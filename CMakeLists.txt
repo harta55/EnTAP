@@ -3,14 +3,14 @@ project(enTAP)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-set(SOURCE_FILES main.cpp ExceptionHandler.cpp ExceptionHandler.h)
+set(SOURCE_FILES main.cpp ExceptionHandler.cpp ExceptionHandler.h ErrorFlags.h eninit.cpp eninit.h)
 #add_executable(enTAP ${SOURCE_FILES})
 
-#set(Boost_INCLUDE_DIR /home/harta55/ClionProjects/Libraries/boost_1_62_0)
-#set(Boost_LIBRARY_DIR /home/harta55/ClionProjects/Libraries/boost_1_62_0/stage/lib)
+set(Boost_INCLUDE_DIR /home/harta55/ClionProjects/Libraries/boost_1_62_0)
+set(Boost_LIBRARY_DIR /home/harta55/ClionProjects/Libraries/boost_1_62_0/stage/lib)
 
-set(Boost_INCLUDE_DIR /home/harta/Documents/boost_1_63_0)
-set(Boost_LIBRARY_DIR /home/harta/Documents/boost_1_63_0/stage/lib)
+#set(Boost_INCLUDE_DIR /home/harta/Documents/boost_1_63_0)
+#set(Boost_LIBRARY_DIR /home/harta/Documents/boost_1_63_0/stage/lib)
 
 
 

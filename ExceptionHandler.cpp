@@ -1,24 +1,15 @@
 #include <iostream>
 #include <ctime>
 #include <fstream>
+#include <exception>
+#include "ExceptionHandler.h"
 
-class ExceptionHandler {
 
-    public:
-        ExceptionHandler(const int err_tag, std::string m);
-        int getErrTag();
-        static const short int except_help = 0;
-        static const short int except_input_parse = 1;
+static std::ostringstream cnvt;
 
-    private:
-        int err_tag;
-        void parse_flag(int flag, std::string msg);
-        void print_msg(std::string, bool b);
-    };
-
-ExceptionHandler::ExceptionHandler(const int err, std::string m) {
-    err_tag = err;
-    parse_flag(err_tag,m);
+ExceptionHandler::ExceptionHandler(const std::string &__arg, const int err_tag, std::string m) : runtime_error(__arg) {
+    err = err_tag;
+    message = m;
 }
 
 int ExceptionHandler::getErrTag() {
@@ -58,3 +49,15 @@ void ExceptionHandler::print_msg(std::string msg, bool b) {
                      + ": " + msg << std::endl;
     }
 }
+
+virtual const char* what() const throw()
+{
+    cnvt.str( "" );
+
+    cnvt << std::runtime_error::what();
+    return cnvt.str().c_str();
+}
+
+
+
+

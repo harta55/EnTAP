@@ -6,6 +6,7 @@
 #include "pstream.h"
 #include "boost/program_options.hpp"
 #include "ErrorFlags.h"
+#include <sys/stat.h>
 
 namespace boostPO = boost::program_options;
 
@@ -16,16 +17,18 @@ void init_log();
 void parse_databases(std::string);
 void init_uniprot();
 void parse_arguments_boost(int,const char**);
+bool exists_test3 (const std::string& name);
 
 int main(int argc, const char** argv) {
-//    redi::ipstream in("ls");
-//    std::string str;
-//    while (in >> str) {
-//        std::cout << str << std::endl;
-//        std::cout << "database" << std::endl;
-//    }
+
     init_log();
-    parse_arguments_boost(argc,argv);
+    try {
+        parse_arguments_boost(argc,argv);
+    } catch (ExceptionHandler &e) {
+        if (e.getErr_code()==exit_ok) return 0;
+        e.print_msg();
+        return 1;
+    }
 //    try {
 //        parse_arguments(argv, argc);
 //    }catch (ExceptionHandler e) {
@@ -69,16 +72,17 @@ void parse_arguments_boost(int argc, const char** argv) {
             boostPO::store(boostPO::command_line_parser(argc,argv).options(description)
                 .positional(posOptions).run(),vm);
 
-
             if (vm.count("help")) {
                 std::cout << description<<std::endl<<std::endl;
+                throw(ExceptionHandler("",exit_ok));
             }
             boostPO::notify(vm);
         } catch (boost::program_options::required_option& e) {
-            std::cerr <<"ERROR"<<std::endl;
+            std::cout<<"ERROR CAUTCH"<<std::endl;
         }
-    }catch (ExceptionHandler &e){
-        std::cerr <<"ERROR2"<< e.what()<<std::endl;
+    }catch (boost::program_options::error& e){
+        // Unknown input
+        throw ExceptionHandler(e.what(),err_input_parse);
     }
 }
 
@@ -118,11 +122,6 @@ void parse_arguments_boost(int argc, const char** argv) {
 //    }
 //}
 
-void print_help() {
-    // TODO help information
-    std::cout<<"Print help"<<std::endl;
-}
-
 void init_log() {
     remove("debug.txt");
     print_msg("Start - enTAP", true);
@@ -133,11 +132,24 @@ void print_msg(std::string msg, bool b) {
     time_t rawtime;
     time(&rawtime);
     std::string date_time = ctime(&rawtime);
-    std::ofstream log_file("debug.txt", std::ios_base::out | std::ios_base::app );
-    if (b) {
-        log_file << date_time.substr(0, date_time.size() - 2)
-                     + ": " + msg << std::endl;
-    }
+    std::ofstream log_file("debug.txt", std::ios::out | std::ios::app);
+    log_file << date_time.substr(0, date_time.size() - 2)
+                 + ": " + msg << std::endl;
+    log_file.close();
+//    if (exists_test3("debug.txt")){
+//        std::cout<<"EXISTS"<<std::endl;
+//        redi::ipstream in("ls");
+//        std::string str;
+//        while (in >> str) {
+//            std::cout << str << std::endl;
+//            std::cout << "database" << std::endl;
+//        }
+//    }
+}
+
+bool exists_test3 (const std::string& name) {
+    struct stat buffer;
+    return (stat (name.c_str(), &buffer) == 0);
 }
 
 //void parse_databases(std::string str) {

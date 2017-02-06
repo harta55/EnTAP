@@ -7,6 +7,7 @@
 
 
 const int err_input_parse = 10;
+const int exit_ok= 11;
 
 
 #endif //ENTAP_ERRORFLAGS_H

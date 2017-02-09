@@ -4,7 +4,7 @@
 
 #include <cstdio>
 #include "EntapInit.h"
-#include <curl.h>
+#include "libs/curl-7.52.1/include/curl/curl.h"
 
 namespace entapInit {
 

@@ -37,16 +37,18 @@ void ExceptionHandler::print_msg() {
             "debug.txt", std::ios_base::out | std::ios_base::app );
     std::string added_msg;
 
+    if (err_code == ENTAPERR::E_INPUT_PARSE) std::cout<<"ERROR!"<<std::endl;
     switch (err_code) {
-        case err_input_parse:
-            added_msg = "Error in parsing input data, please consult -h for more"
+        case ENTAPERR::E_INPUT_PARSE:
+            added_msg = "Error in parsing input data, please consult -h for more "
                     "information.";
+            break;
         default:
             added_msg = "Error code not recognized.";
-
     }
     log_file << date_time.substr(0, date_time.size() - 2)
-                 + ": " + added_msg << std::endl <<what()<<std::endl;
+                 + ": " + added_msg << std::endl ;
+    log_file <<what()<<std::endl;
 }
 
 const char* ExceptionHandler::what() {

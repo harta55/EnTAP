@@ -5,9 +5,11 @@
 #ifndef ENTAP_ERRORFLAGS_H
 #define ENTAP_ERRORFLAGS_H
 
+namespace ENTAPERR {
+    const int E_INPUT_PARSE = 10;
+    const int E_SUCCESS= 11;
+}
 
-const int err_input_parse = 10;
-const int exit_ok= 11;
 
 
 #endif //ENTAP_ERRORFLAGS_H

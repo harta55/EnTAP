@@ -16,6 +16,9 @@ namespace entapInit {
     };
 
     void download_file(std::string, std::string);
+    bool file_exists (const std::string& name);
+    void init_entap();
+    int init_taxonomic();
 
 }
 

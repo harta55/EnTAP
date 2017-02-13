@@ -24,7 +24,7 @@
 prefix=/usr/local
 exec_prefix=${prefix}
 includedir=${prefix}/include
-cppflag_curl_staticlib=
+cppflag_curl_staticlib=-DCURL_STATICLIB
 
 usage()
 {
@@ -67,7 +67,7 @@ while test $# -gt 0; do
 
     case "$1" in
     --built-shared)
-        echo yes
+        echo no
         ;;
 
     --ca)
@@ -147,7 +147,7 @@ while test $# -gt 0; do
         else
            CURLLIBDIR=""
         fi
-        if test "Xno" = "Xyes"; then
+        if test "Xyes" = "Xyes"; then
           echo ${CURLLIBDIR}-lcurl 
         else
           echo ${CURLLIBDIR}-lcurl
@@ -164,7 +164,7 @@ while test $# -gt 0; do
         ;;
 
     --configure)
-        echo ""
+        echo " '--disable-shared' '--enable-static'"
         ;;
 
     *)

@@ -2,11 +2,11 @@
 #include <fstream>
 #include <array>
 #include <cstring>
+#include "EntapInit.h"
 #include "ExceptionHandler.h"
 #include "pstream.h"
 #include "boost/program_options.hpp"
 #include "ErrorFlags.h"
-#include <sys/stat.h>
 
 namespace boostPO = boost::program_options;
 
@@ -17,15 +17,16 @@ void init_log();
 void parse_databases(std::string);
 void init_uniprot();
 void parse_arguments_boost(int,const char**);
-bool exists_test3 (const std::string& name);
+
 
 int main(int argc, const char** argv) {
-
     init_log();
+
     try {
         parse_arguments_boost(argc,argv);
+        entapInit::init_entap();
     } catch (ExceptionHandler &e) {
-        if (e.getErr_code()==exit_ok) return 0;
+        if (e.getErr_code()==ENTAPERR::E_SUCCESS) return 0;
         e.print_msg();
         return 1;
     }
@@ -74,15 +75,15 @@ void parse_arguments_boost(int argc, const char** argv) {
 
             if (vm.count("help")) {
                 std::cout << description<<std::endl<<std::endl;
-                throw(ExceptionHandler("",exit_ok));
+                throw(ExceptionHandler("",ENTAPERR::E_SUCCESS));
             }
             boostPO::notify(vm);
         } catch (boost::program_options::required_option& e) {
-            std::cout<<"ERROR CAUTCH"<<std::endl;
+            std::cout<<"Required Option"<<std::endl;
         }
     }catch (boost::program_options::error& e){
         // Unknown input
-        throw ExceptionHandler(e.what(),err_input_parse);
+        throw ExceptionHandler(e.what(),ENTAPERR::E_INPUT_PARSE);
     }
 }
 
@@ -147,10 +148,7 @@ void print_msg(std::string msg, bool b) {
 //    }
 }
 
-bool exists_test3 (const std::string& name) {
-    struct stat buffer;
-    return (stat (name.c_str(), &buffer) == 0);
-}
+
 
 //void parse_databases(std::string str) {
 //    unsigned char flag = 0x0;

@@ -127,7 +127,7 @@ noinst_PROGRAMS = chkhostname$(EXEEXT) libauthretry$(EXEEXT) \
 	lib1531$(EXEEXT) lib1532$(EXEEXT) lib1533$(EXEEXT) \
 	lib1534$(EXEEXT) lib1535$(EXEEXT) lib1536$(EXEEXT) \
 	lib1900$(EXEEXT) lib2033$(EXEEXT)
-#am__append_1 = -DCURL_STATICLIB
+am__append_1 = -DCURL_STATICLIB
 #am__append_2 = -no-undefined
 #am__append_3 = -mimpure-text
 am__append_4 = -DCURL_HIDDEN_SYMBOLS
@@ -170,7 +170,7 @@ libhostname_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
 	$(libhostname_la_CFLAGS) $(CFLAGS) $(libhostname_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
-am_libhostname_la_rpath =
+#am_libhostname_la_rpath =
 PROGRAMS = $(noinst_PROGRAMS)
 am__dirstamp = $(am__leading_dot)dirstamp
 am_chkhostname_OBJECTS = chkhostname-chkhostname.$(OBJEXT) \
@@ -181,10 +181,10 @@ am__objects_2 = lib1500-testutil.$(OBJEXT)
 am_lib1500_OBJECTS = lib1500-lib1500.$(OBJEXT) $(am__objects_1) \
 	$(am__objects_2)
 lib1500_OBJECTS = $(am_lib1500_OBJECTS)
-am__DEPENDENCIES_1 =  \
-	$(top_builddir)/lib/libcurl.la
 #am__DEPENDENCIES_1 =  \
 #	$(top_builddir)/lib/libcurl.la
+am__DEPENDENCIES_1 =  \
+	$(top_builddir)/lib/libcurl.la
 lib1500_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am__objects_3 = lib1501-first.$(OBJEXT)
 am__objects_4 = lib1501-testutil.$(OBJEXT)
@@ -993,24 +993,24 @@ CTAGS = ctags
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.inc \
 	$(top_srcdir)/depcomp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /home/harta/Downloads/curl-7.52.1/missing aclocal-1.15
+ACLOCAL = ${SHELL} /home/harta/CLionProjects/enTAP/libs/curl-7.52.1/missing aclocal-1.15
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 0
 AR = /usr/bin/ar
 AS = as
-AUTOCONF = ${SHELL} /home/harta/Downloads/curl-7.52.1/missing autoconf
-AUTOHEADER = ${SHELL} /home/harta/Downloads/curl-7.52.1/missing autoheader
-AUTOMAKE = ${SHELL} /home/harta/Downloads/curl-7.52.1/missing automake-1.15
+AUTOCONF = ${SHELL} /home/harta/CLionProjects/enTAP/libs/curl-7.52.1/missing autoconf
+AUTOHEADER = ${SHELL} /home/harta/CLionProjects/enTAP/libs/curl-7.52.1/missing autoheader
+AUTOMAKE = ${SHELL} /home/harta/CLionProjects/enTAP/libs/curl-7.52.1/missing automake-1.15
 AWK = mawk
 BLANK_AT_MAKETIME = 
 CC = gcc
 CCDEPMODE = depmode=gcc3
 CFLAGS = -O2 -Wno-system-headers
 CFLAG_CURL_SYMBOL_HIDING = -fvisibility=hidden
-CONFIGURE_OPTIONS = ""
+CONFIGURE_OPTIONS = " '--disable-shared' '--enable-static'"
 CPP = gcc -E
 CPPFLAGS = 
-CPPFLAG_CURL_STATICLIB = 
+CPPFLAG_CURL_STATICLIB = -DCURL_STATICLIB
 CURLVERSION = 7.52.1
 CURL_CA_BUNDLE = "/etc/ssl/certs/ca-certificates.crt"
 CURL_CFLAG_EXTRAS = 
@@ -1042,7 +1042,7 @@ ECHO_C =
 ECHO_N = -n
 ECHO_T = 
 EGREP = /bin/grep -E
-ENABLE_SHARED = yes
+ENABLE_SHARED = no
 ENABLE_STATIC = yes
 EXEEXT = 
 FGREP = /bin/grep -F
@@ -1074,7 +1074,7 @@ LN_S = ln -s
 LTLIBOBJS = 
 LT_SYS_LIBRARY_PATH = 
 MAINT = #
-MAKEINFO = ${SHELL} /home/harta/Downloads/curl-7.52.1/missing makeinfo
+MAKEINFO = ${SHELL} /home/harta/CLionProjects/enTAP/libs/curl-7.52.1/missing makeinfo
 MANIFEST_TOOL = :
 MANOPT = -man
 MKDIR_P = /bin/mkdir -p
@@ -1101,7 +1101,7 @@ PKGADD_VENDOR = curl.haxx.se
 PKGCONFIG = no
 RANDOM_FILE = 
 RANLIB = ranlib
-REQUIRE_LIB_DEPS = no
+REQUIRE_LIB_DEPS = yes
 SED = /bin/sed
 SET_MAKE = 
 SHELL = /bin/bash
@@ -1130,10 +1130,10 @@ VERSION = -
 VERSIONNUM = 073401
 ZLIB_LIBS = 
 ZSH_FUNCTIONS_DIR = ${prefix}/share/zsh/site-functions
-abs_builddir = /home/harta/Downloads/curl-7.52.1/tests/libtest
-abs_srcdir = /home/harta/Downloads/curl-7.52.1/tests/libtest
-abs_top_builddir = /home/harta/Downloads/curl-7.52.1
-abs_top_srcdir = /home/harta/Downloads/curl-7.52.1
+abs_builddir = /home/harta/CLionProjects/enTAP/libs/curl-7.52.1/tests/libtest
+abs_srcdir = /home/harta/CLionProjects/enTAP/libs/curl-7.52.1/tests/libtest
+abs_top_builddir = /home/harta/CLionProjects/enTAP/libs/curl-7.52.1
+abs_top_srcdir = /home/harta/CLionProjects/enTAP/libs/curl-7.52.1
 ac_ct_AR = 
 ac_ct_CC = gcc
 ac_ct_DUMPBIN = 
@@ -1162,7 +1162,7 @@ host_vendor = pc
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /home/harta/Downloads/curl-7.52.1/install-sh
+install_sh = ${SHELL} /home/harta/CLionProjects/enTAP/libs/curl-7.52.1/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 libext = a
@@ -1236,10 +1236,10 @@ AM_CPPFLAGS = -I$(top_builddir)/include/curl \
 EXTRA_DIST = test75.pl test307.pl test610.pl test613.pl test1013.pl	\
 test1022.pl Makefile.inc notexists.pl CMakeLists.txt
 
-SUPPORTFILES_LIBS = $(top_builddir)/lib/libcurl.la  
-#SUPPORTFILES_LIBS = $(top_builddir)/lib/libcurl.la 
-TESTUTIL_LIBS = $(top_builddir)/lib/libcurl.la  
-#TESTUTIL_LIBS = $(top_builddir)/lib/libcurl.la 
+#SUPPORTFILES_LIBS = $(top_builddir)/lib/libcurl.la  
+SUPPORTFILES_LIBS = $(top_builddir)/lib/libcurl.la 
+#TESTUTIL_LIBS = $(top_builddir)/lib/libcurl.la  
+TESTUTIL_LIBS = $(top_builddir)/lib/libcurl.la 
 
 # Dependencies (may need to be overriden)
 LDADD = $(SUPPORTFILES_LIBS)
@@ -1536,14 +1536,14 @@ lib1900_CPPFLAGS = $(AM_CPPFLAGS)
 lib2033_SOURCES = libntlmconnect.c $(SUPPORTFILES) $(TESTUTIL) $(WARNLESS)
 lib2033_LDADD = $(TESTUTIL_LIBS)
 lib2033_CPPFLAGS = $(AM_CPPFLAGS) -DUSE_PIPELINING
-#noinst_LTLIBRARIES = 
+noinst_LTLIBRARIES = 
 
 # Makefile.inc provides the source defines (TESTUTIL, SUPPORTFILES,
 # noinst_PROGRAMS, lib*_SOURCES, and lib*_CFLAGS)
 
 # Preloading of libhostname allows host name overriding,
 # this is used to make some tests machine independent.
-noinst_LTLIBRARIES = libhostname.la
+#noinst_LTLIBRARIES = libhostname.la
 AM_LDFLAGS = 
 AM_CFLAGS = 
 libhostname_la_CPPFLAGS_EXTRA = $(am__append_4)

@@ -43,6 +43,8 @@ void ExceptionHandler::print_msg() {
             added_msg = "Error in parsing input data, please consult -h for more "
                     "information.";
             break;
+        case ENTAPERR::E_INIT_TAXONOMIC:
+            added_msg = "Error in downloading the taxonomic database";
         default:
             added_msg = "Error code not recognized.";
     }

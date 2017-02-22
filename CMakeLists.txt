@@ -31,7 +31,7 @@ endif()
 
 
 include_directories(libs/pstream)
-find_package(Boost 1.62.0 COMPONENTS program_options system filesystem iostreams REQUIRED)
+find_package(Boost 1.62.0 COMPONENTS program_options system filesystem iostreams serialization REQUIRED)
 #find_package(CURL REQUIRED)
 #
 #

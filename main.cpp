@@ -10,53 +10,34 @@
 
 namespace boostPO = boost::program_options;
 
-void set_state(int);
+enum states_config {
+    PARSE_ARGS          = 0x01,
+    PARSE_ARGS_SUCCESS  = 0x02,
+    INIT_ENTAP          = 0x04,
+    INIT_ENTAP_SUCCESS  = 0x08
+};
+
 void parse_arguments(char**, int);
 void print_help();
 void print_msg(std::string, bool);
 void init_log();
-void parse_databases(std::string);
-void init_uniprot();
 void parse_arguments_boost(int,const char**);
-
-namespace States {
-    const static int PARSE_ARGS = 1;
-    const static int PARSE_ARGS_SUCCESS = 2;
-}
-
-enum STATES_CONFIG {
-    PARSE_ARGS          = 0x01
-};
-
-STATES_CONFIG state = PARSE_ARGS;   // init
+void state_summary(states_config);
 
 int main(int argc, const char** argv) {
     init_log();
+    states_config state_config;   // init
 
     try {
-        set_state(States::PARSE_ARGS);
+        state_config = PARSE_ARGS;
         parse_arguments_boost(argc,argv);
-        set_state(States::PARSE_ARGS_SUCCESS);
 //        entapInit::init_entap();
     } catch (ExceptionHandler &e) {
         if (e.getErr_code()==ENTAPERR::E_SUCCESS) return 0;
         e.print_msg();
+        state_summary(state_config);
         return 1;
     }
-//    try {
-//        parse_arguments(argv, argc);
-//    }catch (ExceptionHandler e) {
-//        switch (e.getErrTag()) {
-//            case ExceptionHandler::except_help:
-//                return 0;
-//            case ExceptionHandler::except_input_parse:
-//                print_msg("End - enTAP", true);
-//                print_msg("End - Input parse", true);
-//                return 1;
-//            default:
-//                return 1;
-//        }
-//    }
     return 0;
 }
 
@@ -99,11 +80,11 @@ void parse_arguments_boost(int argc, const char** argv) {
                 std::string msg = "Either config option or run option are required";
                 throw(ExceptionHandler(msg.c_str(),ENTAPERR::E_INPUT_PARSE));
             }
-
             if (is_config && is_run) {
                 std::string msg = "Cannot specify both config and run flags";
                 throw(ExceptionHandler(msg.c_str(),ENTAPERR::E_INPUT_PARSE));
             }
+
         } catch (boost::program_options::required_option& e) {
             std::cout<<"Required Option"<<std::endl;
         }
@@ -112,42 +93,6 @@ void parse_arguments_boost(int argc, const char** argv) {
         throw ExceptionHandler(e.what(),ENTAPERR::E_INPUT_PARSE);
     }
 }
-
-//void parse_arguments(char** args, int len) {
-//    print_msg("Start - parse arguments", true);
-//    unsigned char input = 0x0;
-//    enum Inputs {
-//        ARG_CONFIG          = 0x01,
-//        ARG_HELP            = 0x02,
-//        ARG_OTHER           = 0x04
-//    };
-//
-//    //-c config (download databases / rapsearch)
-//    if (len == 1) {
-//        // no inputs
-//        throw ExceptionHandler(<#initializer#>, ExceptionHandler::except_input_parse, "No inputs");
-//    }
-//    std::string arg_str = "";
-//    for (int i = 1; i != len; i++) {
-//        std::string s = args[i];
-//        arg_str.append(s + " ");
-//        if (s.compare("-h")==0) {
-//            input |= ARG_HELP;
-//        }else if (s.compare("-c")==0) {
-//            input |= ARG_CONFIG;
-//        }
-//    }
-//    if (input & ARG_HELP) {
-//        print_help();
-//        throw ExceptionHandler(<#initializer#>, ExceptionHandler::except_help, "");
-//    } else if (input & ARG_CONFIG & ~ARG_HELP & ~ARG_OTHER) {
-//        try {
-//            parse_databases(arg_str);
-//        }catch (ExceptionHandler e) {
-//            throw e;
-//        }
-//    }
-//}
 
 void init_log() {
     remove("debug.txt");
@@ -165,10 +110,11 @@ void print_msg(std::string msg, bool b) {
     log_file.close();
 }
 
-void set_state(int flag) {
-    state = flag;
-}
-
-void set_state(int flag, int next) {
-    s
+void state_summary(states_config st) {
+    switch (st) {
+        case(PARSE_ARGS):
+            break;
+        default:
+            break;
+    }
 }

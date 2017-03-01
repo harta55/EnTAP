@@ -3,7 +3,6 @@
 //
 
 #include <map>
-#include <cstdio>
 #include "EntapInit.h"
 #include <sys/stat.h>
 #include <iostream>
@@ -77,7 +76,6 @@ namespace entapInit {
 //        curl_global_cleanup();
 //    }
 
-
     void init_entap() {
         std::cout << "hello" << std::endl;
 
@@ -88,8 +86,6 @@ namespace entapInit {
         if (init_taxonomic() != 0) {
             throw ExceptionHandler("",ENTAPERR::E_INIT_TAXONOMIC);
         };
-
-
     }
 
     bool file_exists(const std::string &name) {

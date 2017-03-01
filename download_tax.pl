@@ -45,7 +45,7 @@ sub download_tax {
 		$url = $base . "efetch.fcgi?db=$db&query_key=$key&WebEnv=$web";
 		$url .= "&retstart=$retstart&retmax=$retmax&rettype=null&retmode=xml";
 	    my $efetch_out = get($url);
-	    process_fetch($efetch_out);
+	    eval{process_fetch($efetch_out)};	#error
 	    last;
 	}
 }

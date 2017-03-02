@@ -38,7 +38,7 @@ copy) with previous calls to \fIcurl_easy_setopt(3)\fP using char * inputs,
 will be pointed to by the new handle as well. You must therefore make sure to
 keep the data around until both handles have been cleaned up.
 
-The new handle will \fBnot\fP inherit any state information, no connections,
+The new handle will \fBnot\fP inherit any States information, no connections,
 no SSL sessions and no cookies.
 
 \fBNote\fP that even in multi-threaded programs, this function must be called

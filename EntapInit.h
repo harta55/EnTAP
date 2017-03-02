@@ -6,6 +6,7 @@
 #define ENTAP_INITHANDLER_H
 
 #include <string>
+#include <boost/serialization/unordered_map.hpp>
 
 
 namespace entapInit {
@@ -17,8 +18,12 @@ namespace entapInit {
 
     void download_file(std::string, std::string);
     bool file_exists (const std::string& name);
-    void init_entap();
-    int init_taxonomic();
+    void print_msg(std::string msg);
+    void init_entap(std::unordered_map<std::string, std::string>);
+    void init_taxonomic();
+    void init_uniprot(std::string);
+    void init_ncbi(std::string);
+    void init_database_parse(std::string);
 
 }
 

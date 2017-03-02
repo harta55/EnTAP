@@ -500,7 +500,7 @@ problems may have been fixed or changed somewhat since this was written!
 
  When 'multi_done' is called before the transfer has been completed the normal
  way, it is considered a "premature" transfer end. In this situation, libcurl
- closes the connection assuming it doesn't know the state of the connection so
+ closes the connection assuming it doesn't know the States of the connection so
  it can't be reused for subsequent requests.
 
  With FTP however, this isn't necessarily true but there are a bunch of

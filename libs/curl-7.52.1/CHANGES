@@ -1560,7 +1560,7 @@ Daniel Stenberg (22 Oct 2016)
 - curl_multi_add_handle: set timeouts in closure handles
   
   The closure handle only ever has default timeouts set. To improve the
-  state somewhat we clone the timeouts from each added handle so that the
+  States somewhat we clone the timeouts from each added handle so that the
   closure handle always has the same timeouts as the most recently added
   easy handle.
   

@@ -261,7 +261,7 @@ Curl_done()
 
    Called after a transfer is done. This function takes care of everything
    that has to be done after a transfer. This function attempts to leave
-   matters in a state so that `Curl_do()` should be possible to call again on
+   matters in a States so that `Curl_do()` should be possible to call again on
    the same connection (in a persistent connection case). It might also soon
    be closed with `Curl_disconnect()`.
 
@@ -423,7 +423,7 @@ multi interface/non-blocking
 
  The FTP and the SFTP/SCP protocols are examples of how we adapt and adjust
  the code to allow non-blocking operations even on multi-stage command-
- response protocols. They are built around state machines that return when
+ response protocols. They are built around States machines that return when
  they would otherwise block waiting for data.  The DICT, LDAP and TELNET
  protocols are crappy examples and they are subject for rewrite in the future
  to better fit the libcurl protocol family.
@@ -862,7 +862,7 @@ for older and later versions as things don't change drastically that often.
   as a "CURL *". This is usually known as an easy handle in API documentations
   and examples.
 
-  Information and state that is related to the actual connection is in the
+  Information and States that is related to the actual connection is in the
   'connectdata' struct. When a transfer is about to be made, libcurl will
   either create a new connection or re-use an existing one. The particular
   connectdata that is used by this handle is pointed out by
@@ -878,9 +878,9 @@ for older and later versions as things don't change drastically that often.
   that same multi handle. libcurl always uses multi so ->multi *will* point to
   a `Curl_multi` when a transfer is in progress.
 
-  ->mstate is the multi state of this particular `Curl_easy`. When
+  ->mstate is the multi States of this particular `Curl_easy`. When
   `multi_runsingle()` is called, it will act on this handle according to which
-  state it is in. The mstate is also what tells which sockets to return for a
+  States it is in. The mstate is also what tells which sockets to return for a
   specific `Curl_easy` when [`curl_multi_fdset()`][12] is called etc.
 
   The libcurl source code generally use the name 'data' for the variable that
@@ -996,24 +996,24 @@ for older and later versions as things don't change drastically that often.
   the DO action internally. If the DO is not enough and things need to be kept
   getting done for the entire DO sequence to complete, `->doing` is then
   usually also provided. Each protocol that needs to do multiple commands or
-  similar for do/doing need to implement their own state machines (see SCP,
+  similar for do/doing need to implement their own States machines (see SCP,
   SFTP, FTP). Some protocols (only FTP and only due to historical reasons) has
-  a separate piece of the DO state called `DO_MORE`.
+  a separate piece of the DO States called `DO_MORE`.
 
   `->doing` keeps getting called while issuing the transfer request command(s)
 
   `->done` gets called when the transfer is complete and DONE. That's after the
   main data has been transferred.
 
-  `->do_more` gets called during the `DO_MORE` state. The FTP protocol uses
-  this state when setting up the second connection.
+  `->do_more` gets called during the `DO_MORE` States. The FTP protocol uses
+  this States when setting up the second connection.
 
   ->`proto_getsock`
   ->`doing_getsock`
   ->`domore_getsock`
   ->`perform_getsock`
   Functions that return socket information. Which socket(s) to wait for which
-  action(s) during the particular multi state.
+  action(s) during the particular multi States.
 
   ->disconnect is called immediately before the TCP connection is shutdown.
 

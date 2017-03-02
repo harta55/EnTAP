@@ -421,7 +421,7 @@ AC_HELP_STRING([--disable-werror],[Disable compiler warnings as errors]),
 
 dnl CURL_CHECK_NONBLOCKING_SOCKET
 dnl -------------------------------------------------
-dnl Check for how to set a socket into non-blocking state.
+dnl Check for how to set a socket into non-blocking States.
 
 AC_DEFUN([CURL_CHECK_NONBLOCKING_SOCKET], [
   AC_REQUIRE([CURL_CHECK_FUNC_FCNTL])dnl

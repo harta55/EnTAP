@@ -30,7 +30,7 @@ if (!-d $out_dir) {
 }
 my $out_path = $out_dir . "/$out_file";
 if (-e $out_path) {
-	# TODO separate routine to update database
+	# TODO separate routine to update database, use date flag and get tax after that date
 	open(OUT, ">$out_path") || die "Unable to open output file!\n";
 	download_tax();
 	close OUT;

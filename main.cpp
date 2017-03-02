@@ -2,6 +2,7 @@
 #include <fstream>
 #include <array>
 #include <cstring>
+#include <unordered_map>
 #include "EntapInit.h"
 #include "ExceptionHandler.h"
 #include "pstream.h"
@@ -10,51 +11,61 @@
 
 namespace boostPO = boost::program_options;
 
-enum states_config {
+enum States {
     PARSE_ARGS          = 0x01,
     PARSE_ARGS_SUCCESS  = 0x02,
     INIT_ENTAP          = 0x04,
-    INIT_ENTAP_SUCCESS  = 0x08
+    INIT_ENTAP_SUCCESS  = 0x08,
+    RUN_ENTAP           = 0x16
 };
 
-void parse_arguments(char**, int);
-void print_help();
-void print_msg(std::string, bool);
+void print_msg(std::string);
 void init_log();
-void parse_arguments_boost(int,const char**);
-void state_summary(states_config);
+std::unordered_map<std::string, std::string> parse_arguments_boost(int,const char**);
+void state_summary(States);
+
+States state;   // init
 
 int main(int argc, const char** argv) {
     init_log();
-    states_config state_config;   // init
-
     try {
-        state_config = PARSE_ARGS;
-        parse_arguments_boost(argc,argv);
-//        entapInit::init_entap();
+        state = PARSE_ARGS;
+        std::unordered_map<std::string, std::string> inputs = parse_arguments_boost(argc,argv);
+        if (state == INIT_ENTAP) {
+            entapInit::init_entap(inputs);
+        } else if (state == RUN_ENTAP) {
+
+        } else {
+
+        }
     } catch (ExceptionHandler &e) {
         if (e.getErr_code()==ENTAPERR::E_SUCCESS) return 0;
         e.print_msg();
-        state_summary(state_config);
+        state_summary(state);
         return 1;
     }
     return 0;
 }
 
-void parse_arguments_boost(int argc, const char** argv) {
+std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, const char** argv) {
+    std::string err_msg;
+    std::unordered_map<std::string, std::string> input_map;
+    print_msg("Parsing user input...");
+    std::string ncbi_data, uniprot_data, data_path;
     try {
         boostPO::options_description description("Options");
         // TODO separate out into main options and additional with defaults
         description.add_options()
                 ("help,h", "help options")
-                ("config", "Configure enTAP for execution later")
+                ("config", "Configure enTAP for execution later (complete this step first)")
                 ("run", "Execute enTAP functionality")
-                ("ncbi,N", boostPO::value<std::string>(),"Select which NCBI database you would like to download"
+                ("ncbi,N", boostPO::value<std::string>(&ncbi_data),"Select which NCBI database you would like to download"
                         "\nref - RefSeq database...")
-                ("uniprot,U", "Select which Uniprot database you would like to download"
+                ("uniprot,U", boostPO::value<std::string>(&uniprot_data)->default_value(ENTAPERR::UNIPROT_DEFAULT),
+                        "Select which Uniprot database you would like to download"
                         "\n100 - UniRef100...")
                 //multiple entries
-                ("database,d", boostPO::value<std::vector<std::string>>(),
+                ("database,d", boostPO::value<std::string>(&data_path),
                         "Provide the path to a separate database, however this "
                         "may prohibit taxonomic filtering.")
                 ("version,v", "Display version number");
@@ -77,14 +88,30 @@ void parse_arguments_boost(int argc, const char** argv) {
             bool is_run = (bool) vm.count("run");
 
             if (!is_config && !is_run) {
-                std::string msg = "Either config option or run option are required";
-                throw(ExceptionHandler(msg.c_str(),ENTAPERR::E_INPUT_PARSE));
+                err_msg = "Either config option or run option are required";
+                throw(ExceptionHandler(err_msg.c_str(),ENTAPERR::E_INPUT_PARSE));
             }
             if (is_config && is_run) {
-                std::string msg = "Cannot specify both config and run flags";
-                throw(ExceptionHandler(msg.c_str(),ENTAPERR::E_INPUT_PARSE));
+                err_msg = "Cannot specify both config and run flags";
+                throw(ExceptionHandler(err_msg.c_str(),ENTAPERR::E_INPUT_PARSE));
             }
+            if (ncbi_data.compare("nr")==-1 || ncbi_data.compare("refseq")==-1) {
+                err_msg = "Not a valid NCBI database";
+                throw(ExceptionHandler(err_msg.c_str(),ENTAPERR::E_INPUT_PARSE));
+            }
+            if (uniprot_data.compare("ur90")==-1 || uniprot_data.compare("ur100")==-1 ||
+                    uniprot_data.compare("trembl")==-1, uniprot_data.compare("swiss")) {
+                err_msg = "Not a valid Uniprot database";
+                throw(ExceptionHandler(err_msg.c_str(),ENTAPERR::E_INPUT_PARSE));
+            }
+            // TODO check unknown database
 
+            input_map.emplace("N",ncbi_data);
+            input_map.emplace("U", uniprot_data);
+
+            if (is_config) {
+                state = INIT_ENTAP;
+            } else state = RUN_ENTAP;
         } catch (boost::program_options::required_option& e) {
             std::cout<<"Required Option"<<std::endl;
         }
@@ -92,15 +119,17 @@ void parse_arguments_boost(int argc, const char** argv) {
         // Unknown input
         throw ExceptionHandler(e.what(),ENTAPERR::E_INPUT_PARSE);
     }
+
+    print_msg("Success!");
+    return input_map;
 }
 
 void init_log() {
     remove("debug.txt");
-    print_msg("Start - enTAP", true);
+    print_msg("Start - enTAP");
 }
 
-// true for additional error pipe, false otherwise
-void print_msg(std::string msg, bool b) {
+void print_msg(std::string msg) {
     time_t rawtime;
     time(&rawtime);
     std::string date_time = ctime(&rawtime);
@@ -110,7 +139,7 @@ void print_msg(std::string msg, bool b) {
     log_file.close();
 }
 
-void state_summary(states_config st) {
+void state_summary(States st) {
     switch (st) {
         case(PARSE_ARGS):
             break;

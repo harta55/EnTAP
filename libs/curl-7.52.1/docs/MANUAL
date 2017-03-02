@@ -418,7 +418,7 @@ USER AGENT
 
 COOKIES
 
-  Cookies are generally used by web servers to keep state information at the
+  Cookies are generally used by web servers to keep States information at the
   client's side. The server sets cookies by sending a response line in the
   headers that looks like 'Set-Cookie: <data>' where the data part then
   typically contains a set of NAME=VALUE pairs (separated by semicolons ';'

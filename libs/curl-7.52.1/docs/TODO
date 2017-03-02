@@ -238,7 +238,7 @@
 
 1.7 Detect when called from within callbacks
 
- We should set a state variable before calling callbacks, so that we
+ We should set a States variable before calling callbacks, so that we
  subsequently can add code within libcurl that returns error if called within
  callbacks for when that's not supported.
 
@@ -701,8 +701,8 @@ that doesn't exist on the server, just like --ftp-create-dirs.
 
  Add an interface to libcurl that enables "session IDs" to get
  exported/imported. Cris Bailiff said: "OpenSSL has functions which can
- serialise the current SSL state to a buffer of your choice, and recover/reset
- the state from such a buffer at a later date - this is used by mod_ssl for
+ serialise the current SSL States to a buffer of your choice, and recover/reset
+ the States from such a buffer at a later date - this is used by mod_ssl for
  apache to implement and SSL session ID cache".
 
 13.6 Provide callback for cert verification
@@ -1079,7 +1079,7 @@ that doesn't exist on the server, just like --ftp-create-dirs.
 20.6 Use the RFC6265 test suite
 
  A test suite made for HTTP cookies (RFC 6265) by Adam Barth is available at
- https://github.com/abarth/http-state/tree/master/tests
+ https://github.com/abarth/http-States/tree/master/tests
 
  It'd be really awesome if someone would write a script/setup that would run
  curl with that test suite and detect deviances. Ideally, that would even be

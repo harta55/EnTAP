@@ -76,16 +76,20 @@ namespace entapInit {
 //        curl_global_cleanup();
 //    }
 
-    void init_entap() {
-        std::cout << "hello" << std::endl;
+    void init_entap(std::unordered_map<std::string, std::string> input_map) {
 
         boostFS::path bin_dir(current_path.string() + "/bin");
         boostFS::path data_dir(current_path.string() + "/databases");
         bool bin_dir_state = (boostFS::create_directories(bin_dir));
         bool data_dir_state = (boostFS::create_directories(data_dir));
-        if (init_taxonomic() != 0) {
-            throw ExceptionHandler("",ENTAPERR::E_INIT_TAXONOMIC);
-        };
+
+        try {
+//            init_taxonomic();
+            init_uniprot(input_map["a"]);
+
+        }catch (ExceptionHandler &e) {
+            throw ExceptionHandler(e.what(), e.getErr_code());
+        }
     }
 
     bool file_exists(const std::string &name) {
@@ -93,7 +97,8 @@ namespace entapInit {
         return (stat(name.c_str(), &buff) == 0);
     }
 
-    int init_taxonomic() {
+    void init_taxonomic() {
+        print_msg("Downloading taxonomic database...");
         //TODO Integrate gzip/zlib
 //        std::ifstream file("file.gz", std::ios_base::in | std::ios_base::binary);
 //        try {
@@ -113,43 +118,84 @@ namespace entapInit {
         in.close();
         int status = in.rdbuf()->status();
         if (status != 0) {
-            std::cerr << "Error in downloading" << std::endl;
-            return 1;
+            std::cerr << "Error in downloading taxonomic database" << std::endl;
+            throw ExceptionHandler("Error in downloading taxonomic database", ENTAPERR::E_INIT_TAX_DOWN);
         }
+        print_msg("Success!");
+        print_msg("Indexing taxonomic database...");
 
         std::unordered_map<std::string, std::string> tax_data_map;
-
         std::ifstream infile(ENTAPERR::taxonomic_database);
         std::string line;
-        while (std::getline(infile, line)) {
-            std::istringstream iss(line);
-            std::string lineage, sci_name, tax_id;
+        try {
+            while (std::getline(infile, line)) {
+                std::istringstream iss(line);
+                std::string lineage, sci_name, tax_id;
 
-            std::getline(iss, sci_name, '\t');
-            std::getline(iss, tax_id, '\t');
-            std::getline(iss, lineage, '\t');
+                std::getline(iss, sci_name, '\t');
+                std::getline(iss, tax_id, '\t');
+                std::getline(iss, lineage, '\t');
 
-            std::string id_lineage = tax_id+"||"+lineage;
-            tax_data_map.emplace(sci_name,id_lineage);
+                std::string id_lineage = tax_id+"||"+lineage;
+                tax_data_map.emplace(sci_name,id_lineage);
+            }
+        } catch (std::exception &e) {
+            throw ExceptionHandler(e.what(), ENTAPERR::E_INIT_TAX_INDEX);
         }
 
         // write map
-        {
-            std::ofstream ofs("test.entp");
-            boostAR::binary_oarchive oa(ofs);
-            oa << tax_data_map;
+        try{
+            {
+                std::ofstream ofs("test.entp");
+                boostAR::binary_oarchive oa(ofs);
+                oa << tax_data_map;
+            }
+        } catch (std::exception &e) {
+            throw ExceptionHandler(e.what(), ENTAPERR::E_INIT_TAX_SERIAL);
         }
 
         // read map
-        std::unordered_map<std::string, std::string> restored_map;
-        {
-            std::ifstream ifs("test.entp");
-            boost::archive::binary_iarchive ia(ifs);
-            ia >> restored_map;
+//        std::unordered_map<std::string, std::string> restored_map;
+//        try {
+//            {
+//                std::ifstream ifs("test.ent");
+//                boost::archive::binary_iarchive ia(ifs);
+//                ia >> restored_map;
+//            }
+//
+//            std::cout<<restored_map["pseudoascotaiwania"];
+//        } catch (std::exception &exception){
+//            throw ExceptionHandler(exception.what(), ENTAPERR::E_INIT_TAX_READ);
+//        }
+        print_msg("Success!");
+    }
+
+    void init_uniprot(std::string d) {
+        // TODO setup go term/interpro... integration, date tag
+        std::string base = "www.uniprot.org/";
+        std::string query;
+
+        if (d.compare("swiss")) {
+            std::cout <<  "correct!"<< std::endl;
+
         }
+    }
 
-        std::cout<<restored_map["pseudomonas sp. ep r1"];
+    void init_ncbi(std::string d) {
 
-        return 0;
+    }
+
+    void init_database_parse(std::string path) {
+
+    }
+
+    void print_msg(std::string msg) {
+        time_t rawtime;
+        time(&rawtime);
+        std::string date_time = ctime(&rawtime);
+        std::ofstream log_file("debug.txt", std::ios::out | std::ios::app);
+        log_file << date_time.substr(0, date_time.size() - 2)
+                    + ": " + msg << std::endl;
+        log_file.close();
     }
 }

@@ -369,7 +369,7 @@ The Art Of Scripting HTTP Requests Using Curl
 
  4.5 Hidden Fields
 
-  A very common way for HTML based application to pass state information
+  A very common way for HTML based application to pass States information
   between pages is to add hidden fields to the forms. Hidden fields are
   already filled in, they aren't displayed to the user and they get passed
   along just as all the other fields.
@@ -531,7 +531,7 @@ The Art Of Scripting HTTP Requests Using Curl
 
  9.1 Cookie Basics
 
- The way the web browsers do "client side state control" is by using
+ The way the web browsers do "client side States control" is by using
  cookies. Cookies are just names with associated contents. The cookies are
  sent to the client by the server. The server tells the client for what path
  and host name it wants the cookie sent back, and it also sends an expiration

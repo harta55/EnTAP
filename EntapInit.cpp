@@ -36,46 +36,6 @@ namespace entapInit {
 
     const boostFS::path current_path(boost::filesystem::current_path());
 
-
-//    size_t write_function(void *buffer, size_t size, size_t nmemb, void *stream) {
-//        struct FtpFile *out = (struct FtpFile *) stream;
-//        if (out && !out -> stream) {
-//            // open file to write
-//            out -> stream = fopen(out->filename, "wb");
-//            if (!out->stream) return 1; // can't open file to write
-//        }
-//        return fwrite(buffer, size, nmemb, out->stream);
-//    }
-//
-//    void download_file(std::string, std::string) {
-//        CURL *curl;
-//        CURLcode res;
-//        struct FtpFile ftpfile={
-//                "file.bin", /* name to store the file as if successful */
-//                NULL
-//        };
-//        curl_global_init(CURL_GLOBAL_DEFAULT);
-//        curl = curl_easy_init();
-//        if(curl) {
-//            curl_easy_setopt(curl, CURLOPT_URL,
-//                             "ftp_url");
-//            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_function);
-//            curl_easy_setopt(curl, CURLOPT_WRITEDATA, &ftpfile);
-//            curl_easy_setopt(curl, CURLOPT_USE_SSL, CURLUSESSL_ALL);
-//            curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-//            res = curl_easy_perform(curl);
-//            curl_easy_cleanup(curl);
-//
-//            if(CURLE_OK != res) {
-//                /* we failed */
-//                fprintf(stderr, "curl told us %d\n", res);
-//            }
-//        }
-//        if(ftpfile.stream)
-//            fclose(ftpfile.stream); /* close the local file */
-//        curl_global_cleanup();
-//    }
-
     void init_entap(std::unordered_map<std::string, std::string> input_map) {
 
         boostFS::path bin_dir(current_path.string() + "/bin");
@@ -105,8 +65,6 @@ namespace entapInit {
 //            boostIO::filtering_streambuf<boostIO::input> in;
 //            in.push(boostIO::gzip_decompressor());
 //            in.push(file);
-//
-//
 //        }
 //        catch(const boost::iostreams::gzip_error& e) {
 //            std::cout << e.what() << '\n';
@@ -142,7 +100,6 @@ namespace entapInit {
         } catch (std::exception &e) {
             throw ExceptionHandler(e.what(), ENTAPERR::E_INIT_TAX_INDEX);
         }
-
         // write map
         try{
             {

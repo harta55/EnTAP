@@ -33,11 +33,7 @@ void ExceptionHandler::print_msg() {
                  + ": " + added_msg << std::endl ;
     log_file <<what()<<std::endl;
 
-    std::cerr << date_time.substr(0, date_time.size() - 2)
-                + ": " + added_msg << std::endl ;
-    std::cerr <<what()<<std::endl;
-
-
+    std::cerr << added_msg << std::endl << what() <<std::endl;
 }
 
 const char* ExceptionHandler::what() {

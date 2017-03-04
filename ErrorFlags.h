@@ -21,6 +21,7 @@ namespace ENTAPERR {
 
     const std::string UNIPROT_FTP_SWISS = "ftp://ftp.uniprot.org/pub/databases/"
             "uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz";
+    con
 
 }
 

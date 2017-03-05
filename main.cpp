@@ -7,16 +7,16 @@
 #include "ExceptionHandler.h"
 #include "pstream.h"
 #include "boost/program_options.hpp"
-#include "ErrorFlags.h"
+#include "EntapConsts.h"
+#include "EntapExecute.h"
 
 namespace boostPO = boost::program_options;
 
 enum States {
     PARSE_ARGS          = 0x01,
-    PARSE_ARGS_SUCCESS  = 0x02,
-    INIT_ENTAP          = 0x04,
-    INIT_ENTAP_SUCCESS  = 0x08,
-    RUN_ENTAP           = 0x16
+    INIT_ENTAP          = 0x02,
+    INIT_ENTAP_SUCCESS  = 0x04,
+    EXECUTE_ENTAP       = 0x08
 };
 
 void print_msg(std::string);
@@ -33,13 +33,14 @@ int main(int argc, const char** argv) {
         std::unordered_map<std::string, std::string> inputs = parse_arguments_boost(argc,argv);
         if (state == INIT_ENTAP) {
             entapInit::init_entap(inputs);
-        } else if (state == RUN_ENTAP) {
-
+        } else if (state == EXECUTE_ENTAP) {
+            entapExecute::execute_main();
         } else {
-
+            print_msg("Error in parsing input data");
+            return 1;
         }
     } catch (ExceptionHandler &e) {
-        if (e.getErr_code()==ENTAPERR::E_SUCCESS) return 0;
+        if (e.getErr_code()==ENTAP_ERR::E_SUCCESS) return 0;
         e.print_msg();
         state_summary(state);
         return 1;
@@ -52,6 +53,7 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
     std::unordered_map<std::string, std::string> input_map;
     print_msg("Parsing user input...");
     std::string ncbi_data, uniprot_data, data_path;
+    // TODO do not change .entp filename warning
     try {
         boostPO::options_description description("Options");
         // TODO separate out into main options and additional with defaults
@@ -59,9 +61,9 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
                 ("help,h", "help options")
                 ("config", "Configure enTAP for execution later (complete this step first)")
                 ("run", "Execute enTAP functionality")
-                ("ncbi,N", boostPO::value<std::string>(&ncbi_data),"Select which NCBI database you would like to download"
+                ("ncbi,N", boostPO::value<std::string>(&ncbi_data)->default_value(ENTAP_CONST::NCBI_DEFAULT),"Select which NCBI database you would like to download"
                         "\nref - RefSeq database...")
-                ("uniprot,U", boostPO::value<std::string>(&uniprot_data)->default_value(ENTAPERR::UNIPROT_DEFAULT),
+                ("uniprot,U", boostPO::value<std::string>(&uniprot_data)->default_value(ENTAP_CONST::INPUT_UNIPROT_DEFAULT),
                         "Select which Uniprot database you would like to download"
                         "\n100 - UniRef100...")
                 //multiple entries
@@ -81,7 +83,7 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
 
             if (vm.count("help")) {
                 std::cout << description<<std::endl<<std::endl;
-                throw(ExceptionHandler("",ENTAPERR::E_SUCCESS));
+                throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
 
             bool is_config = (bool) vm.count("config");     // ignore 'config config'
@@ -89,20 +91,20 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
 
             if (!is_config && !is_run) {
                 err_msg = "Either config option or run option are required";
-                throw(ExceptionHandler(err_msg.c_str(),ENTAPERR::E_INPUT_PARSE));
+                throw(ExceptionHandler(err_msg.c_str(),ENTAP_ERR::E_INPUT_PARSE));
             }
             if (is_config && is_run) {
                 err_msg = "Cannot specify both config and run flags";
-                throw(ExceptionHandler(err_msg.c_str(),ENTAPERR::E_INPUT_PARSE));
+                throw(ExceptionHandler(err_msg.c_str(),ENTAP_ERR::E_INPUT_PARSE));
             }
-            if (ncbi_data.compare("nr")==-1 || ncbi_data.compare("refseq")==-1) {
+            if (ncbi_data.compare("nr")!=0 || ncbi_data.compare("refseq")!=0) {
                 err_msg = "Not a valid NCBI database";
-                throw(ExceptionHandler(err_msg.c_str(),ENTAPERR::E_INPUT_PARSE));
+                throw(ExceptionHandler(err_msg.c_str(),ENTAP_ERR::E_INPUT_PARSE));
             }
-            if (uniprot_data.compare("ur90")==-1 || uniprot_data.compare("ur100")==-1 ||
-                    uniprot_data.compare("trembl")==-1, uniprot_data.compare("swiss")) {
+            if (uniprot_data.compare("ur90")!=0 || uniprot_data.compare("ur100")!=0 ||
+                    uniprot_data.compare("trembl")!=0, uniprot_data.compare("swiss")) {
                 err_msg = "Not a valid Uniprot database";
-                throw(ExceptionHandler(err_msg.c_str(),ENTAPERR::E_INPUT_PARSE));
+                throw(ExceptionHandler(err_msg.c_str(),ENTAP_ERR::E_INPUT_PARSE));
             }
             // TODO check unknown database
 
@@ -111,13 +113,13 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
 
             if (is_config) {
                 state = INIT_ENTAP;
-            } else state = RUN_ENTAP;
+            } else state = EXECUTE_ENTAP;
         } catch (boost::program_options::required_option& e) {
             std::cout<<"Required Option"<<std::endl;
         }
     }catch (boost::program_options::error& e){
         // Unknown input
-        throw ExceptionHandler(e.what(),ENTAPERR::E_INPUT_PARSE);
+        throw ExceptionHandler(e.what(),ENTAP_ERR::E_INPUT_PARSE);
     }
 
     print_msg("Success!");

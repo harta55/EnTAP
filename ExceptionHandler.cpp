@@ -3,7 +3,7 @@
 #include <fstream>
 #include <exception>
 #include "ExceptionHandler.h"
-#include "ErrorFlags.h"
+#include "EntapConsts.h"
 
 
 ExceptionHandler::ExceptionHandler(const std::string& msg, int err) {
@@ -20,11 +20,11 @@ void ExceptionHandler::print_msg() {
     std::string added_msg;
 
     switch (err_code) {
-        case ENTAPERR::E_INPUT_PARSE:
+        case ENTAP_ERR::E_INPUT_PARSE:
             added_msg = "Error in parsing input data, please consult -h for more "
                     "information.";
             break;
-        case ENTAPERR::E_INIT_TAX_DOWN:
+        case ENTAP_ERR::E_INIT_TAX_DOWN:
             added_msg = "Error in downloading the taxonomic database";
         default:
             added_msg = "Error code not recognized.";

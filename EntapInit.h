@@ -27,6 +27,7 @@ namespace entapInit {
     void init_database_parse(std::string);
     void init_diamond_index(std::string, std::string, std::string);
     int execute_cmd(std::string,std::string);
+    int execute_cmd(std::string);
 
 }
 

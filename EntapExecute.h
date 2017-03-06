@@ -7,10 +7,11 @@
 
 
 namespace entapExecute {
-    void execute_main();
+    void execute_main(std::unordered_map<std::string, std::string>);
     void genemarkST();
     void rsem();
-    void diamond();
+    void diamond_run(std::string, std::string, std::string);
+    void diamond_parse();
 
 };
 

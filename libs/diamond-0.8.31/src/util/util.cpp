@@ -67,7 +67,7 @@ Temp_file::Temp_file()
 	ss.setf(std::ios::hex, std::ios::basefield);
 	if (config.tmpdir != "")
 		ss << config.tmpdir << dir_separator;
-	ss << "diamond-" << hash_key << "-" << n++ << ".tmp";
+	ss << "diamond_run-" << hash_key << "-" << n++ << ".tmp";
 	ss >> this->file_name_;
 	this->f_ = fopen(this->file_name_.c_str(), "w+b");
 	if (this->f_ == 0)

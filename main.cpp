@@ -34,7 +34,7 @@ int main(int argc, const char** argv) {
         if (state == INIT_ENTAP) {
             entapInit::init_entap(inputs);
         } else if (state == EXECUTE_ENTAP) {
-            entapExecute::execute_main();
+            entapExecute::execute_main(inputs);
         } else {
             print_msg("Error in parsing input data");
             return 1;
@@ -52,7 +52,7 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
     std::string err_msg;
     std::unordered_map<std::string, std::string> input_map;
     print_msg("Parsing user input...");
-    std::string ncbi_data, uniprot_data, data_path;
+    std::string ncbi_data, uniprot_data, data_path, input_file;
     // TODO do not change .entp filename warning
     try {
         boostPO::options_description description("Options");
@@ -70,22 +70,23 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
                 ("database,d", boostPO::value<std::string>(&data_path),
                         "Provide the path to a separate database, however this "
                         "may prohibit taxonomic filtering.")
-                ("version,v", "Display version number");
-        boostPO::positional_options_description posOptions;
-        posOptions.add("config", 1);
-        posOptions.add("run", 1);
+                ("version,v", "Display version number")
+                ("input,i",boostPO::value<std::string>(&input_file)->default_value(ENTAP_CONST::INPUT_FILE_PATH),
+                 "Input transcriptome file");
+//        boostPO::positional_options_description posOptions;
+//        posOptions.add("config", 1);
+//        posOptions.add("run", 1);
         boostPO::variables_map vm;
 
         try {
             boostPO::store(boostPO::command_line_parser(argc,argv).options(description)
-                .positional(posOptions).run(),vm);
+                .run(),vm);
             boostPO::notify(vm);
 
             if (vm.count("help")) {
                 std::cout << description<<std::endl<<std::endl;
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
-
             bool is_config = (bool) vm.count("config");     // ignore 'config config'
             bool is_run = (bool) vm.count("run");
 
@@ -94,19 +95,24 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
                 throw(ExceptionHandler(err_msg.c_str(),ENTAP_ERR::E_INPUT_PARSE));
             }
             if (is_config && is_run) {
-                err_msg = "Cannot specify both config and run flags";
-                throw(ExceptionHandler(err_msg.c_str(),ENTAP_ERR::E_INPUT_PARSE));
+                throw(ExceptionHandler("Cannot specify both config and run flags",
+                                       ENTAP_ERR::E_INPUT_PARSE));
             }
-            if (ncbi_data.compare("nr")!=0 || ncbi_data.compare("refseq")!=0) {
+
+            if (ncbi_data.compare("nr")!=0 && ncbi_data.compare("refseq")!=0) {
                 err_msg = "Not a valid NCBI database";
                 throw(ExceptionHandler(err_msg.c_str(),ENTAP_ERR::E_INPUT_PARSE));
             }
-            if (uniprot_data.compare("ur90")!=0 || uniprot_data.compare("ur100")!=0 ||
+            if (uniprot_data.compare("ur90")!=0 && uniprot_data.compare("ur100")!=0 &&
                     uniprot_data.compare("trembl")!=0, uniprot_data.compare("swiss")) {
                 err_msg = "Not a valid Uniprot database";
                 throw(ExceptionHandler(err_msg.c_str(),ENTAP_ERR::E_INPUT_PARSE));
             }
             // TODO check unknown database
+
+            if (is_run && !vm.count("input")) {
+                throw ExceptionHandler("Missing input transcriptome file", ENTAP_ERR::E_INPUT_PARSE);
+            }
 
             input_map.emplace("N",ncbi_data);
             input_map.emplace("U", uniprot_data);

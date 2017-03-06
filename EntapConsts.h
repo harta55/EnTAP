@@ -33,13 +33,19 @@ namespace ENTAP_CONST {
     const std::string UNIPROT_FTP_SWISS = "ftp://ftp.uniprot.org/pub/databases/"
             "uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz";
     const std::string UNIPROT_BASE_PATH = "databases/uniprot_";
+    const std::string UNIPROT_INDEX_PATH = "bin/uniprot_";
 
     const std::string NCBI_NONREDUNDANT = "nr";
     const std::string NCBI_REFSEQ = "refseq";
     const std::string NCBI_DEFAULT = NCBI_REFSEQ;
 
-    const std::string DIAMOND_PATH_EXE = "../libs/diamond-0.8.31/bin/diamond";
+    const std::string NCBI_INDEX_PATH = "bin/ncbi_";
+
+    const std::string DIAMOND_PATH_EXE = "../libs/diamond-0.8.31/bin/diamond_run";
     const std::string DIAMOND_INDX_OUT_PATH = "outfiles/diamond_index.out";
+    const std::string DIAMOND_RUN_OUT_PATH = "outfiles/diamond_blastx_";
+
+    const std::string INPUT_FILE_PATH = "../target_sequences.fasta";
 }
 
 

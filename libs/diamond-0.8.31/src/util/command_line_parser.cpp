@@ -75,13 +75,13 @@ void Command_line_parser::store_option(const vector<string> &v)
 void Command_line_parser::store(int count, const char ** str, unsigned &command)
 {
 	if (count < 2)
-		throw std::runtime_error("Syntax: diamond COMMAND [OPTIONS]. To print help message: diamond help");
+		throw std::runtime_error("Syntax: diamond COMMAND [OPTIONS]. To print help message: diamond_run help");
 	const string cmd(str[1]);
 	for (command = 0; command < commands_.size(); ++command)
 		if (commands_[command].first == cmd || "--" + commands_[command].first == cmd)
 			break;
 	if (command == commands_.size())
-		throw std::runtime_error("Invalid command: " + cmd + ". To print help message: diamond help");
+		throw std::runtime_error("Invalid command: " + cmd + ". To print help message: diamond_run help");
 
 	for (std::map<string, Option_base*>::const_iterator i = map_.begin(); i != map_.end(); ++i)
 		i->second->set_default();
@@ -100,7 +100,7 @@ void Command_line_parser::store(int count, const char ** str, unsigned &command)
 void Command_line_parser::print_help()
 {
 	static const size_t col1_width = 23;
-	cout << "Syntax: diamond COMMAND [OPTIONS]" << endl << endl;
+	cout << "Syntax: diamond_run COMMAND [OPTIONS]" << endl << endl;
 	cout << "Commands:" << endl;
 	for (vector<pair<string, string> >::const_iterator i = commands_.begin(); i != commands_.end(); ++i)
 		if(i->second != "")

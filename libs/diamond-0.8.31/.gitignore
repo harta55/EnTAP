@@ -51,4 +51,4 @@ install_manifest.txt
 build/
 .idea
 Makefile
-diamond
+diamond_run

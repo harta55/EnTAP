@@ -260,7 +260,7 @@ Config::Config(int argc, const char **argv)
 	}
 
 	message_stream << Const::program_name << " v" << Const::version_string << "." << (unsigned)Const::build_version << " | by Benjamin Buchfink <buchfink@gmail.com>" << endl;
-	message_stream << "Check http://github.com/bbuchfink/diamond for updates." << endl << endl;
+	message_stream << "Check http://github.com/bbuchfink/diamond_run for updates." << endl << endl;
 #ifndef NDEBUG
 	verbose_stream << "Assertions enabled." << endl;
 #endif

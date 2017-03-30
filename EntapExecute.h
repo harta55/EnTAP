@@ -11,7 +11,8 @@ namespace entapExecute {
     void genemarkST();
     void rsem();
     void diamond_run(std::string, std::string, std::string);
-    void diamond_parse();
+    void diamond_parse(std::string[], int);
+    void diamond_blast(std::string ,std::string, std::string);
 
 };
 

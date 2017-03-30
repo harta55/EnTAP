@@ -84,7 +84,7 @@ namespace entapInit {
 //        }
 
         std::string database_path = current_path.string() + "/databases";
-        std::string tax_command = "perl " + ENTAP_CONST::TAX_SCRIPT_PATH;
+        std::string tax_command = "perl " + ENTAP_CONFIG::TAX_SCRIPT_PATH;
         redi::ipstream in(tax_command);
         in.close();
         int status = in.rdbuf()->status();
@@ -96,7 +96,7 @@ namespace entapInit {
         print_msg("Indexing taxonomic database...");
 
         std::unordered_map<std::string, std::string> tax_data_map;
-        std::ifstream infile(ENTAP_CONST::TAX_DATABASE_PATH);
+        std::ifstream infile(ENTAP_CONFIG::TAX_DATABASE_PATH);
         std::string line;
         try {
             while (std::getline(infile, line)) {
@@ -115,11 +115,11 @@ namespace entapInit {
         }
 
         print_msg("Success!");
-        print_msg("Writing file to "+ ENTAP_CONST::TAX_BIN_PATH);
+        print_msg("Writing file to "+ ENTAP_CONFIG::TAX_BIN_PATH);
         // write map
         try{
             {
-                std::ofstream ofs(ENTAP_CONST::TAX_BIN_PATH);
+                std::ofstream ofs(ENTAP_CONFIG::TAX_BIN_PATH);
                 boostAR::binary_oarchive oa(ofs);
                 oa << tax_data_map;
             }
@@ -147,14 +147,14 @@ namespace entapInit {
     void init_uniprot(std::string d) {
         // TODO setup go term/interpro... integration, date tag, use bool input
         std::string ftp_address;
-        if (d.compare(ENTAP_CONST::INPUT_UNIPROT_SWISS) == 0) {
-            ftp_address = ENTAP_CONST::UNIPROT_FTP_SWISS;
+        if (d.compare(ENTAP_CONFIG::INPUT_UNIPROT_SWISS) == 0) {
+            ftp_address = ENTAP_CONFIG::UNIPROT_FTP_SWISS;
         } else {
             std::string msg_err = "Invalid input";
             throw ExceptionHandler(msg_err, ENTAP_ERR::E_INPUT_PARSE);
         }
 
-        std::string file_path = ENTAP_CONST::UNIPROT_BASE_PATH + d + ".fasta.gz";
+        std::string file_path = ENTAP_CONFIG::UNIPROT_BASE_PATH + d + ".fasta.gz";
         std::string uniprot_command = "wget -O "+ file_path + " " + ftp_address;
         print_msg("Downloading uniprot: " + d + " database from " +
             ftp_address + "...");
@@ -185,16 +185,16 @@ namespace entapInit {
 
     void init_diamond_index(std::string uniprot, std::string ncbi, std::string database) {
         print_msg("Preparing to index database(s) with Diamond...");
-        remove(ENTAP_CONST::DIAMOND_INDX_OUT_PATH.c_str());
-        if (uniprot.compare(ENTAP_CONST::INPUT_UNIPROT_NULL) != 0)  {
-//            std::string uniprot_path = ENTAP_CONST::UNIPROT_BASE_PATH + uniprot + ".fasta";
+        remove(ENTAP_CONFIG::DIAMOND_INDX_OUT_PATH.c_str());
+        if (uniprot.compare(ENTAP_CONFIG::INPUT_UNIPROT_NULL) != 0)  {
+//            std::string uniprot_path = ENTAP_CONFIG::UNIPROT_BASE_PATH + uniprot + ".fasta";
             std::string uniprot_path = "databases/database_sequences.fasta";
             if (file_exists(uniprot_path)) {
                 print_msg("Uniprot Database - " + uniprot + " found.");
-                std::string uniprot_index_command = ENTAP_CONST::DIAMOND_PATH_EXE + " makedb --in " +
+                std::string uniprot_index_command = ENTAP_CONFIG::DIAMOND_PATH_EXE + " makedb --in " +
                         uniprot_path + " -d " + "bin/" + "uniprot_"+uniprot;
                 print_msg("Beginning to index database with Diamond...");
-                if (execute_cmd(uniprot_index_command, ENTAP_CONST::DIAMOND_INDX_OUT_PATH)!=0) {
+                if (execute_cmd(uniprot_index_command, ENTAP_CONFIG::DIAMOND_INDX_OUT_PATH)!=0) {
                     std::cerr<<"Error!!" << std::endl;
                 }
                 print_msg("Success!");
@@ -222,7 +222,8 @@ namespace entapInit {
     }
 
     int execute_cmd(std::string cmd, std::string out_path) {
-        std::ofstream out_file(out_path, std::ios::out | std::ios::app);
+        std::ofstream out_file(out_path+".out", std::ios::out | std::ios::app);
+        std::ofstream err_file(out_path+".err", std::ios::out | std::ios::app);
         const redi::pstreams::pmode mode = redi::pstreams::pstdout|redi::pstreams::pstderr;
         redi::ipstream child(cmd, mode);
         char buf[1024];
@@ -249,10 +250,13 @@ namespace entapInit {
             }
         }
         child.close();
+        out_file.close();
+        err_file.close();
         if (child.rdbuf()->exited())
             return child.rdbuf()->status();
         return 1;
     }
+    // todo, may want to handle differently
     int execute_cmd(std::string cmd) {
         const redi::pstreams::pmode mode = redi::pstreams::pstdout|redi::pstreams::pstderr;
         redi::ipstream child(cmd, mode);

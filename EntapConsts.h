@@ -17,7 +17,7 @@ namespace ENTAP_ERR {
     const int E_INIT_TAX_READ = 55;
 }
 
-namespace ENTAP_CONST {
+namespace ENTAP_CONFIG {
     const std::string TAX_SCRIPT_PATH = "../download_tax.pl";
     const std::string TAX_DATABASE_PATH = "databases/ncbi_tax.entp";
     const std::string TAX_BIN_PATH = "bin/ncbi_tax_bin.entp";
@@ -41,11 +41,17 @@ namespace ENTAP_CONST {
 
     const std::string NCBI_INDEX_PATH = "bin/ncbi_";
 
-    const std::string DIAMOND_PATH_EXE = "../libs/diamond-0.8.31/bin/diamond_run";
+    const std::string DIAMOND_PATH_EXE = "../libs/diamond-0.8.31/bin/diamond";
     const std::string DIAMOND_INDX_OUT_PATH = "outfiles/diamond_index.out";
     const std::string DIAMOND_RUN_OUT_PATH = "outfiles/diamond_blastx_";
 
     const std::string INPUT_FILE_PATH = "../target_sequences.fasta";
+}
+
+namespace ENTAP_EXECUTE {
+    const std::string RSEM_EXE_PATH = "../libs/RSEM-1.3.0/rsem-prepare-reference";
+    const int diamond_col_num = 12;
+    const int diamond_e_col = 10;
 }
 
 

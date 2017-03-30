@@ -61,9 +61,9 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
                 ("help,h", "help options")
                 ("config", "Configure enTAP for execution later (complete this step first)")
                 ("run", "Execute enTAP functionality")
-                ("ncbi,N", boostPO::value<std::string>(&ncbi_data)->default_value(ENTAP_CONST::NCBI_DEFAULT),"Select which NCBI database you would like to download"
+                ("ncbi,N", boostPO::value<std::string>(&ncbi_data)->default_value(ENTAP_CONFIG::NCBI_DEFAULT),"Select which NCBI database you would like to download"
                         "\nref - RefSeq database...")
-                ("uniprot,U", boostPO::value<std::string>(&uniprot_data)->default_value(ENTAP_CONST::INPUT_UNIPROT_DEFAULT),
+                ("uniprot,U", boostPO::value<std::string>(&uniprot_data)->default_value(ENTAP_CONFIG::INPUT_UNIPROT_DEFAULT),
                         "Select which Uniprot database you would like to download"
                         "\n100 - UniRef100...")
                 //multiple entries
@@ -71,7 +71,7 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
                         "Provide the path to a separate database, however this "
                         "may prohibit taxonomic filtering.")
                 ("version,v", "Display version number")
-                ("input,i",boostPO::value<std::string>(&input_file)->default_value(ENTAP_CONST::INPUT_FILE_PATH),
+                ("input,i",boostPO::value<std::string>(&input_file)->default_value(ENTAP_CONFIG::INPUT_FILE_PATH),
                  "Input transcriptome file");
 //        boostPO::positional_options_description posOptions;
 //        posOptions.add("config", 1);

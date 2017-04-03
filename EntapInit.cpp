@@ -56,9 +56,9 @@ namespace entapInit {
 
         try {
             state = INIT_TAX;
-//            init_taxonomic();
+            init_taxonomic();
 //            init_uniprot(input_map["U"]);
-            init_diamond_index(input_map["U"],input_map["N"], input_map["d"]);
+//            init_diamond_index(input_map["U"],input_map["N"], input_map["d"]);
 
         }catch (ExceptionHandler &e) {
             throw ExceptionHandler(e.what(), e.getErr_code());
@@ -83,16 +83,22 @@ namespace entapInit {
 //            std::cout << e.what() << '\n';
 //        }
 
-        std::string database_path = current_path.string() + "/databases";
-        std::string tax_command = "perl " + ENTAP_CONFIG::TAX_SCRIPT_PATH;
-        redi::ipstream in(tax_command);
-        in.close();
-        int status = in.rdbuf()->status();
-        if (status != 0) {
-            std::cerr << "Error in downloading taxonomic database" << std::endl;
-            throw ExceptionHandler("Error in downloading taxonomic database", ENTAP_ERR::E_INIT_TAX_DOWN);
+        if (!file_exists(ENTAP_CONFIG::TAX_DATABASE_PATH)) {
+            std::string database_path = current_path.string() + "/databases";
+            std::string tax_command = "perl " + ENTAP_CONFIG::TAX_SCRIPT_PATH;
+            redi::ipstream in(tax_command);
+            in.close();
+            int status = in.rdbuf()->status();
+            if (status != 0) {
+                std::cerr << "Error in downloading taxonomic database" << std::endl;
+                throw ExceptionHandler("Error in downloading taxonomic database", ENTAP_ERR::E_INIT_TAX_DOWN);
+            }
+            print_msg("Success! File written to " + ENTAP_CONFIG::TAX_DATABASE_PATH);
+        } else {
+            print_msg("Database found. Updating...");
+            // TODO Update taxonomic database
         }
-        print_msg("Success! File written to " + ENTAP_ERR::E_INIT_TAX_DOWN);
+
         print_msg("Indexing taxonomic database...");
 
         std::unordered_map<std::string, std::string> tax_data_map;
@@ -128,20 +134,6 @@ namespace entapInit {
         }
         print_msg("Success!");
 
-        // read map
-//        std::unordered_map<std::string, std::string> restored_map;
-//        try {
-//            {
-//                std::ifstream ifs("test.ent");
-//                boost::archive::binary_iarchive ia(ifs);
-//                ia >> restored_map;
-//            }
-//
-//            std::cout<<restored_map["pseudoascotaiwania"];
-//        } catch (std::exception &exception){
-//            throw ExceptionHandler(exception.what(), ENTAP_ERR::E_INIT_TAX_READ);
-//        }
-        print_msg("Success!");
     }
 
     void init_uniprot(std::string d) {

@@ -50,7 +50,7 @@ namespace ENTAP_CONFIG {
 
 namespace ENTAP_EXECUTE {
     const std::string RSEM_EXE_PATH = "../libs/RSEM-1.3.0/rsem-prepare-reference";
-    const int diamond_col_num = 12;
+    const int diamond_col_num = 13;
     const int diamond_e_col = 10;
 }
 

@@ -32,7 +32,8 @@ set(Boost_LIBRARY_DIR /home/harta/Documents/boost_1_63_0/stage/lib)
 
 include_directories(libs/pstream)
 include_directories(libs/fast-cpp-csv-parser) # May need to compile with thread control
-find_package(Boost 1.62.0 COMPONENTS program_options system filesystem iostreams serialization REQUIRED)
+find_package(Boost 1.62.0 COMPONENTS program_options system filesystem iostreams serialization
+        regex REQUIRED)
 #find_package(CURL REQUIRED)
 #
 #

@@ -32,7 +32,7 @@ int main(int argc, const char** argv) {
         state = PARSE_ARGS;
         std::unordered_map<std::string, std::string> inputs = parse_arguments_boost(argc,argv);
         if (state == INIT_ENTAP) {
-            entapInit::init_entap(inputs);
+            entapInit::init_entap(inputs);  // todo state input 1x, user wants to start at 1 and stop
         } else if (state == EXECUTE_ENTAP) {
             entapExecute::execute_main(inputs);
         } else {

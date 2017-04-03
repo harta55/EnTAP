@@ -46,7 +46,6 @@ sub download_tax {
 		$url .= "&retstart=$retstart&retmax=$retmax&rettype=null&retmode=xml";
 	    my $efetch_out = get($url);
 	    eval{process_fetch($efetch_out)};	#error
-	    last;
 	}
 }
 

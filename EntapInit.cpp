@@ -37,13 +37,14 @@ namespace entapInit {
         INIT_UNIPROT        = 0x02,
         INIT_NCBI           = 0x04,
         INIT_DATABASE       = 0x08,
-        INIT_DIAMOND_INDX   = 0x16
+        INIT_DIAMOND_INDX   = 0x16,
+        INIT_EXIT           = 0x32
     };
 
     InitStates state;
     const boostFS::path current_path(boost::filesystem::current_path());
 
-    void init_entap(std::unordered_map<std::string, std::string> input_map) {
+    void init_entap(std::unordered_map<std::string, std::string> input_map, std::string st) {
 
         print_input(input_map);
 
@@ -54,6 +55,7 @@ namespace entapInit {
         bool bin_dir_state = (boostFS::create_directories(bin_dir));
         bool data_dir_state = (boostFS::create_directories(data_dir));
 
+        // while state != EXIT_STATE
         try {
             state = INIT_TAX;
             init_taxonomic();
@@ -279,5 +281,9 @@ namespace entapInit {
         if (child.rdbuf()->exited())
             return child.rdbuf()->status();
         return 1;
+    }
+
+    void verify_state() {
+        // check current state, move to next state
     }
 }

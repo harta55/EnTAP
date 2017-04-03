@@ -17,23 +17,36 @@
 namespace entapExecute {
 
     enum ExecuteStates {
+        FRAME_SELECTION     = 0x01,
+        EXPRESSION          = 0x02,
+        DIAMOND_RUN         = 0x04,
+        DIAMOND_PARSE       = 0x08,
+        EXECUTE_EXIT        = 0x16
 
     };
+    ExecuteStates state = FRAME_SELECTION;
 
     void execute_main(std::unordered_map<std::string, std::string> user_input) {
         entapInit::print_msg("enTAP Executing...");
-        try {
-            diamond_run(user_input["U"], user_input["N"], user_input["d"]);
 
-        } catch (ExceptionHandler &e) {
-            throw ExceptionHandler(e.what(), e.getErr_code());
+        while (state != EXECUTE_EXIT) {
+            try {
+                genemarkST(user_input.at("i"));
+                diamond_run(user_input["U"], user_input["N"], user_input["d"]);
+
+                verify_state(user_input.at("s"));
+                state = EXECUTE_EXIT;
+
+            } catch (ExceptionHandler &e) {
+                throw ExceptionHandler(e.what(), e.getErr_code());
+            }
         }
     }
 
-    void genemarkST() {
+    void genemarkST(std::string file_path) {
 
     }
-    void rsem() {
+    void rsem(std::string bam) {
 
     }
 
@@ -72,7 +85,7 @@ namespace entapExecute {
     }
 
     // input: 3 database string array of selected databases
-    void diamond_parse(std::string databases[3], int s) {
+    void diamond_parse(std::list databases) {
         std::unordered_map<std::string, std::string> taxonomic_database;
         std::unordered_map<std::string, QuerySequence> query_map;
         try {
@@ -81,9 +94,9 @@ namespace entapExecute {
             throw ExceptionHandler(e.what(),e.getErr_code());
         }
         entapInit::print_msg("Beginning to filter individual databases...");
-        for (int i = 0; i < s; i++) {
-            entapInit::print_msg("Database located at "+ databases[i] + " being filtered");
-            io::CSVReader<ENTAP_EXECUTE::diamond_col_num,io::trim_chars<' ' >,io::no_quote_escape<'\t'>> in(databases[i]);
+        for (std::string data : databases) {
+            entapInit::print_msg("Database located at "+ data + " being filtered");
+            io::CSVReader<ENTAP_EXECUTE::diamond_col_num,io::trim_chars<' ' >,io::no_quote_escape<'\t'>> in(data);
             // todo have columns from input file, in_read_header for versatility
 //            in.read_header(io::ignore_extra_column,"qseqid", "sseqid", "pident", "length", "mismatch", "gapopen",
 //            "qstart", "qend", "sstart", "send", "evalue", "bitscore", "stitle");
@@ -91,7 +104,7 @@ namespace entapExecute {
             double pident, bitscore; int length, mismatch, gapopen, qstart, qend, sstart, send;
             while(in.read_row(qseqid, sseqid, pident, length, mismatch, gapopen,
                               qstart, qend, sstart ,send, evalue, bitscore, stitle)) {
-                QuerySequence new_query = QuerySequence(databases[i], qseqid,sseqid, stitle, evalue);
+                QuerySequence new_query = QuerySequence(data, qseqid,sseqid, stitle, evalue);
                 boost::regex exp("\\[([^]]+)\\]");
                 boost::smatch match;
                 if (boost::regex_search(stitle,match,exp)) {
@@ -156,6 +169,11 @@ namespace entapExecute {
             QuerySequence q = map.at(it->first);
             std::cout << q;
         }
+    }
+
+    void verify_state(std::string input) {
+        std::unordered_map<int, ExecuteStates> enum_map;
+
     }
 
 }

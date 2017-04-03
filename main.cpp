@@ -32,7 +32,7 @@ int main(int argc, const char** argv) {
         state = PARSE_ARGS;
         std::unordered_map<std::string, std::string> inputs = parse_arguments_boost(argc,argv);
         if (state == INIT_ENTAP) {
-            entapInit::init_entap(inputs);  // todo state input 1x, user wants to start at 1 and stop
+            entapInit::init_entap(inputs, "0+");  // todo state input 1x, user wants to start at 1 and stop
         } else if (state == EXECUTE_ENTAP) {
             entapExecute::execute_main(inputs);
         } else {
@@ -52,7 +52,7 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
     std::string err_msg;
     std::unordered_map<std::string, std::string> input_map;
     print_msg("Parsing user input...");
-    std::string ncbi_data, uniprot_data, data_path, input_file;
+    std::string ncbi_data, uniprot_data, data_path, input_file, exe_state;
     // TODO do not change .entp filename warning
     try {
         boostPO::options_description description("Options");
@@ -71,6 +71,7 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
                         "Provide the path to a separate database, however this "
                         "may prohibit taxonomic filtering.")
                 ("version,v", "Display version number")
+                ("state,s", boostPO::value<std::string>(&exe_state),"Select a state value")
                 ("input,i",boostPO::value<std::string>(&input_file)->default_value(ENTAP_CONFIG::INPUT_FILE_PATH),
                  "Input transcriptome file");
 //        boostPO::positional_options_description posOptions;

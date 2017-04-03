@@ -3,4 +3,7 @@
   <component name="Perl5LocalSettings">
     <option name="PERL_PATH" value="/usr/bin" />
   </component>
+  <component name="Perl5XSubsState">
+    <option name="isActual" value="false" />
+  </component>
 </project>

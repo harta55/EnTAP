@@ -4,7 +4,6 @@
 
 #include "QuerySequence.h"
 #include <iostream>
-#include <jmorecfg.h>
 
 // best hit selection
 bool QuerySequence::operator>(const QuerySequence &querySequence) {

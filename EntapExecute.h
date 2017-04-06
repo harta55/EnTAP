@@ -15,9 +15,9 @@ namespace entapExecute {
     std::string genemarkST(std::string);
     std::string rsem(std::string, std::string);
     void diamond_run(std::string, std::string, std::string);
-    void diamond_parse(std::list<std::string>);
+    void diamond_parse(std::list<std::string>, std::string);
     void diamond_blast(std::string ,std::string, std::string);
-    bool is_contaminant(std::string);
+    bool is_contaminant(std::string,std::unordered_map<std::string, std::string>&);
     void print_map(std::unordered_map<std::string, QuerySequence>&);
     void verify_state(std::string);
     std::unordered_map<std::string, std::string> read_tax_map();

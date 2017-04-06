@@ -3,6 +3,7 @@
 #include <array>
 #include <cstring>
 #include <unordered_map>
+#include <vector>
 #include "EntapInit.h"
 #include "ExceptionHandler.h"
 #include "pstream.h"
@@ -53,7 +54,9 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
     std::unordered_map<std::string, std::string> input_map;
     print_msg("Parsing user input...");
     std::string ncbi_data, uniprot_data, data_path, input_file, exe_state;
+    std::vector<std::string> contam_vec;
     // TODO do not change .entp filename warning
+    // TODO specify an output path
     try {
         boostPO::options_description description("Options");
         // TODO separate out into main options and additional with defaults
@@ -71,6 +74,7 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
                         "Provide the path to a separate database, however this "
                         "may prohibit taxonomic filtering.")
                 ("version,v", "Display version number")
+                ("contam,c", boostPO::value<std::vector<std::string>>(&contam_vec)->multitoken(),"Contaminant selection")
                 ("state,s", boostPO::value<std::string>(&exe_state),"Select a state value")
                 ("input,i",boostPO::value<std::string>(&input_file)->default_value(ENTAP_CONFIG::INPUT_FILE_PATH),
                  "Input transcriptome file");
@@ -115,8 +119,29 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
                 throw ExceptionHandler("Missing input transcriptome file", ENTAP_ERR::E_INPUT_PARSE);
             }
 
+//            std::vector<std::string> contam_vec;
+//            if (vm.count("contam")) {
+//                try {
+//                    std::istringstream ss(contaminants);
+//                    std::cout<<contaminants<<std::endl;
+//                    std::string it;
+//                    while (std::getline(ss, it, ',')) {
+//                        contam_vec.push_back(it);
+//                    }
+//                    if (contam_vec.size()>10) {
+//                        throw ExceptionHandler("",0);
+//                    }
+//                } catch (...) {
+//                    throw ExceptionHandler("Contaminant selection is invalid",
+//                                           ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
+//                }
+//            }
+            // todo ensure that the input file exists
+
             input_map.emplace("N",ncbi_data);
             input_map.emplace("U", uniprot_data);
+            input_map.emplace("i", input_file);
+//            input_map.emplace("c", contam_vec);       // format: fungi,eukarota
 
             if (is_config) {
                 state = INIT_ENTAP;

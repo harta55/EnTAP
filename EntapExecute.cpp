@@ -13,6 +13,9 @@
 #include "csv.h"
 #include "QuerySequence.h"
 #include <boost/regex.hpp>
+#include <boost/filesystem/path.hpp>
+
+namespace boostFS = boost::filesystem;
 
 namespace entapExecute {
 
@@ -24,21 +27,20 @@ namespace entapExecute {
         DIAMOND_PARSE       = 0x08,
         EXECUTE_EXIT        = 0x16,
         EXECUTE_INIT        = 0x32
-
     };
 
     void execute_main(std::unordered_map<std::string, std::string> user_input) {
         entapInit::print_msg("enTAP Executing...");
         ExecuteStates state = EXECUTE_INIT;
         std::list<std::string> temp;
-        verify_databases(user_input["U"], user_input["N"], temp);
+//        verify_databases(user_input["U"], user_input["N"], temp);
 
         std::string genemark_out, rsem_out;
         while (state != EXECUTE_EXIT) {
             try {
                 genemark_out = genemarkST(user_input.at("i"));
 //                rsem()
-                diamond_run(user_input["U"], user_input["N"], user_input["d"]);
+//                diamond_run(user_input["U"], user_input["N"], user_input["d"]);
 
 //                verify_state(user_input.at("s"));
                 state = EXECUTE_EXIT;
@@ -66,12 +68,19 @@ namespace entapExecute {
 
     std::string genemarkST(std::string file_path) {
         // Outfiles: file/path.faa, file/path.fnn
-        if (!entapInit::file_exists(file_path)) {
-            throw ExceptionHandler("Input transcriptome file not found!", ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
+        entapInit::print_msg("Running genemark...");
+        std::string genemark_cmd = ENTAP_EXECUTE::GENEMARK_EXE_PATH + " -faa -fnn " + file_path;
+        if (entapInit::execute_cmd(genemark_cmd) != 0 ) {
+            throw ExceptionHandler("Error in running genemark at file located at: " +
+                file_path, ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
         }
-
+//        boostFS::path p(file_path);
+//        std::cout<<p.filename()<<std::endl;
+        return "string";
 
     }
+
+
     std::string rsem(std::string bam_file, std::string input_file) {
         // return path
     }
@@ -108,11 +117,10 @@ namespace entapExecute {
             }
         }
 //        diamond_parse(databases, database_index);
-
     }
 
     // input: 3 database string array of selected databases
-    void diamond_parse(std::list<std::string> databases) {
+    void diamond_parse(std::list<std::string> databases, std::string contams) {
         std::unordered_map<std::string, std::string> taxonomic_database;
         std::unordered_map<std::string, QuerySequence> query_map;
         try {
@@ -132,7 +140,7 @@ namespace entapExecute {
             while(in.read_row(qseqid, sseqid, pident, length, mismatch, gapopen,
                               qstart, qend, sstart ,send, evalue, bitscore, stitle)) {
                 QuerySequence new_query = QuerySequence(data, qseqid,sseqid, stitle, evalue);
-                boost::regex exp("\\[([^]]+)\\]");
+                boost::regex exp("\\[([^]]+)\\]");      // TODO determined by database format
                 boost::smatch match;
                 if (boost::regex_search(stitle,match,exp)) {
                     std::string species = std::string(match[1].first, match[1].second);
@@ -140,7 +148,10 @@ namespace entapExecute {
                     std::cout<<"Species found: " +species<<std::endl;
                     if (taxonomic_database.find(species) != taxonomic_database.end()) {
                         new_query.setSpecies(species);
-                        new_query.setContaminant(is_contaminant(species));
+                        new_query.setContaminant(is_contaminant(species, taxonomic_database));
+                    } else {
+                        new_query.setSpecies("NOT_FOUND");
+                        new_query.setContaminant(false);
                     }
                 } else{std::cout<<"no match"<<std::endl;}
                 // can implement buckets if memory is not issue
@@ -186,7 +197,9 @@ namespace entapExecute {
         return restored_map;
     }
 
-    bool is_contaminant(std::string cont) {
+    bool is_contaminant(std::string species, std::unordered_map<std::string, std::string> &database) {
+        // TODO check lineage
+
         return false;
     }
 

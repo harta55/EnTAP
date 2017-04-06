@@ -28,9 +28,10 @@ void ExceptionHandler::print_msg() {
             added_msg = "Error in downloading the taxonomic database";
         default:
             added_msg = "Error code not recognized.";
+    // TODO uniprot db not found : 'Please rerun config and download the database"
     }
     log_file << date_time.substr(0, date_time.size() - 2)
-                 + ": " + added_msg << std::endl ;
+                 + ": \n" + added_msg << std::endl ;
     log_file <<what()<<std::endl;
 
     std::cerr << added_msg << std::endl << what() <<std::endl;

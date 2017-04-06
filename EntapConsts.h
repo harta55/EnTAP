@@ -36,6 +36,7 @@ namespace ENTAP_CONFIG {
     const std::string UNIPROT_INDEX_PATH = "bin/uniprot_";
 
     const std::string NCBI_NONREDUNDANT = "nr";
+    const std::string NCBI_BASE_PATH = "databases/ncbi_";
     const std::string NCBI_REFSEQ = "refseq";
     const std::string NCBI_DEFAULT = NCBI_REFSEQ;
 
@@ -50,6 +51,8 @@ namespace ENTAP_CONFIG {
 
 namespace ENTAP_EXECUTE {
     const std::string RSEM_EXE_PATH = "../libs/RSEM-1.3.0/rsem-prepare-reference";
+    const std::string GENEMARK_OUT_PATH = "outfiles/";
+
     const int diamond_col_num = 13;
     const int diamond_e_col = 10;
 }

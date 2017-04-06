@@ -17,41 +17,68 @@
 namespace entapExecute {
 
     enum ExecuteStates {
+
         FRAME_SELECTION     = 0x01,
         EXPRESSION          = 0x02,
         DIAMOND_RUN         = 0x04,
         DIAMOND_PARSE       = 0x08,
-        EXECUTE_EXIT        = 0x16
+        EXECUTE_EXIT        = 0x16,
+        EXECUTE_INIT        = 0x32
 
     };
-    ExecuteStates state = FRAME_SELECTION;
 
     void execute_main(std::unordered_map<std::string, std::string> user_input) {
         entapInit::print_msg("enTAP Executing...");
+        ExecuteStates state = EXECUTE_INIT;
+        std::list<std::string> temp;
+        verify_databases(user_input["U"], user_input["N"], temp);
 
+        std::string genemark_out, rsem_out;
         while (state != EXECUTE_EXIT) {
             try {
-                genemarkST(user_input.at("i"));
+                genemark_out = genemarkST(user_input.at("i"));
+//                rsem()
                 diamond_run(user_input["U"], user_input["N"], user_input["d"]);
 
-                verify_state(user_input.at("s"));
+//                verify_state(user_input.at("s"));
                 state = EXECUTE_EXIT;
 
             } catch (ExceptionHandler &e) {
-                throw ExceptionHandler(e.what(), e.getErr_code());
+//                throw ExceptionHandler(e.what(), e.getErr_code());
+                throw e;
             }
         }
     }
 
-    void genemarkST(std::string file_path) {
+    std::list<std::string> verify_databases(std::string uniprot, std::string ncbi,
+                                            std::list<std::string> database) {
+        entapInit::print_msg("Verifying databases...");
+        // return file paths
+        std::string uniprot_path = ENTAP_CONFIG::UNIPROT_BASE_PATH + uniprot + ".fasta";
+        std::string ncbi_path = ENTAP_CONFIG::NCBI_BASE_PATH + ncbi + ".fasta";
+
+        if (!entapInit::file_exists(uniprot_path)) {
+            throw ExceptionHandler("Uniprot database at " + uniprot_path + " not found!",
+                ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
+        }
 
     }
-    void rsem(std::string bam) {
 
+    std::string genemarkST(std::string file_path) {
+        // Outfiles: file/path.faa, file/path.fnn
+        if (!entapInit::file_exists(file_path)) {
+            throw ExceptionHandler("Input transcriptome file not found!", ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
+        }
+
+
+    }
+    std::string rsem(std::string bam_file, std::string input_file) {
+        // return path
     }
 
     void diamond_run(std::string uniprot, std::string ncbi, std::string database) {
         // Indexed databases
+        // check if filtered file given
         if (uniprot.empty()) {
             entapInit::print_msg("No Uniprot database selected");
         } else {
@@ -80,12 +107,12 @@ namespace entapExecute {
                 throw ExceptionHandler(e.what(), e.getErr_code());
             }
         }
-        diamond_parse(databases, database_index);
+//        diamond_parse(databases, database_index);
 
     }
 
     // input: 3 database string array of selected databases
-    void diamond_parse(std::list databases) {
+    void diamond_parse(std::list<std::string> databases) {
         std::unordered_map<std::string, std::string> taxonomic_database;
         std::unordered_map<std::string, QuerySequence> query_map;
         try {
@@ -152,7 +179,6 @@ namespace entapExecute {
                 boost::archive::binary_iarchive ia(ifs);
                 ia >> restored_map;
             }
-
         } catch (std::exception &exception){
             throw ExceptionHandler(exception.what(), ENTAP_ERR::E_INIT_TAX_READ);
         }
@@ -164,16 +190,21 @@ namespace entapExecute {
         return false;
     }
 
-    void print_map(std::unordered_map<std::string, QuerySequence> map) {
+    void print_map(std::unordered_map<std::string, QuerySequence> &map) {
         for(std::unordered_map<std::string,QuerySequence>::iterator it = map.begin(); it != map.end(); ++it) {
             QuerySequence q = map.at(it->first);
             std::cout << q;
         }
     }
 
-    void verify_state(std::string input) {
+    void verify_state(std::string &input) {
         std::unordered_map<int, ExecuteStates> enum_map;
 
-    }
+        for (int i = 0; input.length(); i++) {
+            if (input[i] == 'x') {
+            }
+            int c = int(input[i]);
 
+        }
+    }
 }

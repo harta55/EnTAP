@@ -37,8 +37,9 @@ namespace ENTAP_CONFIG {
 
     const std::string NCBI_NONREDUNDANT = "nr";
     const std::string NCBI_BASE_PATH = "databases/ncbi_";
-    const std::string NCBI_REFSEQ = "refseq";
-    const std::string NCBI_DEFAULT = NCBI_REFSEQ;
+    const std::string NCBI_REFSEQ_COMP = "refseq-c";
+    const std::string NCBI_REFSEQ_PLANT = "refseq-p";
+    const std::string NCBI_DEFAULT = NCBI_REFSEQ_COMP;
 
     const std::string NCBI_INDEX_PATH = "bin/ncbi_";
 

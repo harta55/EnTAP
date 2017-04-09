@@ -14,6 +14,7 @@
 #include "QuerySequence.h"
 #include <boost/regex.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
 
 namespace boostFS = boost::filesystem;
 
@@ -31,6 +32,8 @@ namespace entapExecute {
 
     void execute_main(std::unordered_map<std::string, std::string> user_input) {
         entapInit::print_msg("enTAP Executing...");
+        boostFS::path working_dir(boostFS::current_path());
+
         ExecuteStates state = EXECUTE_INIT;
         std::list<std::string> temp;
 //        verify_databases(user_input["U"], user_input["N"], temp);
@@ -63,21 +66,46 @@ namespace entapExecute {
             throw ExceptionHandler("Uniprot database at " + uniprot_path + " not found!",
                 ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
         }
-
     }
 
     std::string genemarkST(std::string file_path) {
         // Outfiles: file/path.faa, file/path.fnn
+        // assumes working directory right now
         entapInit::print_msg("Running genemark...");
         std::string genemark_cmd = ENTAP_EXECUTE::GENEMARK_EXE_PATH + " -faa -fnn " + file_path;
         if (entapInit::execute_cmd(genemark_cmd) != 0 ) {
             throw ExceptionHandler("Error in running genemark at file located at: " +
                 file_path, ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
         }
-//        boostFS::path p(file_path);
-//        std::cout<<p.filename()<<std::endl;
-        return "string";
+        entapInit::print_msg("Success!");
+        // Format genemarks-t output (remove blank lines)
+        entapInit::print_msg("Formatting genemark files");
+        boost::filesystem::path file_name(file_path); file_name = file_name.filename();
+        std::list<std::string> out_names {file_name.string()+".faa", file_name.string()+".fnn"};
+        std::string line;
+        for (std::string path : out_names) {
+            std::ifstream in_file(path);
+            std::string temp_name = path+"_alt";
+            std::string out_path = ENTAP_EXECUTE::GENEMARK_OUT_PATH+path;
+            std::ofstream out_file(path+"_alt");
+            while (getline(in_file,line)){
+                if (!line.empty()) {
+                    out_file << line << '\n';
+                }
+            }
+            in_file.close();
+            out_file.close();
+            if (remove(path.c_str())!=0 || rename(temp_name.c_str(),out_path.c_str())!=0) {
+                throw ExceptionHandler("Error formatting/moving genemark results", ENTAP_ERR::E_INIT_TAX_READ);
+            }
+        }
+        std::string lst_file = file_name.string() + ".lst";
+        std::string out_lst = ENTAP_EXECUTE::GENEMARK_OUT_PATH + lst_file;
 
+        if (rename(lst_file.c_str(),out_lst.c_str())!=0) {
+            throw ExceptionHandler("Error moving genemark results", ENTAP_ERR::E_INIT_TAX_READ);
+        }
+        return ENTAP_EXECUTE::GENEMARK_OUT_PATH + file_name.string() + ".faa";
     }
 
 

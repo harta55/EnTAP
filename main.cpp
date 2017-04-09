@@ -4,6 +4,7 @@
 #include <cstring>
 #include <unordered_map>
 #include <vector>
+#include <boost/filesystem/operations.hpp>
 #include "EntapInit.h"
 #include "ExceptionHandler.h"
 #include "pstream.h"
@@ -29,6 +30,8 @@ States state;   // init
 
 int main(int argc, const char** argv) {
     init_log();
+    // TODO fix, not portable
+    std::string exe_path = boost::filesystem::system_complete(argv[0]).remove_filename().string();
     try {
         state = PARSE_ARGS;
         std::unordered_map<std::string, std::string> inputs = parse_arguments_boost(argc,argv);
@@ -104,7 +107,7 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
                                        ENTAP_ERR::E_INPUT_PARSE));
             }
 
-            if (ncbi_data.compare("nr")!=0 && ncbi_data.compare("refseq")!=0) {
+            if (ncbi_data.compare("nr")!=0 && ncbi_data.compare("refseq-c")!=0) {
                 err_msg = "Not a valid NCBI database";
                 throw(ExceptionHandler(err_msg.c_str(),ENTAP_ERR::E_INPUT_PARSE));
             }

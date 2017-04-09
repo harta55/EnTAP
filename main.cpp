@@ -23,7 +23,7 @@ enum States {
 
 void print_msg(std::string);
 void init_log();
-std::unordered_map<std::string, std::string> parse_arguments_boost(int,const char**);
+boostPO::variables_map parse_arguments_boost(int,const char**);
 void state_summary(States);
 
 States state;   // init
@@ -34,7 +34,7 @@ int main(int argc, const char** argv) {
     std::string exe_path = boost::filesystem::system_complete(argv[0]).remove_filename().string();
     try {
         state = PARSE_ARGS;
-        std::unordered_map<std::string, std::string> inputs = parse_arguments_boost(argc,argv);
+        boostPO::variables_map inputs = parse_arguments_boost(argc,argv);
         if (state == INIT_ENTAP) {
             entapInit::init_entap(inputs, "0+");  // todo state input 1x, user wants to start at 1 and stop
         } else if (state == EXECUTE_ENTAP) {
@@ -52,12 +52,13 @@ int main(int argc, const char** argv) {
     return 0;
 }
 
-std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, const char** argv) {
+boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
     std::string err_msg;
     std::unordered_map<std::string, std::string> input_map;
     print_msg("Parsing user input...");
-    std::string ncbi_data, uniprot_data, data_path, input_file, exe_state;
+    std::string ncbi_data, uniprot_data, data_path, input_file, exe_state, align_path;
     std::vector<std::string> contam_vec;
+    float fpkm;
     // TODO do not change .entp filename warning
     // TODO specify an output path
     try {
@@ -76,7 +77,12 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
                 ("database,d", boostPO::value<std::string>(&data_path),
                         "Provide the path to a separate database, however this "
                         "may prohibit taxonomic filtering.")
+                ("fpkm,r",boostPO::value<float>(&fpkm)->default_value(ENTAP_EXECUTE::RSEM_FPKM_DEFAULT),
+                 "FPKM cutoff value")
                 ("version,v", "Display version number")
+                ("paired-end","Flag for paired end reads")
+                ("threads,t",boostPO::value<int>()->default_value(1),"Number of threads")
+                ("align,a", boostPO::value<std::string>(&align_path),"Path to BAM/SAM file")
                 ("contam,c", boostPO::value<std::vector<std::string>>(&contam_vec)->multitoken(),"Contaminant selection")
                 ("state,s", boostPO::value<std::string>(&exe_state),"Select a state value")
                 ("input,i",boostPO::value<std::string>(&input_file)->default_value(ENTAP_CONFIG::INPUT_FILE_PATH),
@@ -139,16 +145,15 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
 //                                           ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
 //                }
 //            }
-            // todo ensure that the input file exists
-
-            input_map.emplace("N",ncbi_data);
-            input_map.emplace("U", uniprot_data);
-            input_map.emplace("i", input_file);
-//            input_map.emplace("c", contam_vec);       // format: fungi,eukarota
+            // todo ensure that the input file exists, pass vm instead
 
             if (is_config) {
                 state = INIT_ENTAP;
             } else state = EXECUTE_ENTAP;
+
+            print_msg("Success!");
+//            return input_map;
+            return vm;
         } catch (boost::program_options::required_option& e) {
             std::cout<<"Required Option"<<std::endl;
         }
@@ -156,9 +161,6 @@ std::unordered_map<std::string, std::string> parse_arguments_boost(int argc, con
         // Unknown input
         throw ExceptionHandler(e.what(),ENTAP_ERR::E_INPUT_PARSE);
     }
-
-    print_msg("Success!");
-    return input_map;
 }
 
 void init_log() {

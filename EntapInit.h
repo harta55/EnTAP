@@ -7,6 +7,7 @@
 
 #include <string>
 #include <boost/serialization/unordered_map.hpp>
+#include <boost/program_options/variables_map.hpp>
 
 
 namespace entapInit {
@@ -20,7 +21,7 @@ namespace entapInit {
     bool file_exists (const std::string& name);
     void print_input(std::unordered_map<std::string, std::string>);
     void print_msg(std::string msg);
-    void init_entap(std::unordered_map<std::string, std::string>, std::string);
+    void init_entap(boost::program_options::variables_map, std::string);
     void init_taxonomic();
     void init_uniprot(std::string);
     void init_ncbi(std::string);

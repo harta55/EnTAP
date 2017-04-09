@@ -15,6 +15,7 @@
 #include <boost/regex.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/program_options/variables_map.hpp>
 
 namespace boostFS = boost::filesystem;
 
@@ -30,7 +31,7 @@ namespace entapExecute {
         EXECUTE_INIT        = 0x32
     };
 
-    void execute_main(std::unordered_map<std::string, std::string> user_input) {
+    void execute_main(boost::program_options::variables_map &user_input) {
         entapInit::print_msg("enTAP Executing...");
         boostFS::path working_dir(boostFS::current_path());
 
@@ -38,11 +39,15 @@ namespace entapExecute {
         std::list<std::string> temp;
 //        verify_databases(user_input["U"], user_input["N"], temp);
 
-        std::string genemark_out, rsem_out;
+        std::string input_path, rsem_out;
+        input_path = user_input["input"].as<std::string>();        // Gradually changes between runs
+        std::cout<<input_path<<std::endl;
         while (state != EXECUTE_EXIT) {
             try {
-                genemark_out = genemarkST(user_input.at("i"));
-//                rsem()
+                input_path = genemarkST(input_path);
+                bool is_paired = (bool)user_input.count("paired-end");
+                input_path = rsem(input_path,user_input["align"].as<std::string>(),is_paired,
+                    user_input["threads"].as<int>());
 //                diamond_run(user_input["U"], user_input["N"], user_input["d"]);
 
 //                verify_state(user_input.at("s"));
@@ -86,7 +91,7 @@ namespace entapExecute {
         for (std::string path : out_names) {
             std::ifstream in_file(path);
             std::string temp_name = path+"_alt";
-            std::string out_path = ENTAP_EXECUTE::GENEMARK_OUT_PATH+path;
+            std::string out_path = ENTAP_EXECUTE::EXECUTE_OUT_PATH+path;
             std::ofstream out_file(path+"_alt");
             while (getline(in_file,line)){
                 if (!line.empty()) {
@@ -100,17 +105,106 @@ namespace entapExecute {
             }
         }
         std::string lst_file = file_name.string() + ".lst";
-        std::string out_lst = ENTAP_EXECUTE::GENEMARK_OUT_PATH + lst_file;
+        std::string out_lst = ENTAP_EXECUTE::EXECUTE_OUT_PATH + lst_file;
 
         if (rename(lst_file.c_str(),out_lst.c_str())!=0) {
             throw ExceptionHandler("Error moving genemark results", ENTAP_ERR::E_INIT_TAX_READ);
         }
-        return ENTAP_EXECUTE::GENEMARK_OUT_PATH + file_name.string() + ".faa";
+        return ENTAP_EXECUTE::EXECUTE_OUT_PATH + file_name.string() + ".faa";
     }
 
 
-    std::string rsem(std::string bam_file, std::string input_file) {
+    std::string rsem(std::string input_path, std::string bam_path, bool paired_end, int threads) {
         // return path
+        entapInit::print_msg("Running RSEM...");
+        boostFS::path out_dir(ENTAP_EXECUTE::EXECUTE_OUT_PATH+"rsem/");
+        boostFS::remove_all(out_dir.c_str());
+        boostFS::create_directories(out_dir);
+        boostFS::path file_name(input_path);
+        file_name = file_name.stem();
+        if (file_name.has_stem()) file_name = file_name.stem(); // for .fasta.fnn
+        boostFS::path bam_ext(bam_path);bam_ext = bam_ext.extension();
+        std::string bam = bam_ext.string();
+        std::transform(bam.begin(), bam.end(), bam.begin(), ::tolower);
+
+        if (bam_path.empty()) {
+            entapInit::print_msg("No BAM/SAM file provided, exiting RSEM run");
+            return input_path;
+        }
+        if (!entapInit::file_exists(bam_path)) {
+            throw ExceptionHandler("Invalid file path for BAM/SAM file, exiting...",
+                                   ENTAP_ERR::E_INIT_TAX_READ);
+        }
+        std::string rsem_arg;
+        std::string out_path;
+        if (bam.compare(".sam")==0) {
+            entapInit::print_msg("File is detected to be sam file, running validation "
+                                         "and conversion to bam");
+            rsem_arg = ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-sam-validator " + bam_path;
+            out_path = out_dir.string() + file_name.string() + "_rsem_valdate";
+            if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
+                // only thrown in failure in calling rsem
+                throw ExceptionHandler("Error in validating sam file", ENTAP_ERR::E_INIT_TAX_READ);
+            }
+            // RSEM does not return error code if file is invalid, only seen in .err
+            if (!is_file_empty(out_path+".err")) {
+                throw ExceptionHandler("Alignment file invalid!", ENTAP_ERR::E_INIT_TAX_READ);
+            }
+            entapInit::print_msg("Alignment file valid. Converting to BAM");
+            std::string bam_out = out_dir.string() + file_name.string();
+            rsem_arg = ENTAP_EXECUTE::RSEM_EXE_PATH + "convert-sam-for-rsem " + bam_path +
+                " " + bam_out;
+            out_path = out_dir.string() + file_name.string() + "_rsem_convert";
+            if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
+                // execution error, dif from conversion error
+                throw ExceptionHandler("Error in converting sam file", ENTAP_ERR::E_INIT_TAX_READ);
+            }
+            if (!is_file_empty(out_path+".err")) {
+                throw ExceptionHandler("Error in converting sam file", ENTAP_ERR::E_INIT_TAX_READ);
+            }
+            bam_path = bam_out + ".bam";
+
+        } else if(bam.compare(".bam")==0) {
+            entapInit::print_msg("File is detected to be bam file, validating...");
+            rsem_arg = ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-sam-validator " + bam_path;
+            out_path = out_dir.string() + file_name.string() + "_rsem_valdate";
+            if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
+                throw ExceptionHandler("Error in validating bam file", ENTAP_ERR::E_INIT_TAX_READ);
+            }
+            if (!is_file_empty(out_path+".err")) {
+                throw ExceptionHandler("Alignment file invalid!", ENTAP_ERR::E_INIT_TAX_READ);
+            }
+            entapInit::print_msg("Alignment file valid. Continuing...");
+        } else {
+            throw ExceptionHandler("Unknown extension found in the alignment file",
+                ENTAP_ERR::E_INIT_TAX_READ);
+        }
+        // Now have valid BAM file to run rsem
+        entapInit::print_msg("Preparing reference");
+        std::string ref_out_path = out_dir.string() + file_name.string() + "_ref";
+        boostFS::create_directories(ref_out_path);
+        rsem_arg = ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-prepare-reference " + input_path +
+                " " + ref_out_path+"/"+file_name.string();
+        std::string std_out = out_dir.string() + file_name.string() + "_rsem_reference";
+        entapInit::print_msg("Executing following command\n" + rsem_arg);
+        entapInit::execute_cmd(rsem_arg.c_str(), std_out);
+        entapInit::print_msg("Reference successfully created");
+
+        entapInit::print_msg("Running expression analysis...");
+        std::string exp_out_path = out_dir.string() + file_name.string();
+        rsem_arg = ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-calculate-expression " + "--paired-end " +
+            "--bam " + "-p " + std::to_string(threads) + " " + bam_path +" "+ ref_out_path +
+            "/"+file_name.string()+ " " +exp_out_path;
+        if (paired_end) rsem_arg += " --paired-end";
+        std_out = out_dir.string() + file_name.string() + "_rsem_exp";
+        entapInit::print_msg("Executing following command\n" + rsem_arg);
+        entapInit::execute_cmd(rsem_arg.c_str(), std_out);
+        if (!is_file_empty(std_out+".err")) {
+            throw ExceptionHandler("Error in running expression analysis",ENTAP_ERR::E_INIT_TAX_READ);
+        }
+
+        return out_path + ".genes.results";
+
     }
 
     void diamond_run(std::string uniprot, std::string ncbi, std::string database) {
@@ -247,5 +341,10 @@ namespace entapExecute {
             int c = int(input[i]);
 
         }
+    }
+
+    bool is_file_empty(std::string path) {
+        std::ifstream ifstream(path);
+        return ifstream.peek() == std::ifstream::traits_type::eof();
     }
 }

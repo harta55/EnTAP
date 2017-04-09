@@ -18,6 +18,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/unordered_set.hpp>
+#include <boost/program_options/variables_map.hpp>
 #include "boost/archive/text_oarchive.hpp"
 #include "boost/archive/text_iarchive.hpp"
 
@@ -44,9 +45,10 @@ namespace entapInit {
     InitStates state;
     const boostFS::path current_path(boost::filesystem::current_path());
 
-    void init_entap(std::unordered_map<std::string, std::string> input_map, std::string st) {
+    void init_entap(boost::program_options::variables_map, std::string st) {
 
-        print_input(input_map);
+        // todo print map
+//        print_input(input_map);
 
         boostFS::path bin_dir(current_path.string() + "/bin");
         boostFS::path data_dir(current_path.string() + "/databases");
@@ -226,7 +228,7 @@ namespace entapInit {
         while (!finished[0] || !finished[1]) {
             if (!finished[0]) {
                 while ((n = child.err().readsome(buf, sizeof(buf))) > 0)
-                    out_file.write(buf, n);
+                    err_file.write(buf, n);
                 if (child.eof()) {
                     finished[0] = true;
                     if (!finished[1])
@@ -251,6 +253,7 @@ namespace entapInit {
         return 1;
     }
     // todo, may want to handle differently
+    // TODO change to sending map of flags as command
     int execute_cmd(std::string cmd) {
         const redi::pstreams::pmode mode = redi::pstreams::pstdout|redi::pstreams::pstderr;
         redi::ipstream child(cmd, mode);

@@ -69,16 +69,32 @@ namespace entapExecute {
         }
     }
 
-    std::list<std::string> verify_databases(std::string uniprot, std::string ncbi,
-                                            std::list<std::string> database) {
+    std::list<std::string> verify_databases(std::vector<std::string> uniprot, std::vector<std::string>ncbi,
+                                            std::vector<std::string> database) {
         entapInit::print_msg("Verifying databases...");
         // return file paths
-        std::string uniprot_path = ENTAP_CONFIG::UNIPROT_BASE_PATH + uniprot + ".fasta";
-        std::string ncbi_path = ENTAP_CONFIG::NCBI_BASE_PATH + ncbi + ".fasta";
+        std::list file_paths<std::string>;
 
-        if (!entapInit::file_exists(uniprot_path)) {
-            throw ExceptionHandler("Uniprot database at " + uniprot_path + " not found!",
-                ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
+        std::string path;
+        if (uniprot.size()>0) {
+            for (auto const& u_flag:uniprot) {
+                if (u_flag.compare(ENTAP_CONFIG::INPUT_UNIPROT_NULL)!=0) {
+                    path = ENTAP_CONFIG::UNIPROT_INDEX_PATH + u_flag + ".dmnd";
+                    if (!entapInit::file_exists(path))
+                        throw ExceptionHandler("Database located at: "+path+" not found", ENTAP_ERR::E_INPUT_PARSE);
+                    file_paths.push_back(path);
+                }
+            }
+        }
+        if (ncbi.size()>0) {
+            for (auto const& u_flag:ncbi) {
+                if (u_flag.compare(ENTAP_CONFIG::NCBI_NULL)!=0) {
+                    path = ENTAP_CONFIG::NCBI_INDEX_PATH + u_flag + ".dmnd";
+                    if (!entapInit::file_exists(path))
+                        throw ExceptionHandler("Database located at: "+path+" not found", ENTAP_ERR::E_INPUT_PARSE);
+                    file_paths.push_back(path);
+                }
+            }
         }
     }
 

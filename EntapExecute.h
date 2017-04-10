@@ -11,7 +11,8 @@
 #include <boost/program_options/variables_map.hpp>
 
 namespace entapExecute {
-    std::list<std::string> verify_databases(std::string, std::string, std::list<std::string>);
+    std::list<std::string> verify_databases(std::vector<std::string>, std::vector<std::string>,
+                                            std::vector<std::string>);
     void execute_main(boost::program_options::variables_map&);
     std::string genemarkST(std::string);
     std::string rsem(std::string, std::string, bool, int);

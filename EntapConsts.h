@@ -4,6 +4,7 @@
 
 #ifndef ENTAP_ERRORFLAGS_H
 #define ENTAP_ERRORFLAGS_H
+#include <vector>
 
 namespace ENTAP_ERR {
     const int E_INPUT_PARSE = 10;
@@ -39,6 +40,7 @@ namespace ENTAP_CONFIG {
     const std::string NCBI_BASE_PATH = "databases/ncbi_";
     const std::string NCBI_REFSEQ_COMP = "refseq-c";
     const std::string NCBI_REFSEQ_PLANT = "refseq-p";
+    const std::string NCBI_NULL = "null";
     const std::string NCBI_DEFAULT = NCBI_REFSEQ_COMP;
 
     const std::string NCBI_INDEX_PATH = "bin/ncbi_";
@@ -53,6 +55,7 @@ namespace ENTAP_CONFIG {
 namespace ENTAP_EXECUTE {
     const std::string RSEM_EXE_PATH = "../libs/RSEM-1.3.0/";
     const float RSEM_FPKM_DEFAULT = 0.5;
+    const int RSEM_COL_NUM = 7;
 
 
     const std::string EXECUTE_OUT_PATH = "outfiles/";

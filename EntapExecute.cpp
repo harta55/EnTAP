@@ -10,6 +10,7 @@
 #include "ExceptionHandler.h"
 #include "EntapConsts.h"
 #include "EntapInit.h"
+#include <thread>
 #include "csv.h"
 #include "QuerySequence.h"
 #include <boost/regex.hpp>
@@ -35,21 +36,29 @@ namespace entapExecute {
         entapInit::print_msg("enTAP Executing...");
         boostFS::path working_dir(boostFS::current_path());
 
+        unsigned int supported_threads = std::thread::hardware_concurrency();
+        int threads;
+        if (user_input["threads"].as<int>() > supported_threads) {
+            entapInit::print_msg("Specified thread number is larger than available threads,"
+                                         "setting threads to " + std::to_string(supported_threads));
+            threads = supported_threads;
+        } else {
+            threads = user_input["threads"].as<int>();
+        }
+
         ExecuteStates state = EXECUTE_INIT;
         std::list<std::string> temp;
 //        verify_databases(user_input["U"], user_input["N"], temp);
 
-        std::string input_path, rsem_out;
+        std::string input_path, rsem_out, genemark_out;
         input_path = user_input["input"].as<std::string>();        // Gradually changes between runs
-        std::cout<<input_path<<std::endl;
         while (state != EXECUTE_EXIT) {
             try {
-                input_path = genemarkST(input_path);
-                bool is_paired = (bool)user_input.count("paired-end");
-                input_path = rsem(input_path,user_input["align"].as<std::string>(),is_paired,
-                    user_input["threads"].as<int>());
+//                genemark_out = genemarkST(input_path);
+//                bool is_paired = (bool)user_input.count("paired-end");
+//                rsem_out = rsem(input_path,user_input["align"].as<std::string>(),is_paired,threads);
+                input_path = filter_transcriptome(genemark_out,rsem_out,user_input["fpkm"].as<float>(),input_path);
 //                diamond_run(user_input["U"], user_input["N"], user_input["d"]);
-
 //                verify_state(user_input.at("s"));
                 state = EXECUTE_EXIT;
 
@@ -85,13 +94,16 @@ namespace entapExecute {
         entapInit::print_msg("Success!");
         // Format genemarks-t output (remove blank lines)
         entapInit::print_msg("Formatting genemark files");
+
+        std::string genemark_out_dir = ENTAP_EXECUTE::EXECUTE_OUT_PATH + "genemark/";
+        boostFS::create_directories(genemark_out_dir);
         boost::filesystem::path file_name(file_path); file_name = file_name.filename();
         std::list<std::string> out_names {file_name.string()+".faa", file_name.string()+".fnn"};
         std::string line;
         for (std::string path : out_names) {
             std::ifstream in_file(path);
             std::string temp_name = path+"_alt";
-            std::string out_path = ENTAP_EXECUTE::EXECUTE_OUT_PATH+path;
+            std::string out_path = genemark_out_dir+path;
             std::ofstream out_file(path+"_alt");
             while (getline(in_file,line)){
                 if (!line.empty()) {
@@ -105,12 +117,12 @@ namespace entapExecute {
             }
         }
         std::string lst_file = file_name.string() + ".lst";
-        std::string out_lst = ENTAP_EXECUTE::EXECUTE_OUT_PATH + lst_file;
+        std::string out_lst = genemark_out_dir + lst_file;
 
         if (rename(lst_file.c_str(),out_lst.c_str())!=0) {
             throw ExceptionHandler("Error moving genemark results", ENTAP_ERR::E_INIT_TAX_READ);
         }
-        return ENTAP_EXECUTE::EXECUTE_OUT_PATH + file_name.string() + ".faa";
+        return genemark_out_dir + file_name.string() + ".faa";
     }
 
 
@@ -152,8 +164,8 @@ namespace entapExecute {
             }
             entapInit::print_msg("Alignment file valid. Converting to BAM");
             std::string bam_out = out_dir.string() + file_name.string();
-            rsem_arg = ENTAP_EXECUTE::RSEM_EXE_PATH + "convert-sam-for-rsem " + bam_path +
-                " " + bam_out;
+            rsem_arg = ENTAP_EXECUTE::RSEM_EXE_PATH + "convert-sam-for-rsem " + " -p " + std::to_string(threads)
+                       + " "+bam_path + " " + bam_out;
             out_path = out_dir.string() + file_name.string() + "_rsem_convert";
             if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
                 // execution error, dif from conversion error
@@ -198,13 +210,110 @@ namespace entapExecute {
         if (paired_end) rsem_arg += " --paired-end";
         std_out = out_dir.string() + file_name.string() + "_rsem_exp";
         entapInit::print_msg("Executing following command\n" + rsem_arg);
-        entapInit::execute_cmd(rsem_arg.c_str(), std_out);
-        if (!is_file_empty(std_out+".err")) {
+        if (entapInit::execute_cmd(rsem_arg.c_str(), std_out)!=0) {
             throw ExceptionHandler("Error in running expression analysis",ENTAP_ERR::E_INIT_TAX_READ);
         }
-
         return out_path + ".genes.results";
 
+    }
+
+    std::string filter_transcriptome(std::string &genemark_path, std::string &rsem_path,
+        float fpkm, std::string input_path) {
+        entapInit::print_msg("Beginning to filter transcriptome...");
+        bool genemark, rsem;
+
+        boostFS::path file_name(input_path);file_name.filename();
+        if (genemark_path.empty()) {
+            entapInit::print_msg("Looking for genemark file");
+            std::string temp_path = ENTAP_EXECUTE::GENEMARK_EXE_PATH+"genemark"+"/"+
+                    file_name.string()+ ".faa";
+            std::cout<<temp_path<<std::endl;
+            if (entapInit::file_exists(temp_path)){
+                entapInit::print_msg("File found at: " + temp_path);
+                genemark_path = temp_path;
+                genemark = true;
+            } else {
+                entapInit::print_msg("File was not found.");
+                genemark = false;
+            }
+        }else genemark = true;
+        if (rsem_path.empty()) {
+            entapInit::print_msg("Looking for rsem file");
+            std::string temp_path = ENTAP_EXECUTE::EXECUTE_OUT_PATH+"rsem"+"/"+
+                                    file_name.stem().string()+ ".genes.results";
+            if (entapInit::file_exists(temp_path)){
+                entapInit::print_msg("File found at: " + temp_path);
+                rsem_path = temp_path;
+                rsem = true;
+            } else {
+                entapInit::print_msg("File was not found.");
+                rsem= false;
+            }
+        }else rsem = true;
+
+        if (!rsem && !genemark) {
+            throw ExceptionHandler("Neither genemark, nor rsem files were found", ENTAP_ERR::E_INIT_TAX_READ);
+        }
+        std::string out_path = ENTAP_EXECUTE::EXECUTE_OUT_PATH + "/" +
+                               file_name.stem().string()+"_filtered"+file_name.extension().string();
+        std::string out_removed = ENTAP_EXECUTE::EXECUTE_OUT_PATH + "/" +
+                                  file_name.stem().string()+"_removed"+file_name.extension().string();
+        if (genemark && !rsem) {
+            entapInit::print_msg("No rsem file found, so genemark results will continue as main trancriptome: " +
+                genemark_path);
+            boostFS::copy_file(genemark_path,out_path);
+            return genemark_path;
+        }
+
+        std::string process_file;
+        !genemark ? process_file = input_path: process_file=genemark_path;
+        entapInit::print_msg("Filtering file located at: " + process_file);
+
+        io::CSVReader<ENTAP_EXECUTE::RSEM_COL_NUM,io::trim_chars<' ' >,
+                io::no_quote_escape<'\t'>> in(rsem_path);
+        std::unordered_map<std::string,float> expression_map;
+        in.next_line();
+        std::string geneid, transid; float length,e_leng, e_count, tpm, fpkm_val;
+        while(in.read_row(geneid, transid, length,e_leng,e_count,tpm,fpkm_val)) {
+            expression_map.emplace(geneid,fpkm_val);
+        }
+        remove(out_path.c_str()); remove(out_removed.c_str());
+        std::ifstream in_file(process_file);
+        std::ofstream out_file(out_path, std::ios::out | std::ios::app);
+        std::ofstream removed_file(out_removed, std::ios::out | std::ios::app);
+        boost::smatch match;
+        bool filtered = false;
+        double removed_count = 0;
+        for (std::string line; getline(in_file,line);) {
+            boost::regex exp(">(\\S+)",boost::regex::icase);
+            if (boost::regex_search(line,match,exp)) {
+                std::string id = std::string(match[1].first, match[1].second);
+                if (expression_map.find(id) != expression_map.end()) {
+                    float fp = expression_map.at(id);
+                    if (fp > fpkm) {
+                        filtered = true;
+                        out_file << line;
+                    } else  {
+                        filtered = false;
+                        removed_count++;
+                        removed_file << line<<std::endl;
+                    }
+                } else {
+                    // default if not found is NOT remove it
+                    filtered = true;
+                    out_file << line<<std::endl;
+                }
+            } else {
+                // anything not a seq header
+                if (filtered) {
+                    out_file << line <<std::endl;
+                } else removed_file << line<<std::endl;
+            }
+        }
+        in_file.close(); out_file.close(); removed_file.close();
+        entapInit::print_msg("File successfully filtered. Outputs at: " + out_path + " and: " +
+            out_removed);
+        return out_path;
     }
 
     void diamond_run(std::string uniprot, std::string ncbi, std::string database) {
@@ -244,7 +353,7 @@ namespace entapExecute {
     // input: 3 database string array of selected databases
     void diamond_parse(std::list<std::string> databases, std::string contams) {
         std::unordered_map<std::string, std::string> taxonomic_database;
-        std::unordered_map<std::string, QuerySequence> query_map;
+        std::map<std::string, QuerySequence> query_map;
         try {
             taxonomic_database = read_tax_map();
         } catch (ExceptionHandler &e) {
@@ -288,7 +397,7 @@ namespace entapExecute {
                     std::cout<<"Not found"<<std::endl;
                 }
             }
-            print_map(query_map);
+//            print_map(query_map);
         }
     }
 

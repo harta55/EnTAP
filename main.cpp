@@ -56,25 +56,27 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
     std::string err_msg;
     std::unordered_map<std::string, std::string> input_map;
     print_msg("Parsing user input...");
-    std::string ncbi_data, uniprot_data, data_path, input_file, exe_state, align_path;
-    std::vector<std::string> contam_vec;
+    std::string input_file, exe_state, align_path;
+    std::vector<std::string> contam_vec, ncbi_data, uniprot_data, data_path;
     float fpkm;
     // TODO do not change .entp filename warning
-    // TODO specify an output path
+    // TODO specify an output title (species) to name everything
     try {
         boostPO::options_description description("Options");
-        // TODO separate out into main options and additional with defaults
+        // TODO separate out into main options and additional config file with defaults
         description.add_options()
                 ("help,h", "help options")
                 ("config", "Configure enTAP for execution later (complete this step first)")
                 ("run", "Execute enTAP functionality")
-                ("ncbi,N", boostPO::value<std::string>(&ncbi_data)->default_value(ENTAP_CONFIG::NCBI_DEFAULT),"Select which NCBI database you would like to download"
+                ("ncbi,N", boostPO::value<std::vector<std::string>>(&ncbi_data)->multitoken()
+                        ->default_value(std::vector<std::string>{ENTAP_CONFIG::NCBI_DEFAULT},""),"Select which NCBI database you would like to download"
                         "\nref - RefSeq database...")
-                ("uniprot,U", boostPO::value<std::string>(&uniprot_data)->default_value(ENTAP_CONFIG::INPUT_UNIPROT_DEFAULT),
+                ("uniprot,U", boostPO::value<std::vector<std::string>>(&uniprot_data)->multitoken()
+                         ->default_value(std::vector<std::string>{ENTAP_CONFIG::INPUT_UNIPROT_DEFAULT},""),
                         "Select which Uniprot database you would like to download"
                         "\n100 - UniRef100...")
                 //multiple entries
-                ("database,d", boostPO::value<std::string>(&data_path),
+                ("database,d", boostPO::value<std::vector<std::string>>(&data_path)->multitoken(),
                         "Provide the path to a separate database, however this "
                         "may prohibit taxonomic filtering.")
                 ("fpkm,r",boostPO::value<float>(&fpkm)->default_value(ENTAP_EXECUTE::RSEM_FPKM_DEFAULT),
@@ -87,9 +89,6 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                 ("state,s", boostPO::value<std::string>(&exe_state),"Select a state value")
                 ("input,i",boostPO::value<std::string>(&input_file)->default_value(ENTAP_CONFIG::INPUT_FILE_PATH),
                  "Input transcriptome file");
-//        boostPO::positional_options_description posOptions;
-//        posOptions.add("config", 1);
-//        posOptions.add("run", 1);
         boostPO::variables_map vm;
 
         try {
@@ -113,40 +112,53 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                                        ENTAP_ERR::E_INPUT_PARSE));
             }
 
-            if (ncbi_data.compare("nr")!=0 && ncbi_data.compare("refseq-c")!=0) {
-                err_msg = "Not a valid NCBI database";
-                throw(ExceptionHandler(err_msg.c_str(),ENTAP_ERR::E_INPUT_PARSE));
+            if (ncbi_data.size() + uniprot_data.size() + data_path.size() > 3) {
+                // TODO fix for certain cases like -N -N -d null
+                throw ExceptionHandler("Too many databases selected, 3 is the max",
+                                       ENTAP_ERR::E_INPUT_PARSE);
             }
-            if (uniprot_data.compare("ur90")!=0 && uniprot_data.compare("ur100")!=0 &&
-                    uniprot_data.compare("trembl")!=0, uniprot_data.compare("swiss")) {
-                err_msg = "Not a valid Uniprot database";
-                throw(ExceptionHandler(err_msg.c_str(),ENTAP_ERR::E_INPUT_PARSE));
+            bool ncbi_check = false;
+            for (auto const& entry: ncbi_data) {
+                std::cout<<entry<<std::endl;
+                if (entry.compare(ENTAP_CONFIG::NCBI_REFSEQ_COMP)==0){
+                    ncbi_check=true; break;
+                }
+                if (entry.compare(ENTAP_CONFIG::NCBI_NONREDUNDANT)==0) {
+                    ncbi_check=true;break;
+                }
+                if (entry.compare(ENTAP_CONFIG::NCBI_NULL)==0){
+                    ncbi_check=true;break;
+                }
+                if (entry.compare(ENTAP_CONFIG::NCBI_REFSEQ_PLANT)==0){
+                    ncbi_check=true;break;
+                }
+            }
+            if (!ncbi_check) {
+                throw ExceptionHandler("Not a valid NCBI database",ENTAP_ERR::E_INPUT_PARSE);
+            }
+            bool uniprot_check = false;
+            for (auto const& entry: uniprot_data) {
+                if (entry.compare(ENTAP_CONFIG::INPUT_UNIPROT_SWISS)==0){
+                    uniprot_check=true; break;
+                }
+                if (entry.compare(ENTAP_CONFIG::INPUT_UNIPROT_TREMBL)==0) {
+                    uniprot_check=true;break;
+                }
+                if (entry.compare(ENTAP_CONFIG::INPUT_UNIPROT_UR90)==0){
+                    uniprot_check=true;break;
+                }
+                if (entry.compare(ENTAP_CONFIG::INPUT_UNIPROT_UR100)==0){
+                    uniprot_check=true;break;
+                }
+            }
+            if (!uniprot_check) {
+                throw ExceptionHandler("Not a valid Uniprot database",ENTAP_ERR::E_INPUT_PARSE);
             }
             // TODO check unknown database
 
             if (is_run && !vm.count("input")) {
                 throw ExceptionHandler("Missing input transcriptome file", ENTAP_ERR::E_INPUT_PARSE);
             }
-
-//            std::vector<std::string> contam_vec;
-//            if (vm.count("contam")) {
-//                try {
-//                    std::istringstream ss(contaminants);
-//                    std::cout<<contaminants<<std::endl;
-//                    std::string it;
-//                    while (std::getline(ss, it, ',')) {
-//                        contam_vec.push_back(it);
-//                    }
-//                    if (contam_vec.size()>10) {
-//                        throw ExceptionHandler("",0);
-//                    }
-//                } catch (...) {
-//                    throw ExceptionHandler("Contaminant selection is invalid",
-//                                           ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
-//                }
-//            }
-            // todo ensure that the input file exists, pass vm instead
-
             if (is_config) {
                 state = INIT_ENTAP;
             } else state = EXECUTE_ENTAP;

@@ -15,6 +15,7 @@ namespace entapExecute {
     void execute_main(boost::program_options::variables_map&);
     std::string genemarkST(std::string);
     std::string rsem(std::string, std::string, bool, int);
+    std::string filter_transcriptome(std::string&, std::string&,float,std::string);
     void diamond_run(std::string, std::string, std::string);
     void diamond_parse(std::list<std::string>, std::string);
     void diamond_blast(std::string ,std::string, std::string);

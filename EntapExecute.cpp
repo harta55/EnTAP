@@ -25,12 +25,13 @@ namespace entapExecute {
 
     enum ExecuteStates {
 
-        FRAME_SELECTION     = 0x01,
-        EXPRESSION          = 0x02,
-        DIAMOND_RUN         = 0x04,
-        DIAMOND_PARSE       = 0x08,
-        EXECUTE_EXIT        = 0x16,
-        EXECUTE_INIT        = 0x32
+        INIT                = 0x01,
+        FRAME_SELECTION     = 0x02,
+        RSEM                = 0x04,
+        FILTER              = 0x08,
+        DIAMOND_RUN         = 0x16,
+        DIAMOND_PARSE       = 0x32,
+        EXIT                = 0x64
     };
 
     void execute_main(boost::program_options::variables_map &user_input) {
@@ -47,28 +48,40 @@ namespace entapExecute {
             threads = user_input["threads"].as<int>();
         }
 
-        ExecuteStates state = EXECUTE_INIT;
+        std::string current_state = user_input["state"].as<std::string>();
+        ExecuteStates state = INIT;
         std::vector<std::string> other_databases;
         if (user_input.count("database")) {
             other_databases = user_input["database"].as<std::vector<std::string>>();
-        } else other_databases.push_back("");
+        } else other_databases.push_back(ENTAP_CONFIG::NCBI_NULL);
         std::list<std::string> databases = verify_databases(user_input["uniprot"].as<std::vector<std::string>>(),
             user_input["ncbi"].as<std::vector<std::string>>(),other_databases);
 
         std::string input_path, rsem_out, genemark_out;
         input_path = user_input["input"].as<std::string>();        // Gradually changes between runs
-        while (state != EXECUTE_EXIT) {
+        while (state != EXIT) {
             try {
-//                genemark_out = genemarkST(input_path);
+                switch (state) {
+                    case FRAME_SELECTION:
+                        genemark_out = genemarkST(input_path);
+                        break;
+                    case RSEM:
 //                bool is_paired = (bool)user_input.count("paired-end");
 //                rsem_out = rsem(input_path,user_input["align"].as<std::string>(),is_paired,threads);
+                        break;
+                    case FILTER:
 //                input_path = filter_transcriptome(genemark_out,rsem_out,user_input["fpkm"].as<float>(),input_path);
-//                diamond_run(user_input["U"], user_input["N"], user_input["d"]);
-//                verify_state(user_input.at("s"));
-                state = EXECUTE_EXIT;
+                        break;
+                    case DIAMOND_RUN:
+                        diamond_run(databases,input_path,threads);
+                        break;
+                    default:
+                        break;
+                }
+                verify_state(current_state);
+                state = EXIT;
 
             } catch (ExceptionHandler &e) {
-//                throw ExceptionHandler(e.what(), e.getErr_code());
                 throw e;
             }
         }
@@ -109,10 +122,25 @@ namespace entapExecute {
         entapInit::print_msg("Verifying other databases...");
         if (database.size()>0) {
             for (auto const& data_path:database) {
+                if (data_path.compare(ENTAP_CONFIG::NCBI_NULL)==0) continue;
                 if (!entapInit::file_exists(data_path)) {
                     throw ExceptionHandler("Database located at: "+path+" not found", ENTAP_ERR::E_INPUT_PARSE);
                 }
-                file_paths.push_back(data_path);
+                boostFS::path bpath(data_path); std::string ext = bpath.extension().string();
+                if (ext.compare(".dmnd") == 0) {
+                    entapInit::print_msg("User has input a diamond indexed database at: " +
+                        data_path);
+                    file_paths.push_back(data_path); continue;
+                } else {
+                    entapInit::print_msg("User has input a database at: "+data_path);
+                    std::string test_path = ENTAP_CONFIG::BIN_PATH + data_path + ".dmnd";
+                    entapInit::print_msg("Checking if indexed file exists at: " + test_path);
+                    if (!entapInit::file_exists(test_path)) {
+                        throw ExceptionHandler("Database located at: "+path+" not found", ENTAP_ERR::E_INPUT_PARSE);
+                    } else {
+                        file_paths.push_back(test_path);
+                    }
+                }
             }
         }
         return file_paths;
@@ -352,36 +380,29 @@ namespace entapExecute {
         return out_path;
     }
 
-    void diamond_run(std::string uniprot, std::string ncbi, std::string database) {
-        // Indexed databases
-        // check if filtered file given
-        if (uniprot.empty()) {
-            entapInit::print_msg("No Uniprot database selected");
-        } else {
-
+    void diamond_run(std::list<std::string> database_paths, std::string input_path, int &threads) {
+        // not always known (depending on starting state)
+        if (!entapInit::file_exists(input_path)) {
+            throw ExceptionHandler("Transcriptome file not found",ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
         }
-        std::string databases[3];
-        int database_index = 0;
-
-        std::string uniprot_path = ENTAP_CONFIG::UNIPROT_INDEX_PATH + uniprot + ".dmnd";
-        std::string uniprot_out_path = ENTAP_CONFIG::DIAMOND_RUN_OUT_PATH + uniprot + ".out";
-        std::string uniprot_std_out_path = ENTAP_CONFIG::DIAMOND_RUN_OUT_PATH + uniprot + "std";
-
-        std::string ncbi_path = ENTAP_CONFIG::NCBI_INDEX_PATH + ncbi + ".dmnd";
-
-        if (!entapInit::file_exists(uniprot_path)) {
-            throw ExceptionHandler("Uniprot indexed file not found", ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
-        } else {
-            try {
-                databases[database_index] = uniprot_out_path;
-                database_index++;
-                entapInit::print_msg("Searching against Uniprot database located at: " +
-                    uniprot_path + "...");
-                diamond_blast(uniprot_path, uniprot_out_path, uniprot_std_out_path);
-                entapInit::print_msg("Success! Results written to " + uniprot_out_path);
-            } catch (ExceptionHandler &e) {
-                throw ExceptionHandler(e.what(), e.getErr_code());
+        boostFS::path transc_name(input_path); transc_name=transc_name.stem();
+        if (transc_name.has_stem()) transc_name = transc_name.stem(); //.fasta.faa
+        // database verification already ran, don't need to verify each path
+        try {
+            for (std::string path : database_paths) {
+                // assume all paths should be .dmnd
+                boostFS::path file_name(path); file_name=file_name.stem();
+                entapInit::print_msg("Searching against database located at: " +
+                                     path + "...");
+                std::string out_path = ENTAP_CONFIG::DIAMOND_RUN_OUT_PATH + transc_name.string() + "_" +
+                    file_name.string() + ".out";
+                std::string std_out = ENTAP_CONFIG::DIAMOND_RUN_OUT_PATH + transc_name.string() + "_" +
+                                      file_name.string() + "_std_";
+                diamond_blast(input_path, out_path, std_out, threads);
+                entapInit::print_msg("Success! Results written to " + out_path);
             }
+        } catch (ExceptionHandler &e) {
+            throw ExceptionHandler(e.what(), e.getErr_code());
         }
 //        diamond_parse(databases, database_index);
     }
@@ -410,12 +431,13 @@ namespace entapExecute {
                 boost::regex exp("\\[([^]]+)\\]");      // TODO determined by database format
                 boost::smatch match;
                 if (boost::regex_search(stitle,match,exp)) {
-                    std::string species = std::string(match[1].first, match[1].second);
-                    std::transform(species.begin(),species.end(), species.begin(),::tolower);
-                    std::cout<<"Species found: " +species<<std::endl;
-                    if (taxonomic_database.find(species) != taxonomic_database.end()) {
+                    std::string species_lower = std::string(match[1].first, match[1].second);
+                    std::string species;strcpy(species,species_lower);
+                    std::transform(species_lower.begin(),species_lower.end(), species_lower.begin(),::tolower);
+                    std::cout<<"Species found: " +species_lower<<std::endl;
+                    if (taxonomic_database.find(species_lower) != taxonomic_database.end()) {
                         new_query.setSpecies(species);
-                        new_query.setContaminant(is_contaminant(species, taxonomic_database));
+                        new_query.setContaminant(is_contaminant(species_lower, taxonomic_database));
                     } else {
                         new_query.setSpecies("NOT_FOUND");
                         new_query.setContaminant(false);
@@ -438,9 +460,9 @@ namespace entapExecute {
     }
 
 
-    void diamond_blast(std::string input_file, std::string output_file, std::string std_out) {
+    void diamond_blast(std::string input_file, std::string output_file, std::string std_out,int &threads) {
         std::string diamond_run = ENTAP_CONFIG::DIAMOND_PATH_EXE + " blastx " " -d " + input_file +
-        " -q " + ENTAP_CONFIG::INPUT_FILE_PATH + " -o " + output_file +" -f " +
+        " -q " + ENTAP_CONFIG::INPUT_FILE_PATH + " -o " + output_file + " -p " + std::to_string(threads) +" -f " +
                 "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle";
         if (entapInit::execute_cmd(diamond_run, std_out) != 0) {
             throw ExceptionHandler("Error in DIAMOND run with database located at: " +
@@ -466,6 +488,9 @@ namespace entapExecute {
 
     bool is_contaminant(std::string species, std::unordered_map<std::string, std::string> &database) {
         // TODO check lineage
+        // species and tax database both lowercase
+
+
 
         return false;
     }

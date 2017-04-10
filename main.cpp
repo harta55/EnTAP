@@ -86,7 +86,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                 ("threads,t",boostPO::value<int>()->default_value(1),"Number of threads")
                 ("align,a", boostPO::value<std::string>(&align_path),"Path to BAM/SAM file")
                 ("contam,c", boostPO::value<std::vector<std::string>>(&contam_vec)->multitoken(),"Contaminant selection")
-                ("state,s", boostPO::value<std::string>(&exe_state),"Select a state value")
+                ("state", boostPO::value<std::string>(&exe_state)->default_value("+"),"Select a state value")
                 ("input,i",boostPO::value<std::string>(&input_file)->default_value(ENTAP_CONFIG::INPUT_FILE_PATH),
                  "Input transcriptome file");
         boostPO::variables_map vm;
@@ -112,7 +112,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                                        ENTAP_ERR::E_INPUT_PARSE));
             }
 
-            if (ncbi_data.size() + uniprot_data.size() + data_path.size() > 3) {
+            if (ncbi_data.size() + uniprot_data.size() + data_path.size() > 5) {
                 // TODO fix for certain cases like -N -N -d null
                 throw ExceptionHandler("Too many databases selected, 3 is the max",
                                        ENTAP_ERR::E_INPUT_PARSE);
@@ -163,7 +163,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
             } else state = EXECUTE_ENTAP;
 
             print_msg("Success!");
-//            return input_map;
+            // TODO parse state option
             return vm;
         } catch (boost::program_options::required_option& e) {
             std::cout<<"Required Option"<<std::endl;

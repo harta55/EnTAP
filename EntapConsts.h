@@ -6,6 +6,7 @@
 #define ENTAP_ERRORFLAGS_H
 #include <vector>
 
+// TODO temporary, change
 namespace ENTAP_ERR {
     const int E_INPUT_PARSE = 10;
     const int E_SUCCESS = 11;
@@ -22,6 +23,7 @@ namespace ENTAP_CONFIG {
     const std::string TAX_SCRIPT_PATH = "../download_tax.pl";
     const std::string TAX_DATABASE_PATH = "databases/ncbi_tax.entp";
     const std::string TAX_BIN_PATH = "bin/ncbi_tax_bin.entp";
+    const std::string BIN_PATH = "bin/";
 
     //------------------USER INPUTS-----------------------//
     const std::string INPUT_UNIPROT_SWISS = "swiss";
@@ -46,8 +48,8 @@ namespace ENTAP_CONFIG {
     const std::string NCBI_INDEX_PATH = "bin/ncbi_";
 
     const std::string DIAMOND_PATH_EXE = "../libs/diamond-0.8.31/bin/diamond";
-    const std::string DIAMOND_INDX_OUT_PATH = "outfiles/diamond_index.out";
-    const std::string DIAMOND_RUN_OUT_PATH = "outfiles/diamond_blastx_";
+    const std::string DIAMOND_INDX_OUT_PATH = "outfiles/diamond/diamond_index.out";
+    const std::string DIAMOND_RUN_OUT_PATH = "outfiles/diamond/blastx_";
 
     const std::string INPUT_FILE_PATH = "../target_sequences.fasta";
 }

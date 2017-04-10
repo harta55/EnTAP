@@ -11,6 +11,7 @@
 #include "EntapConsts.h"
 #include "EntapInit.h"
 #include <thread>
+#include <list>
 #include "csv.h"
 #include "QuerySequence.h"
 #include <boost/regex.hpp>
@@ -47,8 +48,12 @@ namespace entapExecute {
         }
 
         ExecuteStates state = EXECUTE_INIT;
-        std::list<std::string> temp;
-//        verify_databases(user_input["U"], user_input["N"], temp);
+        std::vector<std::string> other_databases;
+        if (user_input.count("database")) {
+            other_databases = user_input["database"].as<std::vector<std::string>>();
+        } else other_databases.push_back("");
+        std::list<std::string> databases = verify_databases(user_input["uniprot"].as<std::vector<std::string>>(),
+            user_input["ncbi"].as<std::vector<std::string>>(),other_databases);
 
         std::string input_path, rsem_out, genemark_out;
         input_path = user_input["input"].as<std::string>();        // Gradually changes between runs
@@ -57,7 +62,7 @@ namespace entapExecute {
 //                genemark_out = genemarkST(input_path);
 //                bool is_paired = (bool)user_input.count("paired-end");
 //                rsem_out = rsem(input_path,user_input["align"].as<std::string>(),is_paired,threads);
-                input_path = filter_transcriptome(genemark_out,rsem_out,user_input["fpkm"].as<float>(),input_path);
+//                input_path = filter_transcriptome(genemark_out,rsem_out,user_input["fpkm"].as<float>(),input_path);
 //                diamond_run(user_input["U"], user_input["N"], user_input["d"]);
 //                verify_state(user_input.at("s"));
                 state = EXECUTE_EXIT;
@@ -73,9 +78,10 @@ namespace entapExecute {
                                             std::vector<std::string> database) {
         entapInit::print_msg("Verifying databases...");
         // return file paths
-        std::list file_paths<std::string>;
+        std::list<std::string> file_paths;
 
         std::string path;
+        entapInit::print_msg("Verifying uniprot databases...");
         if (uniprot.size()>0) {
             for (auto const& u_flag:uniprot) {
                 if (u_flag.compare(ENTAP_CONFIG::INPUT_UNIPROT_NULL)!=0) {
@@ -86,6 +92,9 @@ namespace entapExecute {
                 }
             }
         }
+        entapInit::print_msg("Complete");
+        entapInit::print_msg("Verifying NCBI databases...");
+
         if (ncbi.size()>0) {
             for (auto const& u_flag:ncbi) {
                 if (u_flag.compare(ENTAP_CONFIG::NCBI_NULL)!=0) {
@@ -96,6 +105,17 @@ namespace entapExecute {
                 }
             }
         }
+        entapInit::print_msg("Complete");
+        entapInit::print_msg("Verifying other databases...");
+        if (database.size()>0) {
+            for (auto const& data_path:database) {
+                if (!entapInit::file_exists(data_path)) {
+                    throw ExceptionHandler("Database located at: "+path+" not found", ENTAP_ERR::E_INPUT_PARSE);
+                }
+                file_paths.push_back(data_path);
+            }
+        }
+        return file_paths;
     }
 
     std::string genemarkST(std::string file_path) {

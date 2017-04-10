@@ -119,7 +119,6 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
             }
             bool ncbi_check = false;
             for (auto const& entry: ncbi_data) {
-                std::cout<<entry<<std::endl;
                 if (entry.compare(ENTAP_CONFIG::NCBI_REFSEQ_COMP)==0){
                     ncbi_check=true; break;
                 }

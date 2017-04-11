@@ -25,6 +25,8 @@ namespace ENTAP_CONFIG {
     const std::string TAX_BIN_PATH = "bin/ncbi_tax_bin.entp";
     const std::string BIN_PATH = "bin/";
 
+
+    const double E_VALUE = 1e-5;
     //------------------USER INPUTS-----------------------//
     const std::string INPUT_UNIPROT_SWISS = "swiss";
     const std::string INPUT_UNIPROT_UR100 = "ur100";
@@ -50,6 +52,7 @@ namespace ENTAP_CONFIG {
     const std::string DIAMOND_PATH_EXE = "../libs/diamond-0.8.31/bin/diamond";
     const std::string DIAMOND_INDX_OUT_PATH = "outfiles/diamond/diamond_index.out";
     const std::string DIAMOND_RUN_OUT_PATH = "outfiles/diamond/blastx_";
+    const std::string DIAMOND_DIR = "outfiles/diamond";
 
     const std::string INPUT_FILE_PATH = "../target_sequences.fasta";
 }

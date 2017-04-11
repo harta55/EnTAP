@@ -79,8 +79,10 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                 ("database,d", boostPO::value<std::vector<std::string>>(&data_path)->multitoken(),
                         "Provide the path to a separate database, however this "
                         "may prohibit taxonomic filtering.")
-                ("fpkm,r",boostPO::value<float>(&fpkm)->default_value(ENTAP_EXECUTE::RSEM_FPKM_DEFAULT),
+                ("fpkm",boostPO::value<float>(&fpkm)->default_value(ENTAP_EXECUTE::RSEM_FPKM_DEFAULT),
                  "FPKM cutoff value")
+                ("r",boostPO::value<std::string>(),"Run flag")
+                ("e",boostPO::value<double>()->default_value(ENTAP_CONFIG::E_VALUE),"Specify an e-value")
                 ("version,v", "Display version number")
                 ("paired-end","Flag for paired end reads")
                 ("threads,t",boostPO::value<int>()->default_value(1),"Number of threads")
@@ -137,6 +139,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
             }
             bool uniprot_check = false;
             for (auto const& entry: uniprot_data) {
+
                 if (entry.compare(ENTAP_CONFIG::INPUT_UNIPROT_SWISS)==0){
                     uniprot_check=true; break;
                 }
@@ -146,7 +149,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                 if (entry.compare(ENTAP_CONFIG::INPUT_UNIPROT_UR90)==0){
                     uniprot_check=true;break;
                 }
-                if (entry.compare(ENTAP_CONFIG::INPUT_UNIPROT_UR100)==0){
+                if (entry.compare(ENTAP_CONFIG::NCBI_NULL)==0){
                     uniprot_check=true;break;
                 }
             }

@@ -10,10 +10,11 @@
 class QuerySequence {
     public:
         bool operator>(const QuerySequence& querySequence);
-        QuerySequence(std::string,std::string,std::string,std::string,float);
+        QuerySequence(std::string,std::string,std::string, float,int, int, int, int,int,
+                      int, int, double, float, std::string, double);
         QuerySequence();
 
-        float getE_val() const;
+        double getE_val() const;
         void setE_val(float e_val);
         const std::string &getDatabase_path() const;
         void setDatabase_path(const std::string &database_path);
@@ -27,9 +28,14 @@ class QuerySequence {
 private:
         friend std::ostream& operator<<(std::ostream& , const QuerySequence&);
         bool contaminant;
-        int tax_id;
-        float e_val;
-        std::string database_path, qseqid,sseqid, stitle, species;
+        int tax_id,length, mismatch, gapopen, qstart, qend, sstart, send;
+        float pident,bit_score; double user_e,e_val;
+        std::string database_path, qseqid,sseqid, stitle, species, informative;
+public:
+    const std::string &getInformative() const;
+
+    void setInformative(const std::string &informative);
+
 public:
     bool isContaminant() const;
 

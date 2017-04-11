@@ -7,24 +7,39 @@
 
 // best hit selection
 bool QuerySequence::operator>(const QuerySequence &querySequence) {
-    return this->e_val < querySequence.getE_val();
-
+    if (this->contaminant && !querySequence.contaminant) return false;
+    if (!this->contaminant && querySequence.contaminant) return true;
+    if (this->e_val<user_e && querySequence.e_val>user_e) return true;
+    if (this->e_val>user_e && querySequence.e_val<user_e) return false;
+    return this->length>querySequence.length;
 }
 
 QuerySequence::QuerySequence(std::string database,std::string qseqid,std::string sseqid,
-                             std::string stitle,float evalue) {
+                             float pident,int length, int mismatch, int gap, int qstart,
+                             int qend, int sstart, int send, double evalue, float bit,
+                             std::string title, double user_e) {
     this->database_path = database;
     this->qseqid = qseqid;
     this->sseqid = sseqid;
-    this->stitle = stitle;
+    this->pident = pident;
+    this->length = length;
+    this->mismatch = mismatch;
+    this->gapopen = gap;
+    this->qstart = qstart;
+    this->qend = qend;
+    this->sstart = sstart;
+    this->send = send;
     this->e_val = evalue;
+    this->bit_score = bit;
+    this->stitle = title;
+    this->user_e = user_e;
 }
 
 QuerySequence::QuerySequence() {
 
 }
 
-float QuerySequence::getE_val() const {
+double QuerySequence::getE_val() const {
     return e_val;
 }
 
@@ -89,5 +104,17 @@ void QuerySequence::setTax_id(int tax_id) {
 }
 
 std::ostream& operator<<(std::ostream &ostream, const QuerySequence &query) {
-    return ostream << query.qseqid + "(" + query.sseqid + ", " << query.e_val << ", " + query.species + ")";
+    return ostream << query.qseqid<<'\t'<<query.sseqid<<'\t'<<query.pident<<'\t'<<
+                    query.length<<'\t'<<query.mismatch<<'\t'<<query.mismatch<<'\t'<<
+                    query.gapopen<<'\t'<<query.qstart<<'\t'<<query.qend<<'\t'<<
+                    query.sstart<<'\t'<<query.send<<'\t'<<query.e_val<<'\t'<<
+                    query.informative<<'\t'<<query.species<<'\t'<<query.database_path;
+}
+
+const std::string &QuerySequence::getInformative() const {
+    return informative;
+}
+
+void QuerySequence::setInformative(const std::string &informative) {
+    QuerySequence::informative = informative;
 }

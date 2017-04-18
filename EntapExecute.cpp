@@ -38,7 +38,7 @@ namespace entapExecute {
     ExecuteStates state = INIT;
 
 
-    void execute_main(boost::program_options::variables_map &user_input) {
+    void execute_main(boost::program_options::variables_map &user_input,std::string exe_path) {
         entapInit::print_msg("enTAP Executing...");
         boostFS::path working_dir(boostFS::current_path());
 
@@ -58,7 +58,7 @@ namespace entapExecute {
             other_databases = user_input["database"].as<std::vector<std::string>>();
         } else other_databases.push_back(ENTAP_CONFIG::NCBI_NULL);
         std::list<std::string> databases = verify_databases(user_input["uniprot"].as<std::vector<std::string>>(),
-            user_input["ncbi"].as<std::vector<std::string>>(),other_databases);
+            user_input["ncbi"].as<std::vector<std::string>>(),other_databases,exe_path);
         std::list<std::string> diamond_out;
         std::string input_path, rsem_out, genemark_out;
         input_path = user_input["input"].as<std::string>();        // Gradually changes between runs
@@ -76,7 +76,7 @@ namespace entapExecute {
             try {
                 switch (state) {
                     case FRAME_SELECTION:
-                        genemark_out = genemarkST(input_path);
+                        genemark_out = genemarkST(input_path,exe_path);
                         break;
                     case RSEM:
 //                bool is_paired = (bool)user_input.count("paired-end");
@@ -89,7 +89,7 @@ namespace entapExecute {
                         diamond_out = diamond_run(databases,input_path,threads);
                         break;
                     case DIAMOND_PARSE:
-                        diamond_parse(diamond_out,contaminants,user_input["e"].as<double>(),input_path);
+                        diamond_parse(diamond_out,contaminants,user_input["e"].as<double>(),input_path,exe_path);
                     default:
                         state = EXIT;
                         break;
@@ -104,7 +104,7 @@ namespace entapExecute {
     }
 
     std::list<std::string> verify_databases(std::vector<std::string> uniprot, std::vector<std::string>ncbi,
-                                            std::vector<std::string> database) {
+                                            std::vector<std::string> database, std::string &exe) {
         entapInit::print_msg("Verifying databases...");
         // return file paths
         std::list<std::string> file_paths;
@@ -114,7 +114,7 @@ namespace entapExecute {
         if (uniprot.size()>0) {
             for (auto const& u_flag:uniprot) {
                 if (u_flag.compare(ENTAP_CONFIG::INPUT_UNIPROT_NULL)!=0) {
-                    path = ENTAP_CONFIG::UNIPROT_INDEX_PATH + u_flag + ".dmnd";
+                    path = exe+ENTAP_CONFIG::UNIPROT_INDEX_PATH + u_flag + ".dmnd";
                     if (!entapInit::file_exists(path))
                         throw ExceptionHandler("Database located at: "+path+" not found", ENTAP_ERR::E_INPUT_PARSE);
                     file_paths.push_back(path);
@@ -127,7 +127,7 @@ namespace entapExecute {
         if (ncbi.size()>0) {
             for (auto const& u_flag:ncbi) {
                 if (u_flag.compare(ENTAP_CONFIG::NCBI_NULL)!=0) {
-                    path = ENTAP_CONFIG::NCBI_INDEX_PATH + u_flag + ".dmnd";
+                    path = exe+ENTAP_CONFIG::NCBI_INDEX_PATH + u_flag + ".dmnd";
                     if (!entapInit::file_exists(path))
                         throw ExceptionHandler("Database located at: "+path+" not found", ENTAP_ERR::E_INPUT_PARSE);
                     file_paths.push_back(path);
@@ -140,7 +140,7 @@ namespace entapExecute {
             for (auto const& data_path:database) {
                 if (data_path.compare(ENTAP_CONFIG::NCBI_NULL)==0) continue;
                 if (!entapInit::file_exists(data_path)) {
-                    throw ExceptionHandler("Database located at: "+path+" not found", ENTAP_ERR::E_INPUT_PARSE);
+                    throw ExceptionHandler("Database located at: "+data_path+" not found", ENTAP_ERR::E_INPUT_PARSE);
                 }
                 boostFS::path bpath(data_path); std::string ext = bpath.extension().string();
                 if (ext.compare(".dmnd") == 0) {
@@ -148,11 +148,12 @@ namespace entapExecute {
                         data_path);
                     file_paths.push_back(data_path); continue;
                 } else {
+                    //todo fix
                     entapInit::print_msg("User has input a database at: "+data_path);
-                    std::string test_path = ENTAP_CONFIG::BIN_PATH + data_path + ".dmnd";
+                    std::string test_path = exe + ENTAP_CONFIG::BIN_PATH + data_path + ".dmnd";
                     entapInit::print_msg("Checking if indexed file exists at: " + test_path);
                     if (!entapInit::file_exists(test_path)) {
-                        throw ExceptionHandler("Database located at: "+path+" not found", ENTAP_ERR::E_INPUT_PARSE);
+                        throw ExceptionHandler("Database located at: "+data_path+" not found", ENTAP_ERR::E_INPUT_PARSE);
                     } else {
                         file_paths.push_back(test_path);
                     }
@@ -163,11 +164,11 @@ namespace entapExecute {
         return file_paths;
     }
 
-    std::string genemarkST(std::string file_path) {
+    std::string genemarkST(std::string file_path,std::string &exe) {
         // Outfiles: file/path.faa, file/path.fnn
         // assumes working directory right now
         entapInit::print_msg("Running genemark...");
-        std::string genemark_cmd = ENTAP_EXECUTE::GENEMARK_EXE_PATH + " -faa -fnn " + file_path;
+        std::string genemark_cmd = exe+ENTAP_EXECUTE::GENEMARK_EXE_PATH + " -faa -fnn " + file_path;
         if (entapInit::execute_cmd(genemark_cmd) != 0 ) {
             throw ExceptionHandler("Error in running genemark at file located at: " +
                 file_path, ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
@@ -207,7 +208,8 @@ namespace entapExecute {
     }
 
 
-    std::string rsem(std::string input_path, std::string bam_path, bool paired_end, int threads) {
+    std::string rsem(std::string input_path, std::string bam_path, bool paired_end, int threads,
+        std::string &exe) {
         // return path
         entapInit::print_msg("Running RSEM...");
         boostFS::path out_dir(ENTAP_EXECUTE::EXECUTE_OUT_PATH+"rsem/");
@@ -233,7 +235,7 @@ namespace entapExecute {
         if (bam.compare(".sam")==0) {
             entapInit::print_msg("File is detected to be sam file, running validation "
                                          "and conversion to bam");
-            rsem_arg = ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-sam-validator " + bam_path;
+            rsem_arg = exe +ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-sam-validator " + bam_path;
             out_path = out_dir.string() + file_name.string() + "_rsem_valdate";
             if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
                 // only thrown in failure in calling rsem
@@ -245,7 +247,7 @@ namespace entapExecute {
             }
             entapInit::print_msg("Alignment file valid. Converting to BAM");
             std::string bam_out = out_dir.string() + file_name.string();
-            rsem_arg = ENTAP_EXECUTE::RSEM_EXE_PATH + "convert-sam-for-rsem " + " -p " + std::to_string(threads)
+            rsem_arg = exe+ENTAP_EXECUTE::RSEM_EXE_PATH + "convert-sam-for-rsem " + " -p " + std::to_string(threads)
                        + " "+bam_path + " " + bam_out;
             out_path = out_dir.string() + file_name.string() + "_rsem_convert";
             if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
@@ -259,7 +261,7 @@ namespace entapExecute {
 
         } else if(bam.compare(".bam")==0) {
             entapInit::print_msg("File is detected to be bam file, validating...");
-            rsem_arg = ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-sam-validator " + bam_path;
+            rsem_arg = exe+ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-sam-validator " + bam_path;
             out_path = out_dir.string() + file_name.string() + "_rsem_valdate";
             if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
                 throw ExceptionHandler("Error in validating bam file", ENTAP_ERR::E_INIT_TAX_READ);
@@ -276,7 +278,7 @@ namespace entapExecute {
         entapInit::print_msg("Preparing reference");
         std::string ref_out_path = out_dir.string() + file_name.string() + "_ref";
         boostFS::create_directories(ref_out_path);
-        rsem_arg = ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-prepare-reference " + input_path +
+        rsem_arg = exe+ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-prepare-reference " + input_path +
                 " " + ref_out_path+"/"+file_name.string();
         std::string std_out = out_dir.string() + file_name.string() + "_rsem_reference";
         entapInit::print_msg("Executing following command\n" + rsem_arg);
@@ -285,7 +287,7 @@ namespace entapExecute {
 
         entapInit::print_msg("Running expression analysis...");
         std::string exp_out_path = out_dir.string() + file_name.string();
-        rsem_arg = ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-calculate-expression " + "--paired-end " +
+        rsem_arg = exe+ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-calculate-expression " + "--paired-end " +
             "--bam " + "-p " + std::to_string(threads) + " " + bam_path +" "+ ref_out_path +
             "/"+file_name.string()+ " " +exp_out_path;
         if (paired_end) rsem_arg += " --paired-end";
@@ -429,12 +431,12 @@ namespace entapExecute {
 
     // input: 3 database string array of selected databases
     void diamond_parse(std::list<std::string> diamond_file, std::vector<std::string> contams,
-            double user_e, std::string transcriptome) {
+            double user_e, std::string transcriptome, std::string &exe) {
         entapInit::print_msg("Beginning to filter individual diamond_files...");
         std::unordered_map<std::string, std::string> taxonomic_database;
         std::map<std::string, QuerySequence> query_map;
         try {
-            taxonomic_database = read_tax_map();
+            taxonomic_database = read_tax_map(exe);
         } catch (ExceptionHandler &e) {
             throw ExceptionHandler(e.what(),e.getErr_code());
         }
@@ -523,12 +525,12 @@ namespace entapExecute {
         }
     }
 
-    std::unordered_map<std::string, std::string> read_tax_map() {
+    std::unordered_map<std::string, std::string> read_tax_map(std::string &exe) {
         entapInit::print_msg("Reading taxonomic database into memory...");
         std::unordered_map<std::string, std::string> restored_map;
         try {
             {
-                std::ifstream ifs(ENTAP_CONFIG::TAX_BIN_PATH);
+                std::ifstream ifs(exe + ENTAP_CONFIG::TAX_BIN_PATH);
                 boost::archive::binary_iarchive ia(ifs);
                 ia >> restored_map;
             }

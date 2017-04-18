@@ -22,7 +22,7 @@ namespace entapInit {
     void print_input(std::unordered_map<std::string, std::string>);
     void print_msg(std::string msg);
     void init_entap(boost::program_options::variables_map, std::string);
-    void init_taxonomic();
+    void init_taxonomic(std::string&);
     void init_uniprot(std::string);
     void init_ncbi(std::string);
     void init_database_parse(std::string);

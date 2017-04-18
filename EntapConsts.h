@@ -20,9 +20,9 @@ namespace ENTAP_ERR {
 }
 
 namespace ENTAP_CONFIG {
-    const std::string TAX_SCRIPT_PATH = "../download_tax.pl";
-    const std::string TAX_DATABASE_PATH = "databases/ncbi_tax.entp";
-    const std::string TAX_BIN_PATH = "bin/ncbi_tax_bin.entp";
+    const std::string TAX_SCRIPT_PATH = "/download_tax.pl";
+    const std::string TAX_DATABASE_PATH = "/databases/ncbi_tax.entp";
+    const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";
     const std::string BIN_PATH = "bin/";
 
 
@@ -37,34 +37,33 @@ namespace ENTAP_CONFIG {
 
     const std::string UNIPROT_FTP_SWISS = "ftp://ftp.uniprot.org/pub/databases/"
             "uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz";
-    const std::string UNIPROT_BASE_PATH = "databases/uniprot_";
-    const std::string UNIPROT_INDEX_PATH = "bin/uniprot_";
+    const std::string UNIPROT_BASE_PATH = "/databases/uniprot_";
+    const std::string UNIPROT_INDEX_PATH = "/bin/uniprot_";
 
     const std::string NCBI_NONREDUNDANT = "nr";
-    const std::string NCBI_BASE_PATH = "databases/ncbi_";
+    const std::string NCBI_BASE_PATH = "/databases/ncbi_";
     const std::string NCBI_REFSEQ_COMP = "refseq-c";
     const std::string NCBI_REFSEQ_PLANT = "refseq-p";
     const std::string NCBI_NULL = "null";
     const std::string NCBI_DEFAULT = NCBI_REFSEQ_COMP;
 
-    const std::string NCBI_INDEX_PATH = "bin/ncbi_";
+    const std::string NCBI_INDEX_PATH = "/bin/ncbi_";
 
     const std::string DIAMOND_PATH_EXE = "../libs/diamond-0.8.31/bin/diamond";
     const std::string DIAMOND_INDX_OUT_PATH = "outfiles/diamond/diamond_index.out";
     const std::string DIAMOND_RUN_OUT_PATH = "outfiles/diamond/blastx_";
     const std::string DIAMOND_DIR = "outfiles/diamond";
 
-    const std::string INPUT_FILE_PATH = "../target_sequences.fasta";
 }
 
 namespace ENTAP_EXECUTE {
-    const std::string RSEM_EXE_PATH = "../libs/RSEM-1.3.0/";
+    const std::string RSEM_EXE_PATH = "/libs/RSEM-1.3.0/";
     const float RSEM_FPKM_DEFAULT = 0.5;
     const int RSEM_COL_NUM = 7;
 
 
     const std::string EXECUTE_OUT_PATH = "outfiles/";
-    const std::string GENEMARK_EXE_PATH = "../libs/gmst_linux_64/gmst.pl";
+    const std::string GENEMARK_EXE_PATH = "/libs/gmst_linux_64/gmst.pl";
 
     const int diamond_col_num = 13;
     const int diamond_e_col = 10;

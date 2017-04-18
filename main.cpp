@@ -25,20 +25,21 @@ void print_msg(std::string);
 void init_log();
 boostPO::variables_map parse_arguments_boost(int,const char**);
 void state_summary(States);
+std::string get_exe_path();
 
 States state;   // init
 
 int main(int argc, const char** argv) {
     init_log();
     // TODO fix, not portable
-    std::string exe_path = boost::filesystem::system_complete(argv[0]).remove_filename().string();
+    std::string exe_path = get_exe_path();
     try {
         state = PARSE_ARGS;
         boostPO::variables_map inputs = parse_arguments_boost(argc,argv);
         if (state == INIT_ENTAP) {
-            entapInit::init_entap(inputs, "0+");  // todo state input 1x, user wants to start at 1 and stop
+            entapInit::init_entap(inputs, exe_path);  // todo state input 1x, user wants to start at 1 and stop
         } else if (state == EXECUTE_ENTAP) {
-            entapExecute::execute_main(inputs);
+            entapExecute::execute_main(inputs, exe_path);
         } else {
             print_msg("Error in parsing input data");
             return 1;
@@ -88,8 +89,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                 ("align,a", boostPO::value<std::string>(&align_path),"Path to BAM/SAM file")
                 ("contam,c", boostPO::value<std::vector<std::string>>(&contam_vec)->multitoken(),"Contaminant selection")
                 ("state", boostPO::value<std::string>(&exe_state)->default_value("+"),"Select a state value")
-                ("input,i",boostPO::value<std::string>(&input_file)->default_value(ENTAP_CONFIG::INPUT_FILE_PATH),
-                 "Input transcriptome file");
+                ("input,i",boostPO::value<std::string>(&input_file), "Input transcriptome file");
         boostPO::variables_map vm;
 
         try {
@@ -103,6 +103,10 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
             }
             if (vm.count("version")) {
                 std::cout<<"enTAP version 0.1.0"<<std::endl;
+                throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
+            }
+            if (!bool(vm.count("input"))) {
+                throw(ExceptionHandler("Must enter a valid transcriptome",ENTAP_ERR::E_INPUT_PARSE));
             }
             bool is_config = (bool) vm.count("config");     // ignore 'config config'
             bool is_run = (bool) vm.count("run");
@@ -192,6 +196,21 @@ void print_msg(std::string msg) {
     log_file << date_time.substr(0, date_time.size() - 2)
                  + ": " + msg << std::endl;
     log_file.close();
+}
+
+std::string get_exe_path() {
+    //TODO check different systems
+    char buff[1024];
+    ssize_t len = ::readlink("/proc/self/exe", buff, sizeof(buff)-1);
+    if (len != -1) {
+        buff[len] = '\0';
+        std::string path = std::string(buff);
+        boost::filesystem::path p(path);p.remove_filename();
+        return p.string();
+    }
+    return "";      // some error going on with stream
+    boost::filesystem::path p(buff);p.parent_path();
+    std::cout<<p.string()<<std::endl;
 }
 
 void state_summary(States st) {

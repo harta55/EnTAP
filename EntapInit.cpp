@@ -45,13 +45,13 @@ namespace entapInit {
     InitStates state;
     const boostFS::path current_path(boost::filesystem::current_path());
 
-    void init_entap(boost::program_options::variables_map, std::string st) {
+    void init_entap(boost::program_options::variables_map, std::string exe_path) {
 
         // todo print map
 //        print_input(input_map);
 
-        boostFS::path bin_dir(current_path.string() + "/bin");
-        boostFS::path data_dir(current_path.string() + "/databases");
+        boostFS::path bin_dir(exe_path + "/bin");
+        boostFS::path data_dir(exe_path + "/databases");
         boostFS::path out_dir(current_path.string() + "/outfiles");
         bool out_dir_state = (boostFS::create_directories(out_dir));
         bool bin_dir_state = (boostFS::create_directories(bin_dir));
@@ -60,7 +60,7 @@ namespace entapInit {
         // while state != EXIT_STATE
         try {
             state = INIT_TAX;
-            init_taxonomic();
+            init_taxonomic(exe_path);
 //            init_uniprot(input_map["U"]);
 //            init_diamond_index(input_map["U"],input_map["N"], input_map["d"]);
 
@@ -74,22 +74,13 @@ namespace entapInit {
         return (stat(name.c_str(), &buff) == 0);
     }
 
-    void init_taxonomic() {
+    void init_taxonomic(std::string &exe) {
         print_msg("Downloading taxonomic database...");
         //TODO Integrate gzip/zlib
-//        std::ifstream file("file.gz", std::ios_base::in | std::ios_base::binary);
-//        try {
-//            boostIO::filtering_streambuf<boostIO::input> in;
-//            in.push(boostIO::gzip_decompressor());
-//            in.push(file);
-//        }
-//        catch(const boost::iostreams::gzip_error& e) {
-//            std::cout << e.what() << '\n';
-//        }
+        std::string tax_path = exe + ENTAP_CONFIG::TAX_DATABASE_PATH;
 
-        if (!file_exists(ENTAP_CONFIG::TAX_DATABASE_PATH)) {
-            std::string database_path = current_path.string() + "/databases";
-            std::string tax_command = "perl " + ENTAP_CONFIG::TAX_SCRIPT_PATH;
+        if (!file_exists(tax_path)) {
+            std::string tax_command = "perl " + exe + ENTAP_CONFIG::TAX_SCRIPT_PATH;
             redi::ipstream in(tax_command);
             in.close();
             int status = in.rdbuf()->status();
@@ -97,7 +88,7 @@ namespace entapInit {
                 std::cerr << "Error in downloading taxonomic database" << std::endl;
                 throw ExceptionHandler("Error in downloading taxonomic database", ENTAP_ERR::E_INIT_TAX_DOWN);
             }
-            print_msg("Success! File written to " + ENTAP_CONFIG::TAX_DATABASE_PATH);
+            print_msg("Success! File written to " + tax_path);
         } else {
             print_msg("Database found. Updating...");
             // TODO Update taxonomic database
@@ -106,7 +97,7 @@ namespace entapInit {
         print_msg("Indexing taxonomic database...");
 
         std::unordered_map<std::string, std::string> tax_data_map;
-        std::ifstream infile(ENTAP_CONFIG::TAX_DATABASE_PATH);
+        std::ifstream infile(tax_path);
         std::string line;
         try {
             while (std::getline(infile, line)) {
@@ -125,11 +116,12 @@ namespace entapInit {
         }
 
         print_msg("Success!");
-        print_msg("Writing file to "+ ENTAP_CONFIG::TAX_BIN_PATH);
+        std::string tax_bin = exe + ENTAP_CONFIG::TAX_BIN_PATH;
+        print_msg("Writing file to "+ tax_bin);
         // write map
         try{
             {
-                std::ofstream ofs(ENTAP_CONFIG::TAX_BIN_PATH);
+                std::ofstream ofs(tax_bin);
                 boostAR::binary_oarchive oa(ofs);
                 oa << tax_data_map;
             }

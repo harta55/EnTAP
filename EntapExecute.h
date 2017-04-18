@@ -12,13 +12,13 @@
 
 namespace entapExecute {
     std::list<std::string> verify_databases(std::vector<std::string>, std::vector<std::string>,
-                                            std::vector<std::string>);
-    void execute_main(boost::program_options::variables_map&);
-    std::string genemarkST(std::string);
-    std::string rsem(std::string, std::string, bool, int);
+                                            std::vector<std::string>, std::string&);
+    void execute_main(boost::program_options::variables_map&, std::string);
+    std::string genemarkST(std::string,std::string&);
+    std::string rsem(std::string, std::string, bool, int,std::string&);
     std::string filter_transcriptome(std::string&, std::string&,float,std::string);
     std::list<std::string> diamond_run(std::list<std::string>, std::string,int&);
-    void diamond_parse(std::list<std::string>, std::vector<std::string>, double, std::string);
+    void diamond_parse(std::list<std::string>, std::vector<std::string>, double, std::string,std::string&);
     void diamond_blast(std::string ,std::string, std::string,std::string&,int&);
     bool is_contaminant(std::string,std::unordered_map<std::string, std::string>&,
         std::vector<std::string>&);
@@ -26,7 +26,7 @@ namespace entapExecute {
     void verify_state(std::string&);
     bool is_file_empty(std::string);
     std::list<std::string> find_diamond_files();
-    std::unordered_map<std::string, std::string> read_tax_map();
+    std::unordered_map<std::string, std::string> read_tax_map(std::string&);
     void print_header(std::string);
 
 };

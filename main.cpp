@@ -65,12 +65,12 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
         boostPO::options_description description("Options");
         // TODO separate out into main options and additional config file with defaults
         description.add_options()
-                ("help,h", "help options")
+                ("help,h", "Print help options")
                 ("config", "Configure enTAP for execution later (complete this step first)")
                 ("run", "Execute enTAP functionality")
                 ("ncbi,N", boostPO::value<std::vector<std::string>>(&ncbi_data)->multitoken()
                         ->default_value(std::vector<std::string>{ENTAP_CONFIG::NCBI_DEFAULT},""),"Select which NCBI database you would like to download"
-                        "\nref - RefSeq database...")
+                        "\nref - RefSeq database")
                 ("uniprot,U", boostPO::value<std::vector<std::string>>(&uniprot_data)->multitoken()
                          ->default_value(std::vector<std::string>{ENTAP_CONFIG::INPUT_UNIPROT_DEFAULT},""),
                         "Select which Uniprot database you would like to download"
@@ -81,7 +81,6 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                         "may prohibit taxonomic filtering.")
                 ("fpkm",boostPO::value<float>(&fpkm)->default_value(ENTAP_EXECUTE::RSEM_FPKM_DEFAULT),
                  "FPKM cutoff value")
-                ("r",boostPO::value<std::string>(),"Run flag")
                 ("e",boostPO::value<double>()->default_value(ENTAP_CONFIG::E_VALUE),"Specify an e-value")
                 ("version,v", "Display version number")
                 ("paired-end","Flag for paired end reads")
@@ -101,6 +100,9 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
             if (vm.count("help")) {
                 std::cout << description<<std::endl<<std::endl;
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
+            }
+            if (vm.count("version")) {
+                std::cout<<"enTAP version 0.1.0"<<std::endl;
             }
             bool is_config = (bool) vm.count("config");     // ignore 'config config'
             bool is_run = (bool) vm.count("run");

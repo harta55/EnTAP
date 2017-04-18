@@ -450,7 +450,6 @@ namespace entapExecute {
         std::ofstream file_contaminants(out_contaminants, std::ios::out | std::ios::app);
         std::ofstream file_removed(out_removed, std::ios::out | std::ios::app);
 
-
         for (std::string data : diamond_file) {
             entapInit::print_msg("Diamond file located at "+ data + " being filtered");
             io::CSVReader<ENTAP_EXECUTE::diamond_col_num,io::trim_chars<' ' >,io::no_quote_escape<'\t'>> in(data);
@@ -463,7 +462,7 @@ namespace entapExecute {
                               qstart, qend, sstart ,send, evalue, bitscore, stitle)) {
                 QuerySequence new_query = QuerySequence(data, qseqid,sseqid, pident, length, mismatch, gapopen,
                                                         qstart, qend, sstart ,send, evalue, bitscore, stitle, user_e);
-                boost::regex exp("\\[([^]]+)\\]");      // TODO determined by database format
+                boost::regex exp("\\[([^]]+)\\](?!.+\\[.+\\])");      // TODO determined by database format
                 boost::smatch match;
                 if (boost::regex_search(stitle,match,exp)) {
                     std::string species_lower = std::string(match[1].first, match[1].second);

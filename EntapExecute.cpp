@@ -71,6 +71,7 @@ namespace entapExecute {
             std::transform(str.begin(),str.end(), str.begin(),::tolower);
         }
         state = FRAME_SELECTION;
+        bool is_paired = (bool)user_input.count("paired-end");
 
         while (state != EXIT) {
             try {
@@ -79,7 +80,6 @@ namespace entapExecute {
                         genemark_out = genemarkST(input_path,exe_path);
                         break;
                     case RSEM:
-                        bool is_paired = (bool)user_input.count("paired-end");
                         rsem_out = rsem(input_path,user_input["align"].as<std::string>(),is_paired,threads,exe_path);
                         break;
                     case FILTER:

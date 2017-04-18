@@ -70,7 +70,7 @@ namespace entapExecute {
             std::string &str = contaminants[ind];
             std::transform(str.begin(),str.end(), str.begin(),::tolower);
         }
-        state = DIAMOND_PARSE;
+        state = FRAME_SELECTION;
 
         while (state != EXIT) {
             try {
@@ -79,11 +79,11 @@ namespace entapExecute {
                         genemark_out = genemarkST(input_path,exe_path);
                         break;
                     case RSEM:
-//                bool is_paired = (bool)user_input.count("paired-end");
-//                rsem_out = rsem(input_path,user_input["align"].as<std::string>(),is_paired,threads);
+                        bool is_paired = (bool)user_input.count("paired-end");
+                        rsem_out = rsem(input_path,user_input["align"].as<std::string>(),is_paired,threads,exe_path);
                         break;
                     case FILTER:
-//                input_path = filter_transcriptome(genemark_out,rsem_out,user_input["fpkm"].as<float>(),input_path);
+                        input_path = filter_transcriptome(genemark_out,rsem_out,user_input["fpkm"].as<float>(),input_path);
                         break;
                     case DIAMOND_RUN:
                         diamond_out = diamond_run(databases,input_path,threads);
@@ -94,9 +94,8 @@ namespace entapExecute {
                         state = EXIT;
                         break;
                 }
-//                verify_state(current_state);
-                state = EXIT;
-
+                verify_state(current_state);
+//                state = EXIT;
             } catch (ExceptionHandler &e) {
                 throw e;
             }

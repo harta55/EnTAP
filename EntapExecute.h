@@ -9,8 +9,19 @@
 #include "QuerySequence.h"
 #include <list>
 #include <boost/program_options/variables_map.hpp>
+#include <queue>
 
 namespace entapExecute {
+    enum ExecuteStates {
+
+        FRAME_SELECTION,
+        RSEM           ,
+        FILTER         ,
+        DIAMOND_RUN    ,
+        DIAMOND_PARSE  ,
+        EXIT
+    };
+
     std::list<std::string> verify_databases(std::vector<std::string>, std::vector<std::string>,
                                             std::vector<std::string>, std::string&);
     void execute_main(boost::program_options::variables_map&, std::string);
@@ -23,11 +34,12 @@ namespace entapExecute {
     bool is_contaminant(std::string,std::unordered_map<std::string, std::string>&,
         std::vector<std::string>&);
     void print_filtered_map(std::map<std::string, QuerySequence> &, std::string &);
-    void verify_state(std::string&);
+    void verify_state(std::queue<char>&, bool&);
     bool is_file_empty(std::string);
     std::list<std::string> find_diamond_files();
     std::unordered_map<std::string, std::string> read_tax_map(std::string&);
     void print_header(std::string);
+    bool valid_state(enum ExecuteStates);
 
 };
 

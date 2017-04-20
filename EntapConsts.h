@@ -17,6 +17,11 @@ namespace ENTAP_ERR {
 
 
     const int E_INIT_TAX_READ = 55;
+
+    const int E_RUN_GENEMARK                = 100;
+    const int E_RUN_RSEM_VALIDATE           = 110;
+    const int E_RUN_RSEM_CONVERT            = 111;
+    const int E_RUN_RSEM_EXPRESSION         = 112;
 }
 
 namespace ENTAP_CONFIG {

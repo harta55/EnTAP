@@ -20,23 +20,12 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/program_options/variables_map.hpp>
 #include <boost/range/iterator_range_core.hpp>
+#include <queue>
 
 namespace boostFS = boost::filesystem;
 
 namespace entapExecute {
-
-    enum ExecuteStates {
-
-        INIT                = 0x01,
-        FRAME_SELECTION     = 0x02,
-        RSEM                = 0x04,
-        FILTER              = 0x08,
-        DIAMOND_RUN         = 0x16,
-        DIAMOND_PARSE       = 0x32,
-        EXIT                = 0x64
-    };
-    ExecuteStates state = INIT;
-
+    ExecuteStates state;
 
     void execute_main(boost::program_options::variables_map &user_input,std::string exe_path) {
         entapInit::print_msg("enTAP Executing...");
@@ -70,6 +59,14 @@ namespace entapExecute {
             std::string &str = contaminants[ind];
             std::transform(str.begin(),str.end(), str.begin(),::tolower);
         }
+        std::string user_state_str; bool state_flag = false;
+        std::queue<char> state_queue;
+        if (user_input.count("state")) {
+            user_state_str = user_input["state"].as<std::string>();
+            for (char c : user_state_str) {
+                state_queue.push(c);
+            }
+        }
         state = FRAME_SELECTION;
         bool is_paired = (bool)user_input.count("paired-end");
 
@@ -94,7 +91,7 @@ namespace entapExecute {
                         state = EXIT;
                         break;
                 }
-                verify_state(current_state);
+                verify_state(state_queue,state_flag);
 //                state = EXIT;
             } catch (ExceptionHandler &e) {
                 throw e;
@@ -512,7 +509,6 @@ namespace entapExecute {
         print_filtered_map(query_map, out_filtered);
     }
 
-
     void diamond_blast(std::string input_file, std::string output_file, std::string std_out,
                        std::string &database,int &threads) {
         std::string diamond_run = ENTAP_CONFIG::DIAMOND_PATH_EXE + " blastx " " -d " + database +
@@ -542,7 +538,6 @@ namespace entapExecute {
 
     bool is_contaminant(std::string species, std::unordered_map<std::string, std::string> &database,
         std::vector<std::string> &contams) {
-        // TODO check lineage
         // species and tax database both lowercase
         // already checked if in database
         std::string id_lineage = database[species];
@@ -587,13 +582,54 @@ namespace entapExecute {
         ofstream.close();
     }
 
-    void verify_state(std::string &input) {
-        std::unordered_map<int, ExecuteStates> enum_map;
-        state = ExecuteStates(state<<1);
+//only assuming between 0-9 NO 2 DIGIT STATES
+    void verify_state(std::queue<char> &queue, bool &test) {
+        if (queue.empty()) {
+            state = static_cast<ExecuteStates>(state+1);
+            if (!valid_state(state)) state=EXIT;
+            return;
+        }
+        char first = queue.front();
+        if (first == 'x') {
+            state = EXIT;
+            test=false;return;
+        }
+        if (first == '+') {
+            // assuming proper cast, state has been evaluated before
+            test = true;
+            queue.pop();
+            char second = queue.front(); // assuming number
+            if (!second) {
+                // end of queue, might handle differently
+                state = static_cast<ExecuteStates>(state+1);
+                if (!valid_state(state)) state=EXIT;
+                return;
+            }
+            verify_state(queue,test);
+        } else {
+            // some number (assuming it was parsed before)
+            int i = first-'0';
+            if (state<i && test) {
+                state = static_cast<ExecuteStates>(state+1);
+                return;
+            } else if (state<i && !test) {
+                state = static_cast<ExecuteStates>(i);
+                return;
+            }
+            if (state == i) {
+                queue.pop();
+                test = false;
+                verify_state(queue,test);
+            }
+        }
     }
 
     bool is_file_empty(std::string path) {
         std::ifstream ifstream(path);
         return ifstream.peek() == std::ifstream::traits_type::eof();
+    }
+
+    bool valid_state(ExecuteStates s) {
+        return (s>=FRAME_SELECTION && s<=EXIT);
     }
 }

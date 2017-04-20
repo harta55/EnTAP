@@ -88,9 +88,15 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                 ("threads,t",boostPO::value<int>()->default_value(1),"Number of threads")
                 ("align,a", boostPO::value<std::string>(&align_path),"Path to BAM/SAM file")
                 ("contam,c", boostPO::value<std::vector<std::string>>(&contam_vec)->multitoken(),"Contaminant selection")
-                ("state", boostPO::value<std::string>(&exe_state)->default_value("+"),"Select a state value")
+                ("state", boostPO::value<std::string>(&exe_state)->default_value("+"),"Select a state value, *EXPERIMENTAL*\n"
+                "These commands will run certain elements of the pipeline and stop at certain locations, as such"
+                "there are several runs that may be invalid as they rely on data from another portion.\n"
+                        "Examples:\n +2x Will start the pipeline from Frame selection and will run RSEM then filter the"
+                        "transcriptome. It will then stop execution there specified by the x."
+ )
                 ("input,i",boostPO::value<std::string>(&input_file), "Input transcriptome file");
         boostPO::variables_map vm;
+        //TODO verify state commands
 
         try {
             boostPO::store(boostPO::command_line_parser(argc,argv).options(description)
@@ -105,9 +111,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                 std::cout<<"enTAP version 0.1.0"<<std::endl;
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
-            if (!bool(vm.count("input"))) {
-                throw(ExceptionHandler("Must enter a valid transcriptome",ENTAP_ERR::E_INPUT_PARSE));
-            }
+
             bool is_config = (bool) vm.count("config");     // ignore 'config config'
             bool is_run = (bool) vm.count("run");
 
@@ -118,6 +122,10 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
             if (is_config && is_run) {
                 throw(ExceptionHandler("Cannot specify both config and run flags",
                                        ENTAP_ERR::E_INPUT_PARSE));
+            }
+
+            if (!bool(vm.count("input")) && is_run) {
+                throw(ExceptionHandler("Must enter a valid transcriptome",ENTAP_ERR::E_INPUT_PARSE));
             }
 
             if (ncbi_data.size() + uniprot_data.size() + data_path.size() > 5) {

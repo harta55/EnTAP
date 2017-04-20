@@ -81,6 +81,7 @@ namespace entapInit {
 
         if (!file_exists(tax_path)) {
             std::string tax_command = "perl " + exe + ENTAP_CONFIG::TAX_SCRIPT_PATH;
+            std::cout<<tax_command<<std::endl;
             redi::ipstream in(tax_command);
             in.close();
             int status = in.rdbuf()->status();

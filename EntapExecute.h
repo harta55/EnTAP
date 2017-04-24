@@ -12,8 +12,8 @@
 #include <queue>
 
 namespace entapExecute {
-    enum ExecuteStates {
 
+    enum ExecuteStates {
         FRAME_SELECTION,
         RSEM           ,
         FILTER         ,

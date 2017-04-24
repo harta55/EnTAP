@@ -217,8 +217,6 @@ std::string get_exe_path() {
         return p.string();
     }
     return "";      // some error going on with stream
-    boost::filesystem::path p(buff);p.parent_path();
-    std::cout<<p.string()<<std::endl;
 }
 
 void state_summary(States st) {

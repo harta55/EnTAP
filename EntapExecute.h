@@ -14,6 +14,7 @@
 namespace entapExecute {
 
     enum ExecuteStates {
+        INIT           ,
         FRAME_SELECTION,
         RSEM           ,
         FILTER         ,

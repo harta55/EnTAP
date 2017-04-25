@@ -67,7 +67,8 @@ namespace entapExecute {
                 state_queue.push(c);
             }
         }
-        state = FRAME_SELECTION;
+        state = INIT;
+        verify_state(state_queue, state_flag);
         bool is_paired = (bool)user_input.count("paired-end");
 
         while (state != EXIT) {

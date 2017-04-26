@@ -54,7 +54,7 @@ namespace ENTAP_CONFIG {
 
     const std::string NCBI_INDEX_PATH = "/bin/ncbi_";
 
-    const std::string DIAMOND_PATH_EXE = "../libs/diamond-0.8.31/bin/diamond";
+    const std::string DIAMOND_PATH_EXE = "libs/diamond-0.8.31/bin/diamond";
     const std::string DIAMOND_INDX_OUT_PATH = "outfiles/diamond/diamond_index.out";
     const std::string DIAMOND_RUN_OUT_PATH = "outfiles/diamond/blastx_";
     const std::string DIAMOND_DIR = "outfiles/diamond";
@@ -67,7 +67,7 @@ namespace ENTAP_EXECUTE {
     const int RSEM_COL_NUM = 7;
 
 
-    const std::string EXECUTE_OUT_PATH = "outfiles/";
+    const std::string OUTFILE_DEFAULT = "outfiles";
     const std::string GENEMARK_EXE_PATH = "/libs/gmst_linux_64/gmst.pl";
 
     const int diamond_col_num = 13;

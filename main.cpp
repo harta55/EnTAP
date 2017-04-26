@@ -76,7 +76,8 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                          ->default_value(std::vector<std::string>{ENTAP_CONFIG::INPUT_UNIPROT_DEFAULT},""),
                         "Select which Uniprot database you would like to download"
                         "\n100 - UniRef100...")
-                //multiple entries
+                ("tag",boostPO::value<std::string>()->default_value(ENTAP_EXECUTE::OUTFILE_DEFAULT),
+                "Specify species or unique tag you would like files to be saved as")
                 ("database,d", boostPO::value<std::vector<std::string>>(&data_path)->multitoken(),
                         "Provide the path to a separate database, however this "
                         "may prohibit taxonomic filtering.")
@@ -91,7 +92,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                 ("state", boostPO::value<std::string>(&exe_state)->default_value("+"),"Select a state value, *EXPERIMENTAL*\n"
                 "These commands will run certain elements of the pipeline and stop at certain locations, as such"
                 "there are several runs that may be invalid as they rely on data from another portion.\n"
-                        "Examples:\n +2x Will start the pipeline from Frame selection and will run RSEM then filter the"
+                        "Examples:\n+2x Will start the pipeline from Frame selection and will run RSEM then filter the"
                         "transcriptome. It will then stop execution there specified by the x."
  )
                 ("input,i",boostPO::value<std::string>(&input_file), "Input transcriptome file");
@@ -108,7 +109,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
             if (vm.count("version")) {
-                std::cout<<"enTAP version 0.1.0"<<std::endl;
+                std::cout<<"enTAP version 0.1.1"<<std::endl;
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
 

@@ -45,14 +45,15 @@ namespace entapInit {
     InitStates state;
     const boostFS::path current_path(boost::filesystem::current_path());
 
-    void init_entap(boost::program_options::variables_map, std::string exe_path) {
+    void init_entap(boost::program_options::variables_map user_map, std::string exe_path) {
 
         // todo print map
 //        print_input(input_map);
 
+        std::string outpath = current_path.string() + user_map["tag"].as<std::string>();
         boostFS::path bin_dir(exe_path + "/bin");
         boostFS::path data_dir(exe_path + "/databases");
-        boostFS::path out_dir(current_path.string() + "/outfiles");
+        boostFS::path out_dir(outpath);
         bool out_dir_state = (boostFS::create_directories(out_dir));
         bool bin_dir_state = (boostFS::create_directories(bin_dir));
         bool data_dir_state = (boostFS::create_directories(data_dir));
@@ -81,7 +82,6 @@ namespace entapInit {
 
         if (!file_exists(tax_path)) {
             std::string tax_command = "perl " + exe + ENTAP_CONFIG::TAX_SCRIPT_PATH;
-            std::cout<<tax_command<<std::endl;
             redi::ipstream in(tax_command);
             in.close();
             int status = in.rdbuf()->status();

@@ -25,7 +25,8 @@ namespace entapExecute {
 
     std::list<std::string> verify_databases(std::vector<std::string>, std::vector<std::string>,
                                             std::vector<std::string>, std::string&);
-    void execute_main(boost::program_options::variables_map&, std::string);
+    void execute_main(boost::program_options::variables_map&, std::string,
+                      std::unordered_map<std::string,std::string>&);
     std::string genemarkST(std::string,std::string&);
     std::string rsem(std::string, std::string, bool, int,std::string&);
     std::string filter_transcriptome(std::string&, std::string&,float,std::string);

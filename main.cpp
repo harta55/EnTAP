@@ -21,6 +21,8 @@ enum States {
     EXECUTE_ENTAP       = 0x08
 };
 
+bool check_key(std::string&);
+std::unordered_map<std::string,std::string> parse_config(std::string&);
 void print_msg(std::string);
 void init_log();
 boostPO::variables_map parse_arguments_boost(int,const char**);
@@ -35,11 +37,13 @@ int main(int argc, const char** argv) {
     std::string exe_path = get_exe_path();
     try {
         state = PARSE_ARGS;
+        std::unordered_map<std::string,std::string> config_map;
         boostPO::variables_map inputs = parse_arguments_boost(argc,argv);
+        parse_config(exe_path);
         if (state == INIT_ENTAP) {
             entapInit::init_entap(inputs, exe_path);  // todo state input 1x, user wants to start at 1 and stop
         } else if (state == EXECUTE_ENTAP) {
-            entapExecute::execute_main(inputs, exe_path);
+            entapExecute::execute_main(inputs, exe_path,config_map);
         } else {
             print_msg("Error in parsing input data");
             return 1;
@@ -66,36 +70,54 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
         boostPO::options_description description("Options");
         // TODO separate out into main options and additional config file with defaults
         description.add_options()
-                ("help,h", "Print help options")
-                ("config", "Configure enTAP for execution later (complete this step first)")
-                ("run", "Execute enTAP functionality")
-                ("ncbi,N", boostPO::value<std::vector<std::string>>(&ncbi_data)->multitoken()
-                        ->default_value(std::vector<std::string>{ENTAP_CONFIG::NCBI_DEFAULT},""),"Select which NCBI database you would like to download"
-                        "\nref - RefSeq database")
-                ("uniprot,U", boostPO::value<std::vector<std::string>>(&uniprot_data)->multitoken()
-                         ->default_value(std::vector<std::string>{ENTAP_CONFIG::INPUT_UNIPROT_DEFAULT},""),
-                        "Select which Uniprot database you would like to download"
-                        "\n100 - UniRef100...")
-                ("tag",boostPO::value<std::string>()->default_value(ENTAP_EXECUTE::OUTFILE_DEFAULT),
-                "Specify species or unique tag you would like files to be saved as")
-                ("database,d", boostPO::value<std::vector<std::string>>(&data_path)->multitoken(),
-                        "Provide the path to a separate database, however this "
-                        "may prohibit taxonomic filtering.")
-                ("fpkm",boostPO::value<float>(&fpkm)->default_value(ENTAP_EXECUTE::RSEM_FPKM_DEFAULT),
+            ("help,h",
+                 "Print help options")
+            ("config",
+                 "Configure enTAP for execution later (complete this step first)")
+            ("run",
+                 "Execute enTAP functionality")
+            ("ncbi,N",
+                 boostPO::value<std::vector<std::string>>(&ncbi_data)->multitoken()
+                 ->default_value(std::vector<std::string>{ENTAP_CONFIG::INPUT_UNIPROT_NULL},""),
+                 "Select which NCBI database you would like to download"
+                 "\nref - RefSeq database")
+            ("uniprot,U",
+                 boostPO::value<std::vector<std::string>>(&uniprot_data)->multitoken()
+                 ->default_value(std::vector<std::string>{ENTAP_CONFIG::INPUT_UNIPROT_NULL},""),
+                 "Select which Uniprot database you would like to download"
+                 "\n100 - UniRef100...")
+            ("tag",
+                 boostPO::value<std::string>()->default_value(ENTAP_EXECUTE::OUTFILE_DEFAULT),
+                 "Specify species or unique tag you would like files to be saved as")
+            ("database,d",
+                 boostPO::value<std::vector<std::string>>(&data_path)->multitoken(),
+                 "Provide the path to a separate database, however this "
+                 "may prohibit taxonomic filtering.")
+            ("fpkm",
+                 boostPO::value<float>(&fpkm)->default_value(ENTAP_EXECUTE::RSEM_FPKM_DEFAULT),
                  "FPKM cutoff value")
-                ("e",boostPO::value<double>()->default_value(ENTAP_CONFIG::E_VALUE),"Specify an e-value")
-                ("version,v", "Display version number")
-                ("paired-end","Flag for paired end reads")
-                ("threads,t",boostPO::value<int>()->default_value(1),"Number of threads")
-                ("align,a", boostPO::value<std::string>(&align_path),"Path to BAM/SAM file")
-                ("contam,c", boostPO::value<std::vector<std::string>>(&contam_vec)->multitoken(),"Contaminant selection")
-                ("state", boostPO::value<std::string>(&exe_state)->default_value("+"),"Select a state value, *EXPERIMENTAL*\n"
-                "These commands will run certain elements of the pipeline and stop at certain locations, as such"
-                "there are several runs that may be invalid as they rely on data from another portion.\n"
-                        "Examples:\n+2x Will start the pipeline from Frame selection and will run RSEM then filter the"
-                        "transcriptome. It will then stop execution there specified by the x."
- )
-                ("input,i",boostPO::value<std::string>(&input_file), "Input transcriptome file");
+            ("e",
+                 boostPO::value<double>()->default_value(ENTAP_CONFIG::E_VALUE),"Specify an e-value")
+            ("version,v",
+                 "Display version number")
+            ("paired-end",
+                 "Flag for paired end reads")
+            ("threads,t",
+                 boostPO::value<int>()->default_value(1),"Number of threads")
+            ("align,a",
+                 boostPO::value<std::string>(&align_path),"Path to BAM/SAM file")
+            ("contam,c",
+                 boostPO::value<std::vector<std::string>>(&contam_vec)->multitoken(),
+                 "Contaminant selection")
+            ("state",
+                 boostPO::value<std::string>(&exe_state)->default_value("+"),
+                 "Select a state value, *EXPERIMENTAL*\n""These commands will run certain "
+                 "elements of the pipeline and stop at certain locations, as such"
+                 "there are several runs that may be invalid as they rely on data from another portion.\n"
+                 "Examples:\n+2x Will start the pipeline from Frame selection and will run RSEM then filter the"
+                 "transcriptome. It will then stop execution there specified by the x.")
+            ("input,i",
+                 boostPO::value<std::string>(&input_file), "Input transcriptome file");
         boostPO::variables_map vm;
         //TODO verify state commands
 
@@ -134,45 +156,33 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                 throw ExceptionHandler("Too many databases selected, 3 is the max",
                                        ENTAP_ERR::E_INPUT_PARSE);
             }
-            bool ncbi_check = false;
+            bool ncbi_check = true;
+            // If we want to handle just -N scenario (but wouldn't work with -N -N ref)
+            // Need to set ->>zero_tokens() above
+//            if (ncbi_data.size() == 0 && vm.count("ncbi")) {
+//                vm.at("ncbi").value()=std::vector<std::string>{ENTAP_CONFIG::NCBI_DEFAULT};
+//            }
             for (auto const& entry: ncbi_data) {
-                if (entry.compare(ENTAP_CONFIG::NCBI_REFSEQ_COMP)==0){
-                    ncbi_check=true; break;
-                }
-                if (entry.compare(ENTAP_CONFIG::NCBI_NONREDUNDANT)==0) {
-                    ncbi_check=true;break;
-                }
-                if (entry.compare(ENTAP_CONFIG::NCBI_NULL)==0){
-                    ncbi_check=true;break;
-                }
-                if (entry.compare(ENTAP_CONFIG::NCBI_REFSEQ_PLANT)==0){
-                    ncbi_check=true;break;
-                }
+                if (entry.compare(ENTAP_CONFIG::NCBI_REFSEQ_COMP)==0)continue;
+                if (entry.compare(ENTAP_CONFIG::NCBI_NONREDUNDANT)==0)continue;
+                if (entry.compare(ENTAP_CONFIG::NCBI_NULL)==0)continue;
+                if (entry.compare(ENTAP_CONFIG::NCBI_REFSEQ_PLANT)==0)continue;
+                ncbi_check = false;
             }
             if (!ncbi_check) {
                 throw ExceptionHandler("Not a valid NCBI database",ENTAP_ERR::E_INPUT_PARSE);
             }
-            bool uniprot_check = false;
+            bool uniprot_check = true;
             for (auto const& entry: uniprot_data) {
-
-                if (entry.compare(ENTAP_CONFIG::INPUT_UNIPROT_SWISS)==0){
-                    uniprot_check=true; break;
+                if (entry.compare(ENTAP_CONFIG::INPUT_UNIPROT_SWISS)==0)continue;
+                if (entry.compare(ENTAP_CONFIG::INPUT_UNIPROT_TREMBL)==0)continue;
+                if (entry.compare(ENTAP_CONFIG::INPUT_UNIPROT_UR90)==0)continue;
+                if (entry.compare(ENTAP_CONFIG::NCBI_NULL)==0)continue;
+                uniprot_check = false;
                 }
-                if (entry.compare(ENTAP_CONFIG::INPUT_UNIPROT_TREMBL)==0) {
-                    uniprot_check=true;break;
-                }
-                if (entry.compare(ENTAP_CONFIG::INPUT_UNIPROT_UR90)==0){
-                    uniprot_check=true;break;
-                }
-                if (entry.compare(ENTAP_CONFIG::NCBI_NULL)==0){
-                    uniprot_check=true;break;
-                }
-            }
             if (!uniprot_check) {
                 throw ExceptionHandler("Not a valid Uniprot database",ENTAP_ERR::E_INPUT_PARSE);
             }
-            // TODO check unknown database
-
             if (is_run && !vm.count("input")) {
                 throw ExceptionHandler("Missing input transcriptome file", ENTAP_ERR::E_INPUT_PARSE);
             }
@@ -190,6 +200,42 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
         // Unknown input
         throw ExceptionHandler(e.what(),ENTAP_ERR::E_INPUT_PARSE);
     }
+}
+
+std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
+    print_msg("Parsing configuration file...");
+    std::unordered_map<std::string,std::string> config_map;
+    if (!entapInit::file_exists(exe + "/" +ENTAP_CONFIG::CONFIG_FILE)){
+        throw ExceptionHandler("Confuration file was not found",
+                               ENTAP_ERR::E_CONFIG_PARSE);
+    }
+    std::ifstream in_file(ENTAP_CONFIG::CONFIG_FILE);
+    std::string line,key;
+    while (std::getline(in_file,line)) {
+        std::istringstream in_line(line);
+        if (std::getline(in_line,key,'=')) {
+            if (!check_key(key)) {
+                throw ExceptionHandler("Incorrect format in config file",
+                ENTAP_ERR::E_CONFIG_PARSE);
+            }
+            std::string val;
+            if (std::getline(in_line,val))config_map.emplace(key,val);
+        }
+    }
+    print_msg("Success!");
+    return config_map;
+}
+
+bool check_key(std::string& key) {
+    if (key.compare(ENTAP_CONFIG::KEY_NCBI_NR)==0) return true;
+    if (key.compare(ENTAP_CONFIG::KEY_NCBI_REFSEQ_COMPLETE)==0) return true;
+    if (key.compare(ENTAP_CONFIG::KEY_NCBI_REFSEQ_SEPARATE)==0) return true;
+    if (key.compare(ENTAP_CONFIG::KEY_UNIPROT_SWISS)==0) return true;
+    if (key.compare(ENTAP_CONFIG::KEY_UNIPROT_TREMBL)==0) return true;
+    if (key.compare(ENTAP_CONFIG::KEY_UNIPROT_UR100)==0) return true;
+    if (key.compare(ENTAP_CONFIG::KEY_DIAMOND_EXE)==0) return true;
+    if (key.compare(ENTAP_CONFIG::KEY_GENEMARK_EXE)==0) return true;
+    return key.compare(ENTAP_CONFIG::KEY_RSEM_EXE) == 0;
 }
 
 void init_log() {

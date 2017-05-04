@@ -10,6 +10,7 @@
 namespace ENTAP_ERR {
     const int E_INPUT_PARSE = 10;
     const int E_SUCCESS = 11;
+    const int E_CONFIG_PARSE = 12;
     const int E_INIT_TAX_DOWN = 20;
     const int E_INIT_TAX_INDEX = 21;
     const int E_INIT_TAX_SERIAL = 22;
@@ -25,6 +26,19 @@ namespace ENTAP_ERR {
 }
 
 namespace ENTAP_CONFIG {
+
+    //-------------------Config File----------------------//
+    const std::string CONFIG_FILE = "entap_config.txt";
+    const std::string KEY_UNIPROT_SWISS = "uniprot_swiss_path";
+    const std::string KEY_UNIPROT_UR100 = "uniprot_ur100_path";
+    const std::string KEY_UNIPROT_TREMBL = "uniprot_trembl_path";
+    const std::string KEY_NCBI_NR = "ncbi_nr_path";
+    const std::string KEY_NCBI_REFSEQ_COMPLETE = "ncbi_refseq_complete_path";
+    const std::string KEY_NCBI_REFSEQ_SEPARATE = "ncbi_refseq_separate_path";
+    const std::string KEY_DIAMOND_EXE = "diamond_exe_path";
+    const std::string KEY_RSEM_EXE = "rsem_exe_path";
+    const std::string KEY_GENEMARK_EXE = "genemarkst_exe_path";
+
     const std::string TAX_SCRIPT_PATH = "/download_tax.pl";
     const std::string TAX_DATABASE_PATH = "/databases/ncbi_tax.entp";
     const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";
@@ -65,7 +79,6 @@ namespace ENTAP_EXECUTE {
     const std::string RSEM_EXE_PATH = "/libs/RSEM-1.3.0/";
     const float RSEM_FPKM_DEFAULT = 0.5;
     const int RSEM_COL_NUM = 7;
-
 
     const std::string OUTFILE_DEFAULT = "outfiles";
     const std::string GENEMARK_EXE_PATH = "/libs/gmst_linux_64/gmst.pl";

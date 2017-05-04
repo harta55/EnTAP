@@ -28,7 +28,9 @@ namespace entapExecute {
     ExecuteStates state;
     std::string outpath;
 
-    void execute_main(boost::program_options::variables_map &user_input,std::string exe_path) {
+    void execute_main(boost::program_options::variables_map &user_input,std::string exe_path,
+            std::unordered_map<std::string,std::string> &config_map) {
+
         entapInit::print_msg("enTAP Executing...");
         boostFS::path working_dir(boostFS::current_path());
         outpath = working_dir.string() + user_input["tag"].as<std::string>() + "/";

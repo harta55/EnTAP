@@ -1,0 +1,9 @@
+uniprot_swiss_path=fdsa
+uniprot_ur100_path=fdas
+uniprot_trembl_path=afsd
+ncbi_nr_path=asf
+ncbi_refseq_complete_path=rew
+ncbi_refseq_separate_path=cxz
+diamond_exe_path=z
+rsem_exe_path=
+genemarkst_exe_path=vc

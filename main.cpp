@@ -39,7 +39,7 @@ int main(int argc, const char** argv) {
         state = PARSE_ARGS;
         std::unordered_map<std::string,std::string> config_map;
         boostPO::variables_map inputs = parse_arguments_boost(argc,argv);
-        parse_config(exe_path);
+        config_map = parse_config(exe_path);
         if (state == INIT_ENTAP) {
             entapInit::init_entap(inputs, exe_path);  // todo state input 1x, user wants to start at 1 and stop
         } else if (state == EXECUTE_ENTAP) {
@@ -220,6 +220,14 @@ std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
             }
             std::string val;
             if (std::getline(in_line,val))config_map.emplace(key,val);
+        }
+    }
+    print_msg("Checking database and .exe locations...");
+    for (auto i: config_map) {
+        if (i.second.size() <=1) continue;
+        if (!entapInit::file_exists(i.second)) {
+            throw ExceptionHandler(i.first + " file at: " + i.second + " not found",
+                ENTAP_ERR::E_CONFIG_PARSE);
         }
     }
     print_msg("Success!");

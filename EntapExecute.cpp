@@ -26,18 +26,26 @@ namespace boostFS = boost::filesystem;
 
 namespace entapExecute {
     ExecuteStates state;
-    std::string outpath;
+    std::string _outpath;
+    std::string _frame_selection_exe, _expression_exe, _diamond_exe;
 
     void execute_main(boost::program_options::variables_map &user_input,std::string exe_path,
             std::unordered_map<std::string,std::string> &config_map) {
-
         entapInit::print_msg("enTAP Executing...");
-        boostFS::path working_dir(boostFS::current_path());
-        outpath = working_dir.string() + user_input["tag"].as<std::string>() + "/";
-        boostFS::remove_all(outpath);
 
-        unsigned int supported_threads = std::thread::hardware_concurrency();
         int threads;
+        std::list<std::string> diamond_out, databases;
+        std::string input_path, rsem_out, genemark_out;
+
+        bool is_paired = (bool)user_input.count("paired-end");
+        input_path = user_input["input"].as<std::string>();        // Gradually changes between runs
+
+        boostFS::path working_dir(boostFS::current_path());
+        _outpath = working_dir.string() + user_input["tag"].as<std::string>() + "/";
+        boostFS::remove_all(_outpath);
+
+        // init_threads
+        unsigned int supported_threads = std::thread::hardware_concurrency();
         if (user_input["threads"].as<int>() > supported_threads) {
             entapInit::print_msg("Specified thread number is larger than available threads,"
                                          "setting threads to " + std::to_string(supported_threads));
@@ -46,16 +54,13 @@ namespace entapExecute {
             threads = user_input["threads"].as<int>();
         }
 
-        std::string current_state = user_input["state"].as<std::string>();
+        // init_databases
         std::vector<std::string> other_databases, contaminants;
         if (user_input.count("database")) {
             other_databases = user_input["database"].as<std::vector<std::string>>();
         } else other_databases.push_back(ENTAP_CONFIG::NCBI_NULL);
-        std::list<std::string> databases = verify_databases(user_input["uniprot"].as<std::vector<std::string>>(),
-            user_input["ncbi"].as<std::vector<std::string>>(),other_databases,exe_path);
-        std::list<std::string> diamond_out;
-        std::string input_path, rsem_out, genemark_out;
-        input_path = user_input["input"].as<std::string>();        // Gradually changes between runs
+
+        // init_contam_filter
         if (user_input.count("contam")) {
             contaminants = user_input["contam"].as<std::vector<std::string>>();
         } else contaminants.push_back("");
@@ -64,6 +69,8 @@ namespace entapExecute {
             std::string &str = contaminants[ind];
             std::transform(str.begin(),str.end(), str.begin(),::tolower);
         }
+
+        // init_state_control
         std::string user_state_str; bool state_flag = false;
         std::queue<char> state_queue;
         if (user_input.count("state")) {
@@ -72,9 +79,14 @@ namespace entapExecute {
                 state_queue.push(c);
             }
         }
+
         state = INIT;
+        try {
+            databases = verify_databases(user_input["uniprot"].as<std::vector<std::string>>(),
+                   user_input["ncbi"].as<std::vector<std::string>>(),other_databases,exe_path);
+            init_exe_paths(config_map);
+        } catch (ExceptionHandler &e) {throw e;}
         verify_state(state_queue, state_flag);
-        bool is_paired = (bool)user_input.count("paired-end");
 
         while (state != EXIT) {
             try {
@@ -98,7 +110,6 @@ namespace entapExecute {
                         break;
                 }
                 verify_state(state_queue,state_flag);
-//                state = EXIT;
             } catch (ExceptionHandler &e) {
                 throw e;
             }
@@ -179,7 +190,7 @@ namespace entapExecute {
         // Format genemarks-t output (remove blank lines)
         entapInit::print_msg("Formatting genemark files");
 
-        std::string genemark_out_dir = outpath + "genemark/";
+        std::string genemark_out_dir = _outpath + "genemark/";
         boostFS::remove_all(genemark_out_dir.c_str());
         boostFS::create_directories(genemark_out_dir);
         boost::filesystem::path file_name(file_path); file_name = file_name.filename();
@@ -215,7 +226,7 @@ namespace entapExecute {
         std::string &exe) {
         // return path
         entapInit::print_msg("Running RSEM...");
-        boostFS::path out_dir(outpath+"rsem/");
+        boostFS::path out_dir(_outpath+"rsem/");
         boostFS::remove_all(out_dir.c_str());
         boostFS::create_directories(out_dir);
         boostFS::path file_name(input_path);
@@ -325,7 +336,7 @@ namespace entapExecute {
         }else genemark = true;
         if (rsem_path.empty()) {
             entapInit::print_msg("Looking for rsem file");
-            std::string temp_path = outpath+"rsem"+"/"+
+            std::string temp_path = _outpath+"rsem"+"/"+
                                     file_name.stem().string()+ ".genes.results";
             if (entapInit::file_exists(temp_path)){
                 entapInit::print_msg("File found at: " + temp_path);
@@ -340,9 +351,9 @@ namespace entapExecute {
         if (!rsem && !genemark) {
             throw ExceptionHandler("Neither genemark, nor rsem files were found", ENTAP_ERR::E_INIT_TAX_READ);
         }
-        std::string out_path = outpath +
+        std::string out_path = _outpath +
                                file_name.stem().string()+"_filtered"+file_name.extension().string();
-        std::string out_removed = outpath +
+        std::string out_removed = _outpath +
                                   file_name.stem().string()+"_removed"+file_name.extension().string();
         if (genemark && !rsem) {
             entapInit::print_msg("No rsem file found, so genemark results will continue as main trancriptome: " +
@@ -447,10 +458,10 @@ namespace entapExecute {
         if (diamond_file.empty()) throw ExceptionHandler("No diamond files found", ENTAP_ERR::E_INPUT_PARSE);
         boostFS::path input_file(transcriptome); input_file = input_file.stem();
         if (input_file.has_stem()) input_file = input_file.stem();
-        std::string out_contaminants = outpath + input_file.string() + "_contaminants.tsv";
-        std::string out_filtered= outpath + input_file.string() + "_filtered.tsv";
+        std::string out_contaminants = _outpath + input_file.string() + "_contaminants.tsv";
+        std::string out_filtered= _outpath + input_file.string() + "_filtered.tsv";
         // both contaminants and bad hits
-        std::string out_removed= outpath + input_file.string() + "_removed.tsv";
+        std::string out_removed= _outpath + input_file.string() + "_removed.tsv";
         print_header(out_removed); print_header(out_contaminants);
         std::ofstream file_contaminants(out_contaminants, std::ios::out | std::ios::app);
         std::ofstream file_removed(out_removed, std::ios::out | std::ios::app);

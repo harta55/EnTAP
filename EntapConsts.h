@@ -39,6 +39,7 @@ namespace ENTAP_CONFIG {
     const std::string KEY_RSEM_EXE = "rsem_exe_path";
     const std::string KEY_GENEMARK_EXE = "genemarkst_exe_path";
 
+
     const std::string TAX_SCRIPT_PATH = "/download_tax.pl";
     const std::string TAX_DATABASE_PATH = "/databases/ncbi_tax.entp";
     const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";
@@ -47,6 +48,8 @@ namespace ENTAP_CONFIG {
 
     const double E_VALUE = 1e-5;
     //------------------USER INPUTS-----------------------//
+    const std::string INPUT_FLAG_ALIGN = "align";
+
     const std::string INPUT_UNIPROT_SWISS = "swiss";
     const std::string INPUT_UNIPROT_UR100 = "ur100";
     const std::string INPUT_UNIPROT_UR90 = "ur90";
@@ -72,7 +75,6 @@ namespace ENTAP_CONFIG {
     const std::string DIAMOND_INDX_OUT_PATH = "outfiles/diamond/diamond_index.out";
     const std::string DIAMOND_RUN_OUT_PATH = "outfiles/diamond/blastx_";
     const std::string DIAMOND_DIR = "outfiles/diamond";
-
 }
 
 namespace ENTAP_EXECUTE {

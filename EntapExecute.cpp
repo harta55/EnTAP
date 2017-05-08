@@ -14,6 +14,8 @@
 #include <list>
 #include "csv.h"
 #include "QuerySequence.h"
+#include "FrameSelection.h"
+#include "ExpressionAnalysis.h"
 #include <string>
 #include <boost/regex.hpp>
 #include <boost/filesystem/path.hpp>
@@ -26,8 +28,7 @@ namespace boostFS = boost::filesystem;
 
 namespace entapExecute {
     ExecuteStates state;
-    std::string _outpath;
-    std::string _frame_selection_exe, _expression_exe, _diamond_exe;
+    std::string _frame_selection_exe, _expression_exe, _diamond_exe, _outpath;
 
     void execute_main(boost::program_options::variables_map &user_input,std::string exe_path,
             std::unordered_map<std::string,std::string> &config_map) {
@@ -41,7 +42,7 @@ namespace entapExecute {
         input_path = user_input["input"].as<std::string>();        // Gradually changes between runs
 
         boostFS::path working_dir(boostFS::current_path());
-        _outpath = working_dir.string() + user_input["tag"].as<std::string>() + "/";
+        _outpath = working_dir.string() + "/" + user_input["tag"].as<std::string>() + "/";
         boostFS::remove_all(_outpath);
 
         // init_threads
@@ -88,14 +89,22 @@ namespace entapExecute {
         } catch (ExceptionHandler &e) {throw e;}
         verify_state(state_queue, state_flag);
 
+
+        FrameSelection genemark = FrameSelection(input_path,exe_path,_outpath);
+        ExpressionAnalysis rsem = ExpressionAnalysis(input_path,threads,exe_path,_outpath);
+
         while (state != EXIT) {
             try {
                 switch (state) {
                     case FRAME_SELECTION:
-                        genemark_out = genemarkST(input_path,exe_path);
+                        genemark_out = genemark.execute(0);
                         break;
                     case RSEM:
-                        rsem_out = rsem(input_path,user_input["align"].as<std::string>(),is_paired,threads,exe_path);
+                        if (!user_input.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
+                            throw ExceptionHandler("No alignment file specified",
+                                ENTAP_ERR::E_INPUT_PARSE);
+                        }
+                        rsem.execute(0,is_paired,user_input[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>());
                         break;
                     case FILTER:
                         input_path = filter_transcriptome(genemark_out,rsem_out,user_input["fpkm"].as<float>(),input_path);
@@ -109,6 +118,7 @@ namespace entapExecute {
                         state = EXIT;
                         break;
                 }
+
                 verify_state(state_queue,state_flag);
             } catch (ExceptionHandler &e) {
                 throw e;
@@ -175,50 +185,6 @@ namespace entapExecute {
         }
         entapInit::print_msg("Verification complete!");
         return file_paths;
-    }
-
-    std::string genemarkST(std::string file_path,std::string &exe) {
-        // Outfiles: file/path.faa, file/path.fnn
-        // assumes working directory right now
-        entapInit::print_msg("Running genemark...");
-        std::string genemark_cmd = exe+ENTAP_EXECUTE::GENEMARK_EXE_PATH + " -faa -fnn " + file_path;
-        if (entapInit::execute_cmd(genemark_cmd) != 0 ) {
-            throw ExceptionHandler("Error in running genemark at file located at: " +
-                file_path, ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
-        }
-        entapInit::print_msg("Success!");
-        // Format genemarks-t output (remove blank lines)
-        entapInit::print_msg("Formatting genemark files");
-
-        std::string genemark_out_dir = _outpath + "genemark/";
-        boostFS::remove_all(genemark_out_dir.c_str());
-        boostFS::create_directories(genemark_out_dir);
-        boost::filesystem::path file_name(file_path); file_name = file_name.filename();
-        std::list<std::string> out_names {file_name.string()+".faa", file_name.string()+".fnn"};
-        std::string line;
-        for (std::string path : out_names) {
-            std::ifstream in_file(path);
-            std::string temp_name = path+"_alt";
-            std::string out_path = genemark_out_dir+path;
-            std::ofstream out_file(path+"_alt");
-            while (getline(in_file,line)){
-                if (!line.empty()) {
-                    out_file << line << '\n';
-                }
-            }
-            in_file.close();
-            out_file.close();
-            if (remove(path.c_str())!=0 || rename(temp_name.c_str(),out_path.c_str())!=0) {
-                throw ExceptionHandler("Error formatting/moving genemark results", ENTAP_ERR::E_INIT_TAX_READ);
-            }
-        }
-        std::string lst_file = file_name.string() + ".lst";
-        std::string out_lst = genemark_out_dir + lst_file;
-
-        if (rename(lst_file.c_str(),out_lst.c_str())!=0) {
-            throw ExceptionHandler("Error moving genemark results", ENTAP_ERR::E_INIT_TAX_READ);
-        }
-        return genemark_out_dir + file_name.string() + ".faa";
     }
 
 
@@ -600,6 +566,10 @@ namespace entapExecute {
         ofstream.close();
     }
 
+    void init_exe_paths(std::unordered_map<std::string,std::string> &map) {
+        return;
+    }
+
 //only assuming between 0-9 NO 2 DIGIT STATES
     void verify_state(std::queue<char> &queue, bool &test) {
         if (queue.empty()) {
@@ -609,8 +579,13 @@ namespace entapExecute {
         }
         char first = queue.front();
         if (first == 'x') {
-            state = EXIT;
-            test=false;return;
+            queue.pop();
+            test = false;
+            if (queue.empty()) {
+                state = EXIT;
+                return;
+            }
+            verify_state(queue,test); return;
         }
         if (first == '+') {
             // assuming proper cast, state has been evaluated before

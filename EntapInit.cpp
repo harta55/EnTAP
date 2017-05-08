@@ -51,7 +51,7 @@ namespace entapInit {
 //        print_input(input_map);
 
         std::string outpath = current_path.string() + user_map["tag"].as<std::string>();
-        boostFS::path bin_dir(exe_path + "/bin");
+        boostFS::path bin_dir(exe_path + ENTAP_CONFIG::BIN_PATH);
         boostFS::path data_dir(exe_path + "/databases");
         boostFS::path out_dir(outpath);
         bool out_dir_state = (boostFS::create_directories(out_dir));

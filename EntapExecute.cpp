@@ -85,13 +85,13 @@ namespace entapExecute {
         try {
             databases = verify_databases(user_input["uniprot"].as<std::vector<std::string>>(),
                    user_input["ncbi"].as<std::vector<std::string>>(),other_databases,exe_path);
-            init_exe_paths(config_map);
+            init_exe_paths(config_map, exe_path);
         } catch (ExceptionHandler &e) {throw e;}
         verify_state(state_queue, state_flag);
 
 
-        FrameSelection genemark = FrameSelection(input_path,exe_path,_outpath);
-        ExpressionAnalysis rsem = ExpressionAnalysis(input_path,threads,exe_path,_outpath);
+        FrameSelection genemark = FrameSelection(input_path,_frame_selection_exe,_outpath);
+        ExpressionAnalysis rsem = ExpressionAnalysis(input_path,threads,_expression_exe,_outpath);
 
         while (state != EXIT) {
             try {
@@ -404,7 +404,7 @@ namespace entapExecute {
 
     void diamond_blast(std::string input_file, std::string output_file, std::string std_out,
                        std::string &database,int &threads) {
-        std::string diamond_run = ENTAP_CONFIG::DIAMOND_PATH_EXE + " blastx " " -d " + database +
+        std::string diamond_run = _diamond_exe + " blastx " " -d " + database +
         " -q " + input_file + " -o " + output_file + " -p " + std::to_string(threads) +" -f " +
                 "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle";
         if (entapInit::execute_cmd(diamond_run, std_out) != 0) {
@@ -475,7 +475,7 @@ namespace entapExecute {
         ofstream.close();
     }
 
-    void init_exe_paths(std::unordered_map<std::string,std::string> &map) {
+    void init_exe_paths(std::unordered_map<std::string,std::string> &map, std::string &exe) {
         entapInit::print_msg("Verifying execution paths...");
         std::string temp_rsem = map[ENTAP_CONFIG::KEY_RSEM_EXE];
         std::string temp_diamond = map[ENTAP_CONFIG::KEY_DIAMOND_EXE];
@@ -483,22 +483,22 @@ namespace entapExecute {
 
         if (temp_rsem.empty()) {
             entapInit::print_msg("RSEM config path empty, setting to default: " +
-                ENTAP_EXECUTE::RSEM_EXE_PATH);
-            temp_rsem = ENTAP_EXECUTE::RSEM_EXE_PATH;
+                exe+ENTAP_EXECUTE::RSEM_EXE_PATH);
+            temp_rsem = exe+ENTAP_EXECUTE::RSEM_EXE_PATH;
         } else {
             entapInit::print_msg("RSEM path set to: " + temp_rsem);
         }
         if (temp_diamond.empty()) {
             entapInit::print_msg("DIAMOND config path empty, setting to default: " +
-                                 ENTAP_CONFIG::DIAMOND_PATH_EXE);
-            temp_diamond = ENTAP_CONFIG::DIAMOND_PATH_EXE;
+                                 exe+ENTAP_CONFIG::DIAMOND_PATH_EXE);
+            temp_diamond = exe+ENTAP_CONFIG::DIAMOND_PATH_EXE;
         } else {
             entapInit::print_msg("DIAMOND path set to: " + temp_diamond);
         }
         if (temp_genemark.empty()) {
             entapInit::print_msg("GenemarkS-T config path empty, setting to default: " +
-                                 ENTAP_EXECUTE::GENEMARK_EXE_PATH);
-            temp_genemark = ENTAP_EXECUTE::GENEMARK_EXE_PATH;
+                                 exe+ENTAP_EXECUTE::GENEMARK_EXE_PATH);
+            temp_genemark = exe+ENTAP_EXECUTE::GENEMARK_EXE_PATH;
         } else {
             entapInit::print_msg("RSEM path set to: " + temp_genemark);
         }

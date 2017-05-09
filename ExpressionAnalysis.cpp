@@ -59,7 +59,7 @@ std::string ExpressionAnalysis::rsem() {
     if (bam.compare(".sam")==0) {
         entapInit::print_msg("File is detected to be sam file, running validation "
                                      "and conversion to bam");
-        rsem_arg = _exepath +ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-sam-validator " + _alignpath;
+        rsem_arg = _exepath + "rsem-sam-validator " + _alignpath;
         out_path = out_dir.string() + file_name.string() + "_rsem_valdate";
         if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
             // only thrown in failure in calling rsem
@@ -71,7 +71,7 @@ std::string ExpressionAnalysis::rsem() {
         }
         entapInit::print_msg("Alignment file valid. Converting to BAM");
         std::string bam_out = out_dir.string() + file_name.string();
-        rsem_arg = _exepath+ENTAP_EXECUTE::RSEM_EXE_PATH + "convert-sam-for-rsem " + " -p " + std::to_string(_threads)
+        rsem_arg = _exepath+ "convert-sam-for-rsem " + " -p " + std::to_string(_threads)
                    + " "+_alignpath + " " + bam_out;
         out_path = out_dir.string() + file_name.string() + "_rsem_convert";
         if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
@@ -85,7 +85,7 @@ std::string ExpressionAnalysis::rsem() {
 
     } else if(bam.compare(".bam")==0) {
         entapInit::print_msg("File is detected to be bam file, validating...");
-        rsem_arg = _exepath+ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-sam-validator " + _alignpath;
+        rsem_arg = _exepath + "rsem-sam-validator " + _alignpath;
         out_path = out_dir.string() + file_name.string() + "_rsem_valdate";
         if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
             throw ExceptionHandler("Error in validating bam file", ENTAP_ERR::E_INIT_TAX_READ);
@@ -102,7 +102,7 @@ std::string ExpressionAnalysis::rsem() {
     entapInit::print_msg("Preparing reference");
     std::string ref_out_path = out_dir.string() + file_name.string() + "_ref";
     boostFS::create_directories(ref_out_path);
-    rsem_arg = _exepath+ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-prepare-reference " + _inpath +
+    rsem_arg = _exepath + "rsem-prepare-reference " + _inpath +
                " " + ref_out_path+"/"+file_name.string();
     std::string std_out = out_dir.string() + file_name.string() + "_rsem_reference";
     entapInit::print_msg("Executing following command\n" + rsem_arg);
@@ -111,7 +111,7 @@ std::string ExpressionAnalysis::rsem() {
 
     entapInit::print_msg("Running expression analysis...");
     std::string exp_out_path = out_dir.string() + file_name.string();
-    rsem_arg = _exepath+ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-calculate-expression " + "--paired-end " +
+    rsem_arg = _exepath + "rsem-calculate-expression " + "--paired-end " +
                "--bam " + "-p " + std::to_string(_threads) + " " + _alignpath +" "+ ref_out_path +
                "/"+file_name.string()+ " " +exp_out_path;
     if (_ispaired) rsem_arg += " --paired-end";

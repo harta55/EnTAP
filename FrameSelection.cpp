@@ -35,7 +35,7 @@ std::string FrameSelection::genemarkst() {
     // Outfiles: file/path.faa, file/path.fnn
     // assumes working directory right now
     entapInit::print_msg("Running genemark...");
-    std::string genemark_cmd = _exe_path+ENTAP_EXECUTE::GENEMARK_EXE_PATH + " -faa -fnn " + _inpath;
+    std::string genemark_cmd = _exe_path + " -faa -fnn " + _inpath;
     if (entapInit::execute_cmd(genemark_cmd) != 0 ) {
         throw ExceptionHandler("Error in running genemark at file located at: " +
                                _inpath, ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);

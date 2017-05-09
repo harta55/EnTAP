@@ -40,7 +40,7 @@ namespace entapExecute {
     std::unordered_map<std::string, std::string> read_tax_map(std::string&);
     void print_header(std::string);
     bool valid_state(enum ExecuteStates);
-    void init_exe_paths(std::unordered_map<std::string,std::string>&);
+    void init_exe_paths(std::unordered_map<std::string,std::string>&, std::string&);
 
 };
 

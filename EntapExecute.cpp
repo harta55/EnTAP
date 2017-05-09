@@ -188,98 +188,6 @@ namespace entapExecute {
     }
 
 
-    std::string rsem(std::string input_path, std::string bam_path, bool paired_end, int threads,
-        std::string &exe) {
-        // return path
-        entapInit::print_msg("Running RSEM...");
-        boostFS::path out_dir(_outpath+"rsem/");
-        boostFS::remove_all(out_dir.c_str());
-        boostFS::create_directories(out_dir);
-        boostFS::path file_name(input_path);
-        file_name = file_name.stem();
-        if (file_name.has_stem()) file_name = file_name.stem(); // for .fasta.fnn
-        boostFS::path bam_ext(bam_path);bam_ext = bam_ext.extension();
-        std::string bam = bam_ext.string();
-        std::transform(bam.begin(), bam.end(), bam.begin(), ::tolower);
-
-        if (bam_path.empty()) {
-            entapInit::print_msg("No BAM/SAM file provided, exiting RSEM run");
-            return input_path;
-        }
-        if (!entapInit::file_exists(bam_path)) {
-            throw ExceptionHandler("Invalid file path for BAM/SAM file, exiting...",
-                                   ENTAP_ERR::E_INIT_TAX_READ);
-        }
-        std::string rsem_arg;
-        std::string out_path;
-        if (bam.compare(".sam")==0) {
-            entapInit::print_msg("File is detected to be sam file, running validation "
-                                         "and conversion to bam");
-            rsem_arg = exe +ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-sam-validator " + bam_path;
-            out_path = out_dir.string() + file_name.string() + "_rsem_valdate";
-            if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
-                // only thrown in failure in calling rsem
-                throw ExceptionHandler("Error in validating sam file", ENTAP_ERR::E_INIT_TAX_READ);
-            }
-            // RSEM does not return error code if file is invalid, only seen in .err
-            if (!is_file_empty(out_path+".err")) {
-                throw ExceptionHandler("Alignment file invalid!", ENTAP_ERR::E_INIT_TAX_READ);
-            }
-            entapInit::print_msg("Alignment file valid. Converting to BAM");
-            std::string bam_out = out_dir.string() + file_name.string();
-            rsem_arg = exe+ENTAP_EXECUTE::RSEM_EXE_PATH + "convert-sam-for-rsem " + " -p " + std::to_string(threads)
-                       + " "+bam_path + " " + bam_out;
-            out_path = out_dir.string() + file_name.string() + "_rsem_convert";
-            if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
-                // execution error, dif from conversion error
-                throw ExceptionHandler("Error in converting sam file", ENTAP_ERR::E_INIT_TAX_READ);
-            }
-            if (!is_file_empty(out_path+".err")) {
-                throw ExceptionHandler("Error in converting sam file", ENTAP_ERR::E_INIT_TAX_READ);
-            }
-            bam_path = bam_out + ".bam";
-
-        } else if(bam.compare(".bam")==0) {
-            entapInit::print_msg("File is detected to be bam file, validating...");
-            rsem_arg = exe+ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-sam-validator " + bam_path;
-            out_path = out_dir.string() + file_name.string() + "_rsem_valdate";
-            if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
-                throw ExceptionHandler("Error in validating bam file", ENTAP_ERR::E_INIT_TAX_READ);
-            }
-            if (!is_file_empty(out_path+".err")) {
-                throw ExceptionHandler("Alignment file invalid!", ENTAP_ERR::E_INIT_TAX_READ);
-            }
-            entapInit::print_msg("Alignment file valid. Continuing...");
-        } else {
-            throw ExceptionHandler("Unknown extension found in the alignment file",
-                ENTAP_ERR::E_INIT_TAX_READ);
-        }
-        // Now have valid BAM file to run rsem
-        entapInit::print_msg("Preparing reference");
-        std::string ref_out_path = out_dir.string() + file_name.string() + "_ref";
-        boostFS::create_directories(ref_out_path);
-        rsem_arg = exe+ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-prepare-reference " + input_path +
-                " " + ref_out_path+"/"+file_name.string();
-        std::string std_out = out_dir.string() + file_name.string() + "_rsem_reference";
-        entapInit::print_msg("Executing following command\n" + rsem_arg);
-        entapInit::execute_cmd(rsem_arg.c_str(), std_out);
-        entapInit::print_msg("Reference successfully created");
-
-        entapInit::print_msg("Running expression analysis...");
-        std::string exp_out_path = out_dir.string() + file_name.string();
-        rsem_arg = exe+ENTAP_EXECUTE::RSEM_EXE_PATH + "rsem-calculate-expression " + "--paired-end " +
-            "--bam " + "-p " + std::to_string(threads) + " " + bam_path +" "+ ref_out_path +
-            "/"+file_name.string()+ " " +exp_out_path;
-        if (paired_end) rsem_arg += " --paired-end";
-        std_out = out_dir.string() + file_name.string() + "_rsem_exp";
-        entapInit::print_msg("Executing following command\n" + rsem_arg);
-        if (entapInit::execute_cmd(rsem_arg.c_str(), std_out)!=0) {
-            throw ExceptionHandler("Error in running expression analysis",ENTAP_ERR::E_INIT_TAX_READ);
-        }
-        return out_path + ".genes.results";
-
-    }
-
     std::string filter_transcriptome(std::string &genemark_path, std::string &rsem_path,
         float fpkm, std::string input_path) {
         entapInit::print_msg("Beginning to filter transcriptome...");
@@ -381,6 +289,7 @@ namespace entapExecute {
 
     std::list<std::string> diamond_run(std::list<std::string> database_paths, std::string input_path, int &threads) {
         // not always known (depending on starting state)
+        entapInit::print_msg("Beginning to execute DIAMOND...");
         boostFS::create_directories(ENTAP_CONFIG::DIAMOND_DIR);
         std::list<std::string> out_paths;
         if (!entapInit::file_exists(input_path)) {
@@ -567,10 +476,39 @@ namespace entapExecute {
     }
 
     void init_exe_paths(std::unordered_map<std::string,std::string> &map) {
+        entapInit::print_msg("Verifying execution paths...");
+        std::string temp_rsem = map[ENTAP_CONFIG::KEY_RSEM_EXE];
+        std::string temp_diamond = map[ENTAP_CONFIG::KEY_DIAMOND_EXE];
+        std::string temp_genemark = map[ENTAP_CONFIG::KEY_GENEMARK_EXE];
+
+        if (temp_rsem.empty()) {
+            entapInit::print_msg("RSEM config path empty, setting to default: " +
+                ENTAP_EXECUTE::RSEM_EXE_PATH);
+            temp_rsem = ENTAP_EXECUTE::RSEM_EXE_PATH;
+        } else {
+            entapInit::print_msg("RSEM path set to: " + temp_rsem);
+        }
+        if (temp_diamond.empty()) {
+            entapInit::print_msg("DIAMOND config path empty, setting to default: " +
+                                 ENTAP_CONFIG::DIAMOND_PATH_EXE);
+            temp_diamond = ENTAP_CONFIG::DIAMOND_PATH_EXE;
+        } else {
+            entapInit::print_msg("DIAMOND path set to: " + temp_diamond);
+        }
+        if (temp_genemark.empty()) {
+            entapInit::print_msg("GenemarkS-T config path empty, setting to default: " +
+                                 ENTAP_EXECUTE::GENEMARK_EXE_PATH);
+            temp_genemark = ENTAP_EXECUTE::GENEMARK_EXE_PATH;
+        } else {
+            entapInit::print_msg("RSEM path set to: " + temp_genemark);
+        }
+        _diamond_exe = temp_diamond;
+        _frame_selection_exe = temp_genemark;
+        _expression_exe = temp_rsem;
         return;
     }
 
-//only assuming between 0-9 NO 2 DIGIT STATES
+    //only assuming between 0-9 NO 2 DIGIT STATES
     void verify_state(std::queue<char> &queue, bool &test) {
         if (queue.empty()) {
             state = static_cast<ExecuteStates>(state+1);

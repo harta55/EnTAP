@@ -206,7 +206,7 @@ std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
     print_msg("Parsing configuration file...");
     std::unordered_map<std::string,std::string> config_map;
     if (!entapInit::file_exists(exe + "/" +ENTAP_CONFIG::CONFIG_FILE)){
-        throw ExceptionHandler("Confuration file was not found",
+        throw ExceptionHandler("Configuration file was not found",
                                ENTAP_ERR::E_CONFIG_PARSE);
     }
     std::ifstream in_file(ENTAP_CONFIG::CONFIG_FILE);
@@ -219,7 +219,10 @@ std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
                 ENTAP_ERR::E_CONFIG_PARSE);
             }
             std::string val;
-            if (std::getline(in_line,val))config_map.emplace(key,val);
+            if (std::getline(in_line,val)) {
+                if (val.size()<=1) val = "";
+                config_map.emplace(key,val);
+            }
         }
     }
     print_msg("Checking database and .exe locations...");

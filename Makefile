@@ -123,6 +123,60 @@ enTAP/fast:
 	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/build
 .PHONY : enTAP/fast
 
+EntapExecute.o: EntapExecute.cpp.o
+
+.PHONY : EntapExecute.o
+
+# target to build an object file
+EntapExecute.cpp.o:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/EntapExecute.cpp.o
+.PHONY : EntapExecute.cpp.o
+
+EntapExecute.i: EntapExecute.cpp.i
+
+.PHONY : EntapExecute.i
+
+# target to preprocess a source file
+EntapExecute.cpp.i:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/EntapExecute.cpp.i
+.PHONY : EntapExecute.cpp.i
+
+EntapExecute.s: EntapExecute.cpp.s
+
+.PHONY : EntapExecute.s
+
+# target to generate assembly for a file
+EntapExecute.cpp.s:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/EntapExecute.cpp.s
+.PHONY : EntapExecute.cpp.s
+
+EntapInit.o: EntapInit.cpp.o
+
+.PHONY : EntapInit.o
+
+# target to build an object file
+EntapInit.cpp.o:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/EntapInit.cpp.o
+.PHONY : EntapInit.cpp.o
+
+EntapInit.i: EntapInit.cpp.i
+
+.PHONY : EntapInit.i
+
+# target to preprocess a source file
+EntapInit.cpp.i:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/EntapInit.cpp.i
+.PHONY : EntapInit.cpp.i
+
+EntapInit.s: EntapInit.cpp.s
+
+.PHONY : EntapInit.s
+
+# target to generate assembly for a file
+EntapInit.cpp.s:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/EntapInit.cpp.s
+.PHONY : EntapInit.cpp.s
+
 ExceptionHandler.o: ExceptionHandler.cpp.o
 
 .PHONY : ExceptionHandler.o
@@ -149,6 +203,87 @@ ExceptionHandler.s: ExceptionHandler.cpp.s
 ExceptionHandler.cpp.s:
 	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/ExceptionHandler.cpp.s
 .PHONY : ExceptionHandler.cpp.s
+
+ExpressionAnalysis.o: ExpressionAnalysis.cpp.o
+
+.PHONY : ExpressionAnalysis.o
+
+# target to build an object file
+ExpressionAnalysis.cpp.o:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/ExpressionAnalysis.cpp.o
+.PHONY : ExpressionAnalysis.cpp.o
+
+ExpressionAnalysis.i: ExpressionAnalysis.cpp.i
+
+.PHONY : ExpressionAnalysis.i
+
+# target to preprocess a source file
+ExpressionAnalysis.cpp.i:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/ExpressionAnalysis.cpp.i
+.PHONY : ExpressionAnalysis.cpp.i
+
+ExpressionAnalysis.s: ExpressionAnalysis.cpp.s
+
+.PHONY : ExpressionAnalysis.s
+
+# target to generate assembly for a file
+ExpressionAnalysis.cpp.s:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/ExpressionAnalysis.cpp.s
+.PHONY : ExpressionAnalysis.cpp.s
+
+FrameSelection.o: FrameSelection.cpp.o
+
+.PHONY : FrameSelection.o
+
+# target to build an object file
+FrameSelection.cpp.o:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/FrameSelection.cpp.o
+.PHONY : FrameSelection.cpp.o
+
+FrameSelection.i: FrameSelection.cpp.i
+
+.PHONY : FrameSelection.i
+
+# target to preprocess a source file
+FrameSelection.cpp.i:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/FrameSelection.cpp.i
+.PHONY : FrameSelection.cpp.i
+
+FrameSelection.s: FrameSelection.cpp.s
+
+.PHONY : FrameSelection.s
+
+# target to generate assembly for a file
+FrameSelection.cpp.s:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/FrameSelection.cpp.s
+.PHONY : FrameSelection.cpp.s
+
+QuerySequence.o: QuerySequence.cpp.o
+
+.PHONY : QuerySequence.o
+
+# target to build an object file
+QuerySequence.cpp.o:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/QuerySequence.cpp.o
+.PHONY : QuerySequence.cpp.o
+
+QuerySequence.i: QuerySequence.cpp.i
+
+.PHONY : QuerySequence.i
+
+# target to preprocess a source file
+QuerySequence.cpp.i:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/QuerySequence.cpp.i
+.PHONY : QuerySequence.cpp.i
+
+QuerySequence.s: QuerySequence.cpp.s
+
+.PHONY : QuerySequence.s
+
+# target to generate assembly for a file
+QuerySequence.cpp.s:
+	$(MAKE) -f CMakeFiles/enTAP.dir/build.make CMakeFiles/enTAP.dir/QuerySequence.cpp.s
+.PHONY : QuerySequence.cpp.s
 
 main.o: main.cpp.o
 
@@ -186,9 +321,24 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... enTAP"
+	@echo "... EntapExecute.o"
+	@echo "... EntapExecute.i"
+	@echo "... EntapExecute.s"
+	@echo "... EntapInit.o"
+	@echo "... EntapInit.i"
+	@echo "... EntapInit.s"
 	@echo "... ExceptionHandler.o"
 	@echo "... ExceptionHandler.i"
 	@echo "... ExceptionHandler.s"
+	@echo "... ExpressionAnalysis.o"
+	@echo "... ExpressionAnalysis.i"
+	@echo "... ExpressionAnalysis.s"
+	@echo "... FrameSelection.o"
+	@echo "... FrameSelection.i"
+	@echo "... FrameSelection.s"
+	@echo "... QuerySequence.o"
+	@echo "... QuerySequence.i"
+	@echo "... QuerySequence.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"

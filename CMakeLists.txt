@@ -1,14 +1,11 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 2.8)
 project(enTAP)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-set(SOURCE_FILES libs main.cpp ExceptionHandler.cpp ExceptionHandler.h EntapConsts.h EntapInit.cpp EntapInit.h EntapExecute.cpp EntapExecute.h QuerySequence.cpp QuerySequence.h)
+set(SOURCE_FILES libs main.cpp ExceptionHandler.cpp ExceptionHandler.h EntapConsts.h EntapInit.cpp EntapInit.h EntapExecute.cpp EntapExecute.h QuerySequence.cpp QuerySequence.h FrameSelection.cpp FrameSelection.h ExpressionAnalysis.cpp ExpressionAnalysis.h)
 
 add_executable(enTAP ${SOURCE_FILES})
-
-#set(CURL_STATICLIB true)
-
 
 #set(Boost_INCLUDE_DIR /home/harta55/ClionProjects/Libraries/boost_1_62_0)
 #set(Boost_LIBRARY_DIR /home/harta55/ClionProjects/Libraries/boost_1_62_0/stage/lib)
@@ -44,8 +41,6 @@ find_package(Boost 1.62.0 COMPONENTS program_options system filesystem iostreams
 #
 #    add_definitions(-DCURL_STATICLIB)
 #endif()
-
-
 
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})

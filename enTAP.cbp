@@ -11,87 +11,109 @@
 				<Option working_dir="/home/harta/CLionProjects/enTAP"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 all"/>
-					<CompileFile command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="edit_cache">
 				<Option working_dir="/home/harta/CLionProjects/enTAP"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 edit_cache"/>
-					<CompileFile command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="rebuild_cache">
 				<Option working_dir="/home/harta/CLionProjects/enTAP"/>
 				<Option type="4"/>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
-					<CompileFile command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="enTAP">
 				<Option output="/home/harta/CLionProjects/enTAP/enTAP" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/home/harta/CLionProjects/enTAP"/>
+				<Option working_dir=""/>
 				<Option object_output="./"/>
 				<Option type="1"/>
 				<Option compiler="gcc"/>
 				<Compiler>
 					<Add directory="/home/harta/CLionProjects/enTAP/libs/pstream"/>
+					<Add directory="/home/harta/CLionProjects/enTAP/libs/fast-cpp-csv-parser"/>
 					<Add directory="/home/harta/Documents/boost_1_63_0"/>
-					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include"/>
-					<Add directory="/usr/local/include"/>
-					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed"/>
-					<Add directory="/usr/include/x86_64-linux-gnu"/>
-					<Add directory="/usr/include"/>
-					<Add directory="/usr/include/c++/5"/>
-					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
-					<Add directory="/usr/include/c++/5/backward"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 enTAP"/>
-					<CompileFile command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 enTAP"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 			<Target title="enTAP/fast">
 				<Option output="/home/harta/CLionProjects/enTAP/enTAP" prefix_auto="0" extension_auto="0"/>
-				<Option working_dir="/home/harta/CLionProjects/enTAP"/>
+				<Option working_dir=""/>
 				<Option object_output="./"/>
 				<Option type="1"/>
 				<Option compiler="gcc"/>
 				<Compiler>
 					<Add directory="/home/harta/CLionProjects/enTAP/libs/pstream"/>
+					<Add directory="/home/harta/CLionProjects/enTAP/libs/fast-cpp-csv-parser"/>
 					<Add directory="/home/harta/Documents/boost_1_63_0"/>
-					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include"/>
-					<Add directory="/usr/local/include"/>
-					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/5/include-fixed"/>
-					<Add directory="/usr/include/x86_64-linux-gnu"/>
-					<Add directory="/usr/include"/>
-					<Add directory="/usr/include/c++/5"/>
-					<Add directory="/usr/include/x86_64-linux-gnu/c++/5"/>
-					<Add directory="/usr/include/c++/5/backward"/>
 				</Compiler>
 				<MakeCommands>
-					<Build command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 enTAP/fast"/>
-					<CompileFile command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
-					<Clean command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
-					<DistClean command="/usr/bin/make -j3 -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
+					<Build command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 enTAP/fast"/>
+					<CompileFile command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/make -f &quot;/home/harta/CLionProjects/enTAP/Makefile&quot;  VERBOSE=1 clean"/>
 				</MakeCommands>
 			</Target>
 		</Build>
+		<Unit filename="/home/harta/CLionProjects/enTAP/EntapConsts.h">
+			<Option target="enTAP"/>
+		</Unit>
+		<Unit filename="/home/harta/CLionProjects/enTAP/EntapExecute.cpp">
+			<Option target="enTAP"/>
+		</Unit>
+		<Unit filename="/home/harta/CLionProjects/enTAP/EntapExecute.h">
+			<Option target="enTAP"/>
+		</Unit>
+		<Unit filename="/home/harta/CLionProjects/enTAP/EntapInit.cpp">
+			<Option target="enTAP"/>
+		</Unit>
+		<Unit filename="/home/harta/CLionProjects/enTAP/EntapInit.h">
+			<Option target="enTAP"/>
+		</Unit>
 		<Unit filename="/home/harta/CLionProjects/enTAP/ExceptionHandler.cpp">
 			<Option target="enTAP"/>
 		</Unit>
 		<Unit filename="/home/harta/CLionProjects/enTAP/ExceptionHandler.h">
+			<Option target="enTAP"/>
+		</Unit>
+		<Unit filename="/home/harta/CLionProjects/enTAP/ExpressionAnalysis.cpp">
+			<Option target="enTAP"/>
+		</Unit>
+		<Unit filename="/home/harta/CLionProjects/enTAP/ExpressionAnalysis.h">
+			<Option target="enTAP"/>
+		</Unit>
+		<Unit filename="/home/harta/CLionProjects/enTAP/FrameSelection.cpp">
+			<Option target="enTAP"/>
+		</Unit>
+		<Unit filename="/home/harta/CLionProjects/enTAP/FrameSelection.h">
+			<Option target="enTAP"/>
+		</Unit>
+		<Unit filename="/home/harta/CLionProjects/enTAP/QuerySequence.cpp">
+			<Option target="enTAP"/>
+		</Unit>
+		<Unit filename="/home/harta/CLionProjects/enTAP/QuerySequence.h">
+			<Option target="enTAP"/>
+		</Unit>
+		<Unit filename="/home/harta/CLionProjects/enTAP/libs">
 			<Option target="enTAP"/>
 		</Unit>
 		<Unit filename="/home/harta/CLionProjects/enTAP/main.cpp">

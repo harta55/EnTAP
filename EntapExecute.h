@@ -27,7 +27,7 @@ namespace entapExecute {
                                             std::vector<std::string>, std::string&);
     void execute_main(boost::program_options::variables_map&, std::string,
                       std::unordered_map<std::string,std::string>&);
-    std::string filter_transcriptome(std::string&, std::string&,float,std::string);
+    std::string filter_transcriptome(std::string&, std::string&,float,std::string,bool);
     std::list<std::string> diamond_run(std::list<std::string>, std::string,int&);
     void diamond_parse(std::list<std::string>, std::vector<std::string>, double, std::string,std::string&);
     void diamond_blast(std::string ,std::string, std::string,std::string&,int&);

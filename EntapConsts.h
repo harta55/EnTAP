@@ -19,10 +19,12 @@ namespace ENTAP_ERR {
 
     const int E_INIT_TAX_READ = 55;
 
+    const int E_RUN_EXECUTION_PATHS         = 105;
     const int E_RUN_GENEMARK                = 100;
     const int E_RUN_RSEM_VALIDATE           = 110;
     const int E_RUN_RSEM_CONVERT            = 111;
     const int E_RUN_RSEM_EXPRESSION         = 112;
+    const int E_RUN_FILTER                  = 120;
 }
 
 namespace ENTAP_CONFIG {
@@ -49,6 +51,10 @@ namespace ENTAP_CONFIG {
     const double E_VALUE = 1e-5;
     //------------------USER INPUTS-----------------------//
     const std::string INPUT_FLAG_ALIGN = "align";
+    const std::string INPUT_FLAG_RUNPROTEIN = "runP";
+    const std::string INPUT_FLAG_RUNNUCLEOTIDE = "runN";
+    const std::string INPUT_FLAG_OVERWRITE = "overwrite";
+
 
     const std::string INPUT_UNIPROT_SWISS = "swiss";
     const std::string INPUT_UNIPROT_UR100 = "ur100";
@@ -74,16 +80,19 @@ namespace ENTAP_CONFIG {
     const std::string DIAMOND_PATH_EXE = "/libs/diamond-0.8.31/bin/diamond";
     const std::string DIAMOND_INDX_OUT_PATH = "outfiles/diamond/diamond_index.out";
     const std::string DIAMOND_RUN_OUT_PATH = "outfiles/diamond/blastx_";
-    const std::string DIAMOND_DIR = "outfiles/diamond";
+    const std::string DIAMOND_DIR = "diamond/";
 }
 
 namespace ENTAP_EXECUTE {
     const std::string RSEM_EXE_PATH = "/libs/RSEM-1.3.0/";
+    const std::string RSEM_OUT_DIR = "rsem/";
     const float RSEM_FPKM_DEFAULT = 0.5;
     const int RSEM_COL_NUM = 7;
 
     const std::string OUTFILE_DEFAULT = "outfiles";
     const std::string GENEMARK_EXE_PATH = "/libs/gmst_linux_64/gmst.pl";
+
+    const std::string ENTAP_OUTPUT = "entap_out/";
 
     const int diamond_col_num = 13;
     const int diamond_e_col = 10;

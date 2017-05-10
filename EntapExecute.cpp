@@ -16,6 +16,7 @@
 #include "QuerySequence.h"
 #include "FrameSelection.h"
 #include "ExpressionAnalysis.h"
+#include "SimilaritySearch.h"
 #include <string>
 #include <boost/regex.hpp>
 #include <boost/filesystem/path.hpp>
@@ -28,8 +29,9 @@ namespace boostFS = boost::filesystem;
 
 namespace entapExecute {
     ExecuteStates state;
-    std::string _frame_selection_exe, _expression_exe, _diamond_exe, _outpath;
-    bool _blast = false; // false for blastx, true for blastp
+    std::string _frame_selection_exe, _expression_exe, _diamond_exe, _outpath, _entap_outpath;
+    bool _blastp = false; // false for blastx, true for blastp
+    bool _isProtein;      // input sequence, might want to handle differently
 
     void execute_main(boost::program_options::variables_map &user_input,std::string exe_path,
             std::unordered_map<std::string,std::string> &config_map) {
@@ -42,9 +44,15 @@ namespace entapExecute {
         bool is_paired = (bool)user_input.count("paired-end");
         input_path = user_input["input"].as<std::string>();        // Gradually changes between runs
 
+        if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNNUCLEOTIDE)) _isProtein = false;
+        if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN)) _isProtein = true;
+        bool is_overwrite = (bool)user_input.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
+
         boostFS::path working_dir(boostFS::current_path());
         _outpath = working_dir.string() + "/" + user_input["tag"].as<std::string>() + "/";
-        boostFS::remove_all(_outpath);
+        _entap_outpath = _outpath + ENTAP_EXECUTE::ENTAP_OUTPUT;
+        boostFS::create_directories(_entap_outpath);
+//        boostFS::remove_all(_outpath);
 
         // init_threads
         unsigned int supported_threads = std::thread::hardware_concurrency();
@@ -91,15 +99,24 @@ namespace entapExecute {
         verify_state(state_queue, state_flag);
 
 
-        FrameSelection genemark = FrameSelection(input_path,_frame_selection_exe,_outpath);
-        ExpressionAnalysis rsem = ExpressionAnalysis(input_path,threads,_expression_exe,_outpath);
+        FrameSelection genemark = FrameSelection(input_path,_frame_selection_exe,_outpath,is_overwrite);
+        ExpressionAnalysis rsem = ExpressionAnalysis(input_path,threads,_expression_exe,_outpath,is_overwrite);
+        SimilaritySearch diamond = SimilaritySearch(databases,input_path,threads,is_overwrite,_diamond_exe,
+            _outpath);
 
         while (state != EXIT) {
             try {
                 switch (state) {
                     case FRAME_SELECTION:
+                        if (_isProtein) {
+                            entapInit::print_msg("Protein sequences input, skipping frame selection");
+                            genemark_out = input_path;
+                            _blastp = true;
+                            break;
+                        }
                         genemark_out = genemark.execute(0);
-                        _blast = true;
+                        input_path = genemark_out;
+                        _blastp = true;
                         break;
                     case RSEM:
                         if (!user_input.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
@@ -109,10 +126,11 @@ namespace entapExecute {
                         rsem.execute(0,is_paired,user_input[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>());
                         break;
                     case FILTER:
-                        input_path = filter_transcriptome(genemark_out,rsem_out,user_input["fpkm"].as<float>(),input_path);
+                        input_path = filter_transcriptome(genemark_out,rsem_out,user_input["fpkm"].as<float>(),input_path,
+                            is_overwrite);
                         break;
                     case DIAMOND_RUN:
-                        diamond_out = diamond_run(databases,input_path,threads);
+                        diamond_out = diamond.execute(0, input_path, _blastp);
                         break;
                     case DIAMOND_PARSE:
                         diamond_parse(diamond_out,contaminants,user_input["e"].as<double>(),input_path,exe_path);
@@ -120,7 +138,6 @@ namespace entapExecute {
                         state = EXIT;
                         break;
                 }
-
                 verify_state(state_queue,state_flag);
             } catch (ExceptionHandler &e) {
                 throw e;
@@ -191,11 +208,33 @@ namespace entapExecute {
 
 
     std::string filter_transcriptome(std::string &genemark_path, std::string &rsem_path,
-        float fpkm, std::string input_path) {
+        float fpkm, std::string input_path, bool overwrite) {
         entapInit::print_msg("Beginning to filter transcriptome...");
         bool genemark, rsem;
 
         boostFS::path file_name(input_path);file_name.filename();
+        std::string out_path = _entap_outpath +
+                               file_name.stem().stem().string()+"_final.fasta";
+        std::string out_removed = _entap_outpath +
+                                  file_name.stem().string()+"_filtered_out.fasta";
+        if (overwrite) {
+            entapInit::print_msg("Overwrite selected, removing files:\n" +
+                out_path + "\n" + out_removed);
+            try {
+                remove(out_path.c_str());
+                remove(out_removed.c_str());
+            } catch (std::exception const &e) {
+                throw ExceptionHandler(e.what(), ENTAP_ERR::E_RUN_FILTER);
+            }
+        } else {
+            entapInit::print_msg("Overwrite unselected, finding files..");
+            if (!entapInit::file_exists(out_path)) {
+                entapInit::print_msg("File not found at: " + out_path + " continue filtering");
+            } else {
+                entapInit::print_msg("File found at: " + out_path + " not filtering");
+                return out_path;
+            }
+        }
         if (genemark_path.empty()) {
             entapInit::print_msg("Looking for genemark file");
             std::string temp_path = ENTAP_EXECUTE::GENEMARK_EXE_PATH+"genemark"+"/"+
@@ -225,17 +264,15 @@ namespace entapExecute {
         }else rsem = true;
 
         if (!rsem && !genemark) {
-            throw ExceptionHandler("Neither genemark, nor rsem files were found", ENTAP_ERR::E_INIT_TAX_READ);
+            entapInit::print_msg("Neither genemark, nor rsem files were found, no filtering will be done.");
+            return input_path;
         }
-        std::string out_path = _outpath +
-                               file_name.stem().string()+"final"+file_name.extension().string();
-        std::string out_removed = _outpath +
-                                  file_name.stem().string()+"_removed"+file_name.extension().string();
+
         if (genemark && !rsem) {
             entapInit::print_msg("No rsem file found, so genemark results will continue as main trancriptome: " +
                 genemark_path);
             boostFS::copy_file(genemark_path,out_path);
-            return genemark_path;
+            return out_path;
         }
 
         std::string process_file;
@@ -250,7 +287,6 @@ namespace entapExecute {
         while(in.read_row(geneid, transid, length,e_leng,e_count,tpm,fpkm_val)) {
             expression_map.emplace(geneid,fpkm_val);
         }
-        remove(out_path.c_str()); remove(out_removed.c_str());
         std::ifstream in_file(process_file);
         std::ofstream out_file(out_path, std::ios::out | std::ios::app);
         std::ofstream removed_file(out_removed, std::ios::out | std::ios::app);
@@ -289,36 +325,6 @@ namespace entapExecute {
         return out_path;
     }
 
-    std::list<std::string> diamond_run(std::list<std::string> database_paths, std::string input_path, int &threads) {
-        // not always known (depending on starting state)
-        entapInit::print_msg("Beginning to execute DIAMOND...");
-        boostFS::create_directories(ENTAP_CONFIG::DIAMOND_DIR);
-        std::list<std::string> out_paths;
-        if (!entapInit::file_exists(input_path)) {
-            throw ExceptionHandler("Transcriptome file not found",ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
-        }
-        boostFS::path transc_name(input_path); transc_name=transc_name.stem();
-        if (transc_name.has_stem()) transc_name = transc_name.stem(); //.fasta.faa
-        // database verification already ran, don't need to verify each path
-        try {
-            for (std::string data_path : database_paths) {
-                // assume all paths should be .dmnd
-                boostFS::path file_name(data_path); file_name=file_name.stem();
-                entapInit::print_msg("Searching against database located at: " +
-                                     data_path + "...");
-                std::string out_path = ENTAP_CONFIG::DIAMOND_RUN_OUT_PATH + transc_name.string() + "_" +
-                    file_name.string() + ".out";
-                std::string std_out = ENTAP_CONFIG::DIAMOND_RUN_OUT_PATH + transc_name.string() + "_" +
-                                      file_name.string() + "_std";
-                diamond_blast(input_path, out_path, std_out,data_path, threads);
-                entapInit::print_msg("Success! Results written to " + out_path);
-                out_paths.push_back(out_path);
-            }
-        } catch (ExceptionHandler &e) {
-            throw ExceptionHandler(e.what(), e.getErr_code());
-        }
-        return out_paths;
-    }
 
     // input: 3 database string array of selected databases
     void diamond_parse(std::list<std::string> diamond_file, std::vector<std::string> contams,
@@ -335,10 +341,10 @@ namespace entapExecute {
         if (diamond_file.empty()) throw ExceptionHandler("No diamond files found", ENTAP_ERR::E_INPUT_PARSE);
         boostFS::path input_file(transcriptome); input_file = input_file.stem();
         if (input_file.has_stem()) input_file = input_file.stem();
-        std::string out_contaminants = _outpath + input_file.string() + "_contaminants.tsv";
-        std::string out_filtered= _outpath + input_file.string() + "_filtered.tsv";
+        std::string out_contaminants = _entap_outpath + input_file.string() + "_contaminants.tsv";
+        std::string out_filtered= _entap_outpath + input_file.string() + "_filtered.tsv";
         // both contaminants and bad hits
-        std::string out_removed= _outpath + input_file.string() + "_removed.tsv";
+        std::string out_removed= _entap_outpath + input_file.string() + "_removed.tsv";
         print_header(out_removed); print_header(out_contaminants);
         std::ofstream file_contaminants(out_contaminants, std::ios::out | std::ios::app);
         std::ofstream file_removed(out_removed, std::ios::out | std::ios::app);
@@ -409,18 +415,6 @@ namespace entapExecute {
         print_filtered_map(query_map, out_filtered);
     }
 
-    void diamond_blast(std::string input_file, std::string output_file, std::string std_out,
-                       std::string &database,int &threads) {
-        std::string blast_type;
-        _blast ? blast_type = "blastp" : blast_type = "blastx";
-        std::string diamond_run = _diamond_exe + " " + blast_type +" -d " + database +
-        " --sensitive" + " -k 10" + " -q " + input_file + " -o " + output_file + " -p " + std::to_string(threads) +" -f " +
-                "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle";
-        if (entapInit::execute_cmd(diamond_run, std_out) != 0) {
-            throw ExceptionHandler("Error in DIAMOND run with database located at: " +
-                database, ENTAP_ERR::E_INIT_TAX_INDEX);
-        }
-    }
 
     std::unordered_map<std::string, std::string> read_tax_map(std::string &exe) {
         entapInit::print_msg("Reading taxonomic database into memory...");
@@ -484,6 +478,7 @@ namespace entapExecute {
         ofstream.close();
     }
 
+    // Doesn't check default paths if user does not want to use that portion of enTAP
     void init_exe_paths(std::unordered_map<std::string,std::string> &map, std::string &exe) {
         entapInit::print_msg("Verifying execution paths...");
         std::string temp_rsem = map[ENTAP_CONFIG::KEY_RSEM_EXE];

@@ -10,9 +10,10 @@
 class FrameSelection {
     public:
         std::string execute(short);
-        FrameSelection(std::string&, std::string&, std::string&);
+        FrameSelection(std::string&, std::string&, std::string&, bool);
     private:
         std::string _exe_path,_inpath, _outpath;
+        bool _overwrite;
         std::string genemarkst();
 };
 

@@ -11,18 +11,21 @@
 
 namespace boostFS = boost::filesystem;
 
-ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &exe, std::string &out) {
+ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &exe, std::string &out
+    , bool overwrite) {
     this->_inpath = input;
 //    this->_alignpath = alignment;
 //    this->_ispaired = paired;
     this->_threads = t;
     this->_exepath = exe;
     this->_outpath = out;
+    this->_overwrite = overwrite;
 }
 
 std::string ExpressionAnalysis::execute(short software, bool paired, std::string align) {
     this->_alignpath = align;
     this->_ispaired = paired;
+
     try {
         switch (software) {
             case 0:
@@ -36,15 +39,27 @@ std::string ExpressionAnalysis::execute(short software, bool paired, std::string
 std::string ExpressionAnalysis::rsem() {
     // return path
     entapInit::print_msg("Running RSEM...");
-    boostFS::path out_dir(_outpath+"rsem/");
-    boostFS::remove_all(out_dir.c_str());
-    boostFS::create_directories(out_dir);
+    boostFS::path out_dir(_outpath+ENTAP_EXECUTE::RSEM_OUT_DIR);
     boostFS::path file_name(_inpath);
     file_name = file_name.stem();
     if (file_name.has_stem()) file_name = file_name.stem(); // for .fasta.fnn
     boostFS::path bam_ext(_alignpath);bam_ext = bam_ext.extension();
     std::string bam = bam_ext.string();
     std::transform(bam.begin(), bam.end(), bam.begin(), ::tolower);
+    std::string exp_out_path = out_dir.string() + file_name.string();
+
+    // todo move to class-wide init
+    if (_overwrite) {
+        boostFS::remove_all(out_dir.c_str());
+    } else{
+        if (entapInit::file_exists(exp_out_path + ".genes.results")) {
+            entapInit::print_msg("File found at " +exp_out_path + ".genes.results\n"
+                 "moving to next stage of enTAP");
+            return exp_out_path + ".genes.results";
+        }
+        entapInit::print_msg("File not found at " + exp_out_path + ".genes.results. Continuing RSEM run.");
+    }
+    boostFS::create_directories(out_dir);
 
     if (_alignpath.empty()) {
         entapInit::print_msg("No BAM/SAM file provided, exiting RSEM run");
@@ -110,7 +125,6 @@ std::string ExpressionAnalysis::rsem() {
     entapInit::print_msg("Reference successfully created");
 
     entapInit::print_msg("Running expression analysis...");
-    std::string exp_out_path = out_dir.string() + file_name.string();
     rsem_arg = _exepath + "rsem-calculate-expression " + "--paired-end " +
                "--bam " + "-p " + std::to_string(_threads) + " " + _alignpath +" "+ ref_out_path +
                "/"+file_name.string()+ " " +exp_out_path;
@@ -120,6 +134,5 @@ std::string ExpressionAnalysis::rsem() {
     if (entapInit::execute_cmd(rsem_arg.c_str(), std_out)!=0) {
         throw ExceptionHandler("Error in running expression analysis",ENTAP_ERR::E_INIT_TAX_READ);
     }
-    return out_path + ".genes.results";
+    return exp_out_path + ".genes.results";
 }
-

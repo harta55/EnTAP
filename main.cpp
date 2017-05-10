@@ -74,8 +74,11 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                  "Print help options")
             ("config",
                  "Configure enTAP for execution later (complete this step first)")
-            ("run",
-                 "Execute enTAP functionality")
+            (ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN.c_str(),
+                 "Execute enTAP functionality with input protein sequences\n"
+                 "(this option will skip Frame Selection portion of pipeline)")
+            (ENTAP_CONFIG::INPUT_FLAG_RUNNUCLEOTIDE.c_str(),
+                 "Execute enTAP functionality with input nucleotide sequences")
             ("ncbi,N",
                  boostPO::value<std::vector<std::string>>(&ncbi_data)->multitoken()
                  ->default_value(std::vector<std::string>{ENTAP_CONFIG::INPUT_UNIPROT_NULL},""),
@@ -117,7 +120,9 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                  "Examples:\n+2x Will start the pipeline from Frame selection and will run RSEM then filter the"
                  "transcriptome. It will then stop execution there specified by the x.")
             ("input,i",
-                 boostPO::value<std::string>(&input_file), "Input transcriptome file");
+                 boostPO::value<std::string>(&input_file), "Input transcriptome file")
+            (ENTAP_CONFIG::INPUT_FLAG_OVERWRITE.c_str(),
+                "Select this option if you wish to overwrite pre-existing files");
         boostPO::variables_map vm;
         //TODO verify state commands
 
@@ -131,13 +136,20 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
             if (vm.count("version")) {
-                std::cout<<"enTAP version 0.1.1"<<std::endl;
+                std::cout<<"enTAP version 0.2.0"<<std::endl;
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
 
-            bool is_config = (bool) vm.count("config");     // ignore 'config config'
-            bool is_run = (bool) vm.count("run");
 
+            bool is_config = (bool) vm.count("config");     // ignore 'config config'
+            bool is_protein, is_nucleotide;
+            is_protein = (bool)vm.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN);
+            is_nucleotide = (bool)vm.count(ENTAP_CONFIG::INPUT_FLAG_RUNNUCLEOTIDE);
+            if (is_protein && is_nucleotide) {
+                throw ExceptionHandler("Cannot specify both protein and nucleotide",
+                    ENTAP_ERR::E_INPUT_PARSE);
+            }
+            bool is_run = is_protein || is_nucleotide;
             if (!is_config && !is_run) {
                 err_msg = "Either config option or run option are required";
                 throw(ExceptionHandler(err_msg.c_str(),ENTAP_ERR::E_INPUT_PARSE));

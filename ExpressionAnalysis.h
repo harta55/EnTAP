@@ -9,12 +9,12 @@
 
 class ExpressionAnalysis {
 public:
-    ExpressionAnalysis(std::string&, int, std::string&, std::string&);
+    ExpressionAnalysis(std::string&, int, std::string&, std::string&, bool);
     std::string execute(short, bool, std::string);
 
 private:
     std::string _inpath,_alignpath, _exepath, _outpath;
-    bool _ispaired;
+    bool _ispaired, _overwrite;
     int _threads;
     std::string rsem();
 };

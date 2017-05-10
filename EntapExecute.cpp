@@ -29,6 +29,7 @@ namespace boostFS = boost::filesystem;
 namespace entapExecute {
     ExecuteStates state;
     std::string _frame_selection_exe, _expression_exe, _diamond_exe, _outpath;
+    bool _blast = false; // false for blastx, true for blastp
 
     void execute_main(boost::program_options::variables_map &user_input,std::string exe_path,
             std::unordered_map<std::string,std::string> &config_map) {
@@ -98,6 +99,7 @@ namespace entapExecute {
                 switch (state) {
                     case FRAME_SELECTION:
                         genemark_out = genemark.execute(0);
+                        _blast = true;
                         break;
                     case RSEM:
                         if (!user_input.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
@@ -226,7 +228,7 @@ namespace entapExecute {
             throw ExceptionHandler("Neither genemark, nor rsem files were found", ENTAP_ERR::E_INIT_TAX_READ);
         }
         std::string out_path = _outpath +
-                               file_name.stem().string()+"_filtered"+file_name.extension().string();
+                               file_name.stem().string()+"final"+file_name.extension().string();
         std::string out_removed = _outpath +
                                   file_name.stem().string()+"_removed"+file_name.extension().string();
         if (genemark && !rsem) {
@@ -379,13 +381,18 @@ namespace entapExecute {
                 } catch (...) {
                     new_query.setInformative(stitle);
                 }
+                if (new_query.isContaminant()) {
+                    file_contaminants<<new_query<<std::endl;
+                    continue;
+                }
                 // can implement buckets if memory is not issue
                 std::map<std::string,QuerySequence>::iterator it = query_map.find(qseqid);
                 if (it != query_map.end()) {
-                    QuerySequence temp = query_map.at(qseqid);
+//                    QuerySequence temp = query_map.at(qseqid);
                     // todo filter database files separately
                     if (new_query > it->second) {
                         if (it->second.isContaminant()) {
+                            std::cout<<"CONTAM"<<std::endl;
                             file_contaminants<<it->second<<std::endl;
                         }
                         file_removed<<it->second<<std::endl;
@@ -404,12 +411,14 @@ namespace entapExecute {
 
     void diamond_blast(std::string input_file, std::string output_file, std::string std_out,
                        std::string &database,int &threads) {
-        std::string diamond_run = _diamond_exe + " blastx " " -d " + database +
-        " -q " + input_file + " -o " + output_file + " -p " + std::to_string(threads) +" -f " +
+        std::string blast_type;
+        _blast ? blast_type = "blastp" : blast_type = "blastx";
+        std::string diamond_run = _diamond_exe + " " + blast_type +" -d " + database +
+        " --sensitive" + " -k 10" + " -q " + input_file + " -o " + output_file + " -p " + std::to_string(threads) +" -f " +
                 "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore stitle";
         if (entapInit::execute_cmd(diamond_run, std_out) != 0) {
             throw ExceptionHandler("Error in DIAMOND run with database located at: " +
-                input_file, ENTAP_ERR::E_INIT_TAX_INDEX);
+                database, ENTAP_ERR::E_INIT_TAX_INDEX);
         }
     }
 
@@ -436,7 +445,7 @@ namespace entapExecute {
         std::string id_lineage = database[species];
         std::transform(id_lineage.begin(),id_lineage.end(), id_lineage.begin(),::tolower);
         for (auto const& contaminant:contams) {
-            if (id_lineage.find(contaminant)) return true;
+            if (id_lineage.find(contaminant)!=std::string::npos) return true;
         }
         return false;
     }

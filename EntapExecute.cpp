@@ -93,11 +93,11 @@ namespace entapExecute {
         state = INIT;
         try {
             databases = verify_databases(user_input["uniprot"].as<std::vector<std::string>>(),
-                   user_input["ncbi"].as<std::vector<std::string>>(),other_databases,exe_path);
+                   user_input["ncbi"].as<std::vector<std::string>>(),other_databases,exe_path,
+                    config_map);
             init_exe_paths(config_map, exe_path);
         } catch (ExceptionHandler &e) {throw e;}
         verify_state(state_queue, state_flag);
-
 
         FrameSelection genemark = FrameSelection(input_path,_frame_selection_exe,_outpath,is_overwrite);
         ExpressionAnalysis rsem = ExpressionAnalysis(input_path,threads,_expression_exe,_outpath,is_overwrite);
@@ -146,33 +146,68 @@ namespace entapExecute {
     }
 
     std::list<std::string> verify_databases(std::vector<std::string> uniprot, std::vector<std::string>ncbi,
-                                            std::vector<std::string> database, std::string &exe) {
+                                            std::vector<std::string> database, std::string &exe,
+                                            std::unordered_map<std::string,std::string> &config) {
         entapInit::print_msg("Verifying databases...");
         // return file paths
+        // config file paths already exist (checked in main)
         std::list<std::string> file_paths;
 
-        std::string path;
+        std::string path, config_path;
         entapInit::print_msg("Verifying uniprot databases...");
         if (uniprot.size()>0) {
             for (auto const& u_flag:uniprot) {
                 if (u_flag.compare(ENTAP_CONFIG::INPUT_UNIPROT_NULL)!=0) {
-                    path = exe+ENTAP_CONFIG::UNIPROT_INDEX_PATH + u_flag + ".dmnd";
+                    if (u_flag == ENTAP_CONFIG::INPUT_UNIPROT_SWISS){
+                        config_path = config.at(ENTAP_CONFIG::KEY_UNIPROT_SWISS);
+                    } else if (u_flag == ENTAP_CONFIG::INPUT_UNIPROT_TREMBL){
+                        config_path = config.at(ENTAP_CONFIG::KEY_UNIPROT_TREMBL);
+                    } else if (u_flag == ENTAP_CONFIG::INPUT_UNIPROT_UR90) {
+                        config_path = config.at(ENTAP_CONFIG::KEY_UNIPROT_UR90);
+                    } else if (u_flag == ENTAP_CONFIG::INPUT_UNIPROT_UR100) {
+                        config_path = config.at(ENTAP_CONFIG::KEY_UNIPROT_UR100);
+                    }
+                    if (!config_path.empty()) {
+                        entapInit::print_msg("Config file database found, using this path at: " +
+                            config_path);
+                        path = config_path;
+                    } else {
+                        path = exe+ENTAP_CONFIG::UNIPROT_INDEX_PATH + u_flag + ".dmnd";
+                    }
                     if (!entapInit::file_exists(path))
                         throw ExceptionHandler("Database located at: "+path+" not found", ENTAP_ERR::E_INPUT_PARSE);
                     file_paths.push_back(path);
+                } else {
+                    entapInit::print_msg("No/null Uniprot databases detected");
+                    break;
                 }
             }
         }
         entapInit::print_msg("Complete");
         entapInit::print_msg("Verifying NCBI databases...");
-
         if (ncbi.size()>0) {
             for (auto const& u_flag:ncbi) {
                 if (u_flag.compare(ENTAP_CONFIG::NCBI_NULL)!=0) {
-                    path = exe+ENTAP_CONFIG::NCBI_INDEX_PATH + u_flag + ".dmnd";
+                    if (u_flag == ENTAP_CONFIG::NCBI_NONREDUNDANT) {
+                        config_path = config.at(ENTAP_CONFIG::KEY_NCBI_NR);
+                    } else if (u_flag == ENTAP_CONFIG::NCBI_REFSEQ_PLANT) {
+                        config_path = config.at(ENTAP_CONFIG::KEY_NCBI_REFSEQ_SEPARATE);
+                    } else if (u_flag == ENTAP_CONFIG::NCBI_REFSEQ_COMP) {
+                        config_path = config.at(ENTAP_CONFIG::KEY_NCBI_REFSEQ_COMPLETE);
+                    }
+                    if (!config_path.empty()) {
+                        entapInit::print_msg("Config file database found, using this path at: " +
+                                             config_path);
+                        path = config_path;
+                    } else {
+                        path = exe + ENTAP_CONFIG::NCBI_INDEX_PATH + u_flag + ".dmnd";
+                    }
                     if (!entapInit::file_exists(path))
-                        throw ExceptionHandler("Database located at: "+path+" not found", ENTAP_ERR::E_INPUT_PARSE);
+                        throw ExceptionHandler("Database located at: " + path + " not found", ENTAP_ERR::E_INPUT_PARSE);
                     file_paths.push_back(path);
+                } else {
+                    entapInit::print_msg("No/null NCBI databases detected");
+                    break;
                 }
             }
         }
@@ -203,6 +238,16 @@ namespace entapExecute {
             }
         }
         entapInit::print_msg("Verification complete!");
+        if (file_paths.size()>0) {
+            std::string database_final = "\n\nDatabases selected:\n";
+            for (std::string base: file_paths) {
+                database_final += base+"\n";
+            }
+            entapInit::print_msg(database_final);
+        } else{
+            throw ExceptionHandler("No databases selected, exiting...",
+                ENTAP_ERR::E_RUN_VERIFY_DATABASES);
+        }
         return file_paths;
     }
 

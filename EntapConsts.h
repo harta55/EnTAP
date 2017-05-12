@@ -20,6 +20,7 @@ namespace ENTAP_ERR {
     const int E_INIT_TAX_READ = 55;
 
     const int E_RUN_EXECUTION_PATHS         = 105;
+    const int E_RUN_VERIFY_DATABASES        = 106;
     const int E_RUN_GENEMARK                = 100;
     const int E_RUN_RSEM_VALIDATE           = 110;
     const int E_RUN_RSEM_CONVERT            = 111;
@@ -32,6 +33,7 @@ namespace ENTAP_CONFIG {
     //-------------------Config File----------------------//
     const std::string CONFIG_FILE = "entap_config.txt";
     const std::string KEY_UNIPROT_SWISS = "uniprot_swiss_path";
+    const std::string KEY_UNIPROT_UR90 = "uniprot_ur90_path";
     const std::string KEY_UNIPROT_UR100 = "uniprot_ur100_path";
     const std::string KEY_UNIPROT_TREMBL = "uniprot_trembl_path";
     const std::string KEY_NCBI_NR = "ncbi_nr_path";
@@ -54,6 +56,8 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_RUNPROTEIN = "runP";
     const std::string INPUT_FLAG_RUNNUCLEOTIDE = "runN";
     const std::string INPUT_FLAG_OVERWRITE = "overwrite";
+    const std::string INPUT_FLAG_NCBI_1 = "ncbi";
+    const std::string INPUT_FLAG_NCBI_2 = "N";
 
 
     const std::string INPUT_UNIPROT_SWISS = "swiss";

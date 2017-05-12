@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <array>
+#include <vector>
 #include <cstring>
 #include <unordered_map>
 #include <vector>
@@ -24,6 +25,7 @@ enum States {
 bool check_key(std::string&);
 std::unordered_map<std::string,std::string> parse_config(std::string&);
 void print_msg(std::string);
+void print_user_input(boostPO::variables_map&);
 void init_log();
 boostPO::variables_map parse_arguments_boost(int,const char**);
 void state_summary(States);
@@ -39,6 +41,7 @@ int main(int argc, const char** argv) {
         state = PARSE_ARGS;
         std::unordered_map<std::string,std::string> config_map;
         boostPO::variables_map inputs = parse_arguments_boost(argc,argv);
+        print_user_input(inputs);
         config_map = parse_config(exe_path);
         if (state == INIT_ENTAP) {
             entapInit::init_entap(inputs, exe_path);  // todo state input 1x, user wants to start at 1 and stop
@@ -258,6 +261,7 @@ bool check_key(std::string& key) {
     if (key.compare(ENTAP_CONFIG::KEY_UNIPROT_UR100)==0) return true;
     if (key.compare(ENTAP_CONFIG::KEY_DIAMOND_EXE)==0) return true;
     if (key.compare(ENTAP_CONFIG::KEY_GENEMARK_EXE)==0) return true;
+    if (key.compare(ENTAP_CONFIG::KEY_UNIPROT_UR90)==0) return true;
     return key.compare(ENTAP_CONFIG::KEY_RSEM_EXE) == 0;
 }
 
@@ -274,6 +278,33 @@ void print_msg(std::string msg) {
     log_file << date_time.substr(0, date_time.size() - 2)
                  + ": " + msg << std::endl;
     log_file.close();
+}
+
+void print_user_input(boostPO::variables_map &map) {
+    std::string output = "\n\nUser Inputs:";
+    for (const auto& it : map) {
+        std::string key = it.first.c_str();
+        output += "\n" + key+ ": ";
+        auto& value = it.second.value();
+        if (auto v = boost::any_cast<std::string>(&value)) {
+            output += *v;
+        } else if (auto v = boost::any_cast<std::vector<std::string>>(&value)) {
+            if (v->size()>0) {
+                for (auto const& val:*v) {
+                    output+=val+",";
+                }
+            } else {
+                output += "null";
+            }
+        } else if (auto v = boost::any_cast<float>(&value)){
+            output += std::to_string(*v);
+        } else if (auto v = boost::any_cast<double>(&value)) {
+            output += std::to_string(*v);
+        } else {
+            output += "null";
+        }
+    }
+    print_msg(output+"\n");
 }
 
 std::string get_exe_path() {

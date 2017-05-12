@@ -1,4 +1,5 @@
 uniprot_swiss_path=
+uniprot_ur90_path=
 uniprot_ur100_path=
 uniprot_trembl_path=
 ncbi_nr_path=

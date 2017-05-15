@@ -11,6 +11,7 @@ namespace ENTAP_ERR {
     const int E_INPUT_PARSE = 10;
     const int E_SUCCESS = 11;
     const int E_CONFIG_PARSE = 12;
+    const int E_CONFIG_CREATE = 13;
     const int E_INIT_TAX_DOWN = 20;
     const int E_INIT_TAX_INDEX = 21;
     const int E_INIT_TAX_SERIAL = 22;
@@ -53,6 +54,9 @@ namespace ENTAP_CONFIG {
 
 
     const double E_VALUE = 1e-5;
+
+    const std::string DEBUG_FILENAME = "debug.txt";
+    const std::string LOG_FILENAME = "log_file.txt";
     //------------------USER INPUTS-----------------------//
     const std::string INPUT_FLAG_ALIGN = "align";
     const std::string INPUT_FLAG_RUNPROTEIN = "runP";
@@ -103,6 +107,8 @@ namespace ENTAP_EXECUTE {
 
     const std::string OUTFILE_DEFAULT = "outfiles";
     const std::string GENEMARK_EXE_PATH = "/libs/gmst_linux_64/gmst.pl";
+    const std::string GENEMARK_LOG_FILE = "gms.log";
+    const std::string GENEMARK_OUT_PATH = "genemark/";
 
     const std::string ENTAP_OUTPUT = "entap_out/";
 

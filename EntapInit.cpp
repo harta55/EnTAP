@@ -226,7 +226,7 @@ namespace entapInit {
         time_t rawtime;
         time(&rawtime);
         std::string date_time = ctime(&rawtime);
-        std::ofstream log_file("debug.txt", std::ios::out | std::ios::app);
+        std::ofstream log_file(ENTAP_CONFIG::DEBUG_FILENAME, std::ios::out | std::ios::app);
         log_file << date_time.substr(0, date_time.size() - 2)
                     + ": " + msg << std::endl;
         log_file.close();
@@ -278,7 +278,8 @@ namespace entapInit {
         while (!finished[0] || !finished[1]) {
             if (!finished[0]) {
                 while ((n = child.err().readsome(buf, sizeof(buf))) > 0)
-//                    std::cerr.write(buf, n);
+                    continue;
+                    // std::cerr.write(buf, n);
                 if (child.eof()) {
                     finished[0] = true;
                     if (!finished[1])
@@ -287,7 +288,8 @@ namespace entapInit {
             }
             if (!finished[1]) {
                 while ((n = child.out().readsome(buf, sizeof(buf))) > 0)
-//                    std::cout.write(buf, n).flush();
+                    continue;
+                    // std::cout.write(buf, n).flush();
                 if (child.eof()) {
                     finished[1] = true;
                     if (!finished[0])

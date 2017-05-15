@@ -15,6 +15,7 @@ class FrameSelection {
         std::string _exe_path,_inpath, _outpath;
         bool _overwrite;
         std::string genemarkst();
+        std::string genemarkStats(std::string&);
 };
 
 

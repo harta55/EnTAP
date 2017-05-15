@@ -234,8 +234,10 @@ namespace entapExecute {
             }
             entapInit::print_msg(database_final);
         } else{
-            throw ExceptionHandler("No databases selected, exiting...",
-                ENTAP_ERR::E_RUN_VERIFY_DATABASES);
+//            throw ExceptionHandler("No databases selected, exiting...",
+//                ENTAP_ERR::E_RUN_VERIFY_DATABASES);
+            entapInit::print_msg("No databases selected, some funcionality "
+                                         "may not be able to run");
         }
         return file_paths;
     }
@@ -510,6 +512,13 @@ namespace entapExecute {
                 "sstart"<<'\t'<<"send"<<'\t'<<"e_val"<<'\t'<<
                 "informative"<<'\t'<<"species"<<'\t'<<"database_path"<<std::endl;
         ofstream.close();
+    }
+
+    void print_statistics(std::string &msg, std::string &out_path) {
+        std::string file_path = out_path + ENTAP_CONFIG::LOG_FILENAME;
+        std::ofstream log_file(out_path, std::ios::out | std::ios::app);
+        log_file << msg<<std::endl;
+        log_file.close();
     }
 
     // Doesn't check default paths if user does not want to use that portion of enTAP

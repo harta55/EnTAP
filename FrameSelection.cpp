@@ -25,7 +25,6 @@ std::string FrameSelection::execute(short software) {
         switch (software) {
             case 0:
                 return genemarkst();
-                break;
             default:
                 return genemarkst();
         }
@@ -53,9 +52,11 @@ std::string FrameSelection::genemarkst() {
     }
     boostFS::create_directories(genemark_out_dir);
 
-    entapInit::print_msg("Running genemark...");
     std::string genemark_cmd = _exe_path + " -faa -fnn " + _inpath;
-    if (entapInit::execute_cmd(genemark_cmd) != 0 ) {
+    std::string genemark_std_out = genemark_out_dir + "genemark_run";
+    entapInit::print_msg("Running genemark...\n" + genemark_cmd);
+
+    if (entapInit::execute_cmd(genemark_cmd,genemark_std_out) != 0 ) {
         throw ExceptionHandler("Error in running genemark at file located at: " +
                                _inpath, ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
     }
@@ -83,12 +84,35 @@ std::string FrameSelection::genemarkst() {
     }
     std::string lst_file = file_name.string() + ".lst";
     std::string out_lst = genemark_out_dir + lst_file;
+    std::string out_gmst_log = genemark_out_dir+ENTAP_EXECUTE::GENEMARK_LOG_FILE;
 
-    if (rename(lst_file.c_str(),out_lst.c_str())!=0) {
+    if (rename(lst_file.c_str(),out_lst.c_str())!=0 ||
+            rename(ENTAP_EXECUTE::GENEMARK_LOG_FILE.c_str(),out_gmst_log.c_str())!=0) {
         throw ExceptionHandler("Error moving genemark results", ENTAP_ERR::E_INIT_TAX_READ);
     }
     entapInit::print_msg("Success!");
     return final_out;
 }
 
+std::string FrameSelection::genemarkStats(std::string &protein_path) {
+    // generate maps, query->sequence
+    std::map<std::string,std::string> nucleotide_map;
+    std::map<std::string,std::string> protein_map;
+    std::string out_removed_path = _outpath + ENTAP_EXECUTE::GENEMARK_OUT_PATH;
+
+    std::ifstream in_file(_inpath);
+    std::string line, sequence, seq_id;
+    while (getline(in_file,line)){
+        if (line.empty()) continue;
+        if (line.find(">")==0) {
+            if (!seq_id.empty()) nucleotide_map.emplace(seq_id,sequence);
+            sequence = "";
+            seq_id = line.substr(line.find(">")+1,line.find(" "));
+            sequence = line;
+        } else {
+            sequence += line;
+        }
+    }
+    in_file.close();
+}
 

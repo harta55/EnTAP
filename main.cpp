@@ -30,6 +30,7 @@ void init_log();
 boostPO::variables_map parse_arguments_boost(int,const char**);
 void state_summary(States);
 std::string get_exe_path();
+void generate_config(std::string&);
 
 States state;   // init
 
@@ -139,7 +140,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
             if (vm.count("version")) {
-                std::cout<<"enTAP version 0.2.0"<<std::endl;
+                std::cout<<"enTAP version 0.2.1"<<std::endl;
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
 
@@ -220,11 +221,18 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
 std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
     print_msg("Parsing configuration file...");
     std::unordered_map<std::string,std::string> config_map;
-    if (!entapInit::file_exists(exe + "/" +ENTAP_CONFIG::CONFIG_FILE)){
-        throw ExceptionHandler("Configuration file was not found",
-                               ENTAP_ERR::E_CONFIG_PARSE);
+    std::string config_path = exe + "/" + ENTAP_CONFIG::CONFIG_FILE;
+    if (!entapInit::file_exists(config_path)){
+        print_msg("Config file not found, generating new file...");
+        try {
+            generate_config(config_path);
+        } catch (std::exception &e){
+                throw ExceptionHandler(e.what(),ENTAP_ERR::E_CONFIG_CREATE);
+        }
+        print_msg("Config file successfully created");
     }
-    std::ifstream in_file(ENTAP_CONFIG::CONFIG_FILE);
+    print_msg("Config file found at: " + config_path);
+    std::ifstream in_file(config_path);
     std::string line,key;
     while (std::getline(in_file,line)) {
         std::istringstream in_line(line);
@@ -250,6 +258,24 @@ std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
     }
     print_msg("Success!");
     return config_map;
+}
+
+void generate_config(std::string &path) {
+    std::ofstream config_file(ENTAP_CONFIG::CONFIG_FILE, std::ios::out | std::ios::app);
+    config_file <<
+                ENTAP_CONFIG::KEY_UNIPROT_SWISS             +"=\n"+
+                ENTAP_CONFIG::KEY_UNIPROT_TREMBL            +"=\n"+
+                ENTAP_CONFIG::KEY_UNIPROT_UR90              +"=\n"+
+                ENTAP_CONFIG::KEY_UNIPROT_UR100             +"=\n"+
+                ENTAP_CONFIG::KEY_NCBI_NR                   +"=\n"+
+                ENTAP_CONFIG::KEY_NCBI_REFSEQ_COMPLETE      +"=\n"+
+                ENTAP_CONFIG::KEY_NCBI_REFSEQ_SEPARATE      +"=\n"+
+                ENTAP_CONFIG::KEY_DIAMOND_EXE               +"=\n"+
+                ENTAP_CONFIG::KEY_RSEM_EXE                  +"=\n"+
+                ENTAP_CONFIG::KEY_GENEMARK_EXE
+
+                << std::endl;
+    config_file.close();
 }
 
 bool check_key(std::string& key) {

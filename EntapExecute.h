@@ -42,7 +42,7 @@ namespace entapExecute {
     void print_header(std::string);
     bool valid_state(enum ExecuteStates);
     std::string init_exe_paths(std::unordered_map<std::string,std::string>&, std::string&);
-
+    void print_statistics(std::string&, std::string&);
 };
 
 

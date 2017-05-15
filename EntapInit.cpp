@@ -12,6 +12,7 @@
 #include "boost/filesystem.hpp"
 #include "EntapConsts.h"
 #include "ExceptionHandler.h"
+#include "EntapExecute.h"
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/unordered_map.hpp>
 #include <boost/archive/binary_iarchive.hpp>
@@ -19,6 +20,7 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/unordered_set.hpp>
 #include <boost/program_options/variables_map.hpp>
+#include <thread>
 #include "boost/archive/text_oarchive.hpp"
 #include "boost/archive/text_iarchive.hpp"
 
@@ -44,26 +46,34 @@ namespace entapInit {
 
     InitStates state;
     const boostFS::path current_path(boost::filesystem::current_path());
+    std::list<std::string> _compiled_databases;
 
-    void init_entap(boost::program_options::variables_map user_map, std::string exe_path) {
 
-        // todo print map
-//        print_input(input_map);
+    void init_entap(boost::program_options::variables_map user_map, std::string exe_path,
+            std::unordered_map<std::string,std::string> &config_map) {
 
         std::string outpath = current_path.string() + user_map["tag"].as<std::string>();
         boostFS::path bin_dir(exe_path + ENTAP_CONFIG::BIN_PATH);
         boostFS::path data_dir(exe_path + "/databases");
-        boostFS::path out_dir(outpath);
-        bool out_dir_state = (boostFS::create_directories(out_dir));
         bool bin_dir_state = (boostFS::create_directories(bin_dir));
         bool data_dir_state = (boostFS::create_directories(data_dir));
 
+        int threads = get_supported_threads(user_map);
+
+        std::vector<std::string> ncbi_vect, uniprot_vect, database_vect;
+        ncbi_vect = user_map[ENTAP_CONFIG::INPUT_FLAG_NCBI_1].as<std::vector<std::string>>();
+        uniprot_vect = user_map[ENTAP_CONFIG::INPUT_FLAG_UNIPROT].as<std::vector<std::string>>();
+        if (user_map.count("database"))
+            database_vect= user_map["database"].as<std::vector<std::string>>();
+
+        std::string diamond_exe = entapExecute::init_exe_paths(config_map,exe_path);
         // while state != EXIT_STATE
         try {
             state = INIT_TAX;
             init_taxonomic(exe_path);
-//            init_uniprot(input_map["U"]);
-//            init_diamond_index(input_map["U"],input_map["N"], input_map["d"]);
+            init_uniprot(uniprot_vect, exe_path);
+            init_ncbi(ncbi_vect,exe_path);
+            init_diamond_index(diamond_exe,exe_path, threads);
 
         }catch (ExceptionHandler &e) {
             throw ExceptionHandler(e.what(), e.getErr_code());
@@ -93,6 +103,7 @@ namespace entapInit {
         } else {
             print_msg("Database found. Updating...");
             // TODO Update taxonomic database
+            return;
         }
 
         print_msg("Indexing taxonomic database...");
@@ -104,7 +115,6 @@ namespace entapInit {
             while (std::getline(infile, line)) {
                 std::istringstream iss(line);
                 std::string lineage, sci_name, tax_id;
-
                 std::getline(iss, sci_name, '\t');
                 std::getline(iss, tax_id, '\t');
                 std::getline(iss, lineage, '\t');
@@ -133,71 +143,83 @@ namespace entapInit {
 
     }
 
-    void init_uniprot(std::string d) {
+    // may handle differently than ncbi with formatting
+    void init_uniprot(std::vector<std::string> &flags, std::string exe) {
         // TODO setup go term/interpro... integration, date tag, use bool input
+        print_msg("Parsing uniprot databases...");
+        if (flags.empty()) return;
         std::string ftp_address;
-        if (d.compare(ENTAP_CONFIG::INPUT_UNIPROT_SWISS) == 0) {
-            ftp_address = ENTAP_CONFIG::UNIPROT_FTP_SWISS;
-        } else {
-            std::string msg_err = "Invalid input";
-            throw ExceptionHandler(msg_err, ENTAP_ERR::E_INPUT_PARSE);
-        }
+        std::string uniprot_bin = exe + "/" + ENTAP_CONFIG::BIN_PATH + "uniprot_";
+        std::string uniprot_data = exe + ENTAP_CONFIG::UNIPROT_BASE_PATH;
 
-        std::string file_path = ENTAP_CONFIG::UNIPROT_BASE_PATH + d + ".fasta.gz";
-        std::string uniprot_command = "wget -O "+ file_path + " " + ftp_address;
-        print_msg("Downloading uniprot: " + d + " database from " +
-            ftp_address + "...");
-        std::cout<<uniprot_command <<std::endl;
-        redi::ipstream in(uniprot_command);
-        in.close();
-        int status = in.rdbuf()->status();
-        if (status != 0) {
-            throw ExceptionHandler("Error in downloading uniprot database", ENTAP_ERR::E_INIT_TAX_DOWN);
-        }
-
-        std::string unzip_command = "gzip -d " + file_path;
-        redi::ipstream unz(unzip_command);
-        unz.close();
-        status = unz.rdbuf()->status();
-        if (status != 0) {
-            throw ExceptionHandler("Error in unzipping Uniprot Database", ENTAP_ERR::E_INIT_TAX_DOWN);
-        }
-    }
-
-    void init_ncbi(std::string d) {
-
-    }
-
-    void init_database_parse(std::string path) {
-
-    }
-
-    void init_diamond_index(std::string uniprot, std::string ncbi, std::string database) {
-        print_msg("Preparing to index database(s) with Diamond...");
-        remove(ENTAP_CONFIG::DIAMOND_INDX_OUT_PATH.c_str());
-        if (uniprot.compare(ENTAP_CONFIG::INPUT_UNIPROT_NULL) != 0)  {
-//            std::string uniprot_path = ENTAP_CONFIG::UNIPROT_BASE_PATH + uniprot + ".fasta";
-            std::string uniprot_path = "databases/database_sequences.fasta";
-            if (file_exists(uniprot_path)) {
-                print_msg("Uniprot Database - " + uniprot + " found.");
-                std::string uniprot_index_command = ENTAP_CONFIG::DIAMOND_PATH_EXE + " makedb --in " +
-                        uniprot_path + " -d " + "bin/" + "uniprot_"+uniprot;
-                print_msg("Beginning to index database with Diamond...");
-                if (execute_cmd(uniprot_index_command, ENTAP_CONFIG::DIAMOND_INDX_OUT_PATH)!=0) {
-                    std::cerr<<"Error!!" << std::endl;
-                }
-                print_msg("Success!");
+        for (auto &flag : flags) {
+            if (flag == ENTAP_CONFIG::INPUT_UNIPROT_NULL) return;
+            std::string diamond_path = uniprot_bin + flag + ".dmnd";
+            std::string database_path = uniprot_data + flag + ".fasta";
+            if (file_exists(database_path)) {
+                print_msg("Database at: " + database_path + " found, updating...");
+                update_database(database_path);
+                _compiled_databases.push_back(database_path);
             } else {
-                throw ExceptionHandler("Uniprot database file not found", ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
+                print_msg("Database at: " + database_path + " not found, downloading...");
+                try {
+                    std::string temp_path = download_file(flag, database_path);
+                    decompress_file(temp_path);
+                    _compiled_databases.push_back(database_path);
+                } catch (ExceptionHandler &e) {throw e;}
             }
         }
-        // TODO ncbi and random database array
     }
 
-    void print_input(std::unordered_map<std::string, std::string> map) {
-        for ( auto it = map.begin(); it != map.end(); ++it )
-            std::cout << " " << it->first << ":" << it->second;
-        std::cout << std::endl;
+    void init_ncbi(std::vector<std::string> &flags, std::string exe) {
+        // TODO setup go term/interpro... integration, date tag, use bool input
+        print_msg("Parsing NCBI databases...");
+        if (flags.empty()) return;
+        std::string ftp_address;
+        std::string ncbi_data = exe + ENTAP_CONFIG::NCBI_BASE_PATH;
+        for (auto &flag : flags) {
+            if (flag == ENTAP_CONFIG::INPUT_UNIPROT_NULL) return;
+            std::string database_path = ncbi_data + flag + ".fasta";
+            if (file_exists(database_path)) {
+                print_msg("Database at: " + database_path + " found, updating...");
+                update_database(database_path);
+                _compiled_databases.push_back(database_path);
+            } else {
+                print_msg("Database at: " + database_path + " not found, downloading...");
+                try {
+                    std::string temp_path = download_file(flag, database_path);
+                    decompress_file(temp_path);
+                    _compiled_databases.push_back(database_path);
+                } catch (ExceptionHandler &e) {throw e;}
+            }
+        }
+    }
+
+    void init_diamond_index(std::string diamond_exe,std::string exe_path,int threads) {
+        print_msg("Preparing to index database(s) with Diamond...");
+        if (_compiled_databases.empty()) return;
+        std::string bin_path = exe_path + "/" + ENTAP_CONFIG::BIN_PATH;
+        for (std::string item : _compiled_databases) {
+            boostFS::path path(item);
+            std::string filename = path.filename().stem().string();
+            std::string indexed_path = bin_path + filename;
+            std::string std_out = bin_path + filename + "_index";
+            boostFS::remove(std_out+".err");
+            boostFS::remove(std_out+".out");
+
+            // TODO change for updated databases
+            if (file_exists(indexed_path + ".dmnd")) {
+                print_msg("File found at " + indexed_path + ".dmnd, skipping...");
+                continue;
+            }
+            std::string index_command = diamond_exe + " makedb --in " +
+                item + " -d " + indexed_path + " -p "+std::to_string(threads);
+            if (execute_cmd(index_command,std_out) != 0) {
+                throw ExceptionHandler("Error indexing database at: " + item,
+                                       ENTAP_ERR::E_INIT_INDX_DATABASE);
+            }
+            print_msg("Database successfully indexed to: " + indexed_path + ".dmnd");
+        }
     }
 
     void print_msg(std::string msg) {
@@ -256,7 +278,7 @@ namespace entapInit {
         while (!finished[0] || !finished[1]) {
             if (!finished[0]) {
                 while ((n = child.err().readsome(buf, sizeof(buf))) > 0)
-                    std::cerr.write(buf, n);
+//                    std::cerr.write(buf, n);
                 if (child.eof()) {
                     finished[0] = true;
                     if (!finished[1])
@@ -265,7 +287,7 @@ namespace entapInit {
             }
             if (!finished[1]) {
                 while ((n = child.out().readsome(buf, sizeof(buf))) > 0)
-                    std::cout.write(buf, n).flush();
+//                    std::cout.write(buf, n).flush();
                 if (child.eof()) {
                     finished[1] = true;
                     if (!finished[0])
@@ -281,5 +303,56 @@ namespace entapInit {
 
     void verify_state() {
         // check current state, move to next state
+    }
+
+    std::string download_file(std::string flag, std::string &path) {
+        std::string ftp_address;
+        std::string output_path;
+
+        if (flag == ENTAP_CONFIG::INPUT_UNIPROT_SWISS) {
+            ftp_address = ENTAP_CONFIG::UNIPROT_FTP_SWISS;
+            output_path += ".gz";
+
+        } else {
+            throw ExceptionHandler("Invalid uniprot flag", ENTAP_ERR::E_INPUT_PARSE);
+        }
+
+        std::string download_command = "wget -O "+ output_path + " " + ftp_address;
+        print_msg("Downloading uniprot: " + flag + " database from " +
+                  ftp_address + "...");
+        int status = execute_cmd(download_command);
+        if (status != 0) {
+            throw ExceptionHandler("Error in downloading uniprot database", ENTAP_ERR::E_INIT_TAX_DOWN);
+        }
+        print_msg("File successfully downloaded to: " + output_path);
+        return output_path;
+    }
+
+    void decompress_file(std::string file_path) {
+        int status;
+        std::string unzip_command = "gzip -d " + file_path;
+        status = execute_cmd(unzip_command);
+        if (status != 0) {
+            throw ExceptionHandler("Error in unzipping database at " +
+                    file_path, ENTAP_ERR::E_INIT_TAX_DOWN);
+        }
+        print_msg("File at: " + file_path + " successfully decompressed");
+    }
+
+    int update_database(std::string file_path) {
+        return 0;
+    }
+
+    int get_supported_threads(boost::program_options::variables_map &user_map) {
+        unsigned int supported_threads = std::thread::hardware_concurrency();
+        int threads;
+        if (user_map["threads"].as<int>() > supported_threads) {
+            entapInit::print_msg("Specified thread number is larger than available threads,"
+                                         "setting threads to " + std::to_string(supported_threads));
+            threads = supported_threads;
+        } else {
+            threads = user_map["threads"].as<int>();
+        }
+        return threads;
     }
 }

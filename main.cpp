@@ -44,7 +44,7 @@ int main(int argc, const char** argv) {
         print_user_input(inputs);
         config_map = parse_config(exe_path);
         if (state == INIT_ENTAP) {
-            entapInit::init_entap(inputs, exe_path);  // todo state input 1x, user wants to start at 1 and stop
+            entapInit::init_entap(inputs, exe_path, config_map);  // todo state input 1x, user wants to start at 1 and stop
         } else if (state == EXECUTE_ENTAP) {
             entapExecute::execute_main(inputs, exe_path,config_map);
         } else {

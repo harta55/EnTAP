@@ -15,6 +15,8 @@ namespace ENTAP_ERR {
     const int E_INIT_TAX_INDEX = 21;
     const int E_INIT_TAX_SERIAL = 22;
     const int E_INIT_INDX_DATA_NOT_FOUND = 30;
+    const int E_INIT_INDX_DATABASE = 31;
+    const int E_INIT_DOWNLOAD = 23;
 
 
     const int E_INIT_TAX_READ = 55;
@@ -58,6 +60,7 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_OVERWRITE = "overwrite";
     const std::string INPUT_FLAG_NCBI_1 = "ncbi";
     const std::string INPUT_FLAG_NCBI_2 = "N";
+    const std::string INPUT_FLAG_UNIPROT = "uniprot";
 
 
     const std::string INPUT_UNIPROT_SWISS = "swiss";
@@ -67,8 +70,6 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_UNIPROT_NULL = "null";
     const std::string INPUT_UNIPROT_DEFAULT = INPUT_UNIPROT_SWISS;
 
-    const std::string UNIPROT_FTP_SWISS = "ftp://ftp.uniprot.org/pub/databases/"
-            "uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz";
     const std::string UNIPROT_BASE_PATH = "/databases/uniprot_";
     const std::string UNIPROT_INDEX_PATH = "/bin/uniprot_";
 
@@ -80,6 +81,13 @@ namespace ENTAP_CONFIG {
     const std::string NCBI_DEFAULT = NCBI_REFSEQ_COMP;
 
     const std::string NCBI_INDEX_PATH = "/bin/ncbi_";
+
+    //------------------FTP PATHS-----------------------//
+    const std::string UNIPROT_FTP_SWISS = "ftp://ftp.uniprot.org/pub/databases/"
+            "uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz";
+    const std::string UNIPROT_FTP_TREMBL = "ftp://ftp.uniprot.org/pub/databases/"
+            "uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz";
+
 
     const std::string DIAMOND_PATH_EXE = "/libs/diamond-0.8.31/bin/diamond";
     const std::string DIAMOND_INDX_OUT_PATH = "outfiles/diamond/diamond_index.out";

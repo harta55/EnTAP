@@ -37,7 +37,7 @@ namespace entapExecute {
             std::unordered_map<std::string,std::string> &config_map) {
         entapInit::print_msg("enTAP Executing...");
 
-        int threads;
+        int threads = entapInit::get_supported_threads(user_input);
         std::list<std::string> diamond_out, databases;
         std::string input_path, rsem_out, genemark_out;
 
@@ -52,17 +52,6 @@ namespace entapExecute {
         _outpath = working_dir.string() + "/" + user_input["tag"].as<std::string>() + "/";
         _entap_outpath = _outpath + ENTAP_EXECUTE::ENTAP_OUTPUT;
         boostFS::create_directories(_entap_outpath);
-//        boostFS::remove_all(_outpath);
-
-        // init_threads
-        unsigned int supported_threads = std::thread::hardware_concurrency();
-        if (user_input["threads"].as<int>() > supported_threads) {
-            entapInit::print_msg("Specified thread number is larger than available threads,"
-                                         "setting threads to " + std::to_string(supported_threads));
-            threads = supported_threads;
-        } else {
-            threads = user_input["threads"].as<int>();
-        }
 
         // init_databases
         std::vector<std::string> other_databases, contaminants;
@@ -524,7 +513,8 @@ namespace entapExecute {
     }
 
     // Doesn't check default paths if user does not want to use that portion of enTAP
-    void init_exe_paths(std::unordered_map<std::string,std::string> &map, std::string &exe) {
+    // returns diamond path for config
+    std::string init_exe_paths(std::unordered_map<std::string,std::string> &map, std::string &exe) {
         entapInit::print_msg("Verifying execution paths...");
         std::string temp_rsem = map[ENTAP_CONFIG::KEY_RSEM_EXE];
         std::string temp_diamond = map[ENTAP_CONFIG::KEY_DIAMOND_EXE];
@@ -554,7 +544,7 @@ namespace entapExecute {
         _diamond_exe = temp_diamond;
         _frame_selection_exe = temp_genemark;
         _expression_exe = temp_rsem;
-        return;
+        return _diamond_exe;
     }
 
     //only assuming between 0-9 NO 2 DIGIT STATES

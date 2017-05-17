@@ -109,6 +109,7 @@ namespace ENTAP_EXECUTE {
     const std::string GENEMARK_EXE_PATH = "/libs/gmst_linux_64/gmst.pl";
     const std::string GENEMARK_LOG_FILE = "gms.log";
     const std::string GENEMARK_OUT_PATH = "genemark/";
+    const std::string GENEMARK_OUT_UNSELECTED = "genemark_frames_not_found.fasta";
 
     const std::string ENTAP_OUTPUT = "entap_out/";
 

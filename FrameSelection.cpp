@@ -5,7 +5,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <fstream>
 #include "FrameSelection.h"
-
+#include "EntapExecute.h"
 #include "ExceptionHandler.h"
 #include "EntapInit.h"
 #include "EntapConsts.h"
@@ -91,28 +91,53 @@ std::string FrameSelection::genemarkst() {
         throw ExceptionHandler("Error moving genemark results", ENTAP_ERR::E_INIT_TAX_READ);
     }
     entapInit::print_msg("Success!");
+    genemarkStats(final_out);
     return final_out;
 }
 
+/**
+ *
+ * @param protein_path - path to .faa file
+ * @return
+ */
 std::string FrameSelection::genemarkStats(std::string &protein_path) {
     // generate maps, query->sequence
-    std::map<std::string,std::string> nucleotide_map;
-    std::map<std::string,std::string> protein_map;
-    std::string out_removed_path = _outpath + ENTAP_EXECUTE::GENEMARK_OUT_PATH;
+    std::map<std::string,std::string> protein_map = entapExecute::generate_seq_map(protein_path);
+    std::string out_removed_path = _outpath + ENTAP_EXECUTE::GENEMARK_OUT_PATH +
+        ENTAP_EXECUTE::GENEMARK_OUT_UNSELECTED;
+    float min_removed,min_selected,max_removed,max_selected,avg_removed,avg_selected;
+    unsigned int count_total = 0, count_removed = 0;
+
+    struct frame_seq {
+        unsigned int length;
+        std::string sequence;
+        std::string frame_type;
+    };
+    std::map<std::string,frame_seq> nucleotide_map;
 
     std::ifstream in_file(_inpath);
+    std::ofstream removed_file(out_removed_path, std::ios::out | std::ios::app);
     std::string line, sequence, seq_id;
+    frame_seq nucleotide_sequence;
     while (getline(in_file,line)){
         if (line.empty()) continue;
         if (line.find(">")==0) {
-            if (!seq_id.empty()) nucleotide_map.emplace(seq_id,sequence);
-            sequence = "";
+            count_total++;
+            if (!seq_id.empty()) {
+                nucleotide_map.emplace(seq_id,nucleotide_sequence);
+                if (protein_map.find(seq_id) == protein_map.end()) {
+                    // Frame was not found
+                    count_removed++;
+                    removed_file<<nucleotide_sequence.sequence;
+                }
+            }
             seq_id = line.substr(line.find(">")+1,line.find(" "));
-            sequence = line;
+            nucleotide_sequence.sequence = line + "\n";
         } else {
-            sequence += line;
+            nucleotide_sequence.sequence += line + "\n";
         }
     }
-    in_file.close();
+    in_file.close(); removed_file.close();
+    return "";
 }
 

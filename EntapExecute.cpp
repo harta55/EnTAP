@@ -434,7 +434,6 @@ namespace entapExecute {
                     // todo filter database files separately
                     if (new_query > it->second) {
                         if (it->second.isContaminant()) {
-                            std::cout<<"CONTAM"<<std::endl;
                             file_contaminants<<it->second<<std::endl;
                         }
                         file_removed<<it->second<<std::endl;
@@ -610,5 +609,23 @@ namespace entapExecute {
 
     bool valid_state(ExecuteStates s) {
         return (s>=FRAME_SELECTION && s<=EXIT);
+    }
+
+    std::map<std::string,std::string> generate_seq_map(std::string input_path) {
+        std::map<std::string,std::string> seq_map;
+        std::ifstream in_file(input_path);
+        std::string line, sequence, seq_id;
+        while (getline(in_file,line)){
+            if (line.empty()) continue;
+            if (line.find(">")==0) {
+                if (!seq_id.empty()) seq_map.emplace(seq_id,sequence);
+                seq_id = line.substr(line.find(">")+1,line.find(" "));
+                sequence = line;
+            } else {
+                sequence += line;
+            }
+        }
+        in_file.close();
+        return seq_map;
     }
 }

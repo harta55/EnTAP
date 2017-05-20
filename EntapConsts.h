@@ -25,6 +25,8 @@ namespace ENTAP_ERR {
     const int E_RUN_EXECUTION_PATHS         = 105;
     const int E_RUN_VERIFY_DATABASES        = 106;
     const int E_RUN_GENEMARK                = 100;
+    const int E_RUN_GENEMARK_PARSE          = 101;
+    const int E_RUN_GENEMARK_STATS          = 102;
     const int E_RUN_RSEM_VALIDATE           = 110;
     const int E_RUN_RSEM_CONVERT            = 111;
     const int E_RUN_RSEM_EXPRESSION         = 112;
@@ -105,16 +107,33 @@ namespace ENTAP_EXECUTE {
     const float RSEM_FPKM_DEFAULT = 0.5;
     const int RSEM_COL_NUM = 7;
 
+    const std::string SIM_SEARCH_DATABASE_BEST = "_best_hits";
+    const std::string SIM_SEARCH_DATABASE_CONTAM = "_best_hits_contam";
+
     const std::string OUTFILE_DEFAULT = "outfiles";
     const std::string GENEMARK_EXE_PATH = "/libs/gmst_linux_64/gmst.pl";
     const std::string GENEMARK_LOG_FILE = "gms.log";
-    const std::string GENEMARK_OUT_PATH = "genemark/";
-    const std::string GENEMARK_OUT_UNSELECTED = "genemark_frames_not_found.fasta";
+    const std::string GENEMARK_HMM_FILE = "GeneMark_hmm.mod";
+    const std::string GENEMARK_OUT_PATH = "frame_selection/";
+    const std::string FRAME_SELECTION_PARTIAL = "partial_genes.fasta";
+    const std::string FRAME_SELECTION_COMPLTE = "complete_genes.fasta";
+    const std::string FRAME_SELECTION_INTERNAL = "internal_genes.fasta";
+    const std::string FRAME_SELECTION_PROCESSED = "frame_selection/processed";
+    const std::string FRAME_SELECTION_LOST = "sequences_lost.fasta";
+    const std::string FRAME_SELECTION_FIVE_FLAG = "Partial 5 Prime";
+    const std::string FRAME_SELECTION_THREE_FLAG = "Partial 3 Prime";
+    const std::string FRAME_SELECTION_COMPLETE_FLAG = "Complete";
+    const std::string FRAME_SELECTION_INTERNAL_FLAG = "Internal";
 
     const std::string ENTAP_OUTPUT = "entap_out/";
 
     const int diamond_col_num = 13;
     const int diamond_e_col = 10;
+    const short SIM_SEARCH_DIAMOND_FLAG = 0;
+}
+
+namespace ENTAP_STATS {
+    const std::string SOFTWARE_BREAK = "----------------------------------------------\n";
 }
 
 

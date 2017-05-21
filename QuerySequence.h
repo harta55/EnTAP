@@ -82,6 +82,8 @@ public:
 
     const std::string &getFrame() const;
 
+    bool isIs_protein() const;
+
 
 };
 

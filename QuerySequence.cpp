@@ -93,6 +93,10 @@ void QuerySequence::setSequence(const std::string &seq) {
     }
 }
 
+bool QuerySequence::isIs_protein() const {
+    return is_protein;
+}
+
 QuerySequence::QuerySequence(bool is_protein, std::string seq){
     this->_is_database_hit = false;
     this->is_protein = is_protein;

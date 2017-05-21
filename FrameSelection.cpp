@@ -203,9 +203,9 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
         double avg_lost = (double)total_removed_len / count_removed;
         std::string stat_output = ENTAP_STATS::SOFTWARE_BREAK + "Frame Selection: GenemarkS-T" +
             "\n" + ENTAP_STATS::SOFTWARE_BREAK;
-        stat_output += "Total sequences frame selected: " + std::to_string(count_map[selected_flag]) +
+        stat_output += "Total sequences frame selected: " + std::to_string(count_selected) +
             "\n\tThese protein sequences were written to: " + protein_path + "\n";
-        stat_output += "Total sequences lost during selection: " + std::to_string(count_map[lost_flag]) +
+        stat_output += "Total sequences lost during selection: " + std::to_string(count_removed) +
             "\n\tThese nucleotide sequences were written to: " + out_removed_path + "\n";
         stat_output += "There were " + std::to_string(count_map[ENTAP_EXECUTE::FRAME_SELECTION_FIVE_FLAG]) +
             " 5 prime partials and " + std::to_string(count_map[ENTAP_EXECUTE::FRAME_SELECTION_THREE_FLAG]) +

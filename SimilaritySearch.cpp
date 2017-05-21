@@ -231,8 +231,10 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
         for (auto &pair : _SEQUENCES) {
             std::map<std::string, QuerySequence>::iterator it = database_map.find(pair.first);
             if (it == database_map.end()) {
-                count_no_hit++;
-                file_no_hits << pair.second.getSequence();
+                if (pair.second.isIs_protein()) {
+                    count_no_hit++;
+                    file_no_hits << pair.second.getSequence();
+                }
             } else {
                 count_filtered++;
                 if (it->second.isContaminant()) {
@@ -276,7 +278,7 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
                 " hits";
         }
         stat_message +=
-                "\n\tThere were also " + std::to_string(count_no_hit) + " sequences that did not hit "
+                "\n\tThere were also " + std::to_string(count_no_hit) + " protein sequences that did not hit "
                 "against this database" +
                 "\n\t\tThese were written to: " + out_no_hits_fa;
         entapExecute::print_statistics(stat_message,_outpath);
@@ -321,6 +323,7 @@ void SimilaritySearch::process_best_diamond_hit(std::list<std::map<std::string,Q
     std::ofstream file_contam_tsv(out_overall_contam_tsv,std::ios::out | std::ios::app);
     std::ofstream file_no_hits(out_overall_no_hits_fa,std::ios::out | std::ios::app);
 
+    std::map<std::string,int> contam_map;
     for (auto &pair : _SEQUENCES) {
         std::map<std::string,QuerySequence>::iterator it = compiled_hit_map.find(pair.first);
         if (it != compiled_hit_map.end()) {
@@ -329,13 +332,50 @@ void SimilaritySearch::process_best_diamond_hit(std::list<std::map<std::string,Q
             file_best_tsv << it->second << std::endl;
             it->second.setSeq_length(pair.second.getSeq_length());
             pair.second = it->second;
+            if (it->second.isContaminant()) {
+                count_contam++;
+                file_contam_fa << pair.second.getSequence()<<std::endl;
+                file_contam_tsv << it->second << std::endl;
+                std::string contam = it->second.get_contam_type();
+                if (contam_map.count(contam)) {
+                    contam_map[contam]++;
+                } else {
+                    contam_map[contam] = 1;
+                }
+            }
         } else {
-            count_no_hit++;
-            file_no_hits << pair.second.getSequence();
+            if (pair.second.isIs_protein()) {
+                count_no_hit++;
+                file_no_hits << pair.second.getSequence();
+            }
         }
     }
+
+    std::string stat_message =
+            "Statistics of compiled results from each Diamond hit: "
+            "\n\tTotal best hits: " + std::to_string(count_total_filtered) +
+            "\n\t\tBest fasta hits were written to: " + out_best_fa +
+            "\n\t\tBest tsv hits were written to: " + out_best_tsv +
+            "\n\tOf the best hits, there were " + std::to_string(count_contam) + " contaminants" +
+            "\n\t\tThe fasta results were written to: " + out_overall_contam_fa +
+            "\n\t\tThe tsv results were written to: " + out_overall_contam_tsv;
+    if (count_contam > 0) {
+        std::string top_contam;
+        int highest_contam=0;
+        for (auto &pair : contam_map) {
+            if (pair.second > highest_contam) top_contam = pair.first;
+        }
+        stat_message +=
+                "\n\t\tThe top contaminant was: " + top_contam + " with " + std::to_string(highest_contam) +
+                " hits";
+    }
+    stat_message +=
+            "\n\tThere were also " + std::to_string(count_no_hit) + " protein sequences that did not hit "
+                    "against any database" +
+            "\n\t\tThese were written to: " + out_overall_no_hits_fa;
+    entapExecute::print_statistics(stat_message,_outpath);
     file_best_tsv.close(); file_best_fa.close();file_contam_fa.close();
-    file_contam_tsv.close();
+    file_contam_tsv.close(); diamond_maps.clear();
 }
 
 std::list<std::string> SimilaritySearch::find_diamond_files() {

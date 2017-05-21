@@ -66,13 +66,12 @@ namespace entapExecute {
         // init_contam_filter
         if (user_input.count("contam")) {
             contaminants = user_input["contam"].as<std::vector<std::string>>();
-        } else contaminants.push_back("");
+        }
         for (int ind = 0; ind < contaminants.size(); ind++) {
             if (contaminants[ind].empty()) continue;
             std::string &str = contaminants[ind];
             std::transform(str.begin(), str.end(), str.begin(), ::tolower);
         }
-
         // init_state_control
         std::string user_state_str;
         bool state_flag = false;
@@ -83,7 +82,6 @@ namespace entapExecute {
                 state_queue.push(c);
             }
         }
-
         state = INIT;
         try {
             databases = verify_databases(user_input["uniprot"].as<std::vector<std::string>>(),
@@ -96,7 +94,7 @@ namespace entapExecute {
         FrameSelection genemark = FrameSelection(input_path, _frame_selection_exe, _outpath, is_overwrite);
         ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads, _expression_exe, _outpath, is_overwrite);
         SimilaritySearch diamond = SimilaritySearch(databases, input_path, threads, is_overwrite, _diamond_exe,
-                                                    _outpath);
+                                                    _outpath, user_input["e"].as<double>(),exe_path);
         std::map<std::string, QuerySequence> SEQUENCE_MAP = init_sequence_map(input_path);
 
         while (state != EXIT) {
@@ -115,8 +113,9 @@ namespace entapExecute {
                         break;
                     case RSEM:
                         if (!user_input.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
-                            throw ExceptionHandler("No alignment file specified",
-                                                   ENTAP_ERR::E_INPUT_PARSE);
+//                            throw ExceptionHandler("No alignment file specified", ENTAP_ERR::E_INPUT_PARSE);
+                            entapInit::print_msg("No alignment file specified, skipping expression analysis");
+                            break;
                         }
                         rsem.execute(0, is_paired, user_input[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>());
                         break;
@@ -129,7 +128,7 @@ namespace entapExecute {
                         diamond_out = diamond.execute(0, input_path, _blastp);
                         break;
                     case DIAMOND_PARSE:
-                        diamond_parse(diamond_out, contaminants, user_input["e"].as<double>(), input_path, exe_path);
+                        diamond.parse_files(0,contaminants,input_path,SEQUENCE_MAP);
                     default:
                         state = EXIT;
                         break;
@@ -140,6 +139,7 @@ namespace entapExecute {
             }
         }
     }
+
 
     std::list<std::string> verify_databases(std::vector<std::string> uniprot, std::vector<std::string> ncbi,
                                             std::vector<std::string> database, std::string &exe,
@@ -377,115 +377,6 @@ namespace entapExecute {
     }
 
 
-    // input: 3 database string array of selected databases
-    void diamond_parse(std::list<std::string> diamond_files, std::vector<std::string> contams,
-                       double user_e, std::string transcriptome, std::string &exe) {
-        entapInit::print_msg("Beginning to filter individual diamond_files...");
-        std::unordered_map<std::string, std::string> taxonomic_database;
-        std::map<std::string, QuerySequence> query_map;
-        try {
-            taxonomic_database = read_tax_map(exe);
-        } catch (ExceptionHandler &e) {
-            throw ExceptionHandler(e.what(), e.getErr_code());
-        }
-        if (diamond_files.empty()) diamond_files = find_diamond_files();
-        if (diamond_files.empty()) throw ExceptionHandler("No diamond files found", ENTAP_ERR::E_INPUT_PARSE);
-        boostFS::path input_file(transcriptome);
-        input_file = input_file.stem();
-        if (input_file.has_stem()) input_file = input_file.stem();
-        std::string out_contaminants = _entap_outpath + input_file.string() + "_contaminants.tsv";
-        std::string out_filtered = _entap_outpath + input_file.string() + "_filtered.tsv";
-        // both contaminants and bad hits
-        std::string out_removed = _entap_outpath + input_file.string() + "_removed.tsv";
-        print_header(out_removed);
-        print_header(out_contaminants);
-        std::ofstream file_contaminants(out_contaminants, std::ios::out | std::ios::app);
-        std::ofstream file_removed(out_removed, std::ios::out | std::ios::app);
-
-        for (std::string data : diamond_files) {
-            entapInit::print_msg("Diamond file located at " + data + " being filtered");
-            io::CSVReader<ENTAP_EXECUTE::diamond_col_num, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(data);
-            // todo have columns from input file, in_read_header for versatility
-//            in.read_header(io::ignore_extra_column,"qseqid", "sseqid", "pident", "length", "mismatch", "gapopen",
-//            "qstart", "qend", "sstart", "send", "evalue", "bitscore", "stitle");
-            std::string qseqid, sseqid, stitle;
-            float evalue, pident, bitscore;
-            int length, mismatch, gapopen, qstart, qend, sstart, send;
-            while (in.read_row(qseqid, sseqid, pident, length, mismatch, gapopen,
-                               qstart, qend, sstart, send, evalue, bitscore, stitle)) {
-                QuerySequence new_query = QuerySequence(data, qseqid, sseqid, pident, length, mismatch, gapopen,
-                                                        qstart, qend, sstart, send, evalue, bitscore, stitle, user_e);
-                boost::regex exp("\\[([^]]+)\\](?!.+\\[.+\\])");      // TODO determined by database format
-                boost::smatch match;
-                if (boost::regex_search(stitle, match, exp)) {
-                    std::string species_lower = std::string(match[1].first, match[1].second);
-                    std::string species = species_lower;
-                    std::transform(species_lower.begin(), species_lower.end(), species_lower.begin(), ::tolower);
-                    if (taxonomic_database.find(species_lower) != taxonomic_database.end()) {
-                        new_query.setSpecies(species);
-                        new_query.setContaminant(is_contaminant(species_lower, taxonomic_database, contams));
-                    } else {
-                        new_query.setSpecies(species);
-                        new_query.setContaminant(false);
-                    }
-                } else {
-                    new_query.setSpecies("NOT_FOUND");
-                    new_query.setContaminant(false);
-                }
-                //boost::regex exp_informative("")     // TODO use regex(database specific)
-                try {
-                    unsigned long a = stitle.find_last_of('|') + 2;
-                    unsigned long b = stitle.find_first_of('[');
-                    std::string informative = stitle.substr(a, b - a);
-                    new_query.setInformative(informative);
-                } catch (...) {
-                    new_query.setInformative(stitle);
-                }
-                if (new_query.isContaminant()) {
-                    file_contaminants << new_query << std::endl;
-                    continue;
-                }
-                // can implement buckets if memory is not issue
-                std::map<std::string, QuerySequence>::iterator it = query_map.find(qseqid);
-                if (it != query_map.end()) {
-//                    QuerySequence temp = query_map.at(qseqid);
-                    // todo filter database files separately
-                    if (new_query > it->second) {
-                        if (it->second.isContaminant()) {
-                            file_contaminants << it->second << std::endl;
-                        }
-                        file_removed << it->second << std::endl;
-                        it->second = new_query;
-                    } else {
-                        file_removed << it->second << std::endl;
-                    }
-                } else {
-                    query_map.emplace(qseqid, new_query);
-                }
-            }
-        }
-        file_contaminants.close();
-        file_removed.close();
-        print_filtered_map(query_map, out_filtered);
-    }
-
-
-    std::unordered_map<std::string, std::string> read_tax_map(std::string &exe) {
-        entapInit::print_msg("Reading taxonomic database into memory...");
-        std::unordered_map<std::string, std::string> restored_map;
-        try {
-            {
-                std::ifstream ifs(exe + ENTAP_CONFIG::TAX_BIN_PATH);
-                boost::archive::binary_iarchive ia(ifs);
-                ia >> restored_map;
-            }
-        } catch (std::exception &exception) {
-            throw ExceptionHandler(exception.what(), ENTAP_ERR::E_INIT_TAX_READ);
-        }
-        entapInit::print_msg("Success!");
-        return restored_map;
-    }
-
     std::map<std::string, QuerySequence> init_sequence_map(std::string &input_file) {
         std::map<std::string, QuerySequence> seq_map;
         std::ifstream in_file(input_file);
@@ -510,51 +401,31 @@ namespace entapExecute {
 
     }
 
-    bool is_contaminant(std::string species, std::unordered_map<std::string, std::string> &database,
-                        std::vector<std::string> &contams) {
-        // species and tax database both lowercase
-        // already checked if in database
-        std::string id_lineage = database[species];
-        std::transform(id_lineage.begin(), id_lineage.end(), id_lineage.begin(), ::tolower);
-        for (auto const &contaminant:contams) {
-            if (id_lineage.find(contaminant) != std::string::npos) return true;
-        }
-        return false;
-    }
-
-    std::list<std::string> find_diamond_files() {
-        entapInit::print_msg("Diamond files were not inputted, searching in : " + ENTAP_CONFIG::DIAMOND_DIR);
-        std::list<std::string> out_list;
-        boostFS::path p(ENTAP_CONFIG::DIAMOND_DIR);
-        for (auto &file : boost::make_iterator_range(boostFS::directory_iterator(p), {})) {
-            if (file.path().string().find("_std") != std::string::npos) {
-                continue;
-            }
-            out_list.push_back(file.path().string());
-            entapInit::print_msg("File found at: " + file.path().string());
-        }
-        entapInit::print_msg("Done searching for files");
-        return out_list;
-    }
-
-    void print_filtered_map(std::map<std::string, QuerySequence> &map, std::string &out) {
-        print_header(out);
-        std::ofstream file_filtered(out, std::ios::out | std::ios::app);
-        for (std::map<std::string, QuerySequence>::iterator it = map.begin(); it != map.end(); ++it) {
-            file_filtered << it->second << std::endl;
-        }
-        file_filtered.close();
-    }
 
     void print_header(std::string file) {
         std::ofstream ofstream(file, std::ios::out | std::ios::app);
-        ofstream << "qseqid" << '\t' << "seqid" << '\t' << "pident" << '\t' <<
-                 "length" << '\t' << "mismatch" << '\t' << "mismatch" << '\t' <<
-                 "gapopen" << '\t' << "qstart" << '\t' << "qend" << '\t' <<
-                 "sstart" << '\t' << "send" << '\t' << "e_val" << '\t' <<
-                 "informative" << '\t' << "species" << '\t' << "database_path" << std::endl;
+        ofstream <<
+                 "Query Seq\t"
+                 "Subject Seq\t"
+                 "Percent Identical\t"
+                 "Alignment Length\t"
+                 "Mismatches\t"
+                 "Gap Openings\t"
+                 "Query Start\t"
+                 "Query End\t"
+                 "Subject Start\t"
+                 "Subject Eng\t"
+                 "E Value\t"
+                 "Coverage\t"
+                 "Informativeness\t"
+                 "Species\t"
+                 "Origin Database\t"
+                 "Frame\t"
+
+                 <<std::endl;
         ofstream.close();
     }
+
 
     void print_statistics(std::string &msg, std::string &out_path) {
         std::string file_path = out_path + ENTAP_CONFIG::LOG_FILENAME;
@@ -646,10 +517,12 @@ namespace entapExecute {
         }
     }
 
+
     bool is_file_empty(std::string path) {
         std::ifstream ifstream(path);
         return ifstream.peek() == std::ifstream::traits_type::eof();
     }
+
 
     bool valid_state(ExecuteStates s) {
         return (s >= FRAME_SELECTION && s <= EXIT);

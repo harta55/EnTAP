@@ -22,18 +22,17 @@ FrameSelection::FrameSelection(std::string &input, std::string &exe, std::string
 }
 
 std::string FrameSelection::execute(short software,std::map<std::string,QuerySequence> &SEQUENCES) {
-    this->SEQUENCES = SEQUENCES;
     try {
         switch (software) {
             case 0:
-                return genemarkst();
+                return genemarkst(SEQUENCES);
             default:
-                return genemarkst();
+                return genemarkst(SEQUENCES);
         }
     } catch (ExceptionHandler &e) {throw e;}
 }
 
-std::string FrameSelection::genemarkst() {
+std::string FrameSelection::genemarkst(std::map<std::string,QuerySequence> &SEQUENCES) {
     // Outfiles: file/path.faa, file/path.fnn
     // assumes working directory as output right now
     boost::filesystem::path file_name(_inpath); file_name = file_name.filename();
@@ -96,7 +95,7 @@ std::string FrameSelection::genemarkst() {
     }
     entapInit::print_msg("Success!");
     try {
-        genemarkStats(final_out,out_lst);
+        genemarkStats(final_out,out_lst,SEQUENCES);
     } catch (ExceptionHandler &e){throw e;}
     return final_out;
 }
@@ -106,7 +105,8 @@ std::string FrameSelection::genemarkst() {
  * @param protein_path - path to .faa file
  * @param lst_path - path to .lst genemark file
  */
-void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_path) {
+void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_path,
+                                   std::map<std::string,QuerySequence> &SEQUENCES) {
     // generate maps, query->sequence
     entapInit::print_msg("Beginning to calculate Genemark statistics...");
     std::string processed_path = _outpath + ENTAP_EXECUTE::FRAME_SELECTION_PROCESSED +"/";
@@ -149,7 +149,6 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
             std::map<std::string,frame_seq>::iterator p_it = protein_map.find(pair.first);
             if (p_it != protein_map.end()) {
                 count_selected++;
-
                 pair.second.setSequence(p_it->second.sequence);
                 pair.second.setFrame(p_it->second.frame_type);
 
@@ -225,6 +224,7 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
                        std::to_string(avg_lost) + "\n";
         entapExecute::print_statistics(stat_output,_outpath);
     } catch (ExceptionHandler &e) {throw e;}
+    entapInit::print_msg("Success!");
 }
 
 FrameSelection::frame_map_type FrameSelection::genemark_parse_protein(std::string &protein) {

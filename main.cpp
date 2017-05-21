@@ -144,7 +144,6 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
 
-
             bool is_config = (bool) vm.count("config");     // ignore 'config config'
             bool is_protein, is_nucleotide;
             is_protein = (bool)vm.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN);

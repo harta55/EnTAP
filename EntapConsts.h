@@ -5,6 +5,7 @@
 #ifndef ENTAP_ERRORFLAGS_H
 #define ENTAP_ERRORFLAGS_H
 #include <vector>
+#include <list>
 
 // TODO temporary, change
 namespace ENTAP_ERR {
@@ -31,6 +32,7 @@ namespace ENTAP_ERR {
     const int E_RUN_RSEM_CONVERT            = 111;
     const int E_RUN_RSEM_EXPRESSION         = 112;
     const int E_RUN_FILTER                  = 120;
+    const int E_RUN_SIM_SEARCH_FILTER       = 140;
 }
 
 namespace ENTAP_CONFIG {
@@ -98,7 +100,7 @@ namespace ENTAP_CONFIG {
     const std::string DIAMOND_PATH_EXE = "/libs/diamond-0.8.31/bin/diamond";
     const std::string DIAMOND_INDX_OUT_PATH = "outfiles/diamond/diamond_index.out";
     const std::string DIAMOND_RUN_OUT_PATH = "outfiles/diamond/blastx_";
-    const std::string DIAMOND_DIR = "diamond/";
+    const std::string SIM_SEARCH_OUT_PATH = "similarity_search/";
 }
 
 namespace ENTAP_EXECUTE {
@@ -107,8 +109,19 @@ namespace ENTAP_EXECUTE {
     const float RSEM_FPKM_DEFAULT = 0.5;
     const int RSEM_COL_NUM = 7;
 
-    const std::string SIM_SEARCH_DATABASE_BEST = "_best_hits";
-    const std::string SIM_SEARCH_DATABASE_CONTAM = "_best_hits_contam";
+    const std::string SIM_SEARCH_DATABASE_BEST_TSV = "_best_hits.tsv";
+    const std::string SIM_SEARCH_DATABASE_BEST_FA = "_best_hits.fasta";
+    const std::string SIM_SEARCH_DATABASE_CONTAM_TSV = "_best_hits_contam.tsv";
+    const std::string SIM_SEARCH_DATABASE_CONTAM_FA = "_best_hits_contam.fasta";
+    const std::string SIM_SEARCH_DATABASE_NO_HITS = "_no_hits.fasta";
+    const std::string SIM_SEARCH_DATABASE_UNSELECTED = "_unselected.tsv";
+    const std::string SIM_SEARCH_PARSE_PROCESSED = "similarity_search/processed";
+    const std::string SIM_SEARCH_BEST_OVERALL_TSV = "_best_overall_hits.tsv";
+    const std::string SIM_SEARCH_BEST_OVERALL_FA = "_best_overall_hits_fasta";
+    const std::string SIM_SEARCH_OVERALL_CONTAM_FA = "_overall_contam.fasta";
+    const std::string SIM_SEARCH_OVERALL_CONTAM_TSV = "_overall_contam.tsv";
+    const std::string SIM_SEARCH_OVERALL_NO_HITS_FA = "_overall_no_hits.fasta";
+    const std::string SIM_SEARCH_COMPILED_PATH = "similarity_search/results";
 
     const std::string OUTFILE_DEFAULT = "outfiles";
     const std::string GENEMARK_EXE_PATH = "/libs/gmst_linux_64/gmst.pl";
@@ -127,9 +140,22 @@ namespace ENTAP_EXECUTE {
 
     const std::string ENTAP_OUTPUT = "entap_out/";
 
-    const int diamond_col_num = 13;
+    const int diamond_col_num = 14;
     const int diamond_e_col = 10;
     const short SIM_SEARCH_DIAMOND_FLAG = 0;
+
+    const std::list<std::string> INFORMATIVENESS {
+            "conserved",
+            "predicted",
+            "unnamed",
+            "hypothetical",
+            "putative",
+            "unidentified",
+            "uncharacterized",
+            "unknown",
+            "uncultured",
+            "uninformative"
+    };
 }
 
 namespace ENTAP_STATS {

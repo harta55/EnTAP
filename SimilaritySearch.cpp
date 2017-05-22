@@ -43,18 +43,16 @@ std::list<std::string> SimilaritySearch::execute(short software, std::string upd
     } catch (ExceptionHandler &e) {throw e;}
 }
 
-void SimilaritySearch::parse_files(short software, std::vector<std::string> contams, std::string new_input,
+std::pair<std::string,std::string> SimilaritySearch::parse_files(short software, std::vector<std::string> contams, std::string new_input,
                                    std::map<std::string, QuerySequence>& MAP) {
     this->_input_path = new_input;
     this->_SEQUENCES = MAP;
     try {
         switch (software) {
             case 0:
-                diamond_parse(contams);
-                break;
+                return diamond_parse(contams);
             default:
-                diamond_parse(contams);
-                break;
+                return diamond_parse(contams);
         }
     } catch (ExceptionHandler &e) {throw e;}
 }
@@ -137,7 +135,7 @@ std::list<std::string> SimilaritySearch::verify_diamond_files(std::string &outpa
 }
 
 // input: 3 database string array of selected databases
-void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
+std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
     entapInit::print_msg("Beginning to filter individual diamond_files...");
     std::unordered_map<std::string, std::string> taxonomic_database;
     std::list<std::map<std::string,QuerySequence>> database_maps;
@@ -287,10 +285,15 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
         entapInit::print_msg("Success!");
     }
 
-    process_best_diamond_hit(database_maps);
+    return process_best_diamond_hit(database_maps);
 }
 
-void SimilaritySearch::process_best_diamond_hit(std::list<std::map<std::string,QuerySequence>> &diamond_maps) {
+/**
+ *
+ * @param diamond_maps
+ * @return - pair of best_hit.fasta, no_hit.fasta
+ */
+std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(std::list<std::map<std::string,QuerySequence>> &diamond_maps) {
     entapInit::print_msg("Compiling similarity results results to find best overall hits...");
     std::string compiled_path = _outpath + ENTAP_EXECUTE::SIM_SEARCH_COMPILED_PATH + "/";
     boostFS::remove_all(compiled_path.c_str());
@@ -376,6 +379,8 @@ void SimilaritySearch::process_best_diamond_hit(std::list<std::map<std::string,Q
     entapExecute::print_statistics(stat_message,_outpath);
     file_best_tsv.close(); file_best_fa.close();file_contam_fa.close();
     file_contam_tsv.close(); diamond_maps.clear();
+
+    return std::pair<std::string,std::string>(out_best_fa, out_overall_no_hits_fa);
 }
 
 std::list<std::string> SimilaritySearch::find_diamond_files() {
@@ -456,4 +461,28 @@ bool SimilaritySearch::is_informative(std::string title) {
         if (title.find(item) != std::string::npos) return false;
     }
     return true;
+}
+
+void SimilaritySearch::print_header(std::string file) {
+    std::ofstream ofstream(file, std::ios::out | std::ios::app);
+    ofstream <<
+             "Query Seq\t"
+                     "Subject Seq\t"
+                     "Percent Identical\t"
+                     "Alignment Length\t"
+                     "Mismatches\t"
+                     "Gap Openings\t"
+                     "Query Start\t"
+                     "Query End\t"
+                     "Subject Start\t"
+                     "Subject Eng\t"
+                     "E Value\t"
+                     "Coverage\t"
+                     "Informativeness\t"
+                     "Species\t"
+                     "Origin Database\t"
+                     "Frame\t"
+
+             <<std::endl;
+    ofstream.close();
 }

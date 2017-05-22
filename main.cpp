@@ -271,7 +271,8 @@ void generate_config(std::string &path) {
                 ENTAP_CONFIG::KEY_NCBI_REFSEQ_SEPARATE      +"=\n"+
                 ENTAP_CONFIG::KEY_DIAMOND_EXE               +"=\n"+
                 ENTAP_CONFIG::KEY_RSEM_EXE                  +"=\n"+
-                ENTAP_CONFIG::KEY_GENEMARK_EXE
+                ENTAP_CONFIG::KEY_GENEMARK_EXE              +"=\n"+
+                ENTAP_CONFIG::KEY_EGGNOG_EXE
 
                 << std::endl;
     config_file.close();
@@ -287,6 +288,7 @@ bool check_key(std::string& key) {
     if (key.compare(ENTAP_CONFIG::KEY_DIAMOND_EXE)==0) return true;
     if (key.compare(ENTAP_CONFIG::KEY_GENEMARK_EXE)==0) return true;
     if (key.compare(ENTAP_CONFIG::KEY_UNIPROT_UR90)==0) return true;
+    if (key.compare(ENTAP_CONFIG::KEY_EGGNOG_EXE)==0) return true;
     return key.compare(ENTAP_CONFIG::KEY_RSEM_EXE) == 0;
 }
 

@@ -33,6 +33,7 @@ namespace ENTAP_ERR {
     const int E_RUN_RSEM_EXPRESSION         = 112;
     const int E_RUN_FILTER                  = 120;
     const int E_RUN_SIM_SEARCH_FILTER       = 140;
+    const int E_RUN_ANNOTATION              = 150;
 }
 
 namespace ENTAP_CONFIG {
@@ -49,6 +50,7 @@ namespace ENTAP_CONFIG {
     const std::string KEY_DIAMOND_EXE = "diamond_exe_path";
     const std::string KEY_RSEM_EXE = "rsem_exe_path";
     const std::string KEY_GENEMARK_EXE = "genemarkst_exe_path";
+    const std::string KEY_EGGNOG_EXE = "eggnog_exe_path";
 
 
     const std::string TAX_SCRIPT_PATH = "/download_tax.pl";
@@ -90,7 +92,7 @@ namespace ENTAP_CONFIG {
 
     const std::string NCBI_INDEX_PATH = "/bin/ncbi_";
 
-    //------------------FTP PATHS-----------------------//
+    //-----------------------FTP PATHS---------------------------//
     const std::string UNIPROT_FTP_SWISS = "ftp://ftp.uniprot.org/pub/databases/"
             "uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz";
     const std::string UNIPROT_FTP_TREMBL = "ftp://ftp.uniprot.org/pub/databases/"
@@ -108,6 +110,10 @@ namespace ENTAP_EXECUTE {
     const std::string RSEM_OUT_DIR = "rsem/";
     const float RSEM_FPKM_DEFAULT = 0.5;
     const int RSEM_COL_NUM = 7;
+    const std::string OUTFILE_DEFAULT = "outfiles";
+
+
+    //-------------------Similarity Search----------------------//
 
     const std::string SIM_SEARCH_DATABASE_BEST_TSV = "_best_hits.tsv";
     const std::string SIM_SEARCH_DATABASE_BEST_FA = "_best_hits.fasta";
@@ -122,8 +128,12 @@ namespace ENTAP_EXECUTE {
     const std::string SIM_SEARCH_OVERALL_CONTAM_TSV = "_overall_contam.tsv";
     const std::string SIM_SEARCH_OVERALL_NO_HITS_FA = "_overall_no_hits.fasta";
     const std::string SIM_SEARCH_COMPILED_PATH = "similarity_search/results";
+    const int diamond_e_col = 10;
+    const short SIM_SEARCH_DIAMOND_FLAG = 0;
 
-    const std::string OUTFILE_DEFAULT = "outfiles";
+
+    //--------------------Frame Selection----------------------//
+
     const std::string GENEMARK_EXE_PATH = "/libs/gmst_linux_64/gmst.pl";
     const std::string GENEMARK_LOG_FILE = "gms.log";
     const std::string GENEMARK_HMM_FILE = "GeneMark_hmm.mod";
@@ -138,11 +148,16 @@ namespace ENTAP_EXECUTE {
     const std::string FRAME_SELECTION_COMPLETE_FLAG = "Complete";
     const std::string FRAME_SELECTION_INTERNAL_FLAG = "Internal";
 
+    //------------------------Ontology-------------------------//
+
+    const std::string EGGNOG_EMAPPER_EXE = "/libs/eggnog-mapper/emapper.py";
+    const std::string EGGNOG_INIT_EXE = "";
+    const short EGGNOG_COL_NUM = 12;
+    const std::string ONTOLOGY_OUT_PATH = "ontology/";
+
     const std::string ENTAP_OUTPUT = "entap_out/";
 
     const int diamond_col_num = 14;
-    const int diamond_e_col = 10;
-    const short SIM_SEARCH_DIAMOND_FLAG = 0;
 
     const std::list<std::string> INFORMATIVENESS {
             "conserved",

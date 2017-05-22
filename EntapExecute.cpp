@@ -18,6 +18,7 @@
 #include "FrameSelection.h"
 #include "ExpressionAnalysis.h"
 #include "SimilaritySearch.h"
+#include "Ontology.h"
 #include <string>
 #include <boost/regex.hpp>
 #include <boost/filesystem/path.hpp>
@@ -30,7 +31,8 @@ namespace boostFS = boost::filesystem;
 
 namespace entapExecute {
     ExecuteStates state;
-    std::string _frame_selection_exe, _expression_exe, _diamond_exe, _outpath, _entap_outpath;
+    std::string _frame_selection_exe, _expression_exe, _diamond_exe, _outpath, _entap_outpath,
+        _eggnog_exe;
     bool _blastp = false; // false for blastx, true for blastp
     bool _isProtein;      // input sequence, might want to handle differently
 
@@ -41,7 +43,7 @@ namespace entapExecute {
 
         int threads = entapInit::get_supported_threads(user_input);
         std::list<std::string> diamond_out, databases;
-        std::string input_path, rsem_out, genemark_out;
+        std::string input_path, rsem_out, genemark_out, no_database_hits;
 
         bool is_paired = (bool) user_input.count("paired-end");
         input_path = user_input["input"].as<std::string>();        // Gradually changes between runs
@@ -95,7 +97,11 @@ namespace entapExecute {
         ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads, _expression_exe, _outpath, is_overwrite);
         SimilaritySearch diamond = SimilaritySearch(databases, input_path, threads, is_overwrite, _diamond_exe,
                                                     _outpath, user_input["e"].as<double>(),exe_path);
+        Ontology ontology = Ontology(threads,is_overwrite,_eggnog_exe,_outpath,exe_path);
+
         std::map<std::string, QuerySequence> SEQUENCE_MAP = init_sequence_map(input_path);
+        std::pair<std::string,std::string> diamond_pair;    // best_hits.fa,no_hits.fa
+        diamond_pair.first = input_path;
 
         while (state != EXIT) {
             try {
@@ -128,7 +134,13 @@ namespace entapExecute {
                         diamond_out = diamond.execute(0, input_path, _blastp);
                         break;
                     case DIAMOND_PARSE:
-                        diamond.parse_files(0,contaminants,input_path,SEQUENCE_MAP);
+                        diamond_pair = diamond.parse_files(0,contaminants,input_path,SEQUENCE_MAP);
+                        input_path = diamond_pair.first;
+                        no_database_hits = diamond_pair.second;
+                        break;
+                    case GENE_ONTOLOGY:
+                        ontology.execute(0,SEQUENCE_MAP,input_path,no_database_hits);
+                        break;
                     default:
                         state = EXIT;
                         break;
@@ -402,31 +414,6 @@ namespace entapExecute {
     }
 
 
-    void print_header(std::string file) {
-        std::ofstream ofstream(file, std::ios::out | std::ios::app);
-        ofstream <<
-                 "Query Seq\t"
-                 "Subject Seq\t"
-                 "Percent Identical\t"
-                 "Alignment Length\t"
-                 "Mismatches\t"
-                 "Gap Openings\t"
-                 "Query Start\t"
-                 "Query End\t"
-                 "Subject Start\t"
-                 "Subject Eng\t"
-                 "E Value\t"
-                 "Coverage\t"
-                 "Informativeness\t"
-                 "Species\t"
-                 "Origin Database\t"
-                 "Frame\t"
-
-                 <<std::endl;
-        ofstream.close();
-    }
-
-
     void print_statistics(std::string &msg, std::string &out_path) {
         std::string file_path = out_path + ENTAP_CONFIG::LOG_FILENAME;
         std::ofstream log_file(file_path, std::ios::out | std::ios::app);
@@ -441,6 +428,7 @@ namespace entapExecute {
         std::string temp_rsem = map[ENTAP_CONFIG::KEY_RSEM_EXE];
         std::string temp_diamond = map[ENTAP_CONFIG::KEY_DIAMOND_EXE];
         std::string temp_genemark = map[ENTAP_CONFIG::KEY_GENEMARK_EXE];
+        std::string temp_eggnog = map[ENTAP_CONFIG::KEY_EGGNOG_EXE];
 
         if (temp_rsem.empty()) {
             entapInit::print_msg("RSEM config path empty, setting to default: " +
@@ -461,13 +449,23 @@ namespace entapExecute {
                                  exe + ENTAP_EXECUTE::GENEMARK_EXE_PATH);
             temp_genemark = exe + ENTAP_EXECUTE::GENEMARK_EXE_PATH;
         } else {
-            entapInit::print_msg("RSEM path set to: " + temp_genemark);
+            entapInit::print_msg("GenemarkS-T path set to: " + temp_genemark);
         }
+        if (temp_eggnog.empty()) {
+            entapInit::print_msg("Eggnog config path empty, setting to default: " +
+                                 exe + ENTAP_EXECUTE::EGGNOG_EMAPPER_EXE);
+            temp_eggnog = exe + ENTAP_EXECUTE::EGGNOG_EMAPPER_EXE;
+        } else {
+            entapInit::print_msg("Eggnog path set to: " + temp_eggnog);
+        }
+
         _diamond_exe = temp_diamond;
         _frame_selection_exe = temp_genemark;
         _expression_exe = temp_rsem;
+        _eggnog_exe = temp_eggnog;
         return _diamond_exe;
     }
+
 
     //only assuming between 0-9 NO 2 DIGIT STATES
     void verify_state(std::queue<char> &queue, bool &test) {

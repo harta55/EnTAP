@@ -22,6 +22,7 @@ namespace entapExecute {
         FILTER,
         DIAMOND_RUN,
         DIAMOND_PARSE,
+        GENE_ONTOLOGY,
         EXIT
     };
 
@@ -32,22 +33,13 @@ namespace entapExecute {
     void execute_main(boost::program_options::variables_map &, std::string,
                       std::unordered_map<std::string, std::string> &);
     std::string filter_transcriptome(std::string &, std::string &, float, std::string, bool);
-    std::list<std::string> diamond_run(std::list<std::string>, std::string, int &);
-    void diamond_parse(std::list<std::string>, std::vector<std::string>, double, std::string, std::string &);
-    void diamond_blast(std::string, std::string, std::string, std::string &, int &);
-    bool is_contaminant(std::string, std::unordered_map<std::string, std::string> &,
-                        std::vector<std::string> &);
     void print_filtered_map(std::map<std::string, QuerySequence> &, std::string &);
     void verify_state(std::queue<char> &, bool &);
     bool is_file_empty(std::string);
-    std::list<std::string> find_diamond_files();
-    std::unordered_map<std::string, std::string> read_tax_map(std::string &);
-    void print_header(std::string);
     bool valid_state(enum ExecuteStates);
     std::string init_exe_paths(std::unordered_map<std::string, std::string> &, std::string &);
     void print_statistics(std::string &, std::string &);
     std::map<std::string, QuerySequence> init_sequence_map(std::string&);
-
 }
 
 

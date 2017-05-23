@@ -71,6 +71,7 @@ namespace entapInit {
         try {
             state = INIT_TAX;
             init_taxonomic(exe_path);
+            init_go_db(exe_path);
             init_uniprot(uniprot_vect, exe_path);
             init_ncbi(ncbi_vect,exe_path);
             init_diamond_index(diamond_exe,exe_path, threads);
@@ -143,11 +144,29 @@ namespace entapInit {
 
     }
 
+
+    void init_go_db(std::string &exe) {
+        print_msg("Initializing GO terms database...");
+        std::string go_db_path = exe + ENTAP_CONFIG::GO_DB_PATH;
+        if (file_exists(go_db_path)) {
+            print_msg("Database found at: " + go_db_path + " skipping creation");
+            return;
+        }
+
+
+
+
+
+        print_msg("Success!");
+    }
     // may handle differently than ncbi with formatting
     void init_uniprot(std::vector<std::string> &flags, std::string exe) {
         // TODO setup go term/interpro... integration, date tag, use bool input
         print_msg("Parsing uniprot databases...");
-        if (flags.empty()) return;
+        if (flags.empty()) {
+            print_msg("No Uniprot databases selected");
+            return;
+        }
         std::string ftp_address;
         std::string uniprot_bin = exe + "/" + ENTAP_CONFIG::BIN_PATH + "uniprot_";
         std::string uniprot_data = exe + ENTAP_CONFIG::UNIPROT_BASE_PATH;
@@ -174,7 +193,10 @@ namespace entapInit {
     void init_ncbi(std::vector<std::string> &flags, std::string exe) {
         // TODO setup go term/interpro... integration, date tag, use bool input
         print_msg("Parsing NCBI databases...");
-        if (flags.empty()) return;
+        if (flags.empty()) {
+            print_msg("No NCBI databases selected");
+            return;
+        }
         std::string ftp_address;
         std::string ncbi_data = exe + ENTAP_CONFIG::NCBI_BASE_PATH;
         for (auto &flag : flags) {
@@ -307,13 +329,14 @@ namespace entapInit {
         // check current state, move to next state
     }
 
-    std::string download_file(std::string flag, std::string &path) {
+    std::string download_file(std::string flag, std::string &path, std::string temp) {
+        // TODO libcurl
+
         std::string ftp_address;
-        std::string output_path;
+        std::string output_path = path +flag + ".gz";
 
         if (flag == ENTAP_CONFIG::INPUT_UNIPROT_SWISS) {
             ftp_address = ENTAP_CONFIG::UNIPROT_FTP_SWISS;
-            output_path += ".gz";
 
         } else {
             throw ExceptionHandler("Invalid uniprot flag", ENTAP_ERR::E_INPUT_PARSE);
@@ -328,6 +351,14 @@ namespace entapInit {
         }
         print_msg("File successfully downloaded to: " + output_path);
         return output_path;
+    }
+
+    std::string download_file(std::string &ftp, std::string &out_path) {
+        boostFS::path path(out_path);
+//        std::string file = path.filename();
+//        std::string download_command = "wget -O "+ output_path + " " + ftp_address;
+//        print_msg("Downloading: file from " + ftp + "...");
+
     }
 
     void decompress_file(std::string file_path) {

@@ -53,6 +53,7 @@ namespace ENTAP_CONFIG {
     const std::string KEY_EGGNOG_EXE = "eggnog_exe_path";
 
 
+    const std::string GO_DB_PATH = "/bin/go_term.db";
     const std::string TAX_SCRIPT_PATH = "/download_tax.pl";
     const std::string TAX_DATABASE_PATH = "/databases/ncbi_tax.entp";
     const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";

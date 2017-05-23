@@ -28,10 +28,12 @@ namespace entapInit {
     void verify_state();
     int execute_cmd(std::string,std::string);
     int execute_cmd(std::string);
-    std::string download_file(std::string, std::string&);
+    std::string download_file(std::string, std::string&,std::string&);
+    std::string download_file(std::string &,std::string&);
     void decompress_file(std::string);
     int update_database(std::string);
     int get_supported_threads(boost::program_options::variables_map&);
+    void init_go_db(std::string&);
 }
 
 #endif //ENTAP_INITHANDLER_H

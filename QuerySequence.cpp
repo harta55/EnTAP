@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <sstream>
 
 // best hit selection
 bool QuerySequence::operator>(const QuerySequence &querySequence) {
@@ -165,11 +166,11 @@ void QuerySequence::setContaminant(bool contaminant) {
 }
 
 int QuerySequence::getTax_id() const {
-    return tax_id;
+    return _tax_id;
 }
 
 void QuerySequence::setTax_id(int tax_id) {
-    QuerySequence::tax_id = tax_id;
+    QuerySequence::_tax_id = tax_id;
 }
 
 std::ostream& operator<<(std::ostream &ostream, const QuerySequence &query) {
@@ -230,4 +231,47 @@ bool QuerySequence::is_is_database_hit() const {
 
 void QuerySequence::set_is_database_hit(bool _is_database_hit) {
     QuerySequence::_is_database_hit = _is_database_hit;
+}
+
+void QuerySequence::set_eggnog_results(std::string seed_o, std::string seed_o_eval,
+                                       std::string seed_score, std::string predicted,
+                                       std::string go_terms, std::string kegg,
+                                       std::string annotation_tax, std::string ogs) {
+    this->_go_str = go_terms;
+    this->_kegg_str = kegg;
+    this->_seed_ortho = seed_o;
+    this->_seed_eval = seed_o_eval;
+    this->_seed_score = seed_score;
+    this->_predicted_gene = predicted;
+    this->_tax_scope = annotation_tax;
+    this->_ogs = ogs;
+    std::stringstream ss(go_terms);
+    std::string temp;
+    if (!go_terms.empty()) {
+        while (ss >> temp) {
+            this->_go_terms.push_back(temp);
+            if (ss.peek() == ',')
+                ss.ignore();
+        }
+    }
+    if (!kegg.empty()) {
+        std::stringstream keggs(kegg);
+        while (ss >> temp) {
+            this->_kegg_terms.push_back(temp);
+            if (ss.peek() == ',')
+                ss.ignore();
+        }
+    }
+}
+
+std::string QuerySequence::print_eggnog() {
+    std::stringstream stream;
+    stream << this->qseqid<<'\t'<<this->sseqid<<'\t'<<this->pident<<'\t'<<
+           this->length<<'\t'<<this->mismatch<<'\t'<<this->mismatch<<'\t'<<
+           this->gapopen<<'\t'<<this->qstart<<'\t'<<this->qend<<'\t'<<
+           this->sstart<<'\t'<<this->send<<'\t'<<this->e_val<<'\t'<< this->_coverage<<"\t"<<
+           this->stitle<<'\t'<<this->species<<'\t'<<this->database_path<<'\t'<<
+           this->frame<<'\t'<<_seed_ortho<<'\t'<<_seed_eval<<'\t'<<_tax_scope<<'\t'<<
+            _ogs<<'\t'<<_go_str<<'\t'<<_kegg_str;
+    return stream.str();
 }

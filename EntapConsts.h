@@ -22,6 +22,7 @@ namespace ENTAP_ERR {
 
 
     const int E_INIT_TAX_READ = 55;
+    const int E_INIT_GO_SETUP = 60;
 
     const int E_RUN_EXECUTION_PATHS         = 105;
     const int E_RUN_VERIFY_DATABASES        = 106;
@@ -34,6 +35,7 @@ namespace ENTAP_ERR {
     const int E_RUN_FILTER                  = 120;
     const int E_RUN_SIM_SEARCH_FILTER       = 140;
     const int E_RUN_ANNOTATION              = 150;
+    const int E_RUN_EGGNOG                  = 160;
 }
 
 namespace ENTAP_CONFIG {
@@ -54,6 +56,7 @@ namespace ENTAP_CONFIG {
 
 
     const std::string GO_DB_PATH = "/bin/go_term.db";
+    const std::string GO_TERM_FILE = "/databases/term.txt";
     const std::string TAX_SCRIPT_PATH = "/download_tax.pl";
     const std::string TAX_DATABASE_PATH = "/databases/ncbi_tax.entp";
     const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";

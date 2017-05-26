@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <fstream>
+#include <sqlite3.h>
 #include <unordered_map>
 #include "pstream.h"
 #include "boost/filesystem.hpp"
@@ -21,6 +22,7 @@
 #include <boost/serialization/unordered_set.hpp>
 #include <boost/program_options/variables_map.hpp>
 #include <thread>
+#include <csv.h>
 #include "boost/archive/text_oarchive.hpp"
 #include "boost/archive/text_iarchive.hpp"
 
@@ -153,12 +155,39 @@ namespace entapInit {
             return;
         }
 
-
-
-
-
+        std::string go_term_file = exe + ENTAP_CONFIG::GO_TERM_FILE;
+        if (!file_exists(go_term_file)) {
+            throw ExceptionHandler("GO term file must be at: " + go_term_file +
+                " in order to configure database", ENTAP_ERR::E_INIT_GO_SETUP);
+        }
+        sqlite3 *db;
+        if (sqlite3_open(go_db_path.c_str(), & db) != SQLITE_OK) {
+            throw ExceptionHandler("Error opening sqlite database",ENTAP_ERR::E_INIT_GO_SETUP);
+        }
+        std::string query = "CREATE TABLE IF NOT EXISTS terms (id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                "goid TEXT,category TEXT,term TEXT);";
+        if (sqlite3_exec(db, query.c_str(),NULL,0,NULL) != SQLITE_OK) {
+            throw ExceptionHandler("Error creating GO table",ENTAP_ERR::E_INIT_GO_SETUP);
+        }
+        std::string line, val;
+        char *num,*term,*cat,*go,*ex,*ex1,*ex2;
+        char *zErrMsg = 0;
+        io::CSVReader<7, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(go_term_file);
+        while (in.read_row(num,term,cat,go,ex,ex1,ex2)) {
+            char *q = sqlite3_mprintf("INSERT INTO terms "
+                                              "(goid, category,term) "
+                                              "VALUES (%Q,%Q,%Q)",go,cat,term);
+            if (sqlite3_exec(db, q, 0, 0, &zErrMsg) != SQLITE_OK) {
+                fprintf(stderr, "SQL error: %s\n", zErrMsg);
+                sqlite3_free(zErrMsg);
+                throw ExceptionHandler("Error inserting row",ENTAP_ERR::E_INIT_GO_SETUP);
+            }
+            sqlite3_free(q);
+        }
+        sqlite3_close(db);
         print_msg("Success!");
     }
+
     // may handle differently than ncbi with formatting
     void init_uniprot(std::vector<std::string> &flags, std::string exe) {
         // TODO setup go term/interpro... integration, date tag, use bool input

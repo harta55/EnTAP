@@ -4,7 +4,10 @@
 
 #ifndef ENTAP_QUERYSEQUENCE_H
 #define ENTAP_QUERYSEQUENCE_H
+
 #include <iostream>
+#include <vector>
+#include <string>
 
 
 class QuerySequence {
@@ -27,51 +30,41 @@ class QuerySequence {
         const std::string &getStitle() const;
         void setStitle(const std::string &stitle);
         void setSequence(const std::string&);
+        void set_eggnog_results(std::string,std::string,std::string,std::string,std::string,
+                        std::string,std::string,std::string);
+        const std::string &get_contam_type() const;
+        void set_contam_type(const std::string &_contam_type);
+        bool is_is_informative() const;
+        void set_is_informative(bool _is_informative);
+        void setIs_better_hit(bool is_better_hit);
+        bool isContaminant() const;
+        void setContaminant(bool contaminant);
+        int getTax_id() const;
+        bool is_is_database_hit() const;
+        void set_is_database_hit(bool _is_database_hit);
+        void setTax_id(int tax_id);
+        std::string print_eggnog();
 
-private:
-        friend std::ostream& operator<<(std::ostream& , const QuerySequence&);
-        bool contaminant, is_protein, is_better_hit, _is_informative, _is_database_hit;
-        std::string _contam_type;
-public:
-    const std::string &get_contam_type() const;
+    private:
+            friend std::ostream& operator<<(std::ostream& , const QuerySequence&);
+            bool contaminant, is_protein, is_better_hit, _is_informative, _is_database_hit;
+            std::vector<std::string> _go_terms, _kegg_terms;
+            int _tax_id,length, mismatch, gapopen, qstart, qend, sstart, send;
+            double pident,bit_score, e_val, _coverage;
+            unsigned long seq_length;
+            std::string database_path, qseqid,sseqid, stitle, species, sequence, frame, _contam_type,
+                _seed_ortho,_seed_eval,_seed_score,_predicted_gene,_tax_scope, _ogs,_go_str,_kegg_str;
 
-    void set_contam_type(const std::string &_contam_type);
 
-public:
-    bool is_is_informative() const;
-
-    void set_is_informative(bool _is_informative);
-
-public:
-    void setIs_better_hit(bool is_better_hit);
-
-private:
-    int tax_id,length, mismatch, gapopen, qstart, qend, sstart, send;
-    double pident,bit_score, e_val, _coverage;
-    unsigned long seq_length;
 public:
     void setSeq_length(unsigned long seq_length);
 
-private:
-    std::string database_path, qseqid,sseqid, stitle, species, sequence, frame;
 public:
     void setFrame(const std::string &frame);
 
 public:
     const std::string &getSequence() const;
 
-public:
-    bool isContaminant() const;
-
-    void setContaminant(bool contaminant);
-
-    int getTax_id() const;
-
-    bool is_is_database_hit() const;
-
-    void set_is_database_hit(bool _is_database_hit);
-
-    void setTax_id(int tax_id);
 
 public:
     const std::string &getSpecies() const;

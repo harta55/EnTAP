@@ -23,6 +23,7 @@ private:
     bool _is_overwrite;
     void parse_results_eggnog(query_map_struct&,std::pair<std::string,std::string>&);
     void run_eggnog(std::map<std::string,QuerySequence>&);
+    void print_eggnog(query_map_struct&);
 };
 
 

@@ -97,7 +97,7 @@ namespace entapExecute {
         ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads, _expression_exe, _outpath, is_overwrite);
         SimilaritySearch diamond = SimilaritySearch(databases, input_path, threads, is_overwrite, _diamond_exe,
                                                     _outpath, user_input["e"].as<double>(),exe_path);
-        Ontology ontology = Ontology(threads,is_overwrite,_eggnog_exe,_outpath,exe_path);
+        Ontology ontology = Ontology(threads,is_overwrite,_eggnog_exe,_outpath,exe_path,input_path);
 
         std::map<std::string, QuerySequence> SEQUENCE_MAP = init_sequence_map(input_path);
         std::pair<std::string,std::string> diamond_pair;    // best_hits.fa,no_hits.fa

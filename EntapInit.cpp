@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <fstream>
-#include <sqlite3.h>
+#include "sqlite3.h"
 #include <unordered_map>
 #include "pstream.h"
 #include "boost/filesystem.hpp"
@@ -25,11 +25,6 @@
 #include <csv.h>
 #include "boost/archive/text_oarchive.hpp"
 #include "boost/archive/text_iarchive.hpp"
-
-//#include "boost/iostreams/filter/gzip.hpp"
-//#include "boost/iostreams/copy.hpp"
-//#include "boost/iostreams/filtering_streambuf.hpp"
-//#include <curl/curl.h> TODO Integrate curllib
 
 namespace boostFS = boost::filesystem;
 namespace boostAR = boost::archive;
@@ -145,7 +140,6 @@ namespace entapInit {
         print_msg("Success!");
 
     }
-
 
     void init_go_db(std::string &exe) {
         print_msg("Initializing GO terms database...");

@@ -5,6 +5,7 @@
 #ifndef ENTAP_ENTAPEXECUTE_H
 #define ENTAP_ENTAPEXECUTE_H
 
+#include "Ontology.h"
 
 #include "QuerySequence.h"
 #include <list>

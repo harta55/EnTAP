@@ -8,10 +8,12 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include "Ontology.h"
 
 
 class QuerySequence {
     public:
+        typedef std::map<std::string,std::vector<std::string>> go_struct;
         bool operator>(const QuerySequence& querySequence);
         void set_sim_search_results(std::string,std::string,std::string, double,int, int, int, int,int,
                       int, int, double, double, double, std::string);
@@ -46,14 +48,19 @@ class QuerySequence {
         std::string print_eggnog();
 
     private:
-            friend std::ostream& operator<<(std::ostream& , const QuerySequence&);
-            bool contaminant, is_protein, is_better_hit, _is_informative, _is_database_hit;
-            std::vector<std::string> _go_terms, _kegg_terms;
-            int _tax_id,length, mismatch, gapopen, qstart, qend, sstart, send;
-            double pident,bit_score, e_val, _coverage;
-            unsigned long seq_length;
-            std::string database_path, qseqid,sseqid, stitle, species, sequence, frame, _contam_type,
-                _seed_ortho,_seed_eval,_seed_score,_predicted_gene,_tax_scope, _ogs,_go_str,_kegg_str;
+        friend std::ostream& operator<<(std::ostream& , const QuerySequence&);
+        bool contaminant, is_protein, is_better_hit, _is_informative, _is_database_hit;
+        std::vector<std::string> _go_terms, _kegg_terms;
+        int _tax_id,length, mismatch, gapopen, qstart, qend, sstart, send;
+        double pident,bit_score, e_val, _coverage;
+        unsigned long seq_length;
+        std::string database_path, qseqid,sseqid, stitle, species, sequence, frame, _contam_type,
+            _seed_ortho,_seed_eval,_seed_score,_predicted_gene,_tax_scope, _ogs,_go_str,_kegg_str;
+        go_struct _go_parsed;
+public:
+    const go_struct &get_go_parsed() const;
+
+    void set_go_parsed(const go_struct &_go_parsed);
 
 
 public:

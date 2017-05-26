@@ -36,6 +36,7 @@ namespace ENTAP_ERR {
     const int E_RUN_SIM_SEARCH_FILTER       = 140;
     const int E_RUN_ANNOTATION              = 150;
     const int E_RUN_EGGNOG                  = 160;
+    const int E_PARSE_EGGNOG                = 170;
 }
 
 namespace ENTAP_CONFIG {

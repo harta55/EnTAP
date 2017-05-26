@@ -2,11 +2,11 @@
 // Created by harta on 3/29/17.
 //
 
-#include "QuerySequence.h"
 #include <iostream>
 #include <string>
 #include <algorithm>
 #include <sstream>
+#include "QuerySequence.h"
 
 // best hit selection
 bool QuerySequence::operator>(const QuerySequence &querySequence) {
@@ -274,4 +274,12 @@ std::string QuerySequence::print_eggnog() {
            this->frame<<'\t'<<_seed_ortho<<'\t'<<_seed_eval<<'\t'<<_tax_scope<<'\t'<<
             _ogs<<'\t'<<_go_str<<'\t'<<_kegg_str;
     return stream.str();
+}
+
+const QuerySequence::go_struct &QuerySequence::get_go_parsed() const {
+    return _go_parsed;
+}
+
+void QuerySequence::set_go_parsed(const QuerySequence::go_struct &_go_parsed) {
+    QuerySequence::_go_parsed = _go_parsed;
 }

@@ -331,7 +331,7 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
         std::map<std::string,QuerySequence>::iterator it = compiled_hit_map.find(pair.first);
         if (it != compiled_hit_map.end()) {
             count_total_filtered++;
-            file_best_fa << pair.second.getSequence();
+            file_best_fa << pair.second.getSequence() <<std::endl;
             file_best_tsv << it->second << std::endl;
             it->second.setSeq_length(pair.second.getSeq_length());
             pair.second = it->second;

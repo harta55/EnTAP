@@ -115,13 +115,14 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
 void Ontology::run_eggnog(query_map_struct &SEQUENCES) {
 
     std::string eggnog_out_dir = _outpath + ENTAP_EXECUTE::ONTOLOGY_OUT_PATH;
+    boostFS::remove_all(eggnog_out_dir);
     boostFS::create_directories(eggnog_out_dir);
 //    std::string annotation_base_flag = eggnog_out_dir + "annotation_results";
 //    std::string annotation_no_flag = eggnog_out_dir + "annotation_results_no_hits";
         std::string annotation_base_flag = "annotation_results";
     std::string annotation_no_flag = "annotation_results_no_hits";
     std::string annotation_std = eggnog_out_dir + "annotation_std";
-    std::string eggnog_command = "python " + _eggnog_exe;
+    std::string eggnog_command = "python " + _eggnog_exe + " ";
     std::pair<std::string,std::string> out;
 
     // TODO eggnog overwrite
@@ -134,7 +135,7 @@ void Ontology::run_eggnog(query_map_struct &SEQUENCES) {
     };
     if (entapInit::file_exists(_new_input)) {
         for (auto &pair : eggnog_command_map) {
-            eggnog_command += pair.first + " " + pair.second;
+            eggnog_command += pair.first + " " + pair.second + " ";
         }
         entapInit::print_msg("\nExecuting eggnog mapper against protein sequences that hit databases...\n"
                              + eggnog_command);

@@ -171,7 +171,7 @@ std::map<std::string,std::vector<std::string>> Ontology::parse_go_list
     std::vector<std::vector<std::string>>results;
     while (ss >> temp) {
         char *query = sqlite3_mprintf(
-                "SELECT category,term from terms WHERE goid=%Q",temp);
+                "SELECT category,term from terms WHERE goid=%Q",temp.c_str());
         try {
             results = database.query(query);
             output[results[0][0]].push_back(temp + "-" + results[0][1]);

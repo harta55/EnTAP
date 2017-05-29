@@ -104,7 +104,7 @@ std::list<std::string> SimilaritySearch::diamond() {
 void SimilaritySearch::diamond_blast(std::string input_file, std::string output_file, std::string std_out,
                    std::string &database,int &threads, std::string &blast) {
     std::string diamond_run = _diamond_exe + " " + blast +" -d " + database +
-                              " --sensitive" + " -k 5" + " -q " + input_file + " -o " + output_file + " -p " + std::to_string(threads) +" -f " +
+                              " --more-sensitive" + " -k 5" + " -q " + input_file + " -o " + output_file + " -p " + std::to_string(threads) +" -f " +
                               "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp stitle";
     entapInit::print_msg("\nExecuting Diamond:\n" + diamond_run);
     if (entapInit::execute_cmd(diamond_run, std_out) != 0) {
@@ -349,7 +349,7 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
         } else {
             if (pair.second.isIs_protein()) {
                 count_no_hit++;
-                file_no_hits << pair.second.getSequence();
+                file_no_hits << pair.second.getSequence() << std::endl;
             }
         }
     }

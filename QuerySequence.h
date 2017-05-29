@@ -57,6 +57,7 @@ class QuerySequence {
         std::string database_path, qseqid,sseqid, stitle, species, sequence, frame, _contam_type,
             _seed_ortho,_seed_eval,_seed_score,_predicted_gene,_tax_scope, _ogs,_go_str,_kegg_str;
         go_struct _go_parsed;
+        void init_sequence();
 public:
     const go_struct &get_go_parsed() const;
 

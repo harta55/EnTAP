@@ -29,6 +29,7 @@ private:
     void run_eggnog(query_map_struct&);
     void print_eggnog(query_map_struct&);
     go_struct parse_go_list(std::string, DatabaseHelper&);
+    std::string eggnog_format(std::string);
 };
 
 

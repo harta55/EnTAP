@@ -100,6 +100,7 @@ bool QuerySequence::isIs_protein() const {
 }
 
 QuerySequence::QuerySequence(bool is_protein, std::string seq){
+    init_sequence();
     this->_is_database_hit = false;
     this->is_protein = is_protein;
     std::string sub = seq.substr(seq.find("\n")+1);
@@ -272,8 +273,8 @@ std::string QuerySequence::print_eggnog() {
            this->gapopen<<'\t'<<this->qstart<<'\t'<<this->qend<<'\t'<<
            this->sstart<<'\t'<<this->send<<'\t'<<this->e_val<<'\t'<< this->_coverage<<"\t"<<
            this->stitle<<'\t'<<this->species<<'\t'<<this->database_path<<'\t'<<
-           this->frame<<'\t'<<_seed_ortho<<'\t'<<_seed_eval<<'\t'<<_tax_scope<<'\t'<<
-            _ogs<<'\t';
+           this->frame<<this->_seed_ortho<<'\t'<<this->_seed_eval<<'\t'<<this->_seed_score<<'\t'<<
+           this->_predicted_gene<<'\t'<<this->_tax_scope<<'\t'<< this->_ogs<<'\t';
     if (!this->_go_str.empty()) {
         for (std::string val : _go_parsed[ENTAP_EXECUTE::GO_BIOLOGICAL_FLAG]) stream<<val<<",";
         stream<<'\t';
@@ -294,4 +295,19 @@ const QuerySequence::go_struct &QuerySequence::get_go_parsed() const {
 
 void QuerySequence::set_go_parsed(const QuerySequence::go_struct &_go_parsed) {
     QuerySequence::_go_parsed = _go_parsed;
+}
+
+void QuerySequence::init_sequence() {
+    this->pident = 0;
+    this->length = 0;
+    this->mismatch = 0;
+    this->gapopen = 0;
+    this->qstart = 0;
+    this->qend = 0;
+    this->sstart = 0;
+    this->send = 0;
+    this->e_val = 0;
+    this->bit_score = 0;
+    this->_coverage = 0;
+
 }

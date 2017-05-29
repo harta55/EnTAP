@@ -65,8 +65,8 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
         unsigned int count_total_go_hits=0, count_total_go_terms=0, count_no_go=0,count_no_kegg=0,
             count_TOTAL_hits=0, count_total_kegg_terms=0, count_total_kegg_hits=0;
         io::CSVReader<ENTAP_EXECUTE::EGGNOG_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(out.first);
+        // io::single_line_comment<'#'>??
         std::map<std::string, int> eggnog_map;
-        in.next_line();in.next_line();in.next_line();
         while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                            best_og, cog_cat, eggnog_annot)) {
             SEQUENCES[qseqid].set_eggnog_results(seed_ortho,seed_e,seed_score,predicted_gene,go_terms,
@@ -147,9 +147,10 @@ void Ontology::run_eggnog(query_map_struct &SEQUENCES) {
                                ENTAP_ERR::E_RUN_EGGNOG);
     }
     if (entapInit::file_exists(_input_no_hits)) {
-        std::ifstream inFile("file");
+        std::ifstream inFile(_input_no_hits);
         long line_num = std::count(std::istreambuf_iterator<char>(inFile),
                    std::istreambuf_iterator<char>(), '\n');
+        inFile.close();
         if (line_num >1) {
             eggnog_command_map["-i"] = _input_no_hits;
             eggnog_command_map["--output"] = annotation_no_flag;
@@ -163,27 +164,27 @@ void Ontology::run_eggnog(query_map_struct &SEQUENCES) {
             out.second = annotation_no_flag + ".emapper.annotations";
         }
     }
+    if (!out.first.empty()) out.first = eggnog_format(out.first);
+    if (!out.second.empty()) out.second= eggnog_format(out.second);
     parse_results_eggnog(SEQUENCES, out);
 }
 
 std::map<std::string,std::vector<std::string>> Ontology::parse_go_list
         (std::string list, DatabaseHelper &database) {
-    std::map<std::string,std::vector<std::string>> output {
-
-    };
+    std::map<std::string,std::vector<std::string>> output;
     if (list.empty()) return output;
-    std::stringstream ss(list);
+    std::istringstream ss(list);
     std::string temp;
     std::vector<std::vector<std::string>>results;
-    while (ss >> temp) {
+    while (std::getline(ss,temp,',')) {
         char *query = sqlite3_mprintf(
                 "SELECT category,term from terms WHERE goid=%Q",temp.c_str());
         try {
             results = database.query(query);
-            output[results[0][0]].push_back(temp + "-" + results[0][1]);
-        } catch (ExceptionHandler &e) {throw e;}
-        if (ss.peek() == ',')
-            ss.ignore();
+            if (!results.empty())output[results[0][0]].push_back(temp + "-" + results[0][1]);
+        } catch (std::exception e) {
+            throw e;
+        }
     }
     return output;
 }
@@ -201,7 +202,7 @@ void Ontology::print_eggnog(Ontology::query_map_struct &SEQUENCES) {
                  "Query Start\t"
                  "Query End\t"
                  "Subject Start\t"
-                 "Subject Eng\t"
+                 "Subject End\t"
                  "E Value\t"
                  "Coverage\t"
                  "Informativeness\t"
@@ -211,7 +212,8 @@ void Ontology::print_eggnog(Ontology::query_map_struct &SEQUENCES) {
                  "Seed ortholog\t"
                  "Seed E Value\t"
                  "Seed Score\t"
-                 "Tax Score\t"
+                 "Predicted Gene\t"
+                 "Tax Scope\t"
                  "OGs\t"
                  "GO Biological\t"
                  "GO Cellular\t"
@@ -219,8 +221,22 @@ void Ontology::print_eggnog(Ontology::query_map_struct &SEQUENCES) {
                  "KEGG Terms"
          <<std::endl;
     for (auto &pair : SEQUENCES) {
-        std::cout<<pair.second.print_eggnog()<<std::endl;
+        file<<pair.second.print_eggnog()<<std::endl;
     }
     file.close();
+}
+
+std::string Ontology::eggnog_format(std::string file) {
+    std::string out_path = file + "_alt";
+    std::ifstream in_file(file);
+    std::ofstream out_file(out_path);
+    std::string line;
+    while (getline(in_file,line)) {
+        if (line.at(0) == '#' || line.empty()) continue;
+        out_file << line << std::endl;
+    }
+    in_file.close();
+    out_file.close();
+    return out_path;
 }
 

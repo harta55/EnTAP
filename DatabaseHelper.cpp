@@ -19,18 +19,24 @@ std::vector<std::vector<std::string>> DatabaseHelper::query(char *query) {
     query_struct output;
     if (sqlite3_prepare_v2(_database,query,-1,&stmt,0) == SQLITE_OK) {
         int col_num = sqlite3_column_count(stmt);
-        while (sqlite3_step(stmt)) {
-            std::vector<std::string> vals;
-            for (int i = 0; i < col_num; i++) {
-                vals.push_back(std::string((char*)sqlite3_column_text(stmt,i)));
+        int stat = 0;
+        while (true) {
+            stat = sqlite3_step(stmt);
+            if (stat == SQLITE_ROW) {
+                std::vector<std::string> vals;
+                for (int i = 0; i < col_num; i++) {
+                    vals.push_back(std::string((char*)sqlite3_column_text(stmt,i)));
+                }
+                output.push_back(vals);
+            } else {
+                break;
             }
-            output.push_back(vals);
         }
         sqlite3_finalize(stmt);
     } else {
         throw ExceptionHandler("Error querying database",ENTAP_ERR::E_INIT_GO_SETUP);
     }
-    return std::vector<std::vector<std::string>>();
+    return output;
 }
 
 DatabaseHelper::DatabaseHelper() {

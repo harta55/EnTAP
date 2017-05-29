@@ -397,7 +397,9 @@ namespace entapExecute {
             if (line.empty()) continue;
             if (line.find(">") == 0) {
                 if (!seq_id.empty()) {
-                    seq_map.emplace(seq_id, QuerySequence(_blastp, sequence));
+                    QuerySequence query_seq(_blastp,sequence);
+                    query_seq.setQseqid(seq_id);
+                    seq_map.emplace(seq_id, query_seq);
                 }
                 unsigned long first = line.find(">")+1;
                 unsigned long second = line.find(" ");

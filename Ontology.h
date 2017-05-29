@@ -20,9 +20,7 @@ public:
     Ontology(int, bool,std::string,std::string,std::string,std::string);
 
 private:
-    const std::string _GO_BIOLOGICAL_FLAG = "biological_process";
-    const std::string _GO_CELLULAR_FLAG = "cellular_component";
-    const std::string _GO_MOLECULAR_FLAG = "molecular_function";
+
 
     int _threads;
     std::string _entap_exe, _eggnog_exe, _outpath, _new_input, _input_no_hits;

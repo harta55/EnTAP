@@ -159,6 +159,9 @@ namespace ENTAP_EXECUTE {
     const std::string EGGNOG_INIT_EXE = "";
     const short EGGNOG_COL_NUM = 12;
     const std::string ONTOLOGY_OUT_PATH = "ontology/";
+    const std::string GO_BIOLOGICAL_FLAG = "biological_process";
+    const std::string GO_CELLULAR_FLAG = "cellular_component";
+    const std::string GO_MOLECULAR_FLAG = "molecular_function";
 
     const std::string ENTAP_OUTPUT = "entap_out/";
 

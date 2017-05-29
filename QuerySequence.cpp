@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <sstream>
 #include "QuerySequence.h"
+#include "EntapConsts.h"
 
 // best hit selection
 bool QuerySequence::operator>(const QuerySequence &querySequence) {
@@ -272,7 +273,18 @@ std::string QuerySequence::print_eggnog() {
            this->sstart<<'\t'<<this->send<<'\t'<<this->e_val<<'\t'<< this->_coverage<<"\t"<<
            this->stitle<<'\t'<<this->species<<'\t'<<this->database_path<<'\t'<<
            this->frame<<'\t'<<_seed_ortho<<'\t'<<_seed_eval<<'\t'<<_tax_scope<<'\t'<<
-            _ogs<<'\t'<<_go_str<<'\t'<<_kegg_str;
+            _ogs<<'\t';
+    if (!this->_go_str.empty()) {
+        for (std::string val : _go_parsed[ENTAP_EXECUTE::GO_BIOLOGICAL_FLAG]) stream<<val<<",";
+        stream<<'\t';
+        for (std::string val : _go_parsed[ENTAP_EXECUTE::GO_CELLULAR_FLAG]) stream<<val<<",";
+        stream<<'\t';
+        for (std::string val : _go_parsed[ENTAP_EXECUTE::GO_MOLECULAR_FLAG]) stream<<val<<",";
+        stream<<'\t';
+    } else {
+        stream<<"\t\t\t";
+    }
+    stream<<_kegg_str;
     return stream.str();
 }
 

@@ -134,37 +134,43 @@ void Ontology::run_eggnog(query_map_struct &SEQUENCES) {
             {"-m", "diamond"}
     };
     if (entapInit::file_exists(_new_input)) {
-        for (auto &pair : eggnog_command_map) {
-            eggnog_command += pair.first + " " + pair.second + " ";
-        }
+        for (auto &pair : eggnog_command_map)eggnog_command += pair.first + " " + pair.second + " ";
         entapInit::print_msg("\nExecuting eggnog mapper against protein sequences that hit databases...\n"
                              + eggnog_command);
         if (entapInit::execute_cmd(eggnog_command, annotation_std) !=0) {
             throw ExceptionHandler("Error executing eggnog mapper", ENTAP_ERR::E_RUN_ANNOTATION);
         }
         entapInit::print_msg("Success! Results written to: " + annotation_base_flag);
+        out.first = annotation_base_flag + ".emapper.annotations";
     } else {
         throw ExceptionHandler("No input file found at: " + _new_input,
                                ENTAP_ERR::E_RUN_EGGNOG);
     }
     if (entapInit::file_exists(_input_no_hits)) {
-        eggnog_command_map["-i"] = _input_no_hits;
-        eggnog_command_map["--output"] = annotation_no_flag;
-        entapInit::print_msg("\nExecuting eggnog mapper against protein sequences that did not hit databases...\n"
-                             + eggnog_command);
-        if (entapInit::execute_cmd(eggnog_command, annotation_std) !=0) {
-            throw ExceptionHandler("Error executing eggnog mapper", ENTAP_ERR::E_RUN_ANNOTATION);
+        std::ifstream inFile("file");
+        long line_num = std::count(std::istreambuf_iterator<char>(inFile),
+                   std::istreambuf_iterator<char>(), '\n');
+        if (line_num >1) {
+            eggnog_command_map["-i"] = _input_no_hits;
+            eggnog_command_map["--output"] = annotation_no_flag;
+            eggnog_command = "python " + _eggnog_exe + " ";
+            for (auto &pair : eggnog_command_map) eggnog_command += pair.first + " " + pair.second + " ";
+            entapInit::print_msg("\nExecuting eggnog mapper against protein sequences that did not hit databases...\n"
+                                 + eggnog_command);
+            if (entapInit::execute_cmd(eggnog_command, annotation_std) !=0) {
+                throw ExceptionHandler("Error executing eggnog mapper", ENTAP_ERR::E_RUN_ANNOTATION);
+            }
+            out.second = annotation_no_flag + ".emapper.annotations";
         }
-        out.first = annotation_base_flag + ".emapper.annotations";
-        out.second = annotation_no_flag + ".emapper.annotations";
     }
-
     parse_results_eggnog(SEQUENCES, out);
 }
 
 std::map<std::string,std::vector<std::string>> Ontology::parse_go_list
         (std::string list, DatabaseHelper &database) {
-    std::map<std::string,std::vector<std::string>> output;
+    std::map<std::string,std::vector<std::string>> output {
+
+    };
     if (list.empty()) return output;
     std::stringstream ss(list);
     std::string temp;
@@ -207,7 +213,9 @@ void Ontology::print_eggnog(Ontology::query_map_struct &SEQUENCES) {
                  "Seed Score\t"
                  "Tax Score\t"
                  "OGs\t"
-                 "GO Terms\t"
+                 "GO Biological\t"
+                 "GO Cellular\t"
+                 "GO Molecular\t"
                  "KEGG Terms"
          <<std::endl;
     for (auto &pair : SEQUENCES) {

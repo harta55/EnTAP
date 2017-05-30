@@ -473,7 +473,7 @@ namespace entapExecute {
         if (temp_interpro.empty()) {
             entapInit::print_msg("Interpro config path empty, setting to default: " +
                                  exe + ENTAP_EXECUTE::INTERPRO_EXE);
-            temp_eggnog = exe + ENTAP_EXECUTE::INTERPRO_EXE;
+            temp_interpro = exe + ENTAP_EXECUTE::INTERPRO_EXE;
         } else {
             entapInit::print_msg("Interpro path set to: " + temp_interpro);
         }

@@ -411,4 +411,13 @@ namespace entapInit {
         }
         return threads;
     }
+
+    std::string generate_command(std::unordered_map<std::string,std::string> &map,
+        std::string exe_path) {
+        std::stringstream ss;
+        ss << exe_path << " ";
+        for (auto &pair : map)ss << pair.first << " " << pair.second << " ";
+        std::string out = ss.str();
+        return out;
+    }
 }

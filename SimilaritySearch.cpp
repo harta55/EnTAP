@@ -46,13 +46,12 @@ std::list<std::string> SimilaritySearch::execute(short software, std::string upd
 std::pair<std::string,std::string> SimilaritySearch::parse_files(short software, std::vector<std::string> contams, std::string new_input,
                                    std::map<std::string, QuerySequence>& MAP) {
     this->_input_path = new_input;
-    this->_SEQUENCES = MAP;
     try {
         switch (software) {
             case 0:
-                return diamond_parse(contams);
+                return diamond_parse(contams,MAP);
             default:
-                return diamond_parse(contams);
+                return diamond_parse(contams,MAP);
         }
     } catch (ExceptionHandler &e) {throw e;}
 }
@@ -135,7 +134,8 @@ std::list<std::string> SimilaritySearch::verify_diamond_files(std::string &outpa
 }
 
 // input: 3 database string array of selected databases
-std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
+std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<std::string>& contams,
+                                                                   std::map<std::string, QuerySequence> &SEQUENCES) {
     entapInit::print_msg("Beginning to filter individual diamond_files...");
     std::unordered_map<std::string, std::string> taxonomic_database;
     std::list<std::map<std::string,QuerySequence>> database_maps;
@@ -192,7 +192,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
             std::pair<bool,std::string> contam_info = is_contaminant(species, taxonomic_database,contams);
             new_query.setContaminant(contam_info.first);
             new_query.set_contam_type(contam_info.second);
-            new_query.setFrame(_SEQUENCES[qseqid].getFrame());  // May want to handle differently, SLOW
+            new_query.setFrame(SEQUENCES[qseqid].getFrame());  // May want to handle differently, SLOW
 
             if (evalue > _e_val) {
                 count_under_e++; count_removed++;
@@ -226,7 +226,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
         std::ofstream file_no_hits(out_no_hits_fa, std::ios::out | std::ios::app);
 
         std::unordered_map<std::string, int> contam_map;
-        for (auto &pair : _SEQUENCES) {
+        for (auto &pair : SEQUENCES) {
             std::map<std::string, QuerySequence>::iterator it = database_map.find(pair.first);
             if (it == database_map.end()) {
                 if (pair.second.isIs_protein()) {
@@ -285,7 +285,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
         entapInit::print_msg("Success!");
     }
 
-    return process_best_diamond_hit(database_maps);
+    return process_best_diamond_hit(database_maps,SEQUENCES);
 }
 
 /**
@@ -293,7 +293,8 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
  * @param diamond_maps
  * @return - pair of best_hit.fasta, no_hit.fasta
  */
-std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(std::list<std::map<std::string,QuerySequence>> &diamond_maps) {
+std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(std::list<std::map<std::string,QuerySequence>> &diamond_maps,
+                                      std::map<std::string, QuerySequence>&SEQUENCES) {
     entapInit::print_msg("Compiling similarity results results to find best overall hits...");
     std::string compiled_path = _outpath + ENTAP_EXECUTE::SIM_SEARCH_COMPILED_PATH + "/";
     boostFS::remove_all(compiled_path.c_str());
@@ -327,7 +328,7 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
     std::ofstream file_no_hits(out_overall_no_hits_fa,std::ios::out | std::ios::app);
 
     std::map<std::string,int> contam_map;
-    for (auto &pair : _SEQUENCES) {
+    for (auto &pair : SEQUENCES) {
         std::map<std::string,QuerySequence>::iterator it = compiled_hit_map.find(pair.first);
         if (it != compiled_hit_map.end()) {
             count_total_filtered++;

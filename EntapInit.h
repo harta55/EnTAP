@@ -35,6 +35,8 @@ namespace entapInit {
     int get_supported_threads(boost::program_options::variables_map&);
     void init_go_db(std::string&);
     static int callback(void *data, int argc, char **argv, char **azColName);
+    std::string generate_command(std::unordered_map<std::string,std::string>&,
+                                 std::string);
 }
 
 #endif //ENTAP_INITHANDLER_H

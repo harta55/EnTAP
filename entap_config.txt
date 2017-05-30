@@ -9,3 +9,4 @@ diamond_exe_path=
 rsem_exe_path=
 genemarkst_exe_path=
 eggnog_exe_path=
+interpro_exe_path=

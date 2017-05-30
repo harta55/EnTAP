@@ -32,7 +32,8 @@ namespace boostFS = boost::filesystem;
 namespace entapExecute {
     ExecuteStates state;
     std::string _frame_selection_exe, _expression_exe, _diamond_exe, _outpath, _entap_outpath,
-        _eggnog_exe;
+        _ontology_exe;
+    short _ontology_flag;
     bool _blastp = false; // false for blastx, true for blastp
     bool _isProtein;      // input sequence, might want to handle differently
 
@@ -40,7 +41,7 @@ namespace entapExecute {
                       std::unordered_map<std::string, std::string> &config_map) {
         entapInit::print_msg("enTAP Executing...");
 
-
+        _ontology_flag = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<short>();
         int threads = entapInit::get_supported_threads(user_input);
         std::list<std::string> diamond_out, databases;
         std::string input_path, rsem_out, genemark_out, no_database_hits;
@@ -74,6 +75,11 @@ namespace entapExecute {
             std::string &str = contaminants[ind];
             std::transform(str.begin(), str.end(), str.begin(), ::tolower);
         }
+
+        // init_interpro_databases
+        std::vector<std::string> interpro_databases =
+                user_input[ENTAP_CONFIG::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
+
         // init_state_control
         std::string user_state_str;
         bool state_flag = false;
@@ -97,7 +103,7 @@ namespace entapExecute {
         ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads, _expression_exe, _outpath, is_overwrite);
         SimilaritySearch diamond = SimilaritySearch(databases, input_path, threads, is_overwrite, _diamond_exe,
                                                     _outpath, user_input["e"].as<double>(),exe_path);
-        Ontology ontology = Ontology(threads,is_overwrite,_eggnog_exe,_outpath,exe_path,input_path);
+        Ontology ontology = Ontology(threads,is_overwrite,_ontology_exe,_outpath,exe_path,input_path);
 
         std::map<std::string, QuerySequence> SEQUENCE_MAP = init_sequence_map(input_path);
         std::pair<std::string,std::string> diamond_pair;    // best_hits.fa,no_hits.fa
@@ -139,7 +145,8 @@ namespace entapExecute {
                         no_database_hits = diamond_pair.second;
                         break;
                     case GENE_ONTOLOGY:
-                        ontology.execute(0,SEQUENCE_MAP,input_path,no_database_hits);
+                        ontology.execute(_ontology_flag,SEQUENCE_MAP,input_path,no_database_hits,
+                            interpro_databases);
                         break;
                     default:
                         state = EXIT;
@@ -424,14 +431,17 @@ namespace entapExecute {
     }
 
     // Doesn't check default paths if user does not want to use that portion of enTAP
-    // returns diamond path for config
+    // returns diamond path for config TODO REFORMAT
     std::string init_exe_paths(std::unordered_map<std::string, std::string> &map, std::string &exe) {
-        entapInit::print_msg("Verifying execution paths...");
+        entapInit::print_msg("Verifying execution paths. Note they are not checked for validity...");
         std::string temp_rsem = map[ENTAP_CONFIG::KEY_RSEM_EXE];
         std::string temp_diamond = map[ENTAP_CONFIG::KEY_DIAMOND_EXE];
         std::string temp_genemark = map[ENTAP_CONFIG::KEY_GENEMARK_EXE];
         std::string temp_eggnog = map[ENTAP_CONFIG::KEY_EGGNOG_EXE];
-
+        std::string temp_interpro = map[ENTAP_CONFIG::KEY_INTERPRO_EXE];
+        if (_ontology_flag>1 || _ontology_flag<0) {
+            throw ExceptionHandler("Annotation flag must be either 0(eggnog) or"
+                                           "1(interproscan)", ENTAP_ERR::E_CONFIG_PARSE);}
         if (temp_rsem.empty()) {
             entapInit::print_msg("RSEM config path empty, setting to default: " +
                                  exe + ENTAP_EXECUTE::RSEM_EXE_PATH);
@@ -460,12 +470,19 @@ namespace entapExecute {
         } else {
             entapInit::print_msg("Eggnog path set to: " + temp_eggnog);
         }
+        if (temp_interpro.empty()) {
+            entapInit::print_msg("Interpro config path empty, setting to default: " +
+                                 exe + ENTAP_EXECUTE::INTERPRO_EXE);
+            temp_eggnog = exe + ENTAP_EXECUTE::INTERPRO_EXE;
+        } else {
+            entapInit::print_msg("Interpro path set to: " + temp_interpro);
+        }
 
         _diamond_exe = temp_diamond;
         _frame_selection_exe = temp_genemark;
         _expression_exe = temp_rsem;
-        _eggnog_exe = temp_eggnog;
-        return _diamond_exe;
+        _ontology_flag==0 ? _ontology_exe = temp_eggnog : _ontology_exe = temp_interpro;
+        return _diamond_exe;        // for config run
     }
 
 

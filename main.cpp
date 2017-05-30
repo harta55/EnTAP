@@ -69,7 +69,6 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
     std::vector<std::string> contam_vec, ncbi_data, uniprot_data, data_path;
     float fpkm;
     // TODO do not change .entp filename warning
-    // TODO specify an output title (species) to name everything
     try {
         boostPO::options_description description("Options");
         // TODO separate out into main options and additional config file with defaults
@@ -88,11 +87,18 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                  ->default_value(std::vector<std::string>{ENTAP_CONFIG::INPUT_UNIPROT_NULL},""),
                  "Select which NCBI database you would like to download"
                  "\nref - RefSeq database")
+            (ENTAP_CONFIG::INPUT_FLAG_INTERPRO.c_str(),
+             boostPO::value<std::vector<std::string>>()->multitoken()
+                     ->default_value(std::vector<std::string>{ENTAP_CONFIG::INTERPRO_DEFAULT},""),
+             "Select which protein databases you would like to download if using Interpro")
             ("uniprot,U",
                  boostPO::value<std::vector<std::string>>(&uniprot_data)->multitoken()
                  ->default_value(std::vector<std::string>{ENTAP_CONFIG::INPUT_UNIPROT_NULL},""),
                  "Select which Uniprot database you would like to download"
                  "\n100 - UniRef100...")
+            (ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY.c_str(),
+                 boostPO::value<short>()->default_value(ENTAP_EXECUTE::EGGNOG_INT_FLAG),
+                 "Specify ontology software to use\n0 - eggnog\n1 - interproscan")
             ("tag",
                  boostPO::value<std::string>()->default_value(ENTAP_EXECUTE::OUTFILE_DEFAULT),
                  "Specify species or unique tag you would like files to be saved as")
@@ -172,11 +178,6 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                                        ENTAP_ERR::E_INPUT_PARSE);
             }
             bool ncbi_check = true;
-            // If we want to handle just -N scenario (but wouldn't work with -N -N ref)
-            // Need to set ->>zero_tokens() above
-//            if (ncbi_data.size() == 0 && vm.count("ncbi")) {
-//                vm.at("ncbi").value()=std::vector<std::string>{ENTAP_CONFIG::NCBI_DEFAULT};
-//            }
             for (auto const& entry: ncbi_data) {
                 if (entry.compare(ENTAP_CONFIG::NCBI_REFSEQ_COMP)==0)continue;
                 if (entry.compare(ENTAP_CONFIG::NCBI_NONREDUNDANT)==0)continue;
@@ -272,8 +273,8 @@ void generate_config(std::string &path) {
                 ENTAP_CONFIG::KEY_DIAMOND_EXE               +"=\n"+
                 ENTAP_CONFIG::KEY_RSEM_EXE                  +"=\n"+
                 ENTAP_CONFIG::KEY_GENEMARK_EXE              +"=\n"+
-                ENTAP_CONFIG::KEY_EGGNOG_EXE
-
+                ENTAP_CONFIG::KEY_EGGNOG_EXE                +"=\n"+
+                ENTAP_CONFIG::KEY_INTERPRO_EXE
                 << std::endl;
     config_file.close();
 }
@@ -289,6 +290,7 @@ bool check_key(std::string& key) {
     if (key.compare(ENTAP_CONFIG::KEY_GENEMARK_EXE)==0) return true;
     if (key.compare(ENTAP_CONFIG::KEY_UNIPROT_UR90)==0) return true;
     if (key.compare(ENTAP_CONFIG::KEY_EGGNOG_EXE)==0) return true;
+    if (key.compare(ENTAP_CONFIG::KEY_INTERPRO_EXE)==0) return true;
     return key.compare(ENTAP_CONFIG::KEY_RSEM_EXE) == 0;
 }
 

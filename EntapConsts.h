@@ -54,6 +54,7 @@ namespace ENTAP_CONFIG {
     const std::string KEY_RSEM_EXE = "rsem_exe_path";
     const std::string KEY_GENEMARK_EXE = "genemarkst_exe_path";
     const std::string KEY_EGGNOG_EXE = "eggnog_exe_path";
+    const std::string KEY_INTERPRO_EXE = "interpro_exe_path";
 
 
     const std::string GO_DB_PATH = "/bin/go_term.db";
@@ -76,6 +77,8 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_NCBI_1 = "ncbi";
     const std::string INPUT_FLAG_NCBI_2 = "N";
     const std::string INPUT_FLAG_UNIPROT = "uniprot";
+    const std::string INPUT_FLAG_INTERPRO = "protein";
+    const std::string INPUT_FLAG_ONTOLOGY = "ontology";
 
 
     const std::string INPUT_UNIPROT_SWISS = "swiss";
@@ -96,6 +99,8 @@ namespace ENTAP_CONFIG {
     const std::string NCBI_DEFAULT = NCBI_REFSEQ_COMP;
 
     const std::string NCBI_INDEX_PATH = "/bin/ncbi_";
+
+    const std::string INTERPRO_DEFAULT = "pfam";
 
     //-----------------------FTP PATHS---------------------------//
     const std::string UNIPROT_FTP_SWISS = "ftp://ftp.uniprot.org/pub/databases/"
@@ -158,10 +163,15 @@ namespace ENTAP_EXECUTE {
     const std::string EGGNOG_EMAPPER_EXE = "/libs/eggnog-mapper/emapper.py";
     const std::string EGGNOG_INIT_EXE = "";
     const short EGGNOG_COL_NUM = 12;
-    const std::string ONTOLOGY_OUT_PATH = "ontology/";
     const std::string GO_BIOLOGICAL_FLAG = "biological_process";
     const std::string GO_CELLULAR_FLAG = "cellular_component";
     const std::string GO_MOLECULAR_FLAG = "molecular_function";
+    const short EGGNOG_INT_FLAG = 0;
+
+    const short INTERPRO_INT_FLAG = 1;
+    const short INTERPRO_COL_NUM = 15;
+
+    const std::string INTERPRO_EXE = "/libs/interproscan-5.22-61.0/interproscan.sh";
 
     const std::string ENTAP_OUTPUT = "entap_out/";
 

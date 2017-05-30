@@ -25,12 +25,12 @@ private:
     std::string _uniprot_regex = "OS=(.+)\\s\\S\\S";
     int _threads; bool _overwrite,_blastp;
     double _e_val;
-    std::map<std::string, QuerySequence> _SEQUENCES;
     std::list<std::string> diamond();
     void diamond_blast(std::string, std::string, std::string,std::string&,int&, std::string&);
     std::list<std::string> verify_diamond_files(std::string&,
         std::string&, std::string);
-    std::pair<std::string,std::string> diamond_parse(std::vector<std::string>&);
+    std::pair<std::string,std::string> diamond_parse(std::vector<std::string>&,
+                                                     std::map<std::string, QuerySequence>&);
     std::list<std::string> find_diamond_files();
     std::unordered_map<std::string, std::string> read_tax_map();
     std::pair<bool,std::string>  is_contaminant(std::string, std::unordered_map<std::string,
@@ -38,7 +38,7 @@ private:
     std::string get_species(std::string &);
     bool is_informative(std::string);
     std::pair<std::string,std::string> process_best_diamond_hit(std::list<std::map<std::string,
-            QuerySequence>>&);
+            QuerySequence>>&,std::map<std::string, QuerySequence>&);
     void print_header(std::string);
 };
 

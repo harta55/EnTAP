@@ -32,6 +32,7 @@ class QuerySequence {
         const std::string &getStitle() const;
         void setStitle(const std::string &stitle);
         void setSequence(const std::string&);
+        // TODO switch to map results
         void set_eggnog_results(std::string,std::string,std::string,std::string,std::string,
                         std::string,std::string,std::string);
         const std::string &get_contam_type() const;
@@ -45,7 +46,8 @@ class QuerySequence {
         bool is_is_database_hit() const;
         void set_is_database_hit(bool _is_database_hit);
         void setTax_id(int tax_id);
-        std::string print_eggnog();
+        void set_ontology_results(std::map<std::string,std::string>);
+        std::string print_final_results(short,const std::vector<std::string>&);
 
     private:
         friend std::ostream& operator<<(std::ostream& , const QuerySequence&);
@@ -58,6 +60,7 @@ class QuerySequence {
             _seed_ortho,_seed_eval,_seed_score,_predicted_gene,_tax_scope, _ogs,_go_str,_kegg_str;
         go_struct _go_parsed;
         void init_sequence();
+        std::map<std::string,std::string> _ontology_results;
 public:
     const go_struct &get_go_parsed() const;
 
@@ -84,6 +87,7 @@ public:
     const std::string &getFrame() const;
 
     bool isIs_protein() const;
+
 
 
 };

@@ -83,6 +83,7 @@ unsigned long QuerySequence::getSeq_length() const {
 }
 
 QuerySequence::QuerySequence() {
+    init_sequence();
 
 }
 
@@ -266,15 +267,28 @@ void QuerySequence::set_eggnog_results(std::string seed_o, std::string seed_o_ev
     }
 }
 
-std::string QuerySequence::print_eggnog() {
+std::string QuerySequence::print_final_results(short flag,const std::vector<std::string>&headers) {
     std::stringstream stream;
-    stream << this->qseqid<<'\t'<<this->sseqid<<'\t'<<this->pident<<'\t'<<
-           this->length<<'\t'<<this->mismatch<<'\t'<<this->mismatch<<'\t'<<
-           this->gapopen<<'\t'<<this->qstart<<'\t'<<this->qend<<'\t'<<
-           this->sstart<<'\t'<<this->send<<'\t'<<this->e_val<<'\t'<< this->_coverage<<"\t"<<
-           this->stitle<<'\t'<<this->species<<'\t'<<this->database_path<<'\t'<<
-           this->frame<<this->_seed_ortho<<'\t'<<this->_seed_eval<<'\t'<<this->_seed_score<<'\t'<<
-           this->_predicted_gene<<'\t'<<this->_tax_scope<<'\t'<< this->_ogs<<'\t';
+
+    switch (flag) {
+        case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
+            stream << this->qseqid<<'\t'<<this->sseqid<<'\t'<<this->pident<<'\t'<<
+                   this->length<<'\t'<<this->mismatch<<'\t'<<this->mismatch<<'\t'<<
+                   this->gapopen<<'\t'<<this->qstart<<'\t'<<this->qend<<'\t'<<
+                   this->sstart<<'\t'<<this->send<<'\t'<<this->e_val<<'\t'<< this->_coverage<<"\t"<<
+                   this->stitle<<'\t'<<this->species<<'\t'<<this->database_path<<'\t'<<
+                   this->frame<<'\t'<<this->_seed_ortho<<'\t'<<this->_seed_eval<<'\t'<<this->_seed_score<<'\t'<<
+                   this->_predicted_gene<<'\t'<<this->_tax_scope<<'\t'<< this->_ogs<<'\t'<<this->_kegg_str<<'\t';
+            break;
+        case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
+            stream << this<<'\t';
+            for (const std::string &val : headers) {
+                stream << _ontology_results[val] << '\t';
+            }
+            break;
+        default:
+            break;
+    }
     if (!this->_go_str.empty()) {
         for (std::string val : _go_parsed[ENTAP_EXECUTE::GO_BIOLOGICAL_FLAG]) stream<<val<<",";
         stream<<'\t';
@@ -285,8 +299,8 @@ std::string QuerySequence::print_eggnog() {
     } else {
         stream<<"\t\t\t";
     }
-    stream<<_kegg_str;
     return stream.str();
+
 }
 
 const QuerySequence::go_struct &QuerySequence::get_go_parsed() const {
@@ -310,4 +324,8 @@ void QuerySequence::init_sequence() {
     this->bit_score = 0;
     this->_coverage = 0;
 
+}
+
+void QuerySequence::set_ontology_results(std::map<std::string, std::string> map) {
+    this->_ontology_results = map;
 }

@@ -248,14 +248,6 @@ std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
             }
         }
     }
-    print_msg("Checking database and .exe locations...");
-    for (auto i: config_map) {
-        if (i.second.size() <=1) continue;
-        if (!entapInit::file_exists(i.second)) {
-            throw ExceptionHandler(i.first + " file at: " + i.second + " not found",
-                ENTAP_ERR::E_CONFIG_PARSE);
-        }
-    }
     print_msg("Success!");
     return config_map;
 }

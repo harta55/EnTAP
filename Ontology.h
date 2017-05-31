@@ -36,6 +36,7 @@ private:
     std::string eggnog_format(std::string);
     void init_headers();
     void print_header(std::string);
+    bool verify_files(std::string,std::string);
 };
 
 

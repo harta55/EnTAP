@@ -58,7 +58,9 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
     DatabaseHelper database;
     if (!database.open(_entap_exe + ENTAP_CONFIG::GO_DB_PATH))
         throw ExceptionHandler("Unable to open GO database",ENTAP_ERR::E_PARSE_EGGNOG);
-
+    std::map<std::string, int> eggnog_map;
+    unsigned int count_total_go_hits=0, count_total_go_terms=0, count_no_go=0,count_no_kegg=0,
+            count_TOTAL_hits=0, count_total_kegg_terms=0, count_total_kegg_hits=0;
     for (int i=0; i<2;i++) {
         std::string path;
         i == 0 ? path=out.first : path=out.second;
@@ -68,11 +70,9 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
         }
         std::string qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                 best_og, cog_cat, eggnog_annot;
-        unsigned int count_total_go_hits=0, count_total_go_terms=0, count_no_go=0,count_no_kegg=0,
-            count_TOTAL_hits=0, count_total_kegg_terms=0, count_total_kegg_hits=0;
+
         io::CSVReader<ENTAP_EXECUTE::EGGNOG_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(out.first);
         // io::single_line_comment<'#'>??
-        std::map<std::string, int> eggnog_map;
         while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                            best_og, cog_cat, eggnog_annot)) {
             SEQUENCES[qseqid].set_eggnog_results(seed_ortho,seed_e,seed_score,predicted_gene,go_terms,
@@ -95,24 +95,26 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
                 count_no_kegg++;
             }
         }
-        unsigned int count_no_hits=0;
-        for (auto &pair : SEQUENCES) {
-            if (eggnog_map.find(pair.first) == eggnog_map.end()) count_no_hits++;
-        }
-        std::stringstream ss;
-        ss <<
-            "Statistics for file located at: " << path <<
-            "\nTotal hits: " << count_TOTAL_hits <<
-            "\nTotal sequences that did not hit Eggnog Databases: "<<count_no_hits<<
-            "\nTotal sequences containing GO terms: " << count_total_go_hits<<
-            "\nTotal sequences that did not have GO terms: " << count_no_go <<
-            "\nTotal matched GO terms: " << count_total_go_terms <<
-            "\nTotal sequences containing KEGG terms: " << count_total_kegg_hits<<
-            "\nTotal sequences that did not have KEGG terms: " << count_no_kegg<<
-            "\nTotal matched KEGG terms: " << count_total_kegg_terms;
-        msg = ss.str();
-        entapExecute::print_statistics(msg,_outpath);
+
     }
+    entapInit::print_msg("Success! Computing overall statistics...");
+    unsigned int count_no_hits=0;
+    for (auto &pair : SEQUENCES) {
+        if (eggnog_map.find(pair.first) == eggnog_map.end()) count_no_hits++;
+    }
+    std::stringstream ss;
+    ss <<
+       "Statistics for overall Eggnog results: " <<
+       "\nTotal hits: " << count_TOTAL_hits <<
+       "\nTotal sequences that did not hit against Eggnog databases: " <<count_no_hits<<
+       "\nTotal sequences containing GO terms: " << count_total_go_hits<<
+       "\nTotal sequences that did not have GO terms: " << count_no_go <<
+       "\nTotal matched GO terms: " << count_total_go_terms <<
+       "\nTotal sequences containing KEGG terms: " << count_total_kegg_hits<<
+       "\nTotal sequences that did not have KEGG terms: " << count_no_kegg<<
+       "\nTotal matched KEGG terms: " << count_total_kegg_terms;
+    msg = ss.str();
+    entapExecute::print_statistics(msg,_outpath);
     database.close();
     print_eggnog(SEQUENCES);
 }
@@ -120,15 +122,23 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
 
 void Ontology::run_eggnog(query_map_struct &SEQUENCES) {
     std::string eggnog_out_dir = _outpath + ONTOLOGY_OUT_PATH;
-    boostFS::remove_all(eggnog_out_dir);
-    boostFS::create_directories(eggnog_out_dir);
     std::string annotation_base_flag = eggnog_out_dir + "annotation_results";
     std::string annotation_no_flag = eggnog_out_dir + "annotation_results_no_hits";
     std::string annotation_std = eggnog_out_dir + "annotation_std";
     std::string eggnog_command = "python " + _ontology_exe + " ";
     std::pair<std::string,std::string> out;
 
-    // TODO eggnog overwrite
+    if (_is_overwrite) {
+        boostFS::remove_all(eggnog_out_dir);
+    } else {
+        if (verify_files(annotation_base_flag+"_alt",annotation_no_flag+"_alt")) {
+            out.first = annotation_base_flag + "_alt";
+            out.second = annotation_base_flag + "_alt";
+            parse_results_eggnog(SEQUENCES, out);
+            return;
+        }
+    }
+    boostFS::create_directories(eggnog_out_dir);
     std::unordered_map<std::string,std::string> eggnog_command_map = {
             {"-i",_new_input},
             {"--output",annotation_base_flag},
@@ -247,14 +257,27 @@ void Ontology::run_interpro(Ontology::query_map_struct &SEQUENCES, std::vector<s
     std::string interpro_out_dir = _outpath + ONTOLOGY_OUT_PATH;
     std::string annotation_std = interpro_out_dir + "annotation_std";
     std::pair<std::string,std::string> out;
-    boostFS::remove_all(interpro_out_dir);
+
+    if (_is_overwrite) {
+        boostFS::remove_all(interpro_out_dir);
+    } else {
+        boostFS::path file(_new_input);
+        std::string new_out = interpro_out_dir + file.filename().string() + ".tsv";
+        boostFS::path file2(_input_no_hits);
+        std::string no_hits = interpro_out_dir + file2.filename().string() + ".tsv";
+        if (verify_files(new_out,no_hits)) {
+            out.first = new_out; out.second = no_hits;
+            parse_results_interpro(SEQUENCES,out);
+            return;
+        }
+    }
     boostFS::create_directories(interpro_out_dir);
-    // TODO interpro overwrite
     std::unordered_map<std::string,std::string> command_map= {
             {"-i",""},
             {"-goterms",""},
             {"-iprlookup",""},
             {"-pa", ""},
+            {"-d",interpro_out_dir}
     };
     int ct = 0;
     if (!databases.empty()) {
@@ -286,7 +309,7 @@ void Ontology::run_interpro(Ontology::query_map_struct &SEQUENCES, std::vector<s
         if (entapInit::execute_cmd(cmd, annotation_std) !=0) {
             throw ExceptionHandler("Error executing eggnog mapper", ENTAP_ERR::E_RUN_ANNOTATION);
         }
-        i == 0 ? out.first=filename+".tsv" : out.second=filename+".tsv";
+        i == 0 ? out.first=interpro_out_dir + filename+".tsv" : out.second=interpro_out_dir + filename+".tsv";
     }
     parse_results_interpro(SEQUENCES,out);
 }
@@ -426,4 +449,23 @@ void Ontology::print_header(std::string file) {
     for (std::string val : _HEADERS) ofstream << '\t' << val;
     ofstream<<std::endl;
     ofstream.close();
+}
+
+bool Ontology::verify_files(std::string hits,std::string no_hits) {
+    bool verified = false;
+        entapInit::print_msg("Overwrite was unselected, verifying output files...");
+        if (entapInit::file_exists(hits)) {
+            entapInit::print_msg("File located at: " + hits + " found");
+            verified = true;
+        }
+        if (entapInit::file_exists(no_hits)) {
+            entapInit::print_msg("File located at: " + no_hits + " found");
+            verified = true;
+        }
+    if (verified) {
+        entapInit::print_msg("One or more ontology files were found, skipping ontology execution");
+    } else {
+        entapInit::print_msg("No ontology files were found, continuing with execution");
+    }
+    return verified;
 }

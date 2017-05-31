@@ -79,6 +79,7 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_UNIPROT = "uniprot";
     const std::string INPUT_FLAG_INTERPRO = "protein";
     const std::string INPUT_FLAG_ONTOLOGY = "ontology";
+    const std::string INPUT_FLAG_SPECIES = "species";
 
 
     const std::string INPUT_UNIPROT_SWISS = "swiss";

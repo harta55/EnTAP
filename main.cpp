@@ -65,7 +65,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
     std::string err_msg;
     std::unordered_map<std::string, std::string> input_map;
     print_msg("Parsing user input...");
-    std::string input_file, exe_state, align_path;
+    std::string input_file, exe_state, align_path, species;
     std::vector<std::string> contam_vec, ncbi_data, uniprot_data, data_path;
     float fpkm;
     // TODO do not change .entp filename warning
@@ -122,6 +122,9 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
             ("contam,c",
                  boostPO::value<std::vector<std::string>>(&contam_vec)->multitoken(),
                  "Contaminant selection")
+            (ENTAP_CONFIG::INPUT_FLAG_SPECIES.c_str(),
+                 boostPO::value<std::string>(&species),"The type of species you are analyzing if you would like"
+                 "filtering based upon this separated by a '_'.\nExample: homo_sapiens")
             ("state",
                  boostPO::value<std::string>(&exe_state)->default_value("+"),
                  "Select a state value, *EXPERIMENTAL*\n""These commands will run certain "
@@ -201,6 +204,12 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
             }
             if (is_run && !vm.count("input")) {
                 throw ExceptionHandler("Missing input transcriptome file", ENTAP_ERR::E_INPUT_PARSE);
+            }
+            if (!species.empty()) {
+                if (species.find("_") == std::string::npos) {
+                    throw ExceptionHandler("Invalid format of species, must be "
+                         "separated by a '_'", ENTAP_ERR::E_INPUT_PARSE);
+                }
             }
             if (is_config) {
                 state = INIT_ENTAP;

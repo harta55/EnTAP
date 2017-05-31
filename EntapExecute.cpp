@@ -53,6 +53,14 @@ namespace entapExecute {
         if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN)) _isProtein = true;
         bool is_overwrite = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
 
+        std::string input_species;
+        if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_SPECIES)) {
+            input_species = user_input[ENTAP_CONFIG::INPUT_FLAG_SPECIES].as<std::string>();
+            std::transform(input_species.begin(), input_species.end(), input_species.begin(), ::tolower);
+            input_species =
+                    input_species.substr(0,input_species.find("_")) +
+                    " " + input_species.substr(input_species.find("_")+1);
+        }
         boostFS::path working_dir(boostFS::current_path());
         _outpath = working_dir.string() + "/" + user_input["tag"].as<std::string>() + "/";
         _entap_outpath = _outpath + ENTAP_EXECUTE::ENTAP_OUTPUT;
@@ -102,7 +110,7 @@ namespace entapExecute {
         FrameSelection genemark = FrameSelection(input_path, _frame_selection_exe, _outpath, is_overwrite);
         ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads, _expression_exe, _outpath, is_overwrite);
         SimilaritySearch diamond = SimilaritySearch(databases, input_path, threads, is_overwrite, _diamond_exe,
-                                                    _outpath, user_input["e"].as<double>(),exe_path);
+                                                    _outpath, user_input["e"].as<double>(),exe_path,input_species);
         Ontology ontology = Ontology(threads,is_overwrite,_ontology_exe,_outpath,exe_path,input_path);
 
         std::map<std::string, QuerySequence> SEQUENCE_MAP = init_sequence_map(input_path);

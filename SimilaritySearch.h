@@ -15,12 +15,12 @@ class SimilaritySearch {
 public:
     std::list<std::string> execute(short, std::string, bool);
     SimilaritySearch(std::list<std::string>&, std::string, int, bool, std::string,
-                     std::string,double,std::string);
+                     std::string,double,std::string,std::string);
     std::pair<std::string,std::string> parse_files(short, std::vector<std::string>,
                                                    std::string,std::map<std::string, QuerySequence>&);
 private:
     std::list<std::string> _database_paths, _sim_search_paths;
-    std::string _diamond_exe, _outpath, _input_path, _entap_exe;
+    std::string _diamond_exe, _outpath, _input_path, _entap_exe, _input_lineage,_input_species;
     std::string _ncbi_regex = "\\[([^]]+)\\](?!.+\\[.+\\])";
     std::string _uniprot_regex = "OS=(.+)\\s\\S\\S";
     int _threads; bool _overwrite,_blastp;
@@ -40,6 +40,8 @@ private:
     std::pair<std::string,std::string> process_best_diamond_hit(std::list<std::map<std::string,
             QuerySequence>>&,std::map<std::string, QuerySequence>&);
     void print_header(std::string);
+    std::string get_lineage(std::string, std::unordered_map<std::string, std::string>&);
+    int calculate_score(std::string,bool);
 };
 
 

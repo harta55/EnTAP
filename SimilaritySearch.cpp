@@ -18,7 +18,7 @@ namespace boostFS = boost::filesystem;
 
 SimilaritySearch::SimilaritySearch(std::list<std::string> &databases, std::string input,
                            int threads, bool overwrite, std::string exe, std::string out, double e,
-                            std::string entap_exe) {
+                            std::string entap_exe,std::string species) {
     this->_database_paths = databases;
     this->_input_path = input;
     this->_threads = threads;
@@ -27,6 +27,7 @@ SimilaritySearch::SimilaritySearch(std::list<std::string> &databases, std::strin
     this->_outpath = out;
     this->_e_val = e;
     this->_entap_exe = entap_exe;
+    this->_input_species = species;
 }
 
 std::list<std::string> SimilaritySearch::execute(short software, std::string updated_input,
@@ -151,6 +152,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
     std::string sim_search_processed = _outpath + ENTAP_EXECUTE::SIM_SEARCH_PARSE_PROCESSED + "/";
     boostFS::remove_all(sim_search_processed);
     boostFS::create_directories(sim_search_processed);
+    _input_lineage = get_lineage(_input_species,taxonomic_database);
 
     for (std::string data : _sim_search_paths) {
         entapInit::print_msg("Diamond file located at " + data + " being filtered");
@@ -192,15 +194,18 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
             std::pair<bool,std::string> contam_info = is_contaminant(species, taxonomic_database,contams);
             new_query.setContaminant(contam_info.first);
             new_query.set_contam_type(contam_info.second);
+            bool informative = is_informative(stitle);
+            new_query.set_is_informative(informative);
             new_query.setFrame(SEQUENCES[qseqid].getFrame());  // May want to handle differently, SLOW
-
+            std::string lineage = get_lineage(species,taxonomic_database);
+            new_query.set_lineage(lineage);
+            new_query.set_tax_score(calculate_score(lineage,informative));
             if (evalue > _e_val) {
                 count_under_e++; count_removed++;
                 file_unselected_tsv << new_query <<std::endl;
                 continue;
             }
             std::map<std::string, QuerySequence>::iterator it = database_map.find(qseqid);
-            new_query.set_is_informative(is_informative(stitle));
             if (it != database_map.end()) {
                 if (new_query > it->second) {
                     file_unselected_tsv << it->second << std::endl;
@@ -213,7 +218,6 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
                 database_map.emplace(qseqid, new_query);
             }
         }
-
         entapInit::print_msg("File parsed, calculating statistics and writing output...");
 
         // final database stats
@@ -425,7 +429,7 @@ std::pair<bool,std::string> SimilaritySearch::is_contaminant(std::string species
                     std::vector<std::string> &contams) {
     // species and tax database both lowercase
     std::transform(species.begin(), species.end(), species.begin(), ::tolower);
-    std::string lineage, contam_type;
+    std::string lineage;
     if (contams.empty()) return std::pair<bool,std::string>(false,"");
     if (database.find(species) != database.end()) {
         lineage = database[species];
@@ -486,4 +490,27 @@ void SimilaritySearch::print_header(std::string file) {
 
              <<std::endl;
     ofstream.close();
+}
+
+std::string SimilaritySearch::get_lineage(std::string species,
+                                          std::unordered_map<std::string, std::string>&database) {
+    std::transform(species.begin(), species.end(), species.begin(), ::tolower);
+    std::string lineage;
+    lineage = database[species];
+    if (lineage.empty()) return "";
+    if (lineage.find("||") != std::string::npos) {
+        return lineage.substr(lineage.find("||")+2);
+    } else return "";
+}
+
+int SimilaritySearch::calculate_score(std::string lineage, bool is_informative) {
+    int score = 0;
+    if (is_informative) score += 4;
+    std::string temp;
+    size_t p = 0;std::string del = "; ";
+    while ((p = lineage.find("; "))!=std::string::npos) {
+        temp = lineage.substr(0,p);
+        if (_input_lineage.find(temp)!=std::string::npos) score++;
+        lineage.erase(0,p+del.length());
+    }
 }

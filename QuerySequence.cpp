@@ -14,21 +14,22 @@ bool QuerySequence::operator>(const QuerySequence &querySequence) {
     if (this->is_better_hit) {
         // For hits of the same database "better hit"
         double eval1 = this->e_val, eval2 = querySequence.e_val;
-        if (eval1 == 0) eval1 = 1E-120;
-        if (eval2 == 0) eval2 = 1E-120;
+        if (eval1 == 0) eval1 = 1E-180;
+        if (eval2 == 0) eval2 = 1E-180;
 
         if (fabs(log10(eval1) - log10(eval2)) < 7) {
             if (this->contaminant && !querySequence.contaminant) return false;
             if (!this->contaminant && querySequence.contaminant) return true;
 
-            double coverage_dif = fabs(this->_coverage - querySequence._coverage);
-            if (coverage_dif < 4) {
-                if (!this->_is_informative) return false;
-                if (!querySequence._is_informative) return true;
-                return this->length > querySequence.length;
-            } else {
-                return this->_coverage > querySequence._coverage;
+            if (!this->frame.empty() && !querySequence.frame.empty()) {
+                if (verify_frame(this->frame,querySequence.frame)) {
+                    double coverage_dif = fabs(this->_coverage - querySequence._coverage);
+                    if (coverage_dif > 5) {
+                        return this->_coverage > querySequence._coverage;
+                    }
+                }
             }
+            return this->_tax_score > querySequence._tax_score;
         } else {
             return eval1 > eval2;
         }
@@ -37,14 +38,15 @@ bool QuerySequence::operator>(const QuerySequence &querySequence) {
         if (this->contaminant && !querySequence.contaminant) return false;
         if (!this->contaminant && querySequence.contaminant) return true;
 
-        double coverage_dif = fabs(this->_coverage - querySequence._coverage);
-        if (coverage_dif < 7) {
-            if (!this->_is_informative) return false;
-            if (!querySequence._is_informative) return true;
-            return this->length > querySequence.length;
-        } else {
-            return this->_coverage > querySequence._coverage;
+        if (!this->frame.empty() && !querySequence.frame.empty()) {
+            if (verify_frame(this->frame,querySequence.frame)) {
+                double coverage_dif = fabs(this->_coverage - querySequence._coverage);
+                if (coverage_dif > 5) {
+                    return this->_coverage > querySequence._coverage;
+                }
+            }
         }
+        return this->_tax_score > querySequence._tax_score;
     }
 }
 
@@ -329,3 +331,24 @@ void QuerySequence::init_sequence() {
 void QuerySequence::set_ontology_results(std::map<std::string, std::string> map) {
     this->_ontology_results = map;
 }
+
+bool QuerySequence::verify_frame(const std::string &frame1, const std::string &frame2) {
+    return (frame1.compare(ENTAP_EXECUTE::FRAME_SELECTION_INTERNAL_FLAG)!=0 &&
+            frame2.compare(ENTAP_EXECUTE::FRAME_SELECTION_INTERNAL_FLAG)!=0);
+}
+
+void QuerySequence::set_lineage(const std::string &_lineage) {
+    QuerySequence::_lineage = _lineage;
+}
+
+const std::string &QuerySequence::get_lineage() const {
+    return _lineage;
+}
+
+int QuerySequence::get_tax_score() const {
+    return _tax_score;
+}
+
+void QuerySequence::set_tax_score(int _tax_score) {
+    QuerySequence::_tax_score = _tax_score;
+};

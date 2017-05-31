@@ -43,24 +43,35 @@ class QuerySequence {
         bool isContaminant() const;
         void setContaminant(bool contaminant);
         int getTax_id() const;
+        int get_tax_score() const;
+        void set_tax_score(int _tax_score);
         bool is_is_database_hit() const;
         void set_is_database_hit(bool _is_database_hit);
         void setTax_id(int tax_id);
         void set_ontology_results(std::map<std::string,std::string>);
         std::string print_final_results(short,const std::vector<std::string>&);
 
-    private:
+private:
         friend std::ostream& operator<<(std::ostream& , const QuerySequence&);
         bool contaminant, is_protein, is_better_hit, _is_informative, _is_database_hit;
         std::vector<std::string> _go_terms, _kegg_terms;
-        int _tax_id,length, mismatch, gapopen, qstart, qend, sstart, send;
+        int _tax_id,length, mismatch, gapopen, qstart, qend, sstart, send, _tax_score;
         double pident,bit_score, e_val, _coverage;
         unsigned long seq_length;
         std::string database_path, qseqid,sseqid, stitle, species, sequence, frame, _contam_type,
-            _seed_ortho,_seed_eval,_seed_score,_predicted_gene,_tax_scope, _ogs,_go_str,_kegg_str;
-        go_struct _go_parsed;
+                _seed_ortho,_seed_eval,_seed_score,_predicted_gene,_tax_scope, _ogs,_go_str,_kegg_str,
+                _lineage;
+public:
+    const std::string &get_lineage() const;
+
+public:
+    void set_lineage(const std::string &_lineage);
+
+private:
+    go_struct _go_parsed;
         void init_sequence();
         std::map<std::string,std::string> _ontology_results;
+        bool verify_frame(const std::string&,const std::string&);
 public:
     const go_struct &get_go_parsed() const;
 

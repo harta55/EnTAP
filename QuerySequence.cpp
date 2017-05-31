@@ -273,7 +273,7 @@ std::string QuerySequence::print_final_results(short flag,const std::vector<std:
     switch (flag) {
         case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
             stream << this->qseqid<<'\t'<<this->sseqid<<'\t'<<this->pident<<'\t'<<
-                   this->length<<'\t'<<this->mismatch<<'\t'<<this->mismatch<<'\t'<<
+                   this->length<<'\t'<<this->mismatch<<'\t'<<
                    this->gapopen<<'\t'<<this->qstart<<'\t'<<this->qend<<'\t'<<
                    this->sstart<<'\t'<<this->send<<'\t'<<this->e_val<<'\t'<< this->_coverage<<"\t"<<
                    this->stitle<<'\t'<<this->species<<'\t'<<this->database_path<<'\t'<<

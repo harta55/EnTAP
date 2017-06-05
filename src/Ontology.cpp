@@ -346,12 +346,15 @@ void Ontology::parse_results_interpro(Ontology::query_map_struct &SEQUENCES,
         std::string qseqid, temp, protein, data_id, data_term, score, score2, temp2,
                 data, ipr_id, ipr_term,go_id,path_id,temp3;
         double e_val;
-        io::CSVReader<ENTAP_EXECUTE::INTERPRO_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(out.first);
+        io::CSVReader<ENTAP_EXECUTE::INTERPRO_COL_NUM, io::trim_chars<' '>,
+                io::no_quote_escape<'\t'>> in(out.first);
+        in.set_header("qseqid", "temp", "temp3","protein",
+                      "data_id", "data_term", "score", "score2", "e_val", "temp2",
+                      "data", "ipr_id", "ipr_term","go_id","path_id");
         while (in.read_row(qseqid, temp, temp3,protein, data_id, data_term, score, score2, e_val, temp2,
                            data, ipr_id, ipr_term,go_id,path_id)) {
             std::map<std::string, interpro_struct>::iterator iterator = interpro_map.find(qseqid);
             if (iterator != interpro_map.end())if (iterator->second._eval < e_val) continue;
-
             std::map<std::string,std::string> out_map;
             interpro_struct out_struct;
             out_map[KEY_PROTEIN_DATA ]     =    protein;

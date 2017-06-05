@@ -317,7 +317,6 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
             }
         }
     }
-
     std::string out_best_tsv = compiled_path + ENTAP_EXECUTE::SIM_SEARCH_BEST_OVERALL_TSV;
     std::string out_best_fa = compiled_path + ENTAP_EXECUTE::SIM_SEARCH_BEST_OVERALL_FA;
     std::string out_overall_contam_fa = compiled_path + ENTAP_EXECUTE::SIM_SEARCH_OVERALL_CONTAM_FA;
@@ -462,6 +461,7 @@ std::string SimilaritySearch::get_species(std::string &title) {
 
 bool SimilaritySearch::is_informative(std::string title) {
     for (std::string item : ENTAP_EXECUTE::INFORMATIVENESS) {
+        std::transform(item.begin(),item.end(),item.begin(),::tolower);
         if (title.find(item) != std::string::npos) return false;
     }
     return true;

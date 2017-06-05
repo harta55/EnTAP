@@ -93,6 +93,7 @@ void QuerySequence::setSequence(const std::string &seq) {
     this->_is_database_hit = false;
     this->is_protein = true;
     this->sequence = seq;
+    this->seq_length = 0;
     if (!seq.empty() && seq[seq.length()-1] == '\n') {
         this->sequence.pop_back();
     }

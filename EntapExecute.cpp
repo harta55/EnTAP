@@ -41,6 +41,8 @@ namespace entapExecute {
                       std::unordered_map<std::string, std::string> &config_map) {
         entapInit::print_msg("enTAP Executing...");
 
+        if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNNUCLEOTIDE)) _isProtein = false;
+        if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN)) _isProtein = true;
         _ontology_flag = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<short>();
         int threads = entapInit::get_supported_threads(user_input);
         std::list<std::string> diamond_out, databases;
@@ -49,8 +51,6 @@ namespace entapExecute {
         bool is_paired = (bool) user_input.count("paired-end");
         input_path = user_input["input"].as<std::string>();        // Gradually changes between runs
 
-        if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNNUCLEOTIDE)) _isProtein = false;
-        if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN)) _isProtein = true;
         bool is_overwrite = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
 
         std::string input_species;
@@ -412,7 +412,10 @@ namespace entapExecute {
             if (line.empty()) continue;
             if (line.find(">") == 0) {
                 if (!seq_id.empty()) {
-                    QuerySequence query_seq(_blastp,sequence);
+                    QuerySequence query_seq;
+                    if (_isProtein) {
+                       query_seq.setSequence(sequence);
+                    } else query_seq=QuerySequence(_blastp,sequence);
                     query_seq.setQseqid(seq_id);
                     seq_map.emplace(seq_id, query_seq);
                 }

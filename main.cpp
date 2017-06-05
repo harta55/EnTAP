@@ -16,10 +16,11 @@
 namespace boostPO = boost::program_options;
 
 enum States {
-    PARSE_ARGS          = 0x01,
-    INIT_ENTAP          = 0x02,
-    INIT_ENTAP_SUCCESS  = 0x04,
-    EXECUTE_ENTAP       = 0x08
+    PARSE_ARGS            = 0x01,
+    INIT_ENTAP            = 0x02,
+    INIT_ENTAP_SUCCESS    = 0x04,
+    EXECUTE_ENTAP         = 0x08,
+    EXECUTE_ENTAP_SUCCESS = 0x16
 };
 
 bool check_key(std::string&);
@@ -45,9 +46,11 @@ int main(int argc, const char** argv) {
         print_user_input(inputs);
         config_map = parse_config(exe_path);
         if (state == INIT_ENTAP) {
-            entapInit::init_entap(inputs, exe_path, config_map);  // todo state input 1x, user wants to start at 1 and stop
+            entapInit::init_entap(inputs, exe_path, config_map);
+            state = INIT_ENTAP_SUCCESS;
         } else if (state == EXECUTE_ENTAP) {
             entapExecute::execute_main(inputs, exe_path,config_map);
+            state = EXECUTE_ENTAP_SUCCESS;
         } else {
             print_msg("Error in parsing input data");
             return 1;
@@ -347,7 +350,7 @@ std::string get_exe_path() {
         boost::filesystem::path p(path);p.remove_filename();
         return p.string();
     }
-    return "";      // some error going on with stream
+    return "";
 }
 
 void state_summary(States st) {

@@ -140,7 +140,8 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
     entapInit::print_msg("Beginning to filter individual diamond_files...");
     std::unordered_map<std::string, std::string> taxonomic_database;
     std::list<std::map<std::string,QuerySequence>> database_maps;
-
+    std::string msg  =ENTAP_STATS::SOFTWARE_BREAK + "Similarity Search - Diamond\n" +
+                      ENTAP_STATS::SOFTWARE_BREAK;
     try {
         taxonomic_database = read_tax_map();
     } catch (ExceptionHandler &e) {throw e;}
@@ -156,10 +157,8 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
 
     for (std::string data : _sim_search_paths) {
         entapInit::print_msg("Diamond file located at " + data + " being filtered");
-        std::string msg  =ENTAP_STATS::SOFTWARE_BREAK + "Similarity Search - Diamond\n" +
-                          ENTAP_STATS::SOFTWARE_BREAK;
-        entapExecute::print_statistics(msg, _outpath);
 
+        entapExecute::print_statistics(msg, _outpath);
         io::CSVReader<ENTAP_EXECUTE::diamond_col_num, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(data);
         // todo have columns from input file, in_read_header for versatility
         std::string qseqid, sseqid, stitle;
@@ -235,7 +234,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
             if (it == database_map.end()) {
                 if (pair.second.isIs_protein()) {
                     count_no_hit++;
-                    file_no_hits << pair.second.getSequence();
+                    file_no_hits << pair.second.getSequence() <<std::endl;
                 }
             } else {
                 count_filtered++;

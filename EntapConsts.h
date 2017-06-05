@@ -134,7 +134,7 @@ namespace ENTAP_EXECUTE {
     const std::string SIM_SEARCH_DATABASE_UNSELECTED = "_unselected.tsv";
     const std::string SIM_SEARCH_PARSE_PROCESSED = "similarity_search/processed";
     const std::string SIM_SEARCH_BEST_OVERALL_TSV = "_best_overall_hits.tsv";
-    const std::string SIM_SEARCH_BEST_OVERALL_FA = "_best_overall_hits_fasta";
+    const std::string SIM_SEARCH_BEST_OVERALL_FA = "_best_overall_hits.fasta";
     const std::string SIM_SEARCH_OVERALL_CONTAM_FA = "_overall_contam.fasta";
     const std::string SIM_SEARCH_OVERALL_CONTAM_TSV = "_overall_contam.tsv";
     const std::string SIM_SEARCH_OVERALL_NO_HITS_FA = "_overall_no_hits.fasta";

@@ -50,10 +50,8 @@ int main(int argc, const char** argv) {
         boostPO::variables_map inputs = parse_arguments_boost(argc,argv);
         boost::filesystem::path working_dir(boost::filesystem::current_path());
         _outpath = working_dir.string() + "/" + inputs["tag"].as<std::string>() + "/";
-        std::cout<<_outpath<<std::endl;
         print_user_input(inputs);
         config_map = parse_config(exe_path);
-        return 0;
         if (state == INIT_ENTAP) {
             entapInit::init_entap(inputs, exe_path, config_map);
             state = INIT_ENTAP_SUCCESS;

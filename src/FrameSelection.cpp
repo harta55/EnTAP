@@ -14,16 +14,18 @@
 namespace boostFS = boost::filesystem;
 
 // can accept version/other for dependency injection
-FrameSelection::FrameSelection(std::string &input, std::string &exe, std::string &out, bool overwrite) {
-    this->_exe_path = exe;
-    this->_outpath = out;
-    this->_inpath = input;
-    this->_overwrite = overwrite;
+FrameSelection::FrameSelection(std::string &input, std::string &exe, std::string &out,
+                               boost::program_options::variables_map &user_flags) {
+    _exe_path = exe;
+    _outpath = out;
+    _inpath = input;
+    _overwrite = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
+    _software_flag = 0;
 }
 
-std::string FrameSelection::execute(short software,std::map<std::string,QuerySequence> &SEQUENCES) {
+std::string FrameSelection::execute(std::map<std::string,QuerySequence> &SEQUENCES) {
     try {
-        switch (software) {
+        switch (_software_flag) {
             case 0:
                 return genemarkst(SEQUENCES);
             default:

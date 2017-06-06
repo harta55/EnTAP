@@ -150,7 +150,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                  boostPO::value<std::string>(&input_file), "Input transcriptome file")
             (ENTAP_CONFIG::INPUT_FLAG_COMPLETE.c_str(),
                  "Select this option if you have all complete proteins.\n"
-                         "Note: This assumes a protein input");
+                         "Note: This assumes a protein input")
             (ENTAP_CONFIG::INPUT_FLAG_OVERWRITE.c_str(),
                 "Select this option if you wish to overwrite pre-existing files");
         boostPO::variables_map vm;

@@ -6,6 +6,7 @@
 #define ENTAP_FRAMESELECTION_H
 #include <iostream>
 #include <map>
+#include <boost/program_options/variables_map.hpp>
 #include "QuerySequence.h"
 
 
@@ -18,15 +19,14 @@ class FrameSelection {
     typedef std::map<std::string,FrameSelection::frame_seq> frame_map_type;
 
     public:
-        std::string execute(short,std::map<std::string,QuerySequence>&);
-        FrameSelection(std::string&, std::string&, std::string&, bool);
+        std::string execute(std::map<std::string,QuerySequence>&);
+        FrameSelection(std::string&, std::string&, std::string&,
+                       boost::program_options::variables_map &);
 
     private:
-
-
         std::string _exe_path,_inpath, _outpath;
-        std::map<std::string,QuerySequence> SEQUENCES;
         bool _overwrite;
+        short _software_flag;
         std::string genemarkst(std::map<std::string,QuerySequence> &);
         void genemarkStats(std::string&,std::string&,std::map<std::string,QuerySequence> &);
         frame_map_type genemark_parse_protein(std::string&);

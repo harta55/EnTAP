@@ -41,28 +41,22 @@ namespace entapExecute {
                       std::unordered_map<std::string, std::string> &config_map) {
         entapInit::print_msg("enTAP Executing...");
 
+        std::map<std::string, QuerySequence> SEQUENCE_MAP;
+        std::list<std::string> diamond_out, databases;
+        std::string input_path, rsem_out, genemark_out, no_database_hits, user_state_str;
+        std::vector<std::string> other_databases;
+        state = INIT;
+        bool state_flag = false;
+        std::queue<char> state_queue;
+
+        input_path = user_input["input"].as<std::string>();        // Gradually changes between runs
         if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNNUCLEOTIDE)) _isProtein = false;
         if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN)) _isProtein = true;
-        _ontology_flag = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<short>();
         int threads = entapInit::get_supported_threads(user_input);
-        std::list<std::string> diamond_out, databases;
-        std::string input_path, rsem_out, genemark_out, no_database_hits;
-
-        bool is_paired = (bool) user_input.count("paired-end");
-        input_path = user_input["input"].as<std::string>();        // Gradually changes between runs
-
-        double coverage = user_input[ENTAP_CONFIG::INPUT_FLAG_COVERAGE].as<double>();
         bool is_overwrite = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
         _is_complete = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_COMPLETE);
+        std::pair<std::string,std::string> diamond_pair(input_path,"");    // best_hits.fa,no_hits.fa
 
-        std::string input_species;
-        if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_SPECIES)) {
-            input_species = user_input[ENTAP_CONFIG::INPUT_FLAG_SPECIES].as<std::string>();
-            std::transform(input_species.begin(), input_species.end(), input_species.begin(), ::tolower);
-            input_species =
-                    input_species.substr(0,input_species.find("_")) +
-                    " " + input_species.substr(input_species.find("_")+1);
-        }
         boostFS::path working_dir(boostFS::current_path());
         _outpath = working_dir.string() + "/" + user_input["tag"].as<std::string>() + "/";
         _entap_outpath = _outpath + ENTAP_EXECUTE::ENTAP_OUTPUT;
@@ -70,53 +64,34 @@ namespace entapExecute {
         _log_path = _outpath + ENTAP_CONFIG::LOG_FILENAME;
 
         // init_databases
-        std::vector<std::string> other_databases, contaminants;
         if (user_input.count("database")) {
             other_databases = user_input["database"].as<std::vector<std::string>>();
         } else other_databases.push_back(ENTAP_CONFIG::NCBI_NULL);
 
-        // init_contam_filter
-        if (user_input.count("contam")) {
-            contaminants = user_input["contam"].as<std::vector<std::string>>();
-        }
-        for (int ind = 0; ind < contaminants.size(); ind++) {
-            if (contaminants[ind].empty()) continue;
-            std::string &str = contaminants[ind];
-            std::transform(str.begin(), str.end(), str.begin(), ::tolower);
-        }
-
-        // init_interpro_databases
-        std::vector<std::string> interpro_databases =
-                user_input[ENTAP_CONFIG::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
-
         // init_state_control
-        std::string user_state_str;
-        bool state_flag = false;
-        std::queue<char> state_queue;
         if (user_input.count("state")) {
             user_state_str = user_input["state"].as<std::string>();
             for (char c : user_state_str) {
                 state_queue.push(c);
             }
         }
-        state = INIT;
+
         try {
             databases = verify_databases(user_input["uniprot"].as<std::vector<std::string>>(),
                                          user_input["ncbi"].as<std::vector<std::string>>(), other_databases, exe_path,
                                          config_map);
             init_exe_paths(config_map, exe_path);
+            verify_state(state_queue, state_flag);
+            SEQUENCE_MAP = init_sequence_map(input_path);
         } catch (ExceptionHandler &e) { throw e; }
-        verify_state(state_queue, state_flag);
 
-        FrameSelection genemark = FrameSelection(input_path, _frame_selection_exe, _outpath, is_overwrite);
-        ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads, _expression_exe, _outpath, is_overwrite);
-        SimilaritySearch diamond = SimilaritySearch(databases, input_path, threads, is_overwrite, _diamond_exe,
-                                                    _outpath, user_input["e"].as<double>(),exe_path,input_species,coverage);
-        Ontology ontology = Ontology(threads,is_overwrite,_ontology_exe,_outpath,exe_path,input_path);
+        FrameSelection genemark = FrameSelection(input_path, _frame_selection_exe, _outpath, user_input);
+        ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads, _expression_exe, _outpath, user_input);
+        SimilaritySearch diamond = SimilaritySearch(databases, input_path, threads, _diamond_exe, _outpath,
+                                                    exe_path,user_input);
+        Ontology ontology = Ontology(threads,_ontology_exe,_outpath,exe_path,input_path,
+                                     user_input);
 
-        std::map<std::string, QuerySequence> SEQUENCE_MAP = init_sequence_map(input_path);
-        std::pair<std::string,std::string> diamond_pair;    // best_hits.fa,no_hits.fa
-        diamond_pair.first = input_path;
         while (state != EXIT) {
             try {
                 switch (state) {
@@ -127,34 +102,31 @@ namespace entapExecute {
                             _blastp = true;
                             break;
                         }
-                        genemark_out = genemark.execute(0,SEQUENCE_MAP);
+                        genemark_out = genemark.execute(SEQUENCE_MAP);
                         input_path = genemark_out;
                         _blastp = true;
                         break;
                     case RSEM:
                         if (!user_input.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
-//                            throw ExceptionHandler("No alignment file specified", ENTAP_ERR::E_INPUT_PARSE);
                             entapInit::print_msg("No alignment file specified, skipping expression analysis");
                             break;
                         }
-                        rsem.execute(0, is_paired, user_input[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>());
+                        rsem.execute();
                         break;
                     case FILTER:
                         input_path = filter_transcriptome(genemark_out, rsem_out, user_input["fpkm"].as<float>(),
-                                                          input_path,
-                                                          is_overwrite);
+                                                          input_path,is_overwrite);
                         break;
                     case DIAMOND_RUN:
-                        diamond_out = diamond.execute(0, input_path, _blastp);
+                        diamond_out = diamond.execute(input_path, _blastp);
                         break;
                     case DIAMOND_PARSE:
-                        diamond_pair = diamond.parse_files(0,contaminants,input_path,SEQUENCE_MAP);
+                        diamond_pair = diamond.parse_files(input_path,SEQUENCE_MAP);
                         input_path = diamond_pair.first;
                         no_database_hits = diamond_pair.second;
                         break;
                     case GENE_ONTOLOGY:
-                        ontology.execute(_ontology_flag,SEQUENCE_MAP,input_path,no_database_hits,
-                            interpro_databases);
+                        ontology.execute(SEQUENCE_MAP,input_path,no_database_hits);
                         break;
                     default:
                         state = EXIT;

@@ -12,22 +12,23 @@
 namespace boostFS = boost::filesystem;
 
 ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &exe, std::string &out
-    , bool overwrite) {
-    this->_inpath = input;
-//    this->_alignpath = alignment;
-//    this->_ispaired = paired;
-    this->_threads = t;
-    this->_exepath = exe;
-    this->_outpath = out;
-    this->_overwrite = overwrite;
+    , boost::program_options::variables_map& user_flags) {
+    _inpath = input;
+    _threads = t;
+    _exepath = exe;
+    _outpath = out;
+    _overwrite = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
+    _ispaired = (bool) user_flags.count("paired-end");
+    if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
+        _alignpath = user_flags[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>();
+    }
+    _software_flag = 0;
+
 }
 
-std::string ExpressionAnalysis::execute(short software, bool paired, std::string align) {
-    this->_alignpath = align;
-    this->_ispaired = paired;
-
+std::string ExpressionAnalysis::execute() {
     try {
-        switch (software) {
+        switch (_software_flag) {
             case 0:
                 return rsem();
             default:

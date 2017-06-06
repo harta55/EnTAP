@@ -17,26 +17,44 @@
 namespace boostFS = boost::filesystem;
 
 SimilaritySearch::SimilaritySearch(std::list<std::string> &databases, std::string input,
-                           int threads, bool overwrite, std::string exe, std::string out, double e,
-                            std::string entap_exe,std::string species, double cov) {
-    this->_database_paths = databases;
-    this->_input_path = input;
-    this->_threads = threads;
-    this->_overwrite = overwrite;
-    this->_diamond_exe = exe;
-    this->_outpath = out;
-    this->_e_val = e;
-    this->_entap_exe = entap_exe;
-    this->_input_species = species;
-    this->_coverage = cov;
+                           int threads, std::string exe, std::string out,std::string entap_exe,
+                           boost::program_options::variables_map &user_flags) {
+    _database_paths = databases;
+    _input_path = input;
+    _threads = threads;
+    _diamond_exe = exe;
+    _outpath = out;
+    _entap_exe = entap_exe;
+    _input_species;
+    if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_SPECIES)) {
+        _input_species = user_flags[ENTAP_CONFIG::INPUT_FLAG_SPECIES].as<std::string>();
+        std::transform(_input_species.begin(), _input_species.end(), _input_species.begin(), ::tolower);
+        _input_species =
+                _input_species.substr(0,_input_species.find("_")) +
+                " " + _input_species.substr(_input_species.find("_")+1);
+    }
+    _coverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_COVERAGE].as<double>();
+    _overwrite = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
+    _e_val = user_flags["e"].as<double>();
+
+    std::vector<std::string> contaminants;
+    if (user_flags.count("contam")) {
+        contaminants = user_flags["contam"].as<std::vector<std::string>>();
+    }
+    for (int ind = 0; ind < contaminants.size(); ind++) {
+        if (contaminants[ind].empty()) continue;
+        std::string &str = contaminants[ind];
+        std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+    }
+    _contaminants = contaminants;
+    _software_flag = 0;
 }
 
-std::list<std::string> SimilaritySearch::execute(short software, std::string updated_input,
-    bool blast) {
+std::list<std::string> SimilaritySearch::execute(std::string updated_input,bool blast) {
     this->_input_path = updated_input;
     this->_blastp = blast;
     try {
-        switch (software) {
+        switch (_software_flag) {
             case 0:
                 return diamond();
             default:
@@ -45,15 +63,15 @@ std::list<std::string> SimilaritySearch::execute(short software, std::string upd
     } catch (ExceptionHandler &e) {throw e;}
 }
 
-std::pair<std::string,std::string> SimilaritySearch::parse_files(short software, std::vector<std::string> contams, std::string new_input,
+std::pair<std::string,std::string> SimilaritySearch::parse_files(std::string new_input,
                                    std::map<std::string, QuerySequence>& MAP) {
     this->_input_path = new_input;
     try {
-        switch (software) {
+        switch (_software_flag) {
             case 0:
-                return diamond_parse(contams,MAP);
+                return diamond_parse(_contaminants,MAP);
             default:
-                return diamond_parse(contams,MAP);
+                return diamond_parse(_contaminants,MAP);
         }
     } catch (ExceptionHandler &e) {throw e;}
 }

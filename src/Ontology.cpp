@@ -13,31 +13,33 @@
 #include "SimilaritySearch.h"
 
 namespace boostFS = boost::filesystem;
-Ontology::Ontology(int thread, bool overwrite, std::string egg_exe, std::string outpath,
-                   std::string entap_exe,std::string input) {
+Ontology::Ontology(int thread, std::string egg_exe, std::string outpath,
+                   std::string entap_exe,std::string input,
+                   boost::program_options::variables_map &user_input) {
     _ontology_exe = egg_exe;
     _threads = thread;
-    _is_overwrite = overwrite;
     _entap_exe = entap_exe;
     _outpath = outpath;
     _new_input = input;
     ONTOLOGY_OUT_PATH = "ontology/";
+    _is_overwrite = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
+    _software_flag = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<short>();
+    std::vector<std::string> _interpro_databases =
+            user_input[ENTAP_CONFIG::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
 }
 
 
-void Ontology::execute(short software, query_map_struct &SEQUENCES, std::string input,
-                       std::string no_hit, std::vector<std::string>& proteins) {
+void Ontology::execute(query_map_struct &SEQUENCES, std::string input,std::string no_hit) {
     _new_input = input;
     _input_no_hits = no_hit;
-    _software_flag = software;
     init_headers();
     try {
-        switch(software) {
+        switch(_software_flag) {
             case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
                 run_eggnog(SEQUENCES);
                 break;
             case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
-                run_interpro(SEQUENCES,proteins);
+                run_interpro(SEQUENCES,_interpro_databases);
                 break;
             default:
                 run_eggnog(SEQUENCES);

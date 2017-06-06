@@ -28,7 +28,7 @@
 
 namespace boostFS = boost::filesystem;
 namespace boostAR = boost::archive;
-//namespace boostIO = boost::iostreams;
+namespace Chrono = std::chrono;
 
 namespace entapInit {
 
@@ -268,12 +268,10 @@ namespace entapInit {
     }
 
     void print_msg(std::string msg) {
-        time_t rawtime;
-        time(&rawtime);
-        std::string date_time = ctime(&rawtime);
-        std::ofstream log_file(ENTAP_CONFIG::DEBUG_FILENAME, std::ios::out | std::ios::app);
-        log_file << date_time.substr(0, date_time.size() - 2)
-                    + ": " + msg << std::endl;
+        Chrono::time_point<Chrono::system_clock> current = Chrono::system_clock::now();
+        std::time_t time = Chrono::system_clock::to_time_t(current);
+        std::ofstream log_file("debug.txt", std::ios::out | std::ios::app);
+        log_file << std::ctime(&time) << ": " + msg << std::endl;
         log_file.close();
     }
 

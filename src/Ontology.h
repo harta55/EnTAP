@@ -37,6 +37,7 @@ private:
     void init_headers();
     void print_header(std::string);
     bool verify_files(std::string,std::string);
+    void interpro_format_fix(std::string&);
 };
 
 

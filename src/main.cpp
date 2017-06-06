@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <vector>
 #include <boost/filesystem/operations.hpp>
+#include <chrono>
+#include <boost/filesystem/path.hpp>
 #include "EntapInit.h"
 #include "ExceptionHandler.h"
 #include "pstream.h"
@@ -14,6 +16,7 @@
 #include "EntapExecute.h"
 
 namespace boostPO = boost::program_options;
+namespace Chrono = std::chrono;
 
 enum States {
     PARSE_ARGS            = 0x01,
@@ -34,6 +37,8 @@ std::string get_exe_path();
 void generate_config(std::string&);
 
 States state;   // init
+std::string _outpath;
+Chrono::time_point<Chrono::system_clock> _start_time, _end_time;
 
 int main(int argc, const char** argv) {
     init_log();
@@ -43,8 +48,12 @@ int main(int argc, const char** argv) {
         state = PARSE_ARGS;
         std::unordered_map<std::string,std::string> config_map;
         boostPO::variables_map inputs = parse_arguments_boost(argc,argv);
+        boost::filesystem::path working_dir(boost::filesystem::current_path());
+        _outpath = working_dir.string() + "/" + inputs["tag"].as<std::string>() + "/";
+        std::cout<<_outpath<<std::endl;
         print_user_input(inputs);
         config_map = parse_config(exe_path);
+        return 0;
         if (state == INIT_ENTAP) {
             entapInit::init_entap(inputs, exe_path, config_map);
             state = INIT_ENTAP_SUCCESS;
@@ -61,6 +70,7 @@ int main(int argc, const char** argv) {
         state_summary(state);
         return 1;
     }
+    _end_time = Chrono::system_clock::now();
     return 0;
 }
 
@@ -152,7 +162,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
             if (vm.count("version")) {
-                std::cout<<"enTAP version 0.2.1"<<std::endl;
+                std::cout<<"enTAP version: "<<ENTAP_CONFIG::ENTAP_VERSION<<std::endl;
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
 
@@ -300,43 +310,50 @@ bool check_key(std::string& key) {
 
 void init_log() {
     remove("debug.txt");
-    print_msg("Start - enTAP");
+    entapInit::print_msg("Start - enTAP");
 }
 
 void print_msg(std::string msg) {
-    time_t rawtime;
-    time(&rawtime);
-    std::string date_time = ctime(&rawtime);
+    Chrono::time_point<Chrono::system_clock> current = Chrono::system_clock::now();
+    std::time_t time = Chrono::system_clock::to_time_t(current);
     std::ofstream log_file("debug.txt", std::ios::out | std::ios::app);
-    log_file << date_time.substr(0, date_time.size() - 2)
-                 + ": " + msg << std::endl;
+    log_file << std::ctime(&time) << ": " + msg << std::endl;
     log_file.close();
 }
 
 void print_user_input(boostPO::variables_map &map) {
-    std::string output = "\n\nUser Inputs:";
+    remove(std::string(_outpath + ENTAP_CONFIG::LOG_FILENAME).c_str());
+    boost::filesystem::create_directories(_outpath);
+    std::string header = ENTAP_STATS::SOFTWARE_BREAK +
+                         "enTAP Run Information\n" + ENTAP_STATS::SOFTWARE_BREAK;
+    entapExecute::print_statistics(header,_outpath);
+    std::stringstream ss;
+    _start_time = Chrono::system_clock::now();
+    std::time_t time = Chrono::system_clock::to_time_t(_start_time);
+    ss << "Current enTAP Version: " << ENTAP_CONFIG::ENTAP_VERSION <<
+          "\nStart time: " << std::ctime(&time)                    <<
+          "\nYour working directory has been set to: " << _outpath << "\n";
+
     for (const auto& it : map) {
         std::string key = it.first.c_str();
-        output += "\n" + key+ ": ";
+        ss << "\n" << key << ": ";
         auto& value = it.second.value();
         if (auto v = boost::any_cast<std::string>(&value)) {
-            output += *v;
+            ss << *v;
         } else if (auto v = boost::any_cast<std::vector<std::string>>(&value)) {
             if (v->size()>0) {
                 for (auto const& val:*v) {
-                    output+=val+",";
+                    ss << val << ",";
                 }
-            } else {
-                output += "null";
-            }
+            } else ss << "null";
         } else if (auto v = boost::any_cast<float>(&value)){
-            output += std::to_string(*v);
+            ss << *v;
         } else if (auto v = boost::any_cast<double>(&value)) {
-            output += std::to_string(*v);
-        } else {
-            output += "null";
-        }
+            ss << *v;
+        } else ss << "null";
     }
+    std::string output = ss.str();
+    entapExecute::print_statistics(output,_outpath);
     print_msg(output+"\n");
 }
 

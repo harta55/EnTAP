@@ -430,7 +430,6 @@ namespace entapExecute {
         seq_map.emplace(seq_id, QuerySequence(_blastp, sequence));
         in_file.close();
         return seq_map;
-
     }
 
 

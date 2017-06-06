@@ -343,6 +343,7 @@ void Ontology::parse_results_interpro(Ontology::query_map_struct &SEQUENCES,
         if (!entapInit::file_exists(path)) {
             entapInit::print_msg("File not found, skipping...");continue;
         }
+        interpro_format_fix(path);
         std::string qseqid, temp, protein, data_id, data_term, score, score2, temp2,
                 data, ipr_id, ipr_term,go_id,path_id,temp3;
         double e_val;
@@ -471,4 +472,22 @@ bool Ontology::verify_files(std::string hits,std::string no_hits) {
         entapInit::print_msg("No ontology files were found, continuing with execution");
     }
     return verified;
+}
+
+void Ontology::interpro_format_fix(std::string& path) {
+    std::string out_path = path + "_alt";
+    std::ifstream file(path);
+    std::ofstream out(path+"_alt");
+    std::string line;
+    while (std::getline(file,line)) {
+        if (line.empty()) continue;
+        long ct = ENTAP_EXECUTE::INTERPRO_COL_NUM -
+                  std::count(line.begin(),line.end(),'\t') - 1;
+        out << line;
+        for (long i = ct ; i >0; i--) out << '\t';
+        out << std::endl;
+    }
+    file.close();out.close();
+    boostFS::remove(path);
+    boostFS::rename(out_path,path);
 }

@@ -383,11 +383,13 @@ namespace entapExecute {
         std::map<std::string, QuerySequence> seq_map;
         std::ifstream in_file(input_file);
         std::string line, sequence, seq_id;
-        unsigned int count_seqs=0, count_longest=0, count_shortest=0,
-                count_total_len=0;
-        while (getline(in_file, line)) {
-            if (line.empty()) continue;
-            if (line.find(">") == 0) {
+        unsigned long count_seqs=0, total_len=0;
+        int shortest_len = 10000, longest_len = 0;
+        std::vector<int> sequences;
+        while (true) {
+            std::getline(in_file, line);
+            if (line.empty() && !in_file.eof()) continue;
+            if (line.find(">") == 0 || in_file.eof()) {
                 if (!seq_id.empty()) {
                     QuerySequence query_seq;
                     if (_isProtein) {
@@ -397,6 +399,7 @@ namespace entapExecute {
                     query_seq.setQseqid(seq_id);
                     seq_map.emplace(seq_id, query_seq);
                 }
+                if (in_file.eof()) break;
                 unsigned long first = line.find(">")+1;
                 unsigned long second = line.find(" ");
                 seq_id = line.substr(first, second-first);
@@ -405,13 +408,6 @@ namespace entapExecute {
                 sequence += line + "\n";
             }
         }
-        QuerySequence query_seq;
-        if (_isProtein) {
-            query_seq.setSequence(sequence);
-        } else query_seq=QuerySequence(_blastp,sequence);
-        if (_is_complete) query_seq.setFrame(ENTAP_EXECUTE::FRAME_SELECTION_COMPLETE_FLAG);
-        query_seq.setQseqid(seq_id);
-        seq_map.emplace(seq_id, query_seq);
         in_file.close();
         return seq_map;
     }

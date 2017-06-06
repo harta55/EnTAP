@@ -405,7 +405,13 @@ namespace entapExecute {
                 sequence += line + "\n";
             }
         }
-        seq_map.emplace(seq_id, QuerySequence(_blastp, sequence));
+        QuerySequence query_seq;
+        if (_isProtein) {
+            query_seq.setSequence(sequence);
+        } else query_seq=QuerySequence(_blastp,sequence);
+        if (_is_complete) query_seq.setFrame(ENTAP_EXECUTE::FRAME_SELECTION_COMPLETE_FLAG);
+        query_seq.setQseqid(seq_id);
+        seq_map.emplace(seq_id, query_seq);
         in_file.close();
         return seq_map;
     }

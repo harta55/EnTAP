@@ -15,7 +15,7 @@ class SimilaritySearch {
 public:
     std::list<std::string> execute(short, std::string, bool);
     SimilaritySearch(std::list<std::string>&, std::string, int, bool, std::string,
-                     std::string,double,std::string,std::string);
+                     std::string,double,std::string,std::string,double);
     std::pair<std::string,std::string> parse_files(short, std::vector<std::string>,
                                                    std::string,std::map<std::string, QuerySequence>&);
 private:
@@ -24,7 +24,7 @@ private:
     std::string _ncbi_regex = "\\[([^]]+)\\](?!.+\\[.+\\])";
     std::string _uniprot_regex = "OS=(.+)\\s\\S\\S";
     int _threads; bool _overwrite,_blastp;
-    double _e_val;
+    double _e_val, _coverage;
     std::list<std::string> diamond();
     void diamond_blast(std::string, std::string, std::string,std::string&,int&, std::string&);
     std::list<std::string> verify_diamond_files(std::string&,

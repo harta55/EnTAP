@@ -20,14 +20,17 @@ bool QuerySequence::operator>(const QuerySequence &querySequence) {
         if (fabs(log10(eval1) - log10(eval2)) < 7) {
             if (this->_contaminant && !querySequence._contaminant) return false;
             if (!this->_contaminant && querySequence._contaminant) return true;
-
-            if (!this->_frame.empty() && !querySequence._frame.empty()) {
-                if (verify_frame(this->_frame,querySequence._frame)) {
-                    double coverage_dif = fabs(this->_coverage - querySequence._coverage);
-                    if (coverage_dif > 5) {
-                        return this->_coverage > querySequence._coverage;
-                    }
-                }
+//            if (!this->_frame.empty() && !querySequence._frame.empty()) {
+//                if (verify_frame(this->_frame,querySequence._frame)) {
+//                    double coverage_dif = fabs(this->_coverage - querySequence._coverage);
+//                    if (coverage_dif > 5) {
+//                        return this->_coverage > querySequence._coverage;
+//                    }
+//                }
+//            }
+            double coverage_dif = fabs(this->_coverage - querySequence._coverage);
+            if (coverage_dif > 5) {
+                return this->_coverage > querySequence._coverage;
             }
             return this->_tax_score > querySequence._tax_score;
         } else {
@@ -37,14 +40,9 @@ bool QuerySequence::operator>(const QuerySequence &querySequence) {
         // For overall best hits between databases "best hit"
         if (this->_contaminant && !querySequence._contaminant) return false;
         if (!this->_contaminant && querySequence._contaminant) return true;
-
-        if (!this->_frame.empty() && !querySequence._frame.empty()) {
-            if (verify_frame(this->_frame,querySequence._frame)) {
-                double coverage_dif = fabs(this->_coverage - querySequence._coverage);
-                if (coverage_dif > 5) {
-                    return this->_coverage > querySequence._coverage;
-                }
-            }
+        double coverage_dif = fabs(this->_coverage - querySequence._coverage);
+        if (coverage_dif > 5) {
+            return this->_coverage > querySequence._coverage;
         }
         return this->_tax_score > querySequence._tax_score;
     }
@@ -113,8 +111,6 @@ QuerySequence::QuerySequence(bool is_protein, std::string seq){
     if (!seq.empty() && seq[seq.length()-1] == '\n') {
         this->_sequence.pop_back();
     }
-
-
 }
 
 

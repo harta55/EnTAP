@@ -64,7 +64,7 @@ namespace ENTAP_CONFIG {
     const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";
     const std::string BIN_PATH = "bin/";
 
-    const std::string ENTAP_VERSION = "0.3.0";
+    const std::string ENTAP_VERSION = "0.3.1";
 
 
     const double E_VALUE = 1e-5;
@@ -82,6 +82,11 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_INTERPRO = "protein";
     const std::string INPUT_FLAG_ONTOLOGY = "ontology";
     const std::string INPUT_FLAG_SPECIES = "species";
+    const std::string INPUT_FLAG_COVERAGE = "coverage";
+    const std::string INPUT_FLAG_COMPLETE = "complete";
+
+    const double DEFAULT_COVERAGE = 50.0;
+
 
 
     const std::string INPUT_UNIPROT_SWISS = "swiss";

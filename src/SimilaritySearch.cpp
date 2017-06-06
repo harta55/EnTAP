@@ -18,7 +18,7 @@ namespace boostFS = boost::filesystem;
 
 SimilaritySearch::SimilaritySearch(std::list<std::string> &databases, std::string input,
                            int threads, bool overwrite, std::string exe, std::string out, double e,
-                            std::string entap_exe,std::string species) {
+                            std::string entap_exe,std::string species, double cov) {
     this->_database_paths = databases;
     this->_input_path = input;
     this->_threads = threads;
@@ -28,6 +28,7 @@ SimilaritySearch::SimilaritySearch(std::list<std::string> &databases, std::strin
     this->_e_val = e;
     this->_entap_exe = entap_exe;
     this->_input_species = species;
+    this->_coverage = cov;
 }
 
 std::list<std::string> SimilaritySearch::execute(short software, std::string updated_input,
@@ -103,7 +104,7 @@ std::list<std::string> SimilaritySearch::diamond() {
 
 void SimilaritySearch::diamond_blast(std::string input_file, std::string output_file, std::string std_out,
                    std::string &database,int &threads, std::string &blast) {
-    std::string diamond_run = _diamond_exe + " " + blast +" -d " + database +
+    std::string diamond_run = _diamond_exe + " " + blast +" -d " + database + " --query-cover " + std::to_string(_coverage) +
                               " --more-sensitive" + " -k 5" + " -q " + input_file + " -o " + output_file + " -p " + std::to_string(threads) +" -f " +
                               "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp stitle";
     entapInit::print_msg("\nExecuting Diamond:\n" + diamond_run);
@@ -177,8 +178,10 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
         std::string out_unselected_tsv = out_base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_UNSELECTED;
 
         std::ofstream file_unselected_tsv(out_unselected_tsv,std::ios::out | std::ios::app);
-
         std::map<std::string, QuerySequence> database_map;
+        print_header(out_unselected_tsv);
+        print_header(out_best_contams_tsv);
+        print_header(out_best_hits_tsv);
 
         while (in.read_row(qseqid, sseqid, pident, length, mismatch, gapopen,
                            qstart, qend, sstart, send, evalue, bitscore, coverage,stitle)) {
@@ -322,6 +325,9 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
     std::string out_overall_contam_fa = compiled_path + ENTAP_EXECUTE::SIM_SEARCH_OVERALL_CONTAM_FA;
     std::string out_overall_contam_tsv = compiled_path + ENTAP_EXECUTE::SIM_SEARCH_OVERALL_CONTAM_TSV;
     std::string out_overall_no_hits_fa = compiled_path + ENTAP_EXECUTE::SIM_SEARCH_OVERALL_NO_HITS_FA;
+
+    print_header(out_best_tsv);
+    print_header(out_overall_contam_tsv);
 
     std::ofstream file_best_tsv(out_best_tsv,std::ios::out | std::ios::app);
     std::ofstream file_best_fa(out_best_fa ,std::ios::out | std::ios::app);

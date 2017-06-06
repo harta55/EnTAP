@@ -133,6 +133,9 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
             ("contam,c",
                  boostPO::value<std::vector<std::string>>(&contam_vec)->multitoken(),
                  "Contaminant selection")
+            (ENTAP_CONFIG::INPUT_FLAG_COVERAGE.c_str(),
+                 boostPO::value<double>()->default_value(ENTAP_CONFIG::DEFAULT_COVERAGE),
+                 "Select minimum query coverage to be kept for similarity searching")
             (ENTAP_CONFIG::INPUT_FLAG_SPECIES.c_str(),
                  boostPO::value<std::string>(&species),"The type of species you are analyzing if you would like"
                  "filtering based upon this separated by a '_'.\nExample: homo_sapiens")
@@ -145,6 +148,9 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                  "transcriptome. It will then stop execution there specified by the x.")
             ("input,i",
                  boostPO::value<std::string>(&input_file), "Input transcriptome file")
+            (ENTAP_CONFIG::INPUT_FLAG_COMPLETE.c_str(),
+                 "Select this option if you have all complete proteins.\n"
+                         "Note: This assumes a protein input");
             (ENTAP_CONFIG::INPUT_FLAG_OVERWRITE.c_str(),
                 "Select this option if you wish to overwrite pre-existing files");
         boostPO::variables_map vm;
@@ -314,8 +320,9 @@ void init_log() {
 void print_msg(std::string msg) {
     Chrono::time_point<Chrono::system_clock> current = Chrono::system_clock::now();
     std::time_t time = Chrono::system_clock::to_time_t(current);
+    std::string out_time(std::ctime(&time));
     std::ofstream log_file("debug.txt", std::ios::out | std::ios::app);
-    log_file << std::ctime(&time) << ": " + msg << std::endl;
+    log_file << out_time.substr(0,out_time.length()-1) << ": " + msg << std::endl;
     log_file.close();
 }
 
@@ -341,12 +348,14 @@ void print_user_input(boostPO::variables_map &map) {
         } else if (auto v = boost::any_cast<std::vector<std::string>>(&value)) {
             if (v->size()>0) {
                 for (auto const& val:*v) {
-                    ss << val << ",";
+                    ss << val << " ";
                 }
             } else ss << "null";
         } else if (auto v = boost::any_cast<float>(&value)){
             ss << *v;
         } else if (auto v = boost::any_cast<double>(&value)) {
+            ss << *v;
+        } else if (auto v = boost::any_cast<int>(&value)) {
             ss << *v;
         } else ss << "null";
     }

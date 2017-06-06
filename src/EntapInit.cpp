@@ -270,8 +270,9 @@ namespace entapInit {
     void print_msg(std::string msg) {
         Chrono::time_point<Chrono::system_clock> current = Chrono::system_clock::now();
         std::time_t time = Chrono::system_clock::to_time_t(current);
+        std::string out_time(std::ctime(&time));
         std::ofstream log_file("debug.txt", std::ios::out | std::ios::app);
-        log_file << std::ctime(&time) << ": " + msg << std::endl;
+        log_file << out_time.substr(0,out_time.length()-1) << ": " + msg << std::endl;
         log_file.close();
     }
 

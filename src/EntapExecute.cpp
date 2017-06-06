@@ -32,10 +32,10 @@ namespace boostFS = boost::filesystem;
 namespace entapExecute {
     ExecuteStates state;
     std::string _frame_selection_exe, _expression_exe, _diamond_exe, _outpath, _entap_outpath,
-        _ontology_exe;
+        _ontology_exe, _log_path;
     short _ontology_flag;
     bool _blastp = false; // false for blastx, true for blastp
-    bool _isProtein;      // input sequence, might want to handle differently
+    bool _isProtein, _is_complete;      // input sequence, might want to handle differently
 
     void execute_main(boost::program_options::variables_map &user_input, std::string exe_path,
                       std::unordered_map<std::string, std::string> &config_map) {
@@ -51,7 +51,9 @@ namespace entapExecute {
         bool is_paired = (bool) user_input.count("paired-end");
         input_path = user_input["input"].as<std::string>();        // Gradually changes between runs
 
+        double coverage = user_input[ENTAP_CONFIG::INPUT_FLAG_COVERAGE].as<double>();
         bool is_overwrite = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
+        _is_complete = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_COMPLETE);
 
         std::string input_species;
         if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_SPECIES)) {
@@ -65,8 +67,7 @@ namespace entapExecute {
         _outpath = working_dir.string() + "/" + user_input["tag"].as<std::string>() + "/";
         _entap_outpath = _outpath + ENTAP_EXECUTE::ENTAP_OUTPUT;
         boostFS::create_directories(_entap_outpath);
-        std::string log_path = _outpath + ENTAP_CONFIG::LOG_FILENAME;
-        remove(log_path.c_str());
+        _log_path = _outpath + ENTAP_CONFIG::LOG_FILENAME;
 
         // init_databases
         std::vector<std::string> other_databases, contaminants;
@@ -110,13 +111,12 @@ namespace entapExecute {
         FrameSelection genemark = FrameSelection(input_path, _frame_selection_exe, _outpath, is_overwrite);
         ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads, _expression_exe, _outpath, is_overwrite);
         SimilaritySearch diamond = SimilaritySearch(databases, input_path, threads, is_overwrite, _diamond_exe,
-                                                    _outpath, user_input["e"].as<double>(),exe_path,input_species);
+                                                    _outpath, user_input["e"].as<double>(),exe_path,input_species,coverage);
         Ontology ontology = Ontology(threads,is_overwrite,_ontology_exe,_outpath,exe_path,input_path);
 
         std::map<std::string, QuerySequence> SEQUENCE_MAP = init_sequence_map(input_path);
         std::pair<std::string,std::string> diamond_pair;    // best_hits.fa,no_hits.fa
         diamond_pair.first = input_path;
-
         while (state != EXIT) {
             try {
                 switch (state) {
@@ -405,9 +405,14 @@ namespace entapExecute {
 
 
     std::map<std::string, QuerySequence> init_sequence_map(std::string &input_file) {
+        std::string msg_break = ENTAP_STATS::SOFTWARE_BREAK +
+                                "Transcriptome Statistics\n" +
+                                ENTAP_STATS::SOFTWARE_BREAK;
         std::map<std::string, QuerySequence> seq_map;
         std::ifstream in_file(input_file);
         std::string line, sequence, seq_id;
+        unsigned int count_seqs=0, count_longest=0, count_shortest=0,
+                count_total_len=0;
         while (getline(in_file, line)) {
             if (line.empty()) continue;
             if (line.find(">") == 0) {
@@ -416,6 +421,7 @@ namespace entapExecute {
                     if (_isProtein) {
                        query_seq.setSequence(sequence);
                     } else query_seq=QuerySequence(_blastp,sequence);
+                    if (_is_complete) query_seq.setFrame(ENTAP_EXECUTE::FRAME_SELECTION_COMPLETE_FLAG);
                     query_seq.setQseqid(seq_id);
                     seq_map.emplace(seq_id, query_seq);
                 }

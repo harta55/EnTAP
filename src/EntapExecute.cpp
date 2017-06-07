@@ -26,6 +26,7 @@
 #include <boost/program_options/variables_map.hpp>
 #include <boost/range/iterator_range_core.hpp>
 #include <queue>
+#include <iomanip>
 
 namespace boostFS = boost::filesystem;
 
@@ -377,15 +378,15 @@ namespace entapExecute {
 
 
     std::map<std::string, QuerySequence> init_sequence_map(std::string &input_file) {
-        std::string msg_break = ENTAP_STATS::SOFTWARE_BREAK +
-                                "Transcriptome Statistics\n" +
-                                ENTAP_STATS::SOFTWARE_BREAK;
+        std::stringstream out_msg;out_msg<<std::fixed<<std::setprecision(2);
+        out_msg << ENTAP_STATS::SOFTWARE_BREAK
+                << "Transcriptome Statistics\n"
+                << ENTAP_STATS::SOFTWARE_BREAK;
         std::map<std::string, QuerySequence> seq_map;
         std::ifstream in_file(input_file);
-        std::string line, sequence, seq_id;
-        unsigned long count_seqs=0, total_len=0;
-        int shortest_len = 10000, longest_len = 0;
-        std::vector<int> sequences;
+        std::string line, sequence, seq_id, longest_seq, shortest_seq;
+        unsigned long count_seqs=0, total_len=0,shortest_len = 10000, longest_len = 0;
+        std::vector<unsigned long> sequence_lengths;
         while (true) {
             std::getline(in_file, line);
             if (line.empty() && !in_file.eof()) continue;
@@ -398,6 +399,16 @@ namespace entapExecute {
                     if (_is_complete) query_seq.setFrame(ENTAP_EXECUTE::FRAME_SELECTION_COMPLETE_FLAG);
                     query_seq.setQseqid(seq_id);
                     seq_map.emplace(seq_id, query_seq);
+                    count_seqs++;
+                    unsigned long len = query_seq.getSeq_length();
+                    total_len += len;
+                    if (len > longest_len) {
+                        longest_len = len;longest_seq = seq_id;
+                    }
+                    if (len < shortest_len) {
+                        shortest_len = len;shortest_seq = seq_id;
+                    }
+                    sequence_lengths.push_back(len);
                 }
                 if (in_file.eof()) break;
                 unsigned long first = line.find(">")+1;
@@ -409,9 +420,44 @@ namespace entapExecute {
             }
         }
         in_file.close();
+        double avg_len = total_len / count_seqs;
+        // first - n50, second - n90
+        std::pair<unsigned long, unsigned long> n_vals =
+                calculate_N_vals(sequence_lengths, total_len);
+
+        out_msg <<
+                "Total sequences: "                            << count_seqs    <<
+                "\nTotal length of transcriptome(bp): "        << total_len     <<
+                "\nAverage sequence length(bp): "              << avg_len       <<
+                "\nn50: "                                      << n_vals.first  <<
+                "\nn90: "                                      << n_vals.second <<
+                "\nLongest sequence is " << longest_seq        <<" - length(bp): "
+                                                               <<longest_len    <<
+                "\nShortest sequence is "<< shortest_seq       <<" - length(bp): "
+                                                               << shortest_len;
+        if (_is_complete)out_msg<<"\nAll sequences ("<<count_seqs<<") were flagged as complete genes";
+        std::string msg = out_msg.str();
+        print_statistics(msg,_outpath);
         return seq_map;
     }
 
+    std::pair<unsigned long, unsigned long> calculate_N_vals
+            (std::vector<unsigned long> &seq_lengths, unsigned long total_len) {
+        std::sort(seq_lengths.begin(),seq_lengths.end());
+        unsigned long temp_len=0, n_50=0,n_90=0;
+        double fifty_len = total_len * 0.5;
+        double ninety_len = total_len * 0.9;
+        for (unsigned long val : seq_lengths) {
+            temp_len += val;
+            if (temp_len > fifty_len && temp_len < ninety_len) {
+                n_50 = val;
+            } else if (temp_len > fifty_len && temp_len > ninety_len) {
+                n_90 = val;
+                break;
+            }
+        }
+        return std::pair<unsigned long, unsigned long> (n_50,n_90);
+    }
 
     void print_statistics(std::string &msg, std::string &out_path) {
         std::string file_path = out_path + ENTAP_CONFIG::LOG_FILENAME;

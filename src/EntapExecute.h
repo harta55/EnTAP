@@ -41,6 +41,8 @@ namespace entapExecute {
     std::string init_exe_paths(std::unordered_map<std::string, std::string> &, std::string &);
     void print_statistics(std::string &, std::string &);
     std::map<std::string, QuerySequence> init_sequence_map(std::string&);
+    std::pair<unsigned long, unsigned long> calculate_N_vals
+            (std::vector<unsigned long> &, unsigned long);
 }
 
 

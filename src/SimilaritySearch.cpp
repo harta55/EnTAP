@@ -7,6 +7,7 @@
 #include <csv.h>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/regex.hpp>
+#include <iomanip>
 #include "SimilaritySearch.h"
 #include "ExceptionHandler.h"
 #include "EntapInit.h"
@@ -159,8 +160,10 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
     entapInit::print_msg("Beginning to filter individual diamond_files...");
     std::unordered_map<std::string, std::string> taxonomic_database;
     std::list<std::map<std::string,QuerySequence>> database_maps;
-    std::string msg  =ENTAP_STATS::SOFTWARE_BREAK + "Similarity Search - Diamond\n" +
-                      ENTAP_STATS::SOFTWARE_BREAK;
+    std::stringstream out_stream;out_stream<<std::fixed<<std::setprecision(2);
+    out_stream << ENTAP_STATS::SOFTWARE_BREAK
+               << "Similarity Search - Diamond\n"
+               << ENTAP_STATS::SOFTWARE_BREAK;
     try {
         taxonomic_database = read_tax_map();
     } catch (ExceptionHandler &e) {throw e;}
@@ -176,30 +179,21 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
 
     for (std::string data : _sim_search_paths) {
         entapInit::print_msg("Diamond file located at " + data + " being filtered");
-
-        entapExecute::print_statistics(msg, _outpath);
         io::CSVReader<ENTAP_EXECUTE::diamond_col_num, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(data);
         // todo have columns from input file, in_read_header for versatility
         std::string qseqid, sseqid, stitle;
         double evalue, pident, bitscore, coverage;
         int length, mismatch, gapopen, qstart, qend, sstart, send;
         unsigned long count_removed=0, count_TOTAL_hits=0, count_under_e=0, count_no_hit=0,
-                count_contam=0, count_filtered=0;
+                count_contam=0, count_filtered=0, count_informative=0;
 
         boostFS::path path(data);   // path/to/data.out
         std::string out_base_path = sim_search_processed + path.filename().stem().string();
-        std::string out_best_contams_tsv = out_base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_CONTAM_TSV;
-        std::string out_best_contams_fa = out_base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_CONTAM_FA;
-        std::string out_best_hits_tsv = out_base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_BEST_TSV;
-        std::string out_best_hits_fa = out_base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_BEST_FA;
-        std::string out_no_hits_fa = out_base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_NO_HITS;
         std::string out_unselected_tsv = out_base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_UNSELECTED;
 
         std::ofstream file_unselected_tsv(out_unselected_tsv,std::ios::out | std::ios::app);
         std::map<std::string, QuerySequence> database_map;
         print_header(out_unselected_tsv);
-        print_header(out_best_contams_tsv);
-        print_header(out_best_hits_tsv);
 
         while (in.read_row(qseqid, sseqid, pident, length, mismatch, gapopen,
                            qstart, qend, sstart, send, evalue, bitscore, coverage,stitle)) {
@@ -242,74 +236,136 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
 
         // final database stats
         file_unselected_tsv.close();
-
-        std::ofstream file_best_hits_tsv(out_best_hits_tsv,std::ios::out | std::ios::app);
-        std::ofstream file_best_hits_fa(out_best_hits_fa,std::ios::out | std::ios::app);
-        std::ofstream file_best_contam_tsv(out_best_contams_tsv,std::ios::out | std::ios::app);
-        std::ofstream file_best_contam_fa(out_best_contams_fa,std::ios::out | std::ios::app);
-        std::ofstream file_no_hits(out_no_hits_fa, std::ios::out | std::ios::app);
-
-        std::unordered_map<std::string, int> contam_map;
-        for (auto &pair : SEQUENCES) {
-            std::map<std::string, QuerySequence>::iterator it = database_map.find(pair.first);
-            if (it == database_map.end()) {
-                if (pair.second.isIs_protein()) {
-                    count_no_hit++;
-                    file_no_hits << pair.second.getSequence() <<std::endl;
-                }
-            } else {
-                count_filtered++;
-                if (it->second.isContaminant()) {
-                    count_contam++;
-                    file_best_contam_fa << pair.second.getSequence()<<std::endl;
-                    file_best_contam_tsv << it->second << std::endl;
-                    std::string contam = it->second.get_contam_type();
-                    if (contam_map.count(contam)) {
-                        contam_map[contam]++;
-                    } else {
-                        contam_map[contam] = 1;
-                    }
-                }
-                file_best_hits_fa << pair.second.getSequence()<<std::endl;
-                file_best_hits_tsv << it->second << std::endl;
-            }
-        }
-
-        file_best_hits_tsv.close(); file_best_hits_fa.close(); file_best_contam_tsv.close();
-        file_best_contam_fa.close(); file_no_hits.close();
-
-        std::string stat_message =
-                "Statistics of search results from file located at: " + data +
-                "\n\tTotal hits: " + std::to_string(count_TOTAL_hits) +
-                "\n\tBest hits: " + std::to_string(count_filtered) +
-                "\n\t\tBest fasta hits were written to: " + out_best_hits_fa +
-                "\n\t\tBest tsv hits were written to: " + out_best_hits_tsv +
-                "\n\tThere were " + std::to_string(count_removed) + " unselected results filtered out"
-                "\n\t\tThese were written to: " + out_unselected_tsv +
-                "\n\tOf the best hits, there were " + std::to_string(count_contam) + " contaminants" +
-                "\n\t\tThe fasta results were written to: " + out_best_contams_fa +
-                "\n\t\tThe tsv results were written to: " + out_best_contams_tsv;
-        if (count_contam > 0) {
-            std::string top_contam;
-            int highest_contam=0;
-            for (auto &pair : contam_map) {
-                if (pair.second > highest_contam) top_contam = pair.first;
-            }
-            stat_message +=
-                "\n\t\tThe top contaminant was: " + top_contam + " with " + std::to_string(highest_contam) +
-                " hits";
-        }
-        stat_message +=
-                "\n\tThere were also " + std::to_string(count_no_hit) + " protein sequences that did not hit "
-                "against this database" +
-                "\n\t\tThese were written to: " + out_no_hits_fa;
-        entapExecute::print_statistics(stat_message,_outpath);
+        out_stream <<
+                "Statistics of file located at: "              << data               <<
+                "\n\tUnselected results: "                     << count_removed      <<
+                "\n\t\tWritten to: "                           << out_unselected_tsv;
+        calculate_best_stats(SEQUENCES,database_map,out_stream,out_base_path);
+        std::string out_msg = out_stream.str() + "\n";
+        entapExecute::print_statistics(out_msg,_outpath);
         database_maps.push_back(database_map);
 
         entapInit::print_msg("Success!");
     }
-
     return process_best_diamond_hit(database_maps,SEQUENCES);
+}
+
+std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::map<std::string, QuerySequence>&SEQUENCES,
+                                             std::map<std::string, QuerySequence>&best_hits,
+                                             std::stringstream &ss, std::string &base_path) {
+
+    std::string out_best_contams_tsv = base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_CONTAM_TSV;
+    std::string out_best_contams_fa  = base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_CONTAM_FA;
+    std::string out_best_hits_tsv    = base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_BEST_TSV;
+    std::string out_best_hits_fa     = base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_BEST_FA;
+    std::string out_no_hits_fa       = base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_NO_HITS;
+
+    print_header(out_best_contams_tsv);
+    print_header(out_best_hits_tsv);
+    std::ofstream file_best_hits_tsv(out_best_hits_tsv,std::ios::out | std::ios::app);
+    std::ofstream file_best_hits_fa(out_best_hits_fa,std::ios::out | std::ios::app);
+    std::ofstream file_best_contam_tsv(out_best_contams_tsv,std::ios::out | std::ios::app);
+    std::ofstream file_best_contam_fa(out_best_contams_fa,std::ios::out | std::ios::app);
+    std::ofstream file_no_hits(out_no_hits_fa, std::ios::out | std::ios::app);
+
+    unsigned long count_TOTAL_hits=0, count_no_hit=0,
+            count_contam=0, count_filtered=0, count_informative=0;
+
+    typedef std::pair<std::string,int> count_pair;
+    struct compair {
+        bool operator ()(count_pair const& one, count_pair const& two) const {
+            return one.second > two.second;
+        }
+    };
+
+    std::map<std::string, int> contam_map, species_map, contam_species_map;
+    for (auto &pair : SEQUENCES) {
+        std::map<std::string, QuerySequence>::iterator it = best_hits.find(pair.first);
+        if (it == best_hits.end()) {
+            if (pair.second.isIs_protein()) {
+                count_no_hit++;
+                file_no_hits << pair.second.getSequence() <<std::endl;
+            }
+        } else {
+            count_filtered++;
+            std::string species;
+            if (!it->second.get_species().empty()) {
+                species = it->second.get_species();
+            }
+            if (it->second.isContaminant()) {
+                count_contam++;
+                file_best_contam_fa << pair.second.getSequence()<<std::endl;
+                file_best_contam_tsv << it->second << std::endl;
+                std::string contam = it->second.get_contam_type();
+                if (contam_map.count(contam)) {
+                    contam_map[contam]++;
+                } else contam_map[contam] = 1;
+                if (contam_species_map.count(species)) {
+                    contam_species_map[species]++;
+                } else contam_species_map[species] = 1;
+            } else {
+                if (species_map.count(species)) {
+                    species_map[species]++;
+                } else species_map[species] = 1;
+            }
+            if (it->second.is_informative()) {
+                count_informative++;
+            }
+            file_best_hits_fa << pair.second.getSequence()<<std::endl;
+            file_best_hits_tsv << it->second << std::endl;
+        }
+    }
+    file_best_hits_tsv.close(); file_best_hits_fa.close(); file_best_contam_tsv.close();
+    file_best_contam_fa.close(); file_no_hits.close();
+
+    std::vector<count_pair> contam_species_vect(contam_species_map.begin(),contam_species_map.end());
+    std::vector<count_pair> species_vect(species_map.begin(),species_map.end());
+    std::sort(contam_species_vect.begin(),contam_species_vect.end(),compair());
+    std::sort(species_vect.begin(),species_vect.end(),compair());
+    double contam_percent = (count_contam / count_filtered) * 100.0;
+
+    ss <<
+       "\n\tTotal hits: "                             << count_TOTAL_hits   <<
+       "\n\tUnique hits: "                            << count_filtered     <<
+       "\n\t\tBest fasta hits written to: "           << out_best_hits_fa   <<
+       "\n\t\tBest tsv hits written to: "             << out_best_hits_tsv  <<
+       "\n\tSequences that did not hit: "             << count_no_hit       <<
+       "\n\t\tWritten to: "                           << out_no_hits_fa     <<
+       "\n\tInformative hits: "                       << count_informative  <<
+       "\n\tContaminants"                             << count_contam       <<
+          "(" << contam_percent << "): "                                    <<
+       "\n\t\tFasta contaminants written to: "        << out_best_contams_fa<<
+       "\n\t\tTsv contaminants written to: "          << out_best_contams_tsv;
+
+    if (count_contam > 0) {
+        ss << "\n\t\tFlagged contaminants (all % based on total contaminants):";
+        for (auto &pair : contam_map) {
+            double percent = (pair.second / count_contam) * 100;
+            ss
+                << "\n\t\t\t" << pair.first << ": " << pair.second << "(" << percent <<"%)";
+        }
+        ss << "\n\t\tTop 10 contaminants by species:";
+        int ct = 0;
+        for (count_pair pair : contam_species_vect) {
+            if (ct > 10) break;
+            double percent = (pair.second / count_contam) * 100;
+            ss
+                << "\n\t\t\t" << ct << ")" << pair.first << ": "
+                << pair.second << "(" << percent <<"%)";
+            ct++;
+        }
+    }
+    ss << "\n\t\tTop 10 species:";
+    int ct = 0;
+    for (count_pair pair : species_vect) {
+        if (ct > 10) break;
+        double percent = (pair.second / count_contam) * 100;
+        ss
+            << "\n\t\t\t" << ct << ")" << pair.first << ": "
+            << pair.second << "(" << percent <<"%)";
+        ct++;
+    }
+    return std::pair<std::string,std::string>(out_best_hits_fa,out_no_hits_fa);
 }
 
 /**
@@ -323,8 +379,6 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
     std::string compiled_path = _outpath + ENTAP_EXECUTE::SIM_SEARCH_COMPILED_PATH + "/";
     boostFS::remove_all(compiled_path.c_str());
     boostFS::create_directories(compiled_path.c_str());
-    unsigned long count_contam=0, count_no_hit=0, count_total_filtered=0;
-
     std::map<std::string,QuerySequence> compiled_hit_map;
     for (std::map<std::string,QuerySequence> &database_map : diamond_maps) {
         for (auto &pair : database_map) {
@@ -338,76 +392,15 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
             }
         }
     }
-    std::string out_best_tsv = compiled_path + ENTAP_EXECUTE::SIM_SEARCH_BEST_OVERALL_TSV;
-    std::string out_best_fa = compiled_path + ENTAP_EXECUTE::SIM_SEARCH_BEST_OVERALL_FA;
-    std::string out_overall_contam_fa = compiled_path + ENTAP_EXECUTE::SIM_SEARCH_OVERALL_CONTAM_FA;
-    std::string out_overall_contam_tsv = compiled_path + ENTAP_EXECUTE::SIM_SEARCH_OVERALL_CONTAM_TSV;
-    std::string out_overall_no_hits_fa = compiled_path + ENTAP_EXECUTE::SIM_SEARCH_OVERALL_NO_HITS_FA;
-
-    print_header(out_best_tsv);
-    print_header(out_overall_contam_tsv);
-
-    std::ofstream file_best_tsv(out_best_tsv,std::ios::out | std::ios::app);
-    std::ofstream file_best_fa(out_best_fa ,std::ios::out | std::ios::app);
-    std::ofstream file_contam_fa(out_overall_contam_fa,std::ios::out | std::ios::app);
-    std::ofstream file_contam_tsv(out_overall_contam_tsv,std::ios::out | std::ios::app);
-    std::ofstream file_no_hits(out_overall_no_hits_fa,std::ios::out | std::ios::app);
-
-    std::map<std::string,int> contam_map;
-    for (auto &pair : SEQUENCES) {
-        std::map<std::string,QuerySequence>::iterator it = compiled_hit_map.find(pair.first);
-        if (it != compiled_hit_map.end()) {
-            count_total_filtered++;
-            file_best_fa << pair.second.getSequence() <<std::endl;
-            file_best_tsv << it->second << std::endl;
-            it->second.setSeq_length(pair.second.getSeq_length());
-            pair.second = it->second;
-            if (it->second.isContaminant()) {
-                count_contam++;
-                file_contam_fa << pair.second.getSequence()<<std::endl;
-                file_contam_tsv << it->second << std::endl;
-                std::string contam = it->second.get_contam_type();
-                if (contam_map.count(contam)) {
-                    contam_map[contam]++;
-                } else {
-                    contam_map[contam] = 1;
-                }
-            }
-        } else {
-            if (pair.second.isIs_protein()) {
-                count_no_hit++;
-                file_no_hits << pair.second.getSequence() << std::endl;
-            }
-        }
-    }
-
-    std::string stat_message =
-            "Statistics of compiled results from each Diamond hit: "
-            "\n\tTotal best hits: " + std::to_string(count_total_filtered) +
-            "\n\t\tBest fasta hits were written to: " + out_best_fa +
-            "\n\t\tBest tsv hits were written to: " + out_best_tsv +
-            "\n\tOf the best hits, there were " + std::to_string(count_contam) + " contaminants" +
-            "\n\t\tThe fasta results were written to: " + out_overall_contam_fa +
-            "\n\t\tThe tsv results were written to: " + out_overall_contam_tsv;
-    if (count_contam > 0) {
-        std::string top_contam;
-        int highest_contam=0;
-        for (auto &pair : contam_map) {
-            if (pair.second > highest_contam) top_contam = pair.first;
-        }
-        stat_message +=
-                "\n\t\tThe top contaminant was: " + top_contam + " with " + std::to_string(highest_contam) +
-                " hits";
-    }
-    stat_message +=
-            "\n\tThere were also " + std::to_string(count_no_hit) + " protein sequences that did not hit "
-                    "against any database" +
-            "\n\t\tThese were written to: " + out_overall_no_hits_fa;
-    entapExecute::print_statistics(stat_message,_outpath);
-    file_best_tsv.close(); file_best_fa.close();file_contam_fa.close();
-    file_contam_tsv.close(); diamond_maps.clear();
-
-    return std::pair<std::string,std::string>(out_best_fa, out_overall_no_hits_fa);
+    std::stringstream out_stream;out_stream<<std::fixed<<std::setprecision(2);
+    out_stream <<
+            "------Compiled Results------";
+    std::pair<std::string,std::string> out_pair =
+            calculate_best_stats(SEQUENCES,compiled_hit_map,out_stream,compiled_path);
+    std::string out_msg = out_stream.str() + "\n";
+    entapExecute::print_statistics(out_msg,_outpath);
+    diamond_maps.clear();
+    return out_pair;
 }
 
 std::list<std::string> SimilaritySearch::find_diamond_files() {

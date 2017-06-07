@@ -44,6 +44,9 @@ private:
     void print_header(std::string);
     std::string get_lineage(std::string, std::unordered_map<std::string, std::string>&);
     int calculate_score(std::string,bool);
+    std::pair<std::string,std::string> calculate_best_stats (std::map<std::string, QuerySequence>&,
+                                 std::map<std::string, QuerySequence>&,
+                                 std::stringstream &, std::string&);
 };
 
 

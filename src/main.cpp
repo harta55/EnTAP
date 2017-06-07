@@ -37,13 +37,13 @@ std::string get_exe_path();
 void generate_config(std::string&);
 
 States state;   // init
-std::string _outpath;
+std::string _outpath,_exe_path;
 Chrono::time_point<Chrono::system_clock> _start_time, _end_time;
 
 int main(int argc, const char** argv) {
     init_log();
     // TODO fix, not portable
-    std::string exe_path = get_exe_path();
+    _exe_path = get_exe_path();
     try {
         state = PARSE_ARGS;
         std::unordered_map<std::string,std::string> config_map;
@@ -51,12 +51,12 @@ int main(int argc, const char** argv) {
         boost::filesystem::path working_dir(boost::filesystem::current_path());
         _outpath = working_dir.string() + "/" + inputs["tag"].as<std::string>() + "/";
         print_user_input(inputs);
-        config_map = parse_config(exe_path);
+        config_map = parse_config(_exe_path);
         if (state == INIT_ENTAP) {
-            entapInit::init_entap(inputs, exe_path, config_map);
+            entapInit::init_entap(inputs, _exe_path, config_map);
             state = INIT_ENTAP_SUCCESS;
         } else if (state == EXECUTE_ENTAP) {
-            entapExecute::execute_main(inputs, exe_path,config_map);
+            entapExecute::execute_main(inputs, _exe_path,config_map);
             state = EXECUTE_ENTAP_SUCCESS;
         } else {
             print_msg("Error in parsing input data");
@@ -329,15 +329,16 @@ void print_msg(std::string msg) {
 void print_user_input(boostPO::variables_map &map) {
     remove(std::string(_outpath + ENTAP_CONFIG::LOG_FILENAME).c_str());
     boost::filesystem::create_directories(_outpath);
-    std::string header = ENTAP_STATS::SOFTWARE_BREAK +
-                         "enTAP Run Information\n" + ENTAP_STATS::SOFTWARE_BREAK;
-    entapExecute::print_statistics(header,_outpath);
     std::stringstream ss;
+    ss << ENTAP_STATS::SOFTWARE_BREAK <<
+          "enTAP Run Information\n"   <<
+          ENTAP_STATS::SOFTWARE_BREAK;
     _start_time = Chrono::system_clock::now();
     std::time_t time = Chrono::system_clock::to_time_t(_start_time);
-    ss << "Current enTAP Version: " << ENTAP_CONFIG::ENTAP_VERSION <<
-          "\nStart time: " << std::ctime(&time)                    <<
-          "\nYour working directory has been set to: " << _outpath << "\n";
+    ss << "Current enTAP Version: " << ENTAP_CONFIG::ENTAP_VERSION  <<
+          "\nStart time: "          << std::ctime(&time)            <<
+          "\nYour working directory has been set to: "  << _outpath <<
+          "\nYour execution directory has been set to: "<< _exe_path<<'\n';
 
     for (const auto& it : map) {
         std::string key = it.first.c_str();
@@ -359,7 +360,7 @@ void print_user_input(boostPO::variables_map &map) {
             ss << *v;
         } else ss << "null";
     }
-    std::string output = ss.str();
+    std::string output = ss.str() + "\n";
     entapExecute::print_statistics(output,_outpath);
     print_msg(output+"\n");
 }

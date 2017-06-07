@@ -44,6 +44,8 @@ public:
     unsigned long getSeq_length() const;
     const std::string &getFrame() const;
     bool isIs_protein() const;
+    const std::string &get_species() const;
+    bool is_informative() const;
 
 
 private:
@@ -60,8 +62,6 @@ private:
     void init_sequence();
     std::map<std::string,std::string> _ontology_results;
     bool verify_frame(const std::string&,const std::string&);
-
-
 };
 
 

@@ -165,8 +165,16 @@ void QuerySequence::set_is_informative(bool _is_informative) {
     QuerySequence::_is_informative = _is_informative;
 }
 
+const std::string &QuerySequence::get_species() const {
+    return _species;
+}
+
 const std::string &QuerySequence::get_contam_type() const {
     return _contam_type;
+}
+
+bool QuerySequence::is_informative() const {
+    return _is_informative;
 }
 
 void QuerySequence::set_contam_type(const std::string &_contam_type) {
@@ -223,7 +231,7 @@ std::string QuerySequence::print_final_results(short flag,const std::vector<std:
                       this->_tax_scope    <<'\t'<< this->_ogs       <<'\t'<<this->_kegg_str      <<'\t';
             break;
         case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
-            stream << this<<'\t';
+            stream << *this <<'\t';
             for (const std::string &val : headers) {
                 stream << _ontology_results[val] << '\t';
             }

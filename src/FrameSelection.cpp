@@ -221,10 +221,13 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
             std::to_string(min_selected) + "(" + min_kept_seq + ")\n\tMaximum nucleotide length: "+
             std::to_string(max_selected) + "(" + max_kept_seq + ")\n\tAverage length: "+
             std::to_string(avg_selected) + "\n";
-        stat_output += "Lost sequences:\n\tMinimum nucleotide length: " +
-                       std::to_string(min_removed) + "(" + min_removed_seq + ")\n\tMaximum nucleotide length: "+
-                       std::to_string(max_removed) + "(" + max_removed_seq + ")\n\tAverage length: "+
-                       std::to_string(avg_lost) + "\n";
+        if (count_removed > 0) {
+            stat_output += "Lost sequences:\n\tMinimum nucleotide length: " +
+                           std::to_string(min_removed) + "(" + min_removed_seq + ")\n\tMaximum nucleotide length: "+
+                           std::to_string(max_removed) + "(" + max_removed_seq + ")\n\tAverage length: "+
+                           std::to_string(avg_lost) + "\n";
+        }
+
         entapExecute::print_statistics(stat_output,_outpath);
     } catch (ExceptionHandler &e) {throw e;}
     entapInit::print_msg("Success!");

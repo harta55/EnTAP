@@ -89,7 +89,6 @@ void QuerySequence::setSequence(const std::string &seq) {
     _is_database_hit = false;
     is_protein = true;
     _sequence = seq;
-    _seq_length = 0;
     if (!seq.empty() && seq[seq.length()-1] == '\n') {
         this->_sequence.pop_back();
     }
@@ -258,6 +257,7 @@ void QuerySequence::set_go_parsed(const QuerySequence::go_struct &_go_parsed) {
 }
 
 void QuerySequence::init_sequence() {
+    _seq_length = 0;
     _pident = 0;
     _length = 0;
     _mismatch = 0;

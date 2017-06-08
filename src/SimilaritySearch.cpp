@@ -302,11 +302,11 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
                 if (contam_species_map.count(species)) {
                     contam_species_map[species]++;
                 } else contam_species_map[species] = 1;
-            } else {
-                if (species_map.count(species)) {
-                    species_map[species]++;
-                } else species_map[species] = 1;
             }
+            if (species_map.count(species)) {
+                species_map[species]++;
+            } else species_map[species] = 1;
+
             if (it->second.is_informative()) {
                 count_informative++;
             }
@@ -343,7 +343,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
                 << "\n\t\t\t" << pair.first << ": " << pair.second << "(" << percent <<"%)";
         }
         ss << "\n\t\tTop 10 contaminants by species:";
-        int ct = 0;
+        int ct = 1;
         for (count_pair pair : contam_species_vect) {
             if (ct > 10) break;
             double percent = (pair.second / count_contam) * 100;

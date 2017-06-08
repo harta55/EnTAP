@@ -160,10 +160,12 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
     entapInit::print_msg("Beginning to filter individual diamond_files...");
     std::unordered_map<std::string, std::string> taxonomic_database;
     std::list<std::map<std::string,QuerySequence>> database_maps;
-    std::stringstream out_stream;out_stream<<std::fixed<<std::setprecision(2);
-    out_stream << ENTAP_STATS::SOFTWARE_BREAK
+    std::stringstream break_stats;
+    break_stats << ENTAP_STATS::SOFTWARE_BREAK
                << "Similarity Search - Diamond\n"
                << ENTAP_STATS::SOFTWARE_BREAK;
+    std::string break_msg = break_stats.str();
+    entapExecute::print_statistics(break_msg,_outpath);
     try {
         taxonomic_database = read_tax_map();
     } catch (ExceptionHandler &e) {throw e;}
@@ -177,7 +179,11 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
     boostFS::create_directories(sim_search_processed);
     _input_lineage = get_lineage(_input_species,taxonomic_database);
 
-    for (std::string data : _sim_search_paths) {
+    for (std::string &data : _sim_search_paths) {
+        std::stringstream out_stream;out_stream<<std::fixed<<std::setprecision(2);
+        out_stream << ENTAP_STATS::SOFTWARE_BREAK
+                   << "Similarity Search - Diamond\n"
+                   << ENTAP_STATS::SOFTWARE_BREAK;
         entapInit::print_msg("Diamond file located at " + data + " being filtered");
         io::CSVReader<ENTAP_EXECUTE::diamond_col_num, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(data);
         // todo have columns from input file, in_read_header for versatility
@@ -244,7 +250,6 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
         std::string out_msg = out_stream.str() + "\n";
         entapExecute::print_statistics(out_msg,_outpath);
         database_maps.push_back(database_map);
-
         entapInit::print_msg("Success!");
     }
     return process_best_diamond_hit(database_maps,SEQUENCES);
@@ -340,7 +345,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         for (auto &pair : contam_map) {
             double percent = (pair.second / count_contam) * 100;
             ss
-                << "\n\t\t\t" << pair.first << ": " << pair.second << "(" << percent <<"%)";
+                << "\n\t\t\t" << &pair.first << ": " << pair.second << "(" << percent <<"%)";
         }
         ss << "\n\t\tTop 10 contaminants by species:";
         int ct = 1;
@@ -348,7 +353,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
             if (ct > 10) break;
             double percent = (pair.second / count_contam) * 100;
             ss
-                << "\n\t\t\t" << ct << ")" << pair.first << ": "
+                << "\n\t\t\t" << ct << ")" << &pair.first << ": "
                 << pair.second << "(" << percent <<"%)";
             ct++;
         }
@@ -360,7 +365,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         if (ct > 10) break;
         double percent = (pair.second / count_filtered) * 100;
         ss
-            << "\n\t\t\t" << ct << ")" << pair.first << ": "
+            << "\n\t\t\t" << ct << ")" << &pair.first << ": "
             << pair.second << "(" << percent <<"%)";
         ct++;
     }

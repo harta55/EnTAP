@@ -89,11 +89,12 @@ std::string FrameSelection::genemarkst(std::map<std::string,QuerySequence> &SEQU
     std::string out_lst = genemark_out_dir + lst_file;
     std::string out_gmst_log = genemark_out_dir+ENTAP_EXECUTE::GENEMARK_LOG_FILE;
     std::string out_hmm_file = genemark_out_dir+ENTAP_EXECUTE::GENEMARK_HMM_FILE;
-
     if (rename(lst_file.c_str(),out_lst.c_str())!=0 ||
-        rename(ENTAP_EXECUTE::GENEMARK_LOG_FILE.c_str(),out_gmst_log.c_str())!=0 ||
-        rename(ENTAP_EXECUTE::GENEMARK_HMM_FILE.c_str(),out_hmm_file.c_str())!=0) {
+        rename(ENTAP_EXECUTE::GENEMARK_LOG_FILE.c_str(),out_gmst_log.c_str())!=0 ) {
         throw ExceptionHandler("Error moving genemark results", ENTAP_ERR::E_INIT_TAX_READ);
+    }
+    if (entapInit::file_exists(ENTAP_EXECUTE::GENEMARK_HMM_FILE)) {
+        rename(ENTAP_EXECUTE::GENEMARK_HMM_FILE.c_str(),out_hmm_file.c_str());
     }
     entapInit::print_msg("Success!");
     try {

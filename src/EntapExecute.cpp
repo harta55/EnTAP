@@ -449,9 +449,8 @@ namespace entapExecute {
         double ninety_len = total_len * 0.9;
         for (unsigned long val : seq_lengths) {
             temp_len += val;
-            if (temp_len > fifty_len && temp_len < ninety_len) {
-                n_50 = val;
-            } else if (temp_len > fifty_len && temp_len > ninety_len) {
+            if (temp_len > fifty_len && n_50 == 0) n_50 = val;
+            if (temp_len > ninety_len) {
                 n_90 = val;
                 break;
             }

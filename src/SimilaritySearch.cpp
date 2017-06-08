@@ -184,8 +184,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
         std::string qseqid, sseqid, stitle;
         double evalue, pident, bitscore, coverage;
         int length, mismatch, gapopen, qstart, qend, sstart, send;
-        unsigned long count_removed=0, count_TOTAL_hits=0, count_under_e=0, count_no_hit=0,
-                count_contam=0, count_filtered=0, count_informative=0;
+        unsigned long count_removed=0, count_TOTAL_hits=0, count_under_e=0;
 
         boostFS::path path(data);   // path/to/data.out
         std::string out_base_path = sim_search_processed + path.filename().stem().string();
@@ -238,6 +237,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
         file_unselected_tsv.close();
         out_stream <<
                 "Statistics of file located at: "              << data               <<
+                "\n\tTotal hits: "                             << count_TOTAL_hits   <<
                 "\n\tUnselected results: "                     << count_removed      <<
                 "\n\t\tWritten to: "                           << out_unselected_tsv;
         calculate_best_stats(SEQUENCES,database_map,out_stream,out_base_path);
@@ -268,8 +268,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     std::ofstream file_best_contam_fa(out_best_contams_fa,std::ios::out | std::ios::app);
     std::ofstream file_no_hits(out_no_hits_fa, std::ios::out | std::ios::app);
 
-    unsigned long count_TOTAL_hits=0, count_no_hit=0,
-            count_contam=0, count_filtered=0, count_informative=0;
+    unsigned long count_no_hit=0, count_contam=0, count_filtered=0, count_informative=0;
 
     typedef std::pair<std::string,int> count_pair;
     struct compair {
@@ -325,14 +324,13 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     double contam_percent = (count_contam / count_filtered) * 100.0;
 
     ss <<
-       "\n\tTotal hits: "                             << count_TOTAL_hits   <<
        "\n\tUnique hits: "                            << count_filtered     <<
        "\n\t\tBest fasta hits written to: "           << out_best_hits_fa   <<
        "\n\t\tBest tsv hits written to: "             << out_best_hits_tsv  <<
        "\n\tSequences that did not hit: "             << count_no_hit       <<
        "\n\t\tWritten to: "                           << out_no_hits_fa     <<
        "\n\tInformative hits: "                       << count_informative  <<
-       "\n\tContaminants"                             << count_contam       <<
+       "\n\tContaminants: "                           << count_contam       <<
           "(" << contam_percent << "): "                                    <<
        "\n\t\tFasta contaminants written to: "        << out_best_contams_fa<<
        "\n\t\tTsv contaminants written to: "          << out_best_contams_tsv;
@@ -355,11 +353,12 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
             ct++;
         }
     }
-    ss << "\n\t\tTop 10 species:";
-    int ct = 0;
+
+    ss << "\n\tTop 10 species:";
+    int ct = 1;
     for (count_pair pair : species_vect) {
         if (ct > 10) break;
-        double percent = (pair.second / count_contam) * 100;
+        double percent = (pair.second / count_filtered) * 100;
         ss
             << "\n\t\t\t" << ct << ")" << pair.first << ": "
             << pair.second << "(" << percent <<"%)";
@@ -376,9 +375,10 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
 std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(std::list<std::map<std::string,QuerySequence>> &diamond_maps,
                                       std::map<std::string, QuerySequence>&SEQUENCES) {
     entapInit::print_msg("Compiling similarity results results to find best overall hits...");
-    std::string compiled_path = _outpath + ENTAP_EXECUTE::SIM_SEARCH_COMPILED_PATH + "/";
-    boostFS::remove_all(compiled_path.c_str());
-    boostFS::create_directories(compiled_path.c_str());
+    std::string compiled_path = _outpath + ENTAP_EXECUTE::SIM_SEARCH_COMPILED_PATH;
+    std::string results_dir = _outpath + ENTAP_EXECUTE::SIM_SEARCH_RESULTS_DIR;
+    boostFS::remove_all(results_dir.c_str());
+    boostFS::create_directories(results_dir.c_str());
     std::map<std::string,QuerySequence> compiled_hit_map;
     for (std::map<std::string,QuerySequence> &database_map : diamond_maps) {
         for (auto &pair : database_map) {

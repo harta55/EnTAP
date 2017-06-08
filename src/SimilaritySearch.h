@@ -22,7 +22,7 @@ private:
     std::list<std::string> _database_paths, _sim_search_paths;
     std::string _diamond_exe, _outpath, _input_path, _entap_exe, _input_lineage,_input_species;
     std::string _ncbi_regex = "\\[([^]]+)\\](?!.+\\[.+\\])";
-    std::string _uniprot_regex = "OS=(.+)\\s\\S\\S";
+    std::string _uniprot_regex = "OS=(.+?)\\s\\S\\S=";
     int _threads; bool _overwrite,_blastp;
     double _e_val, _coverage;
     short _software_flag;

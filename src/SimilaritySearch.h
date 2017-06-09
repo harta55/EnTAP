@@ -46,7 +46,7 @@ private:
     int calculate_score(std::string,bool);
     std::pair<std::string,std::string> calculate_best_stats (std::map<std::string, QuerySequence>&,
                                  std::map<std::string, QuerySequence>&,
-                                 std::stringstream &, std::string&);
+                                 std::stringstream &, std::string&,bool);
 };
 
 

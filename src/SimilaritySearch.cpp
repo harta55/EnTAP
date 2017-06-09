@@ -243,7 +243,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
                 "\n\tTotal hits: "                             << count_TOTAL_hits   <<
                 "\n\tUnselected results: "                     << count_removed      <<
                 "\n\t\tWritten to: "                           << out_unselected_tsv;
-        calculate_best_stats(SEQUENCES,database_map,out_stream,out_base_path);
+        calculate_best_stats(SEQUENCES,database_map,out_stream,out_base_path,false);
         std::string out_msg = out_stream.str() + "\n";
         entapExecute::print_statistics(out_msg,_outpath);
         database_maps.push_back(database_map);
@@ -254,7 +254,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
 
 std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::map<std::string, QuerySequence>&SEQUENCES,
                                              std::map<std::string, QuerySequence>&best_hits,
-                                             std::stringstream &ss, std::string &base_path) {
+                                             std::stringstream &ss, std::string &base_path, bool is_final) {
 
     std::string out_best_contams_tsv = base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_CONTAM_TSV;
     std::string out_best_contams_fa  = base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_CONTAM_FA;
@@ -314,6 +314,10 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
             }
             file_best_hits_fa << pair.second.getSequence()<<std::endl;
             file_best_hits_tsv << it->second << std::endl;
+            if (is_final) {
+                it->second.setSeq_length(pair.second.getSeq_length());
+                pair.second = it->second;
+            }
         }
     }
     file_best_hits_tsv.close(); file_best_hits_fa.close(); file_best_contam_tsv.close();
@@ -398,7 +402,7 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
     out_stream <<
             "------Compiled Results------";
     std::pair<std::string,std::string> out_pair =
-            calculate_best_stats(SEQUENCES,compiled_hit_map,out_stream,compiled_path);
+            calculate_best_stats(SEQUENCES,compiled_hit_map,out_stream,compiled_path,true);
     std::string out_msg = out_stream.str() + "\n";
     entapExecute::print_statistics(out_msg,_outpath);
     diamond_maps.clear();

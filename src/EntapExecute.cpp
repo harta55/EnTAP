@@ -97,6 +97,7 @@ namespace entapExecute {
             try {
                 switch (state) {
                     case FRAME_SELECTION:
+                        entapInit::print_msg("STATE - FRAME SELECTION");
                         if (_isProtein) {
                             entapInit::print_msg("Protein sequences input, skipping frame selection");
                             genemark_out = input_path;
@@ -108,6 +109,7 @@ namespace entapExecute {
                         _blastp = true;
                         break;
                     case RSEM:
+                        entapInit::print_msg("STATE - EXPRESSION");
                         if (!user_input.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
                             entapInit::print_msg("No alignment file specified, skipping expression analysis");
                             break;
@@ -119,14 +121,17 @@ namespace entapExecute {
                                                           input_path,is_overwrite);
                         break;
                     case DIAMOND_RUN:
+                        entapInit::print_msg("STATE - SIM SEARCH RUN");
                         diamond_out = diamond.execute(input_path, _blastp);
                         break;
                     case DIAMOND_PARSE:
+                        entapInit::print_msg("STATE - SIM SEARCH PARSE");
                         diamond_pair = diamond.parse_files(input_path,SEQUENCE_MAP);
                         input_path = diamond_pair.first;
                         no_database_hits = diamond_pair.second;
                         break;
                     case GENE_ONTOLOGY:
+                        entapInit::print_msg("STATE - GENE ONTOLOGY");
                         ontology.execute(SEQUENCE_MAP,input_path,no_database_hits);
                         break;
                     default:
@@ -379,6 +384,11 @@ namespace entapExecute {
 
     std::map<std::string, QuerySequence> init_sequence_map(std::string &input_file) {
         std::stringstream out_msg;out_msg<<std::fixed<<std::setprecision(2);
+        entapInit::print_msg("Processing transcriptome...");
+        if (!entapInit::file_exists(input_file)) {
+            throw ExceptionHandler("Input file not found at: " +
+                input_file,ENTAP_ERR::E_INPUT_PARSE);
+        }
         out_msg << ENTAP_STATS::SOFTWARE_BREAK
                 << "Transcriptome Statistics\n"
                 << ENTAP_STATS::SOFTWARE_BREAK;
@@ -424,7 +434,6 @@ namespace entapExecute {
         // first - n50, second - n90
         std::pair<unsigned long, unsigned long> n_vals =
                 calculate_N_vals(sequence_lengths, total_len);
-
         out_msg <<
                 "Total sequences: "                            << count_seqs    <<
                 "\nTotal length of transcriptome(bp): "        << total_len     <<
@@ -438,6 +447,7 @@ namespace entapExecute {
         if (_is_complete)out_msg<<"\nAll sequences ("<<count_seqs<<") were flagged as complete genes";
         std::string msg = out_msg.str();
         print_statistics(msg,_outpath);
+        entapInit::print_msg("Success!");
         return seq_map;
     }
 
@@ -517,12 +527,14 @@ namespace entapExecute {
         _frame_selection_exe = temp_genemark;
         _expression_exe = temp_rsem;
         _ontology_flag==0 ? _ontology_exe = temp_eggnog : _ontology_exe = temp_interpro;
+        entapInit::print_msg("Success! All exe paths set");
         return _diamond_exe;        // for config run
     }
 
 
     //only assuming between 0-9 NO 2 DIGIT STATES
     void verify_state(std::queue<char> &queue, bool &test) {
+        entapInit::print_msg("verifying state...");
         if (queue.empty()) {
             state = static_cast<ExecuteStates>(state + 1);
             if (!valid_state(state)) state = EXIT;
@@ -567,6 +579,7 @@ namespace entapExecute {
                 verify_state(queue, test);
             }
         }
+        entapInit::print_msg("Success!");
     }
 
 

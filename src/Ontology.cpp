@@ -78,11 +78,14 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
         // io::single_line_comment<'#'>??
         while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                            best_og, cog_cat, eggnog_annot)) {
-            SEQUENCES[qseqid].set_eggnog_results(seed_ortho,seed_e,seed_score,predicted_gene,go_terms,
-                                                 kegg,tax_scope,ogs);
+            query_map_struct::iterator it = SEQUENCES.find(qseqid);
+            if (it != SEQUENCES.end()) {
+                it->second.set_eggnog_results(seed_ortho,seed_e,seed_score,predicted_gene,go_terms,
+                                              kegg,tax_scope,ogs);
+                it->second.set_go_parsed(parse_go_list(go_terms,database,','));
+            }
             count_TOTAL_hits++;
             eggnog_map[qseqid] = 1;
-            SEQUENCES[qseqid].set_go_parsed(parse_go_list(go_terms,database,','));
             if (!go_terms.empty()) {
                 count_total_go_hits++;
                 long ct = std::count(go_terms.begin(), go_terms.end(), ',');

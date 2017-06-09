@@ -20,7 +20,8 @@ public:
     std::pair<std::string,std::string> parse_files(std::string,std::map<std::string, QuerySequence>&);
 private:
     std::list<std::string> _database_paths, _sim_search_paths;
-    std::string _diamond_exe, _outpath, _input_path, _entap_exe, _input_lineage,_input_species;
+    std::string _diamond_exe, _outpath, _input_path, _entap_exe, _input_lineage,_input_species,
+        _blast_type;
     std::string _ncbi_regex = "\\[([^]]+)\\](?!.+\\[.+\\])";
     std::string _uniprot_regex = "OS=(.+?)\\s\\S\\S=";
     int _threads; bool _overwrite,_blastp;
@@ -29,11 +30,9 @@ private:
     std::vector<std::string> _contaminants;
     std::list<std::string> diamond();
     void diamond_blast(std::string, std::string, std::string,std::string&,int&, std::string&);
-    std::list<std::string> verify_diamond_files(std::string&,
-        std::string&, std::string);
+    std::list<std::string> verify_diamond_files(std::string&, std::string);
     std::pair<std::string,std::string> diamond_parse(std::vector<std::string>&,
                                                      std::map<std::string, QuerySequence>&);
-    std::list<std::string> find_diamond_files();
     std::unordered_map<std::string, std::string> read_tax_map();
     std::pair<bool,std::string>  is_contaminant(std::string, std::unordered_map<std::string,
             std::string> &,std::vector<std::string>&);

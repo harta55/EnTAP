@@ -42,13 +42,20 @@ std::string FrameSelection::genemarkst(std::map<std::string,QuerySequence> &SEQU
                                       file_name.string()+".fnn"};
     std::string genemark_out_dir = _outpath + ENTAP_EXECUTE::GENEMARK_OUT_PATH;
     std::string final_out = genemark_out_dir + file_name.string() + ".faa";
+    std::string lst_file = file_name.string() + ".lst";
+    std::string out_lst = genemark_out_dir + lst_file;
+    std::string out_gmst_log = genemark_out_dir+ENTAP_EXECUTE::GENEMARK_LOG_FILE;
+    std::string out_hmm_file = genemark_out_dir+ENTAP_EXECUTE::GENEMARK_HMM_FILE;
 
     if (_overwrite) {
         boostFS::remove_all(genemark_out_dir.c_str());
     } else {
-        if (entapInit::file_exists(final_out)) {
+        if (entapInit::file_exists(final_out) && entapInit::file_exists(out_lst)) {
             entapInit::print_msg("File found at: " + final_out + "\n"
                  "continuing enTAP with this file and skipping frame selection");
+            try {
+                genemarkStats(final_out,out_lst,SEQUENCES);
+            } catch (ExceptionHandler &e){throw e;}
             return final_out;
         }
         entapInit::print_msg("File not found at " + final_out + " so continuing frame selection");
@@ -64,7 +71,6 @@ std::string FrameSelection::genemarkst(std::map<std::string,QuerySequence> &SEQU
                                _inpath, ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
     }
     entapInit::print_msg("Success!");
-
     // Format genemarks-t output (remove blank lines)
     entapInit::print_msg("Formatting genemark files");
 
@@ -79,16 +85,11 @@ std::string FrameSelection::genemarkst(std::map<std::string,QuerySequence> &SEQU
                 out_file << line << '\n';
             }
         }
-        in_file.close();
-        out_file.close();
+        in_file.close();out_file.close();
         if (remove(path.c_str())!=0 || rename(temp_name.c_str(),out_path.c_str())!=0) {
             throw ExceptionHandler("Error formatting/moving genemark results", ENTAP_ERR::E_INIT_TAX_READ);
         }
     }
-    std::string lst_file = file_name.string() + ".lst";
-    std::string out_lst = genemark_out_dir + lst_file;
-    std::string out_gmst_log = genemark_out_dir+ENTAP_EXECUTE::GENEMARK_LOG_FILE;
-    std::string out_hmm_file = genemark_out_dir+ENTAP_EXECUTE::GENEMARK_HMM_FILE;
     if (rename(lst_file.c_str(),out_lst.c_str())!=0 ||
         rename(ENTAP_EXECUTE::GENEMARK_LOG_FILE.c_str(),out_gmst_log.c_str())!=0 ) {
         throw ExceptionHandler("Error moving genemark results", ENTAP_ERR::E_INIT_TAX_READ);

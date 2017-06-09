@@ -54,6 +54,7 @@ SimilaritySearch::SimilaritySearch(std::list<std::string> &databases, std::strin
 std::list<std::string> SimilaritySearch::execute(std::string updated_input,bool blast) {
     this->_input_path = updated_input;
     this->_blastp = blast;
+    _blastp ? _blast_type = "blastp" : _blast_type = "blastx";
     try {
         switch (_software_flag) {
             case 0:
@@ -81,8 +82,6 @@ std::list<std::string> SimilaritySearch::diamond() {
     // not always known (depending on starting state)
     entapInit::print_msg("Beginning to execute DIAMOND...");
     std::string diamond_out = _outpath + ENTAP_CONFIG::SIM_SEARCH_OUT_PATH;
-    std::string blast_type;
-    _blastp ? blast_type = "blastp" : blast_type = "blastx";
     std::list<std::string> out_paths;
     if (!entapInit::file_exists(_input_path)) {
         throw ExceptionHandler("Transcriptome file not found",ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
@@ -93,12 +92,12 @@ std::list<std::string> SimilaritySearch::diamond() {
     if (_overwrite) {
         boostFS::remove_all(diamond_out.c_str());
     } else {
-        std::list<std::string> temp = verify_diamond_files(diamond_out,blast_type,
-                                                           transc_name.string());
-        if (!temp.empty()) return temp;
+        std::list<std::string> temp = verify_diamond_files(diamond_out,transc_name.string());
+        if (!temp.empty()) {
+            return temp;
+        }
     }
     boostFS::create_directories(diamond_out);
-
     // database verification already ran, don't need to verify each path
     try {
         for (std::string data_path : _database_paths) {
@@ -106,11 +105,11 @@ std::list<std::string> SimilaritySearch::diamond() {
             boostFS::path file_name(data_path); file_name=file_name.stem();
             entapInit::print_msg("Searching against database located at: " +
                                  data_path + "...");
-            std::string out_path = diamond_out + blast_type + "_" + transc_name.string() + "_" +
+            std::string out_path = diamond_out + _blast_type + "_" + transc_name.string() + "_" +
                                    file_name.string() + ".out";
-            std::string std_out = diamond_out + blast_type + "_" + transc_name.string() + "_" +
+            std::string std_out = diamond_out + _blast_type + "_" + transc_name.string() + "_" +
                                   file_name.string() + "_std";
-            diamond_blast(_input_path, out_path, std_out,data_path, _threads, blast_type);
+            diamond_blast(_input_path, out_path, std_out,data_path, _threads, _blast_type);
             entapInit::print_msg("Success! Results written to " + out_path);
             out_paths.push_back(out_path);
         }
@@ -133,8 +132,7 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
     }
 }
 
-std::list<std::string> SimilaritySearch::verify_diamond_files(std::string &outpath,
-                std::string &blast, std::string name) {
+std::list<std::string> SimilaritySearch::verify_diamond_files(std::string &outpath, std::string name) {
     entapInit::print_msg("Override unselected, checking for diamond files"
                                  " of selected databases...");
     std::list<std::string> out_list;
@@ -142,7 +140,7 @@ std::list<std::string> SimilaritySearch::verify_diamond_files(std::string &outpa
         // assume all paths should be .dmnd
         boostFS::path file_name(data_path);
         file_name = file_name.stem();
-        std::string temp_out = outpath + blast + "_" + name + "_" +
+        std::string temp_out = outpath + _blast_type + "_" + name + "_" +
                                file_name.string() + ".out";
         if (!entapInit::file_exists(temp_out)){
             entapInit::print_msg("File at: " + temp_out + " not found, running diamond");
@@ -151,6 +149,7 @@ std::list<std::string> SimilaritySearch::verify_diamond_files(std::string &outpa
         out_list.push_back(temp_out);
     }
     entapInit::print_msg("All diamond files found, skipping this stage of enTAP");
+    _sim_search_paths = out_list;
     return out_list;
 }
 
@@ -169,10 +168,13 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
     try {
         taxonomic_database = read_tax_map();
     } catch (ExceptionHandler &e) {throw e;}
-    if (_sim_search_paths.empty()) _sim_search_paths = find_diamond_files();
+    if (_sim_search_paths.empty()) {
+        std::string diamond_out = _outpath + ENTAP_CONFIG::SIM_SEARCH_OUT_PATH; // Raw outpath
+        boostFS::path transc_name(_input_path); transc_name=transc_name.stem();
+        if (transc_name.has_stem()) transc_name = transc_name.stem(); //.fasta.faa
+        _sim_search_paths = verify_diamond_files(diamond_out,transc_name.string());
+    }
     if (_sim_search_paths.empty()) throw ExceptionHandler("No diamond files found", ENTAP_ERR::E_RUN_SIM_SEARCH_FILTER);
-
-    // TODO --overwrite, best hit files, generate list of output names first
 
     std::string sim_search_processed = _outpath + ENTAP_EXECUTE::SIM_SEARCH_PARSE_PROCESSED + "/";
     boostFS::remove_all(sim_search_processed);
@@ -230,9 +232,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
                     count_removed++;
                     file_unselected_tsv << new_query<< std::endl;
                 }
-            } else {
-                database_map.emplace(qseqid, new_query);
-            }
+            } else database_map.emplace(qseqid, new_query);
         }
         entapInit::print_msg("File parsed, calculating statistics and writing output...");
 
@@ -406,23 +406,8 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
     std::string out_msg = out_stream.str() + "\n";
     entapExecute::print_statistics(out_msg,_outpath);
     diamond_maps.clear();
+    entapInit::print_msg("Success!");
     return out_pair;
-}
-
-std::list<std::string> SimilaritySearch::find_diamond_files() {
-    std::string diamond_path = _outpath + ENTAP_CONFIG::SIM_SEARCH_OUT_PATH;
-    entapInit::print_msg("Diamond files were not inputted, searching in : " + diamond_path);
-    std::list<std::string> out_list;
-    boostFS::path p(ENTAP_CONFIG::SIM_SEARCH_OUT_PATH);
-    for (auto &file : boost::make_iterator_range(boostFS::directory_iterator(p), {})) {
-        if (file.path().string().find("_std") != std::string::npos) {
-            continue;
-        }
-        out_list.push_back(file.path().string());
-        entapInit::print_msg("File found at: " + file.path().string());
-    }
-    entapInit::print_msg("Done searching for files");
-    return out_list;
 }
 
 std::unordered_map<std::string, std::string> SimilaritySearch::read_tax_map() {

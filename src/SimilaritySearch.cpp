@@ -181,9 +181,6 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
 
     for (std::string &data : _sim_search_paths) {
         std::stringstream out_stream;out_stream<<std::fixed<<std::setprecision(2);
-        out_stream << ENTAP_STATS::SOFTWARE_BREAK
-                   << "Similarity Search - Diamond\n"
-                   << ENTAP_STATS::SOFTWARE_BREAK;
         entapInit::print_msg("Diamond file located at " + data + " being filtered");
         io::CSVReader<ENTAP_EXECUTE::diamond_col_num, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(data);
         // todo have columns from input file, in_read_header for versatility
@@ -345,7 +342,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         for (auto &pair : contam_map) {
             double percent = (pair.second / count_contam) * 100;
             ss
-                << "\n\t\t\t" << &pair.first << ": " << pair.second << "(" << percent <<"%)";
+                << "\n\t\t\t" << pair.first << ": " << pair.second << "(" << percent <<"%)";
         }
         ss << "\n\t\tTop 10 contaminants by species:";
         int ct = 1;
@@ -353,7 +350,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
             if (ct > 10) break;
             double percent = (pair.second / count_contam) * 100;
             ss
-                << "\n\t\t\t" << ct << ")" << &pair.first << ": "
+                << "\n\t\t\t" << ct << ")" << pair.first << ": "
                 << pair.second << "(" << percent <<"%)";
             ct++;
         }
@@ -365,7 +362,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         if (ct > 10) break;
         double percent = (pair.second / count_filtered) * 100;
         ss
-            << "\n\t\t\t" << ct << ")" << &pair.first << ": "
+            << "\n\t\t\t" << ct << ")" << pair.first << ": "
             << pair.second << "(" << percent <<"%)";
         ct++;
     }

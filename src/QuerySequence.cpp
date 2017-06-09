@@ -16,25 +16,18 @@ bool QuerySequence::operator>(const QuerySequence &querySequence) {
         double eval1 = this->_e_val, eval2 = querySequence._e_val;
         if (eval1 == 0) eval1 = 1E-180;
         if (eval2 == 0) eval2 = 1E-180;
-
-        if (fabs(log10(eval1) - log10(eval2)) < 7) {
+        if (fabs(log10(eval1) - log10(eval2)) < 6) {
             if (this->_contaminant && !querySequence._contaminant) return false;
             if (!this->_contaminant && querySequence._contaminant) return true;
-//            if (!this->_frame.empty() && !querySequence._frame.empty()) {
-//                if (verify_frame(this->_frame,querySequence._frame)) {
-//                    double coverage_dif = fabs(this->_coverage - querySequence._coverage);
-//                    if (coverage_dif > 5) {
-//                        return this->_coverage > querySequence._coverage;
-//                    }
-//                }
-//            }
             double coverage_dif = fabs(this->_coverage - querySequence._coverage);
             if (coverage_dif > 5) {
                 return this->_coverage > querySequence._coverage;
             }
+            if (this->_tax_score == querySequence._tax_score)
+                return this->_e_val<querySequence._e_val;
             return this->_tax_score > querySequence._tax_score;
         } else {
-            return eval1 > eval2;
+            return eval1 < eval2;
         }
     }else {
         // For overall best hits between databases "best hit"

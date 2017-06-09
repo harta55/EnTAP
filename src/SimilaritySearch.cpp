@@ -159,12 +159,6 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
     entapInit::print_msg("Beginning to filter individual diamond_files...");
     std::unordered_map<std::string, std::string> taxonomic_database;
     std::list<std::map<std::string,QuerySequence>> database_maps;
-    std::stringstream break_stats;
-    break_stats << ENTAP_STATS::SOFTWARE_BREAK
-               << "Similarity Search - Diamond\n"
-               << ENTAP_STATS::SOFTWARE_BREAK;
-    std::string break_msg = break_stats.str();
-    entapExecute::print_statistics(break_msg,_outpath);
     try {
         taxonomic_database = read_tax_map();
     } catch (ExceptionHandler &e) {throw e;}
@@ -183,6 +177,9 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
 
     for (std::string &data : _sim_search_paths) {
         std::stringstream out_stream;out_stream<<std::fixed<<std::setprecision(2);
+        out_stream << ENTAP_STATS::SOFTWARE_BREAK
+                    << "Similarity Search - Diamond - "<<data<<"\n"
+                    << ENTAP_STATS::SOFTWARE_BREAK;
         entapInit::print_msg("Diamond file located at " + data + " being filtered");
         io::CSVReader<ENTAP_EXECUTE::diamond_col_num, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(data);
         // todo have columns from input file, in_read_header for versatility
@@ -228,6 +225,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
                 if (new_query > it->second) {
                     file_unselected_tsv << it->second << std::endl;
                     it->second = new_query;
+                    count_removed++;
                 } else {
                     count_removed++;
                     file_unselected_tsv << new_query<< std::endl;
@@ -235,7 +233,6 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
             } else database_map.emplace(qseqid, new_query);
         }
         entapInit::print_msg("File parsed, calculating statistics and writing output...");
-
         // final database stats
         file_unselected_tsv.close();
         out_stream <<
@@ -270,8 +267,8 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     std::ofstream file_best_contam_fa(out_best_contams_fa,std::ios::out | std::ios::app);
     std::ofstream file_no_hits(out_no_hits_fa, std::ios::out | std::ios::app);
 
-    unsigned long count_no_hit=0, count_contam=0, count_filtered=0, count_informative=0;
-
+    unsigned long count_no_hit=0, count_contam=0, count_filtered=0, count_informative=0,
+        count_uninformative=0;
     typedef std::pair<std::string,int> count_pair;
     struct compair {
         bool operator ()(count_pair const& one, count_pair const& two) const {
@@ -311,7 +308,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
 
             if (it->second.is_informative()) {
                 count_informative++;
-            }
+            } else count_uninformative++;
             file_best_hits_fa << pair.second.getSequence()<<std::endl;
             file_best_hits_tsv << it->second << std::endl;
             if (is_final) {
@@ -336,6 +333,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
        "\n\tSequences that did not hit: "             << count_no_hit       <<
        "\n\t\tWritten to: "                           << out_no_hits_fa     <<
        "\n\tInformative hits: "                       << count_informative  <<
+       "\n\tUninformative hits: "                     << count_uninformative<<
        "\n\tContaminants: "                           << count_contam       <<
           "(" << contam_percent << "): "                                    <<
        "\n\t\tFasta contaminants written to: "        << out_best_contams_fa<<
@@ -400,7 +398,7 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
     }
     std::stringstream out_stream;out_stream<<std::fixed<<std::setprecision(2);
     out_stream <<
-            "------Compiled Results------";
+            "------Compiled Results (Best hit selection across all databases ------";
     std::pair<std::string,std::string> out_pair =
             calculate_best_stats(SEQUENCES,compiled_hit_map,out_stream,compiled_path,true);
     std::string out_msg = out_stream.str() + "\n";
@@ -454,15 +452,14 @@ std::pair<bool,std::string> SimilaritySearch::is_contaminant(std::string species
 std::string SimilaritySearch::get_species(std::string &title) {
     // TODO use regex(database specific)
     boost::regex ncbi_exp(_ncbi_regex);
+    boost::regex uniprot_exp(_uniprot_regex);
     boost::smatch match;
     std::string species = "";
-    if (boost::regex_search(title, match, ncbi_exp)) {
+    if (boost::regex_search(title,match,uniprot_exp)) {
         species = std::string(match[1].first, match[1].second);
     } else {
-        boost::regex uniprot_exp(_uniprot_regex);
-        if (boost::regex_search(title,match,uniprot_exp)) {
+        if (boost::regex_search(title, match, ncbi_exp))
             species = std::string(match[1].first, match[1].second);
-        }
     }
     return species;
 }
@@ -478,24 +475,24 @@ bool SimilaritySearch::is_informative(std::string title) {
 void SimilaritySearch::print_header(std::string file) {
     std::ofstream ofstream(file, std::ios::out | std::ios::app);
     ofstream <<
-             "Query Seq\t"
-                     "Subject Seq\t"
-                     "Percent Identical\t"
-                     "Alignment Length\t"
-                     "Mismatches\t"
-                     "Gap Openings\t"
-                     "Query Start\t"
-                     "Query End\t"
-                     "Subject Start\t"
-                     "Subject Eng\t"
-                     "E Value\t"
-                     "Coverage\t"
-                     "Informativeness\t"
-                     "Species\t"
-                     "Origin Database\t"
-                     "Frame\t"
+         "Query Seq\t"
+                 "Subject Seq\t"
+                 "Percent Identical\t"
+                 "Alignment Length\t"
+                 "Mismatches\t"
+                 "Gap Openings\t"
+                 "Query Start\t"
+                 "Query End\t"
+                 "Subject Start\t"
+                 "Subject Eng\t"
+                 "E Value\t"
+                 "Coverage\t"
+                 "Informativeness\t"
+                 "Species\t"
+                 "Origin Database\t"
+                 "Frame\t"
 
-             <<std::endl;
+         <<std::endl;
     ofstream.close();
 }
 

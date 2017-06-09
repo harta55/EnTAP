@@ -218,12 +218,12 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
             " complete genes\n\tThese were written to: " + out_complete_path + "\n";
         stat_output += "There were " + std::to_string(count_map[ENTAP_EXECUTE::FRAME_SELECTION_INTERNAL_FLAG]) +
             " internal genes\n\tThese were written to: " + out_internal_path + "\n\n";
-        stat_output += "Kept sequences:\n\tMinimum nucleotide length: " +
+        stat_output += "New transcriptome reference:\n\tMinimum nucleotide length: " +
             std::to_string(min_selected) + "(" + min_kept_seq + ")\n\tMaximum nucleotide length: "+
             std::to_string(max_selected) + "(" + max_kept_seq + ")\n\tAverage length: "+
             std::to_string(avg_selected) + "\n";
         if (count_removed > 0) {
-            stat_output += "Lost sequences:\n\tMinimum nucleotide length: " +
+            stat_output += "Rejected Sequences (no frame detected):\n\tMinimum nucleotide length: " +
                            std::to_string(min_removed) + "(" + min_removed_seq + ")\n\tMaximum nucleotide length: "+
                            std::to_string(max_removed) + "(" + max_removed_seq + ")\n\tAverage length: "+
                            std::to_string(avg_lost) + "\n";

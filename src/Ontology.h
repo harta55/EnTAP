@@ -27,7 +27,6 @@ private:
     int _threads;
     short _software_flag;
     std::string _entap_exe, _ontology_exe, _outpath, _new_input, _input_no_hits;
-
     bool _is_overwrite;
     void parse_results_eggnog(query_map_struct&,std::pair<std::string,std::string>&);
     void run_eggnog(query_map_struct&);

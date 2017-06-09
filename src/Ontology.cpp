@@ -54,6 +54,7 @@ void Ontology::execute(query_map_struct &SEQUENCES, std::string input,std::strin
  * @param out - <egg results of sequences that hit databases, results of no hits>
  */
 void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::string,std::string>& out) {
+    entapInit:: print_msg("Beginning to parse eggnog results...");
     std::string msg = ENTAP_STATS::SOFTWARE_BREAK + "Ontology - Eggnog\n" +
                       ENTAP_STATS::SOFTWARE_BREAK;
     entapExecute::print_statistics(msg, _outpath);
@@ -66,13 +67,13 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
     for (int i=0; i<2;i++) {
         std::string path;
         i == 0 ? path=out.first : path=out.second;
+        path = eggnog_format(path);
         entapInit::print_msg("Eggnog file located at " + path + " being filtered");
         if (!entapInit::file_exists(path)) {
             entapInit::print_msg("File not found, skipping...");continue;
         }
         std::string qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                 best_og, cog_cat, eggnog_annot;
-
         io::CSVReader<ENTAP_EXECUTE::EGGNOG_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(out.first);
         // io::single_line_comment<'#'>??
         while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
@@ -97,7 +98,7 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
                 count_no_kegg++;
             }
         }
-
+        boostFS::remove(path);
     }
     entapInit::print_msg("Success! Computing overall statistics...");
     unsigned int count_no_hits=0;
@@ -118,11 +119,13 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
     msg = ss.str();
     entapExecute::print_statistics(msg,_outpath);
     database.close();
+    entapInit::print_msg("Success!");
     print_eggnog(SEQUENCES);
 }
 
 
 void Ontology::run_eggnog(query_map_struct &SEQUENCES) {
+    entapInit::print_msg("Running eggnog...");
     std::string eggnog_out_dir = _outpath + ONTOLOGY_OUT_PATH;
     std::string annotation_base_flag = eggnog_out_dir + "annotation_results";
     std::string annotation_no_flag = eggnog_out_dir + "annotation_results_no_hits";
@@ -133,9 +136,10 @@ void Ontology::run_eggnog(query_map_struct &SEQUENCES) {
     if (_is_overwrite) {
         boostFS::remove_all(eggnog_out_dir);
     } else {
-        if (verify_files(annotation_base_flag+"_alt",annotation_no_flag+"_alt")) {
-            out.first = annotation_base_flag + "_alt";
-            out.second = annotation_base_flag + "_alt";
+        std::string hit_out = annotation_base_flag  +".emapper.annotations";
+        std::string no_hit_out = annotation_no_flag +".emapper.annotations";
+        if (verify_files(hit_out, no_hit_out)) {
+            out.first = hit_out;out.second = no_hit_out;
             parse_results_eggnog(SEQUENCES, out);
             return;
         }
@@ -178,8 +182,7 @@ void Ontology::run_eggnog(query_map_struct &SEQUENCES) {
             out.second = annotation_no_flag + ".emapper.annotations";
         }
     }
-    if (!out.first.empty()) out.first = eggnog_format(out.first);
-    if (!out.second.empty()) out.second= eggnog_format(out.second);
+    entapInit::print_msg("Success!");
     parse_results_eggnog(SEQUENCES, out);
 }
 
@@ -204,6 +207,7 @@ std::map<std::string,std::vector<std::string>> Ontology::parse_go_list
 }
 
 void Ontology::print_eggnog(Ontology::query_map_struct &SEQUENCES) {
+    entapInit::print_msg("Beginning to print final results...");
     std::string final_annotations = _outpath + "final_annotations.tsv";
     std::ofstream file(final_annotations, std::ios::out | std::ios::app);
     file <<
@@ -237,6 +241,7 @@ void Ontology::print_eggnog(Ontology::query_map_struct &SEQUENCES) {
     for (auto &pair : SEQUENCES) {
         file<< pair.second.print_final_results(_software_flag,_HEADERS)<<std::endl;
     }
+    entapInit::print_msg("Success!");
     file.close();
 }
 
@@ -459,15 +464,15 @@ void Ontology::print_header(std::string file) {
 
 bool Ontology::verify_files(std::string hits,std::string no_hits) {
     bool verified = false;
-        entapInit::print_msg("Overwrite was unselected, verifying output files...");
-        if (entapInit::file_exists(hits)) {
-            entapInit::print_msg("File located at: " + hits + " found");
-            verified = true;
-        }
-        if (entapInit::file_exists(no_hits)) {
+    entapInit::print_msg("Overwrite was unselected, verifying output files...");
+    if (entapInit::file_exists(hits)) {
+        entapInit::print_msg("File located at: " + hits + " found");
+        verified = true;
+    } else entapInit::print_msg("File located at: " + hits + " NOT found");
+    if (entapInit::file_exists(no_hits)) {
             entapInit::print_msg("File located at: " + no_hits + " found");
             verified = true;
-        }
+    } else entapInit::print_msg("File located at: " + no_hits + " NOT found");
     if (verified) {
         entapInit::print_msg("One or more ontology files were found, skipping ontology execution");
     } else {

@@ -67,14 +67,14 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
     for (int i=0; i<2;i++) {
         std::string path;
         i == 0 ? path=out.first : path=out.second;
-        path = eggnog_format(path);
         entapInit::print_msg("Eggnog file located at " + path + " being filtered");
         if (!entapInit::file_exists(path)) {
             entapInit::print_msg("File not found, skipping...");continue;
         }
+        path = eggnog_format(path);
         std::string qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                 best_og, cog_cat, eggnog_annot;
-        io::CSVReader<ENTAP_EXECUTE::EGGNOG_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(out.first);
+        io::CSVReader<ENTAP_EXECUTE::EGGNOG_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(path);
         // io::single_line_comment<'#'>??
         while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                            best_og, cog_cat, eggnog_annot)) {
@@ -132,7 +132,6 @@ void Ontology::run_eggnog(query_map_struct &SEQUENCES) {
     std::string annotation_std = eggnog_out_dir + "annotation_std";
     std::string eggnog_command = "python " + _ontology_exe + " ";
     std::pair<std::string,std::string> out;
-
     if (_is_overwrite) {
         boostFS::remove_all(eggnog_out_dir);
     } else {
@@ -209,6 +208,7 @@ std::map<std::string,std::vector<std::string>> Ontology::parse_go_list
 void Ontology::print_eggnog(Ontology::query_map_struct &SEQUENCES) {
     entapInit::print_msg("Beginning to print final results...");
     std::string final_annotations = _outpath + "final_annotations.tsv";
+    boostFS::remove(final_annotations);
     std::ofstream file(final_annotations, std::ios::out | std::ios::app);
     file <<
          "Query Seq\t"
@@ -247,6 +247,7 @@ void Ontology::print_eggnog(Ontology::query_map_struct &SEQUENCES) {
 
 std::string Ontology::eggnog_format(std::string file) {
     std::string out_path = file + "_alt";
+    boostFS::remove(out_path);
     std::ifstream in_file(file);
     std::ofstream out_file(out_path);
     std::string line;

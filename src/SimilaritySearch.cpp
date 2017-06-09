@@ -327,7 +327,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     std::vector<count_pair> species_vect(species_map.begin(),species_map.end());
     std::sort(contam_species_vect.begin(),contam_species_vect.end(),compair());
     std::sort(species_vect.begin(),species_vect.end(),compair());
-    double contam_percent = (count_contam / count_filtered) * 100.0;
+    double contam_percent = ((double)count_contam / count_filtered) * 100;
 
     ss <<
        "\n\tUnique hits: "                            << count_filtered     <<
@@ -344,7 +344,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     if (count_contam > 0) {
         ss << "\n\t\tFlagged contaminants (all % based on total contaminants):";
         for (auto &pair : contam_map) {
-            double percent = (pair.second / count_contam) * 100;
+            double percent = ((double)pair.second / count_contam) * 100;
             ss
                 << "\n\t\t\t" << pair.first << ": " << pair.second << "(" << percent <<"%)";
         }
@@ -352,7 +352,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         int ct = 1;
         for (count_pair pair : contam_species_vect) {
             if (ct > 10) break;
-            double percent = (pair.second / count_contam) * 100;
+            double percent = ((double)pair.second / count_contam) * 100;
             ss
                 << "\n\t\t\t" << ct << ")" << pair.first << ": "
                 << pair.second << "(" << percent <<"%)";
@@ -364,7 +364,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     int ct = 1;
     for (count_pair pair : species_vect) {
         if (ct > 10) break;
-        double percent = (pair.second / count_filtered) * 100;
+        double percent = ((double)pair.second / count_filtered) * 100;
         ss
             << "\n\t\t\t" << ct << ")" << pair.first << ": "
             << pair.second << "(" << percent <<"%)";

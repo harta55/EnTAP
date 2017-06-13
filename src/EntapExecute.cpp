@@ -409,10 +409,7 @@ namespace entapExecute {
             out_file << line << std::endl;
             if (line.find(">") == 0 || in_file.eof()) {
                 if (!seq_id.empty()) {
-                    QuerySequence query_seq;
-                    if (_isProtein) {
-                       query_seq.setSequence(sequence);
-                    } else query_seq=QuerySequence(_blastp,sequence);
+                    QuerySequence query_seq = QuerySequence(_isProtein,sequence);
                     if (_is_complete) query_seq.setFrame(ENTAP_EXECUTE::FRAME_SELECTION_COMPLETE_FLAG);
                     query_seq.setQseqid(seq_id);
                     seq_map.emplace(seq_id, query_seq);
@@ -428,9 +425,7 @@ namespace entapExecute {
                     sequence_lengths.push_back(len);
                 }
                 if (in_file.eof()) break;
-                unsigned long first = line.find(">")+1;
-                unsigned long second = line.find(" ");
-                seq_id = line.substr(first, second-first);
+                seq_id = line.substr(line.find(">")+1);
                 sequence = line + "\n";
             } else {
                 sequence += line + "\n";

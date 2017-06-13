@@ -98,7 +98,7 @@ QuerySequence::QuerySequence(bool is_protein, std::string seq){
     std::string sub = seq.substr(seq.find("\n")+1);
     long line_chars = std::count(sub.begin(),sub.end(),'\n');
     unsigned long seq_len = sub.length() - line_chars;
-    this->_seq_length = seq_len;
+    is_protein ? _seq_length = seq_len * 3 : _seq_length = seq_len;
     this->_sequence = seq;
     if (!seq.empty() && seq[seq.length()-1] == '\n') {
         this->_sequence.pop_back();

@@ -242,6 +242,8 @@ FrameSelection::frame_map_type FrameSelection::genemark_parse_protein(std::strin
         throw ExceptionHandler("File located at: " + protein + " does not exist!",
                                ENTAP_ERR::E_RUN_GENEMARK_PARSE);
     }
+    std::string out_protein = protein + "alt";
+    std::ofstream out_file(out_protein,std::ios::out | std::ios::app);
     std::ifstream in_file(protein);
     std::string line, sequence, seq_id;
     frame_seq protein_sequence;
@@ -256,25 +258,30 @@ FrameSelection::frame_map_type FrameSelection::genemark_parse_protein(std::strin
                 protein_map.emplace(seq_id,protein_sequence);
             }
             unsigned long first = line.find(">")+1;
-            unsigned long second = line.find(" ");
+            unsigned long second = line.find("\t");
             seq_id = line.substr(first,second-first);
             sequence = line + "\n";
+            out_file << ">" + seq_id << std::endl;
         } else {
             sequence += line + "\n";
+            out_file << line << std::endl;
         }
     }
+    out_file << line << std::endl;
     std::string sub = sequence.substr(sequence.find("\n")+1);
     long line_chars = std::count(sub.begin(),sub.end(),'\n');
     unsigned long seq_len = sub.length() - line_chars;
     protein_sequence = {seq_len,sequence, ""};
     protein_map.emplace(seq_id,protein_sequence);
     entapInit::print_msg("Success!");
+    in_file.close(); out_file.close();
+    boostFS::remove(protein);
+    boostFS::rename(out_protein,protein);
     return protein_map;
 }
 
 void FrameSelection::genemark_parse_lst(std::string &lst_path, frame_map_type &current_map) {
     entapInit::print_msg("Parsing file at: " + lst_path);
-//    boost::regex exp("definitionline:(.+)gene");
     std::ifstream in_file(lst_path);
     std::string line, seq_id;
     while (getline(in_file,line)) {
@@ -282,8 +289,7 @@ void FrameSelection::genemark_parse_lst(std::string &lst_path, frame_map_type &c
         line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
         if (line.find("FASTA") == 0) {
             unsigned long first = line.find(":") + 1;
-            unsigned long second = line.find("gene");
-            seq_id = line.substr(first, second - first);
+            seq_id = line.substr(first);
         } else if (isdigit(line.at(0))) {
             std::string frame;
             bool prime_5 = line.find("<") != std::string::npos;

@@ -5,6 +5,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <fstream>
 #include <boost/regex.hpp>
+#include <iomanip>
 #include "FrameSelection.h"
 #include "EntapExecute.h"
 #include "ExceptionHandler.h"
@@ -149,6 +150,7 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
                 {ENTAP_EXECUTE::FRAME_SELECTION_THREE_FLAG,count_partial_3},
         };
 
+        std::vector<unsigned long> all_kept_lengths, all_lost_lengths;
         for (auto& pair : SEQUENCES) {
             std::map<std::string,frame_seq>::iterator p_it = protein_map.find(pair.first);
             if (p_it != protein_map.end()) {
@@ -169,7 +171,7 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
                     max_kept_seq = pair.first;
                 }
                 total_kept_len += length;
-
+                all_kept_lengths.push_back(length);
                 std::map<std::string, std::ofstream*>::iterator file_it = file_map.find(frame_type);
                 if (file_it != file_map.end()) {
                     *file_it->second << sequence;
@@ -192,6 +194,7 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
                     max_removed_seq = pair.first;
                     max_removed = length;
                 }
+                all_lost_lengths.push_back(length);
                 total_removed_len += length;
             }
         }
@@ -205,31 +208,50 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
         // Calculate and print stats
         double avg_selected = (double)total_kept_len / count_selected;
         double avg_lost = (double)total_removed_len / count_removed;
-        std::string stat_output = ENTAP_STATS::SOFTWARE_BREAK + "Frame Selection: GenemarkS-T" +
-            "\n" + ENTAP_STATS::SOFTWARE_BREAK;
-        stat_output += "Total sequences frame selected: " + std::to_string(count_selected) +
-            "\n\tThese protein sequences were written to: " + protein_path + "\n";
-        stat_output += "Total sequences lost during selection: " + std::to_string(count_removed) +
-            "\n\tThese nucleotide sequences were written to: " + out_removed_path + "\n";
-        stat_output += "There were " + std::to_string(count_map[ENTAP_EXECUTE::FRAME_SELECTION_FIVE_FLAG]) +
-            " 5 prime partials and " + std::to_string(count_map[ENTAP_EXECUTE::FRAME_SELECTION_THREE_FLAG]) +
-            " 3 prime partials\n\tAll partials were written to: " + out_partial_path + "\n";
-        stat_output += "There were " + std::to_string(count_map[ENTAP_EXECUTE::FRAME_SELECTION_COMPLETE_FLAG]) +
-            " complete genes\n\tThese were written to: " + out_complete_path + "\n";
-        stat_output += "There were " + std::to_string(count_map[ENTAP_EXECUTE::FRAME_SELECTION_INTERNAL_FLAG]) +
-            " internal genes\n\tThese were written to: " + out_internal_path + "\n\n";
-        stat_output += "New transcriptome reference:\n\tMinimum nucleotide length: " +
-            std::to_string(min_selected) + "(" + min_kept_seq + ")\n\tMaximum nucleotide length: "+
-            std::to_string(max_selected) + "(" + max_kept_seq + ")\n\tAverage length: "+
-            std::to_string(avg_selected) + "\n";
-        if (count_removed > 0) {
-            stat_output += "Rejected Sequences (no frame detected):\n\tMinimum nucleotide length: " +
-                           std::to_string(min_removed) + "(" + min_removed_seq + ")\n\tMaximum nucleotide length: "+
-                           std::to_string(max_removed) + "(" + max_removed_seq + ")\n\tAverage length: "+
-                           std::to_string(avg_lost) + "\n";
-        }
+        std::stringstream stat_output; stat_output<<std::fixed<<std::setprecision(2);
+        stat_output <<
+                    ENTAP_STATS::SOFTWARE_BREAK <<
+                    "Frame Selection: GenemarkS-T" <<
+                    "\n"<<ENTAP_STATS::SOFTWARE_BREAK;
+        stat_output <<
+                    "Total sequences frame selected: "                 << count_selected            <<
+                    "\n\tThese protein sequences were written to: "    << protein_path              <<
+                    "\nTotal sequences lost during selection: "        << count_removed             <<
+                    "\n\tThese nucleotide sequences were written to: " << out_removed_path          <<
+                    "\nThere were " + count_map[ENTAP_EXECUTE::FRAME_SELECTION_FIVE_FLAG]           <<
+                    " 5 prime partials and " + count_map[ENTAP_EXECUTE::FRAME_SELECTION_THREE_FLAG] <<
+                    " 3 prime partials" <<
+                    "\n\tAll partials were written to: " + out_partial_path <<
+                    "\nThere were " + count_map[ENTAP_EXECUTE::FRAME_SELECTION_COMPLETE_FLAG]       <<
+                    " complete genes\n\tThese were written to: " << out_complete_path               <<
+                    "\nThere were " << count_map[ENTAP_EXECUTE::FRAME_SELECTION_INTERNAL_FLAG]      <<
+                    " internal genes\n\tThese were written to: " << out_internal_path               <<"\n\n";
 
-        entapExecute::print_statistics(stat_output,_outpath);
+        std::pair<unsigned long, unsigned long> kept_n =
+                entapExecute::calculate_N_vals(all_kept_lengths,total_kept_len);
+        stat_output << "New transcriptome reference:"
+                    "\n\tTotal sequences: "      << count_selected <<
+                    "\n\tTotal length of transcriptome(bp): "      << total_kept_len <<
+                    "\n\tAverage length(bp): "   << avg_selected   <<
+                    "\n\tn50: "                  << kept_n.first   <<
+                    "\n\tn90: "                  << kept_n.second  <<
+                    "\n\tLongest sequence(bp): " << max_selected   << " (" << max_kept_seq << ")" <<
+                    "\n\tShortest sequence(bp): "<< min_selected   << " (" << min_kept_seq << ")";
+
+        if (count_removed > 0) {
+            std::pair<unsigned long, unsigned long> removed_n =
+                    entapExecute::calculate_N_vals(all_lost_lengths,total_removed_len);
+            stat_output <<
+                    "\nRejected Sequences (no frame detected):" <<
+                    "\n\tTotal sequences: "                     << count_removed    <<
+                    "\n\tAverage sequence length(bp): "         << avg_lost         <<
+                    "\n\tn50: "                                 << removed_n.first  <<
+                    "\n\tn90: "                                 << removed_n.second <<
+                    "\n\tLongest sequence(bp): "  << max_removed<< " (" << max_removed_seq << ")" <<
+                    "\n\tShortest sequence(bp): " << min_removed<< " (" << min_removed_seq << ")" <<"\n";
+        }
+        std::string stat_out_msg = stat_output.str();
+        entapExecute::print_statistics(stat_out_msg,_outpath);
     } catch (ExceptionHandler &e) {throw e;}
     entapInit::print_msg("Success!");
 }

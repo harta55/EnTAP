@@ -394,7 +394,7 @@ namespace entapExecute {
                 << ENTAP_STATS::SOFTWARE_BREAK;
         std::map<std::string, QuerySequence> seq_map;
         boostFS::path path(input_file);
-        std::string out_name = path.stem().string() + "_alt" + path.extension().string();
+        std::string out_name = path.filename().string();
         std::string out_new_path = _outpath + ENTAP_EXECUTE::ENTAP_OUTPUT + out_name;
         boostFS::remove(out_new_path);
         std::ifstream in_file(input_file);
@@ -442,10 +442,8 @@ namespace entapExecute {
                 "\nAverage sequence length(bp): "              << avg_len       <<
                 "\nn50: "                                      << n_vals.first  <<
                 "\nn90: "                                      << n_vals.second <<
-                "\nLongest sequence is " << longest_seq        <<" - length(bp): "
-                                                               <<longest_len    <<
-                "\nShortest sequence is "<< shortest_seq       <<" - length(bp): "
-                                                               << shortest_len;
+                "\nLongest sequence(bp): " << longest_len << " ("<<longest_seq<<")"<<
+                "\nShortest sequence(bp): "<< shortest_len<<" ("<<shortest_seq<<")";
         if (_is_complete)out_msg<<"\nAll sequences ("<<count_seqs<<") were flagged as complete genes";
         std::string msg = out_msg.str();
         print_statistics(msg,_outpath);

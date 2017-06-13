@@ -21,7 +21,7 @@ public:
     QuerySequence(bool, std::string);
     friend void operator+(const QuerySequence &);
     void setQseqid(const std::string &qseqid);
-    void setSequence(const std::string&);
+    void setSequence(std::string&);
     // TODO switch to map results
     void set_eggnog_results(std::string,std::string,std::string,std::string,std::string,
                     std::string,std::string,std::string);
@@ -62,6 +62,7 @@ private:
     void init_sequence();
     std::map<std::string,std::string> _ontology_results;
     bool verify_frame(const std::string&,const std::string&);
+    unsigned long calc_seq_length(std::string &,bool);
 };
 
 

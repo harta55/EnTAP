@@ -78,10 +78,11 @@ QuerySequence::QuerySequence() {
 
 }
 
-void QuerySequence::setSequence(const std::string &seq) {
+void QuerySequence::setSequence( std::string &seq) {
     _is_database_hit = false;
     is_protein = true;
     _sequence = seq;
+    _seq_length = calc_seq_length(seq,true);
     if (!seq.empty() && seq[seq.length()-1] == '\n') {
         this->_sequence.pop_back();
     }
@@ -95,14 +96,19 @@ QuerySequence::QuerySequence(bool is_protein, std::string seq){
     init_sequence();
     this->_is_database_hit = false;
     this->is_protein = is_protein;
-    std::string sub = seq.substr(seq.find("\n")+1);
-    long line_chars = std::count(sub.begin(),sub.end(),'\n');
-    unsigned long seq_len = sub.length() - line_chars;
-    is_protein ? _seq_length = seq_len * 3 : _seq_length = seq_len;
+    _seq_length = calc_seq_length(seq,is_protein);
     this->_sequence = seq;
     if (!seq.empty() && seq[seq.length()-1] == '\n') {
         this->_sequence.pop_back();
     }
+}
+
+unsigned long QuerySequence::calc_seq_length(std::string &seq,bool protein) {
+    std::string sub = seq.substr(seq.find("\n")+1);
+    long line_chars = std::count(sub.begin(),sub.end(),'\n');
+    unsigned long seq_len = sub.length() - line_chars;
+    if (protein) seq_len *= 3;
+    return seq_len;
 }
 
 

@@ -88,14 +88,8 @@ std::list<std::string> SimilaritySearch::diamond() {
     }
     boostFS::path transc_name(_input_path); transc_name=transc_name.stem();
     if (transc_name.has_stem()) transc_name = transc_name.stem(); //.fasta.faa
-
     if (_overwrite) {
         boostFS::remove_all(diamond_out.c_str());
-    } else {
-        std::list<std::string> temp = verify_diamond_files(diamond_out,transc_name.string());
-        if (!temp.empty()) {
-            return temp;
-        }
     }
     boostFS::create_directories(diamond_out);
     // database verification already ran, don't need to verify each path
@@ -109,6 +103,11 @@ std::list<std::string> SimilaritySearch::diamond() {
                                    file_name.string() + ".out";
             std::string std_out = diamond_out + _blast_type + "_" + transc_name.string() + "_" +
                                   file_name.string() + "_std";
+            if (entapInit::file_exists(out_path)) {
+                entapInit::print_msg("File found at " + out_path + " skipping execution against this database");
+                out_paths.push_back(out_path);
+                continue;
+            }
             diamond_blast(_input_path, out_path, std_out,data_path, _threads, _blast_type);
             entapInit::print_msg("Success! Results written to " + out_path);
             out_paths.push_back(out_path);
@@ -123,7 +122,7 @@ std::list<std::string> SimilaritySearch::diamond() {
 void SimilaritySearch::diamond_blast(std::string input_file, std::string output_file, std::string std_out,
                    std::string &database,int &threads, std::string &blast) {
     std::string diamond_run = _diamond_exe + " " + blast +" -d " + database + " --query-cover " + std::to_string(_coverage) +
-                              " --more-sensitive" + " -k 5" + " -q " + input_file + " -o " + output_file + " -p " + std::to_string(threads) +" -f " +
+                              " --more-sensitive" + " --top 3" + " -q " + input_file + " -o " + output_file + " -p " + std::to_string(threads) +" -f " +
                               "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp stitle";
     entapInit::print_msg("\nExecuting Diamond:\n" + diamond_run);
     if (entapInit::execute_cmd(diamond_run, std_out) != 0) {

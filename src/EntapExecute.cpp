@@ -393,13 +393,20 @@ namespace entapExecute {
                 << "Transcriptome Statistics\n"
                 << ENTAP_STATS::SOFTWARE_BREAK;
         std::map<std::string, QuerySequence> seq_map;
+        boostFS::path path(input_file);
+        std::string out_name = path.stem().string() + "_alt" + path.extension().string();
+        std::string out_new_path = _outpath + ENTAP_EXECUTE::ENTAP_OUTPUT + out_name;
+        boostFS::remove(out_new_path);
         std::ifstream in_file(input_file);
+        std::ofstream out_file(out_new_path,std::ios::out | std::ios::app);
         std::string line, sequence, seq_id, longest_seq, shortest_seq;
         unsigned long count_seqs=0, total_len=0,shortest_len = 10000, longest_len = 0;
         std::vector<unsigned long> sequence_lengths;
         while (true) {
             std::getline(in_file, line);
             if (line.empty() && !in_file.eof()) continue;
+            line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
+            out_file << line << std::endl;
             if (line.find(">") == 0 || in_file.eof()) {
                 if (!seq_id.empty()) {
                     QuerySequence query_seq;
@@ -429,7 +436,7 @@ namespace entapExecute {
                 sequence += line + "\n";
             }
         }
-        in_file.close();
+        in_file.close(); out_file.close();
         double avg_len = total_len / count_seqs;
         // first - n50, second - n90
         std::pair<unsigned long, unsigned long> n_vals =
@@ -448,6 +455,7 @@ namespace entapExecute {
         std::string msg = out_msg.str();
         print_statistics(msg,_outpath);
         entapInit::print_msg("Success!");
+        input_file = out_new_path;
         return seq_map;
     }
 

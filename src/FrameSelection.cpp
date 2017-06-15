@@ -218,14 +218,14 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
                     "\n\tThese protein sequences were written to: "    << protein_path              <<
                     "\nTotal sequences lost during selection: "        << count_removed             <<
                     "\n\tThese nucleotide sequences were written to: " << out_removed_path          <<
-                    "\nThere were " + count_map[ENTAP_EXECUTE::FRAME_SELECTION_FIVE_FLAG]           <<
-                    " 5 prime partials and " + count_map[ENTAP_EXECUTE::FRAME_SELECTION_THREE_FLAG] <<
+                    "\nThere were " << count_map[ENTAP_EXECUTE::FRAME_SELECTION_FIVE_FLAG]          <<
+                    " 5 prime partials and " << count_map[ENTAP_EXECUTE::FRAME_SELECTION_THREE_FLAG]<<
                     " 3 prime partials" <<
-                    "\n\tAll partials were written to: " + out_partial_path <<
-                    "\nThere were " + count_map[ENTAP_EXECUTE::FRAME_SELECTION_COMPLETE_FLAG]       <<
-                    " complete genes\n\tThese were written to: " << out_complete_path               <<
+                    "\n\tAll partials written to: " << out_partial_path <<
+                    "\nThere were " << count_map[ENTAP_EXECUTE::FRAME_SELECTION_COMPLETE_FLAG]      <<
+                    " complete genes\n\tWritten to: " << out_complete_path               <<
                     "\nThere were " << count_map[ENTAP_EXECUTE::FRAME_SELECTION_INTERNAL_FLAG]      <<
-                    " internal genes\n\tThese were written to: " << out_internal_path               <<"\n\n";
+                    " internal genes\n\tWritten to: " << out_internal_path               <<"\n\n";
 
         std::pair<unsigned long, unsigned long> kept_n =
                 entapExecute::calculate_N_vals(all_kept_lengths,total_kept_len);

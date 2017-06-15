@@ -9,7 +9,8 @@
 #include <map>
 #include <boost/program_options/variables_map.hpp>
 #include "QuerySequence.h"
-#include "DatabaseHelper.h"
+#include "EntapInit.h"
+
 class QuerySequence;
 
 class Ontology {
@@ -24,6 +25,7 @@ public:
 private:
     std::string ONTOLOGY_OUT_PATH;
     std::vector<std::string> _HEADERS, _interpro_databases;
+    std::vector<short> _go_levels;
     int _threads;
     short _software_flag;
     std::string _entap_exe, _ontology_exe, _outpath, _new_input, _input_no_hits;
@@ -34,12 +36,14 @@ private:
     void parse_results_interpro(query_map_struct&, std::pair<std::string,std::string>&);
     void print_eggnog(query_map_struct&);
     void print_interpro(query_map_struct&);
-    go_struct parse_go_list(std::string, DatabaseHelper&, char);
+    go_struct parse_go_list(std::string, std::map<std::string,entapInit::struct_go_term> &
+            ,char);
     std::string eggnog_format(std::string);
     void init_headers();
     void print_header(std::string);
     bool verify_files(std::string,std::string);
     void interpro_format_fix(std::string&);
+    std::map<std::string,entapInit::struct_go_term> read_go_map ();
 };
 
 

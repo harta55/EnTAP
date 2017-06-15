@@ -57,14 +57,14 @@ namespace ENTAP_CONFIG {
     const std::string KEY_INTERPRO_EXE = "interpro_exe_path";
 
 
-    const std::string GO_DB_PATH = "/bin/go_term.db";
+    const std::string GO_DB_PATH = "/bin/go_term.entp";
     const std::string GO_TERM_FILE = "/databases/term.txt";
     const std::string TAX_SCRIPT_PATH = "/download_tax.pl";
     const std::string TAX_DATABASE_PATH = "/databases/ncbi_tax.entp";
     const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";
     const std::string BIN_PATH = "bin/";
 
-    const std::string ENTAP_VERSION = "0.4.8";
+    const std::string ENTAP_VERSION = "0.5.0";
 
 
     const double E_VALUE = 1e-5;
@@ -84,6 +84,7 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_SPECIES = "species";
     const std::string INPUT_FLAG_COVERAGE = "coverage";
     const std::string INPUT_FLAG_COMPLETE = "complete";
+    const std::string INPUT_FLAG_GO_LEVELS = "level";
 
     const double DEFAULT_COVERAGE = 50.0;
 

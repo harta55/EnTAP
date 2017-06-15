@@ -117,6 +117,10 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                  boostPO::value<std::vector<std::string>>(&data_path)->multitoken(),
                  "Provide the path to a separate database, however this "
                  "may prohibit taxonomic filtering.")
+            (ENTAP_CONFIG::INPUT_FLAG_GO_LEVELS.c_str(),
+                 boostPO::value<std::vector<short>>()->multitoken()
+                 ->default_value(std::vector<short>{0,3,4},""),
+                 "Gene ontology levels you would like outputted.")
             ("fpkm",
                  boostPO::value<float>(&fpkm)->default_value(ENTAP_EXECUTE::RSEM_FPKM_DEFAULT),
                  "FPKM cutoff value")
@@ -358,6 +362,10 @@ void print_user_input(boostPO::variables_map &map) {
             ss << *v;
         } else if (auto v = boost::any_cast<int>(&value)) {
             ss << *v;
+        } else if (auto v = boost::any_cast<std::vector<short>>(&value)) {
+            for (auto const& val:*v) {
+                ss << val << " ";
+            }
         } else ss << "null";
     }
     std::string output = ss.str() + "\n";

@@ -34,7 +34,7 @@ public:
     void set_tax_score(int _tax_score);
     void set_is_database_hit(bool _is_database_hit);
     void set_ontology_results(std::map<std::string,std::string>);
-    std::string print_final_results(short,const std::vector<std::string>&);
+    std::string print_final_results(short,const std::vector<std::string>&,short);
     void set_lineage(const std::string &_lineage);
     void set_go_parsed(const go_struct &_go_parsed);
     const std::string &getSequence() const;

@@ -7,7 +7,6 @@
 #include <sys/stat.h>
 #include <iostream>
 #include <fstream>
-#include "sqlite3.h"
 #include <unordered_map>
 #include "pstream.h"
 #include "boost/filesystem.hpp"
@@ -16,6 +15,7 @@
 #include "EntapExecute.h"
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/unordered_map.hpp>
+#include <boost/serialization/map.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
@@ -45,7 +45,6 @@ namespace entapInit {
     const boostFS::path current_path(boost::filesystem::current_path());
     std::list<std::string> _compiled_databases;
 
-
     void init_entap(boost::program_options::variables_map user_map, std::string exe_path,
             std::unordered_map<std::string,std::string> &config_map) {
 
@@ -68,7 +67,7 @@ namespace entapInit {
         try {
             state = INIT_TAX;
             init_taxonomic(exe_path);
-            init_go_db(exe_path);
+            init_go_db(exe_path,data_dir.string());
             init_uniprot(uniprot_vect, exe_path);
             init_ncbi(ncbi_vect,exe_path);
             init_diamond_index(diamond_exe,exe_path, threads);
@@ -141,44 +140,74 @@ namespace entapInit {
 
     }
 
-    void init_go_db(std::string &exe) {
+    void init_go_db(std::string &exe, std::string database_path) {
         print_msg("Initializing GO terms database...");
         std::string go_db_path = exe + ENTAP_CONFIG::GO_DB_PATH;
         if (file_exists(go_db_path)) {
             print_msg("Database found at: " + go_db_path + " skipping creation");
             return;
         }
+        const std::string GO_TERM_FILE = "term.txt";
+        const std::string GO_GRAPH_FILE = "graph_path.txt";
+        const std::string GO_DATABASE_FTP =
+                "http://archive.geneontology.org/latest-full/go_monthly-termdb-tables.tar.gz";
+        const std::string GO_DATA_NAME = "go_monthly-termdb-tables.tar.gz";
+        const std::string GO_DIR = "go_monthly-termdb-tables/";
+        std::string go_database_zip = database_path + "/" + GO_DATA_NAME;
+        std::string go_database_out = database_path + "/" + GO_DIR;
+        if (file_exists(go_database_zip)) {
+            boostFS::remove(go_database_zip);
+        }
+        try {
+            download_file(GO_DATABASE_FTP,go_database_zip);
+            decompress_file(go_database_zip,database_path,1);
+            boostFS::remove(go_database_zip);
+        } catch (ExceptionHandler const &e ){ throw e;}
 
-        std::string go_term_file = exe + ENTAP_CONFIG::GO_TERM_FILE;
-        if (!file_exists(go_term_file)) {
-            throw ExceptionHandler("GO term file must be at: " + go_term_file +
-                " in order to configure database", ENTAP_ERR::E_INIT_GO_SETUP);
+        std::string go_term_path = go_database_out + GO_TERM_FILE;
+        std::string go_graph_path = go_database_out + GO_GRAPH_FILE;
+        if (!file_exists(go_term_path) || !file_exists(go_graph_path)) {
+            throw ExceptionHandler("GO term files must be at: " + go_term_path + " and " + go_graph_path +
+                                   " in order to configure database", ENTAP_ERR::E_INIT_GO_SETUP);
         }
-        sqlite3 *db;
-        if (sqlite3_open(go_db_path.c_str(), & db) != SQLITE_OK) {
-            throw ExceptionHandler("Error opening sqlite database",ENTAP_ERR::E_INIT_GO_SETUP);
-        }
-        std::string query = "CREATE TABLE IF NOT EXISTS terms (id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                "goid TEXT,category TEXT,term TEXT);";
-        if (sqlite3_exec(db, query.c_str(),NULL,0,NULL) != SQLITE_OK) {
-            throw ExceptionHandler("Error creating GO table",ENTAP_ERR::E_INIT_GO_SETUP);
-        }
-        std::string line, val;
-        char *num,*term,*cat,*go,*ex,*ex1,*ex2;
-        char *zErrMsg = 0;
-        io::CSVReader<7, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(go_term_file);
-        while (in.read_row(num,term,cat,go,ex,ex1,ex2)) {
-            char *q = sqlite3_mprintf("INSERT INTO terms "
-                                              "(goid, category,term) "
-                                              "VALUES (%Q,%Q,%Q)",go,cat,term);
-            if (sqlite3_exec(db, q, 0, 0, &zErrMsg) != SQLITE_OK) {
-                fprintf(stderr, "SQL error: %s\n", zErrMsg);
-                sqlite3_free(zErrMsg);
-                throw ExceptionHandler("Error inserting row",ENTAP_ERR::E_INIT_GO_SETUP);
+        io::CSVReader<6, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(go_graph_path);
+        std::string index,root,branch, temp, distance, temp2;
+        std::map<std::string,std::string> distance_map;
+        const std::string BIOLOGICAL = "6679", MOLECULAR = "2892", CELLULAR = "311";
+        while (in.read_row(index,root,branch, temp, distance, temp2)) {
+            if (root.compare(BIOLOGICAL) == 0 || root.compare(MOLECULAR) == 0 || root.compare(CELLULAR) ==0) {
+                if (distance_map.find(branch) == distance_map.end()) {
+                    distance_map.emplace(branch,distance);
+                } else {
+                    if (distance.empty()) continue;
+                    long cur = std::stoi(distance_map[branch]);
+                    long query = std::stoi(distance);
+                    if (query > cur) distance_map[branch] = distance;
+                }
             }
-            sqlite3_free(q);
         }
-        sqlite3_close(db);
+        std::map<std::string,struct_go_term> go_map;
+        std::string num,term,cat,go,ex,ex1,ex2;
+        io::CSVReader<7, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in2(go_term_path);
+        while (in2.read_row(num,term,cat,go,ex,ex1,ex2)) {
+            std::string lvl = distance_map[num];
+            struct_go_term go_data;
+            go_data.category = cat; go_data.level=lvl;go_data.term=term;
+            go_data.go_id=go;
+            go_map[go] = go_data;
+        }
+        boostFS::remove_all(go_database_out);
+        print_msg("Success!");
+        print_msg("Writing file to "+ go_db_path);
+        try{
+            {
+                std::ofstream ofs(go_db_path);
+                boostAR::binary_oarchive oa(ofs);
+                oa << go_map;
+            }
+        } catch (std::exception &e) {
+            throw ExceptionHandler(e.what(), ENTAP_ERR::E_INIT_GO_SETUP);
+        }
         print_msg("Success!");
     }
 
@@ -206,7 +235,7 @@ namespace entapInit {
                 print_msg("Database at: " + database_path + " not found, downloading...");
                 try {
                     std::string temp_path = download_file(flag, database_path);
-                    decompress_file(temp_path);
+                    decompress_file(temp_path,temp_path,0);
                     _compiled_databases.push_back(database_path);
                 } catch (ExceptionHandler &e) {throw e;}
             }
@@ -233,7 +262,7 @@ namespace entapInit {
                 print_msg("Database at: " + database_path + " not found, downloading...");
                 try {
                     std::string temp_path = download_file(flag, database_path);
-                    decompress_file(temp_path);
+                    decompress_file(temp_path,temp_path,0);
                     _compiled_databases.push_back(database_path);
                 } catch (ExceptionHandler &e) {throw e;}
             }
@@ -373,18 +402,25 @@ namespace entapInit {
         return output_path;
     }
 
-    std::string download_file(std::string &ftp, std::string &out_path) {
+    std::string download_file(const std::string &ftp, std::string &out_path) {
         boostFS::path path(out_path);
-//        std::string file = path.filename();
-//        std::string download_command = "wget -O "+ output_path + " " + ftp_address;
-//        print_msg("Downloading: file from " + ftp + "...");
-
+        std::string download_command = "wget -O "+ out_path + " " + ftp;
+        print_msg("Downloading through wget: file from " + ftp + "...");
+        execute_cmd(download_command);
+        print_msg("Success! File printed to: " + out_path);
+        return out_path;
     }
 
-    void decompress_file(std::string file_path) {
-        int status;
-        std::string unzip_command = "gzip -d " + file_path;
-        status = execute_cmd(unzip_command);
+    void decompress_file(std::string file_path, std::string out_path,short flag) {
+        print_msg("Decompressing file at: " + file_path);
+        std::string unzip_command;
+        if (flag == 0){
+            unzip_command = "gzip -d " + file_path;
+        } else {
+            unzip_command = "tar -xzf " + file_path + " -C " + out_path;
+        }
+        std::string std_out = out_path + "_std";
+        int status = execute_cmd(unzip_command,std_out);
         if (status != 0) {
             throw ExceptionHandler("Error in unzipping database at " +
                     file_path, ENTAP_ERR::E_INIT_TAX_DOWN);
@@ -417,4 +453,5 @@ namespace entapInit {
         std::string out = ss.str();
         return out;
     }
+
 }

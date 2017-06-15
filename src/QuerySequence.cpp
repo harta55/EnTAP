@@ -214,7 +214,7 @@ void QuerySequence::set_eggnog_results(std::string seed_o, std::string seed_o_ev
     }
 }
 
-std::string QuerySequence::print_final_results(short flag,const std::vector<std::string>&headers) {
+std::string QuerySequence::print_final_results(short flag,const std::vector<std::string>&headers, short lvl) {
     std::stringstream stream;
 
     switch (flag) {
@@ -238,11 +238,23 @@ std::string QuerySequence::print_final_results(short flag,const std::vector<std:
             break;
     }
     if (!this->_go_str.empty()) {
-        for (std::string val : _go_parsed[ENTAP_EXECUTE::GO_BIOLOGICAL_FLAG]) stream<<val<<",";
+        for (std::string val : _go_parsed[ENTAP_EXECUTE::GO_BIOLOGICAL_FLAG]) {
+            if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
+                stream<<val<<",";
+            }
+        }
         stream<<'\t';
-        for (std::string val : _go_parsed[ENTAP_EXECUTE::GO_CELLULAR_FLAG]) stream<<val<<",";
+        for (std::string val : _go_parsed[ENTAP_EXECUTE::GO_CELLULAR_FLAG])  {
+            if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
+                stream<<val<<",";
+            }
+        }
         stream<<'\t';
-        for (std::string val : _go_parsed[ENTAP_EXECUTE::GO_MOLECULAR_FLAG]) stream<<val<<",";
+        for (std::string val : _go_parsed[ENTAP_EXECUTE::GO_MOLECULAR_FLAG]) {
+            if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
+                stream<<val<<",";
+            }
+        }
         stream<<'\t';
     } else {
         stream<<"\t\t\t";

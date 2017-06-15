@@ -4,12 +4,13 @@
 
 #include <boost/filesystem.hpp>
 #include <csv.h>
+#include <boost/archive/binary_iarchive.hpp>
 #include "Ontology.h"
 #include "EntapConsts.h"
 #include "EntapInit.h"
+#include <boost/serialization/map.hpp>
 #include "ExceptionHandler.h"
 #include "EntapExecute.h"
-#include "DatabaseHelper.h"
 #include "SimilaritySearch.h"
 
 namespace boostFS = boost::filesystem;
@@ -24,6 +25,7 @@ Ontology::Ontology(int thread, std::string egg_exe, std::string outpath,
     ONTOLOGY_OUT_PATH = "ontology/";
     _is_overwrite = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
     _software_flag = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<short>();
+    _go_levels = user_input[ENTAP_CONFIG::INPUT_FLAG_GO_LEVELS].as<std::vector<short>>();
     std::vector<std::string> _interpro_databases =
             user_input[ENTAP_CONFIG::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
 }
@@ -58,9 +60,10 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
     std::string msg = ENTAP_STATS::SOFTWARE_BREAK + "Ontology - Eggnog\n" +
                       ENTAP_STATS::SOFTWARE_BREAK;
     entapExecute::print_statistics(msg, _outpath);
-    DatabaseHelper database;
-    if (!database.open(_entap_exe + ENTAP_CONFIG::GO_DB_PATH))
-        throw ExceptionHandler("Unable to open GO database",ENTAP_ERR::E_PARSE_EGGNOG);
+    std::map<std::string, entapInit::struct_go_term> GO_DATABASE;
+    try {
+        GO_DATABASE = read_go_map();
+    } catch (ExceptionHandler const &e) {throw e;}
     std::map<std::string, int> eggnog_map;
     unsigned int count_total_go_hits=0, count_total_go_terms=0, count_no_go=0,count_no_kegg=0,
             count_TOTAL_hits=0, count_total_kegg_terms=0, count_total_kegg_hits=0;
@@ -82,7 +85,7 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
             if (it != SEQUENCES.end()) {
                 it->second.set_eggnog_results(seed_ortho,seed_e,seed_score,predicted_gene,go_terms,
                                               kegg,tax_scope,ogs);
-                it->second.set_go_parsed(parse_go_list(go_terms,database,','));
+                it->second.set_go_parsed(parse_go_list(go_terms,GO_DATABASE,','));
             }
             count_TOTAL_hits++;
             eggnog_map[qseqid] = 1;
@@ -111,17 +114,17 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
     std::stringstream ss;
     ss <<
        "Statistics for overall Eggnog results: " <<
-       "\nTotal hits: " << count_TOTAL_hits <<
-       "\nTotal sequences that did not hit against Eggnog databases: " <<count_no_hits<<
-       "\nTotal sequences containing GO terms: " << count_total_go_hits<<
-       "\nTotal sequences that did not have GO terms: " << count_no_go <<
-       "\nTotal matched GO terms: " << count_total_go_terms <<
-       "\nTotal sequences containing KEGG terms: " << count_total_kegg_hits<<
-       "\nTotal sequences that did not have KEGG terms: " << count_no_kegg<<
-       "\nTotal matched KEGG terms: " << count_total_kegg_terms;
+       "\nTotal sequences with family assignment: " << count_TOTAL_hits <<
+       "\nTotal sequences without family assignment: " <<count_no_hits<<
+       "\nTotal sequences with at least one GO term: " << count_total_go_hits<<
+       "\nTotal sequences without GO terms: " << count_no_go <<
+       "\nTotal GO terms assigned: " << count_total_go_terms <<
+       "\nTotal sequences with at least one pathway (KEGG) assignment: " << count_total_kegg_hits<<
+       "\nTotal sequences without pathways (KEGG): " << count_no_kegg<<
+       "\nTotal pathways (KEGG) assigned: " << count_total_kegg_terms;
     msg = ss.str();
     entapExecute::print_statistics(msg,_outpath);
-    database.close();
+    GO_DATABASE.clear();
     entapInit::print_msg("Success!");
     print_eggnog(SEQUENCES);
 }
@@ -189,63 +192,69 @@ void Ontology::run_eggnog(query_map_struct &SEQUENCES) {
 }
 
 std::map<std::string,std::vector<std::string>> Ontology::parse_go_list
-        (std::string list, DatabaseHelper &database,char delim) {
+        (std::string list, std::map<std::string,entapInit::struct_go_term> &GO_DATABASE,char delim) {
     std::map<std::string,std::vector<std::string>> output;
     if (list.empty()) return output;
     std::istringstream ss(list);
     std::string temp;
     std::vector<std::vector<std::string>>results;
     while (std::getline(ss,temp,delim)) {
-        char *query = sqlite3_mprintf(
-                "SELECT category,term from terms WHERE goid=%Q",temp.c_str());
-        try {
-            results = database.query(query);
-            if (!results.empty())output[results[0][0]].push_back(temp + "-" + results[0][1]);
-        } catch (std::exception e) {
-            throw e;
-        }
+        entapInit::struct_go_term term_info = GO_DATABASE[temp];
+        output[term_info.category].push_back(temp + "-" + term_info.term +
+            "(L=" + term_info.level + ")");
     }
     return output;
 }
 
 void Ontology::print_eggnog(Ontology::query_map_struct &SEQUENCES) {
     entapInit::print_msg("Beginning to print final results...");
-    std::string final_annotations = _outpath + "final_annotations.tsv";
-    boostFS::remove(final_annotations);
-    std::ofstream file(final_annotations, std::ios::out | std::ios::app);
-    file <<
-         "Query Seq\t"
-                 "Subject Seq\t"
-                 "Percent Identical\t"
-                 "Alignment Length\t"
-                 "Mismatches\t"
-                 "Gap Openings\t"
-                 "Query Start\t"
-                 "Query End\t"
-                 "Subject Start\t"
-                 "Subject End\t"
-                 "E Value\t"
-                 "Coverage\t"
-                 "Informativeness\t"
-                 "Species\t"
-                 "Origin Database\t"
-                 "Frame\t"
-                 "Seed ortholog\t"
-                 "Seed E Value\t"
-                 "Seed Score\t"
-                 "Predicted Gene\t"
-                 "Tax Scope\t"
-                 "OGs\t"
-                 "KEGG Terms\t"
-                 "GO Biological\t"
-                 "GO Cellular\t"
-                 "GO Molecular"
-         <<std::endl;
+    std::map<short, std::ofstream*> file_map;
+    for (short lvl : _go_levels) {
+        std::string outpath = _outpath  + "final_annotations_lvl" + std::to_string(lvl) +
+                              ".tsv";
+        boostFS::remove(outpath);
+        file_map[lvl] =
+                new std::ofstream(outpath, std::ios::out | std::ios::app);
+        *file_map[lvl] <<
+             "Query Seq\t"
+                     "Subject Seq\t"
+                     "Percent Identical\t"
+                     "Alignment Length\t"
+                     "Mismatches\t"
+                     "Gap Openings\t"
+                     "Query Start\t"
+                     "Query End\t"
+                     "Subject Start\t"
+                     "Subject End\t"
+                     "E Value\t"
+                     "Coverage\t"
+                     "Informativeness\t"
+                     "Species\t"
+                     "Origin Database\t"
+                     "Frame\t"
+                     "Seed ortholog\t"
+                     "Seed E Value\t"
+                     "Seed Score\t"
+                     "Predicted Gene\t"
+                     "Tax Scope\t"
+                     "OGs\t"
+                     "KEGG Terms\t"
+                     "GO Biological\t"
+                     "GO Cellular\t"
+                     "GO Molecular"
+             <<std::endl;
+    }
     for (auto &pair : SEQUENCES) {
-        file<< pair.second.print_final_results(_software_flag,_HEADERS)<<std::endl;
+        for (short i : _go_levels) {
+            *file_map[i]<<
+                    pair.second.print_final_results(_software_flag,_HEADERS,i)<<std::endl;
+        }
+    }
+    for(auto& pair : file_map) {
+        pair.second->close();
+        delete pair.second;
     }
     entapInit::print_msg("Success!");
-    file.close();
 }
 
 std::string Ontology::eggnog_format(std::string file) {
@@ -330,7 +339,6 @@ void Ontology::parse_results_interpro(Ontology::query_map_struct &SEQUENCES,
     std::string msg = ENTAP_STATS::SOFTWARE_BREAK + "Ontology - Interpro\n" +
                       ENTAP_STATS::SOFTWARE_BREAK;
     entapExecute::print_statistics(msg, _outpath);
-    DatabaseHelper database;
     const std::string KEY_PROTEIN_DATA      = _HEADERS[0];
     const std::string KEY_PROTEIN_ID        = _HEADERS[1];
     const std::string KEY_PROTEIN_TERM      = _HEADERS[2];
@@ -339,8 +347,10 @@ void Ontology::parse_results_interpro(Ontology::query_map_struct &SEQUENCES,
     const std::string KEY_INTERPRO_TERM     = _HEADERS[5];
     const std::string KEY_PATHWAY           = _HEADERS[9];
 
-    if (!database.open(_entap_exe + ENTAP_CONFIG::GO_DB_PATH))
-        throw ExceptionHandler("Unable to open GO database",ENTAP_ERR::E_PARSE_EGGNOG);
+    std::map<std::string, entapInit::struct_go_term> GO_DATABASE;
+    try {
+        GO_DATABASE = read_go_map();
+    } catch (ExceptionHandler const &e) {throw e;}
     struct interpro_struct {
         double _eval;
         std::map<std::string,std::string> _results;
@@ -378,7 +388,7 @@ void Ontology::parse_results_interpro(Ontology::query_map_struct &SEQUENCES,
             out_map[KEY_PATHWAY      ]     =    path_id;
 
             out_struct._eval = e_val;
-            out_struct._go_map = parse_go_list(go_id,database,'|');
+            out_struct._go_map = parse_go_list(go_id,GO_DATABASE,'|');
             out_struct._results = out_map;
             interpro_map[qseqid]=out_struct;
         }
@@ -392,7 +402,7 @@ void Ontology::parse_results_interpro(Ontology::query_map_struct &SEQUENCES,
             pair.second.set_go_parsed(it->second._go_map);
         }
     }
-    database.close();
+    GO_DATABASE.clear();
     print_interpro(SEQUENCES);
 }
 
@@ -437,7 +447,7 @@ void Ontology::print_interpro(Ontology::query_map_struct &SEQUENCES) {
     print_header(final_annotations);
     std::ofstream file(final_annotations, std::ios::out | std::ios::app);
     for (auto &pair : SEQUENCES) {
-        file<< pair.second.print_final_results(_software_flag,_HEADERS)<<std::endl;
+        file<< pair.second.print_final_results(_software_flag,_HEADERS,0)<<std::endl;
     }
     file.close();
 }
@@ -502,3 +512,18 @@ void Ontology::interpro_format_fix(std::string& path) {
     boostFS::remove(path);
     boostFS::rename(out_path,path);
 }
+
+std::map<std::string,entapInit::struct_go_term> Ontology::read_go_map () {
+    std::map<std::string,entapInit::struct_go_term> new_map;
+    std::string go_db_path = _entap_exe + ENTAP_CONFIG::GO_DB_PATH;
+    try {
+        {
+            std::ifstream ifs(go_db_path);
+            boost::archive::binary_iarchive ia(ifs);
+            ia >> new_map;
+        }
+    } catch (std::exception &exception) {
+        throw ExceptionHandler(exception.what(), ENTAP_ERR::E_INIT_GO_SETUP);
+    }
+    return new_map;
+};

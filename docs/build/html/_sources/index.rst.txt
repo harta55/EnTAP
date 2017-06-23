@@ -7,8 +7,10 @@ Welcome to enTAP's documentation!
 =================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+   
+   introduction.rst
+   basic_usage.rst
 
 
 

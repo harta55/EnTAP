@@ -24,7 +24,8 @@ FrameSelection::FrameSelection(std::string &input, std::string &exe, std::string
     _software_flag = 0;
 }
 
-std::string FrameSelection::execute(std::map<std::string,QuerySequence> &SEQUENCES) {
+std::string FrameSelection::execute(std::string input, std::map<std::string,QuerySequence> &SEQUENCES) {
+    _inpath = input;
     try {
         switch (_software_flag) {
             case 0:

@@ -18,8 +18,8 @@ namespace entapExecute {
 
     enum ExecuteStates {
         INIT,
-        FRAME_SELECTION,
         RSEM,
+        FRAME_SELECTION,
         FILTER,
         DIAMOND_RUN,
         DIAMOND_PARSE,
@@ -33,8 +33,7 @@ namespace entapExecute {
 
     void execute_main(boost::program_options::variables_map &, std::string,
                       std::unordered_map<std::string, std::string> &);
-    std::string filter_transcriptome(std::string &, std::string &, float, std::string, bool);
-    void print_filtered_map(std::map<std::string, QuerySequence> &, std::string &);
+    std::string filter_transcriptome(std::string &, bool);
     void verify_state(std::queue<char> &, bool &);
     bool is_file_empty(std::string);
     bool valid_state(enum ExecuteStates);

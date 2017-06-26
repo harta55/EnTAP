@@ -100,12 +100,10 @@ namespace entapExecute {
                         entapInit::print_msg("STATE - FRAME SELECTION");
                         if (_isProtein) {
                             entapInit::print_msg("Protein sequences input, skipping frame selection");
-                            genemark_out = input_path;
                             _blastp = true;
                             break;
                         }
-                        genemark_out = genemark.execute(SEQUENCE_MAP);
-                        input_path = genemark_out;
+                        input_path = genemark.execute(input_path,SEQUENCE_MAP);
                         _blastp = true;
                         break;
                     case RSEM:
@@ -114,11 +112,10 @@ namespace entapExecute {
                             entapInit::print_msg("No alignment file specified, skipping expression analysis");
                             break;
                         }
-                        rsem.execute();
+                        input_path = rsem.execute(input_path,SEQUENCE_MAP);
                         break;
                     case FILTER:
-                        input_path = filter_transcriptome(genemark_out, rsem_out, user_input["fpkm"].as<float>(),
-                                                          input_path,is_overwrite);
+                        input_path = filter_transcriptome(input_path,is_overwrite);
                         break;
                     case DIAMOND_RUN:
                         entapInit::print_msg("STATE - SIM SEARCH RUN");
@@ -259,125 +256,13 @@ namespace entapExecute {
     }
 
 
-    std::string filter_transcriptome(std::string &genemark_path, std::string &rsem_path,
-                                     float fpkm, std::string input_path, bool overwrite) {
-        entapInit::print_msg("Beginning to filter transcriptome...");
-        bool genemark, rsem;
-
+    std::string filter_transcriptome(std::string &input_path, bool overwrite) {
+        entapInit::print_msg("Beginning to copy final transcriptome to be used...");
         boostFS::path file_name(input_path);
         file_name.filename();
         std::string out_path = _entap_outpath +
                                file_name.stem().stem().string() + "_final.fasta";
-        std::string out_removed = _entap_outpath +
-                                  file_name.stem().string() + "_filtered_out.fasta";
-        if (overwrite) {
-            entapInit::print_msg("Overwrite selected, removing files:\n" +
-                                 out_path + "\n" + out_removed);
-            try {
-                remove(out_path.c_str());
-                remove(out_removed.c_str());
-            } catch (std::exception const &e) {
-                throw ExceptionHandler(e.what(), ENTAP_ERR::E_RUN_FILTER);
-            }
-        } else {
-            entapInit::print_msg("Overwrite unselected, finding files..");
-            if (!entapInit::file_exists(out_path)) {
-                entapInit::print_msg("File not found at: " + out_path + " continue filtering");
-            } else {
-                entapInit::print_msg("File found at: " + out_path + " not filtering");
-                return out_path;
-            }
-        }
-        if (genemark_path.empty()) {
-            entapInit::print_msg("Looking for genemark file");
-            std::string temp_path = ENTAP_EXECUTE::GENEMARK_EXE_PATH + "genemark" + "/" +
-                                    file_name.string() + ".faa";
-            std::cout << temp_path << std::endl;
-            if (entapInit::file_exists(temp_path)) {
-                entapInit::print_msg("File found at: " + temp_path);
-                genemark_path = temp_path;
-                genemark = true;
-            } else {
-                entapInit::print_msg("File was not found.");
-                genemark = false;
-            }
-        } else genemark = true;
-        if (rsem_path.empty()) {
-            entapInit::print_msg("Looking for rsem file");
-            std::string temp_path = _outpath + "rsem" + "/" +
-                                    file_name.stem().string() + ".genes.results";
-            if (entapInit::file_exists(temp_path)) {
-                entapInit::print_msg("File found at: " + temp_path);
-                rsem_path = temp_path;
-                rsem = true;
-            } else {
-                entapInit::print_msg("File was not found.");
-                rsem = false;
-            }
-        } else rsem = true;
-
-        if (!rsem && !genemark) {
-            entapInit::print_msg("Neither genemark, nor rsem files were found, no filtering will be done.");
-            return input_path;
-        }
-
-        if (genemark && !rsem) {
-            entapInit::print_msg("No rsem file found, so genemark results will continue as main trancriptome: " +
-                                 genemark_path);
-            boostFS::copy_file(genemark_path, out_path);
-            return out_path;
-        }
-
-        std::string process_file;
-        !genemark ? process_file = input_path : process_file = genemark_path;
-        entapInit::print_msg("Filtering file located at: " + process_file);
-
-        io::CSVReader<ENTAP_EXECUTE::RSEM_COL_NUM, io::trim_chars<' '>,
-                io::no_quote_escape<'\t'>> in(rsem_path);
-        std::unordered_map<std::string, float> expression_map;
-        in.next_line();
-        std::string geneid, transid;
-        float length, e_leng, e_count, tpm, fpkm_val;
-        while (in.read_row(geneid, transid, length, e_leng, e_count, tpm, fpkm_val)) {
-            expression_map.emplace(geneid, fpkm_val);
-        }
-        std::ifstream in_file(process_file);
-        std::ofstream out_file(out_path, std::ios::out | std::ios::app);
-        std::ofstream removed_file(out_removed, std::ios::out | std::ios::app);
-        boost::smatch match;
-        bool filtered = false;
-        double removed_count = 0;
-        for (std::string line; getline(in_file, line);) {
-            boost::regex exp(">(\\S+)", boost::regex::icase);
-            if (boost::regex_search(line, match, exp)) {
-                std::string id = std::string(match[1].first, match[1].second);
-                if (expression_map.find(id) != expression_map.end()) {
-                    float fp = expression_map.at(id);
-                    if (fp > fpkm) {
-                        filtered = true;
-                        out_file << line;
-                    } else {
-                        filtered = false;
-                        removed_count++;
-                        removed_file << line << std::endl;
-                    }
-                } else {
-                    // default if not found is NOT remove it
-                    filtered = true;
-                    out_file << line << std::endl;
-                }
-            } else {
-                // anything not a seq header
-                if (filtered) {
-                    out_file << line << std::endl;
-                } else removed_file << line << std::endl;
-            }
-        }
-        in_file.close();
-        out_file.close();
-        removed_file.close();
-        entapInit::print_msg("File successfully filtered. Outputs at: " + out_path + " and: " +
-                             out_removed);
+        boostFS::copy_file(input_path,out_path,boostFS::copy_option::overwrite_if_exists);
         return out_path;
     }
 
@@ -591,6 +476,6 @@ namespace entapExecute {
 
 
     bool valid_state(ExecuteStates s) {
-        return (s >= FRAME_SELECTION && s <= EXIT);
+        return (s >= RSEM && s <= EXIT);
     }
 }

@@ -19,7 +19,7 @@ class FrameSelection {
     typedef std::map<std::string,FrameSelection::frame_seq> frame_map_type;
 
     public:
-        std::string execute(std::map<std::string,QuerySequence>&);
+        std::string execute(std::string,std::map<std::string,QuerySequence>&);
         FrameSelection(std::string&, std::string&, std::string&,
                        boost::program_options::variables_map &);
 

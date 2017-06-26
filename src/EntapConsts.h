@@ -126,8 +126,8 @@ namespace ENTAP_CONFIG {
 
 namespace ENTAP_EXECUTE {
     const std::string RSEM_EXE_PATH = "/libs/RSEM-1.3.0/";
-    const std::string RSEM_OUT_DIR = "rsem/";
-    const float RSEM_FPKM_DEFAULT = 0.5;
+    const std::string RSEM_OUT_DIR = "expression/";
+    const float RSEM_FPKM_DEFAULT = 1;
     const int RSEM_COL_NUM = 7;
     const std::string OUTFILE_DEFAULT = "outfiles";
 

@@ -3,6 +3,9 @@
 //
 
 #include <boost/filesystem.hpp>
+#include <csv.h>
+#include <boost/regex.hpp>
+#include <iomanip>
 #include "ExpressionAnalysis.h"
 #include "ExceptionHandler.h"
 #include "EntapInit.h"
@@ -23,21 +26,23 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &ex
         _alignpath = user_flags[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>();
     }
     _software_flag = 0;
-
+    _fpkm = user_flags["fpkm"].as<float>();
 }
 
-std::string ExpressionAnalysis::execute() {
+std::string ExpressionAnalysis::execute(std::string input,
+                                        std::map<std::string, QuerySequence>& MAP) {
+    _inpath = input;
     try {
         switch (_software_flag) {
             case 0:
-                return rsem();
+                return rsem(MAP);
             default:
-                return rsem();
+                return rsem(MAP);
         }
-    } catch (ExceptionHandler &e) {throw e;}
+    } catch (const ExceptionHandler &e) {throw e;}
 }
 
-std::string ExpressionAnalysis::rsem() {
+std::string ExpressionAnalysis::rsem(std::map<std::string, QuerySequence>& MAP) {
     // return path
     entapInit::print_msg("Running RSEM...");
     boostFS::path out_dir(_outpath+ENTAP_EXECUTE::RSEM_OUT_DIR);
@@ -49,29 +54,24 @@ std::string ExpressionAnalysis::rsem() {
     std::transform(bam.begin(), bam.end(), bam.begin(), ::tolower);
     std::string exp_out_path = out_dir.string() + file_name.string();
 
-    // todo move to class-wide init
     if (_overwrite) {
         boostFS::remove_all(out_dir.c_str());
     } else{
-        if (entapInit::file_exists(exp_out_path + ".genes.results")) {
-            entapInit::print_msg("File found at " +exp_out_path + ".genes.results\n"
-                 "moving to next stage of enTAP");
-            return exp_out_path + ".genes.results";
+        std::string p = exp_out_path + ".genes.results";
+        if (entapInit::file_exists(p)) {
+            entapInit::print_msg("File found at " +p +  "\nmoving to filter transcriptome");
+            try {
+                return rsem_filter(p,MAP);
+            } catch (const ExceptionHandler &e) {throw e;}
         }
         entapInit::print_msg("File not found at " + exp_out_path + ".genes.results. Continuing RSEM run.");
     }
     boostFS::create_directories(out_dir);
-
-    if (_alignpath.empty()) {
-        entapInit::print_msg("No BAM/SAM file provided, exiting RSEM run");
-        return _inpath;
-    }
     if (!entapInit::file_exists(_alignpath)) {
         throw ExceptionHandler("Invalid file path for BAM/SAM file, exiting...",
                                ENTAP_ERR::E_INIT_TAX_READ);
     }
-    std::string rsem_arg;
-    std::string out_path;
+    std::string rsem_arg,out_path;
     if (bam.compare(".sam")==0) {
         entapInit::print_msg("File is detected to be sam file, running validation "
                                      "and conversion to bam");
@@ -126,7 +126,7 @@ std::string ExpressionAnalysis::rsem() {
     entapInit::print_msg("Reference successfully created");
 
     entapInit::print_msg("Running expression analysis...");
-    rsem_arg = _exepath + "rsem-calculate-expression " + "--paired-end " +
+    rsem_arg = _exepath + "rsem-calculate-expression " +
                "--bam " + "-p " + std::to_string(_threads) + " " + _alignpath +" "+ ref_out_path +
                "/"+file_name.string()+ " " +exp_out_path;
     if (_ispaired) rsem_arg += " --paired-end";
@@ -135,5 +135,60 @@ std::string ExpressionAnalysis::rsem() {
     if (entapInit::execute_cmd(rsem_arg.c_str(), std_out)!=0) {
         throw ExceptionHandler("Error in running expression analysis",ENTAP_ERR::E_INIT_TAX_READ);
     }
-    return exp_out_path + ".genes.results";
+    std::string out_results = exp_out_path + ".genes.results";
+    try {
+        return rsem_filter(out_results,MAP);
+    } catch (const ExceptionHandler &e) {throw e;}
+}
+
+std::string ExpressionAnalysis::rsem_filter(std::string &results_path,
+                                            std::map<std::string, QuerySequence>& MAP) {
+    entapInit::print_msg("Beginning to filter transcriptome...");
+    if (!entapInit::file_exists(results_path)) {
+        throw ExceptionHandler("File does not exist at: " + results_path,
+            ENTAP_ERR::E_RUN_RSEM_EXPRESSION);
+    }
+    std::stringstream out_msg;out_msg<<std::fixed<<std::setprecision(2);
+    out_msg << ENTAP_STATS::SOFTWARE_BREAK
+            << "Expression Filtering - RSEM\n"
+            << ENTAP_STATS::SOFTWARE_BREAK;
+    out_msg<<"MORE STATES COMING SOON!"<<std::endl;
+
+    std::string process_dir = _outpath + ENTAP_EXECUTE::RSEM_OUT_DIR + "processed";
+    boostFS::remove_all(process_dir); boostFS::create_directories(process_dir);
+    boostFS::path path (results_path);
+    std::string out_path = _outpath +
+                           path.stem().stem().string() + "_removed.fasta";
+    std::string out_removed = _outpath +
+                              path.stem().string() + "_filtered.fasta";
+    std::ofstream out_file(out_path, std::ios::out | std::ios::app);
+    std::ofstream removed_file(out_removed, std::ios::out | std::ios::app);
+    io::CSVReader<ENTAP_EXECUTE::RSEM_COL_NUM, io::trim_chars<' '>,
+    io::no_quote_escape<'\t'>> in(results_path);
+    in.next_line();
+    long count_removed=0, count_kept=0;
+    std::string geneid, transid;
+    float length, e_leng, e_count, tpm, fpkm_val;
+    while (in.read_row(geneid, transid, length, e_leng, e_count, tpm, fpkm_val)) {
+        if (fpkm_val > _fpkm) {
+            out_file << MAP[geneid].getSequence() << std::endl;
+            count_kept++;
+        } else {
+            removed_file << MAP[geneid].getSequence() << std::endl;
+            count_removed++;
+        }
+    }
+
+    out_msg << "Removed: " << count_removed <<
+            "\nKept: " << count_kept << std::endl;
+    if (count_kept == 0) {
+        throw ExceptionHandler("Error in filtering transcriptome, no sequences kept",
+        ENTAP_ERR::E_RUN_RSEM_EXPRESSION);
+    }
+    std::string out_str = out_msg.str();
+    entapExecute::print_statistics(out_str,_outpath);
+    out_file.close();removed_file.close();
+    entapInit::print_msg("File successfully filtered. Outputs at: " + out_path + " and: " +
+                         out_removed);
+    return out_path;
 }

@@ -184,7 +184,7 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
             } else {
                 // Lost sequence
                 count_removed++;
-                *file_map[lost_flag] << pair.second.getSequence() ;
+                *file_map[lost_flag] << pair.second.get_sequence_n();
                 unsigned long length = pair.second.getSeq_length();  // Nucleotide sequence length
 
                 if (length < min_removed) {

@@ -79,13 +79,28 @@ QuerySequence::QuerySequence() {
 }
 
 void QuerySequence::setSequence( std::string &seq) {
-    _is_database_hit = false;
     is_protein = true;
-    _sequence = seq;
     _seq_length = calc_seq_length(seq,true);
     if (!seq.empty() && seq[seq.length()-1] == '\n') {
-        this->_sequence.pop_back();
+        seq.pop_back();
     }
+    _sequence_p = seq;
+}
+
+const std::string &QuerySequence::get_sequence_p() const {
+    return _sequence_p;
+}
+
+void QuerySequence::set_sequence_p(const std::string &_sequence_p) {
+    QuerySequence::_sequence_p = _sequence_p;
+}
+
+const std::string &QuerySequence::get_sequence_n() const {
+    return _sequence_n;
+}
+
+void QuerySequence::set_sequence_n(const std::string &_sequence_n) {
+    QuerySequence::_sequence_n = _sequence_n;
 }
 
 bool QuerySequence::isIs_protein() const {
@@ -97,10 +112,10 @@ QuerySequence::QuerySequence(bool is_protein, std::string seq){
     this->_is_database_hit = false;
     this->is_protein = is_protein;
     _seq_length = calc_seq_length(seq,is_protein);
-    this->_sequence = seq;
     if (!seq.empty() && seq[seq.length()-1] == '\n') {
-        this->_sequence.pop_back();
+        seq.pop_back();
     }
+    is_protein ? _sequence_p = seq : _sequence_n = seq;
 }
 
 unsigned long QuerySequence::calc_seq_length(std::string &seq,bool protein) {
@@ -139,10 +154,6 @@ std::ostream& operator<<(std::ostream &ostream, const QuerySequence &query) {
 
 const std::string &QuerySequence::getFrame() const {
     return _frame;
-}
-
-const std::string &QuerySequence::getSequence() const {
-    return _sequence;
 }
 
 void QuerySequence::setFrame(const std::string &frame) {
@@ -280,16 +291,14 @@ void QuerySequence::init_sequence() {
     _e_val = 0;
     _bit_score = 0;
     _coverage = 0;
+    _sequence_p = "";
+    _sequence_n = "";
 }
 
 void QuerySequence::set_ontology_results(std::map<std::string, std::string> map) {
     this->_ontology_results = map;
 }
 
-bool QuerySequence::verify_frame(const std::string &frame1, const std::string &frame2) {
-    return (frame1.compare(ENTAP_EXECUTE::FRAME_SELECTION_INTERNAL_FLAG)!=0 &&
-            frame2.compare(ENTAP_EXECUTE::FRAME_SELECTION_INTERNAL_FLAG)!=0);
-}
 
 void QuerySequence::set_lineage(const std::string &_lineage) {
     QuerySequence::_lineage = _lineage;
@@ -297,4 +306,9 @@ void QuerySequence::set_lineage(const std::string &_lineage) {
 
 void QuerySequence::set_tax_score(int _tax_score) {
     QuerySequence::_tax_score = _tax_score;
+}
+
+const std::string &QuerySequence::get_sequence() const {
+    if (_sequence_n.empty()) return _sequence_p;
+    return _sequence_n;
 };

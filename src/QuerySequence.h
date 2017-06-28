@@ -37,7 +37,6 @@ public:
     std::string print_final_results(short,const std::vector<std::string>&,short);
     void set_lineage(const std::string &_lineage);
     void set_go_parsed(const go_struct &_go_parsed);
-    const std::string &getSequence() const;
     void setSeq_length(unsigned long seq_length);
     void setFrame(const std::string &frame);
     void setSpecies(const std::string &species);
@@ -46,6 +45,11 @@ public:
     bool isIs_protein() const;
     const std::string &get_species() const;
     bool is_informative() const;
+    const std::string &get_sequence_p() const;
+    void set_sequence_p(const std::string &_sequence_p);
+    const std::string &get_sequence_n() const;
+    void set_sequence_n(const std::string &_sequence_n);
+    const std::string &get_sequence() const;
 
 
 private:
@@ -55,13 +59,12 @@ private:
     int _tax_id,_length, _mismatch, _gapopen, _qstart, _qend, _sstart, _send, _tax_score;
     double _pident,_bit_score, _e_val, _coverage;
     unsigned long _seq_length;
-    std::string _database_path, _qseqid,_sseqid, _stitle, _species, _sequence, _frame, _contam_type,
+    std::string _database_path, _qseqid,_sseqid, _stitle, _species, _sequence_p, _sequence_n, _frame, _contam_type,
             _seed_ortho,_seed_eval,_seed_score,_predicted_gene,_tax_scope, _ogs,_go_str,_kegg_str,
             _lineage;
     go_struct _go_parsed;
     void init_sequence();
     std::map<std::string,std::string> _ontology_results;
-    bool verify_frame(const std::string&,const std::string&);
     unsigned long calc_seq_length(std::string &,bool);
 };
 

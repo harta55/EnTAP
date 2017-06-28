@@ -15,6 +15,8 @@
 #include "QuerySequence.h"
 #include "EntapExecute.h"
 
+
+
 namespace boostFS = boost::filesystem;
 
 SimilaritySearch::SimilaritySearch(std::list<std::string> &databases, std::string input,
@@ -169,7 +171,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
     }
     if (_sim_search_paths.empty()) throw ExceptionHandler("No diamond files found", ENTAP_ERR::E_RUN_SIM_SEARCH_FILTER);
 
-    std::string sim_search_processed = _outpath + ENTAP_EXECUTE::SIM_SEARCH_PARSE_PROCESSED + "/";
+    std::string sim_search_processed = _outpath + SIM_SEARCH_PARSE_PROCESSED + "/";
     boostFS::remove_all(sim_search_processed);
     boostFS::create_directories(sim_search_processed);
     _input_lineage = get_lineage(_input_species,taxonomic_database);
@@ -189,7 +191,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
 
         boostFS::path path(data);   // path/to/data.out
         std::string out_base_path = sim_search_processed + path.filename().stem().string();
-        std::string out_unselected_tsv = out_base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_UNSELECTED;
+        std::string out_unselected_tsv = out_base_path + SIM_SEARCH_DATABASE_UNSELECTED;
 
         std::ofstream file_unselected_tsv(out_unselected_tsv,std::ios::out | std::ios::app);
         std::map<std::string, QuerySequence> database_map;
@@ -252,19 +254,34 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
                                              std::map<std::string, QuerySequence>&best_hits,
                                              std::stringstream &ss, std::string &base_path, bool is_final) {
 
-    std::string out_best_contams_tsv = base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_CONTAM_TSV;
-    std::string out_best_contams_fa  = base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_CONTAM_FA;
-    std::string out_best_hits_tsv    = base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_BEST_TSV;
-    std::string out_best_hits_fa     = base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_BEST_FA;
-    std::string out_no_hits_fa       = base_path + ENTAP_EXECUTE::SIM_SEARCH_DATABASE_NO_HITS;
+    std::string out_best_contams_tsv             = base_path + SIM_SEARCH_DATABASE_CONTAM_TSV;
+    std::string out_best_contams_fa_nucl         = base_path + SIM_SEARCH_DATABASE_CONTAM_FA_NUCL;
+    std::string out_best_contams_fa_prot         = base_path + SIM_SEARCH_DATABASE_CONTAM_FA_PROT;
 
-    print_header(out_best_contams_tsv);
-    print_header(out_best_hits_tsv);
+    std::string out_best_hits_tsv                = base_path + SIM_SEARCH_DATABASE_BEST_TSV;
+    std::string out_best_hits_no_contam_tsv      = base_path + SIM_SEARCH_DATABASE_BEST_TSV_NO_CONTAM;
+    std::string out_best_hits_fa_nucl            = base_path + SIM_SEARCH_DATABASE_BEST_FA_NUCL;
+    std::string out_best_hits_fa_prot            = base_path + SIM_SEARCH_DATABASE_BEST_FA_PROT;
+    std::string out_best_hits_fa_nucl_no_contam  = base_path + SIM_SEARCH_DATABASE_BEST_FA_NUCL_NO_CONTAM;
+    std::string out_best_hits_fa_prot_no_contam  = base_path + SIM_SEARCH_DATABASE_BEST_FA_PROT_NO_CONTAM;
+
+    std::string out_no_hits_fa_nucl              = base_path + SIM_SEARCH_DATABASE_NO_HITS_NUCL;
+    std::string out_no_hits_fa_prot              = base_path + SIM_SEARCH_DATABASE_NO_HITS_PROT;
+
+    print_header(out_best_contams_tsv);print_header(out_best_hits_tsv);
+    print_header(out_best_hits_no_contam_tsv);
     std::ofstream file_best_hits_tsv(out_best_hits_tsv,std::ios::out | std::ios::app);
-    std::ofstream file_best_hits_fa(out_best_hits_fa,std::ios::out | std::ios::app);
+    std::ofstream file_best_hits_tsv_no_contam(out_best_hits_no_contam_tsv,std::ios::out | std::ios::app);
+    std::ofstream file_best_hits_fa_nucl(out_best_hits_fa_nucl,std::ios::out | std::ios::app);
+    std::ofstream file_best_hits_fa_prot(out_best_hits_fa_prot,std::ios::out | std::ios::app);
+    std::ofstream file_best_hits_fa_nucl_no_contam(out_best_hits_fa_nucl_no_contam,std::ios::out | std::ios::app);
+    std::ofstream file_best_hits_fa_prot_no_contam(out_best_hits_fa_prot_no_contam,std::ios::out | std::ios::app);
+
     std::ofstream file_best_contam_tsv(out_best_contams_tsv,std::ios::out | std::ios::app);
-    std::ofstream file_best_contam_fa(out_best_contams_fa,std::ios::out | std::ios::app);
-    std::ofstream file_no_hits(out_no_hits_fa, std::ios::out | std::ios::app);
+    std::ofstream file_best_contam_fa_prot(out_best_contams_fa_prot,std::ios::out | std::ios::app);
+    std::ofstream file_best_contam_fa_nucl(out_best_contams_fa_nucl,std::ios::out | std::ios::app);
+    std::ofstream file_no_hits_nucl(out_no_hits_fa_nucl, std::ios::out | std::ios::app);
+    std::ofstream file_no_hits_prot(out_no_hits_fa_prot, std::ios::out | std::ios::app);
 
     unsigned long count_no_hit=0, count_contam=0, count_filtered=0, count_informative=0,
         count_uninformative=0;
@@ -281,9 +298,14 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         if (it == best_hits.end()) {
             if (pair.second.isIs_protein()) {
                 count_no_hit++;
-                file_no_hits << pair.second.getSequence() <<std::endl;
+                file_no_hits_nucl << pair.second.get_sequence_n() <<std::endl;
+                file_no_hits_prot << pair.second.get_sequence_p() <<std::endl;
             }
         } else {
+            file_best_hits_fa_nucl << pair.second.get_sequence_n()<<std::endl;
+            file_best_hits_fa_prot << pair.second.get_sequence_p()<<std::endl;
+            file_best_hits_tsv << it->second << std::endl;
+
             count_filtered++;
             std::string species;
             if (!it->second.get_species().empty()) {
@@ -291,7 +313,8 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
             }
             if (it->second.isContaminant()) {
                 count_contam++;
-                file_best_contam_fa << pair.second.getSequence()<<std::endl;
+                file_best_contam_fa_nucl << pair.second.get_sequence_n()<<std::endl;
+                file_best_contam_fa_prot << pair.second.get_sequence_p()<<std::endl;
                 file_best_contam_tsv << it->second << std::endl;
                 std::string contam = it->second.get_contam_type();
                 if (contam_map.count(contam)) {
@@ -300,6 +323,10 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
                 if (contam_species_map.count(species)) {
                     contam_species_map[species]++;
                 } else contam_species_map[species] = 1;
+            } else {
+                file_best_hits_fa_nucl_no_contam << pair.second.get_sequence_n()<<std::endl;
+                file_best_hits_fa_prot_no_contam << pair.second.get_sequence_p()<<std::endl;
+                file_best_hits_tsv_no_contam << it->second << std::endl;
             }
             if (species_map.count(species)) {
                 species_map[species]++;
@@ -308,16 +335,18 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
             if (it->second.is_informative()) {
                 count_informative++;
             } else count_uninformative++;
-            file_best_hits_fa << pair.second.getSequence()<<std::endl;
-            file_best_hits_tsv << it->second << std::endl;
+
             if (is_final) {
+                // TODO fix combining objects, move to class
                 it->second.setSeq_length(pair.second.getSeq_length());
                 pair.second = it->second;
             }
         }
     }
-    file_best_hits_tsv.close(); file_best_hits_fa.close(); file_best_contam_tsv.close();
-    file_best_contam_fa.close(); file_no_hits.close();
+    file_best_hits_tsv.close();file_best_hits_tsv_no_contam.close();file_best_hits_fa_nucl.close();
+    file_best_hits_fa_prot.close();file_best_hits_fa_nucl_no_contam.close();file_best_hits_fa_prot_no_contam.close();
+    file_best_contam_tsv.close();file_best_contam_fa_prot.close();file_best_contam_fa_nucl.close();
+    file_no_hits_nucl.close();file_no_hits_prot.close();
 
     std::vector<count_pair> contam_species_vect(contam_species_map.begin(),contam_species_map.end());
     std::vector<count_pair> species_vect(species_map.begin(),species_map.end());
@@ -327,15 +356,15 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
 
     ss <<
        "\n\tUnique hits: "                            << count_filtered     <<
-       "\n\t\tBest fasta hits written to: "           << out_best_hits_fa   <<
+       "\n\t\tBest fasta hits written to: "           << out_best_hits_fa_prot   <<
        "\n\t\tBest tsv hits written to: "             << out_best_hits_tsv  <<
        "\n\tSequences that did not hit: "             << count_no_hit       <<
-       "\n\t\tWritten to: "                           << out_no_hits_fa     <<
+       "\n\t\tWritten to: "                           << out_no_hits_fa_prot     <<
        "\n\tInformative hits: "                       << count_informative  <<
        "\n\tUninformative hits: "                     << count_uninformative<<
        "\n\tContaminants: "                           << count_contam       <<
           "(" << contam_percent << "): "                                    <<
-       "\n\t\tFasta contaminants written to: "        << out_best_contams_fa<<
+       "\n\t\tFasta contaminants written to: "        << out_best_contams_fa_prot<<
        "\n\t\tTsv contaminants written to: "          << out_best_contams_tsv;
 
     if (count_contam > 0) {
@@ -367,7 +396,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
             << pair.second << "(" << percent <<"%)";
         ct++;
     }
-    return std::pair<std::string,std::string>(out_best_hits_fa,out_no_hits_fa);
+    return std::pair<std::string,std::string>(out_best_hits_fa_prot,out_no_hits_fa_prot);
 }
 
 /**
@@ -378,8 +407,8 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
 std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(std::list<std::map<std::string,QuerySequence>> &diamond_maps,
                                       std::map<std::string, QuerySequence>&SEQUENCES) {
     entapInit::print_msg("Compiling similarity results results to find best overall hits...");
-    std::string compiled_path = _outpath + ENTAP_EXECUTE::SIM_SEARCH_COMPILED_PATH;
-    std::string results_dir = _outpath + ENTAP_EXECUTE::SIM_SEARCH_RESULTS_DIR;
+    std::string compiled_path = _outpath + SIM_SEARCH_COMPILED_PATH;
+    std::string results_dir = _outpath + SIM_SEARCH_RESULTS_DIR;
     boostFS::remove_all(results_dir.c_str());
     boostFS::create_directories(results_dir.c_str());
     std::map<std::string,QuerySequence> compiled_hit_map;
@@ -450,8 +479,8 @@ std::pair<bool,std::string> SimilaritySearch::is_contaminant(std::string species
 
 std::string SimilaritySearch::get_species(std::string &title) {
     // TODO use regex(database specific)
-    boost::regex ncbi_exp(_ncbi_regex);
-    boost::regex uniprot_exp(_uniprot_regex);
+    boost::regex ncbi_exp(_NCBI_REGEX);
+    boost::regex uniprot_exp(_UNIPROT_REGEX);
     boost::smatch match;
     std::string species = "";
     if (boost::regex_search(title,match,uniprot_exp)) {

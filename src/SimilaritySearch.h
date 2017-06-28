@@ -19,11 +19,28 @@ public:
                      std::string,boost::program_options::variables_map &);
     std::pair<std::string,std::string> parse_files(std::string,std::map<std::string, QuerySequence>&);
 private:
+    const std::string _NCBI_REGEX = "\\[([^]]+)\\](?!.+\\[.+\\])";
+    const std::string _UNIPROT_REGEX = "OS=(.+?)\\s\\S\\S=";
+    const std::string SIM_SEARCH_DATABASE_BEST_TSV = "_best_hits.tsv";
+    const std::string SIM_SEARCH_DATABASE_BEST_TSV_NO_CONTAM = "_best_hits_no_contam.tsv";
+    const std::string SIM_SEARCH_DATABASE_BEST_FA_NUCL = "_best_hits.fnn";
+    const std::string SIM_SEARCH_DATABASE_BEST_FA_PROT = "_best_hits.faa";
+    const std::string SIM_SEARCH_DATABASE_BEST_FA_NUCL_NO_CONTAM = "_best_hits_no_contam.fnn";
+    const std::string SIM_SEARCH_DATABASE_BEST_FA_PROT_NO_CONTAM = "_best_hits_no_contam.faa";
+
+    const std::string SIM_SEARCH_DATABASE_CONTAM_TSV = "_best_hits_contam.tsv";
+    const std::string SIM_SEARCH_DATABASE_CONTAM_FA_NUCL = "_best_hits_contam.fnn";
+    const std::string SIM_SEARCH_DATABASE_CONTAM_FA_PROT = "_best_hits_contam.faa";
+    const std::string SIM_SEARCH_DATABASE_NO_HITS_NUCL = "_no_hits.fnn";
+    const std::string SIM_SEARCH_DATABASE_NO_HITS_PROT = "_no_hits.faa";
+    const std::string SIM_SEARCH_DATABASE_UNSELECTED = "_unselected.tsv";
+    const std::string SIM_SEARCH_PARSE_PROCESSED = "similarity_search/processed";
+    const std::string SIM_SEARCH_RESULTS_DIR = "similarity_search/results";
+    const std::string SIM_SEARCH_COMPILED_PATH = "similarity_search/results/_overall";
+
     std::list<std::string> _database_paths, _sim_search_paths;
     std::string _diamond_exe, _outpath, _input_path, _entap_exe, _input_lineage,_input_species,
         _blast_type;
-    std::string _ncbi_regex = "\\[([^]]+)\\](?!.+\\[.+\\])";
-    std::string _uniprot_regex = "OS=(.+?)\\s\\S\\S=";
     int _threads; bool _overwrite,_blastp;
     double _e_val, _coverage;
     short _software_flag;

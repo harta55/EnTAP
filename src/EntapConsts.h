@@ -64,7 +64,7 @@ namespace ENTAP_CONFIG {
     const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";
     const std::string BIN_PATH = "bin/";
 
-    const std::string ENTAP_VERSION = "0.5.1";
+    const std::string ENTAP_VERSION = "0.5.2";
 
 
     const double E_VALUE = 1e-5;
@@ -130,21 +130,6 @@ namespace ENTAP_EXECUTE {
     const float RSEM_FPKM_DEFAULT = 1;
     const int RSEM_COL_NUM = 7;
     const std::string OUTFILE_DEFAULT = "outfiles";
-
-
-    //-------------------Similarity Search----------------------//
-
-    const std::string SIM_SEARCH_DATABASE_BEST_TSV = "_best_hits.tsv";
-    const std::string SIM_SEARCH_DATABASE_BEST_FA = "_best_hits.fasta";
-    const std::string SIM_SEARCH_DATABASE_CONTAM_TSV = "_best_hits_contam.tsv";
-    const std::string SIM_SEARCH_DATABASE_CONTAM_FA = "_best_hits_contam.fasta";
-    const std::string SIM_SEARCH_DATABASE_NO_HITS = "_no_hits.fasta";
-    const std::string SIM_SEARCH_DATABASE_UNSELECTED = "_unselected.tsv";
-    const std::string SIM_SEARCH_PARSE_PROCESSED = "similarity_search/processed";
-    const std::string SIM_SEARCH_RESULTS_DIR = "similarity_search/results";
-    const std::string SIM_SEARCH_COMPILED_PATH = "similarity_search/results/_overall";
-    const int diamond_e_col = 10;
-    const short SIM_SEARCH_DIAMOND_FLAG = 0;
 
 
     //--------------------Frame Selection----------------------//

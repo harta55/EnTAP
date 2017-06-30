@@ -461,12 +461,22 @@ std::pair<bool,std::string> SimilaritySearch::is_contaminant(std::string species
                     std::vector<std::string> &contams) {
     // species and tax database both lowercase
     std::transform(species.begin(), species.end(), species.begin(), ::tolower);
-    std::string lineage;
+    std::string lineage = "";
     if (contams.empty()) return std::pair<bool,std::string>(false,"");
     if (database.find(species) != database.end()) {
         lineage = database[species];
     } else {
-        return std::pair<bool,std::string>(false,"");
+        unsigned long prev_index = 0;
+        while (true) {
+            prev_index = species.find(" ",prev_index);
+            if (prev_index == std::string::npos)break;
+            if (database.find(species.substr(0,prev_index)) != database.end()) {
+                lineage = database[species];
+                break;
+            }
+            prev_index++;
+        }
+        if (lineage.empty()) return std::pair<bool,std::string>(false,"");
     }
     std::transform(lineage.begin(), lineage.end(), lineage.begin(), ::tolower);
     for (auto const &contaminant:contams) {
@@ -489,6 +499,9 @@ std::string SimilaritySearch::get_species(std::string &title) {
         if (boost::regex_search(title, match, ncbi_exp))
             species = std::string(match[1].first, match[1].second);
     }
+    // Double bracket fix
+    if (species[0] == '[') species = species.substr(1);
+    if (species[species.length()-1] == ']') species = species.substr(0,species.length()-1);
     return species;
 }
 

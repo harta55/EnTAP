@@ -14,8 +14,8 @@
 
 class SimilaritySearch {
 public:
-    std::list<std::string> execute(std::string, bool);
-    SimilaritySearch(std::list<std::string>&, std::string, int, std::string, std::string,
+    std::vector<std::string> execute(std::string, bool);
+    SimilaritySearch(std::vector<std::string>&, std::string, int, std::string, std::string,
                      std::string,boost::program_options::variables_map &);
     std::pair<std::string,std::string> parse_files(std::string,std::map<std::string, QuerySequence>&);
 private:
@@ -38,16 +38,16 @@ private:
     const std::string SIM_SEARCH_RESULTS_DIR = "similarity_search/results";
     const std::string SIM_SEARCH_COMPILED_PATH = "similarity_search/results/_overall";
 
-    std::list<std::string> _database_paths, _sim_search_paths;
+    std::vector<std::string> _database_paths, _sim_search_paths;
     std::string _diamond_exe, _outpath, _input_path, _entap_exe, _input_lineage,_input_species,
         _blast_type;
     int _threads; bool _overwrite,_blastp;
     double _e_val, _coverage;
     short _software_flag;
     std::vector<std::string> _contaminants;
-    std::list<std::string> diamond();
+    std::vector<std::string> diamond();
     void diamond_blast(std::string, std::string, std::string,std::string&,int&, std::string&);
-    std::list<std::string> verify_diamond_files(std::string&, std::string);
+    std::vector<std::string> verify_diamond_files(std::string&, std::string);
     std::pair<std::string,std::string> diamond_parse(std::vector<std::string>&,
                                                      std::map<std::string, QuerySequence>&);
     std::unordered_map<std::string, std::string> read_tax_map();

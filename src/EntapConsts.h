@@ -64,7 +64,7 @@ namespace ENTAP_CONFIG {
     const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";
     const std::string BIN_PATH = "bin/";
 
-    const std::string ENTAP_VERSION = "0.5.3";
+    const std::string ENTAP_VERSION = "0.5.3.1";
 
 
     const double E_VALUE = 1e-5;

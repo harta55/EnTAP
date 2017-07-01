@@ -149,8 +149,6 @@ namespace entapInit {
         }
         const std::string GO_TERM_FILE = "term.txt";
         const std::string GO_GRAPH_FILE = "graph_path.txt";
-        const std::string GO_DATABASE_FTP =
-                "http://archive.geneontology.org/latest-full/go_monthly-termdb-tables.tar.gz";
         const std::string GO_DATA_NAME = "go_monthly-termdb-tables.tar.gz";
         const std::string GO_DIR = "go_monthly-termdb-tables/";
         std::string go_database_zip = database_path + "/" + GO_DATA_NAME;

@@ -27,19 +27,18 @@ namespace entapExecute {
         EXIT
     };
 
-    std::list<std::string> verify_databases(std::vector<std::string>, std::vector<std::string>,
+    std::vector<std::string> verify_databases(std::vector<std::string>, std::vector<std::string>,
                                             std::vector<std::string>, std::string &,
                                             std::unordered_map<std::string, std::string> &);
 
     void execute_main(boost::program_options::variables_map &, std::string,
                       std::unordered_map<std::string, std::string> &);
-    std::string filter_transcriptome(std::string &, bool);
+    std::string filter_transcriptome(std::string &);
     void verify_state(std::queue<char> &, bool &);
-    bool is_file_empty(std::string);
     bool valid_state(enum ExecuteStates);
     std::string init_exe_paths(std::unordered_map<std::string, std::string> &, std::string &);
     void print_statistics(std::string &, std::string &);
-    std::map<std::string, QuerySequence> init_sequence_map(std::string&);
+    std::map<std::string, QuerySequence> init_sequence_map(std::string&,bool);
     std::pair<unsigned long, unsigned long> calculate_N_vals
             (std::vector<unsigned long> &, unsigned long);
 }

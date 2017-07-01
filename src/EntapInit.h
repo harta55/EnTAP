@@ -22,6 +22,10 @@ namespace entapInit {
             ar&term;
         }
     };
+
+    const std::string GO_DATABASE_FTP =
+            "http://archive.geneontology.org/latest-full/go_monthly-termdb-tables.tar.gz";
+
     bool file_exists (const std::string& name);
     void print_msg(std::string msg);
     void init_entap(boost::program_options::variables_map, std::string,

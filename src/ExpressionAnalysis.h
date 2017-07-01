@@ -23,6 +23,7 @@ private:
     short _software_flag;
     std::string rsem(std::map<std::string, QuerySequence>&);
     std::string rsem_filter(std::string&,std::map<std::string, QuerySequence>&);
+    bool is_file_empty(std::string);
 };
 
 

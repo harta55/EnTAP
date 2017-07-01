@@ -19,7 +19,7 @@
 
 namespace boostFS = boost::filesystem;
 
-SimilaritySearch::SimilaritySearch(std::list<std::string> &databases, std::string input,
+SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::string input,
                            int threads, std::string exe, std::string out,std::string entap_exe,
                            boost::program_options::variables_map &user_flags) {
     _database_paths = databases;
@@ -53,7 +53,7 @@ SimilaritySearch::SimilaritySearch(std::list<std::string> &databases, std::strin
     _software_flag = 0;
 }
 
-std::list<std::string> SimilaritySearch::execute(std::string updated_input,bool blast) {
+std::vector<std::string> SimilaritySearch::execute(std::string updated_input,bool blast) {
     this->_input_path = updated_input;
     this->_blastp = blast;
     _blastp ? _blast_type = "blastp" : _blast_type = "blastx";
@@ -80,11 +80,11 @@ std::pair<std::string,std::string> SimilaritySearch::parse_files(std::string new
     } catch (ExceptionHandler &e) {throw e;}
 }
 
-std::list<std::string> SimilaritySearch::diamond() {
+std::vector<std::string> SimilaritySearch::diamond() {
     // not always known (depending on starting state)
     entapInit::print_msg("Beginning to execute DIAMOND...");
     std::string diamond_out = _outpath + ENTAP_CONFIG::SIM_SEARCH_OUT_PATH;
-    std::list<std::string> out_paths;
+    std::vector<std::string> out_paths;
     if (!entapInit::file_exists(_input_path)) {
         throw ExceptionHandler("Transcriptome file not found",ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
     }
@@ -114,9 +114,7 @@ std::list<std::string> SimilaritySearch::diamond() {
             entapInit::print_msg("Success! Results written to " + out_path);
             out_paths.push_back(out_path);
         }
-    } catch (ExceptionHandler &e) {
-        throw ExceptionHandler(e.what(), e.getErr_code());
-    }
+    } catch (const ExceptionHandler &e) {throw e;}
     _sim_search_paths = out_paths;
     return out_paths;
 }
@@ -133,10 +131,10 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
     }
 }
 
-std::list<std::string> SimilaritySearch::verify_diamond_files(std::string &outpath, std::string name) {
+std::vector<std::string> SimilaritySearch::verify_diamond_files(std::string &outpath, std::string name) {
     entapInit::print_msg("Override unselected, checking for diamond files"
                                  " of selected databases...");
-    std::list<std::string> out_list;
+    std::vector<std::string> out_list;
     for (std::string data_path : _database_paths) {
         // assume all paths should be .dmnd
         boostFS::path file_name(data_path);

@@ -82,7 +82,7 @@ std::string ExpressionAnalysis::rsem(std::map<std::string, QuerySequence>& MAP) 
             throw ExceptionHandler("Error in validating sam file", ENTAP_ERR::E_INIT_TAX_READ);
         }
         // RSEM does not return error code if file is invalid, only seen in .err
-        if (!entapExecute::is_file_empty(out_path+".err")) {
+        if (!is_file_empty(out_path+".err")) {
             throw ExceptionHandler("Alignment file invalid!", ENTAP_ERR::E_INIT_TAX_READ);
         }
         entapInit::print_msg("Alignment file valid. Converting to BAM");
@@ -94,7 +94,7 @@ std::string ExpressionAnalysis::rsem(std::map<std::string, QuerySequence>& MAP) 
             // execution error, dif from conversion error
             throw ExceptionHandler("Error in converting sam file", ENTAP_ERR::E_INIT_TAX_READ);
         }
-        if (!entapExecute::is_file_empty(out_path+".err")) {
+        if (!is_file_empty(out_path+".err")) {
             throw ExceptionHandler("Error in converting sam file", ENTAP_ERR::E_INIT_TAX_READ);
         }
         _alignpath = bam_out + ".bam";
@@ -106,7 +106,7 @@ std::string ExpressionAnalysis::rsem(std::map<std::string, QuerySequence>& MAP) 
         if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
             throw ExceptionHandler("Error in validating bam file", ENTAP_ERR::E_INIT_TAX_READ);
         }
-        if (!entapExecute::is_file_empty(out_path+".err")) {
+        if (!is_file_empty(out_path+".err")) {
             throw ExceptionHandler("Alignment file invalid!", ENTAP_ERR::E_INIT_TAX_READ);
         }
         entapInit::print_msg("Alignment file valid. Continuing...");
@@ -192,3 +192,9 @@ std::string ExpressionAnalysis::rsem_filter(std::string &results_path,
                          out_removed);
     return out_path;
 }
+
+bool ExpressionAnalysis::is_file_empty(std::string path) {
+    std::ifstream ifstream(path);
+    return ifstream.peek() == std::ifstream::traits_type::eof();
+}
+

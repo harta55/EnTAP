@@ -464,15 +464,15 @@ std::pair<bool,std::string> SimilaritySearch::is_contaminant(std::string species
     if (database.find(species) != database.end()) {
         lineage = database[species];
     } else {
-        unsigned long prev_index = 0;
+        std::string temp_species = species;
         while (true) {
-            prev_index = species.find(" ",prev_index);
-            if (prev_index == std::string::npos)break;
-            if (database.find(species.substr(0,prev_index)) != database.end()) {
-                lineage = database[species];
+            unsigned long index = temp_species.find_last_of(" ");
+            if (index == std::string::npos)break;
+            temp_species = temp_species.substr(0,index);
+            if (database.find(temp_species) != database.end()) {
+                lineage = database[temp_species];
                 break;
             }
-            prev_index++;
         }
         if (lineage.empty()) return std::pair<bool,std::string>(false,"");
     }

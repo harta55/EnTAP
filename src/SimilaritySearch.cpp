@@ -461,7 +461,7 @@ std::pair<bool,std::string> SimilaritySearch::is_contaminant(std::string species
     std::transform(species.begin(), species.end(), species.begin(), ::tolower);
     std::string lineage = "";
     if (contams.empty()) return std::pair<bool,std::string>(false,"");
-    if (database.find(species) != database.end()) {
+    if (database.find(species) != database.end() && !database.at(species).empty()) {
         lineage = database[species];
     } else {
         std::string temp_species = species;

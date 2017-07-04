@@ -539,8 +539,9 @@ std::string SimilaritySearch::get_lineage(std::string species,
                                           std::unordered_map<std::string, std::string>&database) {
     std::transform(species.begin(), species.end(), species.begin(), ::tolower);
     std::string lineage;
-    lineage = database[species];
-    if (lineage.empty()) return "";
+    if (database.find(species) != database.end()) {
+        lineage = database[species];
+    } else return "";
     if (lineage.find("||") != std::string::npos) {
         return lineage.substr(lineage.find("||")+2);
     } else return "";

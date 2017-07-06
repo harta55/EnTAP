@@ -41,6 +41,10 @@ namespace entapExecute {
     std::string             _log_path;
     short                   _ontology_flag;
     bool                    _isProtein;
+    bool                    _EXPRESSION_SUCCESS;
+    bool                    _FRAME_SELETION_SUCCESS;
+    bool                    _SIM_SEARCH_SUCCESS;
+    bool                    _ONTOLOGY_SUCCESS;
 
     void execute_main(boost::program_options::variables_map &user_input, std::string exe_path,
                       std::unordered_map<std::string, std::string> &config_map) {
@@ -62,6 +66,10 @@ namespace entapExecute {
         state = INIT;
         state_flag = false;
         blastp = false;
+        _EXPRESSION_SUCCESS = false;
+        _FRAME_SELETION_SUCCESS = false;
+        _SIM_SEARCH_SUCCESS = false;
+        _ONTOLOGY_SUCCESS = false;
 
         input_path = user_input["input"].as<std::string>();
         threads = entapInit::get_supported_threads(user_input);
@@ -111,14 +119,20 @@ namespace entapExecute {
                         entapInit::print_msg("STATE - FRAME SELECTION");
                         if (_isProtein) {
                             entapInit::print_msg("Protein sequences input, skipping frame selection");
-                        } else input_path = genemark.execute(input_path,SEQUENCE_MAP);
+                        } else {
+                            input_path = genemark.execute(input_path,SEQUENCE_MAP);
+                            _FRAME_SELETION_SUCCESS = true;
+                        }
                         blastp = true;
                         break;
                     case RSEM:
                         entapInit::print_msg("STATE - EXPRESSION");
                         if (!user_input.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
                             entapInit::print_msg("No alignment file specified, skipping expression analysis");
-                        } else input_path = rsem.execute(input_path,SEQUENCE_MAP);
+                        } else {
+                            input_path = rsem.execute(input_path,SEQUENCE_MAP);
+                            _EXPRESSION_SUCCESS = true;
+                        }
                         break;
                     case FILTER:
                         input_path = filter_transcriptome(input_path);
@@ -126,6 +140,7 @@ namespace entapExecute {
                     case DIAMOND_RUN:
                         entapInit::print_msg("STATE - SIM SEARCH RUN");
                         diamond.execute(input_path, blastp);
+                        _SIM_SEARCH_SUCCESS = true;
                         break;
                     case DIAMOND_PARSE:
                         entapInit::print_msg("STATE - SIM SEARCH PARSE");
@@ -136,6 +151,7 @@ namespace entapExecute {
                     case GENE_ONTOLOGY:
                         entapInit::print_msg("STATE - GENE ONTOLOGY");
                         ontology.execute(SEQUENCE_MAP,input_path,no_database_hits);
+                        _ONTOLOGY_SUCCESS = true;
                         break;
                     default:
                         state = EXIT;
@@ -143,6 +159,8 @@ namespace entapExecute {
                 }
                 verify_state(state_queue, state_flag);
             }
+            final_statistics(SEQUENCE_MAP);
+
         } catch (ExceptionHandler &e) {throw e; }
     }
 
@@ -283,8 +301,6 @@ namespace entapExecute {
         entapInit::print_msg("Processing transcriptome...");
 
         std::map<std::string, QuerySequence>            seq_map;
-
-
 
         if (!entapInit::file_exists(input_file)) {
             throw ExceptionHandler("Input file not found at: " +
@@ -498,5 +514,133 @@ namespace entapExecute {
 
     bool valid_state(ExecuteStates s) {
         return (s >= RSEM && s <= EXIT);
+    }
+
+    void final_statistics(std::map<std::string, QuerySequence> &SEQUENCE_MAP) {
+        entapInit::print_msg("Pipeline finished! Calculating final statistics...");
+
+        std::stringstream           ss;
+        unsigned int                count_total_sequences=0;
+        unsigned int                count_exp_kept=0;
+        unsigned int                count_exp_reject=0;
+        unsigned int                count_frame_kept=0;
+        unsigned int                count_frame_rejected=0;
+        unsigned int                count_sim_hits=0;
+        unsigned int                count_sim_no_hits=0;
+        unsigned int                count_ontology=0;
+        unsigned int                count_no_ontology=0;
+        unsigned int                count_one_go=0;
+        unsigned int                count_one_kegg=0;
+        unsigned int                count_sim_only=0;
+        unsigned int                count_ontology_only=0;
+        unsigned int                count_TOTAL_ann=0;
+        unsigned int                count_TOTAL_unann=0;
+        std::string                 out_unannotated_nucl_path;
+        std::string                 out_unannotated_prot_path;
+        std::string                 out_annotated_nucl_path;
+        std::string                 out_annotated_prot_path;
+
+        out_unannotated_nucl_path = _outpath + OUT_UNANNOTATED_NUCL;
+        out_unannotated_prot_path = _outpath + OUT_UNANNOTATED_PROT;
+        out_annotated_nucl_path = _outpath + OUT_ANNOTATED_NUCL;
+        out_annotated_prot_path = _outpath + OUT_ANNOTATED_PROT;
+
+        // Switch to entap_out dir
+        boostFS::remove(out_unannotated_nucl_path);
+        boostFS::remove(out_unannotated_prot_path);
+        boostFS::remove(out_annotated_nucl_path);
+        boostFS::remove(out_annotated_prot_path);
+
+        std::ofstream file_unannotated_nucl(out_unannotated_nucl_path, std::ios::out | std::ios::app);
+        std::ofstream file_unannotated_prot(out_unannotated_prot_path, std::ios::out | std::ios::app);
+        std::ofstream file_annotated_nucl(out_annotated_nucl_path, std::ios::out | std::ios::app);
+        std::ofstream file_annotated_prot(out_annotated_prot_path, std::ios::out | std::ios::app);
+
+        for (auto &pair : SEQUENCE_MAP) {
+            count_total_sequences++;
+            bool is_exp_kept = pair.second.is_is_expression_kept();
+            bool is_prot = pair.second.isIs_protein();
+            bool is_hit = pair.second.is_is_database_hit();
+            bool is_ontology = pair.second.is_is_family_assigned(); // TODO Fix for interpro
+            bool is_one_go = pair.second.is_is_one_go();
+            bool is_one_kegg = pair.second.is_is_one_kegg();
+
+            is_exp_kept ? count_exp_kept++ : count_exp_reject++;
+            is_prot ? count_frame_kept++ : count_frame_rejected++;
+            is_hit ? count_sim_hits++ : count_sim_no_hits++;
+            is_ontology ? count_ontology++ : count_no_ontology++;
+            if (is_one_go) count_one_go++;
+            if (is_one_kegg) count_one_kegg++;
+
+            if (is_hit && !is_ontology) count_sim_only++;
+            if (!is_hit && is_ontology) count_ontology_only++;
+
+            if (is_hit || is_ontology) {
+                // Is annotated
+                count_TOTAL_ann++;
+                if (!pair.second.get_sequence_n().empty())
+                    file_annotated_nucl<<pair.second.get_sequence_n()<<std::endl;
+                file_annotated_prot<<pair.second.get_sequence_p()<<std::endl;
+            } else {
+                // Not annotated
+                if (!pair.second.get_sequence_p().empty())
+                    file_unannotated_nucl<<pair.second.get_sequence_p()<<std::endl;
+                file_unannotated_prot<<pair.second.get_sequence_p()<<std::endl;
+                count_TOTAL_unann++;
+            }
+        }
+
+        file_unannotated_nucl.close();file_unannotated_prot.close();
+        file_annotated_nucl.close();file_annotated_prot.close();
+
+        ss <<
+           ENTAP_STATS::SOFTWARE_BREAK <<
+           "Overall Statistics\n"      <<
+           ENTAP_STATS::SOFTWARE_BREAK <<
+           "Total Sequences: " << count_total_sequences;
+
+        if (_EXPRESSION_SUCCESS) {
+            ss <<
+               "\nExpression Analysis" <<
+               "\n\tKept sequences: "  << count_exp_kept    <<
+               "\n\tLost sequences: "  << count_exp_reject;
+        }
+        if (_FRAME_SELETION_SUCCESS) {
+            ss <<
+               "\nFrame Selection"    <<
+               "\n\tKept sequences: " << count_frame_kept     <<
+               "\n\tLost sequences: " << count_frame_rejected;
+        }
+        if (_SIM_SEARCH_SUCCESS) {
+            ss <<
+               "\nSimilarity Search" <<
+               "\n\tTotal hits: "    << count_sim_hits <<
+               "\n\tNo hits: "       << count_sim_no_hits;
+        }
+        if (_ONTOLOGY_SUCCESS) {
+            switch (_ontology_flag) {
+                case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
+                    ss <<
+                       "\nGene Families"        <<
+                       "\n\tTotal sequences with family assignment: "    << count_ontology   <<
+                       "\n\tTotal sequences without family assignment: " << count_no_ontology<<
+                       "\n\tTotal sequences with at least one GO term: " << count_one_go     <<
+                       "\n\tTotal sequences with at least one pathway (KEGG) assignment: "<< count_one_kegg;
+                    break;
+                case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
+                    break;
+                default:
+                    break;
+            }
+        }
+        ss <<
+           "\nTotals"   <<
+           "\n\tTotal annotated (similarity search only): "     << count_sim_only      <<
+           "\n\tTotal annotated (ontology only): "              << count_ontology_only <<
+           "\n\tTotal annotated (either): "                     << count_TOTAL_ann     <<
+           "\n\tTotal unannotated (either): "                   << count_TOTAL_unann;
+
+        std::string out_msg = ss.str();
+        print_statistics(out_msg,_outpath);
     }
 }

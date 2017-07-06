@@ -50,21 +50,54 @@ public:
     const std::string &get_sequence_n() const;
     void set_sequence_n(const std::string &_sequence_n);
     const std::string &get_sequence() const;
-
+    void setIs_protein(bool is_protein);
+    bool is_is_database_hit() const;
+    bool is_is_family_assigned() const;
+    void set_is_family_assigned(bool _is_family_assigned);
+    bool is_is_one_go() const;
+    void set_is_one_go(bool _is_one_go);
+    bool is_is_one_kegg() const;
+    void set_is_one_kegg(bool _is_one_kegg);
+    bool is_is_expression_kept() const;
+    void set_is_expression_kept(bool _is_expression_kept);
 
 private:
-    friend std::ostream& operator<<(std::ostream& , const QuerySequence&);
-    bool _contaminant, is_protein, is_better_hit, _is_informative, _is_database_hit;
-    std::vector<std::string> _go_terms, _kegg_terms;
-    int _tax_id,_length, _mismatch, _gapopen, _qstart, _qend, _sstart, _send, _tax_score;
-    double _pident,_bit_score, _e_val, _coverage;
-    unsigned long _seq_length;
+
+    bool                              _contaminant;
+    bool                              is_protein;
+    bool                              is_better_hit;
+    bool                              _is_informative;
+    bool                              _is_database_hit;
+    bool                              _is_family_assigned;
+    bool                              _is_one_go;
+    bool                              _is_one_kegg;
+    bool                              _is_expression_kept;
+    int                               _tax_id;
+    int                               _length;
+    int                               _mismatch;
+    int                               _gapopen;
+    int                               _qstart;
+    int                               _qend;
+    int                               _sstart;
+    int                               _send;
+    int                               _tax_score;
+    unsigned long                     _seq_length;
+    double                            _pident;
+    double                            _bit_score;
+    double                            _e_val;
+    double                            _coverage;
+    std::map<std::string,std::string> _ontology_results;
+    std::vector<std::string>          _go_terms;
+    std::vector<std::string>          _kegg_terms;
+    go_struct                         _go_parsed;
+
+    //TODO switch to map of sim search results
     std::string _database_path, _qseqid,_sseqid, _stitle, _species, _sequence_p, _sequence_n, _frame, _contam_type,
             _seed_ortho,_seed_eval,_seed_score,_predicted_gene,_tax_scope, _ogs,_go_str,_kegg_str,
             _lineage;
-    go_struct _go_parsed;
+
+    friend std::ostream& operator<<(std::ostream& , const QuerySequence&);
     void init_sequence();
-    std::map<std::string,std::string> _ontology_results;
     unsigned long calc_seq_length(std::string &,bool);
 };
 

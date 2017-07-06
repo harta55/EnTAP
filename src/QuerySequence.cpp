@@ -293,6 +293,11 @@ void QuerySequence::init_sequence() {
     _coverage = 0;
     _sequence_p = "";
     _sequence_n = "";
+    _is_family_assigned = false;
+    _is_one_go = false;
+    _is_one_kegg = false;
+    _is_database_hit = false;
+    _is_expression_kept = false;
 }
 
 void QuerySequence::set_ontology_results(std::map<std::string, std::string> map) {
@@ -311,4 +316,44 @@ void QuerySequence::set_tax_score(int _tax_score) {
 const std::string &QuerySequence::get_sequence() const {
     if (_sequence_n.empty()) return _sequence_p;
     return _sequence_n;
+}
+
+void QuerySequence::setIs_protein(bool is_protein) {
+    QuerySequence::is_protein = is_protein;
+}
+
+bool QuerySequence::is_is_database_hit() const {
+    return _is_database_hit;
+}
+
+bool QuerySequence::is_is_family_assigned() const {
+    return _is_family_assigned;
+}
+
+void QuerySequence::set_is_family_assigned(bool _is_family_assigned) {
+    QuerySequence::_is_family_assigned = _is_family_assigned;
+}
+
+bool QuerySequence::is_is_one_go() const {
+    return _is_one_go;
+}
+
+void QuerySequence::set_is_one_go(bool _is_one_go) {
+    QuerySequence::_is_one_go = _is_one_go;
+}
+
+bool QuerySequence::is_is_one_kegg() const {
+    return _is_one_kegg;
+}
+
+void QuerySequence::set_is_one_kegg(bool _is_one_kegg) {
+    QuerySequence::_is_one_kegg = _is_one_kegg;
+}
+
+bool QuerySequence::is_is_expression_kept() const {
+    return _is_expression_kept;
+}
+
+void QuerySequence::set_is_expression_kept(bool _is_expression_kept) {
+    QuerySequence::_is_expression_kept = _is_expression_kept;
 };

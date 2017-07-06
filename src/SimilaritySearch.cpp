@@ -205,14 +205,14 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
             new_query.setIs_better_hit(true);
             std::string species = get_species(stitle);
             new_query.setSpecies(species);
-            std::pair<bool,std::string> contam_info = is_contaminant(species, taxonomic_database,contams);
+            std::string lineage = get_lineage(species,taxonomic_database);
+            new_query.set_lineage(lineage);
+            std::pair<bool,std::string> contam_info = is_contaminant(lineage, taxonomic_database,contams);
             new_query.setContaminant(contam_info.first);
             new_query.set_contam_type(contam_info.second);
             bool informative = is_informative(stitle);
             new_query.set_is_informative(informative);
             new_query.setFrame(SEQUENCES[qseqid].getFrame());  // May want to handle differently, SLOW
-            std::string lineage = get_lineage(species,taxonomic_database);
-            new_query.set_lineage(lineage);
             new_query.set_tax_score(calculate_score(lineage,informative));
             if (evalue > _e_val) {
                 count_under_e++; count_removed++;
@@ -337,6 +337,10 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
             if (is_final) {
                 // TODO fix combining objects, move to class
                 it->second.setSeq_length(pair.second.getSeq_length());
+                it->second.set_sequence_n(pair.second.get_sequence_n());
+                it->second.set_sequence_p(pair.second.get_sequence_p());
+                it->second.setIs_protein(pair.second.isIs_protein());
+                it->second.set_is_expression_kept(pair.second.is_is_expression_kept());
                 pair.second = it->second;
             }
         }
@@ -455,27 +459,10 @@ std::unordered_map<std::string, std::string> SimilaritySearch::read_tax_map() {
     return restored_map;
 }
 
-std::pair<bool,std::string> SimilaritySearch::is_contaminant(std::string species, std::unordered_map<std::string, std::string> &database,
+std::pair<bool,std::string> SimilaritySearch::is_contaminant(std::string lineage, std::unordered_map<std::string, std::string> &database,
                     std::vector<std::string> &contams) {
     // species and tax database both lowercase
-    std::transform(species.begin(), species.end(), species.begin(), ::tolower);
-    std::string lineage = "";
     if (contams.empty()) return std::pair<bool,std::string>(false,"");
-    if (database.find(species) != database.end() && !database.at(species).empty()) {
-        lineage = database[species];
-    } else {
-        std::string temp_species = species;
-        while (true) {
-            unsigned long index = temp_species.find_last_of(" ");
-            if (index == std::string::npos)break;
-            temp_species = temp_species.substr(0,index);
-            if (database.find(temp_species) != database.end()) {
-                lineage = database[temp_species];
-                break;
-            }
-        }
-        if (lineage.empty()) return std::pair<bool,std::string>(false,"");
-    }
     std::transform(lineage.begin(), lineage.end(), lineage.begin(), ::tolower);
     for (auto const &contaminant:contams) {
         if (lineage.find(contaminant) != std::string::npos){
@@ -538,13 +525,24 @@ void SimilaritySearch::print_header(std::string file) {
 std::string SimilaritySearch::get_lineage(std::string species,
                                           std::unordered_map<std::string, std::string>&database) {
     std::transform(species.begin(), species.end(), species.begin(), ::tolower);
-    std::string lineage;
-    if (database.find(species) != database.end()) {
+    std::string lineage = "";
+    if (database.find(species) != database.end() && !database.at(species).empty()) {
         lineage = database[species];
-    } else return "";
+    } else {
+        std::string temp_species = species;
+        while (true) {
+            unsigned long index = temp_species.find_last_of(" ");
+            if (index == std::string::npos)break;
+            temp_species = temp_species.substr(0,index);
+            if (database.find(temp_species) != database.end()) {
+                lineage = database[temp_species];
+                break;
+            }
+        }
+    }
     if (lineage.find("||") != std::string::npos) {
         return lineage.substr(lineage.find("||")+2);
-    } else return "";
+    } else return lineage;
 }
 
 int SimilaritySearch::calculate_score(std::string lineage, bool is_informative) {

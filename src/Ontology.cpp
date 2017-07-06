@@ -22,7 +22,6 @@ Ontology::Ontology(int thread, std::string egg_exe, std::string outpath,
     _entap_exe = entap_exe;
     _outpath = outpath;
     _new_input = input;
-    ONTOLOGY_OUT_PATH = "ontology/";
     _is_overwrite = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
     _software_flag = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<short>();
     _go_levels = user_input[ENTAP_CONFIG::INPUT_FLAG_GO_LEVELS].as<std::vector<short>>();
@@ -57,16 +56,33 @@ void Ontology::execute(query_map_struct &SEQUENCES, std::string input,std::strin
  */
 void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::string,std::string>& out) {
     entapInit:: print_msg("Beginning to parse eggnog results...");
-    std::string msg = ENTAP_STATS::SOFTWARE_BREAK + "Ontology - Eggnog\n" +
-                      ENTAP_STATS::SOFTWARE_BREAK;
-    entapExecute::print_statistics(msg, _outpath);
-    std::map<std::string, entapInit::struct_go_term> GO_DATABASE;
+
+    std::stringstream                                   ss;
+    std::string                                         out_msg;
+    std::string                                         out_no_hits_nucl;
+    std::string                                         out_no_hits_prot;
+    std::string                                         out_hit_nucl;
+    std::string                                         out_hit_prot;
+    std::string                                         out_processed_dir;
+    std::map<std::string, entapInit::struct_go_term>    GO_DATABASE;
+    std::map<std::string, int>                          eggnog_map;
+    unsigned int                                        count_total_go_hits=0;
+    unsigned int                                        count_total_go_terms=0;
+    unsigned int                                        count_no_go=0;
+    unsigned int                                        count_no_kegg=0;
+    unsigned int                                        count_TOTAL_hits=0;         // All ortho matches
+    unsigned int                                        count_total_kegg_terms=0;
+    unsigned int                                        count_total_kegg_hits=0;
+    unsigned int                                        count_no_hits=0;            // Unannotated OGs
+
+    out_processed_dir = _outpath + PROCESSED_OUT_DIR;
+    boostFS::remove_all(out_processed_dir);
+    boostFS::create_directories(out_processed_dir);
+
     try {
         GO_DATABASE = read_go_map();
     } catch (ExceptionHandler const &e) {throw e;}
-    std::map<std::string, int> eggnog_map;
-    unsigned int count_total_go_hits=0, count_total_go_terms=0, count_no_go=0,count_no_kegg=0,
-            count_TOTAL_hits=0, count_total_kegg_terms=0, count_total_kegg_hits=0;
+
     for (int i=0; i<2;i++) {
         std::string path;
         i == 0 ? path=out.first : path=out.second;
@@ -86,32 +102,58 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
                 it->second.set_eggnog_results(seed_ortho,seed_e,seed_score,predicted_gene,go_terms,
                                               kegg,tax_scope,ogs);
                 it->second.set_go_parsed(parse_go_list(go_terms,GO_DATABASE,','));
-            }
-            count_TOTAL_hits++;
-            eggnog_map[qseqid] = 1;
-            if (!go_terms.empty()) {
-                count_total_go_hits++;
-                long ct = std::count(go_terms.begin(), go_terms.end(), ',');
-                count_total_go_terms += ct + 1;
-            } else {
-                count_no_go++;
-            }
-            if (!kegg.empty()) {
-                count_total_kegg_hits++;
-                long ct = std::count(kegg.begin(), kegg.end(), ',');
-                count_total_kegg_terms += ct + 1;
-            } else {
-                count_no_kegg++;
+                it->second.set_is_family_assigned(true);
+                count_TOTAL_hits++;
+                eggnog_map[qseqid] = 1;
+                if (!go_terms.empty()) {
+                    count_total_go_hits++;
+                    long ct = std::count(go_terms.begin(), go_terms.end(), ',');
+                    count_total_go_terms += ct + 1;
+                    it->second.set_is_one_go(true);
+                } else {
+                    count_no_go++;
+                }
+                if (!kegg.empty()) {
+                    count_total_kegg_hits++;
+                    long ct = std::count(kegg.begin(), kegg.end(), ',');
+                    count_total_kegg_terms += ct + 1;
+                    it->second.set_is_one_kegg(true);
+                } else {
+                    count_no_kegg++;
+                }
             }
         }
         boostFS::remove(path);
     }
+
+    out_no_hits_nucl = out_processed_dir + OUT_UNANNOTATED_NUCL;
+    out_no_hits_prot = out_processed_dir + OUT_UNANNOTATED_PROT;
+    out_hit_nucl     = out_processed_dir + OUT_ANNOTATED_NUCL;
+    out_hit_prot     = out_processed_dir + OUT_ANNOTATED_PROT;
+    std::ofstream file_no_hits_nucl(out_no_hits_nucl, std::ios::out | std::ios::app);
+    std::ofstream file_no_hits_prot(out_no_hits_prot, std::ios::out | std::ios::app);
+    std::ofstream file_hits_nucl(out_hit_nucl, std::ios::out | std::ios::app);
+    std::ofstream file_hits_prot(out_hit_prot, std::ios::out | std::ios::app);
+
     entapInit::print_msg("Success! Computing overall statistics...");
-    unsigned int count_no_hits=0;
     for (auto &pair : SEQUENCES) {
-        if (eggnog_map.find(pair.first) == eggnog_map.end()) count_no_hits++;
+        if (eggnog_map.find(pair.first) == eggnog_map.end()) {
+            // Unannotated sequence
+            if (!pair.second.get_sequence_n().empty()) file_no_hits_nucl<<pair.second.get_sequence_n()<<std::endl;
+            file_no_hits_prot << pair.second.get_sequence_p() << std::endl;
+            count_no_hits++;
+        } else {
+            // Annotated sequence
+            if (!pair.second.get_sequence_n().empty()) file_hits_nucl<<pair.second.get_sequence_n()<<std::endl;
+            file_hits_prot << pair.second.get_sequence_p() << std::endl;
+        }
     }
-    std::stringstream ss;
+
+    file_hits_nucl.close();file_hits_prot.close();
+    file_no_hits_nucl.close();file_no_hits_prot.close();
+
+    ss << ENTAP_STATS::SOFTWARE_BREAK + "Ontology - Eggnog\n" +
+          ENTAP_STATS::SOFTWARE_BREAK;
     ss <<
        "Statistics for overall Eggnog results: " <<
        "\nTotal sequences with family assignment: " << count_TOTAL_hits <<
@@ -122,8 +164,8 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
        "\nTotal sequences with at least one pathway (KEGG) assignment: " << count_total_kegg_hits<<
        "\nTotal sequences without pathways (KEGG): " << count_no_kegg<<
        "\nTotal pathways (KEGG) assigned: " << count_total_kegg_terms;
-    msg = ss.str();
-    entapExecute::print_statistics(msg,_outpath);
+    out_msg = ss.str();
+    entapExecute::print_statistics(out_msg,_outpath);
     GO_DATABASE.clear();
     entapInit::print_msg("Success!");
     print_eggnog(SEQUENCES);

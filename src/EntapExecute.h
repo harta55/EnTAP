@@ -16,6 +16,12 @@
 
 namespace entapExecute {
 
+
+    const std::string   OUT_UNANNOTATED_NUCL = "final_unannotated.fnn";
+    const std::string   OUT_UNANNOTATED_PROT = "final_unannotated.faa";
+    const std::string   OUT_ANNOTATED_NUCL = "final_annotated.fnn";
+    const std::string   OUT_ANNOTATED_PROT = "final_annotated.faa";
+
     enum ExecuteStates {
         INIT,
         RSEM,
@@ -41,6 +47,7 @@ namespace entapExecute {
     std::map<std::string, QuerySequence> init_sequence_map(std::string&,bool);
     std::pair<unsigned long, unsigned long> calculate_N_vals
             (std::vector<unsigned long> &, unsigned long);
+    void final_statistics(std::map<std::string, QuerySequence>&);
 }
 
 

@@ -23,7 +23,12 @@ public:
              boost::program_options::variables_map &);
 
 private:
-    std::string ONTOLOGY_OUT_PATH;
+    const std::string ONTOLOGY_OUT_PATH = "ontology/";
+    const std::string PROCESSED_OUT_DIR = "ontology/processed/";
+    const std::string OUT_UNANNOTATED_NUCL = "unannotated_sequences.fnn";
+    const std::string OUT_UNANNOTATED_PROT = "unannotated_sequences.faa";
+    const std::string OUT_ANNOTATED_NUCL = "annotated_sequences.fnn";
+    const std::string OUT_ANNOTATED_PROT = "annotated_sequences.faa";
     std::vector<std::string> _HEADERS, _interpro_databases;
     std::vector<short> _go_levels;
     int _threads;

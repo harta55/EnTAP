@@ -172,6 +172,7 @@ std::string ExpressionAnalysis::rsem_filter(std::string &results_path,
     while (in.read_row(geneid, transid, length, e_leng, e_count, tpm, fpkm_val)) {
         if (fpkm_val > _fpkm) {
             out_file << MAP[geneid].get_sequence() << std::endl;
+            MAP[geneid].set_is_expression_kept(true);
             count_kept++;
         } else {
             removed_file << MAP[geneid].get_sequence() << std::endl;

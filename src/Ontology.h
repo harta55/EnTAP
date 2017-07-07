@@ -23,18 +23,25 @@ public:
              boost::program_options::variables_map &);
 
 private:
-    const std::string ONTOLOGY_OUT_PATH = "ontology/";
-    const std::string PROCESSED_OUT_DIR = "ontology/processed/";
-    const std::string OUT_UNANNOTATED_NUCL = "unannotated_sequences.fnn";
-    const std::string OUT_UNANNOTATED_PROT = "unannotated_sequences.faa";
-    const std::string OUT_ANNOTATED_NUCL = "annotated_sequences.fnn";
-    const std::string OUT_ANNOTATED_PROT = "annotated_sequences.faa";
-    std::vector<std::string> _HEADERS, _interpro_databases;
-    std::vector<short> _go_levels;
-    int _threads;
-    short _software_flag;
-    std::string _entap_exe, _ontology_exe, _outpath, _new_input, _input_no_hits;
-    bool _is_overwrite;
+    const std::string ONTOLOGY_OUT_PATH     = "ontology/";
+    const std::string PROCESSED_OUT_DIR     = "ontology/processed/";
+    const std::string OUT_UNANNOTATED_NUCL  = "unannotated_sequences.fnn";
+    const std::string OUT_UNANNOTATED_PROT  = "unannotated_sequences.faa";
+    const std::string OUT_ANNOTATED_NUCL    = "annotated_sequences.fnn";
+    const std::string OUT_ANNOTATED_PROT    = "annotated_sequences.faa";
+
+    std::vector<short>              _go_levels;
+    int                             _threads;
+    short                           _software_flag;
+    bool                            _is_overwrite;
+    std::string                     _entap_exe;
+    std::string                     _ontology_exe;
+    std::string                     _outpath;
+    std::string                     _new_input;
+    std::string                     _input_no_hits;
+    std::vector<std::string>        _HEADERS;
+    std::vector<std::string>        _interpro_databases;
+
     void parse_results_eggnog(query_map_struct&,std::pair<std::string,std::string>&);
     void run_eggnog(query_map_struct&);
     void run_interpro(query_map_struct&,std::vector<std::string>&);

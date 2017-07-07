@@ -28,7 +28,7 @@ SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::str
     _diamond_exe = exe;
     _outpath = out;
     _entap_exe = entap_exe;
-    _input_species;
+    _input_species = "";
     if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_SPECIES)) {
         _input_species = user_flags[ENTAP_CONFIG::INPUT_FLAG_SPECIES].as<std::string>();
         std::transform(_input_species.begin(), _input_species.end(), _input_species.begin(), ::tolower);
@@ -524,6 +524,7 @@ void SimilaritySearch::print_header(std::string file) {
 
 std::string SimilaritySearch::get_lineage(std::string species,
                                           std::unordered_map<std::string, std::string>&database) {
+    if (species.empty()) return "";
     std::transform(species.begin(), species.end(), species.begin(), ::tolower);
     std::string lineage = "";
     if (database.find(species) != database.end() && !database.at(species).empty()) {

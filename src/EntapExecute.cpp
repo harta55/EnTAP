@@ -38,7 +38,6 @@ namespace entapExecute {
     std::string             _outpath;
     std::string             _entap_outpath;
     std::string             _ontology_exe;
-    std::string             _log_path;
     short                   _ontology_flag;
     bool                    _isProtein;
     bool                    _EXPRESSION_SUCCESS;
@@ -81,7 +80,6 @@ namespace entapExecute {
         _outpath = working_dir.string() + "/" + user_input["tag"].as<std::string>() + "/";
         _entap_outpath = _outpath + ENTAP_EXECUTE::ENTAP_OUTPUT;
         boostFS::create_directories(_entap_outpath);
-        _log_path = _outpath + ENTAP_CONFIG::LOG_FILENAME;
 
         // init_databases
         if (user_input.count("database")) {
@@ -297,27 +295,36 @@ namespace entapExecute {
 
     std::map<std::string, QuerySequence> init_sequence_map(std::string &input_file,
                                                            bool is_complete) {
-        std::stringstream out_msg;out_msg<<std::fixed<<std::setprecision(2);
         entapInit::print_msg("Processing transcriptome...");
 
-        std::map<std::string, QuerySequence>            seq_map;
+        std::stringstream                        out_msg;
+        std::map<std::string, QuerySequence>     seq_map;
+        std::string                              line;
+        std::string                              sequence;
+        std::string                              seq_id;
+        std::string                              longest_seq;
+        std::string                              shortest_seq;
+        unsigned long                            count_seqs=0;
+        unsigned long                            total_len=0;
+        unsigned long                            shortest_len=10000;
+        unsigned long                            longest_len=0;
+        double                                   avg_len;
+        std::vector<unsigned long>               sequence_lengths;
+        std::pair<unsigned long, unsigned long>  n_vals;
+
 
         if (!entapInit::file_exists(input_file)) {
             throw ExceptionHandler("Input file not found at: " +
                 input_file,ENTAP_ERR::E_INPUT_PARSE);
         }
-        out_msg << ENTAP_STATS::SOFTWARE_BREAK
-                << "Transcriptome Statistics\n"
-                << ENTAP_STATS::SOFTWARE_BREAK;
+
         boostFS::path path(input_file);
         std::string out_name = path.filename().string();
         std::string out_new_path = _outpath + ENTAP_EXECUTE::ENTAP_OUTPUT + out_name;
         boostFS::remove(out_new_path);
         std::ifstream in_file(input_file);
         std::ofstream out_file(out_new_path,std::ios::out | std::ios::app);
-        std::string line, sequence, seq_id, longest_seq, shortest_seq;
-        unsigned long count_seqs=0, total_len=0,shortest_len = 10000, longest_len = 0;
-        std::vector<unsigned long> sequence_lengths;
+
         while (true) {
             std::getline(in_file, line);
             if (line.empty() && !in_file.eof()) continue;
@@ -348,10 +355,15 @@ namespace entapExecute {
             }
         }
         in_file.close(); out_file.close();
-        double avg_len = total_len / count_seqs;
+        avg_len = total_len / count_seqs;
         // first - n50, second - n90
-        std::pair<unsigned long, unsigned long> n_vals =
-                calculate_N_vals(sequence_lengths, total_len);
+        n_vals = calculate_N_vals(sequence_lengths, total_len);
+
+        out_msg<<std::fixed<<std::setprecision(2);
+        out_msg << ENTAP_STATS::SOFTWARE_BREAK
+                << "Transcriptome Statistics\n"
+                << ENTAP_STATS::SOFTWARE_BREAK;
+
         out_msg <<
                 "Total sequences: "                            << count_seqs    <<
                 "\nTotal length of transcriptome(bp): "        << total_len     <<

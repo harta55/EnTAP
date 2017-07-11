@@ -491,6 +491,7 @@ std::string SimilaritySearch::get_species(std::string &title) {
 }
 
 bool SimilaritySearch::is_informative(std::string title) {
+    std::transform(title.begin(),title.end(),title.begin(),::tolower);
     for (std::string item : ENTAP_EXECUTE::INFORMATIVENESS) {
         std::transform(item.begin(),item.end(),item.begin(),::tolower);
         if (title.find(item) != std::string::npos) return false;
@@ -548,7 +549,7 @@ std::string SimilaritySearch::get_lineage(std::string species,
 
 int SimilaritySearch::calculate_score(std::string lineage, bool is_informative) {
     int score = 0;
-    if (is_informative) score += 4;
+    if (is_informative) score += 5;
     std::string temp;
     size_t p = 0;std::string del = "; ";
     while ((p = lineage.find("; "))!=std::string::npos) {

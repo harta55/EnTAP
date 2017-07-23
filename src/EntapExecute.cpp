@@ -19,6 +19,7 @@
 #include "ExpressionAnalysis.h"
 #include "SimilaritySearch.h"
 #include "Ontology.h"
+#include "GraphingManager.h"
 #include <string>
 #include <boost/regex.hpp>
 #include <boost/filesystem/path.hpp>
@@ -101,9 +102,9 @@ namespace entapExecute {
             init_exe_paths(config_map, exe_path);
             verify_state(state_queue, state_flag);
             SEQUENCE_MAP = init_sequence_map(input_path, is_complete);
-
+            GraphingManager graphingManager = GraphingManager(ENTAP_EXECUTE::GRAPH_FILEPATH);
             FrameSelection genemark = FrameSelection(input_path, _frame_selection_exe,
-                                                     _outpath, user_input);
+                                                     _outpath, user_input, &graphingManager);
             ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads, _expression_exe,
                                                          _outpath, user_input);
             SimilaritySearch diamond = SimilaritySearch(databases, input_path, threads,
@@ -122,6 +123,7 @@ namespace entapExecute {
                             _FRAME_SELETION_SUCCESS = true;
                         }
                         blastp = true;
+                        exit(0);
                         break;
                     case RSEM:
                         entapInit::print_msg("STATE - EXPRESSION");
@@ -333,7 +335,7 @@ namespace entapExecute {
             if (line.find(">") == 0 || in_file.eof()) {
                 if (!seq_id.empty()) {
                     QuerySequence query_seq = QuerySequence(_isProtein,sequence);
-                    if (is_complete) query_seq.setFrame(ENTAP_EXECUTE::FRAME_SELECTION_COMPLETE_FLAG);
+                    if (is_complete) query_seq.setFrame("Complete");
                     query_seq.setQseqid(seq_id);
                     seq_map.emplace(seq_id, query_seq);
                     count_seqs++;

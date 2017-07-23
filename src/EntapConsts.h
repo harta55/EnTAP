@@ -9,34 +9,33 @@
 
 // TODO temporary, change
 namespace ENTAP_ERR {
-    const int E_INPUT_PARSE = 10;
-    const int E_SUCCESS = 11;
-    const int E_CONFIG_PARSE = 12;
-    const int E_CONFIG_CREATE = 13;
-    const int E_INIT_TAX_DOWN = 20;
-    const int E_INIT_TAX_INDEX = 21;
-    const int E_INIT_TAX_SERIAL = 22;
-    const int E_INIT_INDX_DATA_NOT_FOUND = 30;
-    const int E_INIT_INDX_DATABASE = 31;
-    const int E_INIT_DOWNLOAD = 23;
+    const unsigned short E_INPUT_PARSE = 10;
+    const unsigned short E_SUCCESS = 11;
+    const unsigned short E_CONFIG_PARSE = 12;
+    const unsigned short E_CONFIG_CREATE = 13;
+    const unsigned short E_INIT_TAX_DOWN = 20;
+    const unsigned short E_INIT_TAX_INDEX = 21;
+    const unsigned short E_INIT_TAX_SERIAL = 22;
+    const unsigned short E_INIT_INDX_DATA_NOT_FOUND = 30;
+    const unsigned short E_INIT_INDX_DATABASE = 31;
+    const unsigned short E_INIT_DOWNLOAD = 23;
 
+    const unsigned short E_INIT_TAX_READ = 55;
+    const unsigned short E_INIT_GO_SETUP = 60;
 
-    const int E_INIT_TAX_READ = 55;
-    const int E_INIT_GO_SETUP = 60;
-
-    const int E_RUN_EXECUTION_PATHS         = 105;
-    const int E_RUN_VERIFY_DATABASES        = 106;
-    const int E_RUN_GENEMARK                = 100;
-    const int E_RUN_GENEMARK_PARSE          = 101;
-    const int E_RUN_GENEMARK_STATS          = 102;
-    const int E_RUN_RSEM_VALIDATE           = 110;
-    const int E_RUN_RSEM_CONVERT            = 111;
-    const int E_RUN_RSEM_EXPRESSION         = 112;
-    const int E_RUN_FILTER                  = 120;
-    const int E_RUN_SIM_SEARCH_FILTER       = 140;
-    const int E_RUN_ANNOTATION              = 150;
-    const int E_RUN_EGGNOG                  = 160;
-    const int E_PARSE_EGGNOG                = 170;
+    const unsigned short E_RUN_EXECUTION_PATHS         = 105;
+    const unsigned short E_RUN_VERIFY_DATABASES        = 106;
+    const unsigned short E_RUN_GENEMARK                = 100;
+    const unsigned short E_RUN_GENEMARK_PARSE          = 101;
+    const unsigned short E_RUN_GENEMARK_STATS          = 102;
+    const unsigned short E_RUN_RSEM_VALIDATE           = 110;
+    const unsigned short E_RUN_RSEM_CONVERT            = 111;
+    const unsigned short E_RUN_RSEM_EXPRESSION         = 112;
+    const unsigned short E_RUN_FILTER                  = 120;
+    const unsigned short E_RUN_SIM_SEARCH_FILTER       = 140;
+    const unsigned short E_RUN_ANNOTATION              = 150;
+    const unsigned short E_RUN_EGGNOG                  = 160;
+    const unsigned short E_PARSE_EGGNOG                = 170;
 }
 
 namespace ENTAP_CONFIG {
@@ -64,7 +63,7 @@ namespace ENTAP_CONFIG {
     const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";
     const std::string BIN_PATH = "bin/";
 
-    const std::string ENTAP_VERSION = "0.5.6.2";
+    const std::string ENTAP_VERSION = "0.5.7";
 
 
     const double E_VALUE = 1e-5;
@@ -130,23 +129,13 @@ namespace ENTAP_EXECUTE {
     const float RSEM_FPKM_DEFAULT = 1;
     const int RSEM_COL_NUM = 7;
     const std::string OUTFILE_DEFAULT = "outfiles";
+    const std::string FIGURE_DIR      = "figures/";
 
 
     //--------------------Frame Selection----------------------//
 
     const std::string GENEMARK_EXE_PATH = "/libs/gmst_linux_64/gmst.pl";
-    const std::string GENEMARK_LOG_FILE = "gms.log";
-    const std::string GENEMARK_HMM_FILE = "GeneMark_hmm.mod";
-    const std::string GENEMARK_OUT_PATH = "frame_selection/";
-    const std::string FRAME_SELECTION_PARTIAL = "partial_genes.fasta";
-    const std::string FRAME_SELECTION_COMPLTE = "complete_genes.fasta";
-    const std::string FRAME_SELECTION_INTERNAL = "internal_genes.fasta";
-    const std::string FRAME_SELECTION_PROCESSED = "frame_selection/processed";
-    const std::string FRAME_SELECTION_LOST = "sequences_lost.fasta";
-    const std::string FRAME_SELECTION_FIVE_FLAG = "Partial 5 Prime";
-    const std::string FRAME_SELECTION_THREE_FLAG = "Partial 3 Prime";
-    const std::string FRAME_SELECTION_COMPLETE_FLAG = "Complete";
-    const std::string FRAME_SELECTION_INTERNAL_FLAG = "Internal";
+    const std::string EXECUTION_PROCESSED = "frame_selection/processed";
 
     //------------------------Ontology-------------------------//
 
@@ -179,6 +168,18 @@ namespace ENTAP_EXECUTE {
             "uncultured",
             "uninformative"
     };
+
+    //--------------------Graphing----------------------//
+
+    const std::string GRAPH_FILEPATH   =        "/src/entap_graphing.py";
+
+    const signed char GRAPH_INIT       =        -1;
+    const signed char GRAPH_EXPRESSION =         0;
+    const signed char GRAPH_FRAME      =         1;
+    const signed char GRAPH_SIM        =         2;
+    const signed char GRAPH_ONTOLOGY   =         3;
+
+
 }
 
 namespace ENTAP_STATS {

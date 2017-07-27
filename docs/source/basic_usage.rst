@@ -1,7 +1,9 @@
+.. _NCBI Taxonomy: https://www.ncbi.nlm.nih.gov/taxonomy
+
 Basic Usage
 ============
 
-*enTAP* has two stages of execution, :ref:`configuration<config-label>` and :ref:`run<run-label>`. Configuration is generally ran first (and may only need to be ran once) to setup databases while run is reserved for the main annotation pipeline.
+*enTAP* has two stages of execution, :ref:`configuration<config-label>` and :ref:`run<run-label>`. Configuration is generally ran first (and may only need to be ran once) to setup databases while run is reserved for the main annotation pipeline and can be ran multiple times after initial configuration.
 
 .. _config-label:
 
@@ -18,17 +20,17 @@ To run configuration with a sample database, the command is as follows:
 This stage must be done at least once prior to :ref:`running<run-label>`. Once the database is configured, you need not do it again unless you updated your original database or plan on configuring several others.
 
 
-**Note:** If you already have DIAMOND (.dmnd) configured databases, you can skip the configuration of that database. Although, due to other database downloading (taxonomy and ontology), you must still run the configuration stage without any flags
+.. note:: If you already have DIAMOND (.dmnd) configured databases, you can skip the configuration of that database. Although, due to other *enTAP* database downloading (taxonomy and ontology), configuration must still be ran at least once without any flags.
 
 
-**Note:** This is the only stage that requires connection to the internet.
+.. note:: This is the only stage that requires connection to the Internet.
 
 Flags:
 ^^^^^^^^^^^^^^^^^^^^^
 
 Required Flags:
 
-* The only required flag is **--config**. Although in order to run the full *enTAP* pipeline, you must have a .dmnd configured database.
+* The only required flag is **- -config**. Although in order to run the full *enTAP* pipeline, you must have a .dmnd configured database.
 
 
 Optional Flags:
@@ -48,7 +50,7 @@ Memory usage will vary depending on the number of database you would like config
 
 Run
 -------------
-The run stage of *enTAP* is the main annotation pipeline. After configuration is ran at least once, this can be ran continually without requiring configuration to be ran again. 
+The run stage of *enTAP* is the main annotation pipeline. After configuration is ran at least once, this can be ran continually without requiring configuration to be ran again (unless more databases will be configured). 
 
 Input Files:
 ^^^^^^^^^^^^
@@ -67,7 +69,7 @@ Sample Run:
 
 A specific run flag (**runP/runN**) must be used:
 
-* runP: Indicates protein input transcripts. **Note:** Selection of this option will skip the frame selection portion of the pipeline.
+* runP: Indicates protein input transcripts. Selection of this option will skip the frame selection portion of the pipeline.
 * runN: Indicates nucleotide input transcripts. Selection of this option will cause frame selection to be ran. 
 
 
@@ -78,7 +80,7 @@ An example run with a nucleotide transcriptome:
     enTAP --runN -i path/to/transcriptome.fasta -d path/to/database.dmnd -d path/to/database2.dmnd -a path/to/alignment.sam
 
 
-With the above command, the entire *enTAP* pipeline will be ran. However, it is entirely possible to skip frame selection by inputting protein transcripts (--runP) or skip expression filtering by excluding an alignment file. 
+With the above command, the entire *enTAP* pipeline will be ran. However, it is entirely possible to skip frame selection by inputting protein transcripts (- -runP) or skip expression filtering by excluding an alignment file. 
 
 
 Flags:
@@ -86,37 +88,61 @@ Flags:
 
 Required Flags:
 
-* (--runP/--runN)
+* (- -runP/- -runN)
     * Specification of input transcriptome file. runP for protein (skip frame selection) or runN for nucleotide (frame selection will be ran)
 
-* (-i/--input)
+* (-i/- -input)
     * Path to the transcriptome file (either nucleotide or protein)
 
-* (-d/--database)
+* (-d/- -database)
     * Specify up to 4 DIAMOND indexed (.dmnd) databases to run similarity search against
 
 Optional Flags:
 
-* (-a/--align)
+* (-a/- -align)
     * Path to alignment file (either SAM or BAM format)
     * **Note:** Ignoring this flag will skip expression filtering
 
-* (--contam)
+* (- -contam)
     * Specify :ref:`contaminant<tax-label>` level of filtering
     * Multiple contaminants can be selected through repeated flags
 
-* (--species)
-    * Species of your transcriptome. This will allow for taxonomic 'favoring' of hits that are closer to your target species.
-    * Format **must** be as follows: "--species homo_sapiens"
+* (- -species)
+    * This flag will allow for taxonomic 'favoring' of hits that are closer to your target species or lineage. Any lineage can be used as referenced by the NCBI Taxonomic database, such as genus, phylum, or species.
+    * Format **must** replace all spaces with underscores ('_') as follows: "- -species homo_sapiens" or "- -species primates"
 
-* (--tag)
+* (- -tag)
     * Specify output folder labelling.
-    * (default: outfiles)
+    * Default: /outfiles
+
+* (- - fpkm)
+    * Specify FPKM cutoff for expression filtering
+    * Default: 0.5
+
+* (- - coverage)
+    * Specify minimum query coverage for similarity searching
+    * Default: 50%
+
+* (- - overwrite)
+    * All previously ran files will be overwritten if the same - -tag flag is used
+    * Without this flag *enTAP* will :ref:`recognize<over-label>` previous runs
+
+* (- - state)
+    * Precise control over execution stages. This flag allows for certain parts to be ran while skipping others. 
 
 
 .. _tax-label:
 
 Taxonomic Contaminant Filtering
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Taxonomic contaminant filtering (as well as taxonomic favoring) is based upon the `NCBI Taxonomy`_ database. 
+
+.. _over-label:
+
+Picking Up Where You Left Off
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+.. _state-label:
+State Control
+^^^^^^^^^^^^^^

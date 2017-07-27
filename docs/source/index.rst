@@ -11,6 +11,7 @@ Welcome to enTAP's documentation!
    
    introduction.rst
    basic_usage.rst
+   interpreting_the_results.rst
 
 
 

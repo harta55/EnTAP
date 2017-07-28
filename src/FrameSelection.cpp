@@ -25,7 +25,7 @@ FrameSelection::FrameSelection(std::string &input, std::string &exe, std::string
     _overwrite       = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
     _software_flag   = 0;
     _processed_path  = (boostFS::path(out) / boostFS::path(FRAME_SELECTION_OUT_DIR) /
-                        boostFS::path(ENTAP_EXECUTE::EXECUTION_PROCESSED)).string();
+                        boostFS::path(PROCESSED_DIR)).string();
     _figure_path     = (boostFS::path(out) / boostFS::path(FRAME_SELECTION_OUT_DIR) /
                         boostFS::path(ENTAP_EXECUTE::FIGURE_DIR)).string();
     _frame_outpath   = (boostFS::path(out) / boostFS::path(FRAME_SELECTION_OUT_DIR)).string();
@@ -150,6 +150,7 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
     float                                   avg_selected;
     float                                   avg_lost;
     std::pair<unsigned long, unsigned long> kept_n;
+    GraphingStruct                          graphingStruct;
 
     boostFS::remove_all(_processed_path);
     boostFS::remove_all(_figure_path);
@@ -304,10 +305,19 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
         file_figure_results << FRAME_SELECTION_THREE_FLAG    << '\t' << std::to_string(count_map[FRAME_SELECTION_THREE_FLAG]) <<std::endl;
         file_figure_results << FRAME_SELECTION_COMPLETE_FLAG << '\t' << std::to_string(count_map[FRAME_SELECTION_COMPLETE_FLAG])   <<std::endl;
         file_figure_results << FRAME_SELECTION_INTERNAL_FLAG << '\t' << std::to_string(count_map[FRAME_SELECTION_INTERNAL_FLAG])   <<std::endl;
-        _graphingManager->graph(figure_results_path, GRAPH_TITLE_FRAME_RESULTS, figure_results_png,
-                                GRAPH_FRAME_FLAG, GRAPH_PIE_RESULTS_FLAG);
-        _graphingManager->graph(figure_removed_path, GRAPH_TITLE_REF_COMPAR, figure_removed_png,
-                                GRAPH_FRAME_FLAG, GRAPH_COMP_BOX_FLAG);
+
+        graphingStruct.text_file_path = figure_results_path;
+        graphingStruct.graph_title    = GRAPH_TITLE_FRAME_RESULTS;
+        graphingStruct.fig_out_path   = figure_results_png;
+        graphingStruct.software_flag  = GRAPH_FRAME_FLAG;
+        graphingStruct.graph_type     = GRAPH_PIE_RESULTS_FLAG;
+        _graphingManager->graph(graphingStruct);
+
+        graphingStruct.text_file_path = figure_removed_path;
+        graphingStruct.graph_title    = GRAPH_TITLE_REF_COMPAR;
+        graphingStruct.fig_out_path   = figure_removed_png;
+        graphingStruct.graph_type     = GRAPH_COMP_BOX_FLAG;
+        _graphingManager->graph(graphingStruct);
 
     } catch (ExceptionHandler &e) {throw e;}
     entapInit::print_msg("Success!");

@@ -90,6 +90,10 @@ def expression_graphs():
 
 
 def sim_search_graphs():
+    if _graph_flag == 1:
+        InputValues = parse_input(_stats_path)
+        create_bar(_graph_title, _output_path, InputValues.values, InputValues.labels,
+                   InputValues.xlabel, InputValues.ylabel)
     pass
 
 
@@ -100,14 +104,16 @@ def ontology_graphs():
 def create_graphs(flag):
     if flag == -1:                  # Initial test case
         exit(0)
-    stages = {
-        0: init_graphs(),           # Reserved for future spot
-        1: frame_selection_graphs(),
-        2: expression_graphs(),
-        3: sim_search_graphs(),
-        4: ontology_graphs()
-    }
-    stages[flag]
+    if flag == 1:
+        frame_selection_graphs()
+    elif flag == 2:
+        expression_graphs()
+    elif flag == 3:
+        sim_search_graphs()
+    elif flag == 4:
+        ontology_graphs()
+    else:
+        init_graphs()
 
 
 def create_pie(title, file, vals, labels):
@@ -131,6 +137,15 @@ def create_boxplot(title, file, label_vals):
     plt.savefig(file)
 
 
+def create_bar(title, file, vals, labels, xlabel, ylabel):
+    plt.barh(range(len(labels)), vals, align='center', alpha=0.5)   # Horizontal bar graph
+    plt.yticks(range(len(labels)), labels)
+    plt.ylabel(xlabel)
+    plt.xlabel(ylabel)
+    plt.title(title)
+    plt.savefig(file)
+
+
 def autopct_vals(values):
     def my_autopct(pct):
         total = sum(values)
@@ -142,9 +157,11 @@ def autopct_vals(values):
 # Return collection containing values and labels for them
 # Primarily used for single label - value series, NOT multiple values to one label
 def parse_input(path):
-    UserVals = collections.namedtuple('Values', ['values', 'labels', 'rows'])
+    UserVals = collections.namedtuple('Values', ['values', 'labels', 'xlabel', 'ylabel'])
     file = open(path, 'r')
-    UserVals.rows = file.readline().split('\t')
+    labels = file.readline().split('\t')
+    UserVals.xlabel = labels[0]
+    UserVals.ylabel = labels[1]
     UserVals.labels = []
     UserVals.values= []
     for line in file:

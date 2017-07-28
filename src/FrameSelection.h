@@ -26,14 +26,14 @@ class FrameSelection {
 
     private:
 
-        const std::string GRAPH_TITLE_FRAME_RESULTS     = "Frame_Selection_Results";
+        const std::string GRAPH_TITLE_FRAME_RESULTS     = "Frame_Selection_ORFs";
         const std::string GRAPH_FILE_FRAME_RESUTS       = "frame_results_pie.png";
         const std::string GRAPH_TEXT_FRAME_RESUTS       = "frame_results_pie.txt";
-        const std::string GRAPH_TITLE_REF_COMPAR        = "Rejected_Sequence_Comparison";
+        const std::string GRAPH_TITLE_REF_COMPAR        = "Frame_Selected_Sequences";
         const std::string GRAPH_FILE_REF_COMPAR         = "rejected_comparison_box.png";
         const std::string GRAPH_TEXT_REF_COMPAR         = "rejected_comparison_box.txt";
-        const std::string GRAPH_REJECTED_FLAG           = "Rejected";
-        const std::string GRAPH_KEPT_FLAG               = "Kept";
+        const std::string GRAPH_REJECTED_FLAG           = "Removed";
+        const std::string GRAPH_KEPT_FLAG               = "Selected";
         const std::string FRAME_SELECTION_OUT_DIR       = "frame_selection/";
         const std::string FRAME_SELECTION_PARTIAL       = "partial_genes.fasta";
         const std::string FRAME_SELECTION_COMPLTE       = "complete_genes.fasta";
@@ -44,6 +44,7 @@ class FrameSelection {
         const std::string FRAME_SELECTION_THREE_FLAG    = "Partial 3 Prime";
         const std::string FRAME_SELECTION_COMPLETE_FLAG = "Complete";
         const std::string FRAME_SELECTION_INTERNAL_FLAG = "Internal";
+        const std::string PROCESSED_DIR                 = "processed/";
         const std::string GENEMARK_LOG_FILE             = "gms.log";
         const std::string GENEMARK_HMM_FILE             = "GeneMark_hmm.mod";
         const std::string GENEMARK_STD_OUT              = "genemark_run";

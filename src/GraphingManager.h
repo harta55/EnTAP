@@ -5,13 +5,14 @@
 #ifndef ENTAP_GRAPHINGMANAGER_H
 #define ENTAP_GRAPHINGMANAGER_H
 #include <iostream>
+#include "EntapConsts.h"
 
 class GraphingManager {
 
 
 public:
     GraphingManager(std::string);
-    void graph(std::string, std::string, std::string, unsigned char, unsigned char);
+    void graph(GraphingStruct&);
 
 
 private:

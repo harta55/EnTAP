@@ -8,6 +8,15 @@
 #include <list>
 
 // TODO temporary, change
+
+typedef struct {
+    std::string text_file_path;
+    std::string graph_title;
+    std::string fig_out_path;
+    unsigned char software_flag;
+    unsigned char graph_type;
+} GraphingStruct;
+
 namespace ENTAP_ERR {
     const unsigned short E_INPUT_PARSE = 10;
     const unsigned short E_SUCCESS = 11;
@@ -63,7 +72,7 @@ namespace ENTAP_CONFIG {
     const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";
     const std::string BIN_PATH = "bin/";
 
-    const std::string ENTAP_VERSION = "0.5.7";
+    const std::string ENTAP_VERSION = "0.6.0";
 
 
     const double E_VALUE = 1e-5;
@@ -135,7 +144,6 @@ namespace ENTAP_EXECUTE {
     //--------------------Frame Selection----------------------//
 
     const std::string GENEMARK_EXE_PATH = "/libs/gmst_linux_64/gmst.pl";
-    const std::string EXECUTION_PROCESSED = "frame_selection/processed";
 
     //------------------------Ontology-------------------------//
 

@@ -21,7 +21,7 @@ namespace boostFS = boost::filesystem;
 
 SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::string input,
                            int threads, std::string exe, std::string out,std::string entap_exe,
-                           boost::program_options::variables_map &user_flags) {
+                           boost::program_options::variables_map &user_flags, GraphingManager *graphingManager) {
     _database_paths = databases;
     _input_path = input;
     _threads = threads;
@@ -51,6 +51,12 @@ SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::str
     }
     _contaminants = contaminants;
     _software_flag = 0;
+
+    _sim_search_path = (boostFS::path(out) / boostFS::path(SIM_SEARCH_DIR)).string();
+    _processed_path  = (boostFS::path(_sim_search_path) / boostFS::path(PROCESSED_DIR)).string();
+    _results_path    = (boostFS::path(_sim_search_path) / boostFS::path(RESULTS_DIR)).string();
+    _figure_path     = (boostFS::path(_sim_search_path) / boostFS::path(FIGURE_DIR)).string();
+    _graphingManager = graphingManager;
 }
 
 std::vector<std::string> SimilaritySearch::execute(std::string updated_input,bool blast) {
@@ -69,7 +75,7 @@ std::vector<std::string> SimilaritySearch::execute(std::string updated_input,boo
 
 std::pair<std::string,std::string> SimilaritySearch::parse_files(std::string new_input,
                                    std::map<std::string, QuerySequence>& MAP) {
-    this->_input_path = new_input;
+    _input_path = new_input;
     try {
         switch (_software_flag) {
             case 0:
@@ -81,9 +87,7 @@ std::pair<std::string,std::string> SimilaritySearch::parse_files(std::string new
 }
 
 std::vector<std::string> SimilaritySearch::diamond() {
-    // not always known (depending on starting state)
     entapInit::print_msg("Beginning to execute DIAMOND...");
-    std::string diamond_out = _outpath + ENTAP_CONFIG::SIM_SEARCH_OUT_PATH;
     std::vector<std::string> out_paths;
     if (!entapInit::file_exists(_input_path)) {
         throw ExceptionHandler("Transcriptome file not found",ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
@@ -91,20 +95,20 @@ std::vector<std::string> SimilaritySearch::diamond() {
     boostFS::path transc_name(_input_path); transc_name=transc_name.stem();
     if (transc_name.has_stem()) transc_name = transc_name.stem(); //.fasta.faa
     if (_overwrite) {
-        boostFS::remove_all(diamond_out.c_str());
+        boostFS::remove_all(_sim_search_path);
     }
-    boostFS::create_directories(diamond_out);
+    boostFS::create_directories(_sim_search_path);
     // database verification already ran, don't need to verify each path
     try {
+        // assume all paths should be .dmnd
         for (std::string data_path : _database_paths) {
-            // assume all paths should be .dmnd
-            boostFS::path file_name(data_path); file_name=file_name.stem();
-            entapInit::print_msg("Searching against database located at: " +
-                                 data_path + "...");
-            std::string out_path = diamond_out + _blast_type + "_" + transc_name.string() + "_" +
-                                   file_name.string() + ".out";
-            std::string std_out = diamond_out + _blast_type + "_" + transc_name.string() + "_" +
-                                  file_name.string() + "_std";
+            entapInit::print_msg("Searching against database located at: " + data_path + "...");
+            boostFS::path database_name(data_path); database_name=database_name.stem();
+            std::string filename = _blast_type + "_" + transc_name.string() + "_" +
+                                   database_name.string();
+            std::string out_path = (boostFS::path(_sim_search_path) / filename).string() + ".out";
+            std::string std_out  = (boostFS::path(_sim_search_path) / filename).string() + "_std";
+            _file_to_database[out_path] = database_name.string();
             if (entapInit::file_exists(out_path)) {
                 entapInit::print_msg("File found at " + out_path + " skipping execution against this database");
                 out_paths.push_back(out_path);
@@ -156,8 +160,10 @@ std::vector<std::string> SimilaritySearch::verify_diamond_files(std::string &out
 std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<std::string>& contams,
                                                                    std::map<std::string, QuerySequence> &SEQUENCES) {
     entapInit::print_msg("Beginning to filter individual diamond_files...");
-    std::unordered_map<std::string, std::string> taxonomic_database;
-    std::list<std::map<std::string,QuerySequence>> database_maps;
+
+    std::unordered_map<std::string, std::string>    taxonomic_database;
+    std::list<std::map<std::string,QuerySequence>>  database_maps;
+
     try {
         taxonomic_database = read_tax_map();
     } catch (ExceptionHandler &e) {throw e;}
@@ -169,26 +175,23 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
     }
     if (_sim_search_paths.empty()) throw ExceptionHandler("No diamond files found", ENTAP_ERR::E_RUN_SIM_SEARCH_FILTER);
 
-    std::string sim_search_processed = _outpath + SIM_SEARCH_PARSE_PROCESSED + "/";
-    boostFS::remove_all(sim_search_processed);
-    boostFS::create_directories(sim_search_processed);
+    boostFS::remove_all(_processed_path);
+    boostFS::create_directories(_processed_path);
     _input_lineage = get_lineage(_input_species,taxonomic_database);
 
     for (std::string &data : _sim_search_paths) {
-        std::stringstream out_stream;out_stream<<std::fixed<<std::setprecision(2);
-        out_stream << ENTAP_STATS::SOFTWARE_BREAK
-                    << "Similarity Search - Diamond - "<<data<<"\n"
-                    << ENTAP_STATS::SOFTWARE_BREAK;
         entapInit::print_msg("Diamond file located at " + data + " being filtered");
         io::CSVReader<ENTAP_EXECUTE::diamond_col_num, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(data);
         // todo have columns from input file, in_read_header for versatility
-        std::string qseqid, sseqid, stitle;
+        std::string qseqid, sseqid, stitle, database_name;
         double evalue, pident, bitscore, coverage;
         int length, mismatch, gapopen, qstart, qend, sstart, send;
         unsigned long count_removed=0, count_TOTAL_hits=0, count_under_e=0;
 
-        boostFS::path path(data);   // path/to/data.out
-        std::string out_base_path = sim_search_processed + path.filename().stem().string();
+        if (_file_to_database.find(data) != _file_to_database.end()) {
+            database_name = _file_to_database[data];
+        } else database_name = boostFS::path(data).filename().stem().string();
+        std::string out_base_path = (boostFS::path(_processed_path) / boostFS::path(database_name)).string();
         std::string out_unselected_tsv = out_base_path + SIM_SEARCH_DATABASE_UNSELECTED;
 
         std::ofstream file_unselected_tsv(out_unselected_tsv,std::ios::out | std::ios::app);
@@ -234,11 +237,14 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
         entapInit::print_msg("File parsed, calculating statistics and writing output...");
         // final database stats
         file_unselected_tsv.close();
-        out_stream <<
-                "Statistics of file located at: "              << data               <<
-                "\n\tTotal hits: "                             << count_TOTAL_hits   <<
-                "\n\tUnselected results: "                     << count_removed      <<
-                "\n\t\tWritten to: "                           << out_unselected_tsv;
+        std::stringstream out_stream;out_stream<<std::fixed<<std::setprecision(2);
+        out_stream << ENTAP_STATS::SOFTWARE_BREAK
+                   << "Similarity Search - Diamond - "<<data<<"\n"
+                   << ENTAP_STATS::SOFTWARE_BREAK <<
+                   "Statistics of file located at: "              << data               <<
+                   "\n\tTotal hits: "                             << count_TOTAL_hits   <<
+                   "\n\tUnselected results: "                     << count_removed      <<
+                   "\n\t\tWritten to: "                           << out_unselected_tsv;
         calculate_best_stats(SEQUENCES,database_map,out_stream,out_base_path,false);
         std::string out_msg = out_stream.str() + "\n";
         entapExecute::print_statistics(out_msg,_outpath);
@@ -251,6 +257,29 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
 std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::map<std::string, QuerySequence>&SEQUENCES,
                                              std::map<std::string, QuerySequence>&best_hits,
                                              std::stringstream &ss, std::string &base_path, bool is_final) {
+
+    GraphingStruct              graphingStruct;
+    std::string                 database;
+    std::string                 figure_base;
+    unsigned long               count_no_hit=0;
+    unsigned long               count_contam=0;
+    unsigned long               count_filtered=0;
+    unsigned long               count_informative=0;
+    unsigned long               count_uninformative=0;
+    double                      contam_percent;
+    std::map<std::string, int>  contam_map;
+    std::map<std::string, int>  species_map;
+    std::map<std::string, int>  contam_species_map;
+
+    typedef std::pair<std::string,int> count_pair;
+    struct compair {
+        bool operator ()(count_pair const& one, count_pair const& two) const {
+            return one.second > two.second;
+        }
+    };
+
+    database = boostFS::path(base_path).filename().string();
+    figure_base = (boostFS::path(_figure_path) / database).string();
 
     std::string out_best_contams_tsv             = base_path + SIM_SEARCH_DATABASE_CONTAM_TSV;
     std::string out_best_contams_fa_nucl         = base_path + SIM_SEARCH_DATABASE_CONTAM_FA_NUCL;
@@ -266,7 +295,13 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     std::string out_no_hits_fa_nucl              = base_path + SIM_SEARCH_DATABASE_NO_HITS_NUCL;
     std::string out_no_hits_fa_prot              = base_path + SIM_SEARCH_DATABASE_NO_HITS_PROT;
 
-    print_header(out_best_contams_tsv);print_header(out_best_hits_tsv);
+    std::string graph_species_txt_path           = figure_base + GRAPH_SPECIES_BAR_TXT;
+    std::string graph_species_png_path           = figure_base + GRAPH_SPECIES_BAR_PNG;
+    std::string graph_contam_txt_path            = figure_base + GRAPH_CONTAM_BAR_TXT;
+    std::string graph_contam_png_path            = figure_base + GRAPH_CONTAM_BAR_PNG;
+
+    print_header(out_best_contams_tsv);
+    print_header(out_best_hits_tsv);
     print_header(out_best_hits_no_contam_tsv);
     std::ofstream file_best_hits_tsv(out_best_hits_tsv,std::ios::out | std::ios::app);
     std::ofstream file_best_hits_tsv_no_contam(out_best_hits_no_contam_tsv,std::ios::out | std::ios::app);
@@ -281,16 +316,12 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     std::ofstream file_no_hits_nucl(out_no_hits_fa_nucl, std::ios::out | std::ios::app);
     std::ofstream file_no_hits_prot(out_no_hits_fa_prot, std::ios::out | std::ios::app);
 
-    unsigned long count_no_hit=0, count_contam=0, count_filtered=0, count_informative=0,
-        count_uninformative=0;
-    typedef std::pair<std::string,int> count_pair;
-    struct compair {
-        bool operator ()(count_pair const& one, count_pair const& two) const {
-            return one.second > two.second;
-        }
-    };
+    std::ofstream graph_species_file(graph_species_txt_path, std::ios::out | std::ios::app);
+    std::ofstream graph_contam_file(graph_contam_txt_path, std::ios::out | std::ios::app);
 
-    std::map<std::string, int> contam_map, species_map, contam_species_map;
+    graph_species_file << "Species\tCount"     << std::endl;
+    graph_contam_file  << "Contaminant\tCount" << std::endl;
+
     for (auto &pair : SEQUENCES) {
         std::map<std::string, QuerySequence>::iterator it = best_hits.find(pair.first);
         if (it == best_hits.end()) {
@@ -354,7 +385,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     std::vector<count_pair> species_vect(species_map.begin(),species_map.end());
     std::sort(contam_species_vect.begin(),contam_species_vect.end(),compair());
     std::sort(species_vect.begin(),species_vect.end(),compair());
-    double contam_percent = ((double)count_contam / count_filtered) * 100;
+    contam_percent = ((double)count_contam / count_filtered) * 100;
 
     ss <<
        "\n\tUnique hits: "                            << count_filtered     <<
@@ -384,6 +415,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
             ss
                 << "\n\t\t\t" << ct << ")" << pair.first << ": "
                 << pair.second << "(" << percent <<"%)";
+            graph_contam_file << pair.first << '\t' << std::to_string(pair.second) << std::endl;
             ct++;
         }
     }
@@ -396,8 +428,35 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         ss
             << "\n\t\t\t" << ct << ")" << pair.first << ": "
             << pair.second << "(" << percent <<"%)";
+        graph_species_file << pair.first << '\t' << std::to_string(pair.second) << std::endl;
         ct++;
     }
+
+    // Graphing Handle
+    graphingStruct.software_flag = GRAPH_SOFTWARE_FLAG;
+    graph_contam_file.close();
+    graph_species_file.close();
+    if (is_final) {
+
+    } else {
+        if (count_contam > 0) {
+            graphingStruct.fig_out_path = graph_contam_png_path;
+            graphingStruct.graph_title  = database + GRAPH_CONTAM_TITLE;
+            graphingStruct.text_file_path = graph_contam_txt_path;
+            graphingStruct.graph_type = GRAPH_BAR_FLAG;
+            _graphingManager->graph(graphingStruct);
+        }
+        graphingStruct.fig_out_path = graph_species_png_path;
+        graphingStruct.graph_title  = database + GRAPH_SPECIES_TITLE;
+        graphingStruct.text_file_path = graph_species_txt_path;
+        graphingStruct.graph_type = GRAPH_BAR_FLAG;
+        _graphingManager->graph(graphingStruct);
+    }
+
+
+
+
+
     return std::pair<std::string,std::string>(out_best_hits_fa_prot,out_no_hits_fa_prot);
 }
 
@@ -409,10 +468,8 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
 std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(std::list<std::map<std::string,QuerySequence>> &diamond_maps,
                                       std::map<std::string, QuerySequence>&SEQUENCES) {
     entapInit::print_msg("Compiling similarity results results to find best overall hits...");
-    std::string compiled_path = _outpath + SIM_SEARCH_COMPILED_PATH;
-    std::string results_dir = _outpath + SIM_SEARCH_RESULTS_DIR;
-    boostFS::remove_all(results_dir.c_str());
-    boostFS::create_directories(results_dir.c_str());
+    boostFS::remove_all(_results_path.c_str());
+    boostFS::create_directories(_results_path.c_str());
     std::map<std::string,QuerySequence> compiled_hit_map;
     for (std::map<std::string,QuerySequence> &database_map : diamond_maps) {
         for (auto &pair : database_map) {
@@ -430,7 +487,7 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
     out_stream <<
             "------Compiled Results (Best hit selection across all databases ------";
     std::pair<std::string,std::string> out_pair =
-            calculate_best_stats(SEQUENCES,compiled_hit_map,out_stream,compiled_path,true);
+            calculate_best_stats(SEQUENCES,compiled_hit_map,out_stream,_results_path,true);
     std::string out_msg = out_stream.str() + "\n";
     entapExecute::print_statistics(out_msg,_outpath);
     diamond_maps.clear();

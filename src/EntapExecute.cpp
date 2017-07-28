@@ -107,8 +107,8 @@ namespace entapExecute {
                                                      _outpath, user_input, &graphingManager);
             ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads, _expression_exe,
                                                          _outpath, user_input);
-            SimilaritySearch diamond = SimilaritySearch(databases, input_path, threads,
-                                                        _diamond_exe, _outpath, exe_path,user_input);
+            SimilaritySearch diamond = SimilaritySearch(databases, input_path, threads, _diamond_exe,
+                                                        _outpath, exe_path,user_input, &graphingManager);
             Ontology ontology = Ontology(threads,_ontology_exe,_outpath,exe_path,input_path,
                                          user_input);
 
@@ -123,7 +123,6 @@ namespace entapExecute {
                             _FRAME_SELETION_SUCCESS = true;
                         }
                         blastp = true;
-                        exit(0);
                         break;
                     case RSEM:
                         entapInit::print_msg("STATE - EXPRESSION");
@@ -364,9 +363,7 @@ namespace entapExecute {
         out_msg<<std::fixed<<std::setprecision(2);
         out_msg << ENTAP_STATS::SOFTWARE_BREAK
                 << "Transcriptome Statistics\n"
-                << ENTAP_STATS::SOFTWARE_BREAK;
-
-        out_msg <<
+                << ENTAP_STATS::SOFTWARE_BREAK<<
                 "Total sequences: "                            << count_seqs    <<
                 "\nTotal length of transcriptome(bp): "        << total_len     <<
                 "\nAverage sequence length(bp): "              << avg_len       <<

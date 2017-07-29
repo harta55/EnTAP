@@ -25,13 +25,16 @@ public:
     // TODO switch to map results
     void set_eggnog_results(std::string,std::string,std::string,std::string,std::string,
                     std::string,std::string,std::string);
+    void set_tax_score(std::string);
+
+
+
     const std::string &get_contam_type() const;
     void set_contam_type(const std::string &_contam_type);
     void set_is_informative(bool _is_informative);
     void setIs_better_hit(bool is_better_hit);
     bool isContaminant() const;
     void setContaminant(bool contaminant);
-    void set_tax_score(int _tax_score);
     void set_is_database_hit(bool _is_database_hit);
     void set_ontology_results(std::map<std::string,std::string>);
     std::string print_final_results(short,const std::vector<std::string>&,short);
@@ -63,6 +66,12 @@ public:
 
 private:
 
+    const unsigned char E_VAL_DIF     = 8;
+    const unsigned char COV_DIF       = 5;
+    const unsigned char INFORM_ADD    = 3;
+    const float INFORM_FACTOR         = 1.2;
+
+
     bool                              _contaminant;
     bool                              is_protein;
     bool                              is_better_hit;
@@ -80,7 +89,7 @@ private:
     int                               _qend;
     int                               _sstart;
     int                               _send;
-    int                               _tax_score;
+    float                              _tax_score;
     unsigned long                     _seq_length;
     double                            _pident;
     double                            _bit_score;

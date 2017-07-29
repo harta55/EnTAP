@@ -10,11 +10,11 @@
 // TODO temporary, change
 
 typedef struct {
-    std::string text_file_path;
-    std::string graph_title;
-    std::string fig_out_path;
-    unsigned char software_flag;
-    unsigned char graph_type;
+    std::string     text_file_path;
+    std::string     graph_title;
+    std::string     fig_out_path;
+    unsigned char   software_flag;
+    unsigned char   graph_type;
 } GraphingStruct;
 
 namespace ENTAP_ERR {
@@ -49,6 +49,13 @@ namespace ENTAP_ERR {
 
 namespace ENTAP_CONFIG {
 
+    const std::string ENTAP_VERSION = "0.6.1";
+    const double DEFAULT_QCOVERAGE = 50.0;
+    const double DEFAULT_TCOVERAGE = 50.0;
+    const double E_VALUE = 1e-5;
+    const std::string DEBUG_FILENAME = "debug.txt";
+    const std::string LOG_FILENAME = "log_file.txt";
+
     //-------------------Config File----------------------//
     const std::string CONFIG_FILE = "entap_config.txt";
     const std::string KEY_UNIPROT_SWISS = "uniprot_swiss_path";
@@ -64,39 +71,21 @@ namespace ENTAP_CONFIG {
     const std::string KEY_EGGNOG_EXE = "eggnog_exe_path";
     const std::string KEY_INTERPRO_EXE = "interpro_exe_path";
 
-
-    const std::string GO_DB_PATH = "/bin/go_term.entp";
-    const std::string GO_TERM_FILE = "/databases/term.txt";
-    const std::string TAX_SCRIPT_PATH = "/download_tax.pl";
-    const std::string TAX_DATABASE_PATH = "/databases/ncbi_tax.entp";
-    const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";
-    const std::string BIN_PATH = "bin/";
-
-    const std::string ENTAP_VERSION = "0.6.0";
-
-
-    const double E_VALUE = 1e-5;
-
-    const std::string DEBUG_FILENAME = "debug.txt";
-    const std::string LOG_FILENAME = "log_file.txt";
     //------------------USER INPUTS-----------------------//
-    const std::string INPUT_FLAG_ALIGN = "align";
-    const std::string INPUT_FLAG_RUNPROTEIN = "runP";
-    const std::string INPUT_FLAG_RUNNUCLEOTIDE = "runN";
-    const std::string INPUT_FLAG_OVERWRITE = "overwrite";
-    const std::string INPUT_FLAG_NCBI_1 = "ncbi";
-    const std::string INPUT_FLAG_NCBI_2 = "N";
-    const std::string INPUT_FLAG_UNIPROT = "uniprot";
-    const std::string INPUT_FLAG_INTERPRO = "protein";
-    const std::string INPUT_FLAG_ONTOLOGY = "ontology";
-    const std::string INPUT_FLAG_SPECIES = "species";
-    const std::string INPUT_FLAG_COVERAGE = "coverage";
-    const std::string INPUT_FLAG_COMPLETE = "complete";
-    const std::string INPUT_FLAG_GO_LEVELS = "level";
-
-    const double DEFAULT_COVERAGE = 50.0;
-
-
+    const std::string INPUT_FLAG_ALIGN              = "align";
+    const std::string INPUT_FLAG_RUNPROTEIN         = "runP";
+    const std::string INPUT_FLAG_RUNNUCLEOTIDE      = "runN";
+    const std::string INPUT_FLAG_OVERWRITE          = "overwrite";
+    const std::string INPUT_FLAG_NCBI_1             = "ncbi";
+    const std::string INPUT_FLAG_NCBI_2             = "N";
+    const std::string INPUT_FLAG_UNIPROT            = "uniprot";
+    const std::string INPUT_FLAG_INTERPRO           = "protein";
+    const std::string INPUT_FLAG_ONTOLOGY           = "ontology";
+    const std::string INPUT_FLAG_SPECIES            = "species";
+    const std::string INPUT_FLAG_QCOVERAGE          = "qcoverage";
+    const std::string INPUT_FLAG_TCOVERAGE          = "tcoverage";
+    const std::string INPUT_FLAG_COMPLETE           = "complete";
+    const std::string INPUT_FLAG_GO_LEVELS          = "level";
 
     const std::string INPUT_UNIPROT_SWISS = "swiss";
     const std::string INPUT_UNIPROT_UR100 = "ur100";
@@ -115,16 +104,15 @@ namespace ENTAP_CONFIG {
     const std::string NCBI_NULL = "null";
     const std::string NCBI_DEFAULT = NCBI_REFSEQ_COMP;
 
-    const std::string NCBI_INDEX_PATH = "/bin/ncbi_";
-
     const std::string INTERPRO_DEFAULT = "pfam";
 
-    //-----------------------FTP PATHS---------------------------//
-    const std::string UNIPROT_FTP_SWISS = "ftp://ftp.uniprot.org/pub/databases/"
-            "uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz";
-    const std::string UNIPROT_FTP_TREMBL = "ftp://ftp.uniprot.org/pub/databases/"
-            "uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz";
-
+    const std::string GO_DB_PATH = "/bin/go_term.entp";
+    const std::string GO_TERM_FILE = "/databases/term.txt";
+    const std::string TAX_SCRIPT_PATH = "/download_tax.pl";
+    const std::string TAX_DATABASE_PATH = "/databases/ncbi_tax.entp";
+    const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";
+    const std::string BIN_PATH = "bin/";
+    const std::string NCBI_INDEX_PATH = "/bin/ncbi_";
 
     const std::string DIAMOND_PATH_EXE = "/libs/diamond-0.8.31/bin/diamond";
     const std::string DIAMOND_INDX_OUT_PATH = "outfiles/diamond/diamond_index.out";
@@ -135,7 +123,7 @@ namespace ENTAP_CONFIG {
 namespace ENTAP_EXECUTE {
     const std::string RSEM_EXE_PATH = "/libs/RSEM-1.3.0/";
     const std::string RSEM_OUT_DIR = "expression/";
-    const float RSEM_FPKM_DEFAULT = 1;
+    const float RSEM_FPKM_DEFAULT = 0.5;
     const int RSEM_COL_NUM = 7;
     const std::string OUTFILE_DEFAULT = "outfiles";
     const std::string FIGURE_DIR      = "figures/";

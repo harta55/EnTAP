@@ -137,9 +137,12 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
             ("contam,c",
                  boostPO::value<std::vector<std::string>>(&contam_vec)->multitoken(),
                  "Contaminant selection")
-            (ENTAP_CONFIG::INPUT_FLAG_COVERAGE.c_str(),
-                 boostPO::value<double>()->default_value(ENTAP_CONFIG::DEFAULT_COVERAGE),
+            (ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE.c_str(),
+                 boostPO::value<double>()->default_value(ENTAP_CONFIG::DEFAULT_QCOVERAGE),
                  "Select minimum query coverage to be kept for similarity searching")
+            (ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE.c_str(),
+                 boostPO::value<double>()->default_value(ENTAP_CONFIG::DEFAULT_QCOVERAGE),
+                 "Select minimum target coverage to be kept for similarity searching")
             (ENTAP_CONFIG::INPUT_FLAG_SPECIES.c_str(),
                  boostPO::value<std::string>(&species),"The type of species you are analyzing if you would like"
                  "filtering based upon this separated by a '_'.\nExample: homo_sapiens")

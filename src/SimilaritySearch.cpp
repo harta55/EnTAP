@@ -36,7 +36,8 @@ SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::str
                 _input_species.substr(0,_input_species.find("_")) +
                 " " + _input_species.substr(_input_species.find("_")+1);
     }
-    _coverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_COVERAGE].as<double>();
+    _qcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE].as<double>();
+    _tcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE].as<double>();
     _overwrite = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
     _e_val = user_flags["e"].as<double>();
 
@@ -125,7 +126,8 @@ std::vector<std::string> SimilaritySearch::diamond() {
 
 void SimilaritySearch::diamond_blast(std::string input_file, std::string output_file, std::string std_out,
                    std::string &database,int &threads, std::string &blast) {
-    std::string diamond_run = _diamond_exe + " " + blast +" -d " + database + " --query-cover " + std::to_string(_coverage) +
+    std::string diamond_run = _diamond_exe + " " + blast +" -d " + database + " --query-cover " + std::to_string(_qcoverage) +
+                              " --subject-cover " + std::to_string(_tcoverage) +
                               " --more-sensitive" + " --top 3" + " -q " + input_file + " -o " + output_file + " -p " + std::to_string(threads) +" -f " +
                               "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp stitle";
     entapInit::print_msg("\nExecuting Diamond:\n" + diamond_run);
@@ -216,7 +218,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
             bool informative = is_informative(stitle);
             new_query.set_is_informative(informative);
             new_query.setFrame(SEQUENCES[qseqid].getFrame());  // May want to handle differently, SLOW
-            new_query.set_tax_score(calculate_score(lineage,informative));
+            new_query.set_tax_score(_input_lineage);
             if (evalue > _e_val) {
                 count_under_e++; count_removed++;
                 file_unselected_tsv << new_query <<std::endl;
@@ -602,16 +604,4 @@ std::string SimilaritySearch::get_lineage(std::string species,
     if (lineage.find("||") != std::string::npos) {
         return lineage.substr(lineage.find("||")+2);
     } else return lineage;
-}
-
-int SimilaritySearch::calculate_score(std::string lineage, bool is_informative) {
-    int score = 0;
-    if (is_informative) score += 5;
-    std::string temp;
-    size_t p = 0;std::string del = "; ";
-    while ((p = lineage.find("; "))!=std::string::npos) {
-        temp = lineage.substr(0,p);
-        if (_input_lineage.find(temp)!=std::string::npos) score++;
-        lineage.erase(0,p+del.length());
-    }
 }

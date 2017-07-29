@@ -16,13 +16,13 @@ bool QuerySequence::operator>(const QuerySequence &querySequence) {
         double eval1 = this->_e_val, eval2 = querySequence._e_val;
         if (eval1 == 0) eval1 = 1E-180;
         if (eval2 == 0) eval2 = 1E-180;
-        if (fabs(log10(eval1) - log10(eval2)) < 6) {
-            if (this->_contaminant && !querySequence._contaminant) return false;
-            if (!this->_contaminant && querySequence._contaminant) return true;
+        if (fabs(log10(eval1) - log10(eval2)) < E_VAL_DIF) {
             double coverage_dif = fabs(this->_coverage - querySequence._coverage);
-            if (coverage_dif > 5) {
+            if (coverage_dif > COV_DIF) {
                 return this->_coverage > querySequence._coverage;
             }
+            if (this->_contaminant && !querySequence._contaminant) return false;
+            if (!this->_contaminant && querySequence._contaminant) return true;
             if (this->_tax_score == querySequence._tax_score)
                 return this->_e_val<querySequence._e_val;
             return this->_tax_score > querySequence._tax_score;
@@ -31,12 +31,12 @@ bool QuerySequence::operator>(const QuerySequence &querySequence) {
         }
     }else {
         // For overall best hits between databases "best hit"
-        if (this->_contaminant && !querySequence._contaminant) return false;
-        if (!this->_contaminant && querySequence._contaminant) return true;
         double coverage_dif = fabs(this->_coverage - querySequence._coverage);
-        if (coverage_dif > 5) {
+        if (coverage_dif > COV_DIF) {
             return this->_coverage > querySequence._coverage;
         }
+        if (this->_contaminant && !querySequence._contaminant) return false;
+        if (!this->_contaminant && querySequence._contaminant) return true;
         return this->_tax_score > querySequence._tax_score;
     }
 }
@@ -309,8 +309,25 @@ void QuerySequence::set_lineage(const std::string &_lineage) {
     QuerySequence::_lineage = _lineage;
 }
 
-void QuerySequence::set_tax_score(int _tax_score) {
-    QuerySequence::_tax_score = _tax_score;
+void QuerySequence::set_tax_score(std::string input_lineage) {
+    float tax_score = 0;
+    std::string lineage = _lineage;
+    std::remove_if(lineage.begin(),lineage.end(), ::isspace);
+    std::remove_if(input_lineage.begin(),input_lineage.end(), ::isspace);
+
+    std::string temp;
+    size_t p = 0;std::string del = ";";
+    while ((p = lineage.find(";"))!=std::string::npos) {
+        temp = lineage.substr(0,p);
+        if (input_lineage.find(temp)!=std::string::npos) tax_score++;
+        lineage.erase(0,p+del.length());
+    }
+    if (tax_score == 0) {
+        if(is_informative) tax_score += INFORM_ADD;
+    } else {
+        tax_score *= INFORM_FACTOR;
+    }
+    _tax_score = tax_score;
 }
 
 const std::string &QuerySequence::get_sequence() const {

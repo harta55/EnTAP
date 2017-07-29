@@ -49,6 +49,8 @@ private:
     std::string GRAPH_CONTAM_BAR_PNG                             = "_contam_bar.png";
     std::string GRAPH_CONTAM_TITLE                               = "_Top_10_Contaminant_Distribution";
 
+
+
     std::vector<std::string>         _database_paths;
     std::vector<std::string>         _sim_search_paths;
     std::string                      _diamond_exe;
@@ -66,7 +68,8 @@ private:
     bool                             _overwrite;
     bool                             _blastp;
     double                           _e_val;
-    double                           _coverage;
+    double                           _qcoverage;
+    double                           _tcoverage;
     short                            _software_flag;
     std::vector<std::string>         _contaminants;
     std::unordered_map<std::string,std::string> _file_to_database;
@@ -86,7 +89,6 @@ private:
             QuerySequence>>&,std::map<std::string, QuerySequence>&);
     void print_header(std::string);
     std::string get_lineage(std::string, std::unordered_map<std::string, std::string>&);
-    int calculate_score(std::string,bool);
     std::pair<std::string,std::string> calculate_best_stats (std::map<std::string, QuerySequence>&,
                                  std::map<std::string, QuerySequence>&,
                                  std::stringstream &, std::string&,bool);

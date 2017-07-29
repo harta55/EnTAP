@@ -23,8 +23,13 @@ namespace entapInit {
         }
     };
 
+    //-----------------------FTP PATHS---------------------------//
     const std::string GO_DATABASE_FTP =
             "http://archive.geneontology.org/latest-full/go_monthly-termdb-tables.tar.gz";
+    const std::string UNIPROT_FTP_SWISS = "ftp://ftp.uniprot.org/pub/databases/"
+            "uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz";
+    const std::string UNIPROT_FTP_TREMBL = "ftp://ftp.uniprot.org/pub/databases/"
+            "uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz";
 
     bool file_exists (const std::string& name);
     void print_msg(std::string msg);

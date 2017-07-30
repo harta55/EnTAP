@@ -27,8 +27,6 @@ public:
                     std::string,std::string,std::string);
     void set_tax_score(std::string);
 
-
-
     const std::string &get_contam_type() const;
     void set_contam_type(const std::string &_contam_type);
     void set_is_informative(bool _is_informative);
@@ -66,11 +64,10 @@ public:
 
 private:
 
-    const unsigned char E_VAL_DIF     = 8;
-    const unsigned char COV_DIF       = 5;
-    const unsigned char INFORM_ADD    = 3;
-    const float INFORM_FACTOR         = 1.2;
-
+    unsigned char E_VAL_DIF     = 8;
+    unsigned char COV_DIF       = 5;
+    unsigned char INFORM_ADD    = 3;
+    float INFORM_FACTOR         = 1.2;
 
     bool                              _contaminant;
     bool                              is_protein;

@@ -49,7 +49,7 @@ namespace ENTAP_ERR {
 
 namespace ENTAP_CONFIG {
 
-    const std::string ENTAP_VERSION = "0.6.1";
+    const std::string ENTAP_VERSION = "0.6.1.1";
     const double DEFAULT_QCOVERAGE = 50.0;
     const double DEFAULT_TCOVERAGE = 50.0;
     const double E_VALUE = 1e-5;
@@ -86,6 +86,8 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_TCOVERAGE          = "tcoverage";
     const std::string INPUT_FLAG_COMPLETE           = "complete";
     const std::string INPUT_FLAG_GO_LEVELS          = "level";
+    const std::string INPUT_FLAG_EXE_PATH           = "exe";
+    const std::string INPUT_FLAG_FPKM               = "fpkm";
 
     const std::string INPUT_UNIPROT_SWISS = "swiss";
     const std::string INPUT_UNIPROT_UR100 = "ur100";

@@ -383,7 +383,7 @@ namespace entapInit {
         std::string output_path = path +flag + ".gz";
 
         if (flag == ENTAP_CONFIG::INPUT_UNIPROT_SWISS) {
-            ftp_address = ENTAP_CONFIG::UNIPROT_FTP_SWISS;
+            ftp_address = UNIPROT_FTP_SWISS;
 
         } else {
             throw ExceptionHandler("Invalid uniprot flag", ENTAP_ERR::E_INPUT_PARSE);

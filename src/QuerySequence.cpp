@@ -323,7 +323,7 @@ void QuerySequence::set_tax_score(std::string input_lineage) {
         lineage.erase(0,p+del.length());
     }
     if (tax_score == 0) {
-        if(is_informative) tax_score += INFORM_ADD;
+        if(_is_informative) tax_score += INFORM_ADD;
     } else {
         tax_score *= INFORM_FACTOR;
     }

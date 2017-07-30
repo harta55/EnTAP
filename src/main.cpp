@@ -33,7 +33,7 @@ void print_user_input(boostPO::variables_map&);
 void init_log();
 boostPO::variables_map parse_arguments_boost(int,const char**);
 void state_summary(States);
-std::string get_exe_path();
+std::string get_exe_path(boostPO::variables_map&);
 void generate_config(std::string&);
 
 States state;   // init
@@ -42,8 +42,6 @@ Chrono::time_point<Chrono::system_clock> _start_time, _end_time;
 
 int main(int argc, const char** argv) {
     init_log();
-    // TODO fix, not portable
-    _exe_path = get_exe_path();
     try {
         state = PARSE_ARGS;
         std::unordered_map<std::string,std::string> config_map;
@@ -51,6 +49,7 @@ int main(int argc, const char** argv) {
         boost::filesystem::path working_dir(boost::filesystem::current_path());
         _outpath = working_dir.string() + "/" + inputs["tag"].as<std::string>() + "/";
         print_user_input(inputs);
+        _exe_path = get_exe_path(inputs);
         config_map = parse_config(_exe_path);
         if (state == INIT_ENTAP) {
             entapInit::init_entap(inputs, _exe_path, config_map);
@@ -121,7 +120,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                  boostPO::value<std::vector<short>>()->multitoken()
                  ->default_value(std::vector<short>{0,3,4},""),
                  "Gene ontology levels you would like outputted.")
-            ("fpkm",
+            (ENTAP_CONFIG::INPUT_FLAG_FPKM.c_str(),
                  boostPO::value<float>(&fpkm)->default_value(ENTAP_EXECUTE::RSEM_FPKM_DEFAULT),
                  "FPKM cutoff value")
             ("e",
@@ -140,6 +139,9 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
             (ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE.c_str(),
                  boostPO::value<double>()->default_value(ENTAP_CONFIG::DEFAULT_QCOVERAGE),
                  "Select minimum query coverage to be kept for similarity searching")
+            (ENTAP_CONFIG::INPUT_FLAG_EXE_PATH.c_str(),
+                 boostPO::value<std::string>(),
+                 "Specify path to EnTAP exe if it is not detected by the program.")
             (ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE.c_str(),
                  boostPO::value<double>()->default_value(ENTAP_CONFIG::DEFAULT_QCOVERAGE),
                  "Select minimum target coverage to be kept for similarity searching")
@@ -376,8 +378,11 @@ void print_user_input(boostPO::variables_map &map) {
     print_msg(output+"\n");
 }
 
-std::string get_exe_path() {
+std::string get_exe_path(boostPO::variables_map &vm) {
     //TODO check different systems
+    if (vm.count(ENTAP_CONFIG::INPUT_FLAG_EXE_PATH)) {
+        return vm[ENTAP_CONFIG::INPUT_FLAG_EXE_PATH].as<std::string>();
+    }
     char buff[1024];
     ssize_t len = ::readlink("/proc/self/exe", buff, sizeof(buff)-1);
     if (len != -1) {

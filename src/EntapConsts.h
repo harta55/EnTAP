@@ -49,7 +49,7 @@ namespace ENTAP_ERR {
 
 namespace ENTAP_CONFIG {
 
-    const std::string ENTAP_VERSION = "0.6.1.1";
+    const std::string ENTAP_VERSION = "0.6.1.2";
     const double DEFAULT_QCOVERAGE = 50.0;
     const double DEFAULT_TCOVERAGE = 50.0;
     const double E_VALUE = 1e-5;
@@ -124,7 +124,6 @@ namespace ENTAP_CONFIG {
 
 namespace ENTAP_EXECUTE {
     const std::string RSEM_EXE_PATH = "/libs/RSEM-1.3.0/";
-    const std::string RSEM_OUT_DIR = "expression/";
     const float RSEM_FPKM_DEFAULT = 0.5;
     const int RSEM_COL_NUM = 7;
     const std::string OUTFILE_DEFAULT = "outfiles";
@@ -154,29 +153,9 @@ namespace ENTAP_EXECUTE {
 
     const int diamond_col_num = 14;
 
-    const std::list<std::string> INFORMATIVENESS {
-            "conserved",
-            "predicted",
-            "unnamed",
-            "hypothetical",
-            "putative",
-            "unidentified",
-            "uncharacterized",
-            "unknown",
-            "uncultured",
-            "uninformative"
-    };
-
     //--------------------Graphing----------------------//
 
     const std::string GRAPH_FILEPATH   =        "/src/entap_graphing.py";
-
-    const signed char GRAPH_INIT       =        -1;
-    const signed char GRAPH_EXPRESSION =         0;
-    const signed char GRAPH_FRAME      =         1;
-    const signed char GRAPH_SIM        =         2;
-    const signed char GRAPH_ONTOLOGY   =         3;
-
 
 }
 

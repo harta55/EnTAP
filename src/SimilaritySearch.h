@@ -49,7 +49,18 @@ private:
     std::string GRAPH_CONTAM_BAR_PNG                             = "_contam_bar.png";
     std::string GRAPH_CONTAM_TITLE                               = "_Top_10_Contaminant_Distribution";
 
-
+    const std::list<std::string> INFORMATIVENESS {
+            "conserved",
+            "predicted",
+            "unnamed",
+            "hypothetical",
+            "putative",
+            "unidentified",
+            "uncharacterized",
+            "unknown",
+            "uncultured",
+            "uninformative"
+    };
 
     std::vector<std::string>         _database_paths;
     std::vector<std::string>         _sim_search_paths;

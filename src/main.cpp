@@ -143,7 +143,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                  boostPO::value<std::string>(),
                  "Specify path to EnTAP exe if it is not detected by the program.")
             (ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE.c_str(),
-                 boostPO::value<double>()->default_value(ENTAP_CONFIG::DEFAULT_QCOVERAGE),
+                 boostPO::value<double>()->default_value(ENTAP_CONFIG::DEFAULT_TCOVERAGE),
                  "Select minimum target coverage to be kept for similarity searching")
             (ENTAP_CONFIG::INPUT_FLAG_SPECIES.c_str(),
                  boostPO::value<std::string>(&species),"The type of species you are analyzing if you would like"

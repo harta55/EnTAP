@@ -551,7 +551,7 @@ std::string SimilaritySearch::get_species(std::string &title) {
 
 bool SimilaritySearch::is_informative(std::string title) {
     std::transform(title.begin(),title.end(),title.begin(),::tolower);
-    for (std::string item : ENTAP_EXECUTE::INFORMATIVENESS) {
+    for (std::string item : INFORMATIVENESS) {
         std::transform(item.begin(),item.end(),item.begin(),::tolower);
         if (title.find(item) != std::string::npos) return false;
     }

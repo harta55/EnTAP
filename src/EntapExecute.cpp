@@ -285,11 +285,10 @@ namespace entapExecute {
      */
     std::string filter_transcriptome(std::string &input_path) {
         entapInit::print_msg("Beginning to copy final transcriptome to be used...");
-        boostFS::path file_name(input_path);
-        file_name.filename();
-        std::string out_path = _entap_outpath +
-                               file_name.stem().stem().string() + "_final.fasta";
+        boostFS::path file_name(input_path); file_name = file_name.filename();
+        std::string out_path = _entap_outpath + file_name.stem().string() + "_final.fasta";
         boostFS::copy_file(input_path,out_path,boostFS::copy_option::overwrite_if_exists);
+        entapInit::print_msg("Success!");
         return out_path;
     }
 

@@ -93,7 +93,7 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
         path = eggnog_format(path);
         std::string qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                 best_og, cog_cat, eggnog_annot;
-        io::CSVReader<ENTAP_EXECUTE::EGGNOG_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(path);
+        io::CSVReader<EGGNOG_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(path);
         // io::single_line_comment<'#'>??
         while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                            best_og, cog_cat, eggnog_annot)) {
@@ -410,7 +410,7 @@ void Ontology::parse_results_interpro(Ontology::query_map_struct &SEQUENCES,
         std::string qseqid, temp, protein, data_id, data_term, score, score2, temp2,
                 data, ipr_id, ipr_term,go_id,path_id,temp3;
         double e_val;
-        io::CSVReader<ENTAP_EXECUTE::INTERPRO_COL_NUM, io::trim_chars<' '>,
+        io::CSVReader<INTERPRO_COL_NUM, io::trim_chars<' '>,
                 io::no_quote_escape<'\t'>> in(out.first);
         in.set_header("qseqid", "temp", "temp3","protein",
                       "data_id", "data_term", "score", "score2", "e_val", "temp2",
@@ -544,8 +544,7 @@ void Ontology::interpro_format_fix(std::string& path) {
     std::string line;
     while (std::getline(file,line)) {
         if (line.empty()) continue;
-        long ct = ENTAP_EXECUTE::INTERPRO_COL_NUM -
-                  std::count(line.begin(),line.end(),'\t') - 1;
+        long ct = INTERPRO_COL_NUM - std::count(line.begin(),line.end(),'\t') - 1;
         out << line;
         for (long i = ct ; i >0; i--) out << '\t';
         out << std::endl;

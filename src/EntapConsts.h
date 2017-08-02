@@ -2,8 +2,8 @@
 // Created by harta55 on 2/1/17.
 //
 
-#ifndef ENTAP_ERRORFLAGS_H
-#define ENTAP_ERRORFLAGS_H
+#ifndef ENTAPCONSTS_H
+#define ENTAPCONSTS_H
 #include <vector>
 #include <list>
 
@@ -49,12 +49,14 @@ namespace ENTAP_ERR {
 
 namespace ENTAP_CONFIG {
 
-    const std::string ENTAP_VERSION = "0.6.1.2";
+    const std::string ENTAP_VERSION = "0.6.1.3";
     const double DEFAULT_QCOVERAGE = 50.0;
     const double DEFAULT_TCOVERAGE = 50.0;
     const double E_VALUE = 1e-5;
     const std::string DEBUG_FILENAME = "debug.txt";
     const std::string LOG_FILENAME = "log_file.txt";
+    const float RSEM_FPKM_DEFAULT = 0.5;
+    const std::string OUTFILE_DEFAULT = "outfiles";
 
     //-------------------Config File----------------------//
     const std::string CONFIG_FILE = "entap_config.txt";
@@ -115,47 +117,15 @@ namespace ENTAP_CONFIG {
     const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";
     const std::string BIN_PATH = "bin/";
     const std::string NCBI_INDEX_PATH = "/bin/ncbi_";
-
-    const std::string DIAMOND_PATH_EXE = "/libs/diamond-0.8.31/bin/diamond";
-    const std::string DIAMOND_INDX_OUT_PATH = "outfiles/diamond/diamond_index.out";
-    const std::string DIAMOND_RUN_OUT_PATH = "outfiles/diamond/blastx_";
-    const std::string SIM_SEARCH_OUT_PATH = "similarity_search/";
 }
 
 namespace ENTAP_EXECUTE {
-    const std::string RSEM_EXE_PATH = "/libs/RSEM-1.3.0/";
-    const float RSEM_FPKM_DEFAULT = 0.5;
-    const int RSEM_COL_NUM = 7;
-    const std::string OUTFILE_DEFAULT = "outfiles";
-    const std::string FIGURE_DIR      = "figures/";
-
-
-    //--------------------Frame Selection----------------------//
-
-    const std::string GENEMARK_EXE_PATH = "/libs/gmst_linux_64/gmst.pl";
-
     //------------------------Ontology-------------------------//
-
-    const std::string EGGNOG_EMAPPER_EXE = "/libs/eggnog-mapper/emapper.py";
-    const std::string EGGNOG_INIT_EXE = "";
-    const short EGGNOG_COL_NUM = 12;
     const std::string GO_BIOLOGICAL_FLAG = "biological_process";
     const std::string GO_CELLULAR_FLAG = "cellular_component";
     const std::string GO_MOLECULAR_FLAG = "molecular_function";
     const short EGGNOG_INT_FLAG = 0;
-
     const short INTERPRO_INT_FLAG = 1;
-    const short INTERPRO_COL_NUM = 15;
-
-    const std::string INTERPRO_EXE = "/libs/interproscan-5.22-61.0/interproscan.sh";
-
-    const std::string ENTAP_OUTPUT = "entap_out/";
-
-    const int diamond_col_num = 14;
-
-    //--------------------Graphing----------------------//
-
-    const std::string GRAPH_FILEPATH   =        "/src/entap_graphing.py";
 
 }
 

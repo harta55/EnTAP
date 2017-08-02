@@ -53,10 +53,10 @@ SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::str
     _contaminants = contaminants;
     _software_flag = 0;
 
-    _sim_search_path = (boostFS::path(out) / boostFS::path(SIM_SEARCH_DIR)).string();
-    _processed_path  = (boostFS::path(_sim_search_path) / boostFS::path(PROCESSED_DIR)).string();
-    _results_path    = (boostFS::path(_sim_search_path) / boostFS::path(RESULTS_DIR)).string();
-    _figure_path     = (boostFS::path(_sim_search_path) / boostFS::path(FIGURE_DIR)).string();
+    _sim_search_dir = (boostFS::path(out) / boostFS::path(SIM_SEARCH_DIR)).string();
+    _processed_path  = (boostFS::path(_sim_search_dir) / boostFS::path(PROCESSED_DIR)).string();
+    _results_path    = (boostFS::path(_sim_search_dir) / boostFS::path(RESULTS_DIR)).string();
+    _figure_path     = (boostFS::path(_sim_search_dir) / boostFS::path(FIGURE_DIR)).string();
     _graphingManager = graphingManager;
 }
 
@@ -96,9 +96,9 @@ std::vector<std::string> SimilaritySearch::diamond() {
     boostFS::path transc_name(_input_path); transc_name=transc_name.stem();
     if (transc_name.has_stem()) transc_name = transc_name.stem(); //.fasta.faa
     if (_overwrite) {
-        boostFS::remove_all(_sim_search_path);
+        boostFS::remove_all(_sim_search_dir);
     }
-    boostFS::create_directories(_sim_search_path);
+    boostFS::create_directories(_sim_search_dir);
     // database verification already ran, don't need to verify each path
     try {
         // assume all paths should be .dmnd
@@ -107,8 +107,8 @@ std::vector<std::string> SimilaritySearch::diamond() {
             boostFS::path database_name(data_path); database_name=database_name.stem();
             std::string filename = _blast_type + "_" + transc_name.string() + "_" +
                                    database_name.string();
-            std::string out_path = (boostFS::path(_sim_search_path) / filename).string() + ".out";
-            std::string std_out  = (boostFS::path(_sim_search_path) / filename).string() + "_std";
+            std::string out_path = (boostFS::path(_sim_search_dir) / filename).string() + ".out";
+            std::string std_out  = (boostFS::path(_sim_search_dir) / filename).string() + "_std";
             _file_to_database[out_path] = database_name.string();
             if (entapInit::file_exists(out_path)) {
                 entapInit::print_msg("File found at " + out_path + " skipping execution against this database");
@@ -126,10 +126,23 @@ std::vector<std::string> SimilaritySearch::diamond() {
 
 void SimilaritySearch::diamond_blast(std::string input_file, std::string output_file, std::string std_out,
                    std::string &database,int &threads, std::string &blast) {
-    std::string diamond_run = _diamond_exe + " " + blast +" -d " + database + " --query-cover " + std::to_string(_qcoverage) +
-                              " --subject-cover " + std::to_string(_tcoverage) +
-                              " --more-sensitive" + " --top 3" + " -q " + input_file + " -o " + output_file + " -p " + std::to_string(threads) +" -f " +
-                              "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp stitle";
+
+    std::string        diamond_run;
+
+    diamond_run =
+            _diamond_exe + " "
+            + blast +
+            " -d " + database    +
+            " --query-cover "    + std::to_string(_qcoverage) +
+            " --subject-cover "  + std::to_string(_tcoverage) +
+            " --more-sensitive"  +
+            " --top 3"           +
+            " -q " + input_file  +
+            " -o " + output_file +
+            " -p " + std::to_string(threads) +
+            " -f " + "6 qseqid sseqid pident length mismatch gapopen "
+                     "qstart qend sstart send evalue bitscore qcovhsp stitle";
+
     entapInit::print_msg("\nExecuting Diamond:\n" + diamond_run);
     if (entapInit::execute_cmd(diamond_run, std_out) != 0) {
         throw ExceptionHandler("Error in DIAMOND run with database located at: " +
@@ -138,15 +151,15 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
 }
 
 std::vector<std::string> SimilaritySearch::verify_diamond_files(std::string &outpath, std::string name) {
-    entapInit::print_msg("Override unselected, checking for diamond files"
-                                 " of selected databases...");
+    entapInit::print_msg("Override unselected, checking for diamond files of selected databases...");
     std::vector<std::string> out_list;
+    std::string              temp_out;
+
     for (std::string data_path : _database_paths) {
         // assume all paths should be .dmnd
         boostFS::path file_name(data_path);
         file_name = file_name.stem();
-        std::string temp_out = outpath + _blast_type + "_" + name + "_" +
-                               file_name.string() + ".out";
+        temp_out = outpath + _blast_type + "_" + name + "_" + file_name.string() + ".out";
         if (!entapInit::file_exists(temp_out)){
             entapInit::print_msg("File at: " + temp_out + " not found, running diamond");
             out_list.clear();return out_list;
@@ -170,10 +183,9 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
         taxonomic_database = read_tax_map();
     } catch (ExceptionHandler &e) {throw e;}
     if (_sim_search_paths.empty()) {
-        std::string diamond_out = _outpath + ENTAP_CONFIG::SIM_SEARCH_OUT_PATH; // Raw outpath
         boostFS::path transc_name(_input_path); transc_name=transc_name.stem();
         if (transc_name.has_stem()) transc_name = transc_name.stem(); //.fasta.faa
-        _sim_search_paths = verify_diamond_files(diamond_out,transc_name.string());
+        _sim_search_paths = verify_diamond_files(_sim_search_dir,transc_name.string());
     }
     if (_sim_search_paths.empty()) throw ExceptionHandler("No diamond files found", ENTAP_ERR::E_RUN_SIM_SEARCH_FILTER);
 
@@ -183,7 +195,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
 
     for (std::string &data : _sim_search_paths) {
         entapInit::print_msg("Diamond file located at " + data + " being filtered");
-        io::CSVReader<ENTAP_EXECUTE::diamond_col_num, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(data);
+        io::CSVReader<DMND_COL_NUMBER, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(data);
         // todo have columns from input file, in_read_header for versatility
         std::string qseqid, sseqid, stitle, database_name;
         double evalue, pident, bitscore, coverage;
@@ -454,11 +466,6 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         graphingStruct.graph_type = GRAPH_BAR_FLAG;
         _graphingManager->graph(graphingStruct);
     }
-
-
-
-
-
     return std::pair<std::string,std::string>(out_best_hits_fa_prot,out_no_hits_fa_prot);
 }
 

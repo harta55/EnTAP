@@ -19,6 +19,7 @@ private:
 
     const std::string RSEM_OUT_DIR          = "expression/";
     const std::string RSEM_PROCESSED_DIR    = "processed/";
+    static constexpr int RSEM_COL_NUM = 7;
 
     std::string         _inpath;
     std::string         _alignpath;

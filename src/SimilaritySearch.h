@@ -49,6 +49,8 @@ private:
     std::string GRAPH_CONTAM_BAR_PNG                             = "_contam_bar.png";
     std::string GRAPH_CONTAM_TITLE                               = "_Top_10_Contaminant_Distribution";
 
+    static constexpr int DMND_COL_NUMBER = 14;
+
     const std::list<std::string> INFORMATIVENESS {
             "conserved",
             "predicted",
@@ -67,7 +69,7 @@ private:
     std::string                      _diamond_exe;
     std::string                      _outpath;
     std::string                      _input_path;
-    std::string                      _sim_search_path;
+    std::string                      _sim_search_dir;
     std::string                      _processed_path;
     std::string                      _figure_path;
     std::string                      _results_path;

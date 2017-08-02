@@ -157,7 +157,7 @@ std::string ExpressionAnalysis::rsem_filter(std::string &results_path,
                               path.stem().string() + "_filtered.fasta";
     std::ofstream out_file(out_path, std::ios::out | std::ios::app);
     std::ofstream removed_file(out_removed, std::ios::out | std::ios::app);
-    io::CSVReader<ENTAP_EXECUTE::RSEM_COL_NUM, io::trim_chars<' '>,
+    io::CSVReader<RSEM_COL_NUM, io::trim_chars<' '>,
     io::no_quote_escape<'\t'>> in(results_path);
     in.next_line();
     while (in.read_row(geneid, transid, length, e_leng, e_count, tpm, fpkm_val)) {

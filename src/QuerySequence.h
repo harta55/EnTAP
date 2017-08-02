@@ -64,10 +64,10 @@ public:
 
 private:
 
-    unsigned char E_VAL_DIF     = 8;
-    unsigned char COV_DIF       = 5;
-    unsigned char INFORM_ADD    = 3;
-    float INFORM_FACTOR         = 1.2;
+    static constexpr unsigned char E_VAL_DIF     = 8;
+    static constexpr unsigned char COV_DIF       = 5;
+    static constexpr unsigned char INFORM_ADD    = 3;
+    static constexpr float INFORM_FACTOR         = 1.2;
 
     bool                              _contaminant;
     bool                              is_protein;

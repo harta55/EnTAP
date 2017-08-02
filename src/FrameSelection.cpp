@@ -27,7 +27,7 @@ FrameSelection::FrameSelection(std::string &input, std::string &exe, std::string
     _processed_path  = (boostFS::path(out) / boostFS::path(FRAME_SELECTION_OUT_DIR) /
                         boostFS::path(PROCESSED_DIR)).string();
     _figure_path     = (boostFS::path(out) / boostFS::path(FRAME_SELECTION_OUT_DIR) /
-                        boostFS::path(ENTAP_EXECUTE::FIGURE_DIR)).string();
+                        boostFS::path(FIGURE_DIR)).string();
     _frame_outpath   = (boostFS::path(out) / boostFS::path(FRAME_SELECTION_OUT_DIR)).string();
 }
 

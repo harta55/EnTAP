@@ -16,11 +16,19 @@
 
 namespace entapExecute {
 
+    // **********************Defines*************************//
 
-    const std::string   OUT_UNANNOTATED_NUCL = "final_unannotated.fnn";
-    const std::string   OUT_UNANNOTATED_PROT = "final_unannotated.faa";
-    const std::string   OUT_ANNOTATED_NUCL = "final_annotated.fnn";
-    const std::string   OUT_ANNOTATED_PROT = "final_annotated.faa";
+    const std::string OUT_UNANNOTATED_NUCL = "final_unannotated.fnn";
+    const std::string OUT_UNANNOTATED_PROT = "final_unannotated.faa";
+    const std::string OUT_ANNOTATED_NUCL   = "final_annotated.fnn";
+    const std::string OUT_ANNOTATED_PROT   = "final_annotated.faa";
+    const std::string RSEM_EXE_PATH        = "/libs/RSEM-1.3.0/";
+    const std::string GENEMARK_EXE_PATH    = "/libs/gmst_linux_64/gmst.pl";
+    const std::string DIAMOND_PATH_EXE     = "/libs/diamond-0.8.31/bin/diamond";
+    const std::string EGGNOG_EMAPPER_EXE   = "/libs/eggnog-mapper/emapper.py";
+    const std::string INTERPRO_EXE         = "/libs/interproscan-5.22-61.0/interproscan.sh";
+    const std::string ENTAP_OUTPUT         = "entap_out/";
+    const std::string GRAPH_FILEPATH       = "/src/entap_graphing.py";
 
     enum ExecuteStates {
         INIT,
@@ -33,6 +41,7 @@ namespace entapExecute {
         EXIT
     };
 
+    // *******************Prototype Functions**********************//
     std::vector<std::string> verify_databases(std::vector<std::string>, std::vector<std::string>,
                                             std::vector<std::string>, std::string &,
                                             std::unordered_map<std::string, std::string> &);
@@ -42,7 +51,7 @@ namespace entapExecute {
     std::string filter_transcriptome(std::string &);
     void verify_state(std::queue<char> &, bool &);
     bool valid_state(enum ExecuteStates);
-    std::string init_exe_paths(std::unordered_map<std::string, std::string> &, std::string &);
+    std::string init_exe_paths(std::unordered_map<std::string, std::string> &, std::string);
     void print_statistics(std::string &, std::string &);
     std::map<std::string, QuerySequence> init_sequence_map(std::string&,bool);
     std::pair<unsigned long, unsigned long> calculate_N_vals

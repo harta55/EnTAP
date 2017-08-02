@@ -29,6 +29,8 @@ private:
     const std::string OUT_UNANNOTATED_PROT  = "unannotated_sequences.faa";
     const std::string OUT_ANNOTATED_NUCL    = "annotated_sequences.fnn";
     const std::string OUT_ANNOTATED_PROT    = "annotated_sequences.faa";
+    static constexpr short INTERPRO_COL_NUM = 15;
+    static constexpr short EGGNOG_COL_NUM   = 12;
 
     std::vector<short>              _go_levels;
     int                             _threads;

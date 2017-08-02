@@ -45,6 +45,7 @@ class FrameSelection {
         const std::string FRAME_SELECTION_COMPLETE_FLAG = "Complete";
         const std::string FRAME_SELECTION_INTERNAL_FLAG = "Internal";
         const std::string PROCESSED_DIR                 = "processed/";
+        const std::string FIGURE_DIR                    = "figures/";
         const std::string GENEMARK_LOG_FILE             = "gms.log";
         const std::string GENEMARK_HMM_FILE             = "GeneMark_hmm.mod";
         const std::string GENEMARK_STD_OUT              = "genemark_run";

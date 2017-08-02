@@ -37,8 +37,10 @@ std::string get_exe_path(boostPO::variables_map&);
 void generate_config(std::string&);
 
 States state;   // init
-std::string _outpath,_exe_path;
-Chrono::time_point<Chrono::system_clock> _start_time, _end_time;
+std::string _outpath;
+std::string _exe_path;
+Chrono::time_point<Chrono::system_clock> _start_time;
+Chrono::time_point<Chrono::system_clock> _end_time;
 
 int main(int argc, const char** argv) {
     init_log();
@@ -110,7 +112,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                  boostPO::value<short>()->default_value(ENTAP_EXECUTE::EGGNOG_INT_FLAG),
                  "Specify ontology software to use\n0 - eggnog\n1 - interproscan")
             ("tag",
-                 boostPO::value<std::string>()->default_value(ENTAP_EXECUTE::OUTFILE_DEFAULT),
+                 boostPO::value<std::string>()->default_value(ENTAP_CONFIG::OUTFILE_DEFAULT),
                  "Specify species or unique tag you would like files to be saved as")
             ("database,d",
                  boostPO::value<std::vector<std::string>>(&data_path)->multitoken(),
@@ -121,7 +123,7 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
                  ->default_value(std::vector<short>{0,3,4},""),
                  "Gene ontology levels you would like outputted.")
             (ENTAP_CONFIG::INPUT_FLAG_FPKM.c_str(),
-                 boostPO::value<float>(&fpkm)->default_value(ENTAP_EXECUTE::RSEM_FPKM_DEFAULT),
+                 boostPO::value<float>(&fpkm)->default_value(ENTAP_CONFIG::RSEM_FPKM_DEFAULT),
                  "FPKM cutoff value")
             ("e",
                  boostPO::value<double>()->default_value(ENTAP_CONFIG::E_VALUE),"Specify an e-value")
@@ -255,8 +257,14 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
 
 std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
     print_msg("Parsing configuration file...");
+
     std::unordered_map<std::string,std::string> config_map;
-    std::string config_path = exe + "/" + ENTAP_CONFIG::CONFIG_FILE;
+    std::string                                 config_path;
+    std::string                                 line;
+    std::string                                 key;
+    std::string                                 val;
+
+    config_path = exe + "/" + ENTAP_CONFIG::CONFIG_FILE;
     if (!entapInit::file_exists(config_path)){
         print_msg("Config file not found, generating new file...");
         try {
@@ -268,7 +276,6 @@ std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
     }
     print_msg("Config file found at: " + config_path);
     std::ifstream in_file(config_path);
-    std::string line,key;
     while (std::getline(in_file,line)) {
         std::istringstream in_line(line);
         if (std::getline(in_line,key,'=')) {
@@ -276,7 +283,6 @@ std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
                 throw ExceptionHandler("Incorrect format in config file",
                 ENTAP_ERR::E_CONFIG_PARSE);
             }
-            std::string val;
             if (std::getline(in_line,val)) {
                 if (val.size()<=1) val = "";
                 config_map.emplace(key,val);
@@ -336,18 +342,25 @@ void print_msg(std::string msg) {
 }
 
 void print_user_input(boostPO::variables_map &map) {
-    remove(std::string(_outpath + ENTAP_CONFIG::LOG_FILENAME).c_str());
+
+    std::string         output;
+    std::stringstream   ss;
+    std::time_t         time;
+
+    boost::filesystem::remove(std::string(_outpath + ENTAP_CONFIG::LOG_FILENAME).c_str());
     boost::filesystem::create_directories(_outpath);
-    std::stringstream ss;
-    ss << ENTAP_STATS::SOFTWARE_BREAK <<
-          "enTAP Run Information\n"   <<
-          ENTAP_STATS::SOFTWARE_BREAK;
+
     _start_time = Chrono::system_clock::now();
-    std::time_t time = Chrono::system_clock::to_time_t(_start_time);
-    ss << "Current enTAP Version: " << ENTAP_CONFIG::ENTAP_VERSION  <<
-          "\nStart time: "          << std::ctime(&time)            <<
-          "\nYour working directory has been set to: "  << _outpath <<
-          "\nYour execution directory has been set to: "<< _exe_path<<'\n';
+    time = Chrono::system_clock::to_time_t(_start_time);
+
+    ss <<
+       ENTAP_STATS::SOFTWARE_BREAK <<
+       "enTAP Run Information\n"   <<
+       ENTAP_STATS::SOFTWARE_BREAK <<
+       "Current enTAP Version: "   << ENTAP_CONFIG::ENTAP_VERSION  <<
+       "\nStart time: "            << std::ctime(&time)            <<
+       "\nYour working directory has been set to: "  << _outpath   <<
+       "\nYour execution directory has been set to: "<< _exe_path  <<'\n';
 
     for (const auto& it : map) {
         std::string key = it.first.c_str();
@@ -373,7 +386,7 @@ void print_user_input(boostPO::variables_map &map) {
             }
         } else ss << "null";
     }
-    std::string output = ss.str() + "\n";
+    output = ss.str() + "\n";
     entapExecute::print_statistics(output,_outpath);
     print_msg(output+"\n");
 }

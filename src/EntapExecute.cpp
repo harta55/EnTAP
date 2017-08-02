@@ -78,8 +78,8 @@ namespace entapExecute {
         diamond_pair = std::make_pair(input_path,"");
 
         boostFS::path working_dir(boostFS::current_path());
-        _outpath = working_dir.string() + "/" + user_input["tag"].as<std::string>() + "/";
-        _entap_outpath = _outpath + ENTAP_EXECUTE::ENTAP_OUTPUT;
+        _outpath = (working_dir / boostFS::path(user_input["tag"].as<std::string>())).string();
+        _entap_outpath = (boostFS::path(_outpath) / boostFS::path(ENTAP_OUTPUT)).string();
         boostFS::create_directories(_entap_outpath);
 
         // init_databases
@@ -102,7 +102,7 @@ namespace entapExecute {
             init_exe_paths(config_map, exe_path);
             verify_state(state_queue, state_flag);
             SEQUENCE_MAP = init_sequence_map(input_path, is_complete);
-            GraphingManager graphingManager = GraphingManager(ENTAP_EXECUTE::GRAPH_FILEPATH);
+            GraphingManager graphingManager = GraphingManager(GRAPH_FILEPATH);
             FrameSelection genemark = FrameSelection(input_path, _frame_selection_exe,
                                                      _outpath, user_input, &graphingManager);
             ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads, _expression_exe,
@@ -285,9 +285,16 @@ namespace entapExecute {
      */
     std::string filter_transcriptome(std::string &input_path) {
         entapInit::print_msg("Beginning to copy final transcriptome to be used...");
-        boostFS::path file_name(input_path); file_name = file_name.filename();
-        std::string out_path = _entap_outpath + file_name.stem().string() + "_final.fasta";
+
+        boostFS::path file_name;
+        std::string   file_name_str;
+        std::string   out_path;
+
+        file_name = input_path;
+        file_name_str = file_name.filename().stem().string() + "_final.fasta";
+        out_path = (boostFS::path(_entap_outpath) / file_name).string();
         boostFS::copy_file(input_path,out_path,boostFS::copy_option::overwrite_if_exists);
+
         entapInit::print_msg("Success!");
         return out_path;
     }
@@ -320,7 +327,8 @@ namespace entapExecute {
 
         boostFS::path path(input_file);
         std::string out_name = path.filename().string();
-        std::string out_new_path = _outpath + ENTAP_EXECUTE::ENTAP_OUTPUT + out_name;
+        std::string out_new_path = (boostFS::path(_outpath)/ boostFS::path(ENTAP_OUTPUT)).string()
+                                   + out_name;
         boostFS::remove(out_new_path);
         std::ifstream in_file(input_file);
         std::ofstream out_file(out_new_path,std::ios::out | std::ios::app);
@@ -428,8 +436,11 @@ namespace entapExecute {
      * @param exe       - enTAP execution directory
      * @return          - DIAMOND .exe path ran by enTAP::Init
      */
-    std::string init_exe_paths(std::unordered_map<std::string, std::string> &map, std::string &exe) {
+    std::string init_exe_paths(std::unordered_map<std::string, std::string> &map, std::string exe) {
         entapInit::print_msg("Verifying execution paths. Note they are not checked for validity...");
+
+        boostFS::path exe_path(exe);
+
         std::string temp_rsem       = map[ENTAP_CONFIG::KEY_RSEM_EXE];
         std::string temp_diamond    = map[ENTAP_CONFIG::KEY_DIAMOND_EXE];
         std::string temp_genemark   = map[ENTAP_CONFIG::KEY_GENEMARK_EXE];
@@ -440,34 +451,34 @@ namespace entapExecute {
             throw ExceptionHandler("Annotation flag must be either 0(eggnog) or"
                                            "1(interproscan)", ENTAP_ERR::E_CONFIG_PARSE);}
         if (temp_rsem.empty()) {
-            temp_rsem = exe + ENTAP_EXECUTE::RSEM_EXE_PATH;
+            temp_rsem = (exe_path / boostFS::path(RSEM_EXE_PATH)).string();
             entapInit::print_msg("RSEM config path empty, setting to default: " + temp_rsem);
         } else entapInit::print_msg("RSEM path set to: " + temp_rsem);
 
         if (temp_diamond.empty()) {
-            temp_diamond = exe + ENTAP_CONFIG::DIAMOND_PATH_EXE;
+            temp_diamond = (exe_path / boostFS::path(DIAMOND_PATH_EXE)).string();
             entapInit::print_msg("DIAMOND config path empty, setting to default: "+temp_diamond);
         } else entapInit::print_msg("DIAMOND path set to: " + temp_diamond);
 
         if (temp_genemark.empty()) {
-            temp_genemark = exe + ENTAP_EXECUTE::GENEMARK_EXE_PATH;
+            temp_genemark = (exe_path / boostFS::path(GENEMARK_EXE_PATH)).string();
             entapInit::print_msg("GenemarkS-T config path empty, setting to default: "+temp_genemark);
         } else entapInit::print_msg("GenemarkS-T path set to: " + temp_genemark);
 
         if (temp_eggnog.empty()) {
-            temp_eggnog = exe + ENTAP_EXECUTE::EGGNOG_EMAPPER_EXE;
+            temp_eggnog = (exe_path / boostFS::path(EGGNOG_EMAPPER_EXE)).string();
             entapInit::print_msg("Eggnog config path empty, setting to default: " + temp_eggnog);
         } else entapInit::print_msg("Eggnog path set to: " + temp_eggnog);
 
         if (temp_interpro.empty()) {
-            temp_interpro = exe + ENTAP_EXECUTE::INTERPRO_EXE;
+            temp_interpro = (exe_path / boostFS::path(INTERPRO_EXE)).string();
             entapInit::print_msg("Interpro config path empty, setting to default: "+temp_interpro);
         } else entapInit::print_msg("Interpro path set to: " + temp_interpro);
 
         _diamond_exe = temp_diamond;
         _frame_selection_exe = temp_genemark;
         _expression_exe = temp_rsem;
-        _ontology_flag==0 ? _ontology_exe = temp_eggnog : _ontology_exe = temp_interpro;
+        _ontology_flag == 0 ? _ontology_exe = temp_eggnog : _ontology_exe = temp_interpro;
         entapInit::print_msg("Success! All exe paths set");
         return _diamond_exe;        // for config run
     }
@@ -529,26 +540,26 @@ namespace entapExecute {
     void final_statistics(std::map<std::string, QuerySequence> &SEQUENCE_MAP) {
         entapInit::print_msg("Pipeline finished! Calculating final statistics...");
 
-        std::stringstream           ss;
-        unsigned int                count_total_sequences=0;
-        unsigned int                count_exp_kept=0;
-        unsigned int                count_exp_reject=0;
-        unsigned int                count_frame_kept=0;
-        unsigned int                count_frame_rejected=0;
-        unsigned int                count_sim_hits=0;
-        unsigned int                count_sim_no_hits=0;
-        unsigned int                count_ontology=0;
-        unsigned int                count_no_ontology=0;
-        unsigned int                count_one_go=0;
-        unsigned int                count_one_kegg=0;
-        unsigned int                count_sim_only=0;
-        unsigned int                count_ontology_only=0;
-        unsigned int                count_TOTAL_ann=0;
-        unsigned int                count_TOTAL_unann=0;
-        std::string                 out_unannotated_nucl_path;
-        std::string                 out_unannotated_prot_path;
-        std::string                 out_annotated_nucl_path;
-        std::string                 out_annotated_prot_path;
+        std::stringstream      ss;
+        unsigned int           count_total_sequences=0;
+        unsigned int           count_exp_kept=0;
+        unsigned int           count_exp_reject=0;
+        unsigned int           count_frame_kept=0;
+        unsigned int           count_frame_rejected=0;
+        unsigned int           count_sim_hits=0;
+        unsigned int           count_sim_no_hits=0;
+        unsigned int           count_ontology=0;
+        unsigned int           count_no_ontology=0;
+        unsigned int           count_one_go=0;
+        unsigned int           count_one_kegg=0;
+        unsigned int           count_sim_only=0;
+        unsigned int           count_ontology_only=0;
+        unsigned int           count_TOTAL_ann=0;
+        unsigned int           count_TOTAL_unann=0;
+        std::string            out_unannotated_nucl_path;
+        std::string            out_unannotated_prot_path;
+        std::string            out_annotated_nucl_path;
+        std::string            out_annotated_prot_path;
 
         out_unannotated_nucl_path = _outpath + OUT_UNANNOTATED_NUCL;
         out_unannotated_prot_path = _outpath + OUT_UNANNOTATED_PROT;

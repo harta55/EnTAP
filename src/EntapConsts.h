@@ -28,6 +28,7 @@ namespace ENTAP_ERR {
     const unsigned short E_INIT_INDX_DATA_NOT_FOUND = 30;
     const unsigned short E_INIT_INDX_DATABASE = 31;
     const unsigned short E_INIT_DOWNLOAD = 23;
+    const unsigned short E_INIT_EGGNOG   = 40;
 
     const unsigned short E_INIT_TAX_READ = 55;
     const unsigned short E_INIT_GO_SETUP = 60;
@@ -49,7 +50,7 @@ namespace ENTAP_ERR {
 
 namespace ENTAP_CONFIG {
 
-    const std::string ENTAP_VERSION = "0.6.1.3";
+    const std::string ENTAP_VERSION = "0.6.1.4";
     const double DEFAULT_QCOVERAGE = 50.0;
     const double DEFAULT_TCOVERAGE = 50.0;
     const double E_VALUE = 1e-5;
@@ -71,6 +72,7 @@ namespace ENTAP_CONFIG {
     const std::string KEY_RSEM_EXE = "rsem_exe_path";
     const std::string KEY_GENEMARK_EXE = "genemarkst_exe_path";
     const std::string KEY_EGGNOG_EXE = "eggnog_exe_path";
+    const std::string KEY_EGGNOG_DOWN = "eggnog_download_exe";
     const std::string KEY_INTERPRO_EXE = "interpro_exe_path";
 
     //------------------USER INPUTS-----------------------//
@@ -90,6 +92,7 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_GO_LEVELS          = "level";
     const std::string INPUT_FLAG_EXE_PATH           = "exe";
     const std::string INPUT_FLAG_FPKM               = "fpkm";
+    const std::string INPUT_FLAG_DATA_OUT           = "database-out";
 
     const std::string INPUT_UNIPROT_SWISS = "swiss";
     const std::string INPUT_UNIPROT_UR100 = "ur100";
@@ -116,6 +119,7 @@ namespace ENTAP_CONFIG {
     const std::string TAX_DATABASE_PATH = "/databases/ncbi_tax.entp";
     const std::string TAX_BIN_PATH = "/bin/ncbi_tax_bin.entp";
     const std::string BIN_PATH = "bin/";
+    const std::string DATABASE_DIR = "databases/";
     const std::string NCBI_INDEX_PATH = "/bin/ncbi_";
 }
 

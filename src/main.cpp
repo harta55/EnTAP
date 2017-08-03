@@ -17,6 +17,7 @@
 
 namespace boostPO = boost::program_options;
 namespace Chrono = std::chrono;
+namespace boostFS = boost::filesystem;
 
 enum States {
     PARSE_ARGS            = 0x01,
@@ -144,6 +145,9 @@ boostPO::variables_map parse_arguments_boost(int argc, const char** argv) {
             (ENTAP_CONFIG::INPUT_FLAG_EXE_PATH.c_str(),
                  boostPO::value<std::string>(),
                  "Specify path to EnTAP exe if it is not detected by the program.")
+            (ENTAP_CONFIG::INPUT_FLAG_DATA_OUT.c_str(),
+                 boostPO::value<std::string>(),
+                 "Specify output directory for diamond formatted databases.")
             (ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE.c_str(),
                  boostPO::value<double>()->default_value(ENTAP_CONFIG::DEFAULT_TCOVERAGE),
                  "Select minimum target coverage to be kept for similarity searching")
@@ -264,7 +268,7 @@ std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
     std::string                                 key;
     std::string                                 val;
 
-    config_path = exe + "/" + ENTAP_CONFIG::CONFIG_FILE;
+    config_path = (boostFS::path(exe) / boostFS::path(ENTAP_CONFIG::CONFIG_FILE)).string();
     if (!entapInit::file_exists(config_path)){
         print_msg("Config file not found, generating new file...");
         try {
@@ -294,7 +298,7 @@ std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
 }
 
 void generate_config(std::string &path) {
-    std::ofstream config_file(ENTAP_CONFIG::CONFIG_FILE, std::ios::out | std::ios::app);
+    std::ofstream config_file(path, std::ios::out | std::ios::app);
     config_file <<
                 ENTAP_CONFIG::KEY_UNIPROT_SWISS             +"=\n"+
                 ENTAP_CONFIG::KEY_UNIPROT_TREMBL            +"=\n"+
@@ -307,6 +311,7 @@ void generate_config(std::string &path) {
                 ENTAP_CONFIG::KEY_RSEM_EXE                  +"=\n"+
                 ENTAP_CONFIG::KEY_GENEMARK_EXE              +"=\n"+
                 ENTAP_CONFIG::KEY_EGGNOG_EXE                +"=\n"+
+                ENTAP_CONFIG::KEY_EGGNOG_DOWN               +"=\n"+
                 ENTAP_CONFIG::KEY_INTERPRO_EXE
                 << std::endl;
     config_file.close();
@@ -323,6 +328,7 @@ bool check_key(std::string& key) {
     if (key.compare(ENTAP_CONFIG::KEY_GENEMARK_EXE)==0) return true;
     if (key.compare(ENTAP_CONFIG::KEY_UNIPROT_UR90)==0) return true;
     if (key.compare(ENTAP_CONFIG::KEY_EGGNOG_EXE)==0) return true;
+    if (key.compare(ENTAP_CONFIG::KEY_EGGNOG_DOWN)==0) return true;
     if (key.compare(ENTAP_CONFIG::KEY_INTERPRO_EXE)==0) return true;
     return key.compare(ENTAP_CONFIG::KEY_RSEM_EXE) == 0;
 }
@@ -347,8 +353,8 @@ void print_user_input(boostPO::variables_map &map) {
     std::stringstream   ss;
     std::time_t         time;
 
-    boost::filesystem::remove(std::string(_outpath + ENTAP_CONFIG::LOG_FILENAME).c_str());
-    boost::filesystem::create_directories(_outpath);
+    boostFS::remove(std::string(_outpath + ENTAP_CONFIG::LOG_FILENAME).c_str());
+    boostFS::create_directories(_outpath);
 
     _start_time = Chrono::system_clock::now();
     time = Chrono::system_clock::to_time_t(_start_time);

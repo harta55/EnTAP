@@ -41,36 +41,58 @@ namespace entapInit {
         INIT_EXIT           = 0x32
     };
 
-    InitStates state;
-    const boostFS::path current_path(boost::filesystem::current_path());
-    std::list<std::string> _compiled_databases;
+    InitStates               state;
+    std::vector<std::string> _compiled_databases;
+    std::string              _bin_dir;
+    std::string              _data_dir;
+    std::string              _outpath;
+    std::string              _cur_dir;
 
     void init_entap(boost::program_options::variables_map user_map, std::string exe_path,
             std::unordered_map<std::string,std::string> &config_map) {
 
-        std::string outpath = current_path.string() + user_map["tag"].as<std::string>();
-        boostFS::path bin_dir(exe_path + ENTAP_CONFIG::BIN_PATH);
-        boostFS::path data_dir(exe_path + "/databases");
-        bool bin_dir_state = (boostFS::create_directories(bin_dir));
-        bool data_dir_state = (boostFS::create_directories(data_dir));
+        std::string                        dmnd_outpath;
+        std::string                        diamond_exe;
+        std::string                        eggnog_exe;
+        int                                threads; // change
+        std::pair<std::string,std::string> exe_pair;
+        std::vector<std::string>           ncbi_vect;
+        std::vector<std::string>           uniprot_vect;
+        std::vector<std::string>           database_vect;
 
-        int threads = get_supported_threads(user_map);
+        _cur_dir  = boostFS::path(boost::filesystem::current_path()).string();
+        _outpath  = (boostFS::path(_cur_dir) / user_map["tag"].as<std::string>()).string();
+        _bin_dir  = (boostFS::path(exe_path) / boostFS::path(ENTAP_CONFIG::BIN_PATH)).string();
+        _data_dir = (boostFS::path(exe_path) / boostFS::path(ENTAP_CONFIG::DATABASE_DIR)).string();
 
-        std::vector<std::string> ncbi_vect, uniprot_vect, database_vect;
+        boostFS::create_directories(_bin_dir);
+        boostFS::create_directories(_data_dir);
+
+        threads = get_supported_threads(user_map);
+
         ncbi_vect = user_map[ENTAP_CONFIG::INPUT_FLAG_NCBI_1].as<std::vector<std::string>>();
         uniprot_vect = user_map[ENTAP_CONFIG::INPUT_FLAG_UNIPROT].as<std::vector<std::string>>();
-        if (user_map.count("database"))
-            database_vect= user_map["database"].as<std::vector<std::string>>();
+        if (user_map.count("database")) {
+            database_vect = user_map["database"].as<std::vector<std::string>>();
+            _compiled_databases = database_vect;
+        }
 
-        std::string diamond_exe = entapExecute::init_exe_paths(config_map,exe_path);
+        if (user_map.count(ENTAP_CONFIG::INPUT_FLAG_DATA_OUT)) {
+            dmnd_outpath = user_map[ENTAP_CONFIG::INPUT_FLAG_DATA_OUT].as<std::string>();
+        } else dmnd_outpath = _bin_dir;
+
+        exe_pair    = entapExecute::init_exe_paths(config_map,exe_path);
+        diamond_exe = exe_pair.first;
+        eggnog_exe  = exe_pair.second;
         // while state != EXIT_STATE
         try {
-            state = INIT_TAX;
             init_taxonomic(exe_path);
-            init_go_db(exe_path,data_dir.string());
-            init_uniprot(uniprot_vect, exe_path);
-            init_ncbi(ncbi_vect,exe_path);
-            init_diamond_index(diamond_exe,exe_path, threads);
+            init_go_db(exe_path,_data_dir);
+            // TODO future
+            // init_uniprot(uniprot_vect, exe_path);
+            // init_ncbi(ncbi_vect,exe_path);
+            init_diamond_index(diamond_exe,dmnd_outpath, threads);
+            init_eggnog(eggnog_exe);
 
         }catch (ExceptionHandler &e) {
             throw ExceptionHandler(e.what(), e.getErr_code());
@@ -85,13 +107,21 @@ namespace entapInit {
     void init_taxonomic(std::string &exe) {
         print_msg("Downloading taxonomic database...");
         //TODO Integrate gzip/zlib
-        std::string tax_path = exe + ENTAP_CONFIG::TAX_DATABASE_PATH;
+
+        std::string tax_bin;
+        std::string tax_path;
+        std::string tax_command;
+        int         status;
+        std::unordered_map<std::string, std::string> tax_data_map;
+
+        tax_bin  = (boostFS::path(exe) / boostFS::path(ENTAP_CONFIG::TAX_BIN_PATH)).string();
+        tax_path  = (boostFS::path(exe) / boostFS::path(ENTAP_CONFIG::TAX_DATABASE_PATH)).string();
 
         if (!file_exists(tax_path)) {
-            std::string tax_command = "perl " + exe + ENTAP_CONFIG::TAX_SCRIPT_PATH;
+            tax_command = "perl " + exe + ENTAP_CONFIG::TAX_SCRIPT_PATH;
             redi::ipstream in(tax_command);
             in.close();
-            int status = in.rdbuf()->status();
+            status = in.rdbuf()->status();
             if (status != 0) {
                 std::cerr << "Error in downloading taxonomic database" << std::endl;
                 throw ExceptionHandler("Error in downloading taxonomic database", ENTAP_ERR::E_INIT_TAX_DOWN);
@@ -105,7 +135,6 @@ namespace entapInit {
 
         print_msg("Indexing taxonomic database...");
 
-        std::unordered_map<std::string, std::string> tax_data_map;
         std::ifstream infile(tax_path);
         std::string line;
         try {
@@ -123,10 +152,7 @@ namespace entapInit {
             throw ExceptionHandler(e.what(), ENTAP_ERR::E_INIT_TAX_INDEX);
         }
 
-        print_msg("Success!");
-        std::string tax_bin = exe + ENTAP_CONFIG::TAX_BIN_PATH;
-        print_msg("Writing file to "+ tax_bin);
-        // write map
+        print_msg("Success! Writing file to "+ tax_bin);
         try{
             {
                 std::ofstream ofs(tax_bin);
@@ -137,22 +163,24 @@ namespace entapInit {
             throw ExceptionHandler(e.what(), ENTAP_ERR::E_INIT_TAX_SERIAL);
         }
         print_msg("Success!");
-
     }
 
     void init_go_db(std::string &exe, std::string database_path) {
         print_msg("Initializing GO terms database...");
-        std::string go_db_path = exe + ENTAP_CONFIG::GO_DB_PATH;
+
+        std::string go_db_path;
+        std::string go_term_path;
+        std::string go_graph_path;
+        std::string go_database_zip;
+        std::string go_database_out;
+
+        go_db_path = (boostFS::path(exe) / boostFS::path(ENTAP_CONFIG::GO_DB_PATH)).string();
         if (file_exists(go_db_path)) {
             print_msg("Database found at: " + go_db_path + " skipping creation");
             return;
         }
-        const std::string GO_TERM_FILE = "term.txt";
-        const std::string GO_GRAPH_FILE = "graph_path.txt";
-        const std::string GO_DATA_NAME = "go_monthly-termdb-tables.tar.gz";
-        const std::string GO_DIR = "go_monthly-termdb-tables/";
-        std::string go_database_zip = database_path + "/" + GO_DATA_NAME;
-        std::string go_database_out = database_path + "/" + GO_DIR;
+        go_database_zip = database_path + "/" + GO_DATA_NAME;
+        go_database_out = database_path + "/" + GO_DIR;
         if (file_exists(go_database_zip)) {
             boostFS::remove(go_database_zip);
         }
@@ -162,12 +190,13 @@ namespace entapInit {
             boostFS::remove(go_database_zip);
         } catch (ExceptionHandler const &e ){ throw e;}
 
-        std::string go_term_path = go_database_out + GO_TERM_FILE;
-        std::string go_graph_path = go_database_out + GO_GRAPH_FILE;
+        go_term_path = (boostFS::path(go_database_out) / boostFS::path(GO_TERM_FILE)).string();
+        go_graph_path = (boostFS::path(go_database_out) / boostFS::path(GO_GRAPH_FILE)).string();
         if (!file_exists(go_term_path) || !file_exists(go_graph_path)) {
             throw ExceptionHandler("GO term files must be at: " + go_term_path + " and " + go_graph_path +
                                    " in order to configure database", ENTAP_ERR::E_INIT_GO_SETUP);
         }
+
         io::CSVReader<6, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(go_graph_path);
         std::string index,root,branch, temp, distance, temp2;
         std::map<std::string,std::string> distance_map;
@@ -195,8 +224,7 @@ namespace entapInit {
             go_map[go] = go_data;
         }
         boostFS::remove_all(go_database_out);
-        print_msg("Success!");
-        print_msg("Writing file to "+ go_db_path);
+        print_msg("Success! Writing file to "+ go_db_path + "...");
         try{
             {
                 std::ofstream ofs(go_db_path);
@@ -267,15 +295,23 @@ namespace entapInit {
         }
     }
 
-    void init_diamond_index(std::string diamond_exe,std::string exe_path,int threads) {
+    void init_diamond_index(std::string diamond_exe,std::string out_path,int threads) {
         print_msg("Preparing to index database(s) with Diamond...");
+
+        std::string filename;
+        std::string indexed_path;
+        std::string std_out;
+        std::string index_command;
+
+        boostFS::create_directories(out_path);
+
         if (_compiled_databases.empty()) return;
-        std::string bin_path = exe_path + "/" + ENTAP_CONFIG::BIN_PATH;
+
         for (std::string item : _compiled_databases) {
             boostFS::path path(item);
-            std::string filename = path.filename().stem().string();
-            std::string indexed_path = bin_path + filename;
-            std::string std_out = bin_path + filename + "_index";
+            filename     = path.filename().stem().string();
+            indexed_path = (boostFS::path(out_path) / boostFS::path(filename)).string();
+            std_out      = indexed_path + "_index";
             boostFS::remove(std_out+".err");
             boostFS::remove(std_out+".out");
 
@@ -284,13 +320,35 @@ namespace entapInit {
                 print_msg("File found at " + indexed_path + ".dmnd, skipping...");
                 continue;
             }
-            std::string index_command = diamond_exe + " makedb --in " +
-                item + " -d " + indexed_path + " -p "+std::to_string(threads);
+            index_command =
+                    diamond_exe + " makedb --in " + item +
+                    " -d "      + indexed_path +
+                    " -p "      +std::to_string(threads);
+
+            print_msg("Executing DIAMOND command:\n" + index_command);
             if (execute_cmd(index_command,std_out) != 0) {
                 throw ExceptionHandler("Error indexing database at: " + item,
                                        ENTAP_ERR::E_INIT_INDX_DATABASE);
             }
             print_msg("Database successfully indexed to: " + indexed_path + ".dmnd");
+        }
+    }
+
+    void init_eggnog(std::string eggnog_exe) {
+
+        std::string eggnog_cmd;
+
+        eggnog_cmd =
+                "python " + eggnog_exe +
+                " none -y";
+
+        if (!file_exists(eggnog_exe)) {
+            throw ExceptionHandler("Eggnog download path does not exist at: " +
+                                   eggnog_exe, ENTAP_ERR::E_INIT_EGGNOG);
+        }
+        print_msg("Executing eggnog download...\n" + eggnog_cmd);
+        if (execute_cmd(eggnog_cmd) != 0) {
+            throw ExceptionHandler("Error in executing eggnog download",ENTAP_ERR::E_INIT_EGGNOG);
         }
     }
 
@@ -372,10 +430,6 @@ namespace entapInit {
         return 1;
     }
 
-    void verify_state() {
-        // check current state, move to next state
-    }
-
     std::string download_file(std::string flag, std::string &path, std::string temp) {
         // TODO libcurl
 
@@ -412,13 +466,15 @@ namespace entapInit {
     void decompress_file(std::string file_path, std::string out_path,short flag) {
         print_msg("Decompressing file at: " + file_path);
         std::string unzip_command;
+        std::string std_out;
+        int status;
         if (flag == 0){
             unzip_command = "gzip -d " + file_path;
         } else {
             unzip_command = "tar -xzf " + file_path + " -C " + out_path;
         }
-        std::string std_out = out_path + "_std";
-        int status = execute_cmd(unzip_command,std_out);
+        std_out = out_path + "_std";
+        status = execute_cmd(unzip_command,std_out);
         if (status != 0) {
             throw ExceptionHandler("Error in unzipping database at " +
                     file_path, ENTAP_ERR::E_INIT_TAX_DOWN);

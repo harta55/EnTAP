@@ -26,6 +26,7 @@ namespace entapExecute {
     const std::string GENEMARK_EXE_PATH    = "/libs/gmst_linux_64/gmst.pl";
     const std::string DIAMOND_PATH_EXE     = "/libs/diamond-0.8.31/bin/diamond";
     const std::string EGGNOG_EMAPPER_EXE   = "/libs/eggnog-mapper/emapper.py";
+    const std::string EGGNOG_DOWNLOAD_EXE  = "/libs/eggnog-mapper/download_eggnog_data.py";
     const std::string INTERPRO_EXE         = "/libs/interproscan-5.22-61.0/interproscan.sh";
     const std::string ENTAP_OUTPUT         = "entap_out/";
     const std::string GRAPH_FILEPATH       = "/src/entap_graphing.py";
@@ -51,7 +52,8 @@ namespace entapExecute {
     std::string filter_transcriptome(std::string &);
     void verify_state(std::queue<char> &, bool &);
     bool valid_state(enum ExecuteStates);
-    std::string init_exe_paths(std::unordered_map<std::string, std::string> &, std::string);
+    std::pair<std::string,std::string> init_exe_paths(std::unordered_map<std::string, std::string> &,
+                      std::string);
     void print_statistics(std::string &, std::string &);
     std::map<std::string, QuerySequence> init_sequence_map(std::string&,bool);
     std::pair<unsigned long, unsigned long> calculate_N_vals

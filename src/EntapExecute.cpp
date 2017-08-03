@@ -436,16 +436,18 @@ namespace entapExecute {
      * @param exe       - enTAP execution directory
      * @return          - DIAMOND .exe path ran by enTAP::Init
      */
-    std::string init_exe_paths(std::unordered_map<std::string, std::string> &map, std::string exe) {
+    std::pair<std::string,std::string> init_exe_paths(std::unordered_map<std::string,
+            std::string> &map, std::string exe) {
         entapInit::print_msg("Verifying execution paths. Note they are not checked for validity...");
 
-        boostFS::path exe_path(exe);
-
-        std::string temp_rsem       = map[ENTAP_CONFIG::KEY_RSEM_EXE];
-        std::string temp_diamond    = map[ENTAP_CONFIG::KEY_DIAMOND_EXE];
-        std::string temp_genemark   = map[ENTAP_CONFIG::KEY_GENEMARK_EXE];
-        std::string temp_eggnog     = map[ENTAP_CONFIG::KEY_EGGNOG_EXE];
-        std::string temp_interpro   = map[ENTAP_CONFIG::KEY_INTERPRO_EXE];
+        boostFS::path                      exe_path(exe);
+        std::pair<std::string,std::string> outpair;
+        std::string temp_rsem              = map[ENTAP_CONFIG::KEY_RSEM_EXE];
+        std::string temp_diamond           = map[ENTAP_CONFIG::KEY_DIAMOND_EXE];
+        std::string temp_genemark          = map[ENTAP_CONFIG::KEY_GENEMARK_EXE];
+        std::string temp_eggnog            = map[ENTAP_CONFIG::KEY_EGGNOG_EXE];
+        std::string temp_interpro          = map[ENTAP_CONFIG::KEY_INTERPRO_EXE];
+        std::string temp_eggnog_down       = map[ENTAP_CONFIG::KEY_EGGNOG_DOWN];
 
         if (_ontology_flag>1 || _ontology_flag<0) {
             throw ExceptionHandler("Annotation flag must be either 0(eggnog) or"
@@ -470,6 +472,11 @@ namespace entapExecute {
             entapInit::print_msg("Eggnog config path empty, setting to default: " + temp_eggnog);
         } else entapInit::print_msg("Eggnog path set to: " + temp_eggnog);
 
+        if (temp_eggnog_down.empty()) {
+            temp_eggnog_down = (exe_path / boostFS::path(EGGNOG_DOWNLOAD_EXE)).string();
+            entapInit::print_msg("Eggnog config path empty, setting to default: " + temp_eggnog_down);
+        } else entapInit::print_msg("Eggnog path set to: " + temp_eggnog_down);
+
         if (temp_interpro.empty()) {
             temp_interpro = (exe_path / boostFS::path(INTERPRO_EXE)).string();
             entapInit::print_msg("Interpro config path empty, setting to default: "+temp_interpro);
@@ -480,7 +487,11 @@ namespace entapExecute {
         _expression_exe = temp_rsem;
         _ontology_flag == 0 ? _ontology_exe = temp_eggnog : _ontology_exe = temp_interpro;
         entapInit::print_msg("Success! All exe paths set");
-        return _diamond_exe;        // for config run
+
+        outpair.first  = _diamond_exe;
+        outpair.second = temp_eggnog_down;
+
+        return outpair;        // for config run
     }
 
     //only assuming between 0-9 NO 2 DIGIT STATES

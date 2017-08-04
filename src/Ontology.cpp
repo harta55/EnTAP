@@ -27,6 +27,9 @@ Ontology::Ontology(int thread, std::string egg_exe, std::string outpath,
     _go_levels = user_input[ENTAP_CONFIG::INPUT_FLAG_GO_LEVELS].as<std::vector<short>>();
     std::vector<std::string> _interpro_databases =
             user_input[ENTAP_CONFIG::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
+    _ontology_dir = (boostFS::path(outpath) / boostFS::path(ONTOLOGY_OUT_PATH)).string();
+    _processed_dir = (boostFS::path(_ontology_dir) / boostFS::path(PROCESSED_OUT_DIR)).string();
+    _figure_dir = (boostFS::path(_ontology_dir) / boostFS::path(FIGURE_DIR)).string();
 }
 
 
@@ -63,7 +66,6 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
     std::string                                         out_no_hits_prot;
     std::string                                         out_hit_nucl;
     std::string                                         out_hit_prot;
-    std::string                                         out_processed_dir;
     std::map<std::string, entapInit::struct_go_term>    GO_DATABASE;
     std::map<std::string, int>                          eggnog_map;
     unsigned int                                        count_total_go_hits=0;
@@ -75,9 +77,8 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
     unsigned int                                        count_total_kegg_hits=0;
     unsigned int                                        count_no_hits=0;            // Unannotated OGs
 
-    out_processed_dir = _outpath + PROCESSED_OUT_DIR;
-    boostFS::remove_all(out_processed_dir);
-    boostFS::create_directories(out_processed_dir);
+    boostFS::remove_all(_processed_dir);
+    boostFS::create_directories(_processed_dir);
 
     try {
         GO_DATABASE = read_go_map();
@@ -126,10 +127,10 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
         boostFS::remove(path);
     }
 
-    out_no_hits_nucl = out_processed_dir + OUT_UNANNOTATED_NUCL;
-    out_no_hits_prot = out_processed_dir + OUT_UNANNOTATED_PROT;
-    out_hit_nucl     = out_processed_dir + OUT_ANNOTATED_NUCL;
-    out_hit_prot     = out_processed_dir + OUT_ANNOTATED_PROT;
+    out_no_hits_nucl = (boostFS::path(_processed_dir) / boostFS::path(OUT_UNANNOTATED_NUCL)).string();
+    out_no_hits_prot = (boostFS::path(_processed_dir) / boostFS::path(OUT_UNANNOTATED_PROT)).string();
+    out_hit_nucl     = (boostFS::path(_processed_dir) / boostFS::path(OUT_ANNOTATED_NUCL)).string();
+    out_hit_prot     = (boostFS::path(_processed_dir) / boostFS::path(OUT_ANNOTATED_PROT)).string();
     std::ofstream file_no_hits_nucl(out_no_hits_nucl, std::ios::out | std::ios::app);
     std::ofstream file_no_hits_prot(out_no_hits_prot, std::ios::out | std::ios::app);
     std::ofstream file_hits_nucl(out_hit_nucl, std::ios::out | std::ios::app);
@@ -149,12 +150,13 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
         }
     }
 
-    file_hits_nucl.close();file_hits_prot.close();
-    file_no_hits_nucl.close();file_no_hits_prot.close();
+    file_hits_nucl.close();
+    file_hits_prot.close();
+    file_no_hits_nucl.close();
+    file_no_hits_prot.close();
 
     ss << ENTAP_STATS::SOFTWARE_BREAK + "Ontology - Eggnog\n" +
-          ENTAP_STATS::SOFTWARE_BREAK;
-    ss <<
+          ENTAP_STATS::SOFTWARE_BREAK            <<
        "Statistics for overall Eggnog results: " <<
        "\nTotal sequences with family assignment: " << count_TOTAL_hits <<
        "\nTotal sequences without family assignment: " <<count_no_hits<<
@@ -174,24 +176,33 @@ void Ontology::parse_results_eggnog(query_map_struct& SEQUENCES, std::pair<std::
 
 void Ontology::run_eggnog(query_map_struct &SEQUENCES) {
     entapInit::print_msg("Running eggnog...");
-    std::string eggnog_out_dir = _outpath + ONTOLOGY_OUT_PATH;
-    std::string annotation_base_flag = eggnog_out_dir + "annotation_results";
-    std::string annotation_no_flag = eggnog_out_dir + "annotation_results_no_hits";
-    std::string annotation_std = eggnog_out_dir + "annotation_std";
-    std::string eggnog_command = "python " + _ontology_exe + " ";
+
+    std::string                        annotation_base_flag;
+    std::string                        annotation_no_flag;
+    std::string                        annotation_std;
+    std::string                        eggnog_command;
+    std::string                        hit_out;
+    std::string                        no_hit_out;
     std::pair<std::string,std::string> out;
+
+
+    annotation_base_flag = (boostFS::path(_ontology_dir) / boostFS::path("annotation_results")).string();
+    annotation_no_flag   = (boostFS::path(_ontology_dir) / boostFS::path("annotation_results_no_hits")).string();
+    annotation_std       = (boostFS::path(_ontology_dir) / boostFS::path("annotation_std")).string();
+    eggnog_command       = "python " + _ontology_exe + " ";
+
     if (_is_overwrite) {
-        boostFS::remove_all(eggnog_out_dir);
+        boostFS::remove_all(_ontology_dir);
     } else {
-        std::string hit_out = annotation_base_flag  +".emapper.annotations";
-        std::string no_hit_out = annotation_no_flag +".emapper.annotations";
+        hit_out = annotation_base_flag  +".emapper.annotations";
+        no_hit_out = annotation_no_flag +".emapper.annotations";
         if (verify_files(hit_out, no_hit_out)) {
             out.first = hit_out;out.second = no_hit_out;
             parse_results_eggnog(SEQUENCES, out);
             return;
         }
     }
-    boostFS::create_directories(eggnog_out_dir);
+    boostFS::create_directories(_ontology_dir);
     std::unordered_map<std::string,std::string> eggnog_command_map = {
             {"-i",_new_input},
             {"--output",annotation_base_flag},
@@ -235,11 +246,13 @@ void Ontology::run_eggnog(query_map_struct &SEQUENCES) {
 
 std::map<std::string,std::vector<std::string>> Ontology::parse_go_list
         (std::string list, std::map<std::string,entapInit::struct_go_term> &GO_DATABASE,char delim) {
+
     std::map<std::string,std::vector<std::string>> output;
-    if (list.empty()) return output;
-    std::istringstream ss(list);
     std::string temp;
     std::vector<std::vector<std::string>>results;
+
+    if (list.empty()) return output;
+    std::istringstream ss(list);
     while (std::getline(ss,temp,delim)) {
         entapInit::struct_go_term term_info = GO_DATABASE[temp];
         output[term_info.category].push_back(temp + "-" + term_info.term +
@@ -251,9 +264,11 @@ std::map<std::string,std::vector<std::string>> Ontology::parse_go_list
 void Ontology::print_eggnog(Ontology::query_map_struct &SEQUENCES) {
     entapInit::print_msg("Beginning to print final results...");
     std::map<short, std::ofstream*> file_map;
+    std::string file_name;
+    std::string outpath;
     for (short lvl : _go_levels) {
-        std::string outpath = _outpath  + "final_annotations_lvl" + std::to_string(lvl) +
-                              ".tsv";
+        file_name = "final_annotations_lvl" + std::to_string(lvl) + ".tsv";
+        outpath = (boostFS::path(_outpath) / boostFS::path(file_name)).string();
         boostFS::remove(outpath);
         file_map[lvl] =
                 new std::ofstream(outpath, std::ios::out | std::ios::app);
@@ -300,7 +315,10 @@ void Ontology::print_eggnog(Ontology::query_map_struct &SEQUENCES) {
 }
 
 std::string Ontology::eggnog_format(std::string file) {
-    std::string out_path = file + "_alt";
+
+    std::string out_path;
+
+    out_path = file + "_alt";
     boostFS::remove(out_path);
     std::ifstream in_file(file);
     std::ofstream out_file(out_path);
@@ -378,6 +396,10 @@ void Ontology::run_interpro(Ontology::query_map_struct &SEQUENCES, std::vector<s
 
 void Ontology::parse_results_interpro(Ontology::query_map_struct &SEQUENCES,
                                       std::pair<std::string, std::string> &out) {
+
+    std::map<std::string, entapInit::struct_go_term> GO_DATABASE;
+    std::map<std::string, interpro_struct> interpro_map;
+
     std::string msg = ENTAP_STATS::SOFTWARE_BREAK + "Ontology - Interpro\n" +
                       ENTAP_STATS::SOFTWARE_BREAK;
     entapExecute::print_statistics(msg, _outpath);
@@ -389,7 +411,6 @@ void Ontology::parse_results_interpro(Ontology::query_map_struct &SEQUENCES,
     const std::string KEY_INTERPRO_TERM     = _HEADERS[5];
     const std::string KEY_PATHWAY           = _HEADERS[9];
 
-    std::map<std::string, entapInit::struct_go_term> GO_DATABASE;
     try {
         GO_DATABASE = read_go_map();
     } catch (ExceptionHandler const &e) {throw e;}
@@ -398,7 +419,6 @@ void Ontology::parse_results_interpro(Ontology::query_map_struct &SEQUENCES,
         std::map<std::string,std::string> _results;
         std::map<std::string,std::vector<std::string>> _go_map;
     };
-    std::map<std::string, interpro_struct> interpro_map;
     for (int i=0; i<2;i++) {
         std::string path;
         i == 0 ? path=out.first : path=out.second;
@@ -485,7 +505,10 @@ void Ontology::init_headers() {
 
 // TODO combine with eggnog
 void Ontology::print_interpro(Ontology::query_map_struct &SEQUENCES) {
-    std::string final_annotations = _outpath + "final_annotations.tsv";
+
+    std::string final_annotations;
+
+    final_annotations = (boostFS::path(_outpath) / boostFS::path("final_annotations.tsv")).string();
     print_header(final_annotations);
     std::ofstream file(final_annotations, std::ios::out | std::ios::app);
     for (auto &pair : SEQUENCES) {

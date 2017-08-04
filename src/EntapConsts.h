@@ -50,7 +50,7 @@ namespace ENTAP_ERR {
 
 namespace ENTAP_CONFIG {
 
-    const std::string ENTAP_VERSION = "0.6.1.4";
+    const std::string ENTAP_VERSION = "0.6.1.5";
     const double DEFAULT_QCOVERAGE = 50.0;
     const double DEFAULT_TCOVERAGE = 50.0;
     const double E_VALUE = 1e-5;

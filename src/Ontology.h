@@ -24,7 +24,8 @@ public:
 
 private:
     const std::string ONTOLOGY_OUT_PATH     = "ontology/";
-    const std::string PROCESSED_OUT_DIR     = "ontology/processed/";
+    const std::string PROCESSED_OUT_DIR     = "processed/";
+    const std::string FIGURE_DIR            = "figures/";
     const std::string OUT_UNANNOTATED_NUCL  = "unannotated_sequences.fnn";
     const std::string OUT_UNANNOTATED_PROT  = "unannotated_sequences.faa";
     const std::string OUT_ANNOTATED_NUCL    = "annotated_sequences.fnn";
@@ -41,6 +42,9 @@ private:
     std::string                     _outpath;
     std::string                     _new_input;
     std::string                     _input_no_hits;
+    std::string                     _ontology_dir;
+    std::string                     _processed_dir;
+    std::string                     _figure_dir;
     std::vector<std::string>        _HEADERS;
     std::vector<std::string>        _interpro_databases;
 

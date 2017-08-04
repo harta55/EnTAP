@@ -3,16 +3,16 @@
 //
 
 #include "GraphingManager.h"
-#include "EntapInit.h"
+#include "EntapConfig.h"
 #include "EntapConsts.h"
 
 GraphingManager::GraphingManager(std::string path) {
     _graph_path = path;
     std::string cmd = "python " + path + " -s -1 -g -1 -i /temp -t temp";
-    _graphing_enabled = entapInit::execute_cmd(cmd) == 0;
+    _graphing_enabled = entapConfig::execute_cmd(cmd) == 0;
     if (_graphing_enabled) {
-        entapInit::print_msg("Graphing is supported");
-    } else entapInit::print_msg("Graphing is NOT supported");
+        entapConfig::print_msg("Graphing is supported");
+    } else entapConfig::print_msg("Graphing is NOT supported");
 }
 
 void GraphingManager::graph(GraphingStruct& graphingStruct) {
@@ -27,8 +27,8 @@ void GraphingManager::graph(GraphingStruct& graphingStruct) {
     cmd_map[FLAG_SOFT]       = std::to_string(graphingStruct.software_flag);
     cmd_map[FLAG_GRAPH]      = std::to_string(graphingStruct.graph_type);
 
-    graphing_cmd = entapInit::generate_command(cmd_map, "python " + _graph_path);
-    if (entapInit::execute_cmd(graphing_cmd) != 0) {
-        entapInit::print_msg("\nError generating graph from:\n" + graphing_cmd);
+    graphing_cmd = entapConfig::generate_command(cmd_map, "python " + _graph_path);
+    if (entapConfig::execute_cmd(graphing_cmd) != 0) {
+        entapConfig::print_msg("\nError generating graph from:\n" + graphing_cmd);
     }
 }

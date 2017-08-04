@@ -3,7 +3,7 @@
 //
 
 #include <map>
-#include "EntapInit.h"
+#include "EntapConfig.h"
 #include <sys/stat.h>
 #include <iostream>
 #include <fstream>
@@ -30,7 +30,7 @@ namespace boostFS = boost::filesystem;
 namespace boostAR = boost::archive;
 namespace Chrono = std::chrono;
 
-namespace entapInit {
+namespace entapConfig {
 
     enum InitStates {
         INIT_TAX            = 0x01,
@@ -434,7 +434,11 @@ namespace entapInit {
         // TODO libcurl
 
         std::string ftp_address;
-        std::string output_path = path +flag + ".gz";
+        int status;
+        std::string download_command;
+        std::string output_path;
+
+        output_path = path + flag + ".gz";
 
         if (flag == ENTAP_CONFIG::INPUT_UNIPROT_SWISS) {
             ftp_address = UNIPROT_FTP_SWISS;
@@ -443,10 +447,10 @@ namespace entapInit {
             throw ExceptionHandler("Invalid uniprot flag", ENTAP_ERR::E_INPUT_PARSE);
         }
 
-        std::string download_command = "wget -O "+ output_path + " " + ftp_address;
+        download_command = "wget -O "+ output_path + " " + ftp_address;
         print_msg("Downloading uniprot: " + flag + " database from " +
                   ftp_address + "...");
-        int status = execute_cmd(download_command);
+        status = execute_cmd(download_command);
         if (status != 0) {
             throw ExceptionHandler("Error in downloading uniprot database", ENTAP_ERR::E_INIT_TAX_DOWN);
         }
@@ -465,9 +469,11 @@ namespace entapInit {
 
     void decompress_file(std::string file_path, std::string out_path,short flag) {
         print_msg("Decompressing file at: " + file_path);
+
         std::string unzip_command;
         std::string std_out;
         int status;
+
         if (flag == 0){
             unzip_command = "gzip -d " + file_path;
         } else {
@@ -490,7 +496,7 @@ namespace entapInit {
         unsigned int supported_threads = std::thread::hardware_concurrency();
         int threads;
         if (user_map["threads"].as<int>() > supported_threads) {
-            entapInit::print_msg("Specified thread number is larger than available threads,"
+            entapConfig::print_msg("Specified thread number is larger than available threads,"
                                          "setting threads to " + std::to_string(supported_threads));
             threads = supported_threads;
         } else {

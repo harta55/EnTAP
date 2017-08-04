@@ -9,7 +9,7 @@
 #include <map>
 #include <boost/program_options/variables_map.hpp>
 #include "QuerySequence.h"
-#include "EntapInit.h"
+#include "EntapConfig.h"
 
 class QuerySequence;
 
@@ -23,6 +23,13 @@ public:
              boost::program_options::variables_map &);
 
 private:
+
+    struct interpro_struct {
+        double _eval;
+        std::map<std::string,std::string> _results;
+        std::map<std::string,std::vector<std::string>> _go_map;
+    };
+
     const std::string ONTOLOGY_OUT_PATH     = "ontology/";
     const std::string PROCESSED_OUT_DIR     = "processed/";
     const std::string FIGURE_DIR            = "figures/";
@@ -54,14 +61,14 @@ private:
     void parse_results_interpro(query_map_struct&, std::pair<std::string,std::string>&);
     void print_eggnog(query_map_struct&);
     void print_interpro(query_map_struct&);
-    go_struct parse_go_list(std::string, std::map<std::string,entapInit::struct_go_term> &
+    go_struct parse_go_list(std::string, std::map<std::string,entapConfig::struct_go_term> &
             ,char);
     std::string eggnog_format(std::string);
     void init_headers();
     void print_header(std::string);
     bool verify_files(std::string,std::string);
     void interpro_format_fix(std::string&);
-    std::map<std::string,entapInit::struct_go_term> read_go_map ();
+    std::map<std::string,entapConfig::struct_go_term> read_go_map ();
 };
 
 

@@ -8,7 +8,7 @@
 #include <iomanip>
 #include "ExpressionAnalysis.h"
 #include "ExceptionHandler.h"
-#include "EntapInit.h"
+#include "EntapConfig.h"
 #include "EntapConsts.h"
 #include "EntapExecute.h"
 
@@ -44,7 +44,7 @@ std::string ExpressionAnalysis::execute(std::string input,
 
 std::string ExpressionAnalysis::rsem(std::map<std::string, QuerySequence>& MAP) {
     // return path
-    entapInit::print_msg("Running RSEM...");
+    entapConfig::print_msg("Running RSEM...");
 
     boostFS::path                   file_name(_inpath);
     boostFS::path                   bam_ext(_alignpath);
@@ -62,17 +62,17 @@ std::string ExpressionAnalysis::rsem(std::map<std::string, QuerySequence>& MAP) 
         boostFS::remove_all(_rsem_dir);
     } else{
         std::string p = exp_out_path + ".genes.results";
-        if (entapInit::file_exists(p)) {
-            entapInit::print_msg("File found at " +p +  "\nmoving to filter transcriptome");
+        if (entapConfig::file_exists(p)) {
+            entapConfig::print_msg("File found at " +p +  "\nmoving to filter transcriptome");
             try {
                 return rsem_filter(p,MAP);
             } catch (const ExceptionHandler &e) {throw e;}
         }
-        entapInit::print_msg("File not found at " + exp_out_path + ".genes.results. Continuing RSEM run.");
+        entapConfig::print_msg("File not found at " + exp_out_path + ".genes.results. Continuing RSEM run.");
     }
     boostFS::create_directories(_rsem_dir);
 
-    if (!entapInit::file_exists(_alignpath)) {
+    if (!entapConfig::file_exists(_alignpath)) {
         throw ExceptionHandler("Invalid file path for BAM/SAM file, exiting...", ENTAP_ERR::E_INIT_TAX_READ);
     }
     //todo separate into methods
@@ -85,40 +85,40 @@ std::string ExpressionAnalysis::rsem(std::map<std::string, QuerySequence>& MAP) 
         }
 
     } else if(bam.compare(".bam")==0) {
-        entapInit::print_msg("File is detected to be bam file, validating...");
+        entapConfig::print_msg("File is detected to be bam file, validating...");
         rsem_arg = _exepath + "rsem-sam-validator " + _alignpath;
         out_path = _rsem_dir + file_name.string() + "_rsem_valdate";
-        if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
+        if (entapConfig::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) {
             throw ExceptionHandler("Error in validating bam file", ENTAP_ERR::E_INIT_TAX_READ);
         }
         if (!is_file_empty(out_path+".err")) {
             throw ExceptionHandler("Alignment file invalid!", ENTAP_ERR::E_INIT_TAX_READ);
         }
-        entapInit::print_msg("Alignment file valid. Continuing...");
+        entapConfig::print_msg("Alignment file valid. Continuing...");
     } else {
         throw ExceptionHandler("Unknown extension found in the alignment file",
                                ENTAP_ERR::E_INIT_TAX_READ);
     }
 
     // Now have valid BAM file to run rsem
-    entapInit::print_msg("Preparing reference");
+    entapConfig::print_msg("Preparing reference");
     std::string ref_out_path = _rsem_dir + file_name.string() + "_ref";
     boostFS::create_directories(ref_out_path);
     rsem_arg = _exepath + "rsem-prepare-reference " + _inpath +
                " " + ref_out_path+"/"+file_name.string();
     std::string std_out = _rsem_dir + file_name.string() + "_rsem_reference";
-    entapInit::print_msg("Executing following command\n" + rsem_arg);
-    entapInit::execute_cmd(rsem_arg.c_str(), std_out);
-    entapInit::print_msg("Reference successfully created");
+    entapConfig::print_msg("Executing following command\n" + rsem_arg);
+    entapConfig::execute_cmd(rsem_arg.c_str(), std_out);
+    entapConfig::print_msg("Reference successfully created");
 
-    entapInit::print_msg("Running expression analysis...");
+    entapConfig::print_msg("Running expression analysis...");
     rsem_arg = _exepath + "rsem-calculate-expression " +
                "--bam " + "-p " + std::to_string(_threads) + " " + _alignpath +" "+ ref_out_path +
                "/"+file_name.string()+ " " +exp_out_path;
     if (_ispaired) rsem_arg += " --paired-end";
     std_out = _rsem_dir + file_name.string() + "_rsem_exp";
-    entapInit::print_msg("Executing following command\n" + rsem_arg);
-    if (entapInit::execute_cmd(rsem_arg.c_str(), std_out)!=0) {
+    entapConfig::print_msg("Executing following command\n" + rsem_arg);
+    if (entapConfig::execute_cmd(rsem_arg.c_str(), std_out)!=0) {
         throw ExceptionHandler("Error in running expression analysis",ENTAP_ERR::E_INIT_TAX_READ);
     }
     std::string out_results = exp_out_path + ".genes.results";
@@ -129,7 +129,7 @@ std::string ExpressionAnalysis::rsem(std::map<std::string, QuerySequence>& MAP) 
 
 std::string ExpressionAnalysis::rsem_filter(std::string &results_path,
                                             std::map<std::string, QuerySequence>& MAP) {
-    entapInit::print_msg("Beginning to filter transcriptome...");
+    entapConfig::print_msg("Beginning to filter transcriptome...");
 
     long                count_removed=0;
     long                count_kept=0;
@@ -143,7 +143,7 @@ std::string ExpressionAnalysis::rsem_filter(std::string &results_path,
     std::string         out_str;
     std::stringstream   out_msg;
 
-    if (!entapInit::file_exists(results_path)) {
+    if (!entapConfig::file_exists(results_path)) {
         throw ExceptionHandler("File does not exist at: " + results_path,
             ENTAP_ERR::E_RUN_RSEM_EXPRESSION);
     }
@@ -187,7 +187,7 @@ std::string ExpressionAnalysis::rsem_filter(std::string &results_path,
     out_str = out_msg.str();
     entapExecute::print_statistics(out_str,_outpath);
     out_file.close();removed_file.close();
-    entapInit::print_msg("File successfully filtered. Outputs at: " + out_path + " and: " +
+    entapConfig::print_msg("File successfully filtered. Outputs at: " + out_path + " and: " +
                          out_removed);
     return out_path;
 }
@@ -198,7 +198,7 @@ bool ExpressionAnalysis::is_file_empty(std::string path) {
 }
 
 bool ExpressionAnalysis::rsem_validate_file(std::string filename) {
-    entapInit::print_msg("File is detected to be sam file, running validation");
+    entapConfig::print_msg("File is detected to be sam file, running validation");
 
     std::string rsem_arg;
     std::string out_path;
@@ -207,13 +207,13 @@ bool ExpressionAnalysis::rsem_validate_file(std::string filename) {
             " " + _alignpath;
     out_path = (boostFS::path(_rsem_dir) / boostFS::path(filename)).string() + "_rsem_valdate";
     // only thrown in failure in calling rsem
-    if (entapInit::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) return false;
+    if (entapConfig::execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) return false;
     // RSEM does not return error code if file is invalid, only seen in .err
     return (!is_file_empty(out_path+".err"));
 }
 
 bool ExpressionAnalysis::rsem_conv_to_bam(std::string file_name) {
-    entapInit::print_msg("Converting SAM to BAM");
+    entapConfig::print_msg("Converting SAM to BAM");
 
     std::string bam_out;
     std::string rsem_arg;
@@ -223,7 +223,7 @@ bool ExpressionAnalysis::rsem_conv_to_bam(std::string file_name) {
     rsem_arg = (boostFS::path(_exepath) / boostFS::path("convert-sam-for-rsem")).string() +
                 " -p " + std::to_string(_threads) + " " + _alignpath + " " + bam_out;
     std_out = _rsem_dir + file_name + "_rsem_convert";
-    if (entapInit::execute_cmd(rsem_arg.c_str(), std_out)!=0)return false;
+    if (entapConfig::execute_cmd(rsem_arg.c_str(), std_out)!=0)return false;
     if (!is_file_empty(std_out+".err")) return false;
     _alignpath = bam_out + ".bam";
     return true;

@@ -2,15 +2,15 @@
 // Created by harta55 on 2/1/17.
 //
 
-#ifndef ENTAP_INITHANDLER_H
-#define ENTAP_INITHANDLER_H
+#ifndef ENTAPCONFIG_H
+#define ENTAPCONFIG_H
 
 #include <string>
 #include <boost/serialization/unordered_map.hpp>
 #include <boost/program_options/variables_map.hpp>
 
 
-namespace entapInit {
+namespace entapConfig {
     struct struct_go_term {
         std::string go_id, level, category, term;
         friend class boost::serialization::access;

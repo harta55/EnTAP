@@ -9,7 +9,7 @@
 #include "FrameSelection.h"
 #include "EntapExecute.h"
 #include "ExceptionHandler.h"
-#include "EntapInit.h"
+#include "EntapConfig.h"
 #include "EntapConsts.h"
 
 namespace boostFS = boost::filesystem;
@@ -67,29 +67,29 @@ std::string FrameSelection::genemarkst(std::map<std::string,QuerySequence> &SEQU
     if (_overwrite) {
         boostFS::remove_all(_frame_outpath);
     } else {
-        if (entapInit::file_exists(final_out) && entapInit::file_exists(out_lst)) {
-            entapInit::print_msg("File found at: " + final_out + "\n"
+        if (entapConfig::file_exists(final_out) && entapConfig::file_exists(out_lst)) {
+            entapConfig::print_msg("File found at: " + final_out + "\n"
                  "continuing enTAP with this file and skipping frame selection");
             try {
                 genemarkStats(final_out,out_lst,SEQUENCES);
             } catch (ExceptionHandler &e){throw e;}
             return final_out;
         }
-        entapInit::print_msg("File not found at " + final_out + " so continuing frame selection");
+        entapConfig::print_msg("File not found at " + final_out + " so continuing frame selection");
     }
     boostFS::create_directories(_frame_outpath);
 
     genemark_cmd = _exe_path + " -faa -fnn " + _inpath;
     genemark_std_out = (boostFS::path(_frame_outpath) / boostFS::path(GENEMARK_STD_OUT)).string();
-    entapInit::print_msg("Running genemark...\n" + genemark_cmd);
+    entapConfig::print_msg("Running genemark...\n" + genemark_cmd);
 
-    if (entapInit::execute_cmd(genemark_cmd,genemark_std_out) != 0 ) {
+    if (entapConfig::execute_cmd(genemark_cmd,genemark_std_out) != 0 ) {
         throw ExceptionHandler("Error in running genemark at file located at: " +
                                _inpath, ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
     }
-    entapInit::print_msg("Success!");
+    entapConfig::print_msg("Success!");
     // Format genemarks-t output (remove blank lines)
-    entapInit::print_msg("Formatting genemark files");
+    entapConfig::print_msg("Formatting genemark files");
 
     for (std::string path : out_names) {
         std::ifstream in_file(path);
@@ -110,10 +110,10 @@ std::string FrameSelection::genemarkst(std::map<std::string,QuerySequence> &SEQU
         rename(GENEMARK_LOG_FILE.c_str(),out_gmst_log.c_str())!=0 ) {
         throw ExceptionHandler("Error moving genemark results", ENTAP_ERR::E_INIT_TAX_READ);
     }
-    if (entapInit::file_exists(GENEMARK_HMM_FILE)) {
+    if (entapConfig::file_exists(GENEMARK_HMM_FILE)) {
         rename(GENEMARK_HMM_FILE.c_str(),out_hmm_file.c_str());
     }
-    entapInit::print_msg("Success!");
+    entapConfig::print_msg("Success!");
     try {
         genemarkStats(final_out,out_lst,SEQUENCES);
     } catch (ExceptionHandler &e){throw e;}
@@ -128,7 +128,7 @@ std::string FrameSelection::genemarkst(std::map<std::string,QuerySequence> &SEQU
 void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_path,
                                    std::map<std::string,QuerySequence> &SEQUENCES) {
     // generate maps, query->sequence
-    entapInit::print_msg("Beginning to calculate Genemark statistics...");
+    entapConfig::print_msg("Beginning to calculate Genemark statistics...");
 
     std::string                             out_removed_path;
     std::string                             out_internal_path;
@@ -320,11 +320,11 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
         _graphingManager->graph(graphingStruct);
 
     } catch (ExceptionHandler &e) {throw e;}
-    entapInit::print_msg("Success!");
+    entapConfig::print_msg("Success!");
 }
 
 FrameSelection::frame_map_t FrameSelection::genemark_parse_protein(std::string &protein) {
-    entapInit::print_msg("Parsing protein file at: " + protein);
+    entapConfig::print_msg("Parsing protein file at: " + protein);
 
     frame_map_t     protein_map;
     std::string     out_protein;
@@ -333,7 +333,7 @@ FrameSelection::frame_map_t FrameSelection::genemark_parse_protein(std::string &
     std::string     sequence;
     std::string     seq_id;
 
-    if (!entapInit::file_exists(protein)) {
+    if (!entapConfig::file_exists(protein)) {
         throw ExceptionHandler("File located at: " + protein + " does not exist!",
                                ENTAP_ERR::E_RUN_GENEMARK_PARSE);
     }
@@ -366,7 +366,7 @@ FrameSelection::frame_map_t FrameSelection::genemark_parse_protein(std::string &
     unsigned long seq_len = sub.length() - line_chars;
     protein_sequence = {seq_len,sequence, ""};
     protein_map.emplace(seq_id,protein_sequence);
-    entapInit::print_msg("Success!");
+    entapConfig::print_msg("Success!");
     in_file.close(); out_file.close();
     boostFS::remove(protein);
     boostFS::rename(out_protein,protein);
@@ -374,7 +374,7 @@ FrameSelection::frame_map_t FrameSelection::genemark_parse_protein(std::string &
 }
 
 void FrameSelection::genemark_parse_lst(std::string &lst_path, frame_map_t &current_map) {
-    entapInit::print_msg("Parsing file at: " + lst_path);
+    entapConfig::print_msg("Parsing file at: " + lst_path);
 
     std::string     line;
     std::string     seq_id;
@@ -406,7 +406,7 @@ void FrameSelection::genemark_parse_lst(std::string &lst_path, frame_map_t &curr
             }
         }
     }
-    entapInit::print_msg("Success!");
+    entapConfig::print_msg("Success!");
 }
 
 

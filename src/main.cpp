@@ -8,7 +8,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <chrono>
 #include <boost/filesystem/path.hpp>
-#include "EntapInit.h"
+#include "EntapConfig.h"
 #include "ExceptionHandler.h"
 #include "pstream.h"
 #include "boost/program_options.hpp"
@@ -55,7 +55,7 @@ int main(int argc, const char** argv) {
         _exe_path = get_exe_path(inputs);
         config_map = parse_config(_exe_path);
         if (state == INIT_ENTAP) {
-            entapInit::init_entap(inputs, _exe_path, config_map);
+            entapConfig::init_entap(inputs, _exe_path, config_map);
             state = INIT_ENTAP_SUCCESS;
         } else if (state == EXECUTE_ENTAP) {
             entapExecute::execute_main(inputs, _exe_path,config_map);
@@ -269,7 +269,7 @@ std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
     std::string                                 val;
 
     config_path = (boostFS::path(exe) / boostFS::path(ENTAP_CONFIG::CONFIG_FILE)).string();
-    if (!entapInit::file_exists(config_path)){
+    if (!entapConfig::file_exists(config_path)){
         print_msg("Config file not found, generating new file...");
         try {
             generate_config(config_path);
@@ -335,7 +335,7 @@ bool check_key(std::string& key) {
 
 void init_log() {
     remove("debug.txt");
-    entapInit::print_msg("Start - enTAP");
+    entapConfig::print_msg("Start - enTAP");
 }
 
 void print_msg(std::string msg) {

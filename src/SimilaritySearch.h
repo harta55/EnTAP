@@ -36,19 +36,19 @@ private:
 
     const std::string _NCBI_REGEX                                = "\\[([^]]+)\\](?!.+\\[.+\\])";
     const std::string _UNIPROT_REGEX                             = "OS=(.+?)\\s\\S\\S=";
-    const std::string SIM_SEARCH_DATABASE_BEST_TSV               = "_best_hits.tsv";
-    const std::string SIM_SEARCH_DATABASE_BEST_TSV_NO_CONTAM     = "_best_hits_no_contam.tsv";
-    const std::string SIM_SEARCH_DATABASE_BEST_FA_NUCL           = "_best_hits.fnn";
-    const std::string SIM_SEARCH_DATABASE_BEST_FA_PROT           = "_best_hits.faa";
-    const std::string SIM_SEARCH_DATABASE_BEST_FA_NUCL_NO_CONTAM = "_best_hits_no_contam.fnn";
-    const std::string SIM_SEARCH_DATABASE_BEST_FA_PROT_NO_CONTAM = "_best_hits_no_contam.faa";
+    const std::string SIM_SEARCH_DATABASE_BEST_TSV               = "best_hits.tsv";
+    const std::string SIM_SEARCH_DATABASE_BEST_TSV_NO_CONTAM     = "best_hits_no_contam.tsv";
+    const std::string SIM_SEARCH_DATABASE_BEST_FA_NUCL           = "best_hits.fnn";
+    const std::string SIM_SEARCH_DATABASE_BEST_FA_PROT           = "best_hits.faa";
+    const std::string SIM_SEARCH_DATABASE_BEST_FA_NUCL_NO_CONTAM = "best_hits_no_contam.fnn";
+    const std::string SIM_SEARCH_DATABASE_BEST_FA_PROT_NO_CONTAM = "best_hits_no_contam.faa";
 
-    const std::string SIM_SEARCH_DATABASE_CONTAM_TSV             = "_best_hits_contam.tsv";
-    const std::string SIM_SEARCH_DATABASE_CONTAM_FA_NUCL         = "_best_hits_contam.fnn";
-    const std::string SIM_SEARCH_DATABASE_CONTAM_FA_PROT         = "_best_hits_contam.faa";
-    const std::string SIM_SEARCH_DATABASE_NO_HITS_NUCL           = "_no_hits.fnn";
-    const std::string SIM_SEARCH_DATABASE_NO_HITS_PROT           = "_no_hits.faa";
-    const std::string SIM_SEARCH_DATABASE_UNSELECTED             = "_unselected.tsv";
+    const std::string SIM_SEARCH_DATABASE_CONTAM_TSV             = "best_hits_contam.tsv";
+    const std::string SIM_SEARCH_DATABASE_CONTAM_FA_NUCL         = "best_hits_contam.fnn";
+    const std::string SIM_SEARCH_DATABASE_CONTAM_FA_PROT         = "best_hits_contam.faa";
+    const std::string SIM_SEARCH_DATABASE_NO_HITS_NUCL           = "no_hits.fnn";
+    const std::string SIM_SEARCH_DATABASE_NO_HITS_PROT           = "no_hits.faa";
+    const std::string SIM_SEARCH_DATABASE_UNSELECTED             = "unselected.tsv";
     const std::string SIM_SEARCH_DIR                             = "similarity_search/";
     const std::string PROCESSED_DIR                              = "processed/";
     const std::string RESULTS_DIR                                = "overall_results/";

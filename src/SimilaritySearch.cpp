@@ -108,7 +108,8 @@ std::vector<std::string> SimilaritySearch::diamond() {
         // assume all paths should be .dmnd
         for (std::string data_path : _database_paths) {
             print_debug("Searching against database located at: " + data_path + "...");
-            boostFS::path database_name(data_path); database_name=database_name.stem();
+            boostFS::path database_name(data_path);
+            database_name = database_name.stem();
             filename = _blast_type + "_" + transc_name.string() + "_" + database_name.string();
             out_path = (boostFS::path(_sim_search_dir) / filename).string() + ".out";
             std_out  = (boostFS::path(_sim_search_dir) / filename).string() + "_std";
@@ -210,7 +211,8 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
             database_name = _file_to_database[data];
         } else database_name = boostFS::path(data).filename().stem().string();
         std::string out_base_path = (boostFS::path(_processed_path) / boostFS::path(database_name)).string();
-        std::string out_unselected_tsv = out_base_path + SIM_SEARCH_DATABASE_UNSELECTED;
+        std::string out_unselected_tsv = (boostFS::path(out_base_path) /
+                boostFS::path(SIM_SEARCH_DATABASE_UNSELECTED)).string();
 
         std::ofstream file_unselected_tsv(out_unselected_tsv,std::ios::out | std::ios::app);
         std::map<std::string, QuerySequence> database_map;
@@ -300,6 +302,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     database = boostFS::path(base_path).filename().string();
     figure_base = (boostFS::path(_figure_path) / database).string();
     base_bst = base_path;
+    boostFS::create_directories(base_path);
 
     std::string out_best_contams_tsv             = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_CONTAM_TSV)).string();
     std::string out_best_contams_fa_nucl         = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_CONTAM_FA_NUCL)).string();

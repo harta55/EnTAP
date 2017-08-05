@@ -4,10 +4,10 @@
 .. _diamond: https://github.com/bbuchfink/diamond
 .. _GeneMarkS-T: http://exon.gatech.edu/GeneMark/
 
-enTAP Introduction
+EnTAP Introduction
 ==================
 
-*enTAP* is a Eukaryotic Non-Model Transcriptome Annotation Pipeline designed to be fast, efficient, and user-friendly. It provides integration to several aspects of annotation and filtering analysis that will ultimately result in an more accurate match of sequences to gene ontology, pathway, and functional information.
+*EnTAP* is a Eukaryotic Non-Model Transcriptome Annotation Pipeline designed to be fast, efficient, and user-friendly. It provides integration to several aspects of annotation and filtering analysis that will ultimately result in an more accurate match of sequences to gene ontology, pathway, and functional information.
 
 Pipeline Stages:
 ----------------
@@ -16,7 +16,7 @@ Pipeline Stages:
 #. Similarity Search
 #. Gene Ontology Integration
 
-The software in the above stages are packaged within the enTAP repository (with the exception of GeneMarkS-T for frame selection). Installation and usage of enTAP can be seen in the sidebar.
+The software in the above stages are packaged within the EnTAP repository (with the exception of GeneMarkS-T for frame selection). Installation and usage of EnTAP can be seen in the sidebar.
 
 
 Citations:

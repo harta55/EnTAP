@@ -3,24 +3,24 @@
 Basic Usage
 ============
 
-*enTAP* has two stages of execution, :ref:`configuration<config-label>` and :ref:`run<run-label>`. Configuration is generally ran first (and may only need to be ran once) to setup databases while run is reserved for the main annotation pipeline and can be ran multiple times after initial configuration.
+*EnTAP* has two stages of execution, :ref:`configuration<config-label>` and :ref:`run<run-label>`. Configuration is generally ran first (and may only need to be ran once) to setup databases while run is reserved for the main annotation pipeline and can be ran multiple times after initial configuration.
 
 .. _config-label:
 
 Configuration
 -------------
-Configuration is the first stage of *enTAP* that will download and configure the necessary databases for full functionality. Additionally, databases in traditional .fasta (or similar) format must be configured to run with *enTAP* for faster similarity searching. This can be done with any database you have previously downloaded and will be configured and sent to the /bin folder within the *enTAP* directory. 
+Configuration is the first stage of *EnTAP* that will download and configure the necessary databases for full functionality. Additionally, databases in traditional .fasta (or similar) format must be configured to run with *EnTAP* for faster similarity searching. This can be done with any database you have previously downloaded and will be configured and sent to the /bin folder within the *EnTAP* directory. 
 
 To run configuration with a sample database, the command is as follows:
 
 .. code-block:: bash
 
-    enTAP --config -d path/to/database
+    EnTAP --config -d path/to/database
 
 This stage must be done at least once prior to :ref:`running<run-label>`. Once the database is configured, you need not do it again unless you updated your original database or plan on configuring several others.
 
 
-.. note:: If you already have DIAMOND (.dmnd) configured databases, you can skip the configuration of that database. Although, due to other *enTAP* database downloading (taxonomy and ontology), configuration must still be ran at least once without any flags.
+.. note:: If you already have DIAMOND (.dmnd) configured databases, you can skip the configuration of that database. Although, due to other *EnTAP* database downloading (taxonomy and ontology), configuration must still be ran at least once without any flags.
 
 
 .. note:: This is the only stage that requires connection to the Internet.
@@ -30,18 +30,18 @@ Flags:
 
 Required Flags:
 
-* The only required flag is **- -config**. Although in order to run the full *enTAP* pipeline, you must have a .dmnd configured database.
+* The only required flag is **- -config**. Although in order to run the full *EnTAP* pipeline, you must have a .dmnd configured database.
 
 
 Optional Flags:
 
-* -d : Specify any number of databases you would like to configure for *enTAP*
+* -d : Specify any number of databases you would like to configure for *EnTAP*
 
 
 Memory Usage:
 ^^^^^^^^^^^^^^
 
-Memory usage will vary depending on the number of database you would like configured. Although, *enTAP* will download several other databases as well:
+Memory usage will vary depending on the number of database you would like configured. Although, *EnTAP* will download several other databases as well:
 
 * Gene Ontology References: 6Mb
 * NCBI Taxonomy: 400Mb
@@ -50,7 +50,7 @@ Memory usage will vary depending on the number of database you would like config
 
 Run
 -------------
-The run stage of *enTAP* is the main annotation pipeline. After configuration is ran at least once, this can be ran continually without requiring configuration to be ran again (unless more databases will be configured). 
+The run stage of *EnTAP* is the main annotation pipeline. After configuration is ran at least once, this can be ran continually without requiring configuration to be ran again (unless more databases will be configured). 
 
 Input Files:
 ^^^^^^^^^^^^

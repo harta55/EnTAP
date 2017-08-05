@@ -18,6 +18,7 @@ namespace boostFS = boost::filesystem;
 FrameSelection::FrameSelection(std::string &input, std::string &exe, std::string &out,
                                boost::program_options::variables_map &user_flags,
                                GraphingManager *graphingManager) {
+    print_debug("Spawn object - FrameSelection");
     _graphingManager = graphingManager;
     _exe_path        = exe;
     _outpath         = out;

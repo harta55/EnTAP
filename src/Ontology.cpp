@@ -16,6 +16,7 @@ namespace boostFS = boost::filesystem;
 Ontology::Ontology(int thread, std::string egg_exe, std::string outpath,
                    std::string entap_exe,std::string input,
                    boost::program_options::variables_map &user_input) {
+    print_debug("Spawn object - Ontology");
     _ontology_exe = egg_exe;
     _threads = thread;
     _entap_exe = entap_exe;

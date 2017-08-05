@@ -7,6 +7,7 @@
 #include "EntapGlobals.h"
 
 GraphingManager::GraphingManager(std::string path) {
+    print_debug("Spawn object - GraphingManager");
     _graph_path = path;
     std::string cmd = "python " + path + " -s -1 -g -1 -i /temp -t temp";
     _graphing_enabled = execute_cmd(cmd) == 0;

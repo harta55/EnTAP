@@ -16,6 +16,7 @@ namespace boostFS = boost::filesystem;
 
 ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &exe, std::string &out
     , boost::program_options::variables_map& user_flags) {
+    print_debug("Spawn object - ExpressionAnalysis");
     _inpath = input;
     _threads = t;
     _exepath = exe;
@@ -23,7 +24,9 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &ex
     _software_flag = 0;
     _overwrite = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
     _ispaired = (bool) user_flags.count("paired-end");
-    _alignpath = user_flags[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>(); // Checked in EntapExecute.cpp
+    if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
+        _alignpath = user_flags[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>();
+    }
     _fpkm = user_flags[ENTAP_CONFIG::INPUT_FLAG_FPKM].as<float>();
     _rsem_dir = (boostFS::path(out) / boostFS::path(RSEM_OUT_DIR)).string();
     _proc_dir = (boostFS::path(_rsem_dir) / boostFS::path(RSEM_PROCESSED_DIR)).string();

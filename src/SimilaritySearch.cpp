@@ -18,6 +18,7 @@
 SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::string input,
                            int threads, std::string exe, std::string out,std::string entap_exe,
                            boost::program_options::variables_map &user_flags, GraphingManager *graphingManager) {
+    print_debug("Spawn object - SimilaritySearch");
     _database_paths = databases;
     _input_path = input;
     _threads = threads;

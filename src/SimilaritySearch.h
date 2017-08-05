@@ -4,6 +4,8 @@
 
 #ifndef ENTAP_SIMILARITYSEARCH_H
 #define ENTAP_SIMILARITYSEARCH_H
+
+//*********************** Includes *****************************
 #include <iostream>
 #include <list>
 #include <unordered_map>
@@ -12,14 +14,26 @@
 #include "QuerySequence.h"
 #include "GraphingManager.h"
 
+//**************************************************************
+
 
 class SimilaritySearch {
+
+
 public:
+
+    //******************** Public Prototype Functions *********************
     std::vector<std::string> execute(std::string, bool);
     SimilaritySearch(std::vector<std::string>&, std::string, int, std::string, std::string,
                      std::string,boost::program_options::variables_map &, GraphingManager *);
-    std::pair<std::string,std::string> parse_files(std::string,std::map<std::string, QuerySequence>&);
+    std::pair<std::string,std::string> parse_files(std::string,
+                                                   std::map<std::string, QuerySequence>&);
+    //**************************************************************
+
+
 private:
+
+
     const std::string _NCBI_REGEX                                = "\\[([^]]+)\\](?!.+\\[.+\\])";
     const std::string _UNIPROT_REGEX                             = "OS=(.+?)\\s\\S\\S=";
     const std::string SIM_SEARCH_DATABASE_BEST_TSV               = "_best_hits.tsv";
@@ -80,13 +94,13 @@ private:
     int                              _threads;
     bool                             _overwrite;
     bool                             _blastp;
-    double                           _e_val;
-    double                           _qcoverage;
-    double                           _tcoverage;
+    float                           _e_val;
+    float                           _qcoverage;
+    float                           _tcoverage;
     short                            _software_flag;
     std::vector<std::string>         _contaminants;
+    GraphingManager                  *_pGraphingManager;
     std::unordered_map<std::string,std::string> _file_to_database;
-    GraphingManager                  *_graphingManager;
 
     std::vector<std::string> diamond();
     void diamond_blast(std::string, std::string, std::string,std::string&,int&, std::string&);

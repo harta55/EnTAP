@@ -5,7 +5,7 @@
 #ifndef ENTAP_GRAPHINGMANAGER_H
 #define ENTAP_GRAPHINGMANAGER_H
 #include <iostream>
-#include "EntapConsts.h"
+#include "EntapGlobals.h"
 
 class GraphingManager {
 

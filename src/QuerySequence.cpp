@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <sstream>
 #include "QuerySequence.h"
-#include "EntapConsts.h"
+#include "EntapGlobals.h"
 
 // best hit selection
 bool QuerySequence::operator>(const QuerySequence &querySequence) {

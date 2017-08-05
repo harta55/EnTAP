@@ -8,14 +8,16 @@
 #include <iostream>
 #include <map>
 #include <boost/program_options/variables_map.hpp>
-#include "QuerySequence.h"
 #include "EntapConfig.h"
+#include "EntapGlobals.h"
+#include "QuerySequence.h"
 
 class QuerySequence;
 
 class Ontology {
-    typedef std::map<std::string, QuerySequence> query_map_struct;
     typedef std::map<std::string,std::vector<std::string>> go_struct;
+    typedef std::map<std::string, QuerySequence> query_map_struct;
+
 public:
 
     void execute(query_map_struct&,std::string,std::string);
@@ -61,14 +63,14 @@ private:
     void parse_results_interpro(query_map_struct&, std::pair<std::string,std::string>&);
     void print_eggnog(query_map_struct&);
     void print_interpro(query_map_struct&);
-    go_struct parse_go_list(std::string, std::map<std::string,entapConfig::struct_go_term> &
+    go_struct parse_go_list(std::string, std::map<std::string,struct_go_term> &
             ,char);
     std::string eggnog_format(std::string);
     void init_headers();
     void print_header(std::string);
     bool verify_files(std::string,std::string);
     void interpro_format_fix(std::string&);
-    std::map<std::string,entapConfig::struct_go_term> read_go_map ();
+    std::map<std::string,struct_go_term> read_go_map ();
 };
 
 

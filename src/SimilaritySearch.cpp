@@ -2,6 +2,7 @@
 // Created by harta on 5/10/17.
 //
 
+//*********************** Includes *****************************
 #include <boost/filesystem.hpp>
 #include <boost/range/iterator_range_core.hpp>
 #include <csv.h>
@@ -10,14 +11,9 @@
 #include <iomanip>
 #include "SimilaritySearch.h"
 #include "ExceptionHandler.h"
-#include "EntapConfig.h"
-#include "EntapConsts.h"
-#include "QuerySequence.h"
 #include "EntapExecute.h"
+//**************************************************************
 
-
-
-namespace boostFS = boost::filesystem;
 
 SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::string input,
                            int threads, std::string exe, std::string out,std::string entap_exe,
@@ -36,14 +32,14 @@ SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::str
                 _input_species.substr(0,_input_species.find("_")) +
                 " " + _input_species.substr(_input_species.find("_")+1);
     }
-    _qcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE].as<double>();
-    _tcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE].as<double>();
+    _qcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE].as<float>();
+    _tcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE].as<float>();
     _overwrite = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
-    _e_val = user_flags["e"].as<double>();
+    _e_val = user_flags[ENTAP_CONFIG::INPUT_FLAG_E_VAL].as<float>();
 
     std::vector<std::string> contaminants;
-    if (user_flags.count("contam")) {
-        contaminants = user_flags["contam"].as<std::vector<std::string>>();
+    if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_CONTAM)) {
+        contaminants = user_flags[ENTAP_CONFIG::INPUT_FLAG_CONTAM].as<std::vector<std::string>>();
     }
     for (int ind = 0; ind < contaminants.size(); ind++) {
         if (contaminants[ind].empty()) continue;
@@ -57,7 +53,7 @@ SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::str
     _processed_path  = (boostFS::path(_sim_search_dir) / boostFS::path(PROCESSED_DIR)).string();
     _results_path    = (boostFS::path(_sim_search_dir) / boostFS::path(RESULTS_DIR)).string();
     _figure_path     = (boostFS::path(_sim_search_dir) / boostFS::path(FIGURE_DIR)).string();
-    _graphingManager = graphingManager;
+    _pGraphingManager = graphingManager;
 }
 
 std::vector<std::string> SimilaritySearch::execute(std::string updated_input,bool blast) {
@@ -88,7 +84,7 @@ std::pair<std::string,std::string> SimilaritySearch::parse_files(std::string new
 }
 
 std::vector<std::string> SimilaritySearch::diamond() {
-    entapConfig::print_msg("Beginning to execute DIAMOND...");
+    print_debug("Beginning to execute DIAMOND...");
 
     std::vector<std::string>    out_paths;
     boostFS::path               transc_name;
@@ -96,7 +92,7 @@ std::vector<std::string> SimilaritySearch::diamond() {
     std::string                 out_path;
     std::string                 std_out;
 
-    if (!entapConfig::file_exists(_input_path)) {
+    if (!file_exists(_input_path)) {
         throw ExceptionHandler("Transcriptome file not found",ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
     }
     transc_name = _input_path;
@@ -110,19 +106,19 @@ std::vector<std::string> SimilaritySearch::diamond() {
     try {
         // assume all paths should be .dmnd
         for (std::string data_path : _database_paths) {
-            entapConfig::print_msg("Searching against database located at: " + data_path + "...");
+            print_debug("Searching against database located at: " + data_path + "...");
             boostFS::path database_name(data_path); database_name=database_name.stem();
             filename = _blast_type + "_" + transc_name.string() + "_" + database_name.string();
             out_path = (boostFS::path(_sim_search_dir) / filename).string() + ".out";
             std_out  = (boostFS::path(_sim_search_dir) / filename).string() + "_std";
             _file_to_database[out_path] = database_name.string();
-            if (entapConfig::file_exists(out_path)) {
-                entapConfig::print_msg("File found at " + out_path + " skipping execution against this database");
+            if (file_exists(out_path)) {
+                print_debug("File found at " + out_path + " skipping execution against this database");
                 out_paths.push_back(out_path);
                 continue;
             }
             diamond_blast(_input_path, out_path, std_out,data_path, _threads, _blast_type);
-            entapConfig::print_msg("Success! Results written to " + out_path);
+            print_debug("Success! Results written to " + out_path);
             out_paths.push_back(out_path);
         }
     } catch (const ExceptionHandler &e) {throw e;}
@@ -149,15 +145,15 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
             " -f " + "6 qseqid sseqid pident length mismatch gapopen "
                      "qstart qend sstart send evalue bitscore qcovhsp stitle";
 
-    entapConfig::print_msg("\nExecuting Diamond:\n" + diamond_run);
-    if (entapConfig::execute_cmd(diamond_run, std_out) != 0) {
+    print_debug("\nExecuting Diamond:\n" + diamond_run);
+    if (execute_cmd(diamond_run, std_out) != 0) {
         throw ExceptionHandler("Error in DIAMOND run with database located at: " +
                                database, ENTAP_ERR::E_INIT_TAX_INDEX);
     }
 }
 
 std::vector<std::string> SimilaritySearch::verify_diamond_files(std::string &outpath, std::string name) {
-    entapConfig::print_msg("Override unselected, checking for diamond files of selected databases...");
+    print_debug("Override unselected, checking for diamond files of selected databases...");
     std::vector<std::string> out_list;
     std::string              temp_out;
 
@@ -166,13 +162,13 @@ std::vector<std::string> SimilaritySearch::verify_diamond_files(std::string &out
         boostFS::path file_name(data_path);
         file_name = file_name.stem();
         temp_out = outpath + _blast_type + "_" + name + "_" + file_name.string() + ".out";
-        if (!entapConfig::file_exists(temp_out)){
-            entapConfig::print_msg("File at: " + temp_out + " not found, running diamond");
+        if (!file_exists(temp_out)){
+            print_debug("File at: " + temp_out + " not found, running diamond");
             out_list.clear();return out_list;
         }
         out_list.push_back(temp_out);
     }
-    entapConfig::print_msg("All diamond files found, skipping this stage of enTAP");
+    print_debug("All diamond files found, skipping this stage of enTAP");
     _sim_search_paths = out_list;
     return out_list;
 }
@@ -180,7 +176,7 @@ std::vector<std::string> SimilaritySearch::verify_diamond_files(std::string &out
 // input: 3 database string array of selected databases
 std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<std::string>& contams,
                                                                    std::map<std::string, QuerySequence> &SEQUENCES) {
-    entapConfig::print_msg("Beginning to filter individual diamond_files...");
+    print_debug("Beginning to filter individual diamond_files...");
 
     std::unordered_map<std::string, std::string>    taxonomic_database;
     std::list<std::map<std::string,QuerySequence>>  database_maps;
@@ -200,7 +196,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
     _input_lineage = get_lineage(_input_species,taxonomic_database);
 
     for (std::string &data : _sim_search_paths) {
-        entapConfig::print_msg("Diamond file located at " + data + " being filtered");
+        print_debug("Diamond file located at " + data + " being filtered");
         io::CSVReader<DMND_COL_NUMBER, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(data);
         // todo have columns from input file, in_read_header for versatility
         std::string qseqid, sseqid, stitle, database_name;
@@ -255,7 +251,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
                 }
             } else database_map.emplace(qseqid, new_query);
         }
-        entapConfig::print_msg("File parsed, calculating statistics and writing output...");
+        print_debug("File parsed, calculating statistics and writing output...");
         // final database stats
         file_unselected_tsv.close();
         out_stream<<std::fixed<<std::setprecision(2);
@@ -268,9 +264,9 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
                    "\n\t\tWritten to: "                           << out_unselected_tsv;
         calculate_best_stats(SEQUENCES,database_map,out_stream,out_base_path,false);
         std::string out_msg = out_stream.str() + "\n";
-        entapExecute::print_statistics(out_msg,_outpath);
+        print_statistics(out_msg);
         database_maps.push_back(database_map);
-        entapConfig::print_msg("Success!");
+        print_debug("Success!");
     }
     return process_best_diamond_hit(database_maps,SEQUENCES);
 }
@@ -474,13 +470,13 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
             graphingStruct.graph_title  = database + GRAPH_CONTAM_TITLE;
             graphingStruct.text_file_path = graph_contam_txt_path;
             graphingStruct.graph_type = GRAPH_BAR_FLAG;
-            _graphingManager->graph(graphingStruct);
+            _pGraphingManager->graph(graphingStruct);
         }
         graphingStruct.fig_out_path = graph_species_png_path;
         graphingStruct.graph_title  = database + GRAPH_SPECIES_TITLE;
         graphingStruct.text_file_path = graph_species_txt_path;
         graphingStruct.graph_type = GRAPH_BAR_FLAG;
-        _graphingManager->graph(graphingStruct);
+        _pGraphingManager->graph(graphingStruct);
     }
     return std::pair<std::string,std::string>(out_best_hits_fa_prot,out_no_hits_fa_prot);
 }
@@ -492,7 +488,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
  */
 std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(std::list<std::map<std::string,QuerySequence>> &diamond_maps,
                                       std::map<std::string, QuerySequence>&SEQUENCES) {
-    entapConfig::print_msg("Compiling similarity results results to find best overall hits...");
+    print_debug("Compiling similarity results results to find best overall hits...");
 
     std::pair<std::string,std::string>  out_pair;
     std::stringstream                   out_stream;
@@ -518,20 +514,20 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
             "------Compiled Results (Best hit selection across all databases ------";
     out_pair = calculate_best_stats(SEQUENCES,compiled_hit_map,out_stream,_results_path,true);
     out_msg = out_stream.str() + "\n";
-    entapExecute::print_statistics(out_msg,_outpath);
+    print_statistics(out_msg);
     diamond_maps.clear();
-    entapConfig::print_msg("Success!");
+    print_debug("Success!");
     return out_pair;
 }
 
 std::unordered_map<std::string, std::string> SimilaritySearch::read_tax_map() {
-    entapConfig::print_msg("Reading taxonomic database into memory...");
+    print_debug("Reading taxonomic database into memory...");
 
     std::unordered_map<std::string, std::string> restored_map;
     std::string tax_path;
 
     tax_path = (boostFS::path(_entap_exe) / boostFS::path(ENTAP_CONFIG::TAX_BIN_PATH)).string();
-    if (!entapConfig::file_exists(tax_path)) {
+    if (!file_exists(tax_path)) {
         throw ExceptionHandler("NCBI Taxonomic database not found at: " +
             tax_path,ENTAP_ERR::E_INIT_TAX_READ);
     }
@@ -544,7 +540,7 @@ std::unordered_map<std::string, std::string> SimilaritySearch::read_tax_map() {
     } catch (std::exception &exception) {
         throw ExceptionHandler(exception.what(), ENTAP_ERR::E_INIT_TAX_READ);
     }
-    entapConfig::print_msg("Success!");
+    print_debug("Success!");
     return restored_map;
 }
 

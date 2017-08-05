@@ -5,6 +5,7 @@
 #ifndef ENTAP_ENTAPEXECUTE_H
 #define ENTAP_ENTAPEXECUTE_H
 
+//*********************** Includes *****************************
 #include "Ontology.h"
 
 #include "QuerySequence.h"
@@ -14,10 +15,24 @@
 #include <unordered_map>
 #include <queue>
 
+//**************************************************************
+
+
 namespace entapExecute {
 
-    // **********************Defines*************************//
+    enum ExecuteStates {
+        INIT,
+        RSEM,
+        FRAME_SELECTION,
+        FILTER,
+        DIAMOND_RUN,
+        DIAMOND_PARSE,
+        GENE_ONTOLOGY,
+        EXIT
+    };
 
+
+    // ********************** Global Constants *********************
     const std::string OUT_UNANNOTATED_NUCL = "final_unannotated.fnn";
     const std::string OUT_UNANNOTATED_PROT = "final_unannotated.faa";
     const std::string OUT_ANNOTATED_NUCL   = "final_annotated.fnn";
@@ -31,18 +46,10 @@ namespace entapExecute {
     const std::string ENTAP_OUTPUT         = "entap_out/";
     const std::string GRAPH_FILEPATH       = "/src/entap_graphing.py";
 
-    enum ExecuteStates {
-        INIT,
-        RSEM,
-        FRAME_SELECTION,
-        FILTER,
-        DIAMOND_RUN,
-        DIAMOND_PARSE,
-        GENE_ONTOLOGY,
-        EXIT
-    };
+    //**************************************************************
 
-    // *******************Prototype Functions**********************//
+
+    // *******************Prototype Functions******************
     std::vector<std::string> verify_databases(std::vector<std::string>, std::vector<std::string>,
                                             std::vector<std::string>, std::string &,
                                             std::unordered_map<std::string, std::string> &);
@@ -54,11 +61,12 @@ namespace entapExecute {
     bool valid_state(enum ExecuteStates);
     std::pair<std::string,std::string> init_exe_paths(std::unordered_map<std::string, std::string> &,
                       std::string);
-    void print_statistics(std::string &, std::string &);
     std::map<std::string, QuerySequence> init_sequence_map(std::string&,bool);
     std::pair<unsigned long, unsigned long> calculate_N_vals
             (std::vector<unsigned long> &, unsigned long);
     void final_statistics(std::map<std::string, QuerySequence>&);
+    //**************************************************************
+
 }
 
 

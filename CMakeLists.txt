@@ -2,11 +2,19 @@ cmake_minimum_required(VERSION 2.8)
 project(enTAP)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-set(SOURCE_FILES libs src/main.cpp src/ExceptionHandler.cpp src/ExceptionHandler.h src/EntapConsts.h
-        src/EntapInit.cpp src/EntapInit.h src/EntapExecute.cpp src/EntapExecute.h src/QuerySequence.cpp
-        src/QuerySequence.h src/FrameSelection.cpp src/FrameSelection.h src/ExpressionAnalysis.cpp
-        src/ExpressionAnalysis.h src/SimilaritySearch.cpp src/SimilaritySearch.h src/Ontology.cpp
-        src/Ontology.h src/GraphingManager.cpp src/GraphingManager.h)
+set(SOURCE_FILES libs
+        src/main.cpp
+        src/ExceptionHandler.cpp src/ExceptionHandler.h
+        src/EntapGlobals.h src/EntapGlobals.cpp
+        src/EntapConfig.cpp src/EntapConfig.h
+        src/EntapExecute.cpp src/EntapExecute.h
+        src/QuerySequence.cpp src/QuerySequence.h
+        src/FrameSelection.cpp src/FrameSelection.h
+        src/ExpressionAnalysis.cpp src/ExpressionAnalysis.h
+        src/SimilaritySearch.cpp src/SimilaritySearch.h
+        src/Ontology.cpp src/Ontology.h
+        src/GraphingManager.cpp src/GraphingManager.h
+        src/UserInput.cpp src/UserInput.h )
 
 add_executable(enTAP ${SOURCE_FILES})
 

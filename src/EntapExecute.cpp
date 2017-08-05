@@ -2,18 +2,14 @@
 // Created by harta on 3/4/17.
 //
 
+//*********************** Includes *****************************
 #include <boost/serialization/unordered_map.hpp>
-#include <iostream>
-#include <boost/archive/binary_iarchive.hpp>
 #include <fstream>
 #include <map>
 #include "EntapExecute.h"
 #include "ExceptionHandler.h"
-#include "EntapConsts.h"
-#include "EntapConfig.h"
+#include "EntapGlobals.h"
 #include <thread>
-#include <list>
-#include "csv.h"
 #include "QuerySequence.h"
 #include "FrameSelection.h"
 #include "ExpressionAnalysis.h"
@@ -22,16 +18,13 @@
 #include "GraphingManager.h"
 #include <string>
 #include <boost/regex.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
-#include <boost/program_options/variables_map.hpp>
-#include <boost/range/iterator_range_core.hpp>
 #include <queue>
 #include <iomanip>
+//**************************************************************
 
-namespace boostFS = boost::filesystem;
 
 namespace entapExecute {
+
     ExecuteStates           state;
     std::string             _frame_selection_exe;
     std::string             _expression_exe;
@@ -46,15 +39,37 @@ namespace entapExecute {
     bool                    _SIM_SEARCH_SUCCESS;
     bool                    _ONTOLOGY_SUCCESS;
 
+
+/**
+ * ======================================================================
+ * Function execute_main(boostPO::variables_map      &user_input,
+ *                       std::string                 exe_path,
+                         std::unordered_map<std::string, std::string> &config_map)
+ *
+ * Description          - Entry into main annotation portion of EnTAP, manages
+ *                        calling each stage of the pipeline
+ *                      - Calculates overall statistics and parses input
+ *                        transcriptome
+ *                      - Parses input databases
+ *
+ * Notes                - None
+ *
+ * @param user_input    - Boost parsed user input flags
+ * @param exe_path      - Path to EnTAP executable and main directory
+ * @param config_map    - Map of the EnTAP configuration file
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
     void execute_main(boost::program_options::variables_map &user_input, std::string exe_path,
                       std::unordered_map<std::string, std::string> &config_map) {
-        entapConfig::print_msg("enTAP Executing...");
+        print_debug("enTAP Executing...");
 
         std::map<std::string, QuerySequence>    SEQUENCE_MAP;    // Maintained/updated throughout
         std::vector<std::string>                databases;       // NCBI+UNIPROT+Other
         std::vector<std::string>                other_databases; // -d Command databases
         std::pair<std::string,std::string>      diamond_pair;    // best_hits.fa,no_hits.fa
-
         std::string                             input_path;      // FASTA changes depending on execution
         std::string                             no_database_hits;// No DIAMOND
         std::queue<char>                        state_queue;
@@ -72,7 +87,7 @@ namespace entapExecute {
         _ONTOLOGY_SUCCESS = false;
 
         input_path = user_input["input"].as<std::string>();
-        threads = entapConfig::get_supported_threads(user_input);
+        threads = get_supported_threads(user_input);
         _isProtein = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN);
         is_complete = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_COMPLETE);
         diamond_pair = std::make_pair(input_path,"");
@@ -81,6 +96,7 @@ namespace entapExecute {
         _outpath = (working_dir / boostFS::path(user_input["tag"].as<std::string>())).string();
         _entap_outpath = (boostFS::path(_outpath) / boostFS::path(ENTAP_OUTPUT)).string();
         boostFS::create_directories(_entap_outpath);
+        boostFS::create_directories(_outpath);
 
         // init_databases
         if (user_input.count("database")) {
@@ -115,9 +131,9 @@ namespace entapExecute {
             while (state != EXIT) {
                 switch (state) {
                     case FRAME_SELECTION:
-                        entapConfig::print_msg("STATE - FRAME SELECTION");
+                        print_debug("STATE - FRAME SELECTION");
                         if (_isProtein) {
-                            entapConfig::print_msg("Protein sequences input, skipping frame selection");
+                            print_debug("Protein sequences input, skipping frame selection");
                         } else {
                             input_path = genemark.execute(input_path,SEQUENCE_MAP);
                             _FRAME_SELETION_SUCCESS = true;
@@ -125,9 +141,9 @@ namespace entapExecute {
                         blastp = true;
                         break;
                     case RSEM:
-                        entapConfig::print_msg("STATE - EXPRESSION");
+                        print_debug("STATE - EXPRESSION");
                         if (!user_input.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
-                            entapConfig::print_msg("No alignment file specified, skipping expression analysis");
+                            print_debug("No alignment file specified, skipping expression analysis");
                         } else {
                             input_path = rsem.execute(input_path,SEQUENCE_MAP);
                             _EXPRESSION_SUCCESS = true;
@@ -137,18 +153,18 @@ namespace entapExecute {
                         input_path = filter_transcriptome(input_path);
                         break;
                     case DIAMOND_RUN:
-                        entapConfig::print_msg("STATE - SIM SEARCH RUN");
+                        print_debug("STATE - SIM SEARCH RUN");
                         diamond.execute(input_path, blastp);
                         _SIM_SEARCH_SUCCESS = true;
                         break;
                     case DIAMOND_PARSE:
-                        entapConfig::print_msg("STATE - SIM SEARCH PARSE");
+                        print_debug("STATE - SIM SEARCH PARSE");
                         diamond_pair = diamond.parse_files(input_path,SEQUENCE_MAP);
                         input_path = diamond_pair.first;
                         no_database_hits = diamond_pair.second;
                         break;
                     case GENE_ONTOLOGY:
-                        entapConfig::print_msg("STATE - GENE ONTOLOGY");
+                        print_debug("STATE - GENE ONTOLOGY");
                         ontology.execute(SEQUENCE_MAP,input_path,no_database_hits);
                         _ONTOLOGY_SUCCESS = true;
                         break;
@@ -160,21 +176,21 @@ namespace entapExecute {
             }
             final_statistics(SEQUENCE_MAP);
 
-        } catch (ExceptionHandler &e) {throw e; }
+        } catch (const ExceptionHandler &e) {throw e;}
     }
 
 
     std::vector<std::string> verify_databases(std::vector<std::string> uniprot, std::vector<std::string> ncbi,
                                             std::vector<std::string> database, std::string &exe,
                                             std::unordered_map<std::string, std::string> &config) {
-        entapConfig::print_msg("Verifying databases...");
+        print_debug("Verifying databases...");
         // return file paths
         // config file paths already exist (checked in main)
         std::vector<std::string>        file_paths;
         std::string                     path;
         std::string                     config_path;
 
-        entapConfig::print_msg("Verifying uniprot databases...");
+        print_debug("Verifying uniprot databases...");
         if (uniprot.size() > 0) {
             for (auto const &u_flag:uniprot) {
                 if (u_flag.compare(ENTAP_CONFIG::INPUT_UNIPROT_NULL) != 0) {
@@ -188,23 +204,23 @@ namespace entapExecute {
                         config_path = config.at(ENTAP_CONFIG::KEY_UNIPROT_UR100);
                     }
                     if (!config_path.empty()) {
-                        entapConfig::print_msg("Config file database found, using this path at: " +
+                        print_debug("Config file database found, using this path at: " +
                                              config_path);
                         path = config_path;
                     } else {
                         path = exe + ENTAP_CONFIG::UNIPROT_INDEX_PATH + u_flag + ".dmnd";
                     }
-                    if (!entapConfig::file_exists(path))
+                    if (!file_exists(path))
                         throw ExceptionHandler("Database located at: " + path + " not found", ENTAP_ERR::E_INPUT_PARSE);
                     file_paths.push_back(path);
                 } else {
-                    entapConfig::print_msg("No/null Uniprot databases detected");
+                    print_debug("No/null Uniprot databases detected");
                     break;
                 }
             }
         }
-        entapConfig::print_msg("Complete");
-        entapConfig::print_msg("Verifying NCBI databases...");
+        print_debug("Complete");
+        print_debug("Verifying NCBI databases...");
         if (ncbi.size() > 0) {
             for (auto const &u_flag:ncbi) {
                 if (u_flag.compare(ENTAP_CONFIG::NCBI_NULL) != 0) {
@@ -216,43 +232,43 @@ namespace entapExecute {
                         config_path = config.at(ENTAP_CONFIG::KEY_NCBI_REFSEQ_COMPLETE);
                     }
                     if (!config_path.empty()) {
-                        entapConfig::print_msg("Config file database found, using this path at: " +
+                        print_debug("Config file database found, using this path at: " +
                                              config_path);
                         path = config_path;
                     } else {
                         path = exe + ENTAP_CONFIG::NCBI_INDEX_PATH + u_flag + ".dmnd";
                     }
-                    if (!entapConfig::file_exists(path))
+                    if (!file_exists(path))
                         throw ExceptionHandler("Database located at: " + path + " not found", ENTAP_ERR::E_INPUT_PARSE);
                     file_paths.push_back(path);
                 } else {
-                    entapConfig::print_msg("No/null NCBI databases detected");
+                    print_debug("No/null NCBI databases detected");
                     break;
                 }
             }
         }
-        entapConfig::print_msg("Complete");
-        entapConfig::print_msg("Verifying other databases...");
+        print_debug("Complete");
+        print_debug("Verifying other databases...");
         if (database.size() > 0) {
             for (auto const &data_path:database) {
                 if (data_path.compare(ENTAP_CONFIG::NCBI_NULL) == 0) continue;
-                if (!entapConfig::file_exists(data_path)) {
+                if (!file_exists(data_path)) {
                     throw ExceptionHandler("Database located at: " + data_path + " not found",
                                            ENTAP_ERR::E_INPUT_PARSE);
                 }
                 boostFS::path bpath(data_path);
                 std::string ext = bpath.extension().string();
                 if (ext.compare(".dmnd") == 0) {
-                    entapConfig::print_msg("User has input a diamond indexed database at: " +
+                    print_debug("User has input a diamond indexed database at: " +
                                          data_path);
                     file_paths.push_back(data_path);
                     continue;
                 } else {
                     //todo fix
-                    entapConfig::print_msg("User has input a database at: " + data_path);
+                    print_debug("User has input a database at: " + data_path);
                     std::string test_path = exe + ENTAP_CONFIG::BIN_PATH + data_path + ".dmnd";
-                    entapConfig::print_msg("Checking if indexed file exists at: " + test_path);
-                    if (!entapConfig::file_exists(test_path)) {
+                    print_debug("Checking if indexed file exists at: " + test_path);
+                    if (!file_exists(test_path)) {
                         throw ExceptionHandler("Database located at: " + data_path + " not found",
                                                ENTAP_ERR::E_INPUT_PARSE);
                     } else {
@@ -261,15 +277,15 @@ namespace entapExecute {
                 }
             }
         }
-        entapConfig::print_msg("Verification complete!");
+        print_debug("Verification complete!");
         if (file_paths.size() > 0) {
             std::string database_final = "\n\nDatabases selected:\n";
             for (std::string base: file_paths) {
                 database_final += base + "\n";
             }
-            entapConfig::print_msg(database_final);
+            print_debug(database_final);
         } else {
-            entapConfig::print_msg("No databases selected, some funcionality "
+            print_debug("No databases selected, some funcionality "
                                          "may not be able to run");
         }
         return file_paths;
@@ -277,14 +293,21 @@ namespace entapExecute {
 
 
     /**
-     * Description          - Merely selects transcriptome that will continue in pipeline
-     *                        and copies it to entap_out directory
+     * ======================================================================
+     * Function std::string filter_transcriptome(std::string    &input_path)
+     *
+     * Description          - Merely selects transcriptome that will
+     *                        continue in pipeline and copies it to entap_out directory
+     *
+     * Notes                - None
      *
      * @param input_path    - Input transcriptome (expression and/or frame selected)
      * @return              - Copied transcriptome
+     *
+     * =====================================================================
      */
     std::string filter_transcriptome(std::string &input_path) {
-        entapConfig::print_msg("Beginning to copy final transcriptome to be used...");
+        print_debug("Beginning to copy final transcriptome to be used...");
 
         boostFS::path file_name;
         std::string   file_name_str;
@@ -292,20 +315,42 @@ namespace entapExecute {
 
         file_name = input_path;
         file_name_str = file_name.filename().stem().string() + "_final.fasta";
-        out_path = (boostFS::path(_entap_outpath) / file_name).string();
+        out_path = (boostFS::path(_entap_outpath) / file_name_str).string();
         boostFS::copy_file(input_path,out_path,boostFS::copy_option::overwrite_if_exists);
 
-        entapConfig::print_msg("Success!");
+        print_debug("Success!");
         return out_path;
     }
 
 
+/**
+ * ======================================================================
+ * Function std::map<std::string, QuerySequence> init_sequence_map
+ *                                  (std::string     &input_file,
+                                     bool            is_complete)
+ *
+ * Description          - Parses input transcriptome and converts to map of
+ *                        each query sequence
+ *                      - This map is passed throughout EnTAP execution and
+ *                        updated
+ *
+ * Notes                - None
+ *
+ * @param input_file    - Path to input transcriptome
+ * @param is_complete   - Flag from user if the entire transcriptome is a
+ *                        complete gene
+ * @return              - None
+ *
+ * =====================================================================
+ */
     std::map<std::string, QuerySequence> init_sequence_map(std::string &input_file,
                                                            bool is_complete) {
-        entapConfig::print_msg("Processing transcriptome...");
+        print_debug("Processing transcriptome...");
 
         std::stringstream                        out_msg;
         std::map<std::string, QuerySequence>     seq_map;
+        std::string                              out_name;
+        std::string                              out_new_path;
         std::string                              line;
         std::string                              sequence;
         std::string                              seq_id;
@@ -319,16 +364,14 @@ namespace entapExecute {
         std::vector<unsigned long>               sequence_lengths;
         std::pair<unsigned long, unsigned long>  n_vals;
 
-
-        if (!entapConfig::file_exists(input_file)) {
-            throw ExceptionHandler("Input file not found at: " +
-                input_file,ENTAP_ERR::E_INPUT_PARSE);
+        if (!file_exists(input_file)) {
+            throw ExceptionHandler("Input file not found at: " + input_file,
+                                   ENTAP_ERR::E_INPUT_PARSE);
         }
 
         boostFS::path path(input_file);
-        std::string out_name = path.filename().string();
-        std::string out_new_path = (boostFS::path(_outpath)/ boostFS::path(ENTAP_OUTPUT)).string()
-                                   + out_name;
+        out_name = path.filename().string();
+        out_new_path = (boostFS::path(_outpath)/ boostFS::path(ENTAP_OUTPUT)).string() + out_name;
         boostFS::remove(out_new_path);
         std::ifstream in_file(input_file);
         std::ofstream out_file(out_new_path,std::ios::out | std::ios::app);
@@ -380,8 +423,8 @@ namespace entapExecute {
                 "\nShortest sequence(bp): "<< shortest_len<<" ("<<shortest_seq<<")";
         if (is_complete)out_msg<<"\nAll sequences ("<<count_seqs<<") were flagged as complete genes";
         std::string msg = out_msg.str();
-        print_statistics(msg,_outpath);
-        entapConfig::print_msg("Success!");
+        print_statistics(msg);
+        print_debug("Success!");
         input_file = out_new_path;
         return seq_map;
     }
@@ -414,20 +457,6 @@ namespace entapExecute {
     }
 
     /**
-     * Description      - Handles log file information output to .txt file.
-     *
-     * @param msg       - String message
-     * @param out_path  - enTAP outfiles directory
-     */
-    void print_statistics(std::string &msg, std::string &out_path) {
-        std::string file_path = out_path + ENTAP_CONFIG::LOG_FILENAME;
-        std::ofstream log_file(file_path, std::ios::out | std::ios::app);
-        log_file << msg << std::endl;
-        log_file.close();
-    }
-
-
-    /**
      * Description      - Finds exe paths for each piece of pipeline. WARNING: does not
      *                    check for validity of exe paths (as some parts may not want to be
      *                    ran)
@@ -438,7 +467,7 @@ namespace entapExecute {
      */
     std::pair<std::string,std::string> init_exe_paths(std::unordered_map<std::string,
             std::string> &map, std::string exe) {
-        entapConfig::print_msg("Verifying execution paths. Note they are not checked for validity...");
+        print_debug("Verifying execution paths. Note they are not checked for validity...");
 
         boostFS::path                      exe_path(exe);
         std::pair<std::string,std::string> outpair;
@@ -454,39 +483,39 @@ namespace entapExecute {
                                            "1(interproscan)", ENTAP_ERR::E_CONFIG_PARSE);}
         if (temp_rsem.empty()) {
             temp_rsem = (exe_path / boostFS::path(RSEM_EXE_PATH)).string();
-            entapConfig::print_msg("RSEM config path empty, setting to default: " + temp_rsem);
-        } else entapConfig::print_msg("RSEM path set to: " + temp_rsem);
+            print_debug("RSEM config path empty, setting to default: " + temp_rsem);
+        } else print_debug("RSEM path set to: " + temp_rsem);
 
         if (temp_diamond.empty()) {
             temp_diamond = (exe_path / boostFS::path(DIAMOND_PATH_EXE)).string();
-            entapConfig::print_msg("DIAMOND config path empty, setting to default: "+temp_diamond);
-        } else entapConfig::print_msg("DIAMOND path set to: " + temp_diamond);
+            print_debug("DIAMOND config path empty, setting to default: "+temp_diamond);
+        } else print_debug("DIAMOND path set to: " + temp_diamond);
 
         if (temp_genemark.empty()) {
             temp_genemark = (exe_path / boostFS::path(GENEMARK_EXE_PATH)).string();
-            entapConfig::print_msg("GenemarkS-T config path empty, setting to default: "+temp_genemark);
-        } else entapConfig::print_msg("GenemarkS-T path set to: " + temp_genemark);
+            print_debug("GenemarkS-T config path empty, setting to default: "+temp_genemark);
+        } else print_debug("GenemarkS-T path set to: " + temp_genemark);
 
         if (temp_eggnog.empty()) {
             temp_eggnog = (exe_path / boostFS::path(EGGNOG_EMAPPER_EXE)).string();
-            entapConfig::print_msg("Eggnog config path empty, setting to default: " + temp_eggnog);
-        } else entapConfig::print_msg("Eggnog path set to: " + temp_eggnog);
+            print_debug("Eggnog config path empty, setting to default: " + temp_eggnog);
+        } else print_debug("Eggnog path set to: " + temp_eggnog);
 
         if (temp_eggnog_down.empty()) {
             temp_eggnog_down = (exe_path / boostFS::path(EGGNOG_DOWNLOAD_EXE)).string();
-            entapConfig::print_msg("Eggnog config path empty, setting to default: " + temp_eggnog_down);
-        } else entapConfig::print_msg("Eggnog path set to: " + temp_eggnog_down);
+            print_debug("Eggnog config path empty, setting to default: " + temp_eggnog_down);
+        } else print_debug("Eggnog path set to: " + temp_eggnog_down);
 
         if (temp_interpro.empty()) {
             temp_interpro = (exe_path / boostFS::path(INTERPRO_EXE)).string();
-            entapConfig::print_msg("Interpro config path empty, setting to default: "+temp_interpro);
-        } else entapConfig::print_msg("Interpro path set to: " + temp_interpro);
+            print_debug("Interpro config path empty, setting to default: "+temp_interpro);
+        } else print_debug("Interpro path set to: " + temp_interpro);
 
         _diamond_exe = temp_diamond;
         _frame_selection_exe = temp_genemark;
         _expression_exe = temp_rsem;
         _ontology_flag == 0 ? _ontology_exe = temp_eggnog : _ontology_exe = temp_interpro;
-        entapConfig::print_msg("Success! All exe paths set");
+        print_debug("Success! All exe paths set");
 
         outpair.first  = _diamond_exe;
         outpair.second = temp_eggnog_down;
@@ -496,7 +525,7 @@ namespace entapExecute {
 
     //only assuming between 0-9 NO 2 DIGIT STATES
     void verify_state(std::queue<char> &queue, bool &test) {
-        entapConfig::print_msg("verifying state...");
+        print_debug("verifying state...");
         if (queue.empty()) {
             state = static_cast<ExecuteStates>(state + 1);
             if (!valid_state(state)) state = EXIT;
@@ -541,15 +570,32 @@ namespace entapExecute {
                 verify_state(queue, test);
             }
         }
-        entapConfig::print_msg("Success!");
+        print_debug("Success!");
     }
 
     bool valid_state(ExecuteStates s) {
         return (s >= RSEM && s <= EXIT);
     }
 
+
+/**
+ * ======================================================================
+ * Function final_statistics(std::map<std::string, QuerySequence>   &SEQUENCE_MAP)
+ *
+ * Description          - Calculates final statistical information after
+ *                        completed execution
+ *                      - Compiles stats on each stage of pipeline
+ *
+ * Notes                - None
+ *
+ * @param SEQUENCE_MAP  - Map of each query sequence + data
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
     void final_statistics(std::map<std::string, QuerySequence> &SEQUENCE_MAP) {
-        entapConfig::print_msg("Pipeline finished! Calculating final statistics...");
+        print_debug("Pipeline finished! Calculating final statistics...");
 
         std::stringstream      ss;
         unsigned int           count_total_sequences=0;
@@ -571,11 +617,12 @@ namespace entapExecute {
         std::string            out_unannotated_prot_path;
         std::string            out_annotated_nucl_path;
         std::string            out_annotated_prot_path;
+        std::string            out_msg;
 
-        out_unannotated_nucl_path = _outpath + OUT_UNANNOTATED_NUCL;
-        out_unannotated_prot_path = _outpath + OUT_UNANNOTATED_PROT;
-        out_annotated_nucl_path = _outpath + OUT_ANNOTATED_NUCL;
-        out_annotated_prot_path = _outpath + OUT_ANNOTATED_PROT;
+        out_unannotated_nucl_path = (boostFS::path(_outpath) / boostFS::path(OUT_UNANNOTATED_NUCL)).string();
+        out_unannotated_prot_path = (boostFS::path(_outpath) / boostFS::path(OUT_UNANNOTATED_PROT)).string();
+        out_annotated_nucl_path   = (boostFS::path(_outpath) / boostFS::path(OUT_ANNOTATED_NUCL)).string();
+        out_annotated_prot_path   = (boostFS::path(_outpath) / boostFS::path(OUT_ANNOTATED_PROT)).string();
 
         // Switch to entap_out dir
         boostFS::remove(out_unannotated_nucl_path);
@@ -622,8 +669,10 @@ namespace entapExecute {
             }
         }
 
-        file_unannotated_nucl.close();file_unannotated_prot.close();
-        file_annotated_nucl.close();file_annotated_prot.close();
+        file_unannotated_nucl.close();
+        file_unannotated_prot.close();
+        file_annotated_nucl.close();
+        file_annotated_prot.close();
 
         ss <<
            ENTAP_STATS::SOFTWARE_BREAK <<
@@ -672,7 +721,7 @@ namespace entapExecute {
            "\n\tTotal annotated (either): "                     << count_TOTAL_ann     <<
            "\n\tTotal unannotated (either): "                   << count_TOTAL_unann;
 
-        std::string out_msg = ss.str();
-        print_statistics(out_msg,_outpath);
+        out_msg = ss.str();
+        print_statistics(out_msg);
     }
 }

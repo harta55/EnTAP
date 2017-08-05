@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include "pstream.h"
 #include "boost/filesystem.hpp"
-#include "EntapConsts.h"
+#include "EntapGlobals.h"
 #include "ExceptionHandler.h"
 #include "EntapExecute.h"
 #include <boost/serialization/serialization.hpp>
@@ -26,9 +26,7 @@
 #include "boost/archive/text_oarchive.hpp"
 #include "boost/archive/text_iarchive.hpp"
 
-namespace boostFS = boost::filesystem;
 namespace boostAR = boost::archive;
-namespace Chrono = std::chrono;
 
 namespace entapConfig {
 
@@ -99,13 +97,8 @@ namespace entapConfig {
         }
     }
 
-    bool file_exists(const std::string &name) {
-        struct stat buff;
-        return (stat(name.c_str(), &buff) == 0);
-    }
-
     void init_taxonomic(std::string &exe) {
-        print_msg("Downloading taxonomic database...");
+        print_debug("Downloading taxonomic database...");
         //TODO Integrate gzip/zlib
 
         std::string tax_bin;
@@ -126,14 +119,14 @@ namespace entapConfig {
                 std::cerr << "Error in downloading taxonomic database" << std::endl;
                 throw ExceptionHandler("Error in downloading taxonomic database", ENTAP_ERR::E_INIT_TAX_DOWN);
             }
-            print_msg("Success! File written to " + tax_path);
+            print_debug("Success! File written to " + tax_path);
         } else {
-            print_msg("Database found. Updating...");
+            print_debug("Database found. Updating...");
             // TODO Update taxonomic database
             return;
         }
 
-        print_msg("Indexing taxonomic database...");
+        print_debug("Indexing taxonomic database...");
 
         std::ifstream infile(tax_path);
         std::string line;
@@ -152,7 +145,7 @@ namespace entapConfig {
             throw ExceptionHandler(e.what(), ENTAP_ERR::E_INIT_TAX_INDEX);
         }
 
-        print_msg("Success! Writing file to "+ tax_bin);
+        print_debug("Success! Writing file to "+ tax_bin);
         try{
             {
                 std::ofstream ofs(tax_bin);
@@ -162,11 +155,11 @@ namespace entapConfig {
         } catch (std::exception &e) {
             throw ExceptionHandler(e.what(), ENTAP_ERR::E_INIT_TAX_SERIAL);
         }
-        print_msg("Success!");
+        print_debug("Success!");
     }
 
     void init_go_db(std::string &exe, std::string database_path) {
-        print_msg("Initializing GO terms database...");
+        print_debug("Initializing GO terms database...");
 
         std::string go_db_path;
         std::string go_term_path;
@@ -176,7 +169,7 @@ namespace entapConfig {
 
         go_db_path = (boostFS::path(exe) / boostFS::path(ENTAP_CONFIG::GO_DB_PATH)).string();
         if (file_exists(go_db_path)) {
-            print_msg("Database found at: " + go_db_path + " skipping creation");
+            print_debug("Database found at: " + go_db_path + " skipping creation");
             return;
         }
         go_database_zip = database_path + "/" + GO_DATA_NAME;
@@ -224,7 +217,7 @@ namespace entapConfig {
             go_map[go] = go_data;
         }
         boostFS::remove_all(go_database_out);
-        print_msg("Success! Writing file to "+ go_db_path + "...");
+        print_debug("Success! Writing file to "+ go_db_path + "...");
         try{
             {
                 std::ofstream ofs(go_db_path);
@@ -234,15 +227,15 @@ namespace entapConfig {
         } catch (std::exception &e) {
             throw ExceptionHandler(e.what(), ENTAP_ERR::E_INIT_GO_SETUP);
         }
-        print_msg("Success!");
+        print_debug("Success!");
     }
 
     // may handle differently than ncbi with formatting
     void init_uniprot(std::vector<std::string> &flags, std::string exe) {
         // TODO setup go term/interpro... integration, date tag, use bool input
-        print_msg("Parsing uniprot databases...");
+        print_debug("Parsing uniprot databases...");
         if (flags.empty()) {
-            print_msg("No Uniprot databases selected");
+            print_debug("No Uniprot databases selected");
             return;
         }
         std::string ftp_address;
@@ -254,11 +247,11 @@ namespace entapConfig {
             std::string diamond_path = uniprot_bin + flag + ".dmnd";
             std::string database_path = uniprot_data + flag + ".fasta";
             if (file_exists(database_path)) {
-                print_msg("Database at: " + database_path + " found, updating...");
+                print_debug("Database at: " + database_path + " found, updating...");
                 update_database(database_path);
                 _compiled_databases.push_back(database_path);
             } else {
-                print_msg("Database at: " + database_path + " not found, downloading...");
+                print_debug("Database at: " + database_path + " not found, downloading...");
                 try {
                     std::string temp_path = download_file(flag, database_path);
                     decompress_file(temp_path,temp_path,0);
@@ -270,9 +263,9 @@ namespace entapConfig {
 
     void init_ncbi(std::vector<std::string> &flags, std::string exe) {
         // TODO setup go term/interpro... integration, date tag, use bool input
-        print_msg("Parsing NCBI databases...");
+        print_debug("Parsing NCBI databases...");
         if (flags.empty()) {
-            print_msg("No NCBI databases selected");
+            print_debug("No NCBI databases selected");
             return;
         }
         std::string ftp_address;
@@ -281,11 +274,11 @@ namespace entapConfig {
             if (flag == ENTAP_CONFIG::INPUT_UNIPROT_NULL) return;
             std::string database_path = ncbi_data + flag + ".fasta";
             if (file_exists(database_path)) {
-                print_msg("Database at: " + database_path + " found, updating...");
+                print_debug("Database at: " + database_path + " found, updating...");
                 update_database(database_path);
                 _compiled_databases.push_back(database_path);
             } else {
-                print_msg("Database at: " + database_path + " not found, downloading...");
+                print_debug("Database at: " + database_path + " not found, downloading...");
                 try {
                     std::string temp_path = download_file(flag, database_path);
                     decompress_file(temp_path,temp_path,0);
@@ -296,7 +289,7 @@ namespace entapConfig {
     }
 
     void init_diamond_index(std::string diamond_exe,std::string out_path,int threads) {
-        print_msg("Preparing to index database(s) with Diamond...");
+        print_debug("Preparing to index database(s) with Diamond...");
 
         std::string filename;
         std::string indexed_path;
@@ -317,7 +310,7 @@ namespace entapConfig {
 
             // TODO change for updated databases
             if (file_exists(indexed_path + ".dmnd")) {
-                print_msg("File found at " + indexed_path + ".dmnd, skipping...");
+                print_debug("File found at " + indexed_path + ".dmnd, skipping...");
                 continue;
             }
             index_command =
@@ -325,12 +318,12 @@ namespace entapConfig {
                     " -d "      + indexed_path +
                     " -p "      +std::to_string(threads);
 
-            print_msg("Executing DIAMOND command:\n" + index_command);
+            print_debug("Executing DIAMOND command:\n" + index_command);
             if (execute_cmd(index_command,std_out) != 0) {
                 throw ExceptionHandler("Error indexing database at: " + item,
                                        ENTAP_ERR::E_INIT_INDX_DATABASE);
             }
-            print_msg("Database successfully indexed to: " + indexed_path + ".dmnd");
+            print_debug("Database successfully indexed to: " + indexed_path + ".dmnd");
         }
     }
 
@@ -346,88 +339,10 @@ namespace entapConfig {
             throw ExceptionHandler("Eggnog download path does not exist at: " +
                                    eggnog_exe, ENTAP_ERR::E_INIT_EGGNOG);
         }
-        print_msg("Executing eggnog download...\n" + eggnog_cmd);
+        print_debug("Executing eggnog download...\n" + eggnog_cmd);
         if (execute_cmd(eggnog_cmd) != 0) {
             throw ExceptionHandler("Error in executing eggnog download",ENTAP_ERR::E_INIT_EGGNOG);
         }
-    }
-
-    void print_msg(std::string msg) {
-        Chrono::time_point<Chrono::system_clock> current = Chrono::system_clock::now();
-        std::time_t time = Chrono::system_clock::to_time_t(current);
-        std::string out_time(std::ctime(&time));
-        std::ofstream log_file("debug.txt", std::ios::out | std::ios::app);
-        log_file << out_time.substr(0,out_time.length()-1) << ": " + msg << std::endl;
-        log_file.close();
-    }
-
-    int execute_cmd(std::string cmd, std::string out_path) {
-        std::ofstream out_file(out_path+".out", std::ios::out | std::ios::app);
-        std::ofstream err_file(out_path+".err", std::ios::out | std::ios::app);
-        const redi::pstreams::pmode mode = redi::pstreams::pstdout|redi::pstreams::pstderr;
-        redi::ipstream child(cmd, mode);
-        char buf[1024];
-        std::streamsize n;
-        bool finished[2] = { false, false };
-        while (!finished[0] || !finished[1]) {
-            if (!finished[0]) {
-                while ((n = child.err().readsome(buf, sizeof(buf))) > 0)
-                    err_file.write(buf, n);
-                if (child.eof()) {
-                    finished[0] = true;
-                    if (!finished[1])
-                        child.clear();
-                }
-            }
-            if (!finished[1]) {
-                while ((n = child.out().readsome(buf, sizeof(buf))) > 0)
-                    out_file.write(buf, n).flush();
-                if (child.eof()) {
-                    finished[1] = true;
-                    if (!finished[0])
-                        child.clear();
-                }
-            }
-        }
-        child.close();
-        out_file.close();
-        err_file.close();
-        if (child.rdbuf()->exited())
-            return child.rdbuf()->status();
-        return 1;
-    }
-    // todo, may want to handle differently
-    // TODO change to sending map of flags as command
-    int execute_cmd(std::string cmd) {
-        const redi::pstreams::pmode mode = redi::pstreams::pstdout|redi::pstreams::pstderr;
-        redi::ipstream child(cmd, mode);
-        char buf[1024];
-        std::streamsize n;
-        bool finished[2] = { false, false };
-        while (!finished[0] || !finished[1]) {
-            if (!finished[0]) {
-                while ((n = child.err().readsome(buf, sizeof(buf))) > 0)
-                    continue;
-                if (child.eof()) {
-                    finished[0] = true;
-                    if (!finished[1])
-                        child.clear();
-                }
-            }
-            if (!finished[1]) {
-                while ((n = child.out().readsome(buf, sizeof(buf))) > 0)
-                    continue;
-                if (child.eof()) {
-                    finished[1] = true;
-                    if (!finished[0])
-                        child.clear();
-                }
-            }
-        }
-        child.close();
-        if (child.rdbuf()->exited())
-            return child.rdbuf()->status();
-        return 1;
     }
 
     std::string download_file(std::string flag, std::string &path, std::string temp) {
@@ -448,27 +363,27 @@ namespace entapConfig {
         }
 
         download_command = "wget -O "+ output_path + " " + ftp_address;
-        print_msg("Downloading uniprot: " + flag + " database from " +
+        print_debug("Downloading uniprot: " + flag + " database from " +
                   ftp_address + "...");
         status = execute_cmd(download_command);
         if (status != 0) {
             throw ExceptionHandler("Error in downloading uniprot database", ENTAP_ERR::E_INIT_TAX_DOWN);
         }
-        print_msg("File successfully downloaded to: " + output_path);
+        print_debug("File successfully downloaded to: " + output_path);
         return output_path;
     }
 
     std::string download_file(const std::string &ftp, std::string &out_path) {
         boostFS::path path(out_path);
         std::string download_command = "wget -O "+ out_path + " " + ftp;
-        print_msg("Downloading through wget: file from " + ftp + "...");
+        print_debug("Downloading through wget: file from " + ftp + "...");
         execute_cmd(download_command);
-        print_msg("Success! File printed to: " + out_path);
+        print_debug("Success! File printed to: " + out_path);
         return out_path;
     }
 
     void decompress_file(std::string file_path, std::string out_path,short flag) {
-        print_msg("Decompressing file at: " + file_path);
+        print_debug("Decompressing file at: " + file_path);
 
         std::string unzip_command;
         std::string std_out;
@@ -485,32 +400,10 @@ namespace entapConfig {
             throw ExceptionHandler("Error in unzipping database at " +
                     file_path, ENTAP_ERR::E_INIT_TAX_DOWN);
         }
-        print_msg("File at: " + file_path + " successfully decompressed");
+        print_debug("File at: " + file_path + " successfully decompressed");
     }
 
     int update_database(std::string file_path) {
         return 0;
     }
-
-    int get_supported_threads(boost::program_options::variables_map &user_map) {
-        unsigned int supported_threads = std::thread::hardware_concurrency();
-        int threads;
-        if (user_map["threads"].as<int>() > supported_threads) {
-            entapConfig::print_msg("Specified thread number is larger than available threads,"
-                                         "setting threads to " + std::to_string(supported_threads));
-            threads = supported_threads;
-        } else {
-            threads = user_map["threads"].as<int>();
-        }
-        return threads;
-    }
-
-    std::string generate_command(std::unordered_map<std::string,std::string> &map,std::string exe_path) {
-        std::stringstream ss;
-        ss << exe_path << " ";
-        for (auto &pair : map)ss << pair.first << " " << pair.second << " ";
-        std::string out = ss.str();
-        return out;
-    }
-
 }

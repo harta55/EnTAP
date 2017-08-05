@@ -3,7 +3,7 @@
 #include <fstream>
 #include <exception>
 #include "ExceptionHandler.h"
-#include "EntapConsts.h"
+#include "EntapGlobals.h"
 
 
 ExceptionHandler::ExceptionHandler(const std::string& msg, int err) {

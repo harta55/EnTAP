@@ -383,6 +383,7 @@ void generate_config(std::string &path) {
                 ENTAP_CONFIG::KEY_GENEMARK_EXE              +"=\n"+
                 ENTAP_CONFIG::KEY_EGGNOG_EXE                +"=\n"+
                 ENTAP_CONFIG::KEY_EGGNOG_DOWN               +"=\n"+
+                ENTAP_CONFIG::KEG_EGGNOG_DMND_DB            +"=\n"+
                 ENTAP_CONFIG::KEY_INTERPRO_EXE
                 << std::endl;
     config_file.close();
@@ -414,6 +415,7 @@ bool check_key(std::string& key) {
     if (key.compare(ENTAP_CONFIG::KEY_UNIPROT_UR90)==0) return true;
     if (key.compare(ENTAP_CONFIG::KEY_EGGNOG_EXE)==0) return true;
     if (key.compare(ENTAP_CONFIG::KEY_EGGNOG_DOWN)==0) return true;
+    if (key.compare(ENTAP_CONFIG::KEG_EGGNOG_DMND_DB)==0) return true;
     if (key.compare(ENTAP_CONFIG::KEY_INTERPRO_EXE)==0) return true;
     return key.compare(ENTAP_CONFIG::KEY_RSEM_EXE) == 0;
 }

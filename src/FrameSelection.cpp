@@ -199,6 +199,7 @@ void FrameSelection::genemarkStats(std::string &protein_path, std::string &lst_p
 
         for (auto& pair : SEQUENCES) {
             std::map<std::string,frame_seq>::iterator p_it = protein_map.find(pair.first);
+            if (!pair.second.is_is_expression_kept()) continue; // Skip seqs that were lost to expression
             if (p_it != protein_map.end()) {
                 // Kept sequence, either partial, complete, or internal
                 count_selected++;

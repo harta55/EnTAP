@@ -14,7 +14,10 @@ set(SOURCE_FILES libs
         src/SimilaritySearch.cpp src/SimilaritySearch.h
         src/Ontology.cpp src/Ontology.h
         src/GraphingManager.cpp src/GraphingManager.h
-        src/UserInput.cpp src/UserInput.h )
+        src/UserInput.cpp src/UserInput.h
+        src/EggnogLevels.h
+        src/DatabaseHelper.cpp src/DatabaseHelper.h
+        src/sqlite3.c src/sqlite3.h)
 
 add_executable(enTAP ${SOURCE_FILES})
 
@@ -30,5 +33,5 @@ if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
         set(BOOST_IOSTREAMS_SOURCE ZLIB)
     include_directories(${ZLIB_INCLUDE_DIRS})
-    target_link_libraries(enTAP ${Boost_LIBRARIES} ${ZLIB_LIBRARIES} pthread)
+    target_link_libraries(enTAP ${Boost_LIBRARIES} ${ZLIB_LIBRARIES} pthread dl)
 endif()

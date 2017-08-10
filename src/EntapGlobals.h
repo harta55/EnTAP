@@ -53,6 +53,13 @@ struct  struct_go_term {
     }
 };
 
+typedef std::pair<std::string,int> count_pair;
+struct compair {
+    bool operator ()(count_pair const& one, count_pair const& two) const {
+        return one.second > two.second;
+    }
+};
+
 
 //*********************** Externs *****************************
 
@@ -96,7 +103,7 @@ namespace ENTAP_ERR {
 
 namespace ENTAP_CONFIG {
 
-    const std::string ENTAP_VERSION  = "0.6.2";
+    const std::string ENTAP_VERSION  = "0.7.0";
     const std::string DEBUG_FILENAME = "debug.txt";
     const std::string LOG_FILENAME   = "log_file.txt";
 
@@ -115,6 +122,7 @@ namespace ENTAP_CONFIG {
     const std::string KEY_EGGNOG_EXE           = "eggnog_exe_path";
     const std::string KEY_EGGNOG_DOWN          = "eggnog_download_exe";
     const std::string KEY_INTERPRO_EXE         = "interpro_exe_path";
+    const std::string KEG_EGGNOG_DMND_DB       = "eggnog_dmnd_database";
 
     //------------------USER INPUTS-----------------------//
     const std::string INPUT_FLAG_CONFIG        = "config";
@@ -171,11 +179,46 @@ namespace ENTAP_CONFIG {
 
 namespace ENTAP_EXECUTE {
     //------------------------Ontology-------------------------//
-    const std::string GO_BIOLOGICAL_FLAG = "biological_process";
-    const std::string GO_CELLULAR_FLAG = "cellular_component";
-    const std::string GO_MOLECULAR_FLAG = "molecular_function";
+    extern const std::string GO_BIOLOGICAL_FLAG ;
+    extern const std::string GO_CELLULAR_FLAG;
+    extern const std::string GO_MOLECULAR_FLAG;
     const short EGGNOG_INT_FLAG = 0;
     const short INTERPRO_INT_FLAG = 1;
+
+
+    //------------------------Headers-------------------------//
+    extern const std::string HEADER_QUERY;
+    extern const std::string HEADER_SUBJECT;
+    extern const std::string HEADER_PERCENT;
+    extern const std::string HEADER_ALIGN_LEN;
+    extern const std::string HEADER_MISMATCH;
+    extern const std::string HEADER_GAP_OPEN;
+    extern const std::string HEADER_QUERY_S;
+    extern const std::string HEADER_QUERY_E;
+    extern const std::string HEADER_SUBJ_S;
+    extern const std::string HEADER_SUBJ_E;
+    extern const std::string HEADER_E_VAL;
+    extern const std::string HEADER_COVERAGE;
+    extern const std::string HEADER_TITLE;
+    extern const std::string HEADER_SPECIES;
+    extern const std::string HEADER_DATABASE;
+    extern const std::string HEADER_FRAME;
+    extern const std::string HEADER_CONTAM;
+
+    extern const std::string HEADER_SEED_ORTH;
+    extern const std::string HEADER_SEED_EVAL;
+    extern const std::string HEADER_SEED_SCORE;
+    extern const std::string HEADER_PRED_GENE;
+    extern const std::string HEADER_TAX_SCOPE;
+    extern const std::string HEADER_EGG_OGS;
+    extern const std::string HEADER_EGG_KEGG;
+    extern const std::string HEADER_EGG_GO_BIO ;
+    extern const std::string HEADER_EGG_GO_CELL;
+    extern const std::string HEADER_EGG_GO_MOLE;
+    extern const std::string HEADER_EGG_DESC;
+    extern const std::string HEADER_EGG_LEVEL;
+    extern const std::string HEADER_EGG_PROTEIN;
+
 
 }
 
@@ -188,4 +231,4 @@ namespace ENTAP_STATS {
 
 
 
-#endif //ENTAP_ERRORFLAGS_H
+#endif //ENTAPGLOBALS_H

@@ -16,6 +16,7 @@
 #include "SimilaritySearch.h"
 #include "Ontology.h"
 #include "GraphingManager.h"
+#include "DatabaseHelper.h"
 #include <string>
 #include <boost/regex.hpp>
 #include <queue>
@@ -32,6 +33,7 @@ namespace entapExecute {
     std::string             _outpath;
     std::string             _entap_outpath;
     std::string             _ontology_exe;
+    std::string             _eggnog_db;
     short                   _ontology_flag;
     bool                    _isProtein;
     bool                    _EXPRESSION_SUCCESS;
@@ -86,7 +88,7 @@ namespace entapExecute {
         _SIM_SEARCH_SUCCESS = false;
         _ONTOLOGY_SUCCESS = false;
 
-        input_path = user_input["input"].as<std::string>();
+        input_path = user_input[ENTAP_CONFIG::INPUT_FLAG_TRANSCRIPTOME].as<std::string>();
         threads = get_supported_threads(user_input);
         _isProtein = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN);
         is_complete = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_COMPLETE);
@@ -122,11 +124,11 @@ namespace entapExecute {
             FrameSelection genemark = FrameSelection(input_path, _frame_selection_exe,
                                                      _outpath, user_input, &graphingManager);
             ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads, _expression_exe,
-                                                         _outpath, user_input);
+                                                         _outpath, user_input, &graphingManager);
             SimilaritySearch diamond = SimilaritySearch(databases, input_path, threads, _diamond_exe,
                                                         _outpath, exe_path,user_input, &graphingManager);
             Ontology ontology = Ontology(threads,_ontology_exe,_outpath,exe_path,input_path,
-                                         user_input);
+                                         user_input, _eggnog_db, &graphingManager);
 
             while (state != EXIT) {
                 switch (state) {
@@ -134,6 +136,7 @@ namespace entapExecute {
                         print_debug("STATE - FRAME SELECTION");
                         if (_isProtein) {
                             print_debug("Protein sequences input, skipping frame selection");
+                            flag_transcripts(FRAME_SELECTION, SEQUENCE_MAP);
                         } else {
                             input_path = genemark.execute(input_path,SEQUENCE_MAP);
                             _FRAME_SELETION_SUCCESS = true;
@@ -144,6 +147,7 @@ namespace entapExecute {
                         print_debug("STATE - EXPRESSION");
                         if (!user_input.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
                             print_debug("No alignment file specified, skipping expression analysis");
+                            flag_transcripts(RSEM, SEQUENCE_MAP);
                         } else {
                             input_path = rsem.execute(input_path,SEQUENCE_MAP);
                             _EXPRESSION_SUCCESS = true;
@@ -456,6 +460,7 @@ namespace entapExecute {
         return std::pair<unsigned long, unsigned long> (n_50,n_90);
     }
 
+
     /**
      * Description      - Finds exe paths for each piece of pipeline. WARNING: does not
      *                    check for validity of exe paths (as some parts may not want to be
@@ -477,6 +482,7 @@ namespace entapExecute {
         std::string temp_eggnog            = map[ENTAP_CONFIG::KEY_EGGNOG_EXE];
         std::string temp_interpro          = map[ENTAP_CONFIG::KEY_INTERPRO_EXE];
         std::string temp_eggnog_down       = map[ENTAP_CONFIG::KEY_EGGNOG_DOWN];
+        std::string temp_eggnog_db         = map[ENTAP_CONFIG::KEG_EGGNOG_DMND_DB];
 
         if (_ontology_flag>1 || _ontology_flag<0) {
             throw ExceptionHandler("Annotation flag must be either 0(eggnog) or"
@@ -499,12 +505,17 @@ namespace entapExecute {
         if (temp_eggnog.empty()) {
             temp_eggnog = (exe_path / boostFS::path(EGGNOG_EMAPPER_EXE)).string();
             print_debug("Eggnog config path empty, setting to default: " + temp_eggnog);
-        } else print_debug("Eggnog path set to: " + temp_eggnog);
+        } else print_debug("Eggnog emapper path set to: " + temp_eggnog);
 
         if (temp_eggnog_down.empty()) {
             temp_eggnog_down = (exe_path / boostFS::path(EGGNOG_DOWNLOAD_EXE)).string();
             print_debug("Eggnog config path empty, setting to default: " + temp_eggnog_down);
-        } else print_debug("Eggnog path set to: " + temp_eggnog_down);
+        } else print_debug("Eggnog download path set to: " + temp_eggnog_down);
+
+        if (temp_eggnog_db.empty()) {
+            temp_eggnog_db = (exe_path / boostFS::path(EGGNOG_SQL_DB_DEF)).string();
+            print_debug("Eggnog config path empty, setting to default: " + temp_eggnog_db);
+        } else print_debug("Eggnog database path set to: " + temp_eggnog_db);
 
         if (temp_interpro.empty()) {
             temp_interpro = (exe_path / boostFS::path(INTERPRO_EXE)).string();
@@ -514,6 +525,7 @@ namespace entapExecute {
         _diamond_exe = temp_diamond;
         _frame_selection_exe = temp_genemark;
         _expression_exe = temp_rsem;
+        _eggnog_db = temp_eggnog_db;
         _ontology_flag == 0 ? _ontology_exe = temp_eggnog : _ontology_exe = temp_interpro;
         print_debug("Success! All exe paths set");
 
@@ -522,6 +534,7 @@ namespace entapExecute {
 
         return outpair;        // for config run
     }
+
 
     //only assuming between 0-9 NO 2 DIGIT STATES
     void verify_state(std::queue<char> &queue, bool &test) {
@@ -573,10 +586,27 @@ namespace entapExecute {
         print_debug("Success!");
     }
 
+
     bool valid_state(ExecuteStates s) {
         return (s >= RSEM && s <= EXIT);
     }
 
+
+    // Will be moved to object
+    void flag_transcripts(ExecuteStates state, std::map<std::string, QuerySequence>& map) {
+        for (auto &pair : map) {
+            switch (state) {
+                case RSEM:
+                    pair.second.set_is_expression_kept(true);
+                    break;
+                case FRAME_SELECTION:
+                    pair.second.setIs_protein(true);        // Probably already done
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
 
 /**
  * ======================================================================

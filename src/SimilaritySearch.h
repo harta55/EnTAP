@@ -78,6 +78,26 @@ private:
             "uninformative"
     };
 
+    const std::vector<const std::string*> DEFAULT_HEADERS {
+            &ENTAP_EXECUTE::HEADER_QUERY,
+            &ENTAP_EXECUTE::HEADER_SUBJECT,
+            &ENTAP_EXECUTE::HEADER_PERCENT,
+            &ENTAP_EXECUTE::HEADER_ALIGN_LEN,
+            &ENTAP_EXECUTE::HEADER_MISMATCH,
+            &ENTAP_EXECUTE::HEADER_GAP_OPEN,
+            &ENTAP_EXECUTE::HEADER_QUERY_S,
+            &ENTAP_EXECUTE::HEADER_QUERY_E,
+            &ENTAP_EXECUTE::HEADER_SUBJ_S,
+            &ENTAP_EXECUTE::HEADER_SUBJ_E,
+            &ENTAP_EXECUTE::HEADER_E_VAL,
+            &ENTAP_EXECUTE::HEADER_COVERAGE,
+            &ENTAP_EXECUTE::HEADER_TITLE,
+            &ENTAP_EXECUTE::HEADER_SPECIES,
+            &ENTAP_EXECUTE::HEADER_DATABASE,
+            &ENTAP_EXECUTE::HEADER_FRAME,
+            &ENTAP_EXECUTE::HEADER_CONTAM
+    };
+
     std::vector<std::string>         _database_paths;
     std::vector<std::string>         _sim_search_paths;
     std::string                      _diamond_exe;

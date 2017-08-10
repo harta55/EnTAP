@@ -11,6 +11,8 @@
 #include "EntapConfig.h"
 #include "EntapGlobals.h"
 #include "QuerySequence.h"
+#include "DatabaseHelper.h"
+#include "GraphingManager.h"
 
 class QuerySequence;
 
@@ -22,7 +24,7 @@ public:
 
     void execute(query_map_struct&,std::string,std::string);
     Ontology(int,std::string,std::string,std::string,std::string,
-             boost::program_options::variables_map &);
+             boost::program_options::variables_map &, std::string, GraphingManager*);
 
 private:
 
@@ -39,6 +41,22 @@ private:
     const std::string OUT_UNANNOTATED_PROT  = "unannotated_sequences.faa";
     const std::string OUT_ANNOTATED_NUCL    = "annotated_sequences.fnn";
     const std::string OUT_ANNOTATED_PROT    = "annotated_sequences.faa";
+    const std::string GO_MOLECULAR_FLAG     = "molecular_function";
+    const std::string GO_BIOLOGICAL_FLAG    = "biological_process";
+    const std::string GO_CELLULAR_FLAG      = "cellular_component";
+    const std::string GO_OVERALL_FLAG       = "overall";
+
+    const std::string GRAPH_EGG_TAX_BAR_TITLE = "Top_10_Tax_Levels";
+    const std::string GRAPH_EGG_TAX_BAR_PNG   = "eggnog_tax_scope.png";
+    const std::string GRAPH_EGG_TAX_BAR_TXT   = "eggnog_tax_scope.txt";
+    const std::string GRAPH_GO_END_TXT        = "_go_bar_graph.txt";
+    const std::string GRAPH_GO_END_PNG        = "_go_bar_graph.png";
+    const std::string GRAPH_GO_BAR_BIO_TITLE  = "Top_10_GO_Biological_Terms";
+    const std::string GRAPH_GO_BAR_CELL_TITLE = "Top_10_GO_Cellular_Terms";
+    const std::string GRAPH_GO_BAR_MOLE_TITLE = "Top_10_GO_Molecular_Terms";
+    const std::string GRAPH_GO_BAR_ALL_TITLE  = "Top_10_GO_Terms";
+    const unsigned char GRAPH_ONTOLOGY_FLAG = 4;
+    const unsigned char GRAPH_TOP_BAR_FLAG= 1;  // used for tax levels and go term tops
     static constexpr short INTERPRO_COL_NUM = 15;
     static constexpr short EGGNOG_COL_NUM   = 12;
 
@@ -54,8 +72,10 @@ private:
     std::string                     _ontology_dir;
     std::string                     _processed_dir;
     std::string                     _figure_dir;
-    std::vector<std::string>        _HEADERS;
+    std::string                     _eggnog_db_path;
+    std::vector<const std::string*> _HEADERS;
     std::vector<std::string>        _interpro_databases;
+    GraphingManager  *_graphingManager;
 
     void parse_results_eggnog(query_map_struct&,std::pair<std::string,std::string>&);
     void run_eggnog(query_map_struct&);

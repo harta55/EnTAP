@@ -15,6 +15,53 @@
 #include "EntapGlobals.h"
 
 
+
+namespace ENTAP_EXECUTE {
+    //------------------------Ontology-------------------------//
+    const std::string GO_BIOLOGICAL_FLAG = "biological_process";
+    const std::string GO_CELLULAR_FLAG = "cellular_component";
+    const std::string GO_MOLECULAR_FLAG = "molecular_function";
+
+
+    //------------------------Headers-------------------------//
+    const std::string HEADER_QUERY     = "Query Seq";
+    const std::string HEADER_SUBJECT   = "Subject Seq";
+    const std::string HEADER_PERCENT   = "Percent Identical";
+    const std::string HEADER_ALIGN_LEN = "Alignment Length";
+    const std::string HEADER_MISMATCH  = "Mismatches";
+    const std::string HEADER_GAP_OPEN  = "Gap Openings";
+    const std::string HEADER_QUERY_S   = "Query Start";
+    const std::string HEADER_QUERY_E   = "Query End";
+    const std::string HEADER_SUBJ_S    = "Subject Start";
+    const std::string HEADER_SUBJ_E    = "Subject End";
+    const std::string HEADER_E_VAL     = "E Value";
+    const std::string HEADER_COVERAGE  = "Coverage";
+    const std::string HEADER_TITLE     = "Informativeness";
+    const std::string HEADER_SPECIES   = "Species";
+    const std::string HEADER_DATABASE  = "Origin Database";
+    const std::string HEADER_FRAME     = "Frame";
+    const std::string HEADER_CONTAM    = "Contaminant";
+
+    const std::string HEADER_SEED_ORTH = "Seed Ortholog";
+    const std::string HEADER_SEED_EVAL = "Seed E-Value";
+    const std::string HEADER_SEED_SCORE= "Seed Score";
+    const std::string HEADER_PRED_GENE = "Predicted Gene";
+    const std::string HEADER_TAX_SCOPE = "Tax Scope";
+    const std::string HEADER_EGG_OGS   = "OGs";
+    const std::string HEADER_EGG_KEGG  = "KEGG Terms";
+    const std::string HEADER_EGG_GO_BIO = "GO Biological";
+    const std::string HEADER_EGG_GO_CELL = "GO Cellular";
+    const std::string HEADER_EGG_GO_MOLE = "GO Molecular";
+    const std::string HEADER_EGG_DESC  = "Eggnog Description";
+    const std::string HEADER_EGG_LEVEL = "Full Tax Scope";
+    const std::string HEADER_EGG_PROTEIN = "Protein Domains";
+
+
+}
+
+
+
+
 /**
  * ======================================================================
  * Function void print_debug(std::string    msg)

@@ -9,14 +9,16 @@
 #include <vector>
 #include <string>
 #include "Ontology.h"
-
+#include "DatabaseHelper.h"
 
 class QuerySequence {
 public:
     typedef std::map<std::string,std::vector<std::string>> go_struct;
     bool operator>(const QuerySequence& querySequence);
-    void set_sim_search_results(std::string,std::string,std::string, double,int, int, int, int,int,
-                  int, int, double, double, double, std::string);
+    void set_sim_search_results(std::string,std::string,std::string,
+                                std::string,std::string, std::string, std::string, std::string,
+                                std::string, std::string, std::string, std::string, std::string,
+                                double,  double);
     QuerySequence();
     QuerySequence(bool, std::string);
     friend void operator+(const QuerySequence &);
@@ -24,9 +26,12 @@ public:
     void setSequence(std::string&);
     // TODO switch to map results
     void set_eggnog_results(std::string,std::string,std::string,std::string,std::string,
-                    std::string,std::string,std::string);
-    void set_tax_score(std::string);
+                    std::string,std::string,std::string, DatabaseHelper &);
+    std::string print_tsv(const std::vector<const std::string*>&);
+    std::string print_tsv(short, std::vector<const std::string*>& , short);
 
+    void set_tax_score(std::string);
+    void init_header();
     const std::string &get_contam_type() const;
     void set_contam_type(const std::string &_contam_type);
     void set_is_informative(bool _is_informative);
@@ -35,9 +40,8 @@ public:
     void setContaminant(bool contaminant);
     void set_is_database_hit(bool _is_database_hit);
     void set_ontology_results(std::map<std::string,std::string>);
-    std::string print_final_results(short,const std::vector<std::string>&,short);
     void set_lineage(const std::string &_lineage);
-    void set_go_parsed(const go_struct &_go_parsed);
+    void set_go_parsed(const go_struct &_go_parsed, short);
     void setSeq_length(unsigned long seq_length);
     void setFrame(const std::string &frame);
     void setSpecies(const std::string &species);
@@ -61,6 +65,8 @@ public:
     void set_is_one_kegg(bool _is_one_kegg);
     bool is_is_expression_kept() const;
     void set_is_expression_kept(bool _is_expression_kept);
+    void set_fpkm(float _fpkm);
+    const std::string &get_tax_scope() const;
 
 private:
 
@@ -69,6 +75,43 @@ private:
     static constexpr unsigned char INFORM_ADD    = 3;
     static constexpr float INFORM_FACTOR         = 1.2;
 
+    struct EggnogResults {
+        std::string              seed_ortholog;
+        std::string              seed_evalue;
+        std::string              seed_score;
+        std::string              predicted_gene;
+        std::string              tax_scope;         // virNOG NOT virNOG[6]
+        std::string              tax_scope_readable;// Ascomycota
+        std::string              ogs;
+        std::string              og_key;
+        std::string              sql_kegg;
+        std::string              description;
+        std::string              protein_domains;
+        std::vector<std::string> raw_kegg;
+        std::vector<std::string> raw_go;
+        go_struct                parsed_go;
+    };
+
+    struct SimSearchResults {
+        std::string                       length;
+        std::string                       mismatch;
+        std::string                       gapopen;
+        std::string                       qstart;
+        std::string                       qend;
+        std::string                       sstart;
+        std::string                       send;
+        std::string                       pident;
+        std::string                       bit_score;
+        std::string                       e_val;
+        std::string                       coverage;
+        std::string                       database_path;
+        std::string                       qseqid;
+        std::string                       sseqid;
+        std::string                       stitle;
+        std::string                       species;
+    };
+
+    bool                              _header_init; // Not the best way to do this....
     bool                              _contaminant;
     bool                              is_protein;
     bool                              is_better_hit;
@@ -79,28 +122,20 @@ private:
     bool                              _is_one_kegg;
     bool                              _is_expression_kept;
     int                               _tax_id;
-    int                               _length;
-    int                               _mismatch;
-    int                               _gapopen;
-    int                               _qstart;
-    int                               _qend;
-    int                               _sstart;
-    int                               _send;
     float                              _tax_score;
+    float                              _fpkm;
     unsigned long                     _seq_length;
-    double                            _pident;
-    double                            _bit_score;
     double                            _e_val;
     double                            _coverage;
-    std::map<std::string,std::string> _ontology_results;
-    std::vector<std::string>          _go_terms;
-    std::vector<std::string>          _kegg_terms;
-    go_struct                         _go_parsed;
+    std::string                       _yes_no_contam; // just for convenience
+    EggnogResults                     _eggnog_results;
+    SimSearchResults                  _sim_search_results;
 
     //TODO switch to map of sim search results
-    std::string _database_path, _qseqid,_sseqid, _stitle, _species, _sequence_p, _sequence_n, _frame, _contam_type,
-            _seed_ortho,_seed_eval,_seed_score,_predicted_gene,_tax_scope, _ogs,_go_str,_kegg_str,
+    std::string _sequence_p, _sequence_n, _frame, _contam_type, _go_str,_kegg_str,
             _lineage;
+    std::map<const std::string*, std::string*> OUTPUT_MAP;
+
 
     friend std::ostream& operator<<(std::ostream& , const QuerySequence&);
     void init_sequence();

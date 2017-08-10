@@ -201,9 +201,9 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
         print_debug("Diamond file located at " + data + " being filtered");
         io::CSVReader<DMND_COL_NUMBER, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(data);
         // todo have columns from input file, in_read_header for versatility
-        std::string qseqid, sseqid, stitle, database_name;
-        double evalue, pident, bitscore, coverage;
-        int length, mismatch, gapopen, qstart, qend, sstart, send;
+        std::string qseqid, sseqid, stitle, database_name,pident, bitscore,
+                length, mismatch, gapopen, qstart, qend, sstart, send;
+        double evalue, coverage;
         unsigned long count_removed=0, count_TOTAL_hits=0, count_under_e=0;
         std::stringstream out_stream;
 
@@ -224,7 +224,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
 
             QuerySequence new_query = QuerySequence();
             new_query.set_sim_search_results(data, qseqid, sseqid, pident, length, mismatch, gapopen,
-                                             qstart, qend, sstart, send, evalue, bitscore, coverage, stitle);
+                                             qstart, qend, sstart, send, stitle, bitscore, evalue,coverage);
             new_query.setIs_better_hit(true);
             std::string species = get_species(stitle);
             new_query.setSpecies(species);
@@ -245,12 +245,12 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
             std::map<std::string, QuerySequence>::iterator it = database_map.find(qseqid);
             if (it != database_map.end()) {
                 if (new_query > it->second) {
-                    file_unselected_tsv << it->second << std::endl;
+                    file_unselected_tsv << it->second.print_tsv(DEFAULT_HEADERS) << std::endl;
                     it->second = new_query;
                     count_removed++;
                 } else {
                     count_removed++;
-                    file_unselected_tsv << new_query<< std::endl;
+                    file_unselected_tsv << new_query.print_tsv(DEFAULT_HEADERS)<< std::endl;
                 }
             } else database_map.emplace(qseqid, new_query);
         }
@@ -291,13 +291,6 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     std::map<std::string, int>  contam_map;
     std::map<std::string, int>  species_map;
     std::map<std::string, int>  contam_species_map;
-
-    typedef std::pair<std::string,int> count_pair;
-    struct compair {
-        bool operator ()(count_pair const& one, count_pair const& two) const {
-            return one.second > two.second;
-        }
-    };
 
     database = boostFS::path(base_path).filename().string();
     figure_base = (boostFS::path(_figure_path) / database).string();
@@ -356,7 +349,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         } else {
             file_best_hits_fa_nucl << pair.second.get_sequence_n()<<std::endl;
             file_best_hits_fa_prot << pair.second.get_sequence_p()<<std::endl;
-            file_best_hits_tsv << it->second << std::endl;
+            file_best_hits_tsv << it->second.print_tsv(DEFAULT_HEADERS) << std::endl;
 
             count_filtered++;
             std::string species;
@@ -367,7 +360,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
                 count_contam++;
                 file_best_contam_fa_nucl << pair.second.get_sequence_n()<<std::endl;
                 file_best_contam_fa_prot << pair.second.get_sequence_p()<<std::endl;
-                file_best_contam_tsv << it->second << std::endl;
+                file_best_contam_tsv << it->second.print_tsv(DEFAULT_HEADERS) << std::endl;
                 std::string contam = it->second.get_contam_type();
                 if (contam_map.count(contam)) {
                     contam_map[contam]++;
@@ -378,7 +371,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
             } else {
                 file_best_hits_fa_nucl_no_contam << pair.second.get_sequence_n()<<std::endl;
                 file_best_hits_fa_prot_no_contam << pair.second.get_sequence_p()<<std::endl;
-                file_best_hits_tsv_no_contam << it->second << std::endl;
+                file_best_hits_tsv_no_contam << it->second.print_tsv(DEFAULT_HEADERS) << std::endl;
             }
             if (species_map.count(species)) {
                 species_map[species]++;
@@ -430,6 +423,8 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
        "\n\t\tFasta contaminants written to: "        << out_best_contams_fa_prot<<
        "\n\t\tTsv contaminants written to: "          << out_best_contams_tsv;
 
+
+    // ********** Contaminant Calculations ************** //
     if (count_contam > 0) {
         ss << "\n\t\tFlagged contaminants (all % based on total contaminants):";
         for (auto &pair : contam_map) {
@@ -462,7 +457,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         ct++;
     }
 
-    // Graphing Handle
+    // ********* Graphing Handle ********** //
     graphingStruct.software_flag = GRAPH_SOFTWARE_FLAG;
     graph_contam_file.close();
     graph_species_file.close();
@@ -482,6 +477,8 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         graphingStruct.graph_type = GRAPH_BAR_FLAG;
         _pGraphingManager->graph(graphingStruct);
     }
+    // ************************************ ///
+
     return std::pair<std::string,std::string>(out_best_hits_fa_prot,out_no_hits_fa_prot);
 }
 
@@ -594,25 +591,10 @@ bool SimilaritySearch::is_informative(std::string title) {
 
 void SimilaritySearch::print_header(std::string file) {
     std::ofstream ofstream(file, std::ios::out | std::ios::app);
-    ofstream <<
-         "Query Seq\t"
-                 "Subject Seq\t"
-                 "Percent Identical\t"
-                 "Alignment Length\t"
-                 "Mismatches\t"
-                 "Gap Openings\t"
-                 "Query Start\t"
-                 "Query End\t"
-                 "Subject Start\t"
-                 "Subject Eng\t"
-                 "E Value\t"
-                 "Coverage\t"
-                 "Informativeness\t"
-                 "Species\t"
-                 "Origin Database\t"
-                 "Frame\t"
-
-         <<std::endl;
+    for (const std::string *header : DEFAULT_HEADERS) {
+        ofstream << *header << "\t";
+    }
+    ofstream << std::endl;
     ofstream.close();
 }
 

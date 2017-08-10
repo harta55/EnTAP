@@ -8,6 +8,7 @@
 #include <sstream>
 #include "QuerySequence.h"
 #include "EntapGlobals.h"
+#include "EggnogLevels.h"
 
 // best hit selection
 bool QuerySequence::operator>(const QuerySequence &querySequence) {
@@ -48,23 +49,28 @@ void operator+(const QuerySequence &querySequence) {
 
 // TODO switch to set_sim_search
 void QuerySequence::set_sim_search_results(std::string database,std::string qseqid,std::string sseqid,
-                             double pident,int length, int mismatch, int gap, int qstart,
-                             int qend, int sstart, int send, double evalue, double bit, double cover,
-                             std::string title) {
-    _database_path = database;
-    _qseqid = qseqid;
-    _sseqid = sseqid;
-    _pident = pident;
-    _length = length;
-    _mismatch = mismatch;
-    _gapopen = gap;
-    _qstart = qstart;
-    _qend = qend;
-    _sstart = sstart;
-    _send = send;
+                             std::string pident,std::string length, std::string mismatch, std::string gap, std::string qstart,
+                             std::string qend , std::string sstart, std::string send, std::string title, std::string bit,
+                             double evalue,  double cover) {
+    _sim_search_results.database_path = database;
+    _sim_search_results.qseqid = qseqid;
+    _sim_search_results.sseqid = sseqid;
+    _sim_search_results.pident = pident;
+    _sim_search_results.length = length;
+    _sim_search_results.mismatch = mismatch;
+    _sim_search_results.gapopen = gap;
+    _sim_search_results.qstart = qstart;
+    _sim_search_results.qend = qend;
+    _sim_search_results.sstart = sstart;
+    _sim_search_results.send = send;
+    _sim_search_results.stitle = title;
+    _sim_search_results.bit_score = bit;
+    std::ostringstream ostringstream;
+    ostringstream<<evalue;
+    _sim_search_results.e_val = ostringstream.str();
+    _sim_search_results.coverage = std::to_string(cover);
+
     _e_val = evalue;
-    _bit_score = bit;
-    _stitle = title;
     _coverage = cover;
 }
 
@@ -128,11 +134,11 @@ unsigned long QuerySequence::calc_seq_length(std::string &seq,bool protein) {
 
 
 void QuerySequence::setQseqid(const std::string &qseqid) {
-    QuerySequence::_qseqid = qseqid;
+    _sim_search_results.qseqid = qseqid;
 }
 
 void QuerySequence::setSpecies(const std::string &species) {
-    QuerySequence::_species = species;
+    _sim_search_results.species = species;
 }
 
 bool QuerySequence::isContaminant() const {
@@ -141,15 +147,16 @@ bool QuerySequence::isContaminant() const {
 
 void QuerySequence::setContaminant(bool contaminant) {
     QuerySequence::_contaminant = contaminant;
+    contaminant ? _yes_no_contam = "Yes" : _yes_no_contam = "No";
 }
 
 std::ostream& operator<<(std::ostream &ostream, const QuerySequence &query) {
-    return ostream<<query._qseqid<<'\t' <<query._sseqid<<'\t'  <<query._pident<<'\t'<<
-                    query._length<<'\t' <<query._mismatch<<'\t'<<
-                    query._gapopen<<'\t'<<query._qstart<<'\t'  <<query._qend<<'\t'<<
-                    query._sstart<<'\t' <<query._send<<'\t'    <<query._e_val<<'\t'<< query._coverage<<"\t"<<
-                    query._stitle<<'\t' <<query._species<<'\t' <<query._database_path<<'\t'<<
-                    query._frame;
+//    return ostream<<query._qseqid<<'\t' <<query._sseqid<<'\t'  <<query._pident<<'\t'<<
+//                    query._length<<'\t' <<query._mismatch<<'\t'<<
+//                    query._gapopen<<'\t'<<query._qstart<<'\t'  <<query._qend<<'\t'<<
+//                    query._sstart<<'\t' <<query._send<<'\t'    <<query._e_val<<'\t'<< query._coverage<<"\t"<<
+//                    query._stitle<<'\t' <<query._species<<'\t' <<query._database_path<<'\t'<<
+//                    query._frame;
 }
 
 const std::string &QuerySequence::getFrame() const {
@@ -175,7 +182,11 @@ void QuerySequence::set_is_informative(bool _is_informative) {
 }
 
 const std::string &QuerySequence::get_species() const {
-    return _species;
+    return _sim_search_results.species;
+}
+
+const std::string &QuerySequence::get_tax_scope() const {
+    return _eggnog_results.tax_scope_readable;
 }
 
 const std::string &QuerySequence::get_contam_type() const {
@@ -197,102 +208,144 @@ void QuerySequence::set_is_database_hit(bool _is_database_hit) {
 void QuerySequence::set_eggnog_results(std::string seed_o, std::string seed_o_eval,
                                        std::string seed_score, std::string predicted,
                                        std::string go_terms, std::string kegg,
-                                       std::string annotation_tax, std::string ogs) {
-    this->_go_str = go_terms;
-    this->_kegg_str = kegg;
-    this->_seed_ortho = seed_o;
-    this->_seed_eval = seed_o_eval;
-    this->_seed_score = seed_score;
-    this->_predicted_gene = predicted;
-    this->_tax_scope = annotation_tax;
-    this->_ogs = ogs;
-    std::stringstream ss(go_terms);
+                                       std::string annotation_tax, std::string ogs,
+                                       DatabaseHelper &database) {
+    this->_eggnog_results.seed_ortholog = seed_o;
+    this->_eggnog_results.seed_evalue = seed_o_eval;
+    this->_eggnog_results.seed_score = seed_score;
+    this->_eggnog_results.predicted_gene = predicted;
+    this->_eggnog_results.ogs = ogs;
+
+    // Lookup/Assign Tax Scope
+    if (!annotation_tax.empty()) {
+        unsigned short p = (unsigned short) (annotation_tax.find("NOG"));
+        if (p != std::string::npos) {
+            this->_eggnog_results.tax_scope = annotation_tax.substr(0,p+3);
+            this->_eggnog_results.tax_scope_readable =
+                    EGGNOG_LEVELS[this->_eggnog_results.tax_scope];
+        } else {
+            this->_eggnog_results.tax_scope = annotation_tax;
+            this->_eggnog_results.tax_scope_readable = "";
+        }
+    } else {
+        this->_eggnog_results.tax_scope = "";
+        this->_eggnog_results.tax_scope_readable = "";
+    }
+
+    // Push each GO term to a new position in vector array
     std::string temp;
     if (!go_terms.empty()) {
-        while (ss >> temp) {
-            this->_go_terms.push_back(temp);
-            if (ss.peek() == ',')
-                ss.ignore();
+        std::istringstream ss(go_terms);
+        while (std::getline(ss,temp,',')) {
+            this->_eggnog_results.raw_go.push_back(temp);
         }
     }
+
+    // Push each KEGG term to a new position in vector array
     if (!kegg.empty()) {
-        std::stringstream keggs(kegg);
-        while (ss >> temp) {
-            this->_kegg_terms.push_back(temp);
-            if (ss.peek() == ',')
-                ss.ignore();
+        std::istringstream keggs(kegg);
+        while (std::getline(keggs,temp,',')) {
+            this->_eggnog_results.raw_kegg.push_back(temp);
+        }
+    }
+
+    // Find OG query was assigned to
+    if (!ogs.empty()) {
+        std::istringstream ss(ogs);
+        std::unordered_map<std::string,std::string> og_map; // Not fully used right now
+        while (std::getline(ss,temp,',')) {
+            unsigned short p = (unsigned short) temp.find("@");
+            og_map[temp.substr(p+1)] = temp.substr(0,p);
+        }
+        _eggnog_results.og_key = "";
+        if (og_map.find(_eggnog_results.tax_scope) != og_map.end()) {
+            _eggnog_results.og_key = og_map[_eggnog_results.tax_scope];
+        }
+    }
+
+    // Lookup description, KEGG, protein domain from SQL database
+    _eggnog_results.sql_kegg = "";
+    _eggnog_results.description = "";
+    _eggnog_results.protein_domains = "";
+    if (!_eggnog_results.og_key.empty()) {
+        std::vector<std::vector<std::string>>results;
+        std::string sql_kegg;
+        std::string sql_desc;
+        std::string sql_protein;
+
+        char *query = sqlite3_mprintf(
+                "SELECT description, KEGG_freq, SMART_freq FROM og WHERE og=%Q",
+                _eggnog_results.og_key.c_str());
+        try {
+            results = database.query(query);
+            sql_desc = results[0][0];
+            sql_kegg = results[0][1];
+            sql_protein = results[0][2];
+            if (!sql_desc.empty() && sql_desc.find("[]") != 0) _eggnog_results.description = sql_desc;
+            if (!sql_kegg.empty() && sql_kegg.find("[]") != 0) _eggnog_results.sql_kegg = sql_kegg;
+            if (!sql_protein.empty() && sql_protein.find("[]") != 0){
+                _eggnog_results.protein_domains = sql_protein;
+            }
+        } catch (std::exception &e) {
+            // Do not fatal error
+            print_debug(e.what());
         }
     }
 }
 
-std::string QuerySequence::print_final_results(short flag,const std::vector<std::string>&headers, short lvl) {
-    std::stringstream stream;
 
-    switch (flag) {
+void QuerySequence::set_go_parsed(const QuerySequence::go_struct &_go_parsed, short i) {
+    switch (i) {
         case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-            stream << this->_qseqid       <<'\t' <<this->_sseqid    <<'\t'<<this->_pident        <<'\t'<<
-                      this->_length       <<'\t' <<this->_mismatch  <<'\t'<<
-                      this->_gapopen      <<'\t' <<this->_qstart    <<'\t'<<this->_qend          <<'\t'<<
-                      this->_sstart       <<'\t' <<this->_send      <<'\t'<<this->_e_val         <<'\t'<<
-                      this->_coverage     <<'\t' <<this->_stitle    <<'\t'<<this->_species       <<'\t'<<
-                      this->_database_path<<'\t' <<this->_frame     <<'\t'<<this->_seed_ortho    <<'\t'<<
-                      this->_seed_eval    <<'\t' <<this->_seed_score<<'\t'<<this->_predicted_gene<<'\t'<<
-                      this->_tax_scope    <<'\t'<< this->_ogs       <<'\t'<<this->_kegg_str      <<'\t';
+            _eggnog_results.parsed_go = _go_parsed;
             break;
         case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
-            stream << *this <<'\t';
-            for (const std::string &val : headers) {
-                stream << _ontology_results[val] << '\t';
-            }
             break;
         default:
             break;
     }
-    if (!this->_go_str.empty()) {
-        for (std::string val : _go_parsed[ENTAP_EXECUTE::GO_BIOLOGICAL_FLAG]) {
-            if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
-                stream<<val<<",";
-            }
-        }
-        stream<<'\t';
-        for (std::string val : _go_parsed[ENTAP_EXECUTE::GO_CELLULAR_FLAG])  {
-            if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
-                stream<<val<<",";
-            }
-        }
-        stream<<'\t';
-        for (std::string val : _go_parsed[ENTAP_EXECUTE::GO_MOLECULAR_FLAG]) {
-            if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
-                stream<<val<<",";
-            }
-        }
-        stream<<'\t';
-    } else {
-        stream<<"\t\t\t";
-    }
-    return stream.str();
-
-}
-
-void QuerySequence::set_go_parsed(const QuerySequence::go_struct &_go_parsed) {
-    QuerySequence::_go_parsed = _go_parsed;
 }
 
 void QuerySequence::init_sequence() {
     _seq_length = 0;
-    _pident = 0;
-    _length = 0;
-    _mismatch = 0;
-    _gapopen = 0;
-    _qstart = 0;
-    _qend = 0;
-    _sstart = 0;
-    _send = 0;
     _e_val = 0;
-    _bit_score = 0;
     _coverage = 0;
+
+    _sim_search_results.length      = "";
+    _sim_search_results.mismatch    = "";
+    _sim_search_results.gapopen     = "";
+    _sim_search_results.qstart      = "";
+    _sim_search_results.qend        = "";
+    _sim_search_results.sstart      = "";
+    _sim_search_results.send        = "";
+    _sim_search_results.pident      = "";
+    _sim_search_results.bit_score   = "";
+    _sim_search_results.e_val       = "";
+    _sim_search_results.coverage    = "";
+    _sim_search_results.database_path="";
+    _sim_search_results.qseqid = "";
+    _sim_search_results.sseqid = "";
+    _sim_search_results.stitle = "";
+    _sim_search_results.species = "";
+
+    _eggnog_results.seed_ortholog="";
+    _eggnog_results.seed_evalue="";
+    _eggnog_results.seed_score="";
+    _eggnog_results.predicted_gene="";
+    _eggnog_results.tax_scope="";
+    _eggnog_results.tax_scope_readable="";
+    _eggnog_results.ogs="";
+    _eggnog_results.og_key="";
+    _eggnog_results.sql_kegg="";
+    _eggnog_results.description="";
+    _eggnog_results.protein_domains="";
+
+
+    _yes_no_contam = "";
+    _frame = "";
     _sequence_p = "";
     _sequence_n = "";
+    _header_init = false;
     _is_family_assigned = false;
     _is_one_go = false;
     _is_one_kegg = false;
@@ -301,7 +354,7 @@ void QuerySequence::init_sequence() {
 }
 
 void QuerySequence::set_ontology_results(std::map<std::string, std::string> map) {
-    this->_ontology_results = map;
+//    this->_ontology_results = map;
 }
 
 
@@ -374,3 +427,111 @@ bool QuerySequence::is_is_expression_kept() const {
 void QuerySequence::set_is_expression_kept(bool _is_expression_kept) {
     QuerySequence::_is_expression_kept = _is_expression_kept;
 };
+
+std::string QuerySequence::print_tsv(const std::vector<const std::string*>& headers) {
+    std::stringstream ss;
+
+    // Fix, shouldn't be initialized here
+    init_header();
+
+    for (const std::string *header : headers) {
+        ss << *OUTPUT_MAP[header] << "\t";
+    }
+    return ss.str();
+}
+
+std::string QuerySequence::print_tsv(short software, std::vector<const std::string*>& headers,
+                                     short lvl) {
+    if (!_header_init) init_header();
+    std::stringstream stream;
+    go_struct go_terms;
+
+    switch (software) {
+        case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
+            stream << *this << '\t';
+            go_terms = _eggnog_results.parsed_go;
+            break;
+        case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
+//            stream << *this <<'\t';
+//            for (const std::string &val : headers) {
+//                stream << _ontology_results[val] << '\t'; TODO interpro udpate
+//            }
+            // Set go terms
+            break;
+        default:
+            break;
+    }
+
+
+    for (const std::string *header : headers) {
+        if (header == &ENTAP_EXECUTE::HEADER_EGG_GO_BIO) {
+            if (go_terms.empty()) {
+                stream <<'\t';continue;
+            }
+            for (std::string val : go_terms[ENTAP_EXECUTE::GO_BIOLOGICAL_FLAG]) {
+                if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
+                    stream<<val<<",";
+                }
+            }
+            stream<<'\t';
+        } else if (header == &ENTAP_EXECUTE::HEADER_EGG_GO_CELL) {
+            if (go_terms.empty()) {
+                stream <<'\t';continue;
+            }
+            for (std::string val : go_terms[ENTAP_EXECUTE::GO_CELLULAR_FLAG])  {
+                if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
+                    stream<<val<<",";
+                }
+            }
+            stream<<'\t';
+        } else if (header == &ENTAP_EXECUTE::HEADER_EGG_GO_MOLE) {
+            if (go_terms.empty()) {
+                stream <<'\t';continue;
+            }
+            for (std::string val : go_terms[ENTAP_EXECUTE::GO_MOLECULAR_FLAG]) {
+                if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
+                    stream<<val<<",";
+                }
+            }
+            stream<<'\t';
+        } else stream << *OUTPUT_MAP[header] << "\t";
+    }
+    return stream.str();
+}
+
+void QuerySequence::set_fpkm(float _fpkm) {
+    QuerySequence::_fpkm = _fpkm;
+}
+
+
+void QuerySequence::init_header() {
+    OUTPUT_MAP ={
+            {&ENTAP_EXECUTE::HEADER_QUERY     , &_sim_search_results.qseqid},
+            {&ENTAP_EXECUTE::HEADER_SUBJECT   , &_sim_search_results.sseqid},
+            {&ENTAP_EXECUTE::HEADER_PERCENT   , &_sim_search_results.pident},
+            {&ENTAP_EXECUTE::HEADER_ALIGN_LEN , &_sim_search_results.length},
+            {&ENTAP_EXECUTE::HEADER_MISMATCH  , &_sim_search_results.mismatch},
+            {&ENTAP_EXECUTE::HEADER_GAP_OPEN  , &_sim_search_results.gapopen},
+            {&ENTAP_EXECUTE::HEADER_QUERY_E   , &_sim_search_results.qend},
+            {&ENTAP_EXECUTE::HEADER_QUERY_S   , &_sim_search_results.qstart},
+            {&ENTAP_EXECUTE::HEADER_SUBJ_S    , &_sim_search_results.sstart},
+            {&ENTAP_EXECUTE::HEADER_SUBJ_E    , &_sim_search_results.send},
+            {&ENTAP_EXECUTE::HEADER_E_VAL     , &_sim_search_results.e_val},
+            {&ENTAP_EXECUTE::HEADER_COVERAGE  , &_sim_search_results.coverage},
+            {&ENTAP_EXECUTE::HEADER_TITLE     , &_sim_search_results.stitle},
+            {&ENTAP_EXECUTE::HEADER_SPECIES   , &_sim_search_results.species},
+            {&ENTAP_EXECUTE::HEADER_DATABASE  , &_sim_search_results.database_path},
+            {&ENTAP_EXECUTE::HEADER_FRAME     , &_frame},
+            {&ENTAP_EXECUTE::HEADER_CONTAM    , &_yes_no_contam},
+            {&ENTAP_EXECUTE::HEADER_SEED_ORTH , &_eggnog_results.seed_ortholog},
+            {&ENTAP_EXECUTE::HEADER_SEED_EVAL , &_eggnog_results.seed_evalue},
+            {&ENTAP_EXECUTE::HEADER_SEED_SCORE, &_eggnog_results.seed_score},
+            {&ENTAP_EXECUTE::HEADER_PRED_GENE , &_eggnog_results.predicted_gene},
+            {&ENTAP_EXECUTE::HEADER_TAX_SCOPE , &_eggnog_results.tax_scope_readable},
+            {&ENTAP_EXECUTE::HEADER_EGG_OGS   , &_eggnog_results.ogs},
+            {&ENTAP_EXECUTE::HEADER_EGG_DESC  , &_eggnog_results.description},
+            {&ENTAP_EXECUTE::HEADER_EGG_KEGG  , &_eggnog_results.sql_kegg} ,
+            {&ENTAP_EXECUTE::HEADER_EGG_PROTEIN,&_eggnog_results.protein_domains}
+    };
+    _header_init = true;
+}

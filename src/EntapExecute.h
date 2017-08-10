@@ -42,6 +42,7 @@ namespace entapExecute {
     const std::string DIAMOND_PATH_EXE     = "/libs/diamond-0.8.31/bin/diamond";
     const std::string EGGNOG_EMAPPER_EXE   = "/libs/eggnog-mapper/emapper.py";
     const std::string EGGNOG_DOWNLOAD_EXE  = "/libs/eggnog-mapper/download_eggnog_data.py";
+    const std::string EGGNOG_SQL_DB_DEF    = "/libs/eggnog-mapper/data/eggnog.db";
     const std::string INTERPRO_EXE         = "/libs/interproscan-5.22-61.0/interproscan.sh";
     const std::string ENTAP_OUTPUT         = "entap_out/";
     const std::string GRAPH_FILEPATH       = "/src/entap_graphing.py";
@@ -65,6 +66,7 @@ namespace entapExecute {
     std::pair<unsigned long, unsigned long> calculate_N_vals
             (std::vector<unsigned long> &, unsigned long);
     void final_statistics(std::map<std::string, QuerySequence>&);
+    void flag_transcripts(ExecuteStates, std::map<std::string, QuerySequence>&);
     //**************************************************************
 
 }

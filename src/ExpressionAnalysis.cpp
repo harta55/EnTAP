@@ -15,7 +15,7 @@
 namespace boostFS = boost::filesystem;
 
 ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &exe, std::string &out
-    , boost::program_options::variables_map& user_flags) {
+    , boost::program_options::variables_map& user_flags, GraphingManager *graph) {
     print_debug("Spawn object - ExpressionAnalysis");
     _inpath = input;
     _threads = t;
@@ -30,6 +30,8 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &ex
     _fpkm = user_flags[ENTAP_CONFIG::INPUT_FLAG_FPKM].as<float>();
     _rsem_dir = (boostFS::path(out) / boostFS::path(RSEM_OUT_DIR)).string();
     _proc_dir = (boostFS::path(_rsem_dir) / boostFS::path(RSEM_PROCESSED_DIR)).string();
+    _figure_dir = (boostFS::path(_proc_dir) / boostFS::path(RSEM_FIGURE_DIR)).string();
+    _graphingManager = graph;
 }
 
 std::string ExpressionAnalysis::execute(std::string input,
@@ -134,17 +136,27 @@ std::string ExpressionAnalysis::rsem_filter(std::string &results_path,
                                             std::map<std::string, QuerySequence>& MAP) {
     print_debug("Beginning to filter transcriptome...");
 
-    long                count_removed=0;
-    long                count_kept=0;
+    unsigned int        count_removed=0;
+    unsigned int        count_kept=0;
+    unsigned int        count_total=0;      // Used to warn user if high percentage is removed
     float               length;
     float               e_leng;
     float               e_count;
     float               tpm;
     float               fpkm_val;
+    float               rejected_percent;
     std::string         geneid;
     std::string         transid;
     std::string         out_str;
+    std::string         out_kept;
+    std::string         out_removed;
+    std::string         kept_filename;
+    std::string         original_filename;
+    std::string         removed_filename;
+    std::string         fig_txt_box_path;
+    std::string         fig_png_box_path;
     std::stringstream   out_msg;
+    GraphingStruct      graphingStruct;
 
     if (!file_exists(results_path)) {
         throw ExceptionHandler("File does not exist at: " + results_path,
@@ -153,32 +165,54 @@ std::string ExpressionAnalysis::rsem_filter(std::string &results_path,
 
     boostFS::remove_all(_proc_dir);
     boostFS::create_directories(_proc_dir);
+    boostFS::create_directories(_figure_dir);
     boostFS::path path (results_path);
-    std::string out_path = _outpath +
-                           path.stem().stem().string() + "_removed.fasta";
-    std::string out_removed = _outpath +
-                              path.stem().string() + "_filtered.fasta";
-    std::ofstream out_file(out_path, std::ios::out | std::ios::app);
+
+    fig_txt_box_path = (boostFS::path(_figure_dir) / GRAPH_TXT_BOX_PLOT).string();
+    fig_png_box_path = (boostFS::path(_figure_dir) / GRAPH_PNG_BOX_PLOT).string();
+
+    std::ofstream file_fig_box(fig_txt_box_path, std::ios::out | std::ios::app);
+    file_fig_box << "flag\tsequence length" << std::endl;    // First line placeholder, not used
+
+    while (path.has_extension()) path = path = path.stem();
+    original_filename = path.string();
+    out_kept = (boostFS::path(_outpath) / original_filename).string() + "_kept.fasta";
+    out_removed = (boostFS::path(_outpath) / original_filename).string() + "_removed.fasta";
+    std::ofstream out_file(out_kept, std::ios::out | std::ios::app);
     std::ofstream removed_file(out_removed, std::ios::out | std::ios::app);
     io::CSVReader<RSEM_COL_NUM, io::trim_chars<' '>,
     io::no_quote_escape<'\t'>> in(results_path);
     in.next_line();
     while (in.read_row(geneid, transid, length, e_leng, e_count, tpm, fpkm_val)) {
+        count_total++;
         if (fpkm_val > _fpkm) {
+            // Kept sequence
             out_file << MAP[geneid].get_sequence() << std::endl;
-            MAP[geneid].set_is_expression_kept(true);
+            QuerySequence *querySequence = &MAP[geneid];
+            querySequence->set_is_expression_kept(true);
+            querySequence->set_fpkm(fpkm_val);
+            file_fig_box << GRAPH_KEPT_FLAG << '\t' <<
+                            std::to_string(querySequence->getSeq_length()) << std::endl;
             count_kept++;
         } else {
+            // Removed sequence
             removed_file << MAP[geneid].get_sequence() << std::endl;
+            file_fig_box << GRAPH_REJECTED_FLAG << '\t'
+                         << std::to_string(MAP[geneid].getSeq_length())<<std::endl;
             count_removed++;
         }
     }
 
-    //------------------STATISTICS--------------------//
+    //-----------------------STATISTICS-----------------------//
     out_msg<<std::fixed<<std::setprecision(2);
     out_msg << ENTAP_STATS::SOFTWARE_BREAK
             << "Expression Filtering - RSEM\n"
             << ENTAP_STATS::SOFTWARE_BREAK;
+    rejected_percent = ((float)count_removed / count_kept) * 100;
+    if (rejected_percent > REJECTED_ERROR_CUTOFF) {
+        // Warn user high percentage of tranascriptome was rejected
+        out_msg << "Warning: A high percentage of the transcriptome was removed: " << rejected_percent;
+    }
     out_msg<<"MORE STATS COMING SOON!"<<std::endl;
 
     out_msg << "Removed: " << count_removed <<
@@ -189,10 +223,25 @@ std::string ExpressionAnalysis::rsem_filter(std::string &results_path,
     }
     out_str = out_msg.str();
     print_statistics(out_str);
-    out_file.close();removed_file.close();
-    print_debug("File successfully filtered. Outputs at: " + out_path + " and: " +
-                         out_removed);
-    return out_path;
+    out_file.close();
+    removed_file.close();
+    file_fig_box.close();
+    print_debug("File successfully filtered. Outputs at: " + out_kept + " and: " + out_removed);
+
+    //--------------------------------------------------------//
+
+
+    //------------------------Graphing------------------------//
+    graphingStruct.text_file_path   = fig_txt_box_path;
+    graphingStruct.graph_title      = GRAPH_TITLE_BOX_PLOT;
+    graphingStruct.fig_out_path     = fig_png_box_path;
+    graphingStruct.software_flag    = GRAPH_EXPRESSION_FLAG;
+    graphingStruct.graph_type       = GRAPH_BOX_FLAG;
+    _graphingManager->graph(graphingStruct);
+    //--------------------------------------------------------//
+
+
+    return out_kept;
 }
 
 bool ExpressionAnalysis::is_file_empty(std::string path) {

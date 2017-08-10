@@ -12,6 +12,15 @@ _output_path = ""
 _version = 0.0
 plt = None
 
+BOX_SEQ_LEN_LABEL = "Sequence Length"
+
+# Ensure these flags match with main EnTAP project #
+# Frame Selection   = 1
+# Expression        = 2
+# Similarity Search = 3
+# Ontology          = 4
+#***************************************************#
+
 
 def init_argparse():
     global _base_path
@@ -78,14 +87,17 @@ def frame_selection_graphs():
     if _graph_flag == 1:            # Pie chart of each gene type
         InputValues = parse_input(_stats_path)
         create_pie(_graph_title, _output_path, InputValues.values, InputValues.labels)
-    elif _graph_flag == 2:
+    elif _graph_flag == 2:          # Box plot of rejected vs kept sequences and length
         input_vals = parse_input_dict(_stats_path)
-        create_boxplot(_graph_title, _output_path, input_vals)
+        create_boxplot(_graph_title, _output_path, input_vals, BOX_SEQ_LEN_LABEL)
 
     pass
 
 
 def expression_graphs():
+    if _graph_flag == 1:
+        input_vals = parse_input_dict(_stats_path)
+        create_boxplot(_graph_title, _output_path, input_vals, BOX_SEQ_LEN_LABEL)
     pass
 
 
@@ -98,6 +110,10 @@ def sim_search_graphs():
 
 
 def ontology_graphs():
+    if _graph_flag == 1:
+        InputValues = parse_input(_stats_path)
+        create_bar(_graph_title, _output_path, InputValues.values, InputValues.labels,
+                   InputValues.xlabel, InputValues.ylabel)
     pass
 
 
@@ -124,7 +140,7 @@ def create_pie(title, file, vals, labels):
 
 
 # label_vals = dictionary of lists containing different series. Such as all rejected seqs and kept
-def create_boxplot(title, file, label_vals):
+def create_boxplot(title, file, label_vals, y_label):
     data = []
     labels = label_vals.keys()
     for key in label_vals.keys():
@@ -132,6 +148,7 @@ def create_boxplot(title, file, label_vals):
         for val in label_vals[key]:
             temp.append(val)
         data.append(temp)
+    plt.ylabel(y_label)
     plt.boxplot(data, labels=labels)
     plt.title(title)
     plt.savefig(file)

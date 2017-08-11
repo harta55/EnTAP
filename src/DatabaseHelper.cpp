@@ -20,17 +20,14 @@ std::vector<std::vector<std::string>> DatabaseHelper::query(char *query) {
 //    sqlite3_exec(_database,"PRAGMA synchronous = OFF", NULL, NULL, NULL);
 //    sqlite3_exec(_database,"PRAGMA count_changes = false", NULL, NULL, NULL);
 //    sqlite3_exec(_database,"PRAGMA journal_mode = OFF", NULL, NULL, NULL);
-    print_debug("lookup");
     if (sqlite3_prepare_v2(_database,query,-1,&stmt,0) == SQLITE_OK) {
         int col_num = sqlite3_column_count(stmt);
         int stat = 0;
         while (true) {
             stat = sqlite3_step(stmt);
-            print_debug("step");
             if (stat == SQLITE_ROW) {
                 std::vector<std::string> vals;
                 for (int i = 0; i < col_num; i++) {
-                    print_debug("push");
                     vals.push_back(std::string((char*)sqlite3_column_text(stmt,i)));
                 }
                 output.push_back(vals);

@@ -66,6 +66,50 @@ struct compair {
 extern std::string DEBUG_FILE_PATH;
 extern std::string LOG_FILE_PATH;
 
+
+namespace ENTAP_EXECUTE {
+    //------------------------Ontology-------------------------//
+    extern const std::string GO_BIOLOGICAL_FLAG ;
+    extern const std::string GO_CELLULAR_FLAG;
+    extern const std::string GO_MOLECULAR_FLAG;
+    const short EGGNOG_INT_FLAG = 0;
+    const short INTERPRO_INT_FLAG = 1;
+
+
+    //------------------------Headers-------------------------//
+    extern const std::string HEADER_QUERY;
+    extern const std::string HEADER_SUBJECT;
+    extern const std::string HEADER_PERCENT;
+    extern const std::string HEADER_ALIGN_LEN;
+    extern const std::string HEADER_MISMATCH;
+    extern const std::string HEADER_GAP_OPEN;
+    extern const std::string HEADER_QUERY_S;
+    extern const std::string HEADER_QUERY_E;
+    extern const std::string HEADER_SUBJ_S;
+    extern const std::string HEADER_SUBJ_E;
+    extern const std::string HEADER_E_VAL;
+    extern const std::string HEADER_COVERAGE;
+    extern const std::string HEADER_TITLE;
+    extern const std::string HEADER_SPECIES;
+    extern const std::string HEADER_DATABASE;
+    extern const std::string HEADER_FRAME;
+    extern const std::string HEADER_CONTAM;
+
+    extern const std::string HEADER_SEED_ORTH;
+    extern const std::string HEADER_SEED_EVAL;
+    extern const std::string HEADER_SEED_SCORE;
+    extern const std::string HEADER_PRED_GENE;
+    extern const std::string HEADER_TAX_SCOPE;
+    extern const std::string HEADER_EGG_OGS;
+    extern const std::string HEADER_EGG_KEGG;
+    extern const std::string HEADER_EGG_GO_BIO ;
+    extern const std::string HEADER_EGG_GO_CELL;
+    extern const std::string HEADER_EGG_GO_MOLE;
+    extern const std::string HEADER_EGG_DESC;
+    extern const std::string HEADER_EGG_LEVEL;
+    extern const std::string HEADER_EGG_PROTEIN;
+}
+
 //**************************************************************
 
 
@@ -103,7 +147,7 @@ namespace ENTAP_ERR {
 
 namespace ENTAP_CONFIG {
 
-    const std::string ENTAP_VERSION  = "0.7.0";
+    const std::string ENTAP_VERSION  = "0.7.0.1";
     const std::string DEBUG_FILENAME = "debug.txt";
     const std::string LOG_FILENAME   = "log_file.txt";
 
@@ -177,50 +221,6 @@ namespace ENTAP_CONFIG {
     const std::string NCBI_INDEX_PATH   = "/bin/ncbi_";
 }
 
-namespace ENTAP_EXECUTE {
-    //------------------------Ontology-------------------------//
-    extern const std::string GO_BIOLOGICAL_FLAG ;
-    extern const std::string GO_CELLULAR_FLAG;
-    extern const std::string GO_MOLECULAR_FLAG;
-    const short EGGNOG_INT_FLAG = 0;
-    const short INTERPRO_INT_FLAG = 1;
-
-
-    //------------------------Headers-------------------------//
-    extern const std::string HEADER_QUERY;
-    extern const std::string HEADER_SUBJECT;
-    extern const std::string HEADER_PERCENT;
-    extern const std::string HEADER_ALIGN_LEN;
-    extern const std::string HEADER_MISMATCH;
-    extern const std::string HEADER_GAP_OPEN;
-    extern const std::string HEADER_QUERY_S;
-    extern const std::string HEADER_QUERY_E;
-    extern const std::string HEADER_SUBJ_S;
-    extern const std::string HEADER_SUBJ_E;
-    extern const std::string HEADER_E_VAL;
-    extern const std::string HEADER_COVERAGE;
-    extern const std::string HEADER_TITLE;
-    extern const std::string HEADER_SPECIES;
-    extern const std::string HEADER_DATABASE;
-    extern const std::string HEADER_FRAME;
-    extern const std::string HEADER_CONTAM;
-
-    extern const std::string HEADER_SEED_ORTH;
-    extern const std::string HEADER_SEED_EVAL;
-    extern const std::string HEADER_SEED_SCORE;
-    extern const std::string HEADER_PRED_GENE;
-    extern const std::string HEADER_TAX_SCOPE;
-    extern const std::string HEADER_EGG_OGS;
-    extern const std::string HEADER_EGG_KEGG;
-    extern const std::string HEADER_EGG_GO_BIO ;
-    extern const std::string HEADER_EGG_GO_CELL;
-    extern const std::string HEADER_EGG_GO_MOLE;
-    extern const std::string HEADER_EGG_DESC;
-    extern const std::string HEADER_EGG_LEVEL;
-    extern const std::string HEADER_EGG_PROTEIN;
-
-
-}
 
 namespace ENTAP_STATS {
     const std::string SOFTWARE_BREAK = "----------------------------------------------\n";

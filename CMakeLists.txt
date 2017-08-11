@@ -17,7 +17,7 @@ set(SOURCE_FILES libs
         src/UserInput.cpp src/UserInput.h
         src/EggnogLevels.h
         src/DatabaseHelper.cpp src/DatabaseHelper.h
-        src/sqlite3.c src/sqlite3.h)
+        src/sqlite3.c src/sqlite3.h src/frame_selection/ModGeneMarkST.cpp src/frame_selection/ModGeneMarkST.h src/frame_selection/AbstractFrame.h src/expression/AbstractExpression.h src/expression/ModRSEM.cpp src/expression/ModRSEM.h)
 
 add_executable(enTAP ${SOURCE_FILES})
 

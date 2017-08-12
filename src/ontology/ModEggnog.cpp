@@ -84,7 +84,7 @@ void ModEggnog::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
     GraphingStruct                           graphingStruct;
 
     ss<<std::fixed<<std::setprecision(2);
-    boostFS::remove(_processed_path);
+    boostFS::remove_all(_processed_path);
     boostFS::create_directories(_processed_path);
     boostFS::create_directories(_figure_path);
     try {

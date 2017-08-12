@@ -41,7 +41,7 @@ std::string FrameSelection::execute(std::string input, std::map<std::string,Quer
     std::pair<bool, std::string> verify_pair;
 
     _inpath = input;
-    if (_overwrite) boostFS::remove(_frame_outpath);
+    if (_overwrite) boostFS::remove_all(_frame_outpath);
     boostFS::create_directories(_frame_outpath);
     boostFS::create_directories(_processed_path);
     boostFS::create_directories(_figure_path);

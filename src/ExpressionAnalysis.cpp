@@ -43,7 +43,7 @@ std::string ExpressionAnalysis::execute(std::string input,
     std::unique_ptr<AbstractExpression> ptr;
 
     _inpath = input;
-    if (_overwrite) boostFS::remove(_rsem_dir);
+    if (_overwrite) boostFS::remove_all(_rsem_dir);
     boostFS::create_directories(_rsem_dir);
     boostFS::create_directories(_figure_dir);
     boostFS::create_directories(_proc_dir);

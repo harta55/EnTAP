@@ -265,10 +265,15 @@ void verify_databases(boostPO::variables_map& vm) {
     bool            ncbi_check;
     bool            uniprot_check;
 
-    uniprot_data = vm[ENTAP_CONFIG::INPUT_FLAG_UNIPROT].as<databases_t>();
-    ncbi_data = vm[ENTAP_CONFIG::INPUT_FLAG_NCBI_1].as<databases_t>();
-    other_data = vm[ENTAP_CONFIG::INPUT_FLAG_DATABASE].as<databases_t>();
-
+    if (vm.count(ENTAP_CONFIG::INPUT_FLAG_UNIPROT)) {
+        uniprot_data = vm[ENTAP_CONFIG::INPUT_FLAG_UNIPROT].as<databases_t>();
+    }
+    if (vm.count(ENTAP_CONFIG::INPUT_FLAG_NCBI_1)) {
+        ncbi_data = vm[ENTAP_CONFIG::INPUT_FLAG_NCBI_1].as<databases_t>();
+    }
+    if (vm.count(ENTAP_CONFIG::INPUT_FLAG_DATABASE)) {
+        other_data = vm[ENTAP_CONFIG::INPUT_FLAG_DATABASE].as<databases_t>();
+    }
 
     if (ncbi_data.size() + uniprot_data.size() + other_data.size() > MAX_DATABASE_SIZE) {
         // TODO fix for certain cases like -N -N -d null

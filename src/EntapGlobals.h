@@ -147,7 +147,7 @@ namespace ENTAP_ERR {
 
 namespace ENTAP_CONFIG {
 
-    const std::string ENTAP_VERSION  = "0.7.0.1";
+    const std::string ENTAP_VERSION  = "0.7.0.2";
     const std::string DEBUG_FILENAME = "debug.txt";
     const std::string LOG_FILENAME   = "log_file.txt";
 

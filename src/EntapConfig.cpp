@@ -172,8 +172,8 @@ namespace entapConfig {
             print_debug("Database found at: " + go_db_path + " skipping creation");
             return;
         }
-        go_database_zip = database_path + "/" + GO_DATA_NAME;
-        go_database_out = database_path + "/" + GO_DIR;
+        go_database_zip = (boostFS::path(database_path) / boostFS::path(GO_DATA_NAME)).string();
+        go_database_out = (boostFS::path(database_path) / boostFS::path(GO_DIR)).string();
         if (file_exists(go_database_zip)) {
             boostFS::remove(go_database_zip);
         }

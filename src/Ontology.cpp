@@ -52,8 +52,9 @@ void Ontology::execute(query_map_struct &SEQUENCES, std::string input,std::strin
     init_headers();
     try {
         std::unique_ptr<AbstractOntology> ptr = spawn_object();
+        ptr->set_data(_go_levels,_eggnog_db_path,_threads);
         verify_pair = ptr->verify_files();
-        if (verify_pair.first) ptr->execute(SEQUENCES);
+        if (!verify_pair.first) ptr->execute(SEQUENCES);
         ptr->parse(SEQUENCES);
         print_eggnog(SEQUENCES);
 

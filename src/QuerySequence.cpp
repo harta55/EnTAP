@@ -442,7 +442,7 @@ std::string QuerySequence::print_tsv(const std::vector<const std::string*>& head
 
 std::string QuerySequence::print_tsv(short software, std::vector<const std::string*>& headers,
                                      short lvl) {
-    if (!_header_init) init_header();
+    init_header();
     std::stringstream stream;
     go_struct go_terms;
 
@@ -461,7 +461,6 @@ std::string QuerySequence::print_tsv(short software, std::vector<const std::stri
         default:
             break;
     }
-
 
     for (const std::string *header : headers) {
         if (header == &ENTAP_EXECUTE::HEADER_EGG_GO_BIO) {

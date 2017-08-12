@@ -121,12 +121,16 @@ namespace entapConfig {
             }
             print_debug("Success! File written to " + tax_path);
         } else {
-            print_debug("Database found. Updating...");
+            print_debug("Database found. Updating..."); // Just check for bin for now
+            if (file_exists(tax_bin)) {
+                print_debug("Binary database path found at: " + tax_bin + " skipping indexing");
+                return;
+            }
             // TODO Update taxonomic database
-            return;
         }
 
         print_debug("Indexing taxonomic database...");
+        boostFS::remove(tax_bin);
 
         std::ifstream infile(tax_path);
         std::string line;

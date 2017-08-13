@@ -11,10 +11,14 @@ EnTAP Introduction
 
 Pipeline Stages:
 ----------------
-#. Frame Selection
-#. Expression Filtering
-#. Similarity Search
-#. Gene Ontology Integration
+
+    * Transcriptome Filtering
+    1. Expression Filtering
+    2. Frame Selection
+
+    * Annotation
+    3. Similarity Search
+    4. Orthologous Group Assignment
 
 The software in the above stages are packaged within the EnTAP repository (with the exception of GeneMarkS-T for frame selection). Installation and usage of EnTAP can be seen in the sidebar.
 
@@ -42,6 +46,5 @@ Software contained or used within this pipeline:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * `RSEM`_
 * `DIAMOND`_
-* `EggNog`_
-* `InterProScan`_
+* `EggNOG`_
 * `GeneMarkS-T`_

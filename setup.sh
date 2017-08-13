@@ -6,7 +6,7 @@ cd libs/diamond-0.8.31/ || \
 	{ echo "libs/diamond-0.8.31 path not found"; exit 1; }
 mkdir -p bin
 cd bin
-(cmake .. &&  make) || \
+(cmake .. &&  make install) || \
 	{ echo "Error in compiling DIAMOND"; exit 1; }
 echo "DIAMOND setup complete!"
 echo "-----------------------"

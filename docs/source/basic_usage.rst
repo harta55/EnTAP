@@ -1,4 +1,16 @@
 .. _NCBI Taxonomy: https://www.ncbi.nlm.nih.gov/taxonomy
+.. |libs_dir| replace:: /libs
+.. |entap_dir| replace:: /EnTAP
+.. |src_dir| replace:: /src
+.. |config_file| replace:: entap_config.txt
+.. |bin_dir| replace:: /bin
+.. |data_dir| replace:: /databases
+.. |tax_file| replace:: download_tax.pl
+.. |graph_file| replace:: entap_graphing.py
+.. |go_term| replace:: go_term.entp
+.. |tax_bin| replace:: ncbi_tax_bin.entp
+.. |tax_data| replace:: ncbi_tax.entp
+
 
 Basic Usage
 ============
@@ -9,7 +21,54 @@ Basic Usage
 
 Configuration
 -------------
-Configuration is the first stage of *EnTAP* that will download and configure the necessary databases for full functionality. Additionally, databases in traditional .fasta (or similar) format must be configured to run with *EnTAP* for faster similarity searching. This can be done with any database you have previously downloaded and will be configured and sent to the /bin folder within the *EnTAP* directory. 
+Configuration is the first stage of EnTAP that will download and configure the necessary databases for full functionality. This stage may only need to be ran once (unless you'd like to configure more databases for DIAMOND). 
+
+
+Folder Hierarchy
+^^^^^^^^^^^^^^^^^
+
+Before continuing, I'll explain the folder hierarchy that will be assumed throughout the rest of this tutorial. From this point on, the 'main' or 'exe' directory of EnTAP will refer to the setup as downloaded from the GitLab page. 
+
+This |entap_dir| directory contains:
+
+    * |entap_dir| |libs_dir| 
+    * |entap_dir| |src_dir|
+    * |entap_dir| |bin_dir| (created during configuration)
+    * |entap_dir| |data_dir| (created during configuration)
+
+In addition to some other files/directories. This 'main' folder can be changed with the - - exe flag (discussed later)
+
+Recognition of EnTAP databases, src files, and execution accompanying pipeline software rely on this directory hierarchy. However, some files/directories can be changed from the default with the  |config_file| file. 
+
+.. warning:: Renaming folders/files within the main EnTAP directory can cause execution issues
+
+The |config_file| file mentioned above has the following defaults:
+
+    * diamond_exe_path=/EnTAP/libs/diamond-0.8.31/bin/diamond
+    * rsem_exe_path=/EnTAP/libs/RSEM-1.3.0 (this is a path to the directory)
+    * genemarkst_exe_path=/EnTAP//libs/gmst_linux_64/gmst.pl
+    * eggnog_exe_path=/EnTAP/libs/eggnog-mapper/emapper.py
+    * eggnog_download_exe=/EnTAP/libs/eggnog-mapper/
+    * eggnog_dmnd_database=/EnTAP/libs/eggnog-mapper/data/eggnog.db
+
+
+These can be changed to whichever path you would prefer. If something is globally installed, just put a space " " after the '='. EnTAP will recognize these paths first and they will override defaults. 
+
+The following paths cannot be changed from the defaults within the 'main' folder:
+
+    * |entap_dir| / |config_file|
+    * |entap_dir| |src_dir| / |graph_file|
+    * |entap_dir| |src_dir| / |tax_file|
+    * |entap_dir| |bin_dir| / |tax_bin| (downloaded during config)
+    * |entap_dir| |bin_dir| / |go_term| (downloaded during config)
+    * |entap_dir| |data_dir| / |tax_data| (downloaded during config)
+
+This EnTAP directory will be automatically detected (from the EnTAP exe), however the - -exe flag can be used to change this. As long it is pointed to a directory with the above files/paths there will be no execution issues. 
+
+Usage
+^^^^^
+
+Databases in traditional .fasta (or similar) format must be configured to run with EnTAP for faster similarity searching. This can be done with any database you have previously downloaded and will be configured and sent to the /bin folder within the main EnTAP directory. 
 
 To run configuration with a sample database, the command is as follows:
 
@@ -22,6 +81,12 @@ This stage must be done at least once prior to :ref:`running<run-label>`. Once t
 
 .. note:: If you already have DIAMOND (.dmnd) configured databases, you can skip the configuration of that database. Although, due to other *EnTAP* database downloading (taxonomy and ontology), configuration must still be ran at least once without any flags.
 
+Configuration can be ran without formatting a database as follows:
+
+.. code-block:: bash
+
+    EnTAP --config
+
 
 .. note:: This is the only stage that requires connection to the Internet.
 
@@ -30,18 +95,22 @@ Flags:
 
 Required Flags:
 
-* The only required flag is **- -config**. Although in order to run the full *EnTAP* pipeline, you must have a .dmnd configured database.
+    * The only required flag is **- -config**. Although in order to run the full *EnTAP* pipeline, you must have a .dmnd configured database.
 
 
 Optional Flags:
 
-* -d : Specify any number of databases you would like to configure for *EnTAP*
+    * -d : Specify any number of databases you would like to configure for EnTAP
+
+    * -exe: Change 'main' directory
+    * -database-out: Change output directory for formatted DIAMOND databases
+
 
 
 Memory Usage:
 ^^^^^^^^^^^^^^
 
-Memory usage will vary depending on the number of database you would like configured. Although, *EnTAP* will download several other databases as well:
+Memory usage will vary depending on the number of databases you would like configured. Although, EnTAP will download several other databases as well:
 
 * Gene Ontology References: 6Mb
 * NCBI Taxonomy: 400Mb

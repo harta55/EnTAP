@@ -247,13 +247,16 @@ void ModEggnog::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
                 file_go_bar << "Gene Ontology Term\tCount" << std::endl;
 
                 // get total count for each level...change, didn't feel like making another
-                unsigned int lvl_ct = 0;   // Use for percentages
+                unsigned int lvl_ct = 0;   // Use for percentages, total terms for each lvl
+                ct = 0;                    // Use for unique
                 for (count_pair &pair2 : go_vect) {
                     if (pair2.first.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
-                        lvl_ct++;
+                        ct++;
+                        lvl_ct += pair2.second;
                     }
                 }
                 ss << "\nTotal " << pair.first <<" terms (lvl=" << lvl << "): " << lvl_ct;
+                ss << "\nTotal unique " << pair.first <<" terms (lvl=" << lvl << "): " << ct;
                 ss << "\nTop 10 " << pair.first << " terms assigned (lvl=" << lvl << "): ";
 
                 ct = 1;

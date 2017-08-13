@@ -237,6 +237,7 @@ void ModEggnog::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
     if (count_total_go_hits > 0) {
         for (int lvl : _go_levels) {
             for (auto &pair : go_combined_map) {
+                if (pair.first.empty()) continue;
                 // Count maps (biological/molecular/cellular/overall)
                 std::string fig_txt_go_bar = (boostFS::path(_figure_path) / pair.first).string() + std::to_string(lvl)+GRAPH_GO_END_TXT;
                 std::string fig_png_go_bar = (boostFS::path(_figure_path) / pair.first).string() + std::to_string(lvl)+GRAPH_GO_END_PNG;
@@ -246,21 +247,21 @@ void ModEggnog::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
                 file_go_bar << "Gene Ontology Term\tCount" << std::endl;
 
                 // get total count for each level...change, didn't feel like making another
-                ct = 0;
+                unsigned int lvl_ct = 0;   // Use for percentages
                 for (count_pair &pair2 : go_vect) {
                     if (pair2.first.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
-                        ct++;
+                        lvl_ct++;
                     }
                 }
-                ss << "\nTotal terms (" << lvl << "): " << ct;
-                ss << "\nTop 10 " << pair.first << " terms assigned (" << lvl << "): ";
+                ss << "\nTotal " << pair.first <<" terms (lvl=" << lvl << "): " << lvl_ct;
+                ss << "\nTop 10 " << pair.first << " terms assigned (lvl=" << lvl << "): ";
 
                 ct = 1;
                 for (count_pair &pair2 : go_vect) {
                     if (ct > 10) break;
                     if (pair2.first.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
                         ct++;
-                        percent = ((float)pair2.second / count_total_go_terms) * 100;
+                        percent = ((float)pair2.second / lvl_ct) * 100;
                         ss <<
                            "\n\t" << ct << ")" << pair2.first << ": " << pair2.second <<
                            "(" << percent << "%)";
@@ -270,10 +271,10 @@ void ModEggnog::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
                 file_go_bar.close();
                 graphingStruct.fig_out_path = fig_png_go_bar;
                 graphingStruct.text_file_path = fig_txt_go_bar;
-                if (pair.first == GO_BIOLOGICAL_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_BIO_TITLE + std::to_string(lvl);
-                if (pair.first == GO_CELLULAR_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_CELL_TITLE+ std::to_string(lvl);
-                if (pair.first == GO_MOLECULAR_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_MOLE_TITLE+ std::to_string(lvl);
-                if (pair.first == GO_OVERALL_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_ALL_TITLE+ std::to_string(lvl);
+                if (pair.first == GO_BIOLOGICAL_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_BIO_TITLE + "_Level:_"+std::to_string(lvl);
+                if (pair.first == GO_CELLULAR_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_CELL_TITLE+ "_Level:_"+std::to_string(lvl);
+                if (pair.first == GO_MOLECULAR_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_MOLE_TITLE+ "_Level:_"+std::to_string(lvl);
+                if (pair.first == GO_OVERALL_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_ALL_TITLE+ "_Level:_"+std::to_string(lvl);
                 // Other params can stay the same
                 pGraphingManager->graph(graphingStruct);
             }

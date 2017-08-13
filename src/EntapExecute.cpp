@@ -74,6 +74,7 @@ namespace entapExecute {
         std::pair<std::string,std::string>      diamond_pair;    // best_hits.fa,no_hits.fa
         std::string                             input_path;      // FASTA changes depending on execution
         std::string                             no_database_hits;// No DIAMOND
+        std::string                             graph_path;
         std::queue<char>                        state_queue;
         bool                                    state_flag;
         bool                                    is_complete;    // All input sequences are complete genes
@@ -99,6 +100,7 @@ namespace entapExecute {
         _entap_outpath = (boostFS::path(_outpath) / boostFS::path(ENTAP_OUTPUT)).string();
         boostFS::create_directories(_entap_outpath);
         boostFS::create_directories(_outpath);
+        graph_path = (boostFS::path(exe_path) /boostFS::path(GRAPH_FILEPATH)).string();
 
         // init_databases
         if (user_input.count("database")) {
@@ -120,7 +122,7 @@ namespace entapExecute {
             init_exe_paths(config_map, exe_path);
             verify_state(state_queue, state_flag);
             SEQUENCE_MAP = init_sequence_map(input_path, is_complete);
-            GraphingManager graphingManager = GraphingManager(GRAPH_FILEPATH);
+            GraphingManager graphingManager = GraphingManager(graph_path);
             FrameSelection genemark = FrameSelection(input_path, _frame_selection_exe,
                                                      _outpath, user_input, &graphingManager);
             ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads, _expression_exe,
@@ -689,12 +691,16 @@ namespace entapExecute {
                 count_TOTAL_ann++;
                 if (!pair.second.get_sequence_n().empty())
                     file_annotated_nucl<<pair.second.get_sequence_n()<<std::endl;
-                file_annotated_prot<<pair.second.get_sequence_p()<<std::endl;
+                if (!pair.second.get_sequence_p().empty()) {
+                    file_annotated_prot<<pair.second.get_sequence_p()<<std::endl;
+                }
             } else {
                 // Not annotated
                 if (!pair.second.get_sequence_p().empty())
                     file_unannotated_nucl<<pair.second.get_sequence_p()<<std::endl;
-                file_unannotated_prot<<pair.second.get_sequence_p()<<std::endl;
+                if (!pair.second.get_sequence_n().empty()) {
+                    file_unannotated_prot<<pair.second.get_sequence_p()<<std::endl;
+                }
                 count_TOTAL_unann++;
             }
         }

@@ -136,6 +136,7 @@ def create_pie(title, file, vals, labels):
     plt.pie(vals, labels=labels, autopct=autopct_vals(vals))
     plt.axis('equal')
     plt.title(title)
+    plt.gcf().subplots_adjust(bottom=0.15)
     plt.savefig(file)
 
 
@@ -151,6 +152,7 @@ def create_boxplot(title, file, label_vals, y_label):
     plt.ylabel(y_label)
     plt.boxplot(data, labels=labels)
     plt.title(title)
+    plt.gcf().subplots_adjust(bottom=0.15)
     plt.savefig(file)
 
 
@@ -160,7 +162,7 @@ def create_bar(title, file, vals, labels, xlabel, ylabel):
     plt.ylabel(xlabel)
     plt.xlabel(ylabel)
     plt.title(title)
-    plt.savefig(file)
+    plt.savefig(file, bbox_inches="tight")
 
 
 def autopct_vals(values):

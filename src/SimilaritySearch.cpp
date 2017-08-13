@@ -293,8 +293,9 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     std::map<std::string, int>  contam_species_map;
 
     database = boostFS::path(base_path).filename().string();
-    figure_base = (boostFS::path(_figure_path) / database).string();
+    figure_base = (boostFS::path(base_path) / FIGURE_DIR).string();
     base_bst = base_path;
+    boostFS::create_directories(figure_base);
     boostFS::create_directories(base_path);
 
     std::string out_best_contams_tsv             = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_CONTAM_TSV)).string();
@@ -461,22 +462,20 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     graphingStruct.software_flag = GRAPH_SOFTWARE_FLAG;
     graph_contam_file.close();
     graph_species_file.close();
-    if (is_final) {
-
-    } else {
-        if (count_contam > 0) {
-            graphingStruct.fig_out_path = graph_contam_png_path;
-            graphingStruct.graph_title  = database + GRAPH_CONTAM_TITLE;
-            graphingStruct.text_file_path = graph_contam_txt_path;
-            graphingStruct.graph_type = GRAPH_BAR_FLAG;
-            _pGraphingManager->graph(graphingStruct);
-        }
-        graphingStruct.fig_out_path = graph_species_png_path;
-        graphingStruct.graph_title  = database + GRAPH_SPECIES_TITLE;
-        graphingStruct.text_file_path = graph_species_txt_path;
+    if (count_contam > 0) {
+        graphingStruct.fig_out_path = graph_contam_png_path;
+        graphingStruct.graph_title  = database + GRAPH_CONTAM_TITLE;
+        graphingStruct.text_file_path = graph_contam_txt_path;
         graphingStruct.graph_type = GRAPH_BAR_FLAG;
         _pGraphingManager->graph(graphingStruct);
     }
+    graphingStruct.fig_out_path = graph_species_png_path;
+    graphingStruct.graph_title  = database + GRAPH_SPECIES_TITLE;
+    graphingStruct.text_file_path = graph_species_txt_path;
+    graphingStruct.graph_type = GRAPH_BAR_FLAG;
+    _pGraphingManager->graph(graphingStruct);
+
+    // check if final - different graph
     // ************************************ ///
 
     return std::pair<std::string,std::string>(out_best_hits_fa_prot,out_no_hits_fa_prot);

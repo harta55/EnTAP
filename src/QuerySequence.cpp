@@ -340,7 +340,6 @@ void QuerySequence::init_sequence() {
     _eggnog_results.description="";
     _eggnog_results.protein_domains="";
 
-
     _yes_no_contam = "";
     _frame = "";
     _sequence_p = "";
@@ -448,7 +447,7 @@ std::string QuerySequence::print_tsv(short software, std::vector<const std::stri
 
     switch (software) {
         case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-            stream << *this << '\t';
+//            stream << *this << '\t';
             go_terms = _eggnog_results.parsed_go;
             break;
         case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
@@ -463,7 +462,7 @@ std::string QuerySequence::print_tsv(short software, std::vector<const std::stri
     }
 
     for (const std::string *header : headers) {
-        if (header == &ENTAP_EXECUTE::HEADER_EGG_GO_BIO) {
+        if (*header == ENTAP_EXECUTE::HEADER_EGG_GO_BIO) {
             if (go_terms.empty()) {
                 stream <<'\t';continue;
             }
@@ -473,7 +472,7 @@ std::string QuerySequence::print_tsv(short software, std::vector<const std::stri
                 }
             }
             stream<<'\t';
-        } else if (header == &ENTAP_EXECUTE::HEADER_EGG_GO_CELL) {
+        } else if (*header == ENTAP_EXECUTE::HEADER_EGG_GO_CELL) {
             if (go_terms.empty()) {
                 stream <<'\t';continue;
             }
@@ -483,7 +482,7 @@ std::string QuerySequence::print_tsv(short software, std::vector<const std::stri
                 }
             }
             stream<<'\t';
-        } else if (header == &ENTAP_EXECUTE::HEADER_EGG_GO_MOLE) {
+        } else if (*header == ENTAP_EXECUTE::HEADER_EGG_GO_MOLE) {
             if (go_terms.empty()) {
                 stream <<'\t';continue;
             }

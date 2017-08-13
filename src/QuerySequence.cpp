@@ -22,8 +22,8 @@ bool QuerySequence::operator>(const QuerySequence &querySequence) {
             if (coverage_dif > COV_DIF) {
                 return this->_coverage > querySequence._coverage;
             }
-            if (this->_contaminant && !querySequence._contaminant) return false;
-            if (!this->_contaminant && querySequence._contaminant) return true;
+            if (this->_sim_search_results.contaminant && !querySequence._sim_search_results.contaminant) return false;
+            if (!this->_sim_search_results.contaminant && querySequence._sim_search_results.contaminant) return true;
             if (this->_tax_score == querySequence._tax_score)
                 return this->_e_val<querySequence._e_val;
             return this->_tax_score > querySequence._tax_score;
@@ -36,8 +36,8 @@ bool QuerySequence::operator>(const QuerySequence &querySequence) {
         if (coverage_dif > COV_DIF) {
             return this->_coverage > querySequence._coverage;
         }
-        if (this->_contaminant && !querySequence._contaminant) return false;
-        if (!this->_contaminant && querySequence._contaminant) return true;
+        if (this->_sim_search_results.contaminant && !querySequence._sim_search_results.contaminant) return false;
+        if (!this->_sim_search_results.contaminant && querySequence._sim_search_results.contaminant) return true;
         return this->_tax_score > querySequence._tax_score;
     }
 }
@@ -142,12 +142,12 @@ void QuerySequence::setSpecies(const std::string &species) {
 }
 
 bool QuerySequence::isContaminant() const {
-    return _contaminant;
+    return _sim_search_results.contaminant;
 }
 
 void QuerySequence::setContaminant(bool contaminant) {
-    QuerySequence::_contaminant = contaminant;
-    contaminant ? _yes_no_contam = "Yes" : _yes_no_contam = "No";
+    QuerySequence::_sim_search_results.contaminant = contaminant;
+    contaminant ? _sim_search_results.yes_no_contam = "Yes" : _sim_search_results.yes_no_contam  = "No";
 }
 
 std::ostream& operator<<(std::ostream &ostream, const QuerySequence &query) {
@@ -190,7 +190,7 @@ const std::string &QuerySequence::get_tax_scope() const {
 }
 
 const std::string &QuerySequence::get_contam_type() const {
-    return _contam_type;
+    return _sim_search_results.contam_type;
 }
 
 bool QuerySequence::is_informative() const {
@@ -198,7 +198,7 @@ bool QuerySequence::is_informative() const {
 }
 
 void QuerySequence::set_contam_type(const std::string &_contam_type) {
-    QuerySequence::_contam_type = _contam_type;
+    QuerySequence::_sim_search_results.contam_type = _contam_type;
 }
 
 void QuerySequence::set_is_database_hit(bool _is_database_hit) {
@@ -327,6 +327,8 @@ void QuerySequence::init_sequence() {
     _sim_search_results.sseqid = "";
     _sim_search_results.stitle = "";
     _sim_search_results.species = "";
+    _sim_search_results.yes_no_contam = "";
+
 
     _eggnog_results.seed_ortholog="";
     _eggnog_results.seed_evalue="";
@@ -340,11 +342,9 @@ void QuerySequence::init_sequence() {
     _eggnog_results.description="";
     _eggnog_results.protein_domains="";
 
-    _yes_no_contam = "";
     _frame = "";
     _sequence_p = "";
     _sequence_n = "";
-    _header_init = false;
     _is_family_assigned = false;
     _is_one_go = false;
     _is_one_kegg = false;
@@ -358,12 +358,12 @@ void QuerySequence::set_ontology_results(std::map<std::string, std::string> map)
 
 
 void QuerySequence::set_lineage(const std::string &_lineage) {
-    QuerySequence::_lineage = _lineage;
+    QuerySequence::_sim_search_results.lineage = _lineage;
 }
 
 void QuerySequence::set_tax_score(std::string input_lineage) {
     float tax_score = 0;
-    std::string lineage = _lineage;
+    std::string lineage = _sim_search_results.lineage;
     std::remove_if(lineage.begin(),lineage.end(), ::isspace);
     std::remove_if(input_lineage.begin(),input_lineage.end(), ::isspace);
 
@@ -385,6 +385,14 @@ void QuerySequence::set_tax_score(std::string input_lineage) {
 const std::string &QuerySequence::get_sequence() const {
     if (_sequence_n.empty()) return _sequence_p;
     return _sequence_n;
+}
+
+const QuerySequence::SimSearchResults &QuerySequence::get_sim_struct() const {
+    return _sim_search_results;
+}
+
+void QuerySequence::set_sim_struct(const SimSearchResults &sim) {
+    _sim_search_results = sim;
 }
 
 void QuerySequence::setIs_protein(bool is_protein) {
@@ -520,7 +528,7 @@ void QuerySequence::init_header() {
             {&ENTAP_EXECUTE::HEADER_SPECIES   , &_sim_search_results.species},
             {&ENTAP_EXECUTE::HEADER_DATABASE  , &_sim_search_results.database_path},
             {&ENTAP_EXECUTE::HEADER_FRAME     , &_frame},
-            {&ENTAP_EXECUTE::HEADER_CONTAM    , &_yes_no_contam},
+            {&ENTAP_EXECUTE::HEADER_CONTAM    , &_sim_search_results.yes_no_contam},
             {&ENTAP_EXECUTE::HEADER_SEED_ORTH , &_eggnog_results.seed_ortholog},
             {&ENTAP_EXECUTE::HEADER_SEED_EVAL , &_eggnog_results.seed_evalue},
             {&ENTAP_EXECUTE::HEADER_SEED_SCORE, &_eggnog_results.seed_score},
@@ -531,5 +539,4 @@ void QuerySequence::init_header() {
             {&ENTAP_EXECUTE::HEADER_EGG_KEGG  , &_eggnog_results.sql_kegg} ,
             {&ENTAP_EXECUTE::HEADER_EGG_PROTEIN,&_eggnog_results.protein_domains}
     };
-    _header_init = true;
 }

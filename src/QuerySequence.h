@@ -13,7 +13,49 @@
 
 class QuerySequence {
 public:
+
     typedef std::map<std::string,std::vector<std::string>> go_struct;
+
+    struct EggnogResults {
+        std::string              seed_ortholog;
+        std::string              seed_evalue;
+        std::string              seed_score;
+        std::string              predicted_gene;
+        std::string              tax_scope;         // virNOG NOT virNOG[6]
+        std::string              tax_scope_readable;// Ascomycota
+        std::string              ogs;
+        std::string              og_key;
+        std::string              sql_kegg;
+        std::string              description;
+        std::string              protein_domains;
+        std::vector<std::string> raw_kegg;
+        std::vector<std::string> raw_go;
+        go_struct                parsed_go;
+    };
+
+    struct SimSearchResults {
+        std::string                       length;
+        std::string                       mismatch;
+        std::string                       gapopen;
+        std::string                       qstart;
+        std::string                       qend;
+        std::string                       sstart;
+        std::string                       send;
+        std::string                       pident;
+        std::string                       bit_score;
+        std::string                       e_val;
+        std::string                       coverage;
+        std::string                       database_path;
+        std::string                       qseqid;
+        std::string                       sseqid;
+        std::string                       stitle;
+        std::string                       species;
+        std::string                       contam_type;
+        std::string                       lineage;
+        std::string                       yes_no_contam; // just for convenience
+        bool                              contaminant;\
+    };
+
     bool operator>(const QuerySequence& querySequence);
     void set_sim_search_results(std::string,std::string,std::string,
                                 std::string,std::string, std::string, std::string, std::string,
@@ -33,6 +75,8 @@ public:
     void set_tax_score(std::string);
     void init_header();
     const std::string &get_contam_type() const;
+    const SimSearchResults &get_sim_struct() const;
+    void set_sim_struct(const SimSearchResults &);
     void set_contam_type(const std::string &_contam_type);
     void set_is_informative(bool _is_informative);
     void setIs_better_hit(bool is_better_hit);
@@ -75,44 +119,7 @@ private:
     static constexpr unsigned char INFORM_ADD    = 3;
     static constexpr float INFORM_FACTOR         = 1.2;
 
-    struct EggnogResults {
-        std::string              seed_ortholog;
-        std::string              seed_evalue;
-        std::string              seed_score;
-        std::string              predicted_gene;
-        std::string              tax_scope;         // virNOG NOT virNOG[6]
-        std::string              tax_scope_readable;// Ascomycota
-        std::string              ogs;
-        std::string              og_key;
-        std::string              sql_kegg;
-        std::string              description;
-        std::string              protein_domains;
-        std::vector<std::string> raw_kegg;
-        std::vector<std::string> raw_go;
-        go_struct                parsed_go;
-    };
 
-    struct SimSearchResults {
-        std::string                       length;
-        std::string                       mismatch;
-        std::string                       gapopen;
-        std::string                       qstart;
-        std::string                       qend;
-        std::string                       sstart;
-        std::string                       send;
-        std::string                       pident;
-        std::string                       bit_score;
-        std::string                       e_val;
-        std::string                       coverage;
-        std::string                       database_path;
-        std::string                       qseqid;
-        std::string                       sseqid;
-        std::string                       stitle;
-        std::string                       species;
-    };
-
-    bool                              _header_init; // Not the best way to do this....
-    bool                              _contaminant;
     bool                              is_protein;
     bool                              is_better_hit;
     bool                              _is_informative;
@@ -121,19 +128,16 @@ private:
     bool                              _is_one_go;
     bool                              _is_one_kegg;
     bool                              _is_expression_kept;
-    int                               _tax_id;
     float                              _tax_score;
     float                              _fpkm;
     unsigned long                     _seq_length;
     double                            _e_val;
     double                            _coverage;
-    std::string                       _yes_no_contam; // just for convenience
+    std::string                       _sequence_p;
+    std::string                       _sequence_n;
+    std::string                       _frame;
     EggnogResults                     _eggnog_results;
     SimSearchResults                  _sim_search_results;
-
-    //TODO switch to map of sim search results
-    std::string _sequence_p, _sequence_n, _frame, _contam_type, _go_str,_kegg_str,
-            _lineage;
     std::map<const std::string*, std::string*> OUTPUT_MAP;
 
 

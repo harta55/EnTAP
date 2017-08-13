@@ -384,12 +384,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
 
             if (is_final) {
                 // TODO fix combining objects, move to class
-                it->second.setSeq_length(pair.second.getSeq_length());
-                it->second.set_sequence_n(pair.second.get_sequence_n());
-                it->second.set_sequence_p(pair.second.get_sequence_p());
-                it->second.setIs_protein(pair.second.isIs_protein());
-                it->second.set_is_expression_kept(pair.second.is_is_expression_kept());
-                pair.second = it->second;
+                pair.second.set_sim_struct(it->second.get_sim_struct());
             }
         }
     }

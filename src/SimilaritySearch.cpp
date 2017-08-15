@@ -213,7 +213,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
         std::string out_base_path = (boostFS::path(_processed_path) / boostFS::path(database_name)).string();
         std::string out_unselected_tsv = (boostFS::path(out_base_path) /
                 boostFS::path(SIM_SEARCH_DATABASE_UNSELECTED)).string();
-
+        boostFS::create_directories(out_base_path);
         std::ofstream file_unselected_tsv(out_unselected_tsv,std::ios::out | std::ios::app);
         std::map<std::string, QuerySequence> database_map;
         print_header(out_unselected_tsv);
@@ -239,7 +239,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
             new_query.set_tax_score(_input_lineage);
             if (evalue > _e_val) {
                 count_under_e++; count_removed++;
-                file_unselected_tsv << new_query <<std::endl;
+                file_unselected_tsv << new_query.print_tsv(DEFAULT_HEADERS) <<std::endl;
                 continue;
             }
             std::map<std::string, QuerySequence>::iterator it = database_map.find(qseqid);
@@ -296,7 +296,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     figure_base = (boostFS::path(base_path) / FIGURE_DIR).string();
     base_bst = base_path;
     boostFS::create_directories(figure_base);
-    boostFS::create_directories(base_path);
+    boostFS::create_directories(base_path);     // should be created before
 
     std::string out_best_contams_tsv             = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_CONTAM_TSV)).string();
     std::string out_best_contams_fa_nucl         = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_CONTAM_FA_NUCL)).string();
@@ -341,13 +341,16 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
 
     for (auto &pair : SEQUENCES) {
         std::map<std::string, QuerySequence>::iterator it = best_hits.find(pair.first);
+        // Check if original sequences have hit a database
         if (it == best_hits.end()) {
-            if (pair.second.isIs_protein()) {
+            if ((pair.second.isIs_protein() && _blastp) || (!pair.second.isIs_protein() && !_blastp)) {
+                // Protein/nucleotide did not hit database
                 count_no_hit++;
-                file_no_hits_nucl << pair.second.get_sequence_n() <<std::endl;
-                file_no_hits_prot << pair.second.get_sequence_p() <<std::endl;
+                file_no_hits_nucl << pair.second.get_sequence_n() << std::endl;
+                file_no_hits_prot << pair.second.get_sequence_p() << std::endl;
             }
         } else {
+            // Have hit a database
             file_best_hits_fa_nucl << pair.second.get_sequence_n()<<std::endl;
             file_best_hits_fa_prot << pair.second.get_sequence_p()<<std::endl;
             file_best_hits_tsv << it->second.print_tsv(DEFAULT_HEADERS) << std::endl;
@@ -383,8 +386,8 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
             } else count_uninformative++;
 
             if (is_final) {
-                // TODO fix combining objects, move to class
                 pair.second.set_sim_struct(it->second.get_sim_struct());
+                pair.second.set_is_database_hit(true);
             }
         }
     }

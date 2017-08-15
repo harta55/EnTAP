@@ -15,8 +15,7 @@ void ExceptionHandler::print_msg() {
     time_t rawtime;
     time(&rawtime);
     std::string date_time = ctime(&rawtime);
-    std::ofstream log_file(
-            "debug.txt", std::ios_base::out | std::ios_base::app );
+    std::ofstream log_file(DEBUG_FILE_PATH, std::ios_base::out | std::ios_base::app );
     std::string added_msg;
 
     switch (err_code) {
@@ -33,7 +32,6 @@ void ExceptionHandler::print_msg() {
     log_file << date_time.substr(0, date_time.size() - 2)
                  + ": \n" + added_msg << std::endl ;
     log_file <<what()<<std::endl;
-
     std::cerr << added_msg << std::endl << what() <<std::endl;
 }
 

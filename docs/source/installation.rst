@@ -9,14 +9,14 @@
 
 Installation
 ==================
+EnTAP is packaged with all of the software necessary to fully annotate a set of transcripts.  It is optimized to allow a single-command execution for all steps in the pathway, including paramterization by the user.  EnTAP does not have a graphical user interface but it does generate visual summaries for the user at each stage as well as detailed summary files and logs.   
 
-The installation process of EnTAP is as follows:
-
+#. :ref:`System Requirements<dep-label>`
 #. :ref:`Dependency Check<dep-label>`
 #. :ref:`Pipeline Software<pipe-label>`
 #. :ref:`EnTAP<entap-label>`
 
-Before full EnTAP installation, dependencies must be checked to see if they are included in your system (many are by default) and the accompanying pipeline software will need to be installed(unless already installed).
+Before full EnTAP installation, dependencies must be checked to see if they are included in your system (many are by default) and the accompanying pipeline software will need to be installed (unless is already present on the system).
 
 
 .. _dep-label:
@@ -90,4 +90,4 @@ Or to install:
 
     make install
 
-This will complete the installation process. Continue on to Basic Usage!
+This will complete the installation process. You are ready to start using EnTAP!

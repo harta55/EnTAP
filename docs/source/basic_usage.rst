@@ -15,21 +15,20 @@
 Basic Usage
 ============
 
-*EnTAP* has two stages of execution, :ref:`configuration<config-label>` and :ref:`run<run-label>`. Configuration is generally ran first (and may only need to be ran once) to setup databases while run is reserved for the main annotation pipeline and can be ran multiple times after initial configuration.
+*EnTAP* has two stages of execution, :ref:`configuration<config-label>` and :ref:`run<run-label>`. Configuration should be completed before the first run and everytime any of the source databases have been updated by the user.  This should also be run if you would like to include the latest version of the NCBI Taxonomy database and the Gene Ontology database.  All of these are updated regularly at the source and you can ensure you have the most recent version by running configuration before your annotation runs.
 
 .. _config-label:
 
 Configuration
 -------------
-Configuration is the first stage of EnTAP that will download and configure the necessary databases for full functionality. This stage may only need to be ran once (unless you'd like to configure more databases for DIAMOND). 
-
+Configuration is the first stage of EnTAP that will download and configure the necessary databases for full functionality. This is run if you would like to change/update the databases that EnTAP is reading from.
 
 Folder Hierarchy
 ^^^^^^^^^^^^^^^^^
 
-Before continuing, I'll explain the folder hierarchy that will be assumed throughout the rest of this tutorial. From this point on, the 'main' or 'exe' directory of EnTAP will refer to the setup as downloaded from the GitLab page. 
+The EnTAP folder organization is refered to as the execution directory where all files will be made available.  The following organization is observed:
 
-This |entap_dir| directory contains:
+The|entap_dir| directory contains:
 
     * |entap_dir| |libs_dir| 
     * |entap_dir| |src_dir|
@@ -68,7 +67,20 @@ This EnTAP directory will be automatically detected (from the EnTAP exe), howeve
 Usage
 ^^^^^
 
-Databases in traditional .fasta (or similar) format must be configured to run with EnTAP for faster similarity searching. This can be done with any database you have previously downloaded and will be configured and sent to the /bin folder within the main EnTAP directory. 
+All source databases must be provided in FASTA format so that they can be indexed for use by DIAMOND.  This can be completed independent of EnTAP with DIAMOND or as part of the configuration phase of EnTAP.  While any FASTA database can be used, it is recommended to use NCBI (Genbank) sourced databases such as RefSeq databases or NR.  In addition, EnTAP can easily accept EBI databases such as UniProt/SwissProt.  EnTAP can read the species information from these header formats.  If the individual FASTAs in a custom database do not adhere to one of these two formats, it will just not be possible to weight examine taxanomic or contaminant status from them.  
+
+The following FTP sites contain common reference databases that enTAP can recognize:
+RefSeq
+Arthropod RefSeq
+Plant RefSeq
+Mammalian RefSeq
+NR
+SwissProt
+UniProt
+....
+
+It is generally recommended that a user select at least three databases with varying levels of NCBI curation.  Unless the species is very non-model (i.e. does not have close relatives in databases such as RefSeq, it is not necessary to use the full NR database which is less curated).
+
 
 To run configuration with a sample database, the command is as follows:
 
@@ -149,7 +161,7 @@ An example run with a nucleotide transcriptome:
     enTAP --runN -i path/to/transcriptome.fasta -d path/to/database.dmnd -d path/to/database2.dmnd -a path/to/alignment.sam
 
 
-With the above command, the entire *enTAP* pipeline will be ran. However, it is entirely possible to skip frame selection by inputting protein transcripts (- -runP) or skip expression filtering by excluding an alignment file. 
+With the above command, the entire *enTAP* pipeline will run. Both frame selection and expression filtering can be skipped if preferred by the user.  EnTAP would require protein sequences (indicated by --runP) in order to avoid frame selection.  If there is not a hosrt read alignment file provided in SAM/BAM format, then expression filtering via RSEM will be skipped. 
 
 
 Flags:

@@ -70,13 +70,13 @@ Usage
 All source databases must be provided in FASTA format so that they can be indexed for use by DIAMOND.  This can be completed independent of EnTAP with DIAMOND or as part of the configuration phase of EnTAP.  While any FASTA database can be used, it is recommended to use NCBI (Genbank) sourced databases such as RefSeq databases or NR.  In addition, EnTAP can easily accept EBI databases such as UniProt/SwissProt.  EnTAP can read the species information from these header formats.  If the individual FASTAs in a custom database do not adhere to one of these two formats, it will just not be possible to weight examine taxanomic or contaminant status from them.  
 
 The following FTP sites contain common reference databases that enTAP can recognize:
-RefSeq
-Arthropod RefSeq
-Plant RefSeq
-Mammalian RefSeq
-NR
-SwissProt
-UniProt
+* RefSeq:
+* Arthropod RefSeq:
+* Plant RefSeq:
+* Mammalian RefSeq:
+* NR:
+* SwissProt:
+* UniProt:
 ....
 
 It is generally recommended that a user select at least three databases with varying levels of NCBI curation.  Unless the species is very non-model (i.e. does not have close relatives in databases such as RefSeq, it is not necessary to use the full NR database which is less curated).

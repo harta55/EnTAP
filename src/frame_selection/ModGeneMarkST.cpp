@@ -217,25 +217,30 @@ void ModGeneMarkST::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
         avg_lost = (float)total_removed_len / count_removed;
         stat_output<<std::fixed<<std::setprecision(2);
         stat_output <<
-                    ENTAP_STATS::SOFTWARE_BREAK                        <<
-                    "Frame Selection: GenemarkS-T"                     <<
-                    "\n"<<ENTAP_STATS::SOFTWARE_BREAK                  <<
-                    "Total sequences frame selected: "                 << count_selected            <<
-                    "\n\tThese protein sequences were written to: "    << _final_out              <<
-                    "\nTotal sequences lost during selection: "        << count_removed             <<
-                    "\n\tThese nucleotide sequences were written to: " << out_removed_path          <<
-                    "\nThere were "          << count_map[FRAME_SELECTION_FIVE_FLAG] <<
-                    " 5 prime partials and " << count_map[FRAME_SELECTION_THREE_FLAG]<<
-                    " 3 prime partials"                                              <<
-                    "\n\tAll partials written to: " << out_partial_path              <<
-                    "\nThere were " << count_map[FRAME_SELECTION_COMPLETE_FLAG]      <<
-                    " complete genes\n\tWritten to: " << out_complete_path           <<
-                    "\nThere were " << count_map[FRAME_SELECTION_INTERNAL_FLAG]      <<
-                    " internal genes\n\tWritten to: " << out_internal_path           <<"\n\n";
+                    ENTAP_STATS::SOFTWARE_BREAK             <<
+                    "Frame Selection: GenemarkS-T\n"        <<
+                    ENTAP_STATS::SOFTWARE_BREAK             <<
+                    "Total sequences frame selected: "      << count_selected          <<
+                    "\n\tTranslated protein sequences: "    << _final_out              <<
+                    "\nTotal sequences removed (no frame): "<< count_removed           <<
+                    "\n\tFrame selected CDS removed: "      << out_removed_path        <<
+                    "\nTotal of "                           <<
+                    count_map[FRAME_SELECTION_FIVE_FLAG]    << " 5 prime partials and "<<
+                    count_map[FRAME_SELECTION_THREE_FLAG]   << " 3 prime partials"     <<
+                    "\n\tPartial CDS: "                     << out_partial_path        <<
+                    "\nTotal of "                           <<
+                    count_map[FRAME_SELECTION_COMPLETE_FLAG]<<" complete genes:\n\t" << out_complete_path<<
+                    "\nTotal of "                           <<
+                    count_map[FRAME_SELECTION_INTERNAL_FLAG]<<" internal genes:\n\t" << out_internal_path<<"\n\n";
+
+        stat_output <<
+                    ENTAP_STATS::SOFTWARE_BREAK                                <<
+                    "Frame Selection: New Reference Transcriptome Statistics\n"<<
+                    ENTAP_STATS::SOFTWARE_BREAK;
 
         kept_n = entapExecute::calculate_N_vals(all_kept_lengths,total_kept_len);
-        stat_output << "New transcriptome reference:"
-                "\n\tTotal sequences: "      << count_selected <<
+        stat_output <<
+                    "\n\tTotal sequences: "      << count_selected <<
                     "\n\tTotal length of transcriptome(bp): "      << total_kept_len <<
                     "\n\tAverage length(bp): "   << avg_selected   <<
                     "\n\tn50: "                  << kept_n.first   <<
@@ -247,7 +252,7 @@ void ModGeneMarkST::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
             std::pair<unsigned long, unsigned long> removed_n =
                     entapExecute::calculate_N_vals(all_lost_lengths,total_removed_len);
             stat_output <<
-                        "\nRejected Sequences (no frame detected):" <<
+                        "\nRemoved Sequences (no frame):"           <<
                         "\n\tTotal sequences: "                     << count_removed    <<
                         "\n\tAverage sequence length(bp): "         << avg_lost         <<
                         "\n\tn50: "                                 << removed_n.first  <<

@@ -711,10 +711,10 @@ namespace entapExecute {
         file_annotated_prot.close();
 
         ss <<
-           ENTAP_STATS::SOFTWARE_BREAK <<
-           "Overall Statistics\n"      <<
-           ENTAP_STATS::SOFTWARE_BREAK <<
-           "Total Sequences: " << count_total_sequences;
+           ENTAP_STATS::SOFTWARE_BREAK          <<
+           "Final Annotation Statistics\n"      <<
+           ENTAP_STATS::SOFTWARE_BREAK          <<
+           "Total Sequences: "                  << count_total_sequences;
 
         if (_EXPRESSION_SUCCESS) {
             ss <<
@@ -724,25 +724,25 @@ namespace entapExecute {
         }
         if (_FRAME_SELETION_SUCCESS) {
             ss <<
-               "\nFrame Selection"    <<
-               "\n\tKept sequences: " << count_frame_kept     <<
-               "\n\tLost sequences: " << count_frame_rejected;
+               "\nFrame Selection"              <<
+               "\n\tTotal sequences retained: " << count_frame_kept     <<
+               "\n\tTotal sequences removed: "  << count_frame_rejected;
         }
         if (_SIM_SEARCH_SUCCESS) {
             ss <<
-               "\nSimilarity Search" <<
-               "\n\tTotal hits: "    << count_sim_hits <<
-               "\n\tNo hits: "       << count_sim_no_hits;
+               "\nSimilarity Search"                               <<
+               "\n\tTotal unique sequences with an alignment: "    << count_sim_hits <<
+               "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits;
         }
         if (_ONTOLOGY_SUCCESS) {
             switch (_ontology_flag) {
                 case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
                     ss <<
                        "\nGene Families"        <<
-                       "\n\tTotal sequences with family assignment: "    << count_ontology   <<
-                       "\n\tTotal sequences without family assignment: " << count_no_ontology<<
-                       "\n\tTotal sequences with at least one GO term: " << count_one_go     <<
-                       "\n\tTotal sequences with at least one pathway (KEGG) assignment: "<< count_one_kegg;
+                       "\n\tTotal unique sequences with family assignment: "    << count_ontology   <<
+                       "\n\tTotal unique sequences without family assignment: " << count_no_ontology<<
+                       "\n\tTotal unique sequences with at least one GO term: " << count_one_go     <<
+                       "\n\tTotal unique sequences with at least one pathway (KEGG) assignment: "   << count_one_kegg;
                     break;
                 case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
                     break;
@@ -752,10 +752,10 @@ namespace entapExecute {
         }
         ss <<
            "\nTotals"   <<
-           "\n\tTotal annotated (similarity search only): "     << count_sim_only      <<
-           "\n\tTotal annotated (ontology only): "              << count_ontology_only <<
-           "\n\tTotal annotated (either): "                     << count_TOTAL_ann     <<
-           "\n\tTotal unannotated (either): "                   << count_TOTAL_unann;
+           "\n\tTotal unique sequences annotated (similarity search alignments only): "      << count_sim_only      <<
+           "\n\tTotal unique sequences annotated (gene family assignment only): "            << count_ontology_only <<
+           "\n\tTotal unique sequences annotated (gene family and/or similarity search): "   << count_TOTAL_ann     <<
+           "\n\tTotal unique sequences unannotated (gene family and/or similarity search): " << count_TOTAL_unann;
 
         out_msg = ss.str();
         print_statistics(out_msg);

@@ -249,9 +249,22 @@ void verify_user_input(boostPO::variables_map& vm) {
             if (vm.count(ENTAP_CONFIG::INPUT_FLAG_SPECIES)) {
                 verify_species(vm);
             }
+
+            // Verify path + extension for alignment file
+            if (vm.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
+                std::string align_file = vm[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>();
+                std::string align_ext = boostFS::path(align_file).extension().string();
+                std::transform(align_ext.begin(), align_ext.end(), align_ext.begin(), ::tolower);
+                if (align_ext.compare(".sam") != 0 || align_ext.compare(".bam") != 0) {
+                    throw ExceptionHandler("Alignment file must have a .bam or .sam extension",
+                                           ENTAP_ERR::E_INPUT_PARSE);
+                }
+                if (!file_exists(align_file)) {
+                    throw ExceptionHandler("Invalid file path for BAM/SAM file, exiting...",
+                                           ENTAP_ERR::E_INIT_TAX_READ);
+                }
+            }
         }
-
-
 
     }catch (const ExceptionHandler &e) {throw e;}
 }
@@ -459,8 +472,8 @@ void print_user_input(boostPO::variables_map &map, std::string& exe, std::string
        ENTAP_STATS::SOFTWARE_BREAK <<
        "Current enTAP Version: "   << ENTAP_CONFIG::ENTAP_VERSION  <<
        "\nStart time: "            << std::ctime(&time)            <<
-       "\nYour working directory has been set to: "  << out        <<
-       "\nYour execution directory has been set to: "<< exe        <<'\n';
+       "\nWorking directory has been set to: "  << out        <<
+       "\nExecution directory has been set to: "<< exe        <<'\n';
 
     for (const auto& it : map) {
         std::string key = it.first.c_str();

@@ -22,6 +22,8 @@ public:
 
 private:
 
+    const std::string RSEM_PREP_REF_EXE     = "rsem-prepare-reference";
+    const std::string RSEM_CALC_EXP_EXE     = "rsem-calculate-expression";
     const std::string GRAPH_TXT_BOX_PLOT    = "comparison_box.txt";
     const std::string GRAPH_PNG_BOX_PLOT    = "comparison_box.png";
     const std::string GRAPH_TITLE_BOX_PLOT  = "Expression_Analysis";

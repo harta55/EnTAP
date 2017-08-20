@@ -47,7 +47,7 @@ private:
     const std::string FRAME_SELECTION_PARTIAL       = "partial_genes.fasta";
     const std::string FRAME_SELECTION_COMPLTE       = "complete_genes.fasta";
     const std::string FRAME_SELECTION_INTERNAL      = "internal_genes.fasta";
-    const std::string FRAME_SELECTION_LOST          = "sequences_lost.fasta";
+    const std::string FRAME_SELECTION_LOST          = "sequences_removed.fasta";
     const std::string FRAME_SELECTION_LOST_FLAG     = "lost";
     const std::string FRAME_SELECTION_FIVE_FLAG     = "Partial 5 Prime";
     const std::string FRAME_SELECTION_THREE_FLAG    = "Partial 3 Prime";

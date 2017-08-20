@@ -193,11 +193,11 @@ void ModEggnog::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
     file_no_hits_nucl.close();
     file_no_hits_prot.close();
 
-    ss << ENTAP_STATS::SOFTWARE_BREAK + "Ontology - Eggnog\n" +
+    ss << ENTAP_STATS::SOFTWARE_BREAK + "Gene Family - Gene Ontology and Pathway - Eggnog\n" +
           ENTAP_STATS::SOFTWARE_BREAK            <<
        "Statistics for overall Eggnog results: " <<
-       "\nTotal sequences with family assignment: " << count_TOTAL_hits <<
-       "\nTotal sequences without family assignment: " <<count_no_hits;
+       "\nTotal unique sequences with family assignment: " << count_TOTAL_hits <<
+       "\nTotal unique sequences without family assignment: " <<count_no_hits;
 
     // -------- Top Ten Taxonomic Scopes ------- //
     if (!tax_scope_ct_map.empty()) {
@@ -230,8 +230,8 @@ void ModEggnog::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
     // --------------------------------------- //
 
     ss<<
-      "\nTotal sequences with at least one GO term: " << count_total_go_hits <<
-      "\nTotal sequences without GO terms: " << count_no_go <<
+      "\nTotal unique sequences with at least one GO term: " << count_total_go_hits <<
+      "\nTotal unique sequences without GO terms: " << count_no_go <<
       "\nTotal GO terms assigned: " << count_total_go_terms;
 
     if (count_total_go_hits > 0) {
@@ -263,12 +263,12 @@ void ModEggnog::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
                 for (count_pair &pair2 : go_vect) {
                     if (ct > 10) break;
                     if (pair2.first.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
-                        ct++;
                         percent = ((float)pair2.second / lvl_ct) * 100;
                         ss <<
                            "\n\t" << ct << ")" << pair2.first << ": " << pair2.second <<
                            "(" << percent << "%)";
                         file_go_bar << pair2.first << '\t' << std::to_string(pair2.second) << std::endl;
+                        ct++;
                     }
                 }
                 file_go_bar.close();
@@ -285,8 +285,8 @@ void ModEggnog::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
 
     }
     ss<<
-      "\nTotal sequences with at least one pathway (KEGG) assignment: " << count_total_kegg_hits<<
-      "\nTotal sequences without pathways (KEGG): " << count_no_kegg<<
+      "\nTotal unique sequences with at least one pathway (KEGG) assignment: " << count_total_kegg_hits<<
+      "\nTotal unique sequences without pathways (KEGG): " << count_no_kegg<<
       "\nTotal pathways (KEGG) assigned: " << count_total_kegg_terms;
     out_msg = ss.str();
     print_statistics(out_msg);

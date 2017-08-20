@@ -259,12 +259,12 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
         file_unselected_tsv.close();
         out_stream<<std::fixed<<std::setprecision(2);
         out_stream << ENTAP_STATS::SOFTWARE_BREAK
-                   << "Similarity Search - Diamond - "<<data<<"\n"
+                   << "Similarity Search - Diamond - "    <<database_name<<"\n"
                    << ENTAP_STATS::SOFTWARE_BREAK <<
-                   "Statistics of file located at: "              << data               <<
-                   "\n\tTotal hits: "                             << count_TOTAL_hits   <<
-                   "\n\tUnselected results: "                     << count_removed      <<
-                   "\n\t\tWritten to: "                           << out_unselected_tsv;
+                   "Search results:\n"            << data <<
+                   "\n\tTotal alignments: "               << count_TOTAL_hits   <<
+                   "\n\tTotal unselected results: "       << count_removed      <<
+                   "\n\t\tWritten to: "                   << out_unselected_tsv;
         calculate_best_stats(SEQUENCES,database_map,out_stream,out_base_path,false);
         std::string out_msg = out_stream.str() + "\n";
         print_statistics(out_msg);
@@ -410,17 +410,17 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     contam_percent = ((double)count_contam / count_filtered) * 100;
 
     ss <<
-       "\n\tUnique hits: "                            << count_filtered     <<
-       "\n\t\tBest fasta hits written to: "           << out_best_hits_fa_prot   <<
-       "\n\t\tBest tsv hits written to: "             << out_best_hits_tsv  <<
-       "\n\tSequences that did not hit: "             << count_no_hit       <<
-       "\n\t\tWritten to: "                           << out_no_hits_fa_prot     <<
-       "\n\tInformative hits: "                       << count_informative  <<
-       "\n\tUninformative hits: "                     << count_uninformative<<
-       "\n\tContaminants: "                           << count_contam       <<
-          "(" << contam_percent << "): "                                    <<
-       "\n\t\tFasta contaminants written to: "        << out_best_contams_fa_prot<<
-       "\n\t\tTsv contaminants written to: "          << out_best_contams_tsv;
+       "\n\tTotal unique transcripts with an alignment: "                              << count_filtered          <<
+       "\n\t\tReference transcriptome sequences with an alignment (FASTA):\n\t\t\t"    << out_best_hits_fa_prot   <<
+       "\n\t\tSearch results (TSV):\n\t\t\t"          << out_best_hits_tsv   <<
+       "\n\tTotal unique transcripts without an alignment: "                 << count_no_hit       <<
+       "\n\t\tReference transcriptome sequences without an alignment (FASTA):\n\t\t\t"    << out_no_hits_fa_prot     <<
+       "\n\tTotal unique informative alignments: "                           << count_informative  <<
+       "\n\tTotal unique uninformative alignments: "                         << count_uninformative<<
+       "\n\tTotal unique contaminants: "                                     << count_contam       <<
+          "(" << contam_percent << "%): "                                    <<
+       "\n\t\tTranscriptome reference sequences labeled as a contaminant (FASTA):\n\t\t\t"<< out_best_contams_fa_prot<<
+       "\n\t\tTranscriptome reference sequences labeled as a contaminant (TSV):\n\t\t\t"  << out_best_contams_tsv;
 
 
     // ********** Contaminant Calculations ************** //
@@ -444,7 +444,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         }
     }
 
-    ss << "\n\tTop 10 species:";
+    ss << "\n\tTop 10 alignments by species:";
     int ct = 1;
     for (count_pair pair : species_vect) {
         if (ct > 10) break;
@@ -508,8 +508,9 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
         }
     }
     out_stream<<std::fixed<<std::setprecision(2);
-    out_stream <<
-            "------Compiled Results (Best hit selection across all databases ------";
+    out_stream << ENTAP_STATS::SOFTWARE_BREAK
+               << "Compiled Similarity Search - Diamond - Best Overall\n"
+               << ENTAP_STATS::SOFTWARE_BREAK;
     out_pair = calculate_best_stats(SEQUENCES,compiled_hit_map,out_stream,_results_path,true);
     out_msg = out_stream.str() + "\n";
     print_statistics(out_msg);

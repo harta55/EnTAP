@@ -255,7 +255,7 @@ void verify_user_input(boostPO::variables_map& vm) {
                 std::string align_file = vm[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>();
                 std::string align_ext = boostFS::path(align_file).extension().string();
                 std::transform(align_ext.begin(), align_ext.end(), align_ext.begin(), ::tolower);
-                if (align_ext.compare(".sam") != 0 || align_ext.compare(".bam") != 0) {
+                if (align_ext.compare(".sam") != 0 && align_ext.compare(".bam") != 0) {
                     throw ExceptionHandler("Alignment file must have a .bam or .sam extension",
                                            ENTAP_ERR::E_INPUT_PARSE);
                 }

@@ -67,7 +67,7 @@ void ModRSEM::execute(std::map<std::string, QuerySequence> &) {
                " --" + bam +
                " -p " + std::to_string(_threads) + " " +
                _alignpath +" "+
-               ref_path +
+               ref_path + " " +
                _exp_out;
     if (_ispaired) rsem_arg += " --paired-end";
     std_out = (boostFS::path(_expression_outpath) / _filename).string() + "_rsem_exp";

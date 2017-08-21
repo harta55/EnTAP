@@ -26,6 +26,9 @@
 
 namespace entapExecute {
 
+
+    //*********************** Globals *****************************
+
     ExecuteStates           state;
     std::string             _frame_selection_exe;
     std::string             _expression_exe;
@@ -36,10 +39,12 @@ namespace entapExecute {
     std::string             _eggnog_db;
     short                   _ontology_flag;
     bool                    _isProtein;
-    bool                    _EXPRESSION_SUCCESS;
+    bool                    _EXPRESSION_SUCCESS;     // True if this stage was ran/success
     bool                    _FRAME_SELETION_SUCCESS;
     bool                    _SIM_SEARCH_SUCCESS;
     bool                    _ONTOLOGY_SUCCESS;
+
+    //**************************************************************
 
 
 /**
@@ -49,12 +54,13 @@ namespace entapExecute {
                          std::unordered_map<std::string, std::string> &config_map)
  *
  * Description          - Entry into main annotation portion of EnTAP, manages
- *                        calling each stage of the pipeline
+ *                        calling each state of the pipeline
  *                      - Calculates overall statistics and parses input
  *                        transcriptome
  *                      - Parses input databases
+ *                      - Determines execution paths based on configuration file
  *
- * Notes                - None
+ * Notes                - Entry
  *
  * @param user_input    - Boost parsed user input flags
  * @param exe_path      - Path to EnTAP executable and main directory
@@ -329,26 +335,26 @@ namespace entapExecute {
     }
 
 
-/**
- * ======================================================================
- * Function std::map<std::string, QuerySequence> init_sequence_map
- *                                  (std::string     &input_file,
-                                     bool            is_complete)
- *
- * Description          - Parses input transcriptome and converts to map of
- *                        each query sequence
- *                      - This map is passed throughout EnTAP execution and
- *                        updated
- *
- * Notes                - None
- *
- * @param input_file    - Path to input transcriptome
- * @param is_complete   - Flag from user if the entire transcriptome is a
- *                        complete gene
- * @return              - None
- *
- * =====================================================================
- */
+    /**
+     * ======================================================================
+     * Function std::map<std::string, QuerySequence> init_sequence_map
+     *                                  (std::string     &input_file,
+                                         bool            is_complete)
+     *
+     * Description          - Parses input transcriptome and converts to map of
+     *                        each query sequence
+     *                      - This map is passed throughout EnTAP execution and
+     *                        updated
+     *
+     * Notes                - None
+     *
+     * @param input_file    - Path to input transcriptome
+     * @param is_complete   - Flag from user if the entire transcriptome is a
+     *                        complete gene
+     * @return              - None
+     *
+     * =====================================================================
+     */
     std::map<std::string, QuerySequence> init_sequence_map(std::string &input_file,
                                                            bool is_complete) {
         print_debug("Processing transcriptome...");
@@ -538,7 +544,23 @@ namespace entapExecute {
     }
 
 
-    //only assuming between 0-9 NO 2 DIGIT STATES
+/**
+ * ======================================================================
+ * Function verify_state(std::queue<char> &queue, bool &test)
+ *
+ * Description          - Computes the next state that will be executed
+ *                        based upon --state flag (default: +)
+ *                      - User input not thoroughly checked and is experimental
+ *                      - Normal functionality just transitions between
+ *                        states as normal
+ *
+ * Notes                - Only assuming between 0-9, no digit states
+ *
+ * @param queue         - State queue as inputted by user (or default '+')
+ * @param test          - Flag used if previous character was a '+'
+ * @return              - None
+ * ======================================================================
+ */
     void verify_state(std::queue<char> &queue, bool &test) {
         print_debug("verifying state...");
         if (queue.empty()) {
@@ -589,12 +611,40 @@ namespace entapExecute {
     }
 
 
+/**
+ * ======================================================================
+ * Function bool valid_state(ExecuteStates s)
+ *
+ * Description          - Ensures computed state from verify_state() func
+ *                        is valid and within the range
+ *
+ * Notes                - None
+ *
+ * @param s             - State to verify
+ * @return              - None
+ * ======================================================================
+ */
     bool valid_state(ExecuteStates s) {
         return (s >= RSEM && s <= EXIT);
     }
 
 
-    // Will be moved to object
+/**
+ * ======================================================================
+ * Function void flag_transcripts(ExecuteStates state,
+ *                              std::map<std::string, QuerySequence>& map)
+ *
+ * Description          - Sets boolean flags if a certain stage is skipped
+ *                        in pipeline
+ *                      - Used for statistics
+ *
+ * Notes                - Will be moved to transcriptome/project object
+ *
+ * @param state         - Current enum state of execution
+ * @param map           - Map of query sequences (keyed to query IDs)
+ * @return              - None
+ * ======================================================================
+ */
     void flag_transcripts(ExecuteStates state, std::map<std::string, QuerySequence>& map) {
         for (auto &pair : map) {
             switch (state) {
@@ -610,9 +660,10 @@ namespace entapExecute {
         }
     }
 
+
 /**
  * ======================================================================
- * Function final_statistics(std::map<std::string, QuerySequence>   &SEQUENCE_MAP)
+ * Function final_statistics(std::map<std::string, QuerySequence> &SEQUENCE_MAP)
  *
  * Description          - Calculates final statistical information after
  *                        completed execution

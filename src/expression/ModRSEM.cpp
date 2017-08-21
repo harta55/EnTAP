@@ -2,11 +2,31 @@
 // Created by harta on 8/11/17.
 //
 
+
+//*********************** Includes *****************************
 #include <csv.h>
 #include <iomanip>
 #include "ModRSEM.h"
 #include "../ExceptionHandler.h"
 
+//**************************************************************
+
+
+/**
+ * ======================================================================
+ * Function std::pair<bool, std::string> ModRSEM::verify_files()
+ *
+ * Description          - Verifies whether the user has ran RSEM previously
+ *                      - Checks for specific output file
+ *
+ * Notes                - None
+ *
+ * @return              - Pair:
+ *                              - True if file has been found
+ *                              - Path to the file (not used, carried over)
+ *
+ * =====================================================================
+ */
 std::pair<bool, std::string> ModRSEM::verify_files() {
 
     boostFS::path                   file_name(_inpath);
@@ -24,6 +44,25 @@ std::pair<bool, std::string> ModRSEM::verify_files() {
     return std::make_pair(false, "");
 }
 
+
+/**
+ * ======================================================================
+ * Function ModRSEM::execute(std::map<std::string, QuerySequence> &)
+ *
+ * Description          - Responsible for executing RSEM with user
+ *                        alignment file
+ *                      - Verifies input SAM/BAM file through RSEM
+ *                      - Prepares a reference from the transcriptome
+ *                      - Execution expression analysis
+ *
+ * Notes                - Incorporates --paired-end flag
+ *
+ * @param map           - Not used
+ *                        complete gene
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void ModRSEM::execute(std::map<std::string, QuerySequence> &) {
     // return path
     print_debug("Running RSEM...");
@@ -77,6 +116,23 @@ void ModRSEM::execute(std::map<std::string, QuerySequence> &) {
     }
 }
 
+
+/**
+ * ======================================================================
+ * Function std::string ModRSEM::filter(std::map<std::string, QuerySequence> & MAP)
+ *
+ * Description          - Handles filtering of transcriptome based on
+ *                        user selected FPKM threshold
+ *                      - Updates master query sequence map
+ *
+ * Notes                - None
+ *
+ * @param MAP           - Master QuerySequence map
+ *
+ * @return              - Output path of sequences that were kept
+ *
+ * =====================================================================
+ */
 std::string ModRSEM::filter(std::map<std::string, QuerySequence> & MAP) {
     print_debug("Beginning to filter transcriptome...");
 
@@ -186,6 +242,23 @@ std::string ModRSEM::filter(std::map<std::string, QuerySequence> & MAP) {
     return out_kept;
 }
 
+
+/**
+ * ======================================================================
+ * Function ModRSEM::rsem_validate_file(std::string filename)
+ *
+ * Description          - Executes rsem-sam-validator
+ *                      - Determines if user inpuuted BAM/SAM file is valid
+ *                        and will continue to expression analysis
+ *
+ * Notes                - None
+ *
+ * @param filename      - Transcriptome name just to label output
+ *
+ * @return              - True if a valid SAM/BAM file
+ *
+ * =====================================================================
+ */
 bool ModRSEM::rsem_validate_file(std::string filename) {
     print_debug("File is detected to be sam file, running validation");
 
@@ -204,6 +277,21 @@ bool ModRSEM::rsem_validate_file(std::string filename) {
 }
 
 
+/**
+ * ======================================================================
+ * Function ModRSEM::rsem_conv_to_bam(std::string file_name)
+ *
+ * Description          - Executes convert-sam-for-rsem
+ *                      - Converts user inputed file to BAM format
+ *
+ * Notes                - Not used
+ *
+ * @param filename      - Transcriptome name just to label output
+ *
+ * @return              - True if conversion was successful
+ *
+ * =====================================================================
+ */
 bool ModRSEM::rsem_conv_to_bam(std::string file_name) {
     print_debug("Converting SAM to BAM");
 
@@ -221,6 +309,7 @@ bool ModRSEM::rsem_conv_to_bam(std::string file_name) {
     return true;
 }
 
+
 void ModRSEM::set_data(int thread, float fpmk, bool paired) {
     _threads = thread;
     _fpkm = fpmk;
@@ -228,6 +317,21 @@ void ModRSEM::set_data(int thread, float fpmk, bool paired) {
 }
 
 
+/**
+ * ======================================================================
+ * Function ModRSEM::is_file_empty(std::string path)
+ *
+ * Description          - Check if specific file is empty (has no lines)
+ *
+ * Notes                - Used for certain RSEM execution that does not
+ *                        relay error code of non-zero on failure
+ *
+ * @param path          - Path to file
+ *
+ * @return              - True if file is empty
+ *
+ * =====================================================================
+ */
 bool ModRSEM::is_file_empty(std::string path) {
     std::ifstream ifstream(path);
     return ifstream.peek() == std::ifstream::traits_type::eof();

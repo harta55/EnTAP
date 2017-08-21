@@ -35,7 +35,7 @@ enum States {
 };
 
 
-States state;   // init
+States state;   // might handle state summary
 std::string _outpath;
 std::string _exe_path;
 std::string _working_dir;

@@ -36,7 +36,7 @@ bool _config;
  * @param argv          - Pushed from main
  * @return              - Pair containing flag if configuration is selected
  *                        and map of user parsed flags
- * =====================================================================
+ * ======================================================================
  */
 std::pair<bool, boostPO::variables_map> entap_user_parse(int argc, const char** argv) {
 
@@ -69,7 +69,7 @@ std::pair<bool, boostPO::variables_map> entap_user_parse(int argc, const char** 
  * @param argc          - Pushed from main
  * @param argv          - Pushed from main
  * @return              - Variable map of user input flags
- * =====================================================================
+ * ======================================================================
  */
 boost::program_options::variables_map parse_arguments_boost(int argc, const char** argv) {
     print_debug("Parsing user input...");
@@ -270,6 +270,19 @@ void verify_user_input(boostPO::variables_map& vm) {
 }
 
 
+/**
+ * ======================================================================
+ * Function void verify_databases(boostPO::variables_map& vm)
+ *
+ * Description          - Ensures the user is entering valid databases
+ *                        and flags
+ *
+ * Notes                - Not really currently used, will be updated
+ *
+ * @param exe           - Boost variable map of user input
+ * @return              - None
+ * ======================================================================
+ */
 void verify_databases(boostPO::variables_map& vm) {
 
     databases_t     uniprot_data;
@@ -332,7 +345,7 @@ void verify_databases(boostPO::variables_map& vm) {
  *
  * @param exe           - Path to EnTAP executable or main directory
  * @return              - Map of keys to user parameters
- * =====================================================================
+ * ======================================================================
  */
 std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
     print_debug("Parsing configuration file...");
@@ -505,6 +518,20 @@ void print_user_input(boostPO::variables_map &map, std::string& exe, std::string
 }
 
 
+/**
+ * ======================================================================
+ * Function void verify_species(boostPO::variables_map &map)
+ *
+ * Description          - Verify species/tax level input by the user
+ *                      - Ensure it can be found within the tax database
+ *                      - Ensure it's in the right format
+ *
+ * Notes                - None
+ *
+ * @param exe           - Boost map of user inputs
+ * @return              - None
+ * ======================================================================
+ */
 void verify_species(boostPO::variables_map &map) {
 
     std::string species;
@@ -518,6 +545,5 @@ void verify_species(boostPO::variables_map &map) {
                                        "separated by a '_'", ENTAP_ERR::E_INPUT_PARSE);
     }
 
-
-
+    // TODO check it can be found within tax database
 }

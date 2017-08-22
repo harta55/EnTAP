@@ -14,8 +14,6 @@
 #include <sstream>
 #include "EntapGlobals.h"
 
-
-
 namespace ENTAP_EXECUTE {
     //------------------------Ontology-------------------------//
     const std::string GO_BIOLOGICAL_FLAG = "biological_process";
@@ -55,10 +53,65 @@ namespace ENTAP_EXECUTE {
     const std::string HEADER_EGG_DESC  = "Eggnog Description";
     const std::string HEADER_EGG_LEVEL = "Full Tax Scope";
     const std::string HEADER_EGG_PROTEIN = "Protein Domains";
-
-
 }
 
+namespace ENTAP_CONFIG {
+
+    const std::string ENTAP_VERSION  = "0.7.3";
+    const std::string DEBUG_FILENAME = "debug.txt";
+    const std::string LOG_FILENAME   = "log_file.txt";
+
+    //------------------USER INPUTS-----------------------//
+    const std::string INPUT_FLAG_CONFIG        = "config";
+    const std::string INPUT_FLAG_ALIGN         = "align";
+    const std::string INPUT_FLAG_RUNPROTEIN    = "runP";
+    const std::string INPUT_FLAG_RUNNUCLEOTIDE = "runN";
+    const std::string INPUT_FLAG_OVERWRITE     = "overwrite";
+    const std::string INPUT_FLAG_NCBI_1        = "ncbi";
+    const std::string INPUT_FLAG_NCBI_2        = "N";
+    const std::string INPUT_FLAG_UNIPROT       = "uniprot";
+    const std::string INPUT_FLAG_INTERPRO      = "protein";
+    const std::string INPUT_FLAG_ONTOLOGY      = "ontology";
+    const std::string INPUT_FLAG_SPECIES       = "species";
+    const std::string INPUT_FLAG_QCOVERAGE     = "qcoverage";
+    const std::string INPUT_FLAG_TCOVERAGE     = "tcoverage";
+    const std::string INPUT_FLAG_COMPLETE      = "complete";
+    const std::string INPUT_FLAG_GO_LEVELS     = "level";
+    const std::string INPUT_FLAG_EXE_PATH      = "paths";
+    const std::string INPUT_FLAG_FPKM          = "fpkm";
+    const std::string INPUT_FLAG_DATA_OUT      = "database-out";
+    const std::string INPUT_FLAG_CONTAM        = "contam";
+    const std::string INPUT_FLAG_E_VAL         = "e";
+    const std::string INPUT_FLAG_HELP          = "help";
+    const std::string INPUT_FLAG_VERSION       = "version";
+    const std::string INPUT_FLAG_TRANSCRIPTOME = "input";
+    const std::string INPUT_FLAG_DATABASE      = "database";
+
+    const std::string INPUT_UNIPROT_SWISS      = "swiss";
+    const std::string INPUT_UNIPROT_UR100      = "ur100";
+    const std::string INPUT_UNIPROT_UR90       = "ur90";
+    const std::string INPUT_UNIPROT_TREMBL     = "trembl";
+    const std::string INPUT_UNIPROT_NULL       = "null";
+    const std::string INPUT_UNIPROT_DEFAULT    = INPUT_UNIPROT_SWISS;
+
+    const std::string UNIPROT_BASE_PATH = "/databases/uniprot_";
+    const std::string UNIPROT_INDEX_PATH = "/bin/uniprot_";
+
+    const std::string NCBI_NONREDUNDANT = "nr";
+    const std::string NCBI_BASE_PATH = "/databases/ncbi_";
+    const std::string NCBI_REFSEQ_COMP = "refseq-c";
+    const std::string NCBI_REFSEQ_PLANT = "refseq-p";
+    const std::string NCBI_NULL = "null";
+    const std::string NCBI_DEFAULT = NCBI_REFSEQ_COMP;
+
+    const std::string BIN_PATH          = "bin/";
+    const std::string DATABASE_DIR      = "databases/";
+    const std::string NCBI_INDEX_PATH   = "/bin/ncbi_";
+    const std::string GO_DB_PATH        = "/bin/go_term.entp";
+    const std::string GO_TERM_FILE      = "/databases/term.txt";
+    const std::string TAX_DATABASE_PATH = "/databases/ncbi_tax.entp";
+    const std::string TAX_BIN_PATH      = "/bin/ncbi_tax_bin.entp";
+}
 
 
 

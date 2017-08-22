@@ -16,15 +16,14 @@
 
 
 SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::string input,
-                           int threads, std::string exe, std::string out,std::string entap_exe,
-                           boost::program_options::variables_map &user_flags, GraphingManager *graphingManager) {
+                           int threads, std::string out, boost::program_options::variables_map &user_flags,
+                                   GraphingManager *graphingManager) {
     print_debug("Spawn object - SimilaritySearch");
     _database_paths = databases;
     _input_path = input;
     _threads = threads;
-    _diamond_exe = exe;
+    _diamond_exe = DIAMOND_EXE;
     _outpath = out;
-    _entap_exe = entap_exe;
     _input_species = "";
     if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_SPECIES)) {
         _input_species = user_flags[ENTAP_CONFIG::INPUT_FLAG_SPECIES].as<std::string>();
@@ -523,16 +522,14 @@ std::unordered_map<std::string, std::string> SimilaritySearch::read_tax_map() {
     print_debug("Reading taxonomic database into memory...");
 
     std::unordered_map<std::string, std::string> restored_map;
-    std::string tax_path;
 
-    tax_path = (boostFS::path(_entap_exe) / boostFS::path(ENTAP_CONFIG::TAX_BIN_PATH)).string();
-    if (!file_exists(tax_path)) {
+    if (!file_exists(TAX_DB_PATH)) {
         throw ExceptionHandler("NCBI Taxonomic database not found at: " +
-            tax_path,ENTAP_ERR::E_INIT_TAX_READ);
+            TAX_DB_PATH,ENTAP_ERR::E_INIT_TAX_READ);
     }
     try {
         {
-            std::ifstream ifs(tax_path);
+            std::ifstream ifs(TAX_DB_PATH);
             boost::archive::binary_iarchive ia(ifs);
             ia >> restored_map;
         }

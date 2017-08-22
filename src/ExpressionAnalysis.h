@@ -13,8 +13,8 @@
 
 class ExpressionAnalysis {
 public:
-    ExpressionAnalysis(std::string&, int, std::string&, std::string&,
-                       boost::program_options::variables_map&, GraphingManager*);
+    ExpressionAnalysis(std::string&, int, std::string&,boost::program_options::variables_map&,
+                       GraphingManager*);
     std::string execute(std::string, std::map<std::string, QuerySequence>& );
 
 private:

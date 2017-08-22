@@ -25,8 +25,7 @@ class Ontology {
 public:
 
     void execute(query_map_struct&,std::string,std::string);
-    Ontology(int,std::string,std::string,std::string,std::string,
-             boost::program_options::variables_map &, std::string, GraphingManager*);
+    Ontology(int,std::string,std::string, boost::program_options::variables_map &,GraphingManager*);
 
 private:
 
@@ -44,7 +43,6 @@ private:
     int                             _threads;
     short                           _software_flag;
     bool                            _is_overwrite;
-    std::string                     _entap_exe;
     std::string                     _ontology_exe;
     std::string                     _outpath;
     std::string                     _new_input;

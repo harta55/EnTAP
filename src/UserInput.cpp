@@ -18,7 +18,17 @@
 //**************************************************************
 
 bool _config;
-
+std::string RSEM_EXE_DIR;
+std::string GENEMARK_EXE;
+std::string DIAMOND_EXE;
+std::string EGG_EMAPPER_EXE;
+std::string EGG_SQL_DB_PATH;
+std::string EGG_DOWNLOAD_EXE;
+std::string INTERPRO_EXE;
+std::string TAX_DB_PATH;
+std::string TAX_DOWNLOAD_EXE;
+std::string GO_DB_PATH;
+std::string GRAPHING_EXE;
 
 /**
  * ======================================================================
@@ -42,7 +52,6 @@ std::pair<bool, boostPO::variables_map> entap_user_parse(int argc, const char** 
 
     boostPO::variables_map user_inputs;
     std::pair<bool, boostPO::variables_map> out_pair;
-
     try {
         _config = false;
         user_inputs = parse_arguments_boost(argc, argv);
@@ -347,27 +356,27 @@ void verify_databases(boostPO::variables_map& vm) {
  * @return              - Map of keys to user parameters
  * ======================================================================
  */
-std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
+std::unordered_map<std::string,std::string> parse_config(std::string &config,std::string &exe) {
     print_debug("Parsing configuration file...");
 
     std::unordered_map<std::string,std::string> config_map;
-    std::string                                 config_path;
     std::string                                 line;
     std::string                                 key;
     std::string                                 val;
 
-    config_path = (boostFS::path(exe) / boostFS::path(ENTAP_CONFIG::CONFIG_FILE)).string();
-    if (!file_exists(config_path)){
+    if (!file_exists(config)){
         print_debug("Config file not found, generating new file...");
         try {
-            generate_config(config_path);
+            generate_config(config);
         } catch (std::exception &e){
             throw ExceptionHandler(e.what(),ENTAP_ERR::E_CONFIG_CREATE);
         }
         print_debug("Config file successfully created");
+        throw ExceptionHandler("Configuration file generated at: " + config,
+            ENTAP_ERR::E_CONFIG_CREATE_SUCCESS);
     }
-    print_debug("Config file found at: " + config_path);
-    std::ifstream in_file(config_path);
+    print_debug("Config file found at: " + config);
+    std::ifstream in_file(config);
     while (std::getline(in_file,line)) {
         std::istringstream in_line(line);
         if (std::getline(in_line,key,'=')) {
@@ -382,6 +391,7 @@ std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
         }
     }
     print_debug("Success!");
+    init_exe_paths(config_map,exe);
     return config_map;
 }
 
@@ -402,20 +412,17 @@ std::unordered_map<std::string,std::string> parse_config(std::string &exe) {
 void generate_config(std::string &path) {
     std::ofstream config_file(path, std::ios::out | std::ios::app);
     config_file <<
-                ENTAP_CONFIG::KEY_UNIPROT_SWISS             +"=\n"+
-                ENTAP_CONFIG::KEY_UNIPROT_TREMBL            +"=\n"+
-                ENTAP_CONFIG::KEY_UNIPROT_UR90              +"=\n"+
-                ENTAP_CONFIG::KEY_UNIPROT_UR100             +"=\n"+
-                ENTAP_CONFIG::KEY_NCBI_NR                   +"=\n"+
-                ENTAP_CONFIG::KEY_NCBI_REFSEQ_COMPLETE      +"=\n"+
-                ENTAP_CONFIG::KEY_NCBI_REFSEQ_SEPARATE      +"=\n"+
-                ENTAP_CONFIG::KEY_DIAMOND_EXE               +"=\n"+
-                ENTAP_CONFIG::KEY_RSEM_EXE                  +"=\n"+
-                ENTAP_CONFIG::KEY_GENEMARK_EXE              +"=\n"+
-                ENTAP_CONFIG::KEY_EGGNOG_EXE                +"=\n"+
-                ENTAP_CONFIG::KEY_EGGNOG_DOWN               +"=\n"+
-                ENTAP_CONFIG::KEG_EGGNOG_DMND_DB            +"=\n"+
-                ENTAP_CONFIG::KEY_INTERPRO_EXE
+                KEY_DIAMOND_EXE               <<"=\n"<<
+                KEY_RSEM_EXE                  <<"=\n"<<
+                KEY_GENEMARK_EXE              <<"=\n"<<
+                KEY_EGGNOG_EXE                <<"=\n"<<
+                KEY_EGGNOG_DOWN               <<"=\n"<<
+                KEY_EGGNOG_DB                 <<"=\n"<<
+                KEY_INTERPRO_EXE              <<"=\n"<<
+                KEY_TAX_DB                    <<"=\n"<<
+                KEY_TAX_DOWNLOAD_EXE          <<"=\n"<<
+                KEY_GO_DB                     <<"=\n"<<
+                KEY_GRAPH_SCRIPT              <<"=\n"
                 << std::endl;
     config_file.close();
 }
@@ -435,20 +442,17 @@ void generate_config(std::string &path) {
  * =====================================================================
  */
 bool check_key(std::string& key) {
-    if (key.compare(ENTAP_CONFIG::KEY_NCBI_NR)==0) return true;
-    if (key.compare(ENTAP_CONFIG::KEY_NCBI_REFSEQ_COMPLETE)==0) return true;
-    if (key.compare(ENTAP_CONFIG::KEY_NCBI_REFSEQ_SEPARATE)==0) return true;
-    if (key.compare(ENTAP_CONFIG::KEY_UNIPROT_SWISS)==0) return true;
-    if (key.compare(ENTAP_CONFIG::KEY_UNIPROT_TREMBL)==0) return true;
-    if (key.compare(ENTAP_CONFIG::KEY_UNIPROT_UR100)==0) return true;
-    if (key.compare(ENTAP_CONFIG::KEY_DIAMOND_EXE)==0) return true;
-    if (key.compare(ENTAP_CONFIG::KEY_GENEMARK_EXE)==0) return true;
-    if (key.compare(ENTAP_CONFIG::KEY_UNIPROT_UR90)==0) return true;
-    if (key.compare(ENTAP_CONFIG::KEY_EGGNOG_EXE)==0) return true;
-    if (key.compare(ENTAP_CONFIG::KEY_EGGNOG_DOWN)==0) return true;
-    if (key.compare(ENTAP_CONFIG::KEG_EGGNOG_DMND_DB)==0) return true;
-    if (key.compare(ENTAP_CONFIG::KEY_INTERPRO_EXE)==0) return true;
-    return key.compare(ENTAP_CONFIG::KEY_RSEM_EXE) == 0;
+    if (key.compare(KEY_DIAMOND_EXE)==0)      return true;
+    if (key.compare(KEY_GENEMARK_EXE)==0)     return true;
+    if (key.compare(KEY_EGGNOG_EXE)==0)       return true;
+    if (key.compare(KEY_EGGNOG_DOWN)==0)      return true;
+    if (key.compare(KEY_EGGNOG_DB)==0)        return true;
+    if (key.compare(KEY_INTERPRO_EXE)==0)     return true;
+    if (key.compare(KEY_TAX_DB)==0)           return true;
+    if (key.compare(KEY_GO_DB)==0)            return true;
+    if (key.compare(KEY_TAX_DOWNLOAD_EXE)==0) return true;
+    if (key.compare(KEY_GRAPH_SCRIPT)==0)     return true;
+    return key.compare(KEY_RSEM_EXE) == 0;
 }
 
 
@@ -546,4 +550,99 @@ void verify_species(boostPO::variables_map &map) {
     }
 
     // TODO check it can be found within tax database
+}
+
+
+
+/**
+ * ======================================================================
+ * Description      - Finds exe paths for each piece of pipeline. WARNING: does not
+ *                    check for validity of exe paths (as some parts may not want to be
+ *                    ran)
+ *
+ * @param map       - Map of entap_config file
+ * @param exe       - EnTAP execution directory
+ * @return          - DIAMOND .exe path ran by enTAP::Init
+ * ======================================================================
+ */
+void init_exe_paths(std::unordered_map<std::string, std::string> &map, std::string exe) {
+    print_debug("Assigning execution paths. Note they are not checked for validity...");
+
+    std::stringstream                  ss;
+    std::string                        out_msg;
+    boostFS::path                      exe_path(exe);
+    std::pair<std::string,std::string> outpair;
+    std::string temp_rsem              = map[KEY_RSEM_EXE];
+    std::string temp_diamond           = map[KEY_DIAMOND_EXE];
+    std::string temp_genemark          = map[KEY_GENEMARK_EXE];
+    std::string temp_eggnog            = map[KEY_EGGNOG_EXE];
+    std::string temp_interpro          = map[KEY_INTERPRO_EXE];
+    std::string temp_eggnog_down       = map[KEY_EGGNOG_DOWN];
+    std::string temp_eggnog_db         = map[KEY_EGGNOG_DB];
+    std::string temp_tax_db            = map[KEY_TAX_DB];
+    std::string temp_go_db             = map[KEY_GO_DB];
+    std::string temp_tax_download      = map[KEY_TAX_DOWNLOAD_EXE];
+    std::string temp_graphing          = map[KEY_GRAPH_SCRIPT];
+
+    // Included software paths
+    if (temp_rsem.empty())    temp_rsem           = PATHS(exe_path,Defaults::D_MAP.at(KEY_RSEM_EXE));
+    if (temp_diamond.empty()) temp_diamond        = PATHS(exe_path,Defaults::D_MAP.at(KEY_DIAMOND_EXE));
+    if (temp_genemark.empty())temp_genemark       = PATHS(exe_path,Defaults::D_MAP.at(KEY_GENEMARK_EXE));
+    if (temp_eggnog.empty())  temp_eggnog         = PATHS(exe_path,Defaults::D_MAP.at(KEY_EGGNOG_EXE));
+    if (temp_eggnog_down.empty())temp_eggnog_down = PATHS(exe_path,Defaults::D_MAP.at(KEY_EGGNOG_DOWN));
+    if (temp_eggnog_db.empty())  temp_eggnog_db   = PATHS(exe_path,Defaults::D_MAP.at(KEY_EGGNOG_DB));
+    if (temp_interpro.empty())   temp_interpro    = PATHS(exe_path,Defaults::D_MAP.at(KEY_INTERPRO_EXE));
+
+    // EnTAP paths
+    if (temp_tax_db.empty()) temp_tax_db     = PATHS(exe_path, Defaults::D_MAP.at(KEY_TAX_DB));
+    if (temp_tax_download.empty()) temp_tax_download = PATHS(exe_path, Defaults::D_MAP.at(KEY_TAX_DOWNLOAD_EXE));
+    if (temp_go_db.empty()) temp_go_db       = PATHS(exe_path, Defaults::D_MAP.at(KEY_GO_DB));
+    if (temp_graphing.empty()) temp_graphing = PATHS(exe_path, Defaults::D_MAP.at(KEY_GRAPH_SCRIPT));
+
+    ss <<
+       "\nRSEM Directory: "                  << temp_rsem         <<
+       "\nGeneMarkS-T: "                     << temp_genemark     <<
+       "\nDIAMOND: "                         << temp_diamond      <<
+       "\nEggNOG Emapper: "                  << temp_eggnog       <<
+       "\nEggNOG Download: "                 << temp_eggnog_down  <<
+       "\nEggNOG Database: "                 << temp_eggnog_db    <<
+       "\nEnTAP Taxonomic Database: "        << temp_tax_db       <<
+       "\nEnTAP Taxonomic Download Script: " << temp_tax_download <<
+       "\nEnTAP Gene Ontology Database: "    << temp_go_db        <<
+       "\nEnTAP Graphing Script: "           << temp_graphing;
+
+    out_msg = ss.str();
+    print_debug(out_msg);
+    print_statistics(out_msg);
+
+    DIAMOND_EXE      = temp_diamond;
+    GENEMARK_EXE     = temp_genemark;
+    RSEM_EXE_DIR     = temp_rsem;
+    EGG_SQL_DB_PATH  = temp_eggnog_db;
+    EGG_DOWNLOAD_EXE = temp_eggnog_down;
+    EGG_EMAPPER_EXE  = temp_eggnog;
+    INTERPRO_EXE     = temp_interpro;
+    TAX_DB_PATH      = temp_tax_db;
+    TAX_DOWNLOAD_EXE = temp_tax_download;
+    GO_DB_PATH       = temp_go_db;
+    GRAPHING_EXE     = temp_graphing;
+
+    print_debug("Success! All exe paths set");
+}
+
+
+std::string get_exe_path(boostPO::variables_map &vm) {
+    //TODO check different systems
+    if (vm.count(ENTAP_CONFIG::INPUT_FLAG_EXE_PATH)) {
+        return vm[ENTAP_CONFIG::INPUT_FLAG_EXE_PATH].as<std::string>();
+    }
+    char buff[1024];
+    ssize_t len = ::readlink("/proc/self/exe", buff, sizeof(buff)-1);
+    if (len != -1) {
+        buff[len] = '\0';
+        std::string path = std::string(buff);
+        boost::filesystem::path p(path);p.remove_filename();
+        return p.string();
+    }
+    return "";
 }

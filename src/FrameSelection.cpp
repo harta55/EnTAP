@@ -16,12 +16,12 @@
 namespace boostFS = boost::filesystem;
 
 // can accept version/other for dependency injection
-FrameSelection::FrameSelection(std::string &input, std::string &exe, std::string &out,
+FrameSelection::FrameSelection(std::string &input, std::string &out,
                                boost::program_options::variables_map &user_flags,
                                GraphingManager *graphingManager) {
     print_debug("Spawn object - FrameSelection");
     _graphingManager = graphingManager;
-    _exe_path        = exe;
+    _exe_path        = GENEMARK_EXE;
     _outpath         = out;
     _inpath          = input;
     _overwrite       = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);

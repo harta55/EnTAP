@@ -30,13 +30,8 @@ namespace entapExecute {
     //*********************** Globals *****************************
 
     ExecuteStates           state;
-    std::string             _frame_selection_exe;
-    std::string             _expression_exe;
-    std::string             _diamond_exe;
     std::string             _outpath;
     std::string             _entap_outpath;
-    std::string             _ontology_exe;
-    std::string             _eggnog_db;
     short                   _ontology_flag;
     bool                    _isProtein;
     bool                    _EXPRESSION_SUCCESS;     // True if this stage was ran/success
@@ -70,8 +65,7 @@ namespace entapExecute {
  *
  * =====================================================================
  */
-    void execute_main(boost::program_options::variables_map &user_input, std::string exe_path,
-                      std::unordered_map<std::string, std::string> &config_map) {
+    void execute_main(boost::program_options::variables_map &user_input) {
         print_debug("enTAP Executing...");
 
         std::map<std::string, QuerySequence>    SEQUENCE_MAP;    // Maintained/updated throughout
@@ -80,7 +74,6 @@ namespace entapExecute {
         std::pair<std::string,std::string>      diamond_pair;    // best_hits.fa,no_hits.fa
         std::string                             input_path;      // FASTA changes depending on execution
         std::string                             no_database_hits;// No DIAMOND
-        std::string                             graph_path;
         std::queue<char>                        state_queue;
         bool                                    state_flag;
         bool                                    is_complete;    // All input sequences are complete genes
@@ -106,7 +99,6 @@ namespace entapExecute {
         _entap_outpath = (boostFS::path(_outpath) / boostFS::path(ENTAP_OUTPUT)).string();
         boostFS::create_directories(_entap_outpath);
         boostFS::create_directories(_outpath);
-        graph_path = (boostFS::path(exe_path) /boostFS::path(GRAPH_FILEPATH)).string();
 
         // init_databases
         if (user_input.count("database")) {
@@ -124,19 +116,16 @@ namespace entapExecute {
         try {
             databases = verify_databases(user_input["uniprot"].as<std::vector<std::string>>(),
                                          user_input["ncbi"].as<std::vector<std::string>>(),
-                                         other_databases, exe_path, config_map);
-            init_exe_paths(config_map, exe_path);
+                                         other_databases, "");
             verify_state(state_queue, state_flag);
             SEQUENCE_MAP = init_sequence_map(input_path, is_complete);
-            GraphingManager graphingManager = GraphingManager(graph_path);
-            FrameSelection genemark = FrameSelection(input_path, _frame_selection_exe,
-                                                     _outpath, user_input, &graphingManager);
-            ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads, _expression_exe,
+            GraphingManager graphingManager = GraphingManager(GRAPHING_EXE);
+            FrameSelection genemark = FrameSelection(input_path,_outpath, user_input, &graphingManager);
+            ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads,
                                                          _outpath, user_input, &graphingManager);
-            SimilaritySearch diamond = SimilaritySearch(databases, input_path, threads, _diamond_exe,
-                                                        _outpath, exe_path,user_input, &graphingManager);
-            Ontology ontology = Ontology(threads,_ontology_exe,_outpath,exe_path,input_path,
-                                         user_input, _eggnog_db, &graphingManager);
+            SimilaritySearch diamond = SimilaritySearch(databases, input_path, threads,
+                                                        _outpath,user_input, &graphingManager);
+            Ontology ontology = Ontology(threads,_outpath,input_path, user_input, &graphingManager);
 
             while (state != EXIT) {
                 switch (state) {
@@ -193,8 +182,7 @@ namespace entapExecute {
 
 
     std::vector<std::string> verify_databases(std::vector<std::string> uniprot, std::vector<std::string> ncbi,
-                                            std::vector<std::string> database, std::string &exe,
-                                            std::unordered_map<std::string, std::string> &config) {
+                                            std::vector<std::string> database, std::string exe) {
         print_debug("Verifying databases...");
         // return file paths
         // config file paths already exist (checked in main)
@@ -202,6 +190,7 @@ namespace entapExecute {
         std::string                     path;
         std::string                     config_path;
 
+#if NCBI_UNIPROT
         print_debug("Verifying uniprot databases...");
         if (uniprot.size() > 0) {
             for (auto const &u_flag:uniprot) {
@@ -260,6 +249,8 @@ namespace entapExecute {
             }
         }
         print_debug("Complete");
+
+#endif
         print_debug("Verifying other databases...");
         if (database.size() > 0) {
             for (auto const &data_path:database) {
@@ -271,14 +262,13 @@ namespace entapExecute {
                 boostFS::path bpath(data_path);
                 std::string ext = bpath.extension().string();
                 if (ext.compare(".dmnd") == 0) {
-                    print_debug("User has input a diamond indexed database at: " +
-                                         data_path);
+                    print_debug("User has input a diamond indexed database at: " + data_path);
                     file_paths.push_back(data_path);
                     continue;
                 } else {
-                    //todo fix
+                    //todo fix not really used yet
                     print_debug("User has input a database at: " + data_path);
-                    std::string test_path = exe + ENTAP_CONFIG::BIN_PATH + data_path + ".dmnd";
+                    std::string test_path = PATHS(exe,ENTAP_CONFIG::BIN_PATH) + data_path + ".dmnd";
                     print_debug("Checking if indexed file exists at: " + test_path);
                     if (!file_exists(test_path)) {
                         throw ExceptionHandler("Database located at: " + data_path + " not found",
@@ -297,8 +287,7 @@ namespace entapExecute {
             }
             print_debug(database_final);
         } else {
-            print_debug("No databases selected, some funcionality "
-                                         "may not be able to run");
+            print_debug("No databases selected, some functionality may not be able to run");
         }
         return file_paths;
     }
@@ -377,8 +366,7 @@ namespace entapExecute {
         std::pair<unsigned long, unsigned long>  n_vals;
 
         if (!file_exists(input_file)) {
-            throw ExceptionHandler("Input file not found at: " + input_file,
-                                   ENTAP_ERR::E_INPUT_PARSE);
+            throw ExceptionHandler("Input file not found at: " + input_file,ENTAP_ERR::E_INPUT_PARSE);
         }
 
         boostFS::path path(input_file);
@@ -466,81 +454,6 @@ namespace entapExecute {
             }
         }
         return std::pair<unsigned long, unsigned long> (n_50,n_90);
-    }
-
-
-    /**
-     * Description      - Finds exe paths for each piece of pipeline. WARNING: does not
-     *                    check for validity of exe paths (as some parts may not want to be
-     *                    ran)
-     *
-     * @param map       - Map of entap_config file
-     * @param exe       - enTAP execution directory
-     * @return          - DIAMOND .exe path ran by enTAP::Init
-     */
-    std::pair<std::string,std::string> init_exe_paths(std::unordered_map<std::string,
-            std::string> &map, std::string exe) {
-        print_debug("Verifying execution paths. Note they are not checked for validity...");
-
-        boostFS::path                      exe_path(exe);
-        std::pair<std::string,std::string> outpair;
-        std::string temp_rsem              = map[ENTAP_CONFIG::KEY_RSEM_EXE];
-        std::string temp_diamond           = map[ENTAP_CONFIG::KEY_DIAMOND_EXE];
-        std::string temp_genemark          = map[ENTAP_CONFIG::KEY_GENEMARK_EXE];
-        std::string temp_eggnog            = map[ENTAP_CONFIG::KEY_EGGNOG_EXE];
-        std::string temp_interpro          = map[ENTAP_CONFIG::KEY_INTERPRO_EXE];
-        std::string temp_eggnog_down       = map[ENTAP_CONFIG::KEY_EGGNOG_DOWN];
-        std::string temp_eggnog_db         = map[ENTAP_CONFIG::KEG_EGGNOG_DMND_DB];
-
-        if (_ontology_flag>1 || _ontology_flag<0) {
-            throw ExceptionHandler("Annotation flag must be either 0(eggnog) or"
-                                           "1(interproscan)", ENTAP_ERR::E_CONFIG_PARSE);}
-        if (temp_rsem.empty()) {
-            temp_rsem = (exe_path / boostFS::path(RSEM_EXE_PATH)).string();
-            print_debug("RSEM config path empty, setting to default: " + temp_rsem);
-        } else print_debug("RSEM path set to: " + temp_rsem);
-
-        if (temp_diamond.empty()) {
-            temp_diamond = (exe_path / boostFS::path(DIAMOND_PATH_EXE)).string();
-            print_debug("DIAMOND config path empty, setting to default: "+temp_diamond);
-        } else print_debug("DIAMOND path set to: " + temp_diamond);
-
-        if (temp_genemark.empty()) {
-            temp_genemark = (exe_path / boostFS::path(GENEMARK_EXE_PATH)).string();
-            print_debug("GenemarkS-T config path empty, setting to default: "+temp_genemark);
-        } else print_debug("GenemarkS-T path set to: " + temp_genemark);
-
-        if (temp_eggnog.empty()) {
-            temp_eggnog = (exe_path / boostFS::path(EGGNOG_EMAPPER_EXE)).string();
-            print_debug("Eggnog config path empty, setting to default: " + temp_eggnog);
-        } else print_debug("Eggnog emapper path set to: " + temp_eggnog);
-
-        if (temp_eggnog_down.empty()) {
-            temp_eggnog_down = (exe_path / boostFS::path(EGGNOG_DOWNLOAD_EXE)).string();
-            print_debug("Eggnog config path empty, setting to default: " + temp_eggnog_down);
-        } else print_debug("Eggnog download path set to: " + temp_eggnog_down);
-
-        if (temp_eggnog_db.empty()) {
-            temp_eggnog_db = (exe_path / boostFS::path(EGGNOG_SQL_DB_DEF)).string();
-            print_debug("Eggnog config path empty, setting to default: " + temp_eggnog_db);
-        } else print_debug("Eggnog database path set to: " + temp_eggnog_db);
-
-        if (temp_interpro.empty()) {
-            temp_interpro = (exe_path / boostFS::path(INTERPRO_EXE)).string();
-            print_debug("Interpro config path empty, setting to default: "+temp_interpro);
-        } else print_debug("Interpro path set to: " + temp_interpro);
-
-        _diamond_exe = temp_diamond;
-        _frame_selection_exe = temp_genemark;
-        _expression_exe = temp_rsem;
-        _eggnog_db = temp_eggnog_db;
-        _ontology_flag == 0 ? _ontology_exe = temp_eggnog : _ontology_exe = temp_interpro;
-        print_debug("Success! All exe paths set");
-
-        outpair.first  = _diamond_exe;
-        outpair.second = temp_eggnog_down;
-
-        return outpair;        // for config run
     }
 
 

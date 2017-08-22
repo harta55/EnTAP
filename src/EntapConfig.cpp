@@ -46,23 +46,28 @@ namespace entapConfig {
     std::string              _outpath;
     std::string              _cur_dir;
 
-    void init_entap(boost::program_options::variables_map user_map, std::string exe_path,
-            std::unordered_map<std::string,std::string> &config_map) {
+    void init_entap(boost::program_options::variables_map user_map, std::string exe_path) {
 
-        std::string                        dmnd_outpath;
-        std::string                        diamond_exe;
-        std::string                        eggnog_exe;
+        std::string                        database_outdir;
         int                                threads; // change
         std::pair<std::string,std::string> exe_pair;
         std::vector<std::string>           ncbi_vect;
         std::vector<std::string>           uniprot_vect;
         std::vector<std::string>           database_vect;
 
+
+        if (user_map.count(ENTAP_CONFIG::INPUT_FLAG_DATA_OUT)) {
+            database_outdir = user_map[ENTAP_CONFIG::INPUT_FLAG_DATA_OUT].as<std::string>();
+        } else database_outdir = exe_path;
+
         _cur_dir  = boostFS::path(boost::filesystem::current_path()).string();
         _outpath  = (boostFS::path(_cur_dir) / user_map["tag"].as<std::string>()).string();
-        _bin_dir  = (boostFS::path(exe_path) / boostFS::path(ENTAP_CONFIG::BIN_PATH)).string();
-        _data_dir = (boostFS::path(exe_path) / boostFS::path(ENTAP_CONFIG::DATABASE_DIR)).string();
+        _bin_dir  = PATHS(database_outdir, ENTAP_CONFIG::BIN_PATH);
+        _data_dir = PATHS(database_outdir, ENTAP_CONFIG::DATABASE_DIR);
 
+        if (database_outdir.empty()) database_outdir = PATHS(_cur_dir,ENTAP_CONFIG_DIR);
+
+        boostFS::create_directories(database_outdir);
         boostFS::create_directories(_bin_dir);
         boostFS::create_directories(_data_dir);
 
@@ -75,22 +80,16 @@ namespace entapConfig {
             _compiled_databases = database_vect;
         }
 
-        if (user_map.count(ENTAP_CONFIG::INPUT_FLAG_DATA_OUT)) {
-            dmnd_outpath = user_map[ENTAP_CONFIG::INPUT_FLAG_DATA_OUT].as<std::string>();
-        } else dmnd_outpath = _bin_dir;
-
-        exe_pair    = entapExecute::init_exe_paths(config_map,exe_path);
-        diamond_exe = exe_pair.first;
-        eggnog_exe  = exe_pair.second;
         // while state != EXIT_STATE
         try {
-            init_taxonomic(exe_path);
-            init_go_db(exe_path,_data_dir);
-            // TODO future
-            // init_uniprot(uniprot_vect, exe_path);
-            // init_ncbi(ncbi_vect,exe_path);
-            init_diamond_index(diamond_exe,dmnd_outpath, threads);
-            init_eggnog(eggnog_exe);
+            init_taxonomic(database_outdir);
+            init_go_db(database_outdir,_data_dir);
+#if NCBI_UNIPROT
+            init_uniprot(uniprot_vect, exe_path);
+            init_ncbi(ncbi_vect,exe_path);
+#endif
+            init_diamond_index(DIAMOND_EXE,database_outdir, threads);
+            init_eggnog(EGG_DOWNLOAD_EXE);
 
         }catch (ExceptionHandler &e) {
             throw ExceptionHandler(e.what(), e.getErr_code());
@@ -104,20 +103,15 @@ namespace entapConfig {
         std::string tax_bin;
         std::string tax_path;
         std::string tax_command;
-        int         status;
         std::unordered_map<std::string, std::string> tax_data_map;
 
         tax_bin  = (boostFS::path(exe) / boostFS::path(ENTAP_CONFIG::TAX_BIN_PATH)).string();
         tax_path  = (boostFS::path(exe) / boostFS::path(ENTAP_CONFIG::TAX_DATABASE_PATH)).string();
 
         if (!file_exists(tax_path)) {
-            tax_command = "perl " + exe + ENTAP_CONFIG::TAX_SCRIPT_PATH;
-            redi::ipstream in(tax_command);
-            in.close();
-            status = in.rdbuf()->status();
-            if (status != 0) {
-                std::cerr << "Error in downloading taxonomic database" << std::endl;
-                throw ExceptionHandler("Error in downloading taxonomic database", ENTAP_ERR::E_INIT_TAX_DOWN);
+            tax_command = "perl " + TAX_DOWNLOAD_EXE + " " + tax_path;
+            if (execute_cmd(tax_command) != 0) {
+                throw ExceptionHandler("Command: " + tax_command, ENTAP_ERR::E_INIT_TAX_DOWN);
             }
             print_debug("Success! File written to " + tax_path);
         } else {
@@ -300,14 +294,12 @@ namespace entapConfig {
         std::string std_out;
         std::string index_command;
 
-        boostFS::create_directories(out_path);
-
         if (_compiled_databases.empty()) return;
 
         for (std::string item : _compiled_databases) {
             boostFS::path path(item);
             filename     = path.filename().stem().string();
-            indexed_path = (boostFS::path(out_path) / boostFS::path(filename)).string();
+            indexed_path = PATHS(out_path,filename);
             std_out      = indexed_path + "_index";
             boostFS::remove(std_out+".err");
             boostFS::remove(std_out+".out");

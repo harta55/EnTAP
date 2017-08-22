@@ -15,12 +15,12 @@
 
 namespace boostFS = boost::filesystem;
 
-ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &exe, std::string &out
+ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &out
     , boost::program_options::variables_map& user_flags, GraphingManager *graph) {
     print_debug("Spawn object - ExpressionAnalysis");
     _inpath = input;
     _threads = t;
-    _exepath = exe;
+    _exepath = RSEM_EXE_DIR;
     _outpath = out;
     _software_flag = 0;
     _overwrite = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);

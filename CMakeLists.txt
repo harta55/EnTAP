@@ -1,7 +1,15 @@
 cmake_minimum_required(VERSION 2.8)
-project(enTAP)
+project(EnTAP)
+include(CheckCXXCompilerFlag)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+if(COMPILER_SUPPORTS_CXX11)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    message("Compiler supports C++11!")
+else()
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support.")
+endif()
+
 set(SOURCE_FILES libs
         src/main.cpp
         src/ExceptionHandler.cpp src/ExceptionHandler.h
@@ -17,21 +25,45 @@ set(SOURCE_FILES libs
         src/UserInput.cpp src/UserInput.h
         src/EggnogLevels.h
         src/DatabaseHelper.cpp src/DatabaseHelper.h
-        src/sqlite3.c src/sqlite3.h src/frame_selection/ModGeneMarkST.cpp src/frame_selection/ModGeneMarkST.h src/frame_selection/AbstractFrame.h src/expression/AbstractExpression.h src/expression/ModRSEM.cpp src/expression/ModRSEM.h src/ontology/AbstractOntology.h src/ontology/ModEggnog.cpp src/ontology/ModEggnog.h src/ontology/AbstractOntology.cpp src/ontology/ModInterpro.cpp src/ontology/ModInterpro.h)
+        src/sqlite3.c src/sqlite3.h
+        src/frame_selection/ModGeneMarkST.cpp src/frame_selection/ModGeneMarkST.h
+        src/frame_selection/AbstractFrame.h
+        src/expression/AbstractExpression.h
+        src/expression/ModRSEM.cpp src/expression/ModRSEM.h
+        src/ontology/AbstractOntology.h
+        src/ontology/ModEggnog.cpp src/ontology/ModEggnog.h
+        src/ontology/AbstractOntology.cpp
+        src/ontology/ModInterpro.cpp src/ontology/ModInterpro.h)
 
-add_executable(enTAP ${SOURCE_FILES})
+add_executable(EnTAP ${SOURCE_FILES})
 
-set(Boost_INCLUDE_DIR /home/harta/CLionProjects/enTAP/libs/boost_1_63_0)
-set(Boost_LIBRARY_DIR /home/harta/CLionProjects/enTAP/libs/boost_1_63_0/stage/lib)
+# Change these paths to the specific boost directory if you're having trouble linking
+#set(Boost_INCLUDE_DIR /path/to/boost_1_63_0)
+#set(Boost_LIBRARY_DIR /path/to/boost_1_63_0/stage/lib)
 
 include_directories(libs/pstream)
 include_directories(libs/fast-cpp-csv-parser) # May need to compile with thread control
-find_package(Boost 1.63.0 COMPONENTS program_options system filesystem iostreams serialization
+find_package(Boost 1.50.0 COMPONENTS program_options system filesystem iostreams serialization
         regex REQUIRED)
+
+find_package(Perl)
+if (Perl_FOUND)
+    message("Perl detected! Version: ${PERL_VERSION_STRING}")
+else()
+    message(WARNING "Perl was not detected, taxonomic database download will not be available!")
+endif()
+
+find_package(PythonInterp)
+if (PYTHONINTERP_FOUND)
+    message("Python detected! Version: ${PYTHON_VERSION_STRING}")
+    message("--   Ensure Python SQLITE and Matplotlib (optional) modules are installed")
+else()
+    message(WARNING "Python was not detected, EnTAP graphing and EggNOG functionality will not be allowed")
+endif()
 
 if(Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
-        set(BOOST_IOSTREAMS_SOURCE ZLIB)
-    include_directories(${ZLIB_INCLUDE_DIRS})
-    target_link_libraries(enTAP ${Boost_LIBRARIES} ${ZLIB_LIBRARIES} pthread dl)
+    target_link_libraries(EnTAP ${Boost_LIBRARIES} pthread dl)
+else()
+    message(FATAL_ERROR "Boost Libraries are required to run EnTAP.")
 endif()

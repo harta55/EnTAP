@@ -16,8 +16,7 @@ class FrameSelection {
 
 public:
     std::string execute(std::string,std::map<std::string,QuerySequence>&);
-    FrameSelection(std::string&, std::string&, std::string&,
-                   boost::program_options::variables_map &, GraphingManager*);
+    FrameSelection(std::string&, std::string&, boost::program_options::variables_map &, GraphingManager*);
 
 private:
 

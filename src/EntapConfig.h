@@ -22,11 +22,11 @@ namespace entapConfig {
     const std::string GO_GRAPH_FILE = "graph_path.txt";
     const std::string GO_DATA_NAME = "go_monthly-termdb-tables.tar.gz";
     const std::string GO_DIR = "go_monthly-termdb-tables/";
+    const std::string ENTAP_CONFIG_DIR = "/entap_config";
 
     //******************Prototype Functions******************
 
-    void init_entap(boost::program_options::variables_map, std::string,
-        std::unordered_map<std::string,std::string>&);
+    void init_entap(boost::program_options::variables_map, std::string);
     void init_taxonomic(std::string&);
     void init_uniprot(std::vector<std::string>&, std::string);
     void init_ncbi(std::vector<std::string>&, std::string);
@@ -37,6 +37,8 @@ namespace entapConfig {
     int update_database(std::string);
     void init_go_db(std::string&,std::string);
     void init_eggnog(std::string);
+
+
 }
 
 #endif //ENTAP_INITHANDLER_H

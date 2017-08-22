@@ -11,8 +11,8 @@ my $xml_check = eval {
 };
 my $db = 'taxonomy';
 my $query = 'root[Subtree]';
-my $out_file = 'ncbi_tax.entp';
-my $out_dir = 'databases';
+my $out_file = 'ncbi_tax.entp';		#default
+my $out_dir = 'databases';			#default
 my $retmax = 100;
 
 my $base = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/';
@@ -25,10 +25,11 @@ my $web = $1 if ($output =~ /<WebEnv>(\S+)<\/WebEnv>/);
 my $key = $1 if ($output =~ /<QueryKey>(\d+)<\/QueryKey>/);
 my $count = $1 if ($output =~ /<Count>(\d+)<\/Count>/);
 
-if (!-d $out_dir) {
-	mkdir($out_dir);
-}
-my $out_path = $out_dir . "/$out_file";
+my $out_path = $ARGV[0];
+#if (!-d $out_dir) {
+#	mkdir($out_dir);
+#}
+#my $out_path = $out_dir . "/$out_file";
 if (-e $out_path) {
 	# TODO separate routine to update database, use date flag and get tax after that date
 	open(OUT, ">$out_path") || die "Unable to open output file!\n";

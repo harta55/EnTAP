@@ -30,10 +30,9 @@ std::map<std::string,std::vector<std::string>> AbstractOntology::parse_go_list
 
 std::map<std::string,struct_go_term> AbstractOntology::read_go_map () {
     std::map<std::string,struct_go_term> new_map;
-    std::string go_db_path = _entap_exe + ENTAP_CONFIG::GO_DB_PATH;
     try {
         {
-            std::ifstream ifs(go_db_path);
+            std::ifstream ifs(GO_DB_PATH);
             boost::archive::binary_iarchive ia(ifs);
             ia >> new_map;
         }

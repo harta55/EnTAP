@@ -13,11 +13,10 @@ class QuerySequence;
 
 class AbstractOntology {
 public:
-    AbstractOntology(std::string &exe, std::string &entap_exe,std::string &out, std::string &in_hits,
+    AbstractOntology(std::string &exe,std::string &out, std::string &in_hits,
                      std::string &in_nohits, std::string &proc,
                   std::string &fig, std::string &ont_out, GraphingManager *graphing){
         _exe_path = exe;
-        _entap_exe = entap_exe;
         _outpath = out;
         _inpath = in_hits;
         _in_no_hits = in_nohits;
@@ -55,7 +54,6 @@ protected:
     const unsigned char GRAPH_ONTOLOGY_FLAG = 4;
     const unsigned char GRAPH_TOP_BAR_FLAG= 1;  // used for tax levels and go term tops
 
-    std::string _entap_exe;
     std::string _in_no_hits;
     std::string _exe_path;
     std::string _outpath;

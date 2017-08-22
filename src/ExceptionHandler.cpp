@@ -12,27 +12,41 @@ ExceptionHandler::ExceptionHandler(const std::string& msg, int err) {
 }
 
 void ExceptionHandler::print_msg() {
-    time_t rawtime;
-    time(&rawtime);
-    std::string date_time = ctime(&rawtime);
-    std::ofstream log_file(DEBUG_FILE_PATH, std::ios_base::out | std::ios_base::app );
-    std::string added_msg;
+
+    std::stringstream added_msg;
+    std::string out_msg;
+
+    added_msg << "Error code: " << err_code << "\n";
 
     switch (err_code) {
         case ENTAP_ERR::E_INPUT_PARSE:
-            added_msg = "Error in parsing input data, please consult -h for more "
-                    "information.";
+            added_msg << "Error in parsing input data, please consult -h for more information.";
+            break;
+        case ENTAP_ERR::E_CONFIG_PARSE:
+            added_msg << "Error in parsing the EnTAP configuration file, ensure all parameters are"
+                    "in the correct format.";
+            break;
+        case ENTAP_ERR::E_CONFIG_CREATE:
+            added_msg << "Error in creating the EnTAP configuration file. If this persists, download"
+                    "the file from GitHub";
+            break;
+        case ENTAP_ERR::E_CONFIG_CREATE_SUCCESS:
+            added_msg << "Configuration file was not found and was generated, make sure to "
+                    "check the paths before continuing.";
             break;
         case ENTAP_ERR::E_INIT_TAX_DOWN:
-            added_msg = "Error in downloading the taxonomic database";
+            added_msg << "Error in downloading the taxonomic database. Ensure that the script is at "
+                      << TAX_DOWNLOAD_EXE;
+            break;
         default:
-            added_msg = "Error code not recognized.";
-    // TODO uniprot db not found : 'Please rerun config and download the database"
+            added_msg << "Error code not recognized.";
+            break;
     }
-    log_file << date_time.substr(0, date_time.size() - 2)
-                 + ": \n" + added_msg << std::endl ;
-    log_file <<what()<<std::endl;
-    std::cerr << added_msg << std::endl << what() <<std::endl;
+
+    added_msg << "\n" << what();
+    out_msg = added_msg.str();
+    print_debug(out_msg);
+    std::cerr << out_msg << std::endl;
 }
 
 const char* ExceptionHandler::what() {

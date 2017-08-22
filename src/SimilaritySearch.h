@@ -24,8 +24,8 @@ public:
 
     //******************** Public Prototype Functions *********************
     std::vector<std::string> execute(std::string, bool);
-    SimilaritySearch(std::vector<std::string>&, std::string, int, std::string, std::string,
-                     std::string,boost::program_options::variables_map &, GraphingManager *);
+    SimilaritySearch(std::vector<std::string>&, std::string, int, std::string,
+                     boost::program_options::variables_map &, GraphingManager *);
     std::pair<std::string,std::string> parse_files(std::string,
                                                    std::map<std::string, QuerySequence>&);
     //**************************************************************
@@ -107,7 +107,6 @@ private:
     std::string                      _processed_path;
     std::string                      _figure_path;
     std::string                      _results_path;
-    std::string                      _entap_exe;
     std::string                      _input_lineage;
     std::string                      _input_species;
     std::string                      _blast_type;

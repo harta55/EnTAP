@@ -17,13 +17,11 @@
 #include "ontology/AbstractOntology.h"
 #include "ontology/ModEggnog.h"
 
-Ontology::Ontology(int thread, std::string egg_exe, std::string outpath, std::string entap_exe,
-                   std::string input, boost::program_options::variables_map &user_input,
-                   std::string database, GraphingManager* graphing) {
+Ontology::Ontology(int thread, std::string outpath, std::string input,
+                   boost::program_options::variables_map &user_input, GraphingManager* graphing) {
     print_debug("Spawn object - Ontology");
-    _ontology_exe = egg_exe;
+    _ontology_exe = EGG_EMAPPER_EXE;
     _threads = thread;
-    _entap_exe = entap_exe;
     _outpath = outpath;
     _new_input = input;
     _is_overwrite = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
@@ -34,7 +32,7 @@ Ontology::Ontology(int thread, std::string egg_exe, std::string outpath, std::st
     _ontology_dir = (boostFS::path(outpath) / boostFS::path(ONTOLOGY_OUT_PATH)).string();
     _processed_dir = (boostFS::path(_ontology_dir) / boostFS::path(PROCESSED_OUT_DIR)).string();
     _figure_dir = (boostFS::path(_processed_dir) / boostFS::path(FIGURE_DIR)).string();
-    _eggnog_db_path = database;
+    _eggnog_db_path = EGG_SQL_DB_PATH;
     _graphingManager = graphing;
     SOFTWARE = static_cast<OntologySoftware>(_software_flag);
 }
@@ -76,14 +74,14 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object() {
     switch (SOFTWARE) {
         case EGGNOG:
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
-                    _ontology_exe, _entap_exe, _outpath, _new_input, _input_no_hits,
+                    _ontology_exe, _outpath, _new_input, _input_no_hits,
                     _processed_dir, _figure_dir, _ontology_dir, _graphingManager
             ));
         case INTERPRO:
             break;
         default:
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
-                    _ontology_exe, _entap_exe, _outpath, _new_input, _input_no_hits,
+                    _ontology_exe, _outpath, _new_input, _input_no_hits,
                     _processed_dir, _figure_dir, _ontology_dir, _graphingManager
             ));
     }

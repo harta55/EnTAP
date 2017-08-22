@@ -11,10 +11,10 @@
 class ModEggnog : public AbstractOntology{
 
 public:
-    ModEggnog(std::string &exe, std::string &entap,std::string &out, std::string &in,
+    ModEggnog(std::string &exe,std::string &out, std::string &in,
               std::string &in_no_hits,std::string &proc,
             std::string &fig, std::string &ont, GraphingManager *graphing) :
-    AbstractOntology(exe, entap, out, in, in_no_hits,proc, fig, ont, graphing){}
+    AbstractOntology(exe, out, in, in_no_hits,proc, fig, ont, graphing){}
 
     virtual std::pair<bool, std::string> verify_files() override ;
     virtual void execute(std::map<std::string, QuerySequence>&) override ;

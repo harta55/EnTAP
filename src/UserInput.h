@@ -72,7 +72,7 @@ namespace Defaults {
     const std::string EGG_SQL_DB_DEFAULT       = "/libs/eggnog-mapper/data/eggnog.db";
     const std::string INTERPRO_DEF_EXE         = "/libs/interproscan-5.22-61.0/interproscan.sh";
     const std::string TAX_DB_DEFAULT           = ENTAP_CONFIG::TAX_BIN_PATH;
-    const std::string GO_DB_DEFAULT            = ENTAP_CONFIG::GO_DB_PATH;
+    const std::string GO_DB_DEFAULT            = ENTAP_CONFIG::GO_DB_PATH_DEF;
     const std::string TAX_DOWNLOAD_DEF         = "/src/download_tax.pl";
     const std::string GRAPH_SCRIPT_DEF         = "/src/entap_graphing.py";
 

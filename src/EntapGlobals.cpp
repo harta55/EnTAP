@@ -57,7 +57,7 @@ namespace ENTAP_EXECUTE {
 
 namespace ENTAP_CONFIG {
 
-    const std::string ENTAP_VERSION  = "0.7.3";
+    const std::string ENTAP_VERSION  = "0.7.3.1";
     const std::string DEBUG_FILENAME = "debug.txt";
     const std::string LOG_FILENAME   = "log_file.txt";
 
@@ -107,7 +107,7 @@ namespace ENTAP_CONFIG {
     const std::string BIN_PATH          = "bin/";
     const std::string DATABASE_DIR      = "databases/";
     const std::string NCBI_INDEX_PATH   = "/bin/ncbi_";
-    const std::string GO_DB_PATH        = "/bin/go_term.entp";
+    const std::string GO_DB_PATH_DEF    = "/bin/go_term.entp";
     const std::string GO_TERM_FILE      = "/databases/term.txt";
     const std::string TAX_DATABASE_PATH = "/databases/ncbi_tax.entp";
     const std::string TAX_BIN_PATH      = "/bin/ncbi_tax_bin.entp";

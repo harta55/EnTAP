@@ -105,27 +105,23 @@ namespace entapConfig {
         std::string tax_command;
         std::unordered_map<std::string, std::string> tax_data_map;
 
-        tax_bin  = (boostFS::path(exe) / boostFS::path(ENTAP_CONFIG::TAX_BIN_PATH)).string();
         tax_path  = (boostFS::path(exe) / boostFS::path(ENTAP_CONFIG::TAX_DATABASE_PATH)).string();
 
-        if (!file_exists(tax_path)) {
+        if (file_exists(TAX_DB_PATH)) {
+            tax_bin = TAX_DB_PATH;
+            print_debug("Tax database binary found at: " + tax_bin + " skipping...");
+            return;
+            // TODO update!
+        } else {
+            print_debug("Tax database not found at: " + tax_bin + " downloading...");
             tax_command = "perl " + TAX_DOWNLOAD_EXE + " " + tax_path;
             if (execute_cmd(tax_command) != 0) {
                 throw ExceptionHandler("Command: " + tax_command, ENTAP_ERR::E_INIT_TAX_DOWN);
             }
             print_debug("Success! File written to " + tax_path);
-        } else {
-            print_debug("Database found. Updating..."); // Just check for bin for now
-            if (file_exists(tax_bin)) {
-                print_debug("Binary database path found at: " + tax_bin + " skipping indexing");
-                return;
-            }
-            // TODO Update taxonomic database
         }
 
         print_debug("Indexing taxonomic database...");
-        boostFS::remove(tax_bin);
-
         std::ifstream infile(tax_path);
         std::string line;
         try {
@@ -165,10 +161,12 @@ namespace entapConfig {
         std::string go_database_zip;
         std::string go_database_out;
 
-        go_db_path = (boostFS::path(exe) / boostFS::path(ENTAP_CONFIG::GO_DB_PATH)).string();
-        if (file_exists(go_db_path)) {
-            print_debug("Database found at: " + go_db_path + " skipping creation");
+        if (file_exists(GO_DB_PATH)) {
+            print_debug("Database found at: " + GO_DB_PATH + " skipping creation");
             return;
+        } else {
+            print_debug("Database NOT found at: " + GO_DB_PATH + " , downloading...");
+            go_db_path = PATHS(exe, ENTAP_CONFIG::GO_DB_PATH_DEF);
         }
         go_database_zip = (boostFS::path(database_path) / boostFS::path(GO_DATA_NAME)).string();
         go_database_out = (boostFS::path(database_path) / boostFS::path(GO_DIR)).string();

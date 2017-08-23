@@ -178,7 +178,7 @@ namespace ENTAP_CONFIG {
     extern const std::string NCBI_NULL;
     extern const std::string NCBI_DEFAULT;
 
-    extern const std::string GO_DB_PATH        ;
+    extern const std::string GO_DB_PATH_DEF    ;
     extern const std::string GO_TERM_FILE      ;
     extern const std::string TAX_DATABASE_PATH ;
     extern const std::string TAX_BIN_PATH      ;

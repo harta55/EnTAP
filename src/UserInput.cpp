@@ -360,14 +360,16 @@ std::unordered_map<std::string,std::string> parse_config(std::string &config,std
     print_debug("Parsing configuration file...");
 
     std::unordered_map<std::string,std::string> config_map;
+    std::string                                 new_config;
     std::string                                 line;
     std::string                                 key;
     std::string                                 val;
 
     if (!file_exists(config)){
         print_debug("Config file not found, generating new file...");
+        new_config = CONFIG_FILE;
         try {
-            generate_config(config);
+            generate_config(new_config);
         } catch (std::exception &e){
             throw ExceptionHandler(e.what(),ENTAP_ERR::E_CONFIG_CREATE);
         }

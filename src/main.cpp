@@ -88,7 +88,7 @@ void init_entap(boostPO::variables_map& user_input) {
     print_user_input(user_input, _exe_path, _outpath);
     if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_EXE_PATH)) {
         config_path = user_input[ENTAP_CONFIG::INPUT_FLAG_EXE_PATH].as<std::string>();
-    } else config_path = PATHS(_outpath,CONFIG_FILE);
+    } else config_path = PATHS(_exe_path,CONFIG_FILE);
     parse_config(config_path,_exe_path);
 }
 

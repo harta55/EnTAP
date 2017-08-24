@@ -23,6 +23,7 @@ namespace entapConfig {
     const std::string GO_DATA_NAME = "go_monthly-termdb-tables.tar.gz";
     const std::string GO_DIR = "go_monthly-termdb-tables/";
     const std::string ENTAP_CONFIG_DIR = "/entap_config";
+    const std::string TAX_DATABASE_PATH = "/databases/ncbi_tax.entp";
 
     //******************Prototype Functions******************
 

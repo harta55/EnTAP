@@ -71,26 +71,9 @@ namespace Defaults {
     const std::string EGG_DOWNLOAD_DEFAULT     = "/libs/eggnog-mapper/download_eggnog_data.py";
     const std::string EGG_SQL_DB_DEFAULT       = "/libs/eggnog-mapper/data/eggnog.db";
     const std::string INTERPRO_DEF_EXE         = "/libs/interproscan-5.22-61.0/interproscan.sh";
-    const std::string TAX_DB_DEFAULT           = ENTAP_CONFIG::TAX_BIN_PATH;
-    const std::string GO_DB_DEFAULT            = ENTAP_CONFIG::GO_DB_PATH_DEF;
     const std::string TAX_DOWNLOAD_DEF         = "/src/download_tax.pl";
     const std::string GRAPH_SCRIPT_DEF         = "/src/entap_graphing.py";
 
-
-    // Just for convenience
-    const std::unordered_map<std::string,std::string> D_MAP {
-            {KEY_RSEM_EXE, RSEM_DEFAULT_EXE},
-            {KEY_DIAMOND_EXE, DIAMOND_DEFAULT_EXE},
-            {KEY_GENEMARK_EXE, GENEMARK_DEFAULT_EXE},
-            {KEY_EGGNOG_DOWN, EGG_DOWNLOAD_DEFAULT},
-            {KEY_EGGNOG_EXE, EGG_EMAPPER_DEFAULT},
-            {KEY_EGGNOG_DB, EGG_SQL_DB_DEFAULT},
-            {KEY_INTERPRO_EXE, INTERPRO_DEF_EXE},
-            {KEY_TAX_DOWNLOAD_EXE, TAX_DOWNLOAD_DEF},
-            {KEY_TAX_DB, TAX_DB_DEFAULT},
-            {KEY_GO_DB, GO_DB_DEFAULT},
-            {KEY_GRAPH_SCRIPT, GRAPH_SCRIPT_DEF}
-    };
 }
 
 //**************************************************************

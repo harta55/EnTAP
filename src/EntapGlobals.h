@@ -80,9 +80,9 @@ extern std::string EGG_EMAPPER_EXE;
 extern std::string EGG_SQL_DB_PATH;
 extern std::string EGG_DOWNLOAD_EXE;
 extern std::string INTERPRO_EXE;
-extern std::string TAX_DB_PATH;
+extern std::string TAX_DB_PATH;     // binary
 extern std::string TAX_DOWNLOAD_EXE;
-extern std::string GO_DB_PATH;
+extern std::string GO_DB_PATH;      // binary
 extern std::string GRAPHING_EXE;
 
 
@@ -179,9 +179,7 @@ namespace ENTAP_CONFIG {
     extern const std::string NCBI_DEFAULT;
 
     extern const std::string GO_DB_PATH_DEF    ;
-    extern const std::string GO_TERM_FILE      ;
-    extern const std::string TAX_DATABASE_PATH ;
-    extern const std::string TAX_BIN_PATH      ;
+    extern const std::string TAX_DB_DEFAULT    ;
     extern const std::string BIN_PATH          ;
     extern const std::string DATABASE_DIR      ;
     extern const std::string NCBI_INDEX_PATH   ;

@@ -105,7 +105,7 @@ namespace entapConfig {
         std::string tax_command;
         std::unordered_map<std::string, std::string> tax_data_map;
 
-        tax_path  = (boostFS::path(exe) / boostFS::path(ENTAP_CONFIG::TAX_DATABASE_PATH)).string();
+        tax_path  = (boostFS::path(exe) / boostFS::path(TAX_DATABASE_PATH)).string();
 
         if (file_exists(TAX_DB_PATH)) {
             tax_bin = TAX_DB_PATH;

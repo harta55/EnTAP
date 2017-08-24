@@ -587,19 +587,19 @@ void init_exe_paths(std::unordered_map<std::string, std::string> &map, std::stri
     std::string temp_graphing          = map[KEY_GRAPH_SCRIPT];
 
     // Included software paths
-    if (temp_rsem.empty())    temp_rsem           = PATHS(exe_path,Defaults::D_MAP.at(KEY_RSEM_EXE));
-    if (temp_diamond.empty()) temp_diamond        = PATHS(exe_path,Defaults::D_MAP.at(KEY_DIAMOND_EXE));
-    if (temp_genemark.empty())temp_genemark       = PATHS(exe_path,Defaults::D_MAP.at(KEY_GENEMARK_EXE));
-    if (temp_eggnog.empty())  temp_eggnog         = PATHS(exe_path,Defaults::D_MAP.at(KEY_EGGNOG_EXE));
-    if (temp_eggnog_down.empty())temp_eggnog_down = PATHS(exe_path,Defaults::D_MAP.at(KEY_EGGNOG_DOWN));
-    if (temp_eggnog_db.empty())  temp_eggnog_db   = PATHS(exe_path,Defaults::D_MAP.at(KEY_EGGNOG_DB));
-    if (temp_interpro.empty())   temp_interpro    = PATHS(exe_path,Defaults::D_MAP.at(KEY_INTERPRO_EXE));
+    if (temp_rsem.empty())    temp_rsem           = PATHS(exe_path,Defaults::RSEM_DEFAULT_EXE);
+    if (temp_diamond.empty()) temp_diamond        = PATHS(exe_path,Defaults::DIAMOND_DEFAULT_EXE);
+    if (temp_genemark.empty())temp_genemark       = PATHS(exe_path,Defaults::GENEMARK_DEFAULT_EXE);
+    if (temp_eggnog.empty())  temp_eggnog         = PATHS(exe_path,Defaults::EGG_EMAPPER_DEFAULT);
+    if (temp_eggnog_down.empty())temp_eggnog_down = PATHS(exe_path,Defaults::EGG_DOWNLOAD_DEFAULT);
+    if (temp_eggnog_db.empty())  temp_eggnog_db   = PATHS(exe_path,Defaults::EGG_SQL_DB_DEFAULT);
+    if (temp_interpro.empty())   temp_interpro    = PATHS(exe_path,Defaults::INTERPRO_DEF_EXE);
 
     // EnTAP paths
-    if (temp_tax_db.empty()) temp_tax_db     = PATHS(exe_path, Defaults::D_MAP.at(KEY_TAX_DB));
-    if (temp_tax_download.empty()) temp_tax_download = PATHS(exe_path, Defaults::D_MAP.at(KEY_TAX_DOWNLOAD_EXE));
-    if (temp_go_db.empty()) temp_go_db       = PATHS(exe_path, Defaults::D_MAP.at(KEY_GO_DB));
-    if (temp_graphing.empty()) temp_graphing = PATHS(exe_path, Defaults::D_MAP.at(KEY_GRAPH_SCRIPT));
+    if (temp_tax_db.empty()) temp_tax_db     = PATHS(exe_path, ENTAP_CONFIG::TAX_DB_DEFAULT);
+    if (temp_tax_download.empty()) temp_tax_download = PATHS(exe_path, Defaults::TAX_DOWNLOAD_DEF);
+    if (temp_go_db.empty()) temp_go_db       = PATHS(exe_path, ENTAP_CONFIG::GO_DB_PATH_DEF);
+    if (temp_graphing.empty()) temp_graphing = PATHS(exe_path, Defaults::GRAPH_SCRIPT_DEF);
 
     ss <<
        "\nRSEM Directory: "                  << temp_rsem         <<

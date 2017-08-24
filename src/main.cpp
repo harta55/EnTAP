@@ -47,7 +47,6 @@ int main(int argc, const char** argv) {
 
     boostPO::variables_map                      inputs;
     std::pair<bool,boostPO::variables_map>      user_pair;
-    bool                                        config;     // True for config state
 
     _start_time = std::chrono::system_clock::now();
     try {

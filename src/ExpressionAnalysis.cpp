@@ -29,9 +29,9 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &ou
         _alignpath = user_flags[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>();
     }
     _fpkm = user_flags[ENTAP_CONFIG::INPUT_FLAG_FPKM].as<float>();
-    _rsem_dir = (boostFS::path(out) / boostFS::path(RSEM_OUT_DIR)).string();
-    _proc_dir = (boostFS::path(_rsem_dir) / boostFS::path(RSEM_PROCESSED_DIR)).string();
-    _figure_dir = (boostFS::path(_proc_dir) / boostFS::path(RSEM_FIGURE_DIR)).string();
+    _rsem_dir = PATHS(out, RSEM_OUT_DIR);
+    _proc_dir = PATHS(_rsem_dir, RSEM_PROCESSED_DIR);
+    _figure_dir = PATHS(_proc_dir,RSEM_FIGURE_DIR);
     _graphingManager = graph;
     SOFTWARE = static_cast<ExpressionSoftware>(_software_flag);
 }

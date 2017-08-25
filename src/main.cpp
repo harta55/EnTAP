@@ -78,10 +78,9 @@ void init_entap(boostPO::variables_map& user_input) {
 
     boost::filesystem::path working_dir(boost::filesystem::current_path());
     _working_dir = working_dir.string();
-    _outpath = (boostFS::path(_working_dir) /
-                boostFS::path(user_input["tag"].as<std::string>())).string();
-    DEBUG_FILE_PATH = (boostFS::path(_outpath) / ENTAP_CONFIG::DEBUG_FILENAME).string();
-    LOG_FILE_PATH   = (boostFS::path(_outpath) / ENTAP_CONFIG::LOG_FILENAME).string();
+    _outpath = PATHS(_working_dir, user_input["tag"].as<std::string>());
+    DEBUG_FILE_PATH = PATHS(_outpath, ENTAP_CONFIG::DEBUG_FILENAME);
+    LOG_FILE_PATH   = PATHS(_outpath, ENTAP_CONFIG::LOG_FILENAME);
     init_log();
     _exe_path = get_exe_path(user_input);
     print_user_input(user_input, _exe_path, _outpath);

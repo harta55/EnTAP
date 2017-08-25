@@ -159,12 +159,12 @@ std::string ModRSEM::filter(std::map<std::string, QuerySequence> & MAP) {
     GraphingStruct      graphingStruct;
 
     if (!file_exists(_rsem_out)) {
-        throw ExceptionHandler("File does not exist at: " + _rsem_out,
-                               ENTAP_ERR::E_RUN_RSEM_EXPRESSION);
+        throw ExceptionHandler("File does not exist at: " + _rsem_out, ENTAP_ERR::E_RUN_RSEM_EXPRESSION);
     }
 
     boostFS::remove_all(_processed_path);
     boostFS::create_directories(_processed_path);
+    boostFS::create_directories(_figure_path);
     boostFS::path path (_rsem_out);
 
     fig_txt_box_path = (boostFS::path(_figure_path) / GRAPH_TXT_BOX_PLOT).string();
@@ -175,8 +175,10 @@ std::string ModRSEM::filter(std::map<std::string, QuerySequence> & MAP) {
 
     while (path.has_extension()) path = path = path.stem();
     original_filename = path.string();
-    out_kept = (boostFS::path(_outpath) / original_filename).string() + "_kept.fasta";
-    out_removed = (boostFS::path(_outpath) / original_filename).string() + "_removed.fasta";
+    removed_filename  = original_filename + RSEM_OUT_REMOVED;
+    kept_filename     = original_filename + RSEM_OUT_KEPT;
+    out_kept    = PATHS(_processed_path, kept_filename);
+    out_removed = PATHS(_processed_path, removed_filename);
     std::ofstream out_file(out_kept, std::ios::out | std::ios::app);
     std::ofstream removed_file(out_removed, std::ios::out | std::ios::app);
     io::CSVReader<RSEM_COL_NUM, io::trim_chars<' '>,

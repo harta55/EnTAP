@@ -660,9 +660,9 @@ namespace entapExecute {
                 }
             } else {
                 // Not annotated
-                if (!pair.second.get_sequence_p().empty())
-                    file_unannotated_nucl<<pair.second.get_sequence_p()<<std::endl;
-                if (!pair.second.get_sequence_n().empty()) {
+                if (!pair.second.get_sequence_n().empty())
+                    file_unannotated_nucl<<pair.second.get_sequence_n()<<std::endl;
+                if (!pair.second.get_sequence_p().empty()) {
                     file_unannotated_prot<<pair.second.get_sequence_p()<<std::endl;
                 }
                 count_TOTAL_unann++;

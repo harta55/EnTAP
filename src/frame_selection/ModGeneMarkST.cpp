@@ -343,6 +343,8 @@ void ModGeneMarkST::genemark_parse_lst(std::string &lst_path, frame_map_t &curre
 
     std::string     line;
     std::string     seq_id;
+    bool            prime_5;
+    bool            prime_3;
 
     std::ifstream in_file(lst_path);
     while (getline(in_file,line)) {
@@ -353,8 +355,8 @@ void ModGeneMarkST::genemark_parse_lst(std::string &lst_path, frame_map_t &curre
             seq_id = line.substr(first);
         } else if (isdigit(line.at(0))) {
             std::string frame;
-            bool prime_5 = line.find("<") != std::string::npos;
-            bool prime_3 = line.find(">") != std::string::npos;
+            prime_5 = line.find("<") != std::string::npos;
+            prime_3 = line.find(">") != std::string::npos;
             if (prime_5 && prime_3) {
                 frame = "Internal";
             } else if (!prime_5 && !prime_3) {

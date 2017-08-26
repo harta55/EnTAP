@@ -19,6 +19,8 @@
 
 class SimilaritySearch {
 
+    typedef std::map<std::string,std::map<std::string,unsigned int>> graph_sum_t;
+
 
 public:
 
@@ -56,12 +58,20 @@ private:
 
     const unsigned char GRAPH_SOFTWARE_FLAG                      = 3;
     const unsigned char GRAPH_BAR_FLAG                           = 1;
-    std::string GRAPH_SPECIES_BAR_TXT                            = "_species_bar.txt";
-    std::string GRAPH_SPECIES_BAR_PNG                            = "_species_bar.png";
-    std::string GRAPH_SPECIES_TITLE                              = "_Top_10_Species_Distribution";
-    std::string GRAPH_CONTAM_BAR_TXT                             = "_contam_bar.txt";
-    std::string GRAPH_CONTAM_BAR_PNG                             = "_contam_bar.png";
-    std::string GRAPH_CONTAM_TITLE                               = "_Top_10_Contaminant_Distribution";
+    const unsigned char GRAPH_SUM_FLAG                           = 2;
+    const std::string GRAPH_DATABASE_SUM_TITLE                    = "_Summary";
+    const std::string GRAPH_DATABASE_SUM_TXT                     = "_summary_bar.txt";
+    const std::string GRAPH_DATABASE_SUM_PNG                     = "_summary_bar.png";
+    const std::string GRAPH_SPECIES_BAR_TXT                      = "_species_bar.txt";
+    const std::string GRAPH_SPECIES_BAR_PNG                      = "_species_bar.png";
+    const std::string GRAPH_SPECIES_TITLE                        = "_Top_10_Species_Distribution";
+    const std::string GRAPH_CONTAM_BAR_TXT                       = "_contam_bar.txt";
+    const std::string GRAPH_CONTAM_BAR_PNG                       = "_contam_bar.png";
+    const std::string GRAPH_CONTAM_TITLE                         = "_Top_10_Contaminant_Distribution";
+    const std::string UNINFORMATIVE_FLAG                         = "Uninformative";
+    const std::string INFORMATIVE_FLAG                           = "Informative";
+    const std::string NO_HIT_FLAG                                = "No Hits";
+
 
     static constexpr int DMND_COL_NUMBER = 14;
 

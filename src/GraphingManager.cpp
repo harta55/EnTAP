@@ -33,3 +33,7 @@ void GraphingManager::graph(GraphingStruct& graphingStruct) {
         print_debug("\nError generating graph from:\n" + graphing_cmd);
     }
 }
+
+bool GraphingManager::is_graphing_enabled() const {
+    return _graphing_enabled;
+}

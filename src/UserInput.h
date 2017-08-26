@@ -17,14 +17,13 @@ typedef std::vector<std::string> databases_t;
 
 //******************** Prototype Functions *********************
 boost::program_options::variables_map parse_arguments_boost(int, const char**);
-void verify_user_input(boost::program_options::variables_map&);
+bool verify_user_input(boost::program_options::variables_map&);
 void print_user_input(boost::program_options::variables_map &map, std::string&, std::string&);
 bool check_key(std::string&);
 std::unordered_map<std::string,std::string> parse_config(std::string&,std::string&);
 void generate_config(std::string&);
 void verify_databases(boost::program_options::variables_map&);
 void verify_species (boost::program_options::variables_map&);
-std::pair<bool, boost::program_options::variables_map> entap_user_parse(int argc, const char** argv);
 void init_exe_paths(std::unordered_map<std::string, std::string> &, std::string);
 std::string get_exe_path(boostPO::variables_map&);
 

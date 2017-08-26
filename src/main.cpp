@@ -46,15 +46,15 @@ void exit_print(States);
 int main(int argc, const char** argv) {
 
     boostPO::variables_map                      inputs;
-    std::pair<bool,boostPO::variables_map>      user_pair;
     States                                      state;
+    bool                                        config;
 
     _start_time = std::chrono::system_clock::now();
     try {
-        user_pair = entap_user_parse(argc,argv);
-        inputs = user_pair.second;
+        inputs = parse_arguments_boost(argc,argv);
         init_entap(inputs);
-        if (user_pair.first) {
+        config = verify_user_input(inputs);
+        if (config) {
             state = CONFIG_ENTAP;
             entapConfig::init_entap(inputs, _exe_path);
             state = CONFIG_ENTAP_SUCCESS;

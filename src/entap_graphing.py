@@ -2,6 +2,7 @@ import argparse
 import sys
 import collections
 import os
+from operator import add
 
 _stats_path = ""
 _software_flag = ""
@@ -101,11 +102,17 @@ def expression_graphs():
     pass
 
 
+# Flag 3
 def sim_search_graphs():
     if _graph_flag == 1:
         InputValues = parse_input(_stats_path)
         create_bar(_graph_title, _output_path, InputValues.values, InputValues.labels,
                    InputValues.xlabel, InputValues.ylabel)
+    elif _graph_flag == 2:  # Stacked informative/uninformative bar graph
+        InputValues = parse_sim_stack(_stats_path)
+        create_bar_stacked(_graph_title, _output_path, InputValues.label_map,
+                           InputValues.xlabel, InputValues.ylabel)
+
     pass
 
 
@@ -130,6 +137,40 @@ def create_graphs(flag):
         ontology_graphs()
     else:
         init_graphs()
+
+
+# dict[dict] structure
+def create_bar_stacked(title, file, value_map, xlab, ylab):
+    indices = range(len(value_map.keys()))
+    x_labels = []
+    legend_labels = []
+    stacked_vals = {}
+    # Frame or just a temporary flag (if no frame was sent)
+    for key in value_map.keys():
+        x_labels.append(key)
+        for val in value_map[key].keys():
+            if not stacked_vals.__contains__(val):
+                stacked_vals[val] = []
+            stacked_vals[val].append(value_map[key][val])
+
+    plts = []
+    prev_key = ""
+    totals = [0] * len(value_map.keys())
+    for key in stacked_vals:
+        if not prev_key == "":
+            p = plt.bar(indices, stacked_vals[key], bottom=totals)
+        else:
+            p = plt.bar(indices, stacked_vals[key])
+        plts.append(p)
+        legend_labels.append(key)
+        prev_key = key
+        totals = map(add, totals, stacked_vals[key])
+
+    plt.legend(plts, legend_labels)
+    plt.xticks(indices, x_labels)
+    plt.ylabel(ylab)
+    plt.title(title)
+    plt.savefig(file, bbox_inches="tight")
 
 
 def create_pie(title, file, vals, labels):
@@ -192,6 +233,7 @@ def parse_input(path):
     return UserVals
 
 
+# Used for box plot with multiple labels to a value
 def parse_input_dict(path):
     file = open(path, 'r')
     rows = file.readline().split('\t')  # not used currently
@@ -204,6 +246,25 @@ def parse_input_dict(path):
             series_dict[values[0]] = []
         series_dict[values[0]].append(int(values[1]))
     return series_dict
+
+
+#Always has 3 columns
+def parse_sim_stack(path):
+    UserVals = collections.namedtuple('Values', ['label_map', 'xlabel', 'ylabel'])
+    file = open(path,'r')
+    rows = file.readline().split('\t')
+    UserVals.xlabel = rows[0]
+    UserVals.ylabel = rows[1]
+    UserVals.label_map = {}
+
+    for line in file:
+        if not line or line == '\n':
+            continue
+        temp = line.strip().split('\t')
+        if not UserVals.label_map.__contains__(temp[0]):
+            UserVals.label_map[temp[0]] = {}
+        UserVals.label_map[temp[0]][temp[1]] = int(temp[2])
+    return UserVals
 
 
 def main():

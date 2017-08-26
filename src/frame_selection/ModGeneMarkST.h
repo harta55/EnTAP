@@ -32,8 +32,8 @@ private:
     const std::string GRAPH_FILE_FRAME_RESUTS       = "frame_results_pie.png";
     const std::string GRAPH_TEXT_FRAME_RESUTS       = "frame_results_pie.txt";
     const std::string GRAPH_TITLE_REF_COMPAR        = "Frame_Selected_Sequences";
-    const std::string GRAPH_FILE_REF_COMPAR         = "rejected_comparison_box.png";
-    const std::string GRAPH_TEXT_REF_COMPAR         = "rejected_comparison_box.txt";
+    const std::string GRAPH_FILE_REF_COMPAR         = "removed_comparison_box.png";
+    const std::string GRAPH_TEXT_REF_COMPAR         = "removed_comparison_box.txt";
     const std::string GRAPH_REJECTED_FLAG           = "Removed";
     const std::string GRAPH_KEPT_FLAG               = "Selected";
 

@@ -14,6 +14,7 @@
 #include "UserInput.h"
 #include "EntapGlobals.h"
 #include "ExceptionHandler.h"
+#include "GraphingManager.h"
 
 //**************************************************************
 
@@ -29,39 +30,6 @@ std::string TAX_DB_PATH;
 std::string TAX_DOWNLOAD_EXE;
 std::string GO_DB_PATH;
 std::string GRAPHING_EXE;
-
-/**
- * ======================================================================
- * Function std::pair<bool, boostPO::variables_map> entap_user_parse
- *                              (int            argc,
- *                               const char**   argv)
- *
- * Description          - Handles overall parsing and verifying of user
- *                        flags
- *                      - Flags parsed through Boost program options
- *
- * Notes                - Called from main
- *
- * @param argc          - Pushed from main
- * @param argv          - Pushed from main
- * @return              - Pair containing flag if configuration is selected
- *                        and map of user parsed flags
- * ======================================================================
- */
-std::pair<bool, boostPO::variables_map> entap_user_parse(int argc, const char** argv) {
-
-    boostPO::variables_map user_inputs;
-    std::pair<bool, boostPO::variables_map> out_pair;
-    try {
-        _config = false;
-        user_inputs = parse_arguments_boost(argc, argv);
-        verify_user_input(user_inputs);
-
-    } catch (const ExceptionHandler &e) {throw e;}
-    out_pair.first  = _config;
-    out_pair.second = user_inputs;
-    return out_pair;
-};
 
 
 /**
@@ -113,6 +81,8 @@ boost::program_options::variables_map parse_arguments_boost(int argc, const char
                 (ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY.c_str(),
                  boostPO::value<short>()->default_value(ENTAP_EXECUTE::EGGNOG_INT_FLAG),
                  "Specify ontology software to use\n0 - eggnog\n1 - interproscan")
+                (ENTAP_CONFIG::INPUT_FLAG_GRAPH.c_str(),
+                "Check whether your system supports graphing")
                 ("tag",
                  boostPO::value<std::string>()->default_value(OUTFILE_DEFAULT),
                  "Specify species or unique tag you would like files to be saved as")
@@ -210,7 +180,7 @@ boost::program_options::variables_map parse_arguments_boost(int argc, const char
  * @return              - None
  * =====================================================================
  */
-void verify_user_input(boostPO::variables_map& vm) {
+bool verify_user_input(boostPO::variables_map& vm) {
 
     bool                     is_protein;
     bool                     is_nucleotide;
@@ -218,6 +188,22 @@ void verify_user_input(boostPO::variables_map& vm) {
     bool                     is_run;
     std::string              species;
     std::string              input_tran_path;
+
+    if (vm.count(ENTAP_CONFIG::INPUT_FLAG_GRAPH)) {
+        if (!file_exists(GRAPHING_EXE)) {
+            std::cout<<"Graphing is NOT enabled on this system! Graphing script could not "
+                    "be found at: "<<GRAPHING_EXE << std::endl;
+        }
+        GraphingManager gmanager = GraphingManager(GRAPHING_EXE);
+        if (gmanager.is_graphing_enabled()) {
+            std::cout<< "Graphing is enabled on this system!" << std::endl;
+            throw ExceptionHandler("",ENTAP_ERR::E_SUCCESS);
+        } else {
+            std::cout<<"Graphing is NOT enabled on this system!,"
+                    " ensure that you have python with the Matplotlib module installed."<<std::endl;
+            throw ExceptionHandler("",ENTAP_ERR::E_SUCCESS);
+        }
+    }
 
     is_config = (bool) vm.count(ENTAP_CONFIG::INPUT_FLAG_CONFIG);     // ignore 'config config'
     is_protein = (bool)vm.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN);
@@ -235,7 +221,6 @@ void verify_user_input(boostPO::variables_map& vm) {
         throw(ExceptionHandler("Cannot specify both config and run flags",
                                ENTAP_ERR::E_INPUT_PARSE));
     }
-    _config = is_config;
 
     try {
         verify_databases(vm);
@@ -276,6 +261,7 @@ void verify_user_input(boostPO::variables_map& vm) {
         }
 
     }catch (const ExceptionHandler &e) {throw e;}
+    return is_config;
 }
 
 

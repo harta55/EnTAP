@@ -13,7 +13,7 @@ class GraphingManager {
 public:
     GraphingManager(std::string);
     void graph(GraphingStruct&);
-
+    bool is_graphing_enabled() const;
 
 private:
 

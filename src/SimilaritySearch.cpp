@@ -12,6 +12,7 @@
 #include "SimilaritySearch.h"
 #include "ExceptionHandler.h"
 #include "EntapExecute.h"
+#include "EntapGlobals.h"
 //**************************************************************
 
 
@@ -281,6 +282,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     GraphingStruct              graphingStruct;
     std::string                 database;
     std::string                 figure_base;
+    std::string                 frame;
     unsigned long               count_no_hit=0;
     unsigned long               count_contam=0;
     unsigned long               count_filtered=0;
@@ -290,6 +292,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     std::map<std::string, int>  contam_map;
     std::map<std::string, int>  species_map;
     std::map<std::string, int>  contam_species_map;
+    graph_sum_t                 graphing_sum_map;
 
     database = boostFS::path(base_path).filename().string();
     figure_base = (boostFS::path(base_path) / FIGURE_DIR).string();
@@ -297,9 +300,9 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     boostFS::create_directories(figure_base);
     boostFS::create_directories(base_path);     // should be created before
 
-    std::string out_best_contams_tsv             = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_CONTAM_TSV)).string();
-    std::string out_best_contams_fa_nucl         = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_CONTAM_FA_NUCL)).string();
-    std::string out_best_contams_fa_prot         = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_CONTAM_FA_PROT)).string();
+    std::string out_best_contams_tsv             = PATHS(base_bst ,SIM_SEARCH_DATABASE_CONTAM_TSV);
+    std::string out_best_contams_fa_nucl         = PATHS(base_bst ,SIM_SEARCH_DATABASE_CONTAM_FA_NUCL);
+    std::string out_best_contams_fa_prot         = PATHS(base_bst ,SIM_SEARCH_DATABASE_CONTAM_FA_PROT);
 
     std::string out_best_hits_tsv                = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_BEST_TSV)).string();
     std::string out_best_hits_no_contam_tsv      = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_BEST_TSV_NO_CONTAM)).string();
@@ -315,6 +318,8 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     std::string graph_species_png_path           = (boostFS::path(figure_base) / boostFS::path(GRAPH_SPECIES_BAR_PNG)).string();
     std::string graph_contam_txt_path            = (boostFS::path(figure_base) / boostFS::path(GRAPH_CONTAM_BAR_TXT)).string();
     std::string graph_contam_png_path            = (boostFS::path(figure_base) / boostFS::path(GRAPH_CONTAM_BAR_PNG)).string();
+    std::string graph_sum_txt_path               = PATHS(figure_base, GRAPH_DATABASE_SUM_TXT);
+    std::string graph_sum_png_path               = PATHS(figure_base, GRAPH_DATABASE_SUM_PNG);
 
     print_header(out_best_contams_tsv);
     print_header(out_best_hits_tsv);
@@ -334,9 +339,11 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
 
     std::ofstream graph_species_file(graph_species_txt_path, std::ios::out | std::ios::app);
     std::ofstream graph_contam_file(graph_contam_txt_path, std::ios::out | std::ios::app);
+    std::ofstream graph_sum_file(graph_sum_txt_path, std::ios::out | std::ios::app);
 
     graph_species_file << "Species\tCount"     << std::endl;
-    graph_contam_file  << "Contaminant\tCount" << std::endl;
+    graph_contam_file  << "Contaminant Species\tCount" << std::endl;
+    graph_sum_file     << "Category\tCount"    << std::endl;
 
     for (auto &pair : SEQUENCES) {
         std::map<std::string, QuerySequence>::iterator it = best_hits.find(pair.first);
@@ -347,9 +354,16 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
                 count_no_hit++;
                 file_no_hits_nucl << pair.second.get_sequence_n() << std::endl;
                 file_no_hits_prot << pair.second.get_sequence_p() << std::endl;
+                // Graphing
+                frame = pair.second.getFrame();
+                if (graphing_sum_map[frame].find(NO_HIT_FLAG) != graphing_sum_map[frame].end()) {
+                    graphing_sum_map[frame][NO_HIT_FLAG]++;
+                } else graphing_sum_map[frame][NO_HIT_FLAG] = 1;
+
             }
         } else {
             // Have hit a database
+            frame = pair.second.getFrame();     // Used for graphing
             file_best_hits_fa_nucl << pair.second.get_sequence_n()<<std::endl;
             file_best_hits_fa_prot << pair.second.get_sequence_p()<<std::endl;
             file_best_hits_tsv << it->second.print_tsv(DEFAULT_HEADERS) << std::endl;
@@ -382,12 +396,23 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
 
             if (it->second.is_informative()) {
                 count_informative++;
-            } else count_uninformative++;
+                // Graphing
+                if (graphing_sum_map[frame].find(INFORMATIVE_FLAG) != graphing_sum_map[frame].end()) {
+                    graphing_sum_map[frame][INFORMATIVE_FLAG]++;
+                } else graphing_sum_map[frame][INFORMATIVE_FLAG] = 1;
+
+            } else {
+                count_uninformative++;
+                if (graphing_sum_map[frame].find(UNINFORMATIVE_FLAG) != graphing_sum_map[frame].end()) {
+                    graphing_sum_map[frame][UNINFORMATIVE_FLAG]++;
+                } else graphing_sum_map[frame][UNINFORMATIVE_FLAG] = 1;
+            }
 
             if (is_final) {
                 pair.second.set_sim_struct(it->second.get_sim_struct());
                 pair.second.set_is_database_hit(true);
             }
+
         }
     }
     file_best_hits_tsv.close();
@@ -413,9 +438,35 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
        "\n\t\tReference transcriptome sequences with an alignment (FASTA):\n\t\t\t"    << out_best_hits_fa_prot   <<
        "\n\t\tSearch results (TSV):\n\t\t\t"          << out_best_hits_tsv   <<
        "\n\tTotal unique transcripts without an alignment: "                 << count_no_hit       <<
-       "\n\t\tReference transcriptome sequences without an alignment (FASTA):\n\t\t\t"    << out_no_hits_fa_prot     <<
-       "\n\tTotal unique informative alignments: "                           << count_informative  <<
-       "\n\tTotal unique uninformative alignments: "                         << count_uninformative<<
+       "\n\t\tReference transcriptome sequences without an alignment (FASTA):\n\t\t\t"    << out_no_hits_fa_prot;
+    // Have frame information
+    if (graphing_sum_map.size() > 1) {
+        for (auto &pair : graphing_sum_map) {
+            // Frame -> Map of uninform/inform/no hits
+            ss << "\n\t\t" << pair.first << "(" << pair.second[NO_HIT_FLAG] << ")";
+            graph_sum_file << pair.first << "\t" << NO_HIT_FLAG << "\t" << pair.second[NO_HIT_FLAG] << "\n";
+        }
+    }
+    ss <<
+       "\n\tTotal unique informative alignments: " << count_informative;
+    if (graphing_sum_map.size() > 1) {
+        for (auto &pair : graphing_sum_map) {
+            // Frame -> Map of uninform/inform/no hits
+            ss << "\n\t\t" << pair.first << "(" << pair.second[INFORMATIVE_FLAG] << ")";
+            graph_sum_file << pair.first << "\t" << INFORMATIVE_FLAG << "\t" << pair.second[INFORMATIVE_FLAG] << "\n";
+        }
+    }
+    ss <<
+       "\n\tTotal unique uninformative alignments: " << count_uninformative;
+    if (graphing_sum_map.size() > 1) {
+        for (auto &pair : graphing_sum_map) {
+            // Frame -> Map of uninform/inform/no hits
+            ss << "\n\t\t" << pair.first << "(" << pair.second[UNINFORMATIVE_FLAG] << ")";
+            graph_sum_file << pair.first << "\t" << UNINFORMATIVE_FLAG << "\t" << pair.second[UNINFORMATIVE_FLAG] << "\n";
+        }
+    }
+
+    ss<<
        "\n\tTotal unique contaminants: "                                     << count_contam       <<
           "(" << contam_percent << "%): "                                    <<
        "\n\t\tTranscriptome reference sequences labeled as a contaminant (FASTA):\n\t\t\t"<< out_best_contams_fa_prot<<
@@ -459,6 +510,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     graphingStruct.software_flag = GRAPH_SOFTWARE_FLAG;
     graph_contam_file.close();
     graph_species_file.close();
+    graph_sum_file.close();
     if (count_contam > 0) {
         graphingStruct.fig_out_path = graph_contam_png_path;
         graphingStruct.graph_title  = database + GRAPH_CONTAM_TITLE;
@@ -470,6 +522,12 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     graphingStruct.graph_title  = database + GRAPH_SPECIES_TITLE;
     graphingStruct.text_file_path = graph_species_txt_path;
     graphingStruct.graph_type = GRAPH_BAR_FLAG;
+    _pGraphingManager->graph(graphingStruct);
+
+    graphingStruct.fig_out_path   = graph_sum_png_path;
+    graphingStruct.graph_title    = database + GRAPH_DATABASE_SUM_TITLE;
+    graphingStruct.text_file_path = graph_sum_txt_path;
+    graphingStruct.graph_type     = GRAPH_SUM_FLAG;
     _pGraphingManager->graph(graphingStruct);
 
     // check if final - different graph

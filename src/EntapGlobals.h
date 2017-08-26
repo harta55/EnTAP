@@ -163,6 +163,7 @@ namespace ENTAP_CONFIG {
     extern const std::string INPUT_FLAG_VERSION      ;
     extern const std::string INPUT_FLAG_TRANSCRIPTOME;
     extern const std::string INPUT_FLAG_DATABASE     ;
+    extern const std::string INPUT_FLAG_GRAPH;
 
     extern const std::string INPUT_UNIPROT_SWISS    ;
     extern const std::string INPUT_UNIPROT_UR100    ;

@@ -18,13 +18,6 @@
 //**************************************************************
 
 
-//******************** Prototype Functions *********************
-void init_log();
-void init_entap(boostPO::variables_map&);
-
-//**************************************************************
-
-
 enum States {
     PARSE_ARGS            = 0x01,
     CONFIG_ENTAP          = 0x02,
@@ -34,7 +27,6 @@ enum States {
 };
 
 
-States state;   // might handle state summary
 std::string _outpath;
 std::string _exe_path;
 std::string _working_dir;
@@ -43,10 +35,19 @@ std::chrono::time_point<std::chrono::system_clock> _end_time;
 std::string DEBUG_FILE_PATH;
 std::string LOG_FILE_PATH;
 
+
+//******************** Prototype Functions *********************
+void init_log();
+void init_entap(boostPO::variables_map&);
+void exit_print(States);
+//**************************************************************
+
+
 int main(int argc, const char** argv) {
 
     boostPO::variables_map                      inputs;
     std::pair<bool,boostPO::variables_map>      user_pair;
+    States                                      state;
 
     _start_time = std::chrono::system_clock::now();
     try {
@@ -68,6 +69,7 @@ int main(int argc, const char** argv) {
         return e.getErr_code();
     }
     _end_time = std::chrono::system_clock::now();
+    exit_print(state);
     return 0;
 }
 
@@ -95,4 +97,21 @@ void init_log() {
     boostFS::remove(DEBUG_FILE_PATH);
     boostFS::remove(LOG_FILE_PATH);
     print_debug("Start - EnTAP");
+}
+
+
+void exit_print(States s) {
+    std::stringstream out_stream;
+    std::string       out_msg;
+    std::string       out_time;
+    long              min_dif;
+
+    print_debug("End - EnTAP");
+    min_dif = std::chrono::duration_cast<std::chrono::minutes>(_end_time - _start_time).count();
+
+    out_stream <<
+               "\nEnTAP has completed! "           <<
+               "\nTotal runtime (minutes): "     << min_dif;
+    out_msg = out_stream.str();
+    print_statistics(out_msg);
 }

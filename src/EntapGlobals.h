@@ -23,6 +23,7 @@ namespace boostPO = boost::program_options;
 
 #define PATHS(x,y)      (boostFS::path(x) / boostFS::path(y)).string()
 #define NCBI_UNIPROT    0       // Compiler flag for future feature
+#define DEBUG           1
 
 //**************************************************************
 
@@ -112,6 +113,8 @@ namespace ENTAP_EXECUTE {
     extern const std::string HEADER_DATABASE;
     extern const std::string HEADER_FRAME;
     extern const std::string HEADER_CONTAM;
+    extern const std::string HEADER_INFORM;
+
 
     extern const std::string HEADER_SEED_ORTH;
     extern const std::string HEADER_SEED_EVAL;

@@ -95,7 +95,8 @@ private:
             &ENTAP_EXECUTE::HEADER_SPECIES,
             &ENTAP_EXECUTE::HEADER_DATABASE,
             &ENTAP_EXECUTE::HEADER_FRAME,
-            &ENTAP_EXECUTE::HEADER_CONTAM
+            &ENTAP_EXECUTE::HEADER_CONTAM,
+            &ENTAP_EXECUTE::HEADER_INFORM
     };
 
     std::vector<std::string>         _database_paths;

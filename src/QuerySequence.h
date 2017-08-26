@@ -53,7 +53,8 @@ public:
         std::string                       contam_type;
         std::string                       lineage;
         std::string                       yes_no_contam; // just for convenience
-        bool                              contaminant;\
+        std::string                       yes_no_inform;
+        bool                              contaminant;
     };
 
     bool operator>(const QuerySequence& querySequence);
@@ -71,6 +72,7 @@ public:
                     std::string,std::string,std::string, DatabaseHelper &);
     std::string print_tsv(const std::vector<const std::string*>&);
     std::string print_tsv(short, std::vector<const std::string*>& , short);
+    std::string format_eggnog(std::string&);
 
     void set_tax_score(std::string);
     void init_header();
@@ -128,8 +130,8 @@ private:
     bool                              _is_one_go;
     bool                              _is_one_kegg;
     bool                              _is_expression_kept;
-    float                              _tax_score;
-    float                              _fpkm;
+    float                             _tax_score;
+    float                             _fpkm;
     unsigned long                     _seq_length;
     double                            _e_val;
     double                            _coverage;

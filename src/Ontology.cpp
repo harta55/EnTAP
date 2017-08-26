@@ -139,6 +139,7 @@ void Ontology::init_headers() {
                     &ENTAP_EXECUTE::HEADER_DATABASE,
                     &ENTAP_EXECUTE::HEADER_FRAME,
                     &ENTAP_EXECUTE::HEADER_CONTAM,
+                    &ENTAP_EXECUTE::HEADER_INFORM,
                     &ENTAP_EXECUTE::HEADER_SEED_ORTH,
                     &ENTAP_EXECUTE::HEADER_SEED_EVAL,
                     &ENTAP_EXECUTE::HEADER_SEED_SCORE,

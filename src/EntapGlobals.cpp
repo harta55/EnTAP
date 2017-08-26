@@ -34,11 +34,12 @@ namespace ENTAP_EXECUTE {
     const std::string HEADER_SUBJ_E    = "Subject End";
     const std::string HEADER_E_VAL     = "E Value";
     const std::string HEADER_COVERAGE  = "Coverage";
-    const std::string HEADER_TITLE     = "Informativeness";
+    const std::string HEADER_TITLE     = "Description";
     const std::string HEADER_SPECIES   = "Species";
     const std::string HEADER_DATABASE  = "Origin Database";
     const std::string HEADER_FRAME     = "Frame";
     const std::string HEADER_CONTAM    = "Contaminant";
+    const std::string HEADER_INFORM    = "Informative";
 
     const std::string HEADER_SEED_ORTH = "Seed Ortholog";
     const std::string HEADER_SEED_EVAL = "Seed E-Value";
@@ -57,7 +58,7 @@ namespace ENTAP_EXECUTE {
 
 namespace ENTAP_CONFIG {
 
-    const std::string ENTAP_VERSION  = "0.7.3.3";
+    const std::string ENTAP_VERSION  = "0.7.3.4";
     const std::string DEBUG_FILENAME = "debug.txt";
     const std::string LOG_FILENAME   = "log_file.txt";
 
@@ -129,6 +130,7 @@ namespace ENTAP_CONFIG {
  */
 void print_debug(std::string msg) {
 
+#if DEBUG
     std::chrono::time_point<std::chrono::system_clock> current;
     std::time_t time;
 
@@ -138,6 +140,8 @@ void print_debug(std::string msg) {
     std::ofstream debug_file(DEBUG_FILE_PATH, std::ios::out | std::ios::app);
     debug_file << out_time.substr(0,out_time.length()-1) << ": " + msg << std::endl;
     debug_file.close();
+#endif
+    return;
 }
 
 

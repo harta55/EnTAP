@@ -179,6 +179,7 @@ void QuerySequence::setIs_better_hit(bool is_better_hit) {
 
 void QuerySequence::set_is_informative(bool _is_informative) {
     QuerySequence::_is_informative = _is_informative;
+    _is_informative ? _sim_search_results.yes_no_inform = "Yes" : _sim_search_results.yes_no_inform = "No";
 }
 
 const std::string &QuerySequence::get_species() const {
@@ -205,6 +206,7 @@ void QuerySequence::set_is_database_hit(bool _is_database_hit) {
     QuerySequence::_is_database_hit = _is_database_hit;
 }
 
+// TODO move to eggnog module
 void QuerySequence::set_eggnog_results(std::string seed_o, std::string seed_o_eval,
                                        std::string seed_score, std::string predicted,
                                        std::string go_terms, std::string kegg,
@@ -282,9 +284,11 @@ void QuerySequence::set_eggnog_results(std::string seed_o, std::string seed_o_ev
             sql_kegg = results[0][1];
             sql_protein = results[0][2];
             if (!sql_desc.empty() && sql_desc.find("[]") != 0) _eggnog_results.description = sql_desc;
-            if (!sql_kegg.empty() && sql_kegg.find("[]") != 0) _eggnog_results.sql_kegg = sql_kegg;
-            if (!sql_protein.empty() && sql_protein.find("[]") != 0){
-                _eggnog_results.protein_domains = sql_protein;
+            if (!sql_kegg.empty() && sql_kegg.find("[]") != 0) {
+                _eggnog_results.sql_kegg = format_eggnog(sql_kegg);
+            }
+            if (!sql_protein.empty() && sql_protein.find("{}") != 0){
+                _eggnog_results.protein_domains = format_eggnog(sql_protein);
             }
         } catch (std::exception &e) {
             // Do not fatal error
@@ -328,7 +332,6 @@ void QuerySequence::init_sequence() {
     _sim_search_results.stitle = "";
     _sim_search_results.species = "";
     _sim_search_results.yes_no_contam = "";
-
 
     _eggnog_results.seed_ortholog="";
     _eggnog_results.seed_evalue="";
@@ -529,6 +532,7 @@ void QuerySequence::init_header() {
             {&ENTAP_EXECUTE::HEADER_DATABASE  , &_sim_search_results.database_path},
             {&ENTAP_EXECUTE::HEADER_FRAME     , &_frame},
             {&ENTAP_EXECUTE::HEADER_CONTAM    , &_sim_search_results.yes_no_contam},
+            {&ENTAP_EXECUTE::HEADER_INFORM    , &_sim_search_results.yes_no_inform},
             {&ENTAP_EXECUTE::HEADER_SEED_ORTH , &_eggnog_results.seed_ortholog},
             {&ENTAP_EXECUTE::HEADER_SEED_EVAL , &_eggnog_results.seed_evalue},
             {&ENTAP_EXECUTE::HEADER_SEED_SCORE, &_eggnog_results.seed_score},
@@ -539,4 +543,51 @@ void QuerySequence::init_header() {
             {&ENTAP_EXECUTE::HEADER_EGG_KEGG  , &_eggnog_results.sql_kegg} ,
             {&ENTAP_EXECUTE::HEADER_EGG_PROTEIN,&_eggnog_results.protein_domains}
     };
+}
+
+
+std::string QuerySequence::format_eggnog(std::string& input) {
+
+    enum FLAGS {
+        DOM    = 0x01,
+        INNER  = 0x02,
+        INNER2 = 0x04,
+        STR    = 0x08,
+        FOUND  = 0x10
+    };
+
+    unsigned char bracketFlag = 0x0;
+    std::string output = "";
+
+    for (char c : input) {
+        if (c == '{') {
+            bracketFlag |= DOM;
+        } else if (c == '[' && !(bracketFlag & INNER)) {
+            bracketFlag |= INNER;
+            if (bracketFlag & DOM) output += " (";
+        } else if (c == '[' && !(bracketFlag & INNER2)) {
+            bracketFlag |= INNER2;
+        } else if (c == '}') {
+            bracketFlag &= ~DOM;
+            bracketFlag &= ~FOUND;
+            output = output.substr(0,output.length()-2); // Remove trailing ', '
+        } else if (c == ']' && (bracketFlag & INNER2)) {
+            bracketFlag &= ~INNER2;
+            bracketFlag &= ~FOUND;
+            output += ", ";
+        } else if (c == ']' && (bracketFlag & INNER)) {
+            bracketFlag &= ~INNER;
+            bracketFlag &= ~FOUND;
+            output = output.substr(0,output.length()-2); // Remove trailing ', '
+            if (bracketFlag & DOM) output += "), ";
+        } else if (c == '\"') {
+            bracketFlag ^= STR;
+            if (!(bracketFlag & STR)) bracketFlag |= FOUND;
+            if (!(bracketFlag & INNER)) bracketFlag &= ~FOUND;
+        } else {
+            if (bracketFlag & FOUND) continue;
+            if (bracketFlag & STR) output += c;
+        }
+    }
+    return output;
 }

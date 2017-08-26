@@ -1,6 +1,11 @@
-//
-// Created by harta on 5/25/17.
-//
+/*
+ * Developed by Alexander Hart
+ * Plant Computational Genomics Lab
+ * University of Connecticut
+ *
+ * 2017
+*/
+
 
 #ifndef ENTAP_DATABASEHELPER_H
 #define ENTAP_DATABASEHELPER_H

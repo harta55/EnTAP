@@ -1,6 +1,10 @@
-//
-// Created by harta on 5/7/17.
-//
+/*
+ * Developed by Alexander Hart
+ * Plant Computational Genomics Lab
+ * University of Connecticut
+ *
+ * 2017
+*/
 
 #ifndef ENTAP_EXPRESSIONANALYSIS_H
 #define ENTAP_EXPRESSIONANALYSIS_H

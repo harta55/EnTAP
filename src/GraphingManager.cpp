@@ -1,6 +1,11 @@
-//
-// Created by harta on 7/21/17.
-//
+/*
+ * Developed by Alexander Hart
+ * Plant Computational Genomics Lab
+ * University of Connecticut
+ *
+ * 2017
+*/
+
 
 #include "GraphingManager.h"
 #include "EntapConfig.h"

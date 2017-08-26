@@ -1,3 +1,11 @@
+/*
+ * Developed by Alexander Hart
+ * Plant Computational Genomics Lab
+ * University of Connecticut
+ *
+ * 2017
+*/
+
 
 //*********************** Includes *****************************
 #include <iostream>
@@ -80,7 +88,7 @@ void init_entap(boostPO::variables_map& user_input) {
 
     boost::filesystem::path working_dir(boost::filesystem::current_path());
     _working_dir = working_dir.string();
-    _outpath = PATHS(_working_dir, user_input["tag"].as<std::string>());
+    _outpath     = PATHS(_working_dir, user_input["tag"].as<std::string>());
     DEBUG_FILE_PATH = PATHS(_outpath, ENTAP_CONFIG::DEBUG_FILENAME);
     LOG_FILE_PATH   = PATHS(_outpath, ENTAP_CONFIG::LOG_FILENAME);
     init_log();
@@ -111,7 +119,7 @@ void exit_print(States s) {
 
     out_stream <<
                "\nEnTAP has completed! "           <<
-               "\nTotal runtime (minutes): "     << min_dif;
+               "\nTotal runtime (minutes): "       << min_dif;
     out_msg = out_stream.str();
     print_statistics(out_msg);
 }

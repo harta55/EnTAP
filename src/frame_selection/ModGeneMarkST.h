@@ -1,6 +1,11 @@
-//
-// Created by harta on 8/11/17.
-//
+/*
+ * Developed by Alexander Hart
+ * Plant Computational Genomics Lab
+ * University of Connecticut
+ *
+ * 2017
+*/
+
 
 #ifndef ENTAP_MODGENEMARKST_H
 #define ENTAP_MODGENEMARKST_H

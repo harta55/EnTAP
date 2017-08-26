@@ -1,6 +1,10 @@
-//
-// Created by harta55 on 2/1/17.
-//
+/*
+ * Developed by Alexander Hart
+ * Plant Computational Genomics Lab
+ * University of Connecticut
+ *
+ * 2017
+*/
 
 #ifndef ENTAPCONFIG_H
 #define ENTAPCONFIG_H

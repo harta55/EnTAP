@@ -1,7 +1,13 @@
-//
-// Created by harta on 8/4/17.
-//
+/*
+ * Developed by Alexander Hart
+ * Plant Computational Genomics Lab
+ * University of Connecticut
+ *
+ * 2017
+*/
 
+
+//*********************** Includes *****************************
 #include <chrono>
 #include <string>
 #include <ios>
@@ -13,6 +19,9 @@
 #include <unordered_map>
 #include <sstream>
 #include "EntapGlobals.h"
+
+//**************************************************************
+
 
 namespace ENTAP_EXECUTE {
     //------------------------Ontology-------------------------//

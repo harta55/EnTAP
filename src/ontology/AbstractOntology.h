@@ -1,6 +1,11 @@
-//
-// Created by harta on 8/12/17.
-//
+/*
+ * Developed by Alexander Hart
+ * Plant Computational Genomics Lab
+ * University of Connecticut
+ *
+ * 2017
+*/
+
 
 #ifndef ENTAP_ABSTRACTONTOLOGY_H
 #define ENTAP_ABSTRACTONTOLOGY_H

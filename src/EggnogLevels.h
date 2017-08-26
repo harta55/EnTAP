@@ -1,6 +1,10 @@
-//
-// Created by harta on 8/6/17.
-//
+/*
+ * Developed by Alexander Hart
+ * Plant Computational Genomics Lab
+ * University of Connecticut
+ *
+ * 2017
+*/
 
 #ifndef ENTAP_EGGNOGLEVELS_H
 #define ENTAP_EGGNOGLEVELS_H

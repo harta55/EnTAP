@@ -1,6 +1,10 @@
-//
-// Created by Alex on 9/14/2016.
-//
+/*
+ * Developed by Alexander Hart
+ * Plant Computational Genomics Lab
+ * University of Connecticut
+ *
+ * 2017
+*/
 
 #ifndef ENTAP_EXCEPTIONHANDLER_H
 #define ENTAP_EXCEPTIONHANDLER_H

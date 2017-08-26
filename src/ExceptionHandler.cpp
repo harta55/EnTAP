@@ -1,3 +1,12 @@
+/*
+ * Developed by Alexander Hart
+ * Plant Computational Genomics Lab
+ * University of Connecticut
+ *
+ * 2017
+*/
+
+
 #include <iostream>
 #include <ctime>
 #include <fstream>

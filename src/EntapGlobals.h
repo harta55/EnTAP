@@ -1,7 +1,11 @@
-//
-// Created by harta55 on 2/1/17.
-//
-// TODO temporary, change
+/*
+ * Developed by Alexander Hart
+ * Plant Computational Genomics Lab
+ * University of Connecticut
+ *
+ * 2017
+*/
+
 
 #ifndef ENTAPGLOBALS_H
 #define ENTAPGLOBALS_H

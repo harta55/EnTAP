@@ -1,6 +1,10 @@
-//
-// Created by harta on 3/4/17.
-//
+/*
+ * Developed by Alexander Hart
+ * Plant Computational Genomics Lab
+ * University of Connecticut
+ *
+ * 2017
+*/
 
 #ifndef ENTAP_ENTAPEXECUTE_H
 #define ENTAP_ENTAPEXECUTE_H

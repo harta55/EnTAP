@@ -11,6 +11,8 @@
 .. |tax_bin| replace:: ncbi_tax_bin.entp
 .. |tax_data| replace:: ncbi_tax.entp
 
+.. |flag_path| replace:: paths
+
 
 Basic Usage
 ============
@@ -21,25 +23,28 @@ Basic Usage
 
 Configuration
 -------------
-Configuration is the first stage of EnTAP that will download and configure the necessary databases for full functionality. This is run if you would like to change/update the databases that EnTAP is reading from.
+Configuration is the first stage of EnTAP that will download and configure the necessary databases for full functionality. This is run if you would like to change/update the databases that EnTAP is reading from. I'll break this up into two sections, :ref:`folder hierarchy<hierarchy-label>` and :ref:`usage<usage-label>`. The folder hierarchy section will just describe how everything is 'typically' setup with EnTAP, however these paths can be easily changed in the |config_file| (more on that later!). The usage section will go over the basic usage during the Configuration stage of EnTAP. 
+
+
+.. _hierarchy-label:
 
 Folder Hierarchy
 ^^^^^^^^^^^^^^^^^
 
-The EnTAP folder organization is refered to as the execution directory where all files will be made available.  The following organization is observed:
+The EnTAP folder organization is referred to as the execution directory where all files will be made available. This is essentially the hierarchy that was downloaded from the repository. 
 
-The|entap_dir| directory contains:
+The |entap_dir| directory contains:
 
     * |entap_dir| |libs_dir| 
     * |entap_dir| |src_dir|
     * |entap_dir| |bin_dir| (created during configuration)
     * |entap_dir| |data_dir| (created during configuration)
 
-In addition to some other files/directories. This 'main' folder can be changed with the - - exe flag (discussed later)
+In addition to some other files/directories.
 
-Recognition of EnTAP databases, src files, and execution accompanying pipeline software rely on this directory hierarchy. However, some files/directories can be changed from the default with the  |config_file| file. 
+Recognition of EnTAP databases, src files, and execution accompanying pipeline software can rely on this 'default' directory hierarchy. However, any necessary files/directories can be changed from the default with the  |config_file| file (by specifying the |flag_path| flag). 
 
-.. warning:: Renaming folders/files within the main EnTAP directory can cause execution issues
+.. warning:: Ensure you are pointing to the correct paths if not using the defaults!
 
 The |config_file| file mentioned above has the following defaults:
 
@@ -47,22 +52,23 @@ The |config_file| file mentioned above has the following defaults:
     * rsem_exe_path=/EnTAP/libs/RSEM-1.3.0 (this is a path to the directory)
     * genemarkst_exe_path=/EnTAP//libs/gmst_linux_64/gmst.pl
     * eggnog_exe_path=/EnTAP/libs/eggnog-mapper/emapper.py
-    * eggnog_download_exe=/EnTAP/libs/eggnog-mapper/
-    * eggnog_dmnd_database=/EnTAP/libs/eggnog-mapper/data/eggnog.db
+    * eggnog_download_exe=/EnTAP/libs/eggnog-mapper/download_eggnog_data.py
+    * eggnog_database=/EnTAP/libs/eggnog-mapper/data/eggnog.db (downloaded during Configuration)
+    * entap_tax_database=/EnTAP/bin/ncbi_tax_bin.entp (binary version, downloaded during Configuration)
+    * entap_tax_download_script=/EnTAP/src/download_tax.pl
+    * entap_go_database=/EnTAP/bin/go_term.entp (binary version, downloaded during Configuration)
+    * entap_graphing_script=/EnTAP/src/entap_graphing.py
 
 
 These can be changed to whichever path you would prefer. If something is globally installed, just put a space " " after the '='. EnTAP will recognize these paths first and they will override defaults. 
 
-The following paths cannot be changed from the defaults within the 'main' folder:
 
-    * |entap_dir| / |config_file|
-    * |entap_dir| |src_dir| / |graph_file|
-    * |entap_dir| |src_dir| / |tax_file|
-    * |entap_dir| |bin_dir| / |tax_bin| (downloaded during config)
-    * |entap_dir| |bin_dir| / |go_term| (downloaded during config)
-    * |entap_dir| |data_dir| / |tax_data| (downloaded during config)
+This configuration file will be automatically detected if it is in the same directory as the EnTAP .exe, otherwise the path to it can be specified through the |flag_path| flag. 
 
-This EnTAP directory will be automatically detected (from the EnTAP exe), however the - -exe flag can be used to change this. As long it is pointed to a directory with the above files/paths there will be no execution issues. 
+.. note:: Be sure you set the paths before moving on (besides the databases that haven't been downloaded yet)!
+
+
+.. _usage-label:
 
 Usage
 ^^^^^
@@ -91,7 +97,7 @@ To run configuration with a sample database, the command is as follows:
 This stage must be done at least once prior to :ref:`running<run-label>`. Once the database is configured, you need not do it again unless you updated your original database or plan on configuring several others.
 
 
-.. note:: If you already have DIAMOND (.dmnd) configured databases, you can skip the configuration of that database. Although, due to other *EnTAP* database downloading (taxonomy and ontology), configuration must still be ran at least once without any flags.
+.. note:: If you already have DIAMOND (.dmnd) configured databases, you can skip the configuration of that database. Although, due to other EnTAP database downloading (taxonomy and ontology), configuration must still be ran at least once without any flags.
 
 Configuration can be ran without formatting a database as follows:
 
@@ -107,16 +113,26 @@ Flags:
 
 Required Flags:
 
-    * The only required flag is **- -config**. Although in order to run the full *EnTAP* pipeline, you must have a .dmnd configured database.
-
+* (- - config)
+    * The only required flag. 
+    * Although in order to run the full EnTAP pipeline, you must have a .dmnd configured database.
 
 Optional Flags:
 
-    * -d : Specify any number of databases you would like to configure for EnTAP
+* (-d/ - - database)
+    * Specify any number of FASTA formatted databases you would like to configure for EnTAP
+    * Not necessary if you already have DIAMOND configured databases (.dmnd)
 
-    * -exe: Change 'main' directory
-    * -database-out: Change output directory for formatted DIAMOND databases
+* (- - |flag_path|)
+    * Point to |config_file| for specifying paths
 
+* (- - database-out)
+    * Specify an output directory for the databases to be sent to
+    * This will send the Taxonomic Database, GO Database, and any DIAMOND databases to this location
+    * EggNOG database will not be sent here as it must remain in the EggNOG directory
+
+* (- t/ - - threads)
+    * Specify thread number for Configuration
 
 
 Memory Usage:
@@ -126,6 +142,9 @@ Memory usage will vary depending on the number of databases you would like confi
 
 * Gene Ontology References: 6Mb
 * NCBI Taxonomy: 400Mb
+* EggNOG Database: 30Gb
+
+....
 
 .. _run-label:
 
@@ -157,10 +176,10 @@ An example run with a nucleotide transcriptome:
 
 .. code-block:: bash
 
-    enTAP --runN -i path/to/transcriptome.fasta -d path/to/database.dmnd -d path/to/database2.dmnd -a path/to/alignment.sam
+    EnTAP --runN -i path/to/transcriptome.fasta -d path/to/database.dmnd -d path/to/database2.dmnd -a path/to/alignment.sam
 
 
-With the above command, the entire *enTAP* pipeline will run. Both frame selection and expression filtering can be skipped if preferred by the user.  EnTAP would require protein sequences (indicated by --runP) in order to avoid frame selection.  If there is not a hosrt read alignment file provided in SAM/BAM format, then expression filtering via RSEM will be skipped. 
+With the above command, the entire EnTAP pipeline will run. Both frame selection and expression filtering can be skipped if preferred by the user.  EnTAP would require protein sequences (indicated by --runP) in order to avoid frame selection.  If there is not a short read alignment file provided in SAM/BAM format, then expression filtering via RSEM will be skipped. 
 
 
 Flags:
@@ -182,16 +201,21 @@ Optional Flags:
 * (-a/- -align)
     * Path to alignment file (either SAM or BAM format)
     * **Note:** Ignoring this flag will skip expression filtering
+    * If you have ran alignment with paired end reads be sure to use the - -paired-end flag as well
 
-* (- -contam)
+* (- - contam)
     * Specify :ref:`contaminant<tax-label>` level of filtering
     * Multiple contaminants can be selected through repeated flags
 
-* (- -species)
-    * This flag will allow for taxonomic 'favoring' of hits that are closer to your target species or lineage. Any lineage can be used as referenced by the NCBI Taxonomic database, such as genus, phylum, or species.
+* (- - species)
+    * This flag will allow for :ref:`taxonomic<tax-label>` 'favoring' of hits that are closer to your target species or lineage. Any lineage can be used as referenced by the NCBI Taxonomic database, such as genus, phylum, or species.
     * Format **must** replace all spaces with underscores ('_') as follows: "- -species homo_sapiens" or "- -species primates"
 
-* (- -tag)
+* (- - level)
+    * Specify Gene Ontology levels you would like to normalize to
+    * Any amount of these flags can be used
+
+* (- - tag)
     * Specify output folder labelling.
     * Default: /outfiles
 
@@ -199,30 +223,99 @@ Optional Flags:
     * Specify FPKM cutoff for expression filtering
     * Default: 0.5
 
-* (- - coverage)
+* (-e)
+    * Specify minimum E-value cutoff for similarity searching
+    * Default: 10E-5
+
+* (- - tcoverage)
+    * Specify minimum target coverage for similarity searching
+    * Default: 50%
+
+* (- - qcoverage)
     * Specify minimum query coverage for similarity searching
     * Default: 50%
 
 * (- - overwrite)
     * All previously ran files will be overwritten if the same - -tag flag is used
-    * Without this flag *enTAP* will :ref:`recognize<over-label>` previous runs
+    * Without this flag EnTAP will :ref:`recognize<over-label>` previous runs and skip things that were already ran
+
+* (- - paired-end)
+    * Signify your reads are paired end for RSEM execution
+
+* (- - graph)
+    * This will check whether or not your system has graphing functionality supported
+    * If Python with the Matplotlib module are installed on your system graphing should be enabled!
+    * This can be specified on its own
+
+* (-t/ - - threads)
+    * Specify the number of threads of execution
 
 * (- - state)
-    * Precise control over execution stages. This flag allows for certain parts to be ran while skipping others. 
+    * Precise control over execution :ref:`stages<state-label>`. This flag allows for certain parts to be ran while skipping others. 
+    * Warning: This may cause issues depending on what you plan on running! 
 
 
 .. _tax-label:
 
-Taxonomic Contaminant Filtering
+Taxonomic Favoring and Contaminant Filtering
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Taxonomic contaminant filtering (as well as taxonomic favoring) is based upon the `NCBI Taxonomy`_ database. 
+Taxonomic contaminant filtering (as well as taxonomic favoring) is based upon the `NCBI Taxonomy`_ database. In saying this, all species/genus/lineage names must be contained within this database in order for it to be recognized by EnTAP. 
+
+**Contaminant Filtering:**
+
+Contaminants can be introduced during collection or processing of a sample. A contaminant is essentially a species that is not of the target species you are collecting. Some common contaminants are bacteria and fungi that can sometimes be found within collected samples. If a query sequence from your transcriptome is found when matching against a similarity search database, it will be flagged as such (but NOT removed automatically). Oftentimes, researchers would like to remove these sequences from the dataset. 
+
+An example of flagging bacteria and fungi as contaminants can be seen below:
+
+.. code-block:: bash
+
+    EnTAP --runN -i path/to/transcriptome.fasta -d path/to/database.dmnd -c fungi -c bacteria
+
+
+**Taxonomic Favoring**
+
+During best hit selection of similarity searched results, taxonomic consideration can utilized. If a certain lineage (such as sapiens) is specified, hits closer in taxonomic lineage to this selection will be chosen. Any lineage such as species/kingdom/phylum can be utilized as long as it is contained within the Taxonomic Database
+
 
 .. _over-label:
 
 Picking Up Where You Left Off
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+In order to save time and make it easier to do different analyses of data, EnTAP allows for picking up where you left off if certain stages were already ran and you'd like analyze data with different contaminant flags or taxonomic favoring. As an example, if similarity searching was ran previously you can skip hitting against the database and analyze the data to save time. However, the - - overwrite flag will not allow for this as it will remove previous runs and not recognize them. 
+
+In order to pick up and skip re-running certain stages again, the files that were ran previously **must** be in the same directories and have the same names. With an input transcriptome name of 'transcriptome' and example database of 'complete.protein':
+
+* Expression Filtering
+    * transcriptome.genes.results
+
+* Frame Selection
+    * transcriptome.fasta.faa
+    * transcriptome.fasta.fnn
+    * transcriptome.fasta.lst
+
+* Similarity Search
+    * blastp_transcriptome_complete.protein.faa.out
+
+* Gene Family
+    * annotation_results.emapper.annotations
+    * annotation_results_no_hits.emapper.annotations
+
+
+Since file naming is based on your input as well, the flags below **must** remain the same:
+* (-i / - - input)
+
+* (-a / - - align)
+
+* (-d / - - database)
+    * Do not necessarily need to remain the same. If additional databases are added, EnTAP will recognize the new ones and run similarity searching on them    
+
+* (- - qcoverage)
+
+* (- - tcoverage)
+
 
 .. _state-label:
+
 State Control
 ^^^^^^^^^^^^^^

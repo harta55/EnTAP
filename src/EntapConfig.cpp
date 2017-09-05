@@ -110,19 +110,21 @@ namespace entapConfig {
         std::unordered_map<std::string, std::string> tax_data_map;
 
         tax_path  = (boostFS::path(exe) / boostFS::path(TAX_DATABASE_PATH)).string();
-
         if (file_exists(TAX_DB_PATH)) {
             tax_bin = TAX_DB_PATH;
             print_debug("Tax database binary found at: " + tax_bin + " skipping...");
             return;
             // TODO update!
         } else {
-            print_debug("Tax database not found at: " + tax_bin + " downloading...");
-            tax_command = "perl " + TAX_DOWNLOAD_EXE + " " + tax_path;
-            if (execute_cmd(tax_command) != 0) {
-                throw ExceptionHandler("Command: " + tax_command, ENTAP_ERR::E_INIT_TAX_DOWN);
-            }
-            print_debug("Success! File written to " + tax_path);
+            print_debug("Tax database binary not found at: " + TAX_DB_PATH + " checking non-binary...");
+            if (!file_exists(tax_path)) {
+                print_debug("Tax database not found at: " + tax_path + " downloading...");
+                tax_command = "perl " + TAX_DOWNLOAD_EXE + " " + tax_path;
+                if (execute_cmd(tax_command) != 0) {
+                    throw ExceptionHandler("Command: " + tax_command, ENTAP_ERR::E_INIT_TAX_DOWN);
+                }
+                print_debug("Success! File written to " + tax_path);
+            } else print_debug("Database found at: " + tax_path + " indexing...");
         }
 
         print_debug("Indexing taxonomic database...");
@@ -143,6 +145,7 @@ namespace entapConfig {
             throw ExceptionHandler(e.what(), ENTAP_ERR::E_INIT_TAX_INDEX);
         }
 
+        tax_bin = PATHS(exe, ENTAP_CONFIG::TAX_DB_DEFAULT);
         print_debug("Success! Writing file to "+ tax_bin);
         try{
             {

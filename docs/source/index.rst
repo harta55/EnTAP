@@ -5,6 +5,7 @@
 
    
 .. image::    ENTAP_white.jpg
+	:scale: 50%
 	:align: center
    
 Welcome to EnTAP's documentation!

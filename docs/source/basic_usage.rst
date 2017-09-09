@@ -12,6 +12,7 @@
 .. |tax_data| replace:: ncbi_tax.entp
 
 .. |flag_path| replace:: paths
+.. |flag_taxon| replace:: taxon
 
 
 Basic Usage
@@ -207,7 +208,7 @@ Optional Flags:
     * Specify :ref:`contaminant<tax-label>` level of filtering
     * Multiple contaminants can be selected through repeated flags
 
-* (- - species)
+* (- - taxon)
     * This flag will allow for :ref:`taxonomic<tax-label>` 'favoring' of hits that are closer to your target species or lineage. Any lineage can be used as referenced by the NCBI Taxonomic database, such as genus, phylum, or species.
     * Format **must** replace all spaces with underscores ('_') as follows: "- -species homo_sapiens" or "- -species primates"
 

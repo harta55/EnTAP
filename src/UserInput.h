@@ -15,10 +15,17 @@
 
 //**************************************************************
 
+//*********************** Defines ******************************
 
-//*********************** Typedefs *****************************
+//**************************************************************
+
+//*********************** Typedefs/Enum ************************
 typedef std::vector<std::string> databases_t;
 
+enum SPECIES_FLAGS {
+    SPECIES,
+    CONTAMINANT
+};
 //******************** Prototype Functions *********************
 boost::program_options::variables_map parse_arguments_boost(int, const char**);
 bool verify_user_input(boost::program_options::variables_map&);
@@ -27,21 +34,29 @@ bool check_key(std::string&);
 std::unordered_map<std::string,std::string> parse_config(std::string&,std::string&);
 void generate_config(std::string&);
 void verify_databases(boost::program_options::variables_map&);
-void verify_species (boost::program_options::variables_map&);
+void verify_species (boost::program_options::variables_map&, SPECIES_FLAGS);
 void init_exe_paths(std::unordered_map<std::string, std::string> &, std::string);
 std::string get_exe_path(boostPO::variables_map&);
 
 //**************************************************************
 
 
+
 //*********************** Constants ****************************
 const float DEFAULT_QCOVERAGE              = 50.0;
 const float DEFAULT_TCOVERAGE              = 50.0;
+const float COVERAGE_MIN                   = 0.0;
+const float COVERAGE_MAX                   = 100.0;
 const float E_VALUE                        = 1e-5;
 const float RSEM_FPKM_DEFAULT              = 0.5;
+const float FPKM_MIN                       = 0.0;
+const float FPKM_MAX                       = 100.0;
 const unsigned char MAX_DATABASE_SIZE      = 5;
+const std::string DEFAULT_STATE            = "+";
 const std::string INTERPRO_DEFAULT         = "pfam";
 const std::string OUTFILE_DEFAULT          = "outfiles";
+const std::string BAM_EXT                  = ".bam";
+const std::string SAM_EXT                  = ".sam";
 
 
 //-------------------Config File----------------------//
@@ -76,7 +91,6 @@ namespace Defaults {
     const std::string INTERPRO_DEF_EXE         = "/libs/interproscan-5.22-61.0/interproscan.sh";
     const std::string TAX_DOWNLOAD_DEF         = "/src/download_tax.pl";
     const std::string GRAPH_SCRIPT_DEF         = "/src/entap_graphing.py";
-
 }
 
 //**************************************************************

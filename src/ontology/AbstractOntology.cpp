@@ -42,7 +42,7 @@ std::map<std::string,struct_go_term> AbstractOntology::read_go_map () {
             ia >> new_map;
         }
     } catch (std::exception &exception) {
-        throw ExceptionHandler(exception.what(), ENTAP_ERR::E_INIT_GO_SETUP);
+        throw ExceptionHandler(exception.what(), ENTAP_ERR::E_GO_READ);
     }
     return new_map;
 };

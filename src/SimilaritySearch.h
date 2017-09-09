@@ -32,8 +32,10 @@ public:
     std::vector<std::string> execute(std::string, bool);
     SimilaritySearch(std::vector<std::string>&, std::string, int, std::string,
                      boost::program_options::variables_map &, GraphingManager *);
+    SimilaritySearch();
     std::pair<std::string,std::string> parse_files(std::string,
                                                    std::map<std::string, QuerySequence>&);
+    std::unordered_map<std::string, std::string> read_tax_map();
     //**************************************************************
 
 
@@ -141,7 +143,6 @@ private:
     std::vector<std::string> verify_diamond_files(std::string&, std::string);
     std::pair<std::string,std::string> diamond_parse(std::vector<std::string>&,
                                                      std::map<std::string, QuerySequence>&);
-    std::unordered_map<std::string, std::string> read_tax_map();
     std::pair<bool,std::string>  is_contaminant(std::string, std::unordered_map<std::string,
             std::string> &,std::vector<std::string>&);
     std::string get_species(std::string &);

@@ -9,19 +9,24 @@
 
 #ifndef ENTAP_FRAMESELECTION_H
 #define ENTAP_FRAMESELECTION_H
+
+//*********************** Includes *****************************
 #include <iostream>
 #include <map>
 #include <boost/program_options/variables_map.hpp>
 #include "QuerySequence.h"
 #include "GraphingManager.h"
 #include "frame_selection/AbstractFrame.h"
+//**************************************************************
 
 
 class FrameSelection {
 
+
 public:
     std::string execute(std::string,std::map<std::string,QuerySequence>&);
     FrameSelection(std::string&, std::string&, boost::program_options::variables_map &, GraphingManager*);
+
 
 private:
 

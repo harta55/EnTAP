@@ -80,37 +80,39 @@ namespace entapExecute {
         std::string                             input_path;      // FASTA changes depending on execution
         std::string                             no_database_hits;// No DIAMOND
         std::queue<char>                        state_queue;
+        bool                                    trim_flag;       // User trim flag selected
         bool                                    state_flag;
-        bool                                    is_complete;    // All input sequences are complete genes
-        bool                                    blastp;         // false for blastx, true for blastp
+        bool                                    is_complete;     // All input sequences are complete genes
+        bool                                    blastp;          // false for blastx, true for blastp
         int                                     threads;
 
         state = INIT;
-        state_flag = false;
-        blastp = false;
-        _EXPRESSION_SUCCESS = false;
+        state_flag              = false;
+        blastp                  = false;
+        _EXPRESSION_SUCCESS     = false;
         _FRAME_SELETION_SUCCESS = false;
-        _SIM_SEARCH_SUCCESS = false;
-        _ONTOLOGY_SUCCESS = false;
+        _SIM_SEARCH_SUCCESS     = false;
+        _ONTOLOGY_SUCCESS       = false;
 
-        input_path = user_input[ENTAP_CONFIG::INPUT_FLAG_TRANSCRIPTOME].as<std::string>();
-        threads = get_supported_threads(user_input);
-        _isProtein = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN);
-        is_complete = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_COMPLETE);
+        input_path   = user_input[ENTAP_CONFIG::INPUT_FLAG_TRANSCRIPTOME].as<std::string>();
+        threads      = get_supported_threads(user_input);
+        _isProtein   = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN);
+        trim_flag    = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_TRIM);
+        is_complete  = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_COMPLETE);
         diamond_pair = std::make_pair(input_path,"");
 
         boostFS::path working_dir(boostFS::current_path());
         _outpath = (working_dir / boostFS::path(user_input["tag"].as<std::string>())).string();
-        _entap_outpath = (boostFS::path(_outpath) / boostFS::path(ENTAP_OUTPUT)).string();
+        _entap_outpath = PATHS(_outpath, ENTAP_OUTPUT);
         boostFS::create_directories(_entap_outpath);
         boostFS::create_directories(_outpath);
 
-        // init_databases
+        // init databases
         if (user_input.count("database")) {
             other_databases = user_input["database"].as<std::vector<std::string>>();
         } else other_databases.push_back(ENTAP_CONFIG::NCBI_NULL);
 
-        // init_state_control
+        // init state control
         if (user_input.count("state")) {
             std::string user_state_str = user_input["state"].as<std::string>();
             for (char c : user_state_str) {
@@ -123,7 +125,7 @@ namespace entapExecute {
                                          user_input["ncbi"].as<std::vector<std::string>>(),
                                          other_databases, "");
             verify_state(state_queue, state_flag);
-            SEQUENCE_MAP = init_sequence_map(input_path, is_complete);
+            SEQUENCE_MAP = init_sequence_map(input_path, is_complete, trim_flag);
             GraphingManager graphingManager = GraphingManager(GRAPHING_EXE);
             FrameSelection genemark = FrameSelection(input_path,_outpath, user_input, &graphingManager);
             ExpressionAnalysis rsem = ExpressionAnalysis(input_path, threads,
@@ -343,6 +345,7 @@ namespace entapExecute {
      * Notes                - None
      *
      * @param input_file    - Path to input transcriptome
+     * @param trim          - Flag from user to trim sequence ID to first space
      * @param is_complete   - Flag from user if the entire transcriptome is a
      *                        complete gene
      * @return              - None
@@ -350,7 +353,7 @@ namespace entapExecute {
      * =====================================================================
      */
     std::map<std::string, QuerySequence> init_sequence_map(std::string &input_file,
-                                                           bool is_complete) {
+                                                           bool is_complete, bool trim) {
         print_debug("Processing transcriptome...");
 
         std::stringstream                        out_msg;
@@ -404,8 +407,15 @@ namespace entapExecute {
                     sequence_lengths.push_back(len);
                 }
                 if (in_file.eof()) break;
-                seq_id = line.substr(line.find(">")+1);
-                sequence = line + "\n";
+                if (trim) {
+                    if (line.find(" ") != std::string::npos) {
+                        seq_id = line.substr(line.find(">")+1, line.find(" ")-1);
+                    } else seq_id = line.substr(line.find(">")+1);
+                    sequence = line.substr(line.find(">"), line.find(" ")) + "\n";
+                } else {
+                    seq_id = line.substr(line.find(">")+1);
+                    sequence = line + "\n";
+                }
             } else {
                 sequence += line + "\n";
             }

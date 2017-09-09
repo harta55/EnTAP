@@ -7,10 +7,27 @@
 */
 
 
+//*********************** Includes *****************************
 #include "DatabaseHelper.h"
 #include "ExceptionHandler.h"
 #include "EntapGlobals.h"
+//**************************************************************
 
+
+/**
+ * ======================================================================
+ * Function bool DatabaseHelper::open(std::string file)
+ *
+ * Description          - Opens sql database through sqlite3
+ *
+ * Notes                - None
+ *
+ * @param file          - Path to database
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 bool DatabaseHelper::open(std::string file) {
     return sqlite3_open(file.c_str(),&_database) == SQLITE_OK;
     //    sqlite3_exec(_database,"PRAGMA synchronous = OFF", NULL, NULL, NULL);
@@ -18,10 +35,40 @@ bool DatabaseHelper::open(std::string file) {
     //    sqlite3_exec(_database,"PRAGMA journal_mode = OFF", NULL, NULL, NULL);
 }
 
+
+/**
+ * ======================================================================
+ * Function void DatabaseHelper::close()
+ *
+ * Description          - Close SQL database
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void DatabaseHelper::close() {
     sqlite3_close(_database);
 }
 
+
+/**
+ * ======================================================================
+ * Function std::vector<std::vector<std::string>> DatabaseHelper::query(char *query)
+ *
+ * Description          - Queries SQL database and returns vector of
+ *                        relevant information pulled from database
+ *
+ * Notes                - None
+ *
+ * @param query         - SQL query
+ *
+ * @return              - Vector of queried information
+ *
+ * =====================================================================
+ */
 std::vector<std::vector<std::string>> DatabaseHelper::query(char *query) {
     sqlite3_stmt *stmt;
     query_struct output;
@@ -42,14 +89,16 @@ std::vector<std::vector<std::string>> DatabaseHelper::query(char *query) {
         }
         sqlite3_finalize(stmt);
     } else {
-        throw ExceptionHandler("Error querying database",ENTAP_ERR::E_INIT_GO_SETUP);
+        throw ExceptionHandler("Error querying database",ENTAP_ERR::E_DATABASE_QUERY);
     }
     return output;
 }
 
+
 DatabaseHelper::DatabaseHelper() {
     _database = NULL;
 }
+
 
 DatabaseHelper::~DatabaseHelper() {
     close();

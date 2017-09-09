@@ -19,10 +19,10 @@
 #include "EntapGlobals.h"
 #include "ExceptionHandler.h"
 #include "GraphingManager.h"
+#include "SimilaritySearch.h"
 
 //**************************************************************
 
-bool _config;
 std::string RSEM_EXE_DIR;
 std::string GENEMARK_EXE;
 std::string DIAMOND_EXE;
@@ -114,6 +114,8 @@ boost::program_options::variables_map parse_arguments_boost(int argc, const char
                 ("contam,c",
                  boostPO::value<std::vector<std::string>>()->multitoken(),
                  "Contaminant selection")
+                (ENTAP_CONFIG::INPUT_FLAG_TRIM.c_str(),
+                "Trim input sequence headers to first space to make outputs easier to read")
                 (ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE.c_str(),
                  boostPO::value<float>()->default_value(DEFAULT_QCOVERAGE),
                  "Select minimum query coverage to be kept for similarity searching")
@@ -127,10 +129,10 @@ boost::program_options::variables_map parse_arguments_boost(int argc, const char
                  boostPO::value<float>()->default_value(DEFAULT_TCOVERAGE),
                  "Select minimum target coverage to be kept for similarity searching")
                 (ENTAP_CONFIG::INPUT_FLAG_SPECIES.c_str(),
-                 boostPO::value<std::string>(),"The type of species you are analyzing if you would like"
-                         "filtering based upon this separated by a '_'.\nExample: homo_sapiens")
-                ("state",
-                 boostPO::value<std::string>()->default_value("+"),
+                 boostPO::value<std::string>(),"The type of taxon/species you are analyzing if you would like"
+                         "favoring of hits based upon this. Ensure it is separated by a '_'.\nExample: homo_sapiens")
+                (ENTAP_CONFIG::INPUT_FLAG_STATE.c_str(),
+                 boostPO::value<std::string>()->default_value(DEFAULT_STATE),
                  "Select a state value, *EXPERIMENTAL*\n""These commands will run certain "
                          "elements of the pipeline and stop at certain locations, as such"
                          "there are several runs that may be invalid as they rely on data from another portion.\n"
@@ -209,8 +211,11 @@ bool verify_user_input(boostPO::variables_map& vm) {
         }
     }
 
-    is_config = (bool) vm.count(ENTAP_CONFIG::INPUT_FLAG_CONFIG);     // ignore 'config config'
-    is_protein = (bool)vm.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN);
+
+    // ------------ Config / Run Required beyond this point ---------------- //
+
+    is_config     = (bool) vm.count(ENTAP_CONFIG::INPUT_FLAG_CONFIG);     // ignore 'config config'
+    is_protein    = (bool)vm.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN);
     is_nucleotide = (bool)vm.count(ENTAP_CONFIG::INPUT_FLAG_RUNNUCLEOTIDE);
     if (is_protein && is_nucleotide) {
         throw ExceptionHandler("Cannot specify both protein and nucleotide input flags",
@@ -245,7 +250,12 @@ bool verify_user_input(boostPO::variables_map& vm) {
 
             // Verify species for taxonomic relevance
             if (vm.count(ENTAP_CONFIG::INPUT_FLAG_SPECIES)) {
-                verify_species(vm);
+                verify_species(vm, SPECIES);
+            }
+
+            // Verify contaminant
+            if (vm.count(ENTAP_CONFIG::INPUT_FLAG_CONTAM)) {
+                verify_species(vm, CONTAMINANT);
             }
 
             // Verify path + extension for alignment file
@@ -253,7 +263,7 @@ bool verify_user_input(boostPO::variables_map& vm) {
                 std::string align_file = vm[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>();
                 std::string align_ext = boostFS::path(align_file).extension().string();
                 std::transform(align_ext.begin(), align_ext.end(), align_ext.begin(), ::tolower);
-                if (align_ext.compare(".sam") != 0 && align_ext.compare(".bam") != 0) {
+                if (align_ext.compare(SAM_EXT) != 0 && align_ext.compare(BAM_EXT) != 0) {
                     throw ExceptionHandler("Alignment file must have a .bam or .sam extension",
                                            ENTAP_ERR::E_INPUT_PARSE);
                 }
@@ -262,6 +272,50 @@ bool verify_user_input(boostPO::variables_map& vm) {
                                            ENTAP_ERR::E_INIT_TAX_READ);
                 }
             }
+
+            // Verify FPKM
+            if (vm.count(ENTAP_CONFIG::INPUT_FLAG_FPKM)) {
+                float fpkm = vm[ENTAP_CONFIG::INPUT_FLAG_FPKM].as<float>();
+                if (fpkm > FPKM_MAX || fpkm < FPKM_MIN) {
+                    throw ExceptionHandler("FPKM is out of range, but be between " + std::to_string(FPKM_MIN) +
+                                           " and " + std::to_string(FPKM_MAX), ENTAP_ERR::E_INPUT_PARSE);
+                }
+            }
+
+            // Verify query coverage
+            if (vm.count(ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE)) {
+                float qcoverage = vm[ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE].as<float>();
+                if (qcoverage > COVERAGE_MAX || qcoverage < COVERAGE_MIN) {
+                    throw ExceptionHandler("Query coverage is out of range, but be between " +
+                                           std::to_string(COVERAGE_MIN) +
+                                           " and " + std::to_string(COVERAGE_MAX), ENTAP_ERR::E_INPUT_PARSE);
+                }
+            }
+
+            // Verify target coverage
+            if (vm.count(ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE)) {
+                float qcoverage = vm[ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE].as<float>();
+                if (qcoverage > COVERAGE_MAX || qcoverage < COVERAGE_MIN) {
+                    throw ExceptionHandler("Target coverage is out of range, but be between " +
+                                           std::to_string(COVERAGE_MIN) +
+                                           " and " + std::to_string(COVERAGE_MAX), ENTAP_ERR::E_INPUT_PARSE);
+                }
+            }
+
+            // Verify for default state, may need to do a temp run of executables to verify
+            if (vm[ENTAP_CONFIG::INPUT_FLAG_STATE].as<std::string>() == DEFAULT_STATE) {
+                if (!file_exists(TAX_DB_PATH)) {
+                    throw ExceptionHandler("Taxonomic database could not be found at: " + TAX_DB_PATH +
+                                            " make sure to set the path in the configuration file",
+                                            ENTAP_ERR::E_INPUT_PARSE);
+                }
+            }
+
+
+        } else {
+            // Must be config
+            ;
+
         }
 
     }catch (const ExceptionHandler &e) {throw e;}
@@ -284,9 +338,11 @@ bool verify_user_input(boostPO::variables_map& vm) {
  */
 void verify_databases(boostPO::variables_map& vm) {
 
+    databases_t     other_data;
+
+#if NCBI_UNIPROT
     databases_t     uniprot_data;
     databases_t     ncbi_data;
-    databases_t     other_data;
     bool            ncbi_check;
     bool            uniprot_check;
 
@@ -296,15 +352,13 @@ void verify_databases(boostPO::variables_map& vm) {
     if (vm.count(ENTAP_CONFIG::INPUT_FLAG_NCBI_1)) {
         ncbi_data = vm[ENTAP_CONFIG::INPUT_FLAG_NCBI_1].as<databases_t>();
     }
-    if (vm.count(ENTAP_CONFIG::INPUT_FLAG_DATABASE)) {
-        other_data = vm[ENTAP_CONFIG::INPUT_FLAG_DATABASE].as<databases_t>();
-    }
 
     if (ncbi_data.size() + uniprot_data.size() + other_data.size() > MAX_DATABASE_SIZE) {
         // TODO fix for certain cases like -N -N -d null
         throw ExceptionHandler("Too many databases selected, 3 is the max",
                                ENTAP_ERR::E_INPUT_PARSE);
     }
+
     ncbi_check = true;
     for (auto const& entry: ncbi_data) {
         if (entry.compare(ENTAP_CONFIG::NCBI_REFSEQ_COMP)==0)continue;
@@ -327,6 +381,20 @@ void verify_databases(boostPO::variables_map& vm) {
     if (!uniprot_check) {
         throw ExceptionHandler("Not a valid Uniprot database",ENTAP_ERR::E_INPUT_PARSE);
     }
+#endif
+
+    if (vm.count(ENTAP_CONFIG::INPUT_FLAG_DATABASE)) {
+        other_data = vm[ENTAP_CONFIG::INPUT_FLAG_DATABASE].as<databases_t>();
+    }
+    if (other_data.size() > MAX_DATABASE_SIZE) {
+        throw ExceptionHandler("Too many databases selected, the max is " +
+            std::to_string(MAX_DATABASE_SIZE), ENTAP_ERR::E_INPUT_PARSE);
+    }
+    for (auto const& path: other_data) {
+        if (!file_exists(path)) throw ExceptionHandler("Database path invalid: " +
+            path, ENTAP_ERR::E_INPUT_PARSE);
+    }
+
 }
 
 
@@ -528,19 +596,40 @@ void print_user_input(boostPO::variables_map &map, std::string& exe, std::string
  * @return              - None
  * ======================================================================
  */
-void verify_species(boostPO::variables_map &map) {
+void verify_species(boostPO::variables_map &map, SPECIES_FLAGS flag) {
 
-    std::string species;
+    std::vector<std::string> species;
+    std::string              raw_species;
+    std::unordered_map<std::string, std::string>    taxonomic_database;
 
-    species = map[ENTAP_CONFIG::INPUT_FLAG_SPECIES].as<std::string>();
 
+    if (flag == SPECIES) {
+        raw_species = map[ENTAP_CONFIG::INPUT_FLAG_SPECIES].as<std::string>();
+        std::transform(raw_species.begin(), raw_species.end(), raw_species.begin(), ::tolower);
+        std::replace(raw_species.begin(), raw_species.end(), '_',' ');
+        species.push_back(raw_species);
+    } else if (flag == CONTAMINANT) {
+        species = map[ENTAP_CONFIG::INPUT_FLAG_CONTAM].as<std::vector<std::string>>();
+        for (std::string &contam : species) {
+            std::transform(raw_species.begin(), raw_species.end(), raw_species.begin(), ::tolower);
+            std::replace(raw_species.begin(), raw_species.end(), '_',' ');
+        }
+    }
     if (species.empty()) return;
 
-    if (species.find("_") == std::string::npos) {
-        throw ExceptionHandler("Invalid format of species, must be "
-                                       "separated by a '_'", ENTAP_ERR::E_INPUT_PARSE);
-    }
+    try {
+        SimilaritySearch similaritySearch = SimilaritySearch();
+        taxonomic_database = similaritySearch.read_tax_map();
+    } catch (const ExceptionHandler &e) {throw e;}
 
+    for (std::string &s : species) {
+        if (taxonomic_database.find(s) == taxonomic_database.end()) {
+            throw ExceptionHandler("Error in one of your inputted taxons: " + s + " it is not located"
+                                   " within the taxonomic database. You may remove it or select another",
+                                    ENTAP_ERR::E_INPUT_PARSE);
+        }
+    }
+    print_debug("Taxonomic species verified");
     // TODO check it can be found within tax database
 }
 

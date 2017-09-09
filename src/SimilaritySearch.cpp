@@ -33,9 +33,7 @@ SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::str
     if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_SPECIES)) {
         _input_species = user_flags[ENTAP_CONFIG::INPUT_FLAG_SPECIES].as<std::string>();
         std::transform(_input_species.begin(), _input_species.end(), _input_species.begin(), ::tolower);
-        _input_species =
-                _input_species.substr(0,_input_species.find("_")) +
-                " " + _input_species.substr(_input_species.find("_")+1);
+        std::replace(_input_species.begin(), _input_species.end(), '_',' ');
     }
     _qcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE].as<float>();
     _tcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE].as<float>();
@@ -60,6 +58,8 @@ SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::str
     _figure_path     = (boostFS::path(_sim_search_dir) / boostFS::path(FIGURE_DIR)).string();
     _pGraphingManager = graphingManager;
 }
+
+SimilaritySearch::SimilaritySearch() {}
 
 std::vector<std::string> SimilaritySearch::execute(std::string updated_input,bool blast) {
     this->_input_path = updated_input;

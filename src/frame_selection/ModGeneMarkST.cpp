@@ -7,11 +7,29 @@
 */
 
 
+//*********************** Includes *****************************
 #include <iomanip>
 #include "ModGeneMarkST.h"
 #include "../ExceptionHandler.h"
 #include "../EntapExecute.h"
+//**************************************************************
 
+
+/**
+ * ======================================================================
+ * Function std::pair<bool, std::string> ModGeneMarkST::verify_files()
+ *
+ * Description           - Checks whether GeneMarkS-T has already been ran
+ *                         with the same input
+ *
+ * Notes                 - None
+ *
+ *
+ * @return               - Bool   - Yes if previous files have been found
+ *                       - String - Path to frame selected transcriptome
+ *
+ * =====================================================================
+ */
 std::pair<bool, std::string> ModGeneMarkST::verify_files() {
     std::string lst_file;
 
@@ -28,6 +46,23 @@ std::pair<bool, std::string> ModGeneMarkST::verify_files() {
     return std::make_pair(false, "");
 }
 
+
+/**
+ * ======================================================================
+ * Function std::string ModGeneMarkST::execute(std::map<std::string, QuerySequence> &SEQUENCES)
+ *
+ * Description          - Calculates final statistical information after
+ *                        completed execution
+ *                      - Compiles stats on each stage of pipeline
+ *
+ * Notes                - None
+ *
+ * @param SEQUENCES     - Map of each query sequence + data
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 std::string ModGeneMarkST::execute(std::map<std::string, QuerySequence> &SEQUENCES) {
     // Outfiles: file/path.faa, file/path.fnn
     // assumes working directory as output right now
@@ -268,7 +303,7 @@ void ModGeneMarkST::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
         std::string stat_out_msg = stat_output.str();
         print_statistics(stat_out_msg);
 
-        // Figure handling
+        //------------------- Figure handling ---------------//
         file_figure_results << GRAPH_REJECTED_FLAG           << '\t' << std::to_string(count_removed)   <<std::endl;
         file_figure_results << FRAME_SELECTION_FIVE_FLAG     << '\t' << std::to_string(count_map[FRAME_SELECTION_FIVE_FLAG]) <<std::endl;
         file_figure_results << FRAME_SELECTION_THREE_FLAG    << '\t' << std::to_string(count_map[FRAME_SELECTION_THREE_FLAG]) <<std::endl;
@@ -287,12 +322,29 @@ void ModGeneMarkST::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
         graphingStruct.fig_out_path   = figure_removed_png;
         graphingStruct.graph_type     = GRAPH_COMP_BOX_FLAG;
         pGraphingManager->graph(graphingStruct);
+        //---------------------------------------------------//
 
     } catch (ExceptionHandler &e) {throw e;}
     print_debug("Success!");
 }
 
 
+/**
+ * ======================================================================
+ * Function ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein
+ *                                                  (std::string &protein)
+ *
+ * Description          - Analyzes protein file to pull protein sequences
+ *                      - Will be added to overall data flow
+ *
+ * Notes                - None
+ *
+ * @param protein       - Path to protein (.faa) file
+ *
+ * @return              - Structure containing protein sequence with seqID
+ *
+ * =====================================================================
+ */
 ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein(std::string &protein) {
     print_debug("Parsing protein file at: " + protein);
 
@@ -343,6 +395,24 @@ ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein(std::string &pr
     return protein_map;
 }
 
+
+/**
+ * ======================================================================
+ * Function void ModGeneMarkST::genemark_parse_lst(std::string &lst_path,
+ *                                                 frame_map_t &current_map)
+ *
+ * Description          - Parses .lst file produced from GeneMark run
+ *                      - Will add this information to map
+ *
+ * Notes                - None
+ *
+ * @param lst_path     - Path to .lst file produced from GeneMark
+ * @param current_map  - Map being used to analyze GeneMark data
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void ModGeneMarkST::genemark_parse_lst(std::string &lst_path, frame_map_t &current_map) {
     print_debug("Parsing file at: " + lst_path);
 

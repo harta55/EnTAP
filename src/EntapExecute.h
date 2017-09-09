@@ -49,12 +49,11 @@ namespace entapExecute {
     // *******************Prototype Functions******************
     std::vector<std::string> verify_databases(std::vector<std::string>, std::vector<std::string>,
                                             std::vector<std::string>, std::string);
-
     void execute_main(boost::program_options::variables_map &);
     std::string filter_transcriptome(std::string &);
     void verify_state(std::queue<char> &, bool &);
     bool valid_state(enum ExecuteStates);
-    std::map<std::string, QuerySequence> init_sequence_map(std::string&,bool);
+    std::map<std::string, QuerySequence> init_sequence_map(std::string&,bool,bool);
     std::pair<unsigned long, unsigned long> calculate_N_vals
             (std::vector<unsigned long> &, unsigned long);
     void final_statistics(std::map<std::string, QuerySequence>&);

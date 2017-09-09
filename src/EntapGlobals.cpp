@@ -18,7 +18,10 @@
 #include <boost/program_options/variables_map.hpp>
 #include <unordered_map>
 #include <sstream>
+#include <boost/archive/binary_iarchive.hpp>
 #include "EntapGlobals.h"
+#include "ExceptionHandler.h"
+#include <boost/archive/binary_iarchive.hpp>
 
 //**************************************************************
 
@@ -67,7 +70,7 @@ namespace ENTAP_EXECUTE {
 
 namespace ENTAP_CONFIG {
 
-    const std::string ENTAP_VERSION  = "0.7.4.1";
+    const std::string ENTAP_VERSION  = "0.7.4.2";
     const std::string DEBUG_FILENAME = "debug.txt";
     const std::string LOG_FILENAME   = "log_file.txt";
 
@@ -82,7 +85,7 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_UNIPROT       = "uniprot";
     const std::string INPUT_FLAG_INTERPRO      = "protein";
     const std::string INPUT_FLAG_ONTOLOGY      = "ontology";
-    const std::string INPUT_FLAG_SPECIES       = "species";
+    const std::string INPUT_FLAG_SPECIES       = "taxon";
     const std::string INPUT_FLAG_QCOVERAGE     = "qcoverage";
     const std::string INPUT_FLAG_TCOVERAGE     = "tcoverage";
     const std::string INPUT_FLAG_COMPLETE      = "complete";
@@ -97,6 +100,8 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_TRANSCRIPTOME = "input";
     const std::string INPUT_FLAG_DATABASE      = "database";
     const std::string INPUT_FLAG_GRAPH         = "graph";
+    const std::string INPUT_FLAG_TRIM          = "trim";
+    const std::string INPUT_FLAG_STATE         = "state";
 
     const std::string INPUT_UNIPROT_SWISS      = "swiss";
     const std::string INPUT_UNIPROT_UR100      = "ur100";

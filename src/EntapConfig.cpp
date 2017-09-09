@@ -6,6 +6,8 @@
  * 2017
 */
 
+
+//*********************** Includes *****************************
 #include <map>
 #include "EntapConfig.h"
 #include <sys/stat.h>
@@ -29,8 +31,7 @@
 #include <csv.h>
 #include "boost/archive/text_oarchive.hpp"
 #include "boost/archive/text_iarchive.hpp"
-
-namespace boostAR = boost::archive;
+//**************************************************************
 
 namespace entapConfig {
 
@@ -50,6 +51,25 @@ namespace entapConfig {
     std::string              _outpath;
     std::string              _cur_dir;
 
+
+    /**
+     * ======================================================================
+     * Function void init_entap(boost::program_options::variables_map user_map,
+     *                          std::string exe_path)
+     *
+     * Description          - Entry into configurating EnTAP
+     *                      - Responsible for downloading EnTAP databases (taxonomic,
+     *                        Gene Ontology), DIAMOND configuring, and EggNOG download
+     *
+     * Notes                - Entry
+     *
+     * @param user_map      - Boost parsed user input flags
+     * @param exe_path      - Path to EnTAP executable and main directory
+     *
+     * @return              - None
+     *
+     * =====================================================================
+     */
     void init_entap(boost::program_options::variables_map user_map, std::string exe_path) {
 
         std::string                        database_outdir;
@@ -100,6 +120,21 @@ namespace entapConfig {
         }
     }
 
+
+    /**
+     * ======================================================================
+     * Function void init_taxonomic(std::string &exe)
+     *
+     * Description          - Responsible for downloading NCBI Taxonomic database
+     *
+     * Notes                - Utilizes Perl script in /src
+     *
+     * @param user_map      - Boost parsed user input flags
+     *
+     * @return              - None
+     *
+     * =====================================================================
+     */
     void init_taxonomic(std::string &exe) {
         print_debug("Downloading taxonomic database...");
         //TODO Integrate gzip/zlib
@@ -159,6 +194,22 @@ namespace entapConfig {
         print_debug("Success!");
     }
 
+
+    /**
+     * ======================================================================
+     * Function void init_go_db(std::string &exe, std::string database_path)
+     *
+     * Description          - Responsible for downloading and indexing a
+     *                        mapping of the Gene Ontology database
+     *
+     * Notes                - Utilizes script in /src
+     *
+     * @param user_map      - Boost parsed user input flags
+     *
+     * @return              - None
+     *
+     * =====================================================================
+     */
     void init_go_db(std::string &exe, std::string database_path) {
         print_debug("Initializing GO terms database...");
 
@@ -177,20 +228,18 @@ namespace entapConfig {
         }
         go_database_zip = (boostFS::path(database_path) / boostFS::path(GO_DATA_NAME)).string();
         go_database_out = (boostFS::path(database_path) / boostFS::path(GO_DIR)).string();
-        if (file_exists(go_database_zip)) {
-            boostFS::remove(go_database_zip);
-        }
+        if (file_exists(go_database_zip)) boostFS::remove(go_database_zip);
         try {
             download_file(GO_DATABASE_FTP,go_database_zip);
             decompress_file(go_database_zip,database_path,1);
             boostFS::remove(go_database_zip);
         } catch (ExceptionHandler const &e ){ throw e;}
 
-        go_term_path = (boostFS::path(go_database_out) / boostFS::path(GO_TERM_FILE)).string();
-        go_graph_path = (boostFS::path(go_database_out) / boostFS::path(GO_GRAPH_FILE)).string();
+        go_term_path  = PATHS(go_database_out, GO_TERM_FILE);
+        go_graph_path = PATHS(go_database_out, GO_GRAPH_FILE);
         if (!file_exists(go_term_path) || !file_exists(go_graph_path)) {
             throw ExceptionHandler("GO term files must be at: " + go_term_path + " and " + go_graph_path +
-                                   " in order to configure database", ENTAP_ERR::E_INIT_GO_SETUP);
+                                   " in order to configure database", ENTAP_ERR::E_INIT_GO_INDEX);
         }
 
         io::CSVReader<6, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(go_graph_path);
@@ -228,11 +277,13 @@ namespace entapConfig {
                 oa << go_map;
             }
         } catch (std::exception &e) {
-            throw ExceptionHandler(e.what(), ENTAP_ERR::E_INIT_GO_SETUP);
+            throw ExceptionHandler(e.what(), ENTAP_ERR::E_INIT_GO_INDEX);
         }
         print_debug("Success!");
     }
 
+
+#if NCBI_UNIPROT
     // may handle differently than ncbi with formatting
     void init_uniprot(std::vector<std::string> &flags, std::string exe) {
         // TODO setup go term/interpro... integration, date tag, use bool input
@@ -290,7 +341,27 @@ namespace entapConfig {
             }
         }
     }
+#endif
 
+
+    /**
+     * ======================================================================
+     * Function init_diamond_index(std::string diamond_exe,std::string out_path,
+     *                             int threads)
+     *
+     * Description          - Responsible for indexing user specified FASTA formatted
+     *                        database for DIAMOND usage
+     *
+     * Notes                - Utilizes script in /src
+     *
+     * @param diamond_exe   - Path to DIAMOND exe
+     * @param out_path      - Database out directory
+     * @param threads       - Thread number
+     *
+     * @return              - None
+     *
+     * =====================================================================
+     */
     void init_diamond_index(std::string diamond_exe,std::string out_path,int threads) {
         print_debug("Preparing to index database(s) with Diamond...");
 
@@ -328,6 +399,21 @@ namespace entapConfig {
         }
     }
 
+
+    /**
+     * ======================================================================
+     * Function init_eggnog(std::string eggnog_exe)
+     *
+     * Description          - Ensure EggNOG databases are downloaded
+     *
+     * Notes                - Only will download DIAMOND database
+     *
+     * @param eggnog_exe    - Path to EggNOG download python script
+     *
+     * @return              - None
+     *
+     * =====================================================================
+     */
     void init_eggnog(std::string eggnog_exe) {
 
         std::string eggnog_cmd;
@@ -342,7 +428,7 @@ namespace entapConfig {
         }
         print_debug("Executing eggnog download...\n" + eggnog_cmd);
         if (execute_cmd(eggnog_cmd) != 0) {
-            throw ExceptionHandler("Error in executing eggnog download",ENTAP_ERR::E_INIT_EGGNOG);
+            throw ExceptionHandler("EggNOG command: " + eggnog_cmd,ENTAP_ERR::E_INIT_EGGNOG);
         }
     }
 
@@ -375,14 +461,36 @@ namespace entapConfig {
     }
 
     std::string download_file(const std::string &ftp, std::string &out_path) {
+        int status;
+
         boostFS::path path(out_path);
         std::string download_command = "wget -O "+ out_path + " " + ftp;
         print_debug("Downloading through wget: file from " + ftp + "...");
-        execute_cmd(download_command);
+        status = execute_cmd(download_command);
+        if (status != 0) {
+            throw ExceptionHandler("Error in downloading " + ftp, ENTAP_ERR::E_INIT_GO_DOWNLOAD);
+        }
         print_debug("Success! File printed to: " + out_path);
         return out_path;
     }
 
+
+    /**
+     * ======================================================================
+     * Function decompress_file(std::string file_path, std::string out_path,short flag)
+     *
+     * Description          - Decompresses file using unix commands
+     *
+     * Notes                - Will be replaced with library
+     *
+     * @param file_path     - Path to file to be unzipped
+     * @param out_path      - Output file path
+     * @param flag          - Gzip/tar flag
+     *
+     * @return              - None
+     *
+     * =====================================================================
+     */
     void decompress_file(std::string file_path, std::string out_path,short flag) {
         print_debug("Decompressing file at: " + file_path);
 
@@ -399,7 +507,7 @@ namespace entapConfig {
         status = execute_cmd(unzip_command,std_out);
         if (status != 0) {
             throw ExceptionHandler("Error in unzipping database at " +
-                    file_path, ENTAP_ERR::E_INIT_TAX_DOWN);
+                    file_path, ENTAP_ERR::E_INIT_GO_UNZIP);
         }
         print_debug("File at: " + file_path + " successfully decompressed");
     }

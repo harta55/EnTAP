@@ -20,6 +20,7 @@
 
 namespace boostFS = boost::filesystem;
 namespace boostPO = boost::program_options;
+namespace boostAR = boost::archive;
 
 //**************************************************************
 
@@ -28,6 +29,7 @@ namespace boostPO = boost::program_options;
 #define PATHS(x,y)      (boostFS::path(x) / boostFS::path(y)).string()
 #define NCBI_UNIPROT    0       // Compiler flag for future feature
 #define DEBUG           1
+#define FILE_APPEND     std::ios::out | std::ios::app
 
 //**************************************************************
 
@@ -168,6 +170,8 @@ namespace ENTAP_CONFIG {
     extern const std::string INPUT_FLAG_TRANSCRIPTOME;
     extern const std::string INPUT_FLAG_DATABASE     ;
     extern const std::string INPUT_FLAG_GRAPH;
+    extern const std::string INPUT_FLAG_TRIM;
+    extern const std::string INPUT_FLAG_STATE;
 
     extern const std::string INPUT_UNIPROT_SWISS    ;
     extern const std::string INPUT_UNIPROT_UR100    ;
@@ -211,8 +215,11 @@ namespace ENTAP_ERR {
     const unsigned short E_INIT_DOWNLOAD = 23;
     const unsigned short E_INIT_EGGNOG   = 40;
 
-    const unsigned short E_INIT_TAX_READ = 55;
-    const unsigned short E_INIT_GO_SETUP = 60;
+    const unsigned short E_INIT_TAX_READ    = 55;
+    const unsigned short E_INIT_GO_DOWNLOAD = 60;
+    const unsigned short E_INIT_GO_UNZIP    = 61;
+    const unsigned short E_INIT_GO_PARSE    = 62;
+    const unsigned short E_INIT_GO_INDEX    = 63;
 
     const unsigned short E_RUN_EXECUTION_PATHS         = 105;
     const unsigned short E_RUN_VERIFY_DATABASES        = 106;
@@ -225,7 +232,9 @@ namespace ENTAP_ERR {
     const unsigned short E_RUN_FILTER                  = 120;
     const unsigned short E_RUN_SIM_SEARCH_FILTER       = 140;
     const unsigned short E_RUN_ANNOTATION              = 150;
+    const unsigned short E_GO_READ                     = 151;
     const unsigned short E_RUN_EGGNOG                  = 160;
+    const unsigned short E_DATABASE_QUERY              = 161;
     const unsigned short E_PARSE_EGGNOG                = 170;
 }
 

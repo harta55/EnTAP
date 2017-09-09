@@ -7,6 +7,7 @@
 */
 
 
+//*********************** Includes *****************************
 #include <boost/filesystem/operations.hpp>
 #include <fstream>
 #include <boost/regex.hpp>
@@ -17,10 +18,29 @@
 #include "EntapConfig.h"
 #include "EntapGlobals.h"
 #include "frame_selection/ModGeneMarkST.h"
+//**************************************************************
 
-namespace boostFS = boost::filesystem;
 
-// can accept version/other for dependency injection
+/**
+ * ======================================================================
+ * Function FrameSelection(std::string &input, std::string &out,
+ *                             boost::program_options::variables_map &user_flags,
+ *                             GraphingManager *graphingManager)
+ *
+ * Description           - Initializes member variables of Frame Selection
+ *                       - Sets software type
+ *
+ * Notes                 - Called from EntapExecute
+ *
+ * @param input          - Input transcriptome (may have been from expression analysis)
+ * @param out            - EnTAP main output directory
+ * @param user_flag      - Boost map of user inputs
+ * @param graphingManager- Pointer to graphing manager
+ *
+ * @return               - FrameSelection object
+ *
+ * =====================================================================
+ */
 FrameSelection::FrameSelection(std::string &input, std::string &out,
                                boost::program_options::variables_map &user_flags,
                                GraphingManager *graphingManager) {
@@ -40,6 +60,24 @@ FrameSelection::FrameSelection(std::string &input, std::string &out,
 }
 
 
+/**
+ * ======================================================================
+ * Function std::string FrameSelection::execute(std::string input,
+ *                                              std::map<std::string,QuerySequence> &SEQUENCES)
+ *
+ * Description           - Handles overall Frame Selection process
+ *                       - Runs software, parses and adds information to existing
+ *                         data
+ *
+ * Notes                 - None
+ *
+ * @param input          - Input transcriptome (may have been from expression analysis)
+ * @param SEQUENCES      - Sequence map of information thus far
+ *
+ * @return               - Path to new transcriptome
+ *
+ * =====================================================================
+ */
 std::string FrameSelection::execute(std::string input, std::map<std::string,QuerySequence> &SEQUENCES) {
 
     std::string output;
@@ -63,6 +101,19 @@ std::string FrameSelection::execute(std::string input, std::map<std::string,Quer
 }
 
 
+/**
+ * ======================================================================
+ * Function std::unique_ptr<AbstractFrame> FrameSelection::spawn_object()
+ *
+ * Description           - Spawns object for specified frame selection software
+ *
+ * Notes                 - Currently only GeneMarkS-T support
+ *
+ *
+ * @return               - Frame Selection module object
+ *
+ * =====================================================================
+ */
 std::unique_ptr<AbstractFrame> FrameSelection::spawn_object() {
     // Handle any special conditions for each software
 

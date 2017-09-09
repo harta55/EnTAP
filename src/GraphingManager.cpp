@@ -7,10 +7,27 @@
 */
 
 
+//*********************** Includes *****************************
 #include "GraphingManager.h"
 #include "EntapConfig.h"
 #include "EntapGlobals.h"
+//**************************************************************
 
+/**
+ * ======================================================================
+ * Function GraphingManager::GraphingManager(std::string path)
+ *
+ * Description          - Constructor for graphing manager
+ *                      - Checks whether graphing is supported on system
+ *
+ * Notes                - None
+ *
+ * @param path          - Path to python graphing file (in /src)
+ *
+ * @return              - GraphingManager object
+ *
+ * =====================================================================
+ */
 GraphingManager::GraphingManager(std::string path) {
     print_debug("Spawn object - GraphingManager");
     _graph_path = path;
@@ -21,6 +38,22 @@ GraphingManager::GraphingManager(std::string path) {
     } else print_debug("Graphing is NOT supported");
 }
 
+
+/**
+ * ======================================================================
+ * Function void GraphingManager::graph(GraphingStruct& graphingStruct)
+ *
+ * Description          - Responsible for sending a command to the python
+ *                        graphing script
+ *
+ * Notes                - None
+ *
+ * @param graphingStruct- Structure of graphing commands
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void GraphingManager::graph(GraphingStruct& graphingStruct) {
     if (!_graphing_enabled) return;
 
@@ -38,6 +71,7 @@ void GraphingManager::graph(GraphingStruct& graphingStruct) {
         print_debug("\nError generating graph from:\n" + graphing_cmd);
     }
 }
+
 
 bool GraphingManager::is_graphing_enabled() const {
     return _graphing_enabled;

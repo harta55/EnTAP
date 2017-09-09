@@ -198,11 +198,12 @@ void ModEggnog::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
     file_no_hits_nucl.close();
     file_no_hits_prot.close();
 
-    ss << ENTAP_STATS::SOFTWARE_BREAK + "Gene Family - Gene Ontology and Pathway - Eggnog\n" +
-          ENTAP_STATS::SOFTWARE_BREAK            <<
-       "Statistics for overall Eggnog results: " <<
-       "\nTotal unique sequences with family assignment: " << count_TOTAL_hits <<
-       "\nTotal unique sequences without family assignment: " <<count_no_hits;
+    ss << ENTAP_STATS::SOFTWARE_BREAK                             <<
+          "Gene Family - Gene Ontology and Pathway - Eggnog\n"    <<
+          ENTAP_STATS::SOFTWARE_BREAK                             <<
+          "Statistics for overall Eggnog results: "               <<
+          "\nTotal unique sequences with family assignment: "     << count_TOTAL_hits <<
+          "\nTotal unique sequences without family assignment: "  << count_no_hits;
 
     // -------- Top Ten Taxonomic Scopes ------- //
     if (!tax_scope_ct_map.empty()) {

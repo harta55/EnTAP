@@ -34,14 +34,13 @@ enum States {
     EXECUTE_ENTAP_SUCCESS = 0x16
 };
 
-
 std::string _outpath;
 std::string _exe_path;
 std::string _working_dir;
 std::chrono::time_point<std::chrono::system_clock> _start_time;
 std::chrono::time_point<std::chrono::system_clock> _end_time;
-std::string DEBUG_FILE_PATH;
-std::string LOG_FILE_PATH;
+std::string DEBUG_FILE_PATH;        // Extern
+std::string LOG_FILE_PATH;          // Extern
 
 
 //******************** Prototype Functions *********************
@@ -51,6 +50,21 @@ void exit_print(States);
 //**************************************************************
 
 
+/**
+ * ======================================================================
+ * Function int main(int argc, const char** argv)
+ *
+ * Description          - Typical C entry point
+ *                      - Initializes logs, inputs
+ *                      - Sets EnTAP to execution or configuration states
+ *
+ * Notes                - None
+ *
+ * @param argc          - User input size
+ * @param argv          - User input
+ * @return              - Execution status, 0 if success
+ * ======================================================================
+ */
 int main(int argc, const char** argv) {
 
     boostPO::variables_map                      inputs;
@@ -82,6 +96,19 @@ int main(int argc, const char** argv) {
 }
 
 
+/**
+ * ======================================================================
+ * Function init_entap(boostPO::variables_map& user_input)
+ *
+ * Description          - Initializes debug/log file paths
+ *                      - Parses user configuration file
+ *
+ * Notes                - None
+ *
+ * @param user_input    - Boost user inputs
+ * @return              - None
+ * ======================================================================
+ */
 void init_entap(boostPO::variables_map& user_input) {
 
     std::string config_path;
@@ -102,6 +129,17 @@ void init_entap(boostPO::variables_map& user_input) {
 }
 
 
+/**
+ * ======================================================================
+ * Function init_log()
+ *
+ * Description          - Initializes log and debug files
+ *
+ * Notes                - None
+ *
+ * @return              - None
+ * ======================================================================
+ */
 void init_log() {
     boostFS::remove(DEBUG_FILE_PATH);
     boostFS::remove(LOG_FILE_PATH);
@@ -109,6 +147,18 @@ void init_log() {
 }
 
 
+/**
+ * ======================================================================
+ * Function void exit_print(States s)
+ *
+ * Description          - Prints final information on EnTAP exit
+ *
+ * Notes                - Will be used for state debug reports in future
+ *
+ * @param s             - State
+ * @return              - None
+ * ======================================================================
+ */
 void exit_print(States s) {
     std::stringstream out_stream;
     std::string       out_msg;

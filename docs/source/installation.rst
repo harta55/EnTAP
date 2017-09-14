@@ -11,13 +11,30 @@ Installation
 ==================
 EnTAP is packaged with all of the software necessary to fully annotate a set of transcripts.  It is optimized to allow a single-command execution for all steps in the pathway, including paramterization by the user.  EnTAP does not have a graphical user interface but it does generate visual summaries for the user at each stage as well as detailed summary files and logs.   
 
-#. :ref:`System Requirements<dep-label>`
+#. :ref:`System Requirements<sys-label>`
 #. :ref:`Dependency Check<dep-label>`
 #. :ref:`Pipeline Software<pipe-label>`
 #. :ref:`EnTAP<entap-label>`
 
 Before full EnTAP installation, dependencies must be checked to see if they are included in your system (many are by default) and the accompanying pipeline software will need to be installed (unless is already present on the system).
 
+.. sys-label:
+
+System Requirements
+-------------------
+  
+    * Operating System
+        * UNIX-based OS
+
+    * Storage Minimum
+        * Gene Ontology References: 6Mb
+        * NCBI Taxonomy: 400Mb
+        * EggNOG Database: 30Gb
+        * DIAMOND Databases
+        * Additional storage for files generated depending on transcriptome size (at least 5 times the size)
+
+    * Memory
+        * At least 16 Gb of RAM (will very depending on DIAMOND database sizes)
 
 .. _dep-label:
 
@@ -41,20 +58,20 @@ Before continuing on in the installation process, ensure that the following depe
 
 Pipeline Software
 ------------------
-EnTAP leverages several software distributions within the pipeline to provide the best quality annotations. Not all of the software is required, but it is suggested. However, similarity searching and orthologous group assignment should not be skipped. 
+EnTAP leverages several software distributions within the pipeline to provide the best quality annotations. Not all of the software is required, but it is suggested. However, similarity searching and orthologous group assignment should not be skipped. The packages used (and their tested versions) can be seen below. This is not to say that newer versions will not be compatible, however they have not been tested yet with EnTAP. 
 
 .. note:: If the software is already installed on your system, this stage can be skipped
 
 Software:
-    * RSEM_ (Expression Filtering with alignment file)
-    * GeneMarkS-T_ (Frame Selection)
-    * DIAMOND_ (Similarity Search)
-    * EggNOG-Emapper_ (Orthologous Group Assignment)
+    * RSEM_ (Expression Filtering with alignment file): version 1.3.0
+    * GeneMarkS-T_ (Frame Selection): version 5.1
+    * DIAMOND_ (Similarity Search): version 0.8.31
+    * EggNOG-Emapper_ (Orthologous Group Assignment): version 0.7.4.1-beta
 
 If you have downloaded the full repository from the GitLab page, each of these (with the exception of GeneMarkS-T) are contained within the /libs directory. GeneMarkS-T must be acquired from the website linked previously due to licensing (free for academic use). 
 
 
-RSEM and DIAMOND both require compilation from source code while EggNOG-Emapper does not. To compile these, run the script within the main directory: 
+RSEM and DIAMOND both require compilation from source code while EggNOG-Emapper or GeneMarkS-T does not. To compile these, run the script within the main directory: 
 
 .. code-block :: bash
 
@@ -72,7 +89,12 @@ If there are any problems with the setup script, installation steps can be found
 EnTAP Installation
 ----------------------
 
-Once dependencies and pipeline software have been installed, you can now continue to install EnTAP! Within the main directory, execute the following command:
+Once dependencies and pipeline software have been installed, you can now continue to install EnTAP! 
+
+First, download and extract the latest release version from GitHub:
+https://github.com/harta55/EnTAP/releases
+
+Within the main directory, execute the following command:
 
 .. code-block :: bash
 

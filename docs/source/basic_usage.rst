@@ -1,15 +1,25 @@
 .. _NCBI Taxonomy: https://www.ncbi.nlm.nih.gov/taxonomy
+.. _Bowtie: http://bowtie-bio.sourceforge.net/index.shtml
+.. |out_dir| replace:: /outfiles
 .. |libs_dir| replace:: /libs
 .. |entap_dir| replace:: /EnTAP
 .. |src_dir| replace:: /src
 .. |config_file| replace:: entap_config.txt
 .. |bin_dir| replace:: /bin
+.. |test_dir| replace:: /test_data
 .. |data_dir| replace:: /databases
 .. |tax_file| replace:: download_tax.pl
 .. |graph_file| replace:: entap_graphing.py
 .. |go_term| replace:: go_term.entp
 .. |tax_bin| replace:: ncbi_tax_bin.entp
 .. |tax_data| replace:: ncbi_tax.entp
+
+.. |ref_comp| replace:: ftp://ftp.ncbi.nlm.nih.gov/refseq/release/complete/
+.. |ref_plant| replace:: ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plant/
+.. |ref_mamm| replace:: ftp://ftp.ncbi.nlm.nih.gov/refseq/release/vertebrate_mammalian/
+.. |ref_nr| replace:: ftp://ftp.ncbi.nlm.nih.gov/blast/db/
+.. |uni_swiss| replace:: ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
+.. |uni_trembl| replace:: ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz
 
 .. |flag_path| replace:: paths
 .. |flag_taxon| replace:: taxon
@@ -76,14 +86,44 @@ Usage
 
 All source databases must be provided in FASTA format so that they can be indexed for use by DIAMOND.  This can be completed independent of EnTAP with DIAMOND or as part of the configuration phase of EnTAP.  While any FASTA database can be used, it is recommended to use NCBI (Genbank) sourced databases such as RefSeq databases or NR.  In addition, EnTAP can easily accept EBI databases such as UniProt/SwissProt.  EnTAP can read the species information from these header formats.  If the individual FASTAs in a custom database do not adhere to one of these two formats, it will just not be possible to weight examine taxanomic or contaminant status from them.  
 
-The following FTP sites contain common reference databases that enTAP can recognize:
-   * RefSeq:
-   * Arthropod RefSeq:
-   * Plant RefSeq:
-   * Mammalian RefSeq:
-   * NR:
-   * SwissProt:
-   * UniProt:
+The following FTP sites contain common reference databases that EnTAP can recognize:
+   * RefSeq: |ref_comp|
+   * Plant RefSeq: |ref_plant|
+   * Mammalian RefSeq: |ref_mamm|
+   * NR: |ref_nr|
+   * SwissProt: |uni_swiss|
+       * Reviewed
+
+   * TrEMBL: |uni_trembl|
+       * Unreviewed
+
+Both Uniprot databases (SwissProt and TrEMBL) can be downloaded on a Unix system through the following command:
+
+.. code-block:: bash
+ 
+    wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
+
+Or, for the TrEMBL database:
+
+.. code-block:: bash
+
+    wget ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz
+
+Alternatively, the NCBI databases must be downloaded in separate, smaller files, and concatenated together. As an example, the following commands will download and combine the NR database files:
+
+Download:
+
+.. code-block:: bash
+
+    wget ftp://ftp.ncbi.nlm.nih.gov/blast/db/nr.*.tar.gz
+
+Decompress/Concatenate:
+
+.. code-block:: bash
+   
+    cat nr.* > nr_database.fasta
+    
+
 ....
 
 It is generally recommended that a user select at least three databases with varying levels of NCBI curation.  Unless the species is very non-model (i.e. does not have close relatives in databases such as RefSeq, it is not necessary to use the full NR database which is less curated).
@@ -145,7 +185,41 @@ Memory usage will vary depending on the number of databases you would like confi
 * NCBI Taxonomy: 400Mb
 * EggNOG Database: 30Gb
 
-....
+
+.. test-label:
+
+Test Data
+-------------
+Before continuing on to the :ref:`run<run-label>` stage, it is advised to do a test run of EnTAP to ensure that everything is properly configured. There should be no errors in the test run. The test data resides within the |test_dir| directory of the main EnTAP directory. This will walk you through configuring a database for DIAMOND (if you haven't already done so) and executing EnTAP with and without frame selection. 
+
+Before we begin, make sure that the paths in the configuration file are correct. Since we are running the configuration stage, EnTAP will check to make sure you have the other databases downloaded (which should have been done prior to this). To begin the test, execute the following command to configure the test DIAMOND database:
+
+.. code-block:: bash
+
+    EnTAP --config -d /test_data/swiss_prot_test.fasta --database-out /test_data
+
+
+This should finish very shortly without any errors and you should find a uniprot_sprot_test.dmnd file within the |test_dir| directory. 
+
+Next up is verifying the main execution stage! Once again, first ensure that the configuration file has all of the correct paths. We are going to check an execution with and without frame selection. If you are not going to use frame selection, you may skip this test!
+
+.. note:: The following tests will take longer as they will be testing the entire pipeline and running against the larger EggNOG database.
+
+To test EnTAP with frame selection, execute the following command:
+
+.. code-block:: bash
+
+    EnTAP --runN -i /test_data/trinity.fnn -d /test_data/uniprot_sprot_test.dmnd
+
+To test EnTAP without frame selection, execute the following command:
+
+.. code-block:: bash
+
+    EnTAP --runP -i /test_data/trinity.faa -d /test_data/uniprot_sprot_test.dmnd
+
+These should run without error and you should have several files within the created |out_dir| directory. The final_annotations_lvl0.tsv file should resemble the test_data/final_annotations_test.tsv file. 
+
+If any failures were seen during the above executions, be sure to go through each stage of installation and configuration to be sure everything was configured correctly before continuing!
 
 .. _run-label:
 
@@ -163,6 +237,7 @@ Required:
 Optional:
 
 * .BAM/.SAM alignment file. If left unspecified expression filtering will not be performed. 
+    * This can be generated by software that does not perform gapped alignments such as `Bowtie`_. All you need to generate an alignment file is a pair of reads and your assembled transcriptome!
 
 Sample Run:
 ^^^^^^^^^^^
@@ -251,6 +326,9 @@ Optional Flags:
 * (-t/ - - threads)
     * Specify the number of threads of execution
 
+* ( - - trim)
+    * This flag will trim your sequence headers to anything before a space. It will make your data easier to read if you have a lot of excess information you do not need in your headers.
+
 * (- - state)
     * Precise control over execution :ref:`stages<state-label>`. This flag allows for certain parts to be ran while skipping others. 
     * Warning: This may cause issues depending on what you plan on running! 
@@ -275,7 +353,13 @@ An example of flagging bacteria and fungi as contaminants can be seen below:
 
 **Taxonomic Favoring**
 
-During best hit selection of similarity searched results, taxonomic consideration can utilized. If a certain lineage (such as sapiens) is specified, hits closer in taxonomic lineage to this selection will be chosen. Any lineage such as species/kingdom/phylum can be utilized as long as it is contained within the Taxonomic Database
+During best hit selection of similarity searched results, taxonomic consideration can utilized. If a certain lineage (such as sapiens) is specified, hits closer in taxonomic lineage to this selection will be chosen. Any lineage such as species/kingdom/phylum can be utilized as long as it is contained within the Taxonomic Database. If it is not located within the database, EnTAP will stop the execution immediately and let you know! 
+
+This feature can be utilized with the |flag_taxon| flag. An example command utilizing both common contaminants and a species taxon can be seen below:
+
+.. code-block:: bash
+
+    EnTAP --runN -i path/to/transcriptome.fasta -d path/to/database.dmnd -c fungi -c bacteria --taxon sapiens
 
 
 .. _over-label:
@@ -304,6 +388,7 @@ In order to pick up and skip re-running certain stages again, the files that wer
 
 
 Since file naming is based on your input as well, the flags below **must** remain the same:
+
 * (-i / - - input)
 
 * (-a / - - align)
@@ -315,8 +400,38 @@ Since file naming is based on your input as well, the flags below **must** remai
 
 * (- - tcoverage)
 
+* (- - trim)
+
 
 .. _state-label:
 
 State Control
 ^^^^^^^^^^^^^^
+
+.. warning:: This is experimental and certain configurations may not work. This is not needed if you'd like to run certain portions because of "picking up where you left off!"
+
+State control of EnTAP allows you to further customize your runs. This is separate from the exclusion of - - align flag to skip expression filtering, or runP, instead of runN, to skip frame selection. You probably will never actually have to use this feature! Nonetheless, state control is based around the following stages of EnTAP:
+
+#. Expression Filtering
+#. Frame Selection
+#. Transcriptome Filtering (selection of final transcriptome)
+#. Similarity Search
+#. Best Hit Selection
+#. Gene Ontology / Gene Families
+
+With this functionality of EnTAP, you can execute whatever states you would like with certain commands. Using a '+' will execute from that state to the end, while using a 'x' will stop at that state. These basic commands can be combined to execute whatever you would like. It's easier if I lay out some examples:
+
+* (- - state 1+)
+    * This will start at expression filtering and continue to the end of the pipeline
+
+* (- - state 1+5x)
+    * This will start at expression filtering and stop at best hit selection
+
+* (- - state 4x)
+    * This will just execute similarity search and stop
+
+* (- - state 1+3x5+)
+    * This will essentially execute every stage besides similarity searching
+    * This is an example of something that may fail, since best hit selection relies on similarity search results
+
+The default 'state' of EnTAP is merely '+'. This executes every stage of the pipeline (or attempts to if the correct commands are in place). 

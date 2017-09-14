@@ -33,10 +33,13 @@ All of the software integrated into this pipeline are packaged within the EnTAP 
 
 Citations:
 ----------
-[1] B. Buchfink, Xie C., D. Huson, "Fast and sensitive protein alignment using 
+[1] A. Mitchell, H.-Y. Chang, and L. Daugherty, "The InterPro protein families database: the
+      classification resource after 15 years," Nucleid Acids Research, vol. 43, no. D1, 2015.
+
+[2] B. Buchfink, Xie C., D. Huson, "Fast and sensitive protein alignment using 
       DIAMOND", Nature Methods 12, 59-60 (2015).
 
-[2] eggNOG 4.5: a hierarchical orthology framework with improved functional
+[3] eggNOG 4.5: a hierarchical orthology framework with improved functional
       annotations for eukaryotic, prokaryotic and viral sequences. Jaime
       Huerta-Cepas, Damian Szklarczyk, Kristoffer Forslund, Helen Cook, Davide
       Heller, Mathias C. Walter, Thomas Rattei, Daniel R. Mende, Shinichi
@@ -44,11 +47,17 @@ Citations:
       Bork. Nucl. Acids Res. (04 January 2016) 44 (D1): D286-D293. doi:
       10.1093/nar/gkv1248
 
-[3] Fast genome-wide functional annotation through orthology assignment by
+[4] Fast genome-wide functional annotation through orthology assignment by
       eggNOG-mapper. Jaime Huerta-Cepas, Damian Szklarczyk, Lars Juhl Jensen,
       Christian von Mering and Peer Bork. Submitted (2016).
 
-[4] Li, B., Dewey, C., & Liu, P. RSEM. In.
+[5] Li, B., Dewey, C., & Liu, P. RSEM. In.
+
+[6] P. Jones et al., "InterProScan 5: genome-scale protein function classification," (in eng),
+      Bioinformatics, vol. 30, no. 9, pp. 1236-40, May 2014.
+
+[7] S. Tang, A. Lomsadze, and M. Borodovsky, "Identification of protein coding regions in
+      RNA transcripts," Nucleic Acids Research, 2015
 
 Software contained or used within this pipeline:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -56,3 +65,4 @@ Software contained or used within this pipeline:
 * `DIAMOND`_
 * `EggNOG`_
 * `GeneMarkS-T`_
+* `InterProScan`_

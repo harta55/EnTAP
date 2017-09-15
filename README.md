@@ -6,3 +6,9 @@ EnTAP is an eukaryotic non-model annotation pipeline developed by Alexander Hart
 
 Full Documentation can be found at:
 http://entap.readthedocs.io/en/latest/
+
+For information/bug reports, contact Alexander Hart at entap.dev@gmail.com
+
+
+Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+EnTAP is protected under the GNU General Public License Version 3

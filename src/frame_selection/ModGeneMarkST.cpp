@@ -1,9 +1,28 @@
 /*
+ *
  * Developed by Alexander Hart
  * Plant Computational Genomics Lab
  * University of Connecticut
  *
- * 2017
+ * For information, contact Alexander Hart at:
+ *     entap.dev@gmail.com
+ *
+ * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ *
+ * This file is part of EnTAP.
+ *
+ * EnTAP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * EnTAP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
@@ -349,49 +368,43 @@ ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein(std::string &pr
     print_debug("Parsing protein file at: " + protein);
 
     frame_map_t     protein_map;
-    std::string     out_protein;
     frame_seq       protein_sequence;
     std::string     line;
     std::string     sequence;
     std::string     seq_id;
+    unsigned short  first;
+    unsigned short  second;
+    unsigned short  seq_len;
+    unsigned short  line_chars;
 
     if (!file_exists(protein)) {
         throw ExceptionHandler("File located at: " + protein + " does not exist!",
                                ENTAP_ERR::E_RUN_GENEMARK_PARSE);
     }
-    out_protein = protein + "alt";
-    std::ofstream out_file(out_protein,std::ios::out | std::ios::app);
     std::ifstream in_file(protein);
-    while (getline(in_file,line)){
-        if (line.empty()) continue;
-        if (line.find(">")==0) {
+    while(true) {
+        getline(in_file,line);
+        if (line.empty() && !in_file.eof()) continue;
+        if (line.find(">")==0 || in_file.eof()) {
             if (!seq_id.empty()) {
                 std::string sub = sequence.substr(sequence.find("\n")+1);
-                long line_chars = std::count(sub.begin(),sub.end(),'\n');
-                unsigned long seq_len = sub.length() - line_chars;
+                line_chars = (unsigned short) std::count(sub.begin(),sub.end(),'\n');
+                seq_len = (unsigned short) (sub.length() - line_chars);
                 protein_sequence = {seq_len,sequence, ""};
                 protein_map.emplace(seq_id,protein_sequence);
             }
-            unsigned long first = line.find(">")+1;
-            unsigned long second = line.find("\t");
+            if (in_file.eof()) break;
+            first = (unsigned short) (line.find(">") + 1);
+            second = (unsigned short) line.find("\t");
             seq_id = line.substr(first,second-first);
-            sequence = line + "\n";
-            out_file << ">" + seq_id << std::endl;
+            sequence = seq_id + "\n";
         } else {
             sequence += line + "\n";
-            out_file << line << std::endl;
         }
     }
-    out_file << line << std::endl;
-    std::string sub = sequence.substr(sequence.find("\n")+1);
-    long line_chars = std::count(sub.begin(),sub.end(),'\n');
-    unsigned long seq_len = sub.length() - line_chars;
-    protein_sequence = {seq_len,sequence, ""};
-    protein_map.emplace(seq_id,protein_sequence);
+
     print_debug("Success!");
-    in_file.close(); out_file.close();
-    boostFS::remove(protein);
-    boostFS::rename(out_protein,protein);
+    in_file.close();
     return protein_map;
 }
 
@@ -416,20 +429,21 @@ ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein(std::string &pr
 void ModGeneMarkST::genemark_parse_lst(std::string &lst_path, frame_map_t &current_map) {
     print_debug("Parsing file at: " + lst_path);
 
+    std::string     frame;
     std::string     line;
     std::string     seq_id;
     bool            prime_5;
     bool            prime_3;
+    unsigned short  first;
 
     std::ifstream in_file(lst_path);
     while (getline(in_file,line)) {
         if (line.empty()) continue;
         line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
         if (line.find("FASTA") == 0) {
-            unsigned long first = line.find(":") + 1;
+            first = (unsigned short) (line.find(":") + 1);
             seq_id = line.substr(first);
         } else if (isdigit(line.at(0))) {
-            std::string frame;
             prime_5 = line.find("<") != std::string::npos;
             prime_3 = line.find(">") != std::string::npos;
             if (prime_5 && prime_3) {

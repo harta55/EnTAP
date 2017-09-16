@@ -1,9 +1,28 @@
 /*
+ *
  * Developed by Alexander Hart
  * Plant Computational Genomics Lab
  * University of Connecticut
  *
- * 2017
+ * For information, contact Alexander Hart at:
+ *     entap.dev@gmail.com
+ *
+ * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ *
+ * This file is part of EnTAP.
+ *
+ * EnTAP is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * EnTAP is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 
@@ -387,8 +406,6 @@ namespace entapExecute {
         while (true) {
             std::getline(in_file, line);
             if (line.empty() && !in_file.eof()) continue;
-            line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
-            out_file << line << std::endl;
             if (line.find(">") == 0 || in_file.eof()) {
                 if (!seq_id.empty()) {
                     QuerySequence query_seq = QuerySequence(_isProtein,sequence);
@@ -411,16 +428,20 @@ namespace entapExecute {
                     if (line.find(" ") != std::string::npos) {
                         seq_id = line.substr(line.find(">")+1, line.find(" ")-1);
                     } else seq_id = line.substr(line.find(">")+1);
-                    sequence = line.substr(line.find(">"), line.find(" ")) + "\n";
+                    sequence = ">" + seq_id + "\n";
                 } else {
+                    line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
                     seq_id = line.substr(line.find(">")+1);
                     sequence = line + "\n";
                 }
+                out_file << sequence;
             } else {
+                out_file << line << std::endl;
                 sequence += line + "\n";
             }
         }
-        in_file.close(); out_file.close();
+        in_file.close();
+        out_file.close();
         avg_len = total_len / count_seqs;
         // first - n50, second - n90
         n_vals = calculate_N_vals(sequence_lengths, total_len);

@@ -20,16 +20,41 @@
 //**************************************************************
 
 
+/**
+ * ======================================================================
+ * Function SimilaritySearch(std::vector<std::string> &databases, std::string input,
+                           int threads, std::string out, boost::program_options::variables_map &user_flags,
+                           GraphingManager *graphingManager)
+ *
+ * Description          - SimilaritySearch object constructor
+ *                      - Responsible for initiating SimSearch member variables,
+ *                        parsing user input for relevant information used within
+ *                        this module
+ *
+ * Notes                - None
+ *
+ * @param databases     - List of user selected databases (parsed in  execute namespace)
+ * @param input         - Path to user transcriptome (final version post filtering)
+ * @param threads       - Thread count
+ * @param out           - EnTAP out directory
+ * @param user_flags    - Boost parsed user input
+ * @param graphingManager- Pointer to graphing manager
+ *
+ * @return              - SimilaritySearch instance
+ * ======================================================================
+ */
 SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::string input,
                            int threads, std::string out, boost::program_options::variables_map &user_flags,
                                    GraphingManager *graphingManager) {
     print_debug("Spawn object - SimilaritySearch");
     _database_paths = databases;
-    _input_path = input;
-    _threads = threads;
-    _diamond_exe = DIAMOND_EXE;
-    _outpath = out;
-    _input_species = "";
+    _input_path     = input;
+    _threads        = threads;
+    _diamond_exe    = DIAMOND_EXE;      // Set to extern set previously
+    _outpath        = out;
+    _input_species  = "";
+
+    // Species already checked for validity in Init
     if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_SPECIES)) {
         _input_species = user_flags[ENTAP_CONFIG::INPUT_FLAG_SPECIES].as<std::string>();
         std::transform(_input_species.begin(), _input_species.end(), _input_species.begin(), ::tolower);
@@ -38,8 +63,9 @@ SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::str
     _qcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE].as<float>();
     _tcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE].as<float>();
     _overwrite = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
-    _e_val = user_flags[ENTAP_CONFIG::INPUT_FLAG_E_VAL].as<float>();
+    _e_val     = user_flags[ENTAP_CONFIG::INPUT_FLAG_E_VAL].as<float>();
 
+    // Format contaminants for use in database
     std::vector<std::string> contaminants;
     if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_CONTAM)) {
         contaminants = user_flags[ENTAP_CONFIG::INPUT_FLAG_CONTAM].as<std::vector<std::string>>();
@@ -48,19 +74,52 @@ SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::str
         if (contaminants[ind].empty()) continue;
         std::string &str = contaminants[ind];
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
+        std::replace(str.begin(), str.end(), '_',' ');
     }
     _contaminants = contaminants;
-    _software_flag = 0;
+    _software_flag = 0;         // Default DIAMOND software
+    _pGraphingManager= graphingManager;
 
-    _sim_search_dir = (boostFS::path(out) / boostFS::path(SIM_SEARCH_DIR)).string();
+    // Set sim search paths/directories
+    _sim_search_dir  = (boostFS::path(out) / boostFS::path(SIM_SEARCH_DIR)).string();
     _processed_path  = (boostFS::path(_sim_search_dir) / boostFS::path(PROCESSED_DIR)).string();
     _results_path    = (boostFS::path(_sim_search_dir) / boostFS::path(RESULTS_DIR)).string();
     _figure_path     = (boostFS::path(_sim_search_dir) / boostFS::path(FIGURE_DIR)).string();
-    _pGraphingManager = graphingManager;
 }
 
+
+/**
+ * ======================================================================
+ * Function SimilaritySearch()
+ *
+ * Description          - Empty constructor
+ *
+ * Notes                - None
+ *
+ * @return              - SimilaritySearch instance
+ * ======================================================================
+ */
 SimilaritySearch::SimilaritySearch() {}
 
+
+/**
+ * ======================================================================
+ * Function std::vector<std::string> SimilaritySearch::execute(std::string updated_input,
+ *                                                             bool blast)
+ *
+ * Description          - Responsible for executing the selected similarity
+ *                        searching software
+ *                      - Returns output files of sim search
+ *                      - Throws instance of ExceptionHandler on failed execution
+ *
+ * Notes                - None
+ *
+ * @param updated_input - User transcriptome, if changed
+ * @param blast         - Blastx/blastp (true for blastp)
+ *
+ * @return              - Vector of output files
+ * ======================================================================
+ */
 std::vector<std::string> SimilaritySearch::execute(std::string updated_input,bool blast) {
     this->_input_path = updated_input;
     this->_blastp = blast;
@@ -75,6 +134,24 @@ std::vector<std::string> SimilaritySearch::execute(std::string updated_input,boo
     } catch (ExceptionHandler &e) {throw e;}
 }
 
+
+/**
+ * ======================================================================
+ * Function std::pair<std::string,std::string> SimilaritySearch::parse_files(std::string new_input,
+                                   std::map<std::string, QuerySequence>& MAP)
+ *
+ * Description          - Responsible for best hit selection of sequences hit
+ *                        against the diamond databases
+ *                      - Throws fatal ExceptionHandler instance
+ *
+ * Notes                - Entered as SIM_SEARCH_PARSE state from Execute namespace
+ *
+ * @param new_input     - User transcriptome, if changed
+ * @param MAP           - Master data structure of transcriptome information
+ *
+ * @return              - Pair of output files (hits and no hits)
+ * ======================================================================
+ */
 std::pair<std::string,std::string> SimilaritySearch::parse_files(std::string new_input,
                                    std::map<std::string, QuerySequence>& MAP) {
     _input_path = new_input;
@@ -88,6 +165,22 @@ std::pair<std::string,std::string> SimilaritySearch::parse_files(std::string new
     } catch (ExceptionHandler &e) {throw e;}
 }
 
+
+/**
+ * ======================================================================
+ * Function std::vector<std::string> SimilaritySearch::diamond()
+ *
+ * Description          - Responsible for executing simliarity search through
+ *                        pstreams library
+ *                      - Returns vector of output files from sim search
+ *                      - Checks whether DIAMOND has been ran previously
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - Output files from similarity searching
+ * ======================================================================
+ */
 std::vector<std::string> SimilaritySearch::diamond() {
     print_debug("Beginning to execute DIAMOND...");
 
@@ -115,8 +208,8 @@ std::vector<std::string> SimilaritySearch::diamond() {
             boostFS::path database_name(data_path);
             database_name = database_name.stem();
             filename = _blast_type + "_" + transc_name.string() + "_" + database_name.string();
-            out_path = (boostFS::path(_sim_search_dir) / filename).string() + ".out";
-            std_out  = (boostFS::path(_sim_search_dir) / filename).string() + "_std";
+            out_path = PATHS(_sim_search_dir,filename) + ".out";
+            std_out  = PATHS(_sim_search_dir,filename) + "_std";
             _file_to_database[out_path] = database_name.string();
             if (file_exists(out_path)) {
                 print_debug("File found at " + out_path + " skipping execution against this database");
@@ -132,6 +225,27 @@ std::vector<std::string> SimilaritySearch::diamond() {
     return out_paths;
 }
 
+
+/**
+ * ======================================================================
+ * Function void SimilaritySearch::diamond_blast(std::string input_file, std::string output_file, std::string std_out,
+                   std::string &database,int &threads, std::string &blast)
+ *
+ * Description          - Responsible for execution of DIAMOND through pstreams
+ *                        library
+ *
+ * Notes                - None
+ *
+ * @param input_file    - Path to input transcriptome
+ * @param output_file   - Path to output file from sim search
+ * @param std_out       - Std out/err path
+ * @param database      - Selected database to hit against
+ * @param threads       - Thread number
+ * @param blast         - Blast type (blastx/blastp)
+ *
+ * @return              - None
+ * ======================================================================
+ */
 void SimilaritySearch::diamond_blast(std::string input_file, std::string output_file, std::string std_out,
                    std::string &database,int &threads, std::string &blast) {
 
@@ -186,6 +300,9 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
 
     std::unordered_map<std::string, std::string>    taxonomic_database;
     std::list<std::map<std::string,QuerySequence>>  database_maps;
+    unsigned int                                    count_removed;
+    unsigned int                                    count_TOTAL_hits;
+    unsigned int                                    count_under_e;
 
     try {
         taxonomic_database = read_tax_map();
@@ -208,7 +325,9 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
         std::string qseqid, sseqid, stitle, database_name,pident, bitscore,
                 length, mismatch, gapopen, qstart, qend, sstart, send;
         double evalue, coverage;
-        unsigned long count_removed=0, count_TOTAL_hits=0, count_under_e=0;
+        count_removed = 0;
+        count_TOTAL_hits = 0;
+        count_under_e = 0;
         std::stringstream out_stream;
 
         if (_file_to_database.find(data) != _file_to_database.end()) {

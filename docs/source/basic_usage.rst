@@ -149,6 +149,8 @@ Configuration can be ran without formatting a database as follows:
 
 .. note:: This is the only stage that requires connection to the Internet.
 
+If you experience any trouble in downloading the EnTAP databases (taxonomy and gene ontology), you can use the databases contained in the repo download, databases.tar.gz. Just be sure to set the configuration file to these database paths (as these are the binaries)!
+
 Flags:
 ^^^^^^^^^^^^^^^^^^^^^
 

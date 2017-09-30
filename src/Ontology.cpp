@@ -27,6 +27,7 @@
 
 #include <boost/filesystem.hpp>
 #include <csv.h>
+#include <fstream>
 #include <boost/archive/binary_iarchive.hpp>
 #include "Ontology.h"
 #include "EntapConfig.h"
@@ -41,27 +42,30 @@
 #include "ontology/ModEggnog.h"
 
 Ontology::Ontology(int thread, std::string outpath, std::string input,
-                   boost::program_options::variables_map &user_input, GraphingManager* graphing) {
+                   boost::program_options::variables_map &user_input, GraphingManager* graphing,
+                   QueryData *queryData, bool blastp) {
     print_debug("Spawn object - Ontology");
-    _ontology_exe = EGG_EMAPPER_EXE;
-    _threads = thread;
-    _outpath = outpath;
-    _new_input = input;
-    _is_overwrite = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
-    _software_flag = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<short>();
-    _go_levels = user_input[ENTAP_CONFIG::INPUT_FLAG_GO_LEVELS].as<std::vector<short>>();
+    _ontology_exe    = EGG_EMAPPER_EXE;
+    _threads         = thread;
+    _outpath         = outpath;
+    _new_input       = input;
+    _is_overwrite    = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
+    _blastp          = blastp;
+    _software_flag   = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<short>();
+    _go_levels       = user_input[ENTAP_CONFIG::INPUT_FLAG_GO_LEVELS].as<std::vector<short>>();
+    _ontology_dir    = PATHS(outpath, ONTOLOGY_OUT_PATH);
+    _processed_dir   = PATHS(_ontology_dir, PROCESSED_OUT_DIR);
+    _figure_dir      = PATHS(_processed_dir, FIGURE_DIR);
+    _eggnog_db_path  = EGG_SQL_DB_PATH;
+    _graphingManager = graphing;
+    _QUERY_DATA      = queryData;
     std::vector<std::string> _interpro_databases =
             user_input[ENTAP_CONFIG::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
-    _ontology_dir = (boostFS::path(outpath) / boostFS::path(ONTOLOGY_OUT_PATH)).string();
-    _processed_dir = (boostFS::path(_ontology_dir) / boostFS::path(PROCESSED_OUT_DIR)).string();
-    _figure_dir = (boostFS::path(_processed_dir) / boostFS::path(FIGURE_DIR)).string();
-    _eggnog_db_path = EGG_SQL_DB_PATH;
-    _graphingManager = graphing;
     SOFTWARE = static_cast<OntologySoftware>(_software_flag);
 }
 
 
-void Ontology::execute(query_map_struct &SEQUENCES, std::string input,std::string no_hit) {
+void Ontology::execute(std::string input,std::string no_hit) {
 
     std::pair<bool,std::string> verify_pair;
 
@@ -75,9 +79,9 @@ void Ontology::execute(query_map_struct &SEQUENCES, std::string input,std::strin
         std::unique_ptr<AbstractOntology> ptr = spawn_object();
         ptr->set_data(_go_levels,_eggnog_db_path,_threads);
         verify_pair = ptr->verify_files();
-        if (!verify_pair.first) ptr->execute(SEQUENCES);
-        ptr->parse(SEQUENCES);
-        print_eggnog(SEQUENCES);
+        if (!verify_pair.first) ptr->execute();
+        ptr->parse();
+        print_eggnog(*_QUERY_DATA->get_pSequences());
 
         // TODO move printing to manager
     } catch (ExceptionHandler &e) {throw e;}
@@ -98,14 +102,14 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object() {
         case EGGNOG:
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
                     _ontology_exe, _outpath, _new_input, _input_no_hits,
-                    _processed_dir, _figure_dir, _ontology_dir, _graphingManager
+                    _processed_dir, _figure_dir, _ontology_dir, _graphingManager, _QUERY_DATA, _blastp
             ));
         case INTERPRO:
             break;
         default:
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
                     _ontology_exe, _outpath, _new_input, _input_no_hits,
-                    _processed_dir, _figure_dir, _ontology_dir, _graphingManager
+                    _processed_dir, _figure_dir, _ontology_dir, _graphingManager, _QUERY_DATA, _blastp
             ));
     }
 }

@@ -31,17 +31,19 @@
 
 
 #include "AbstractExpression.h"
+#include "../QueryData.h"
 
 class ModRSEM : public AbstractExpression{
 
 public:
     ModRSEM(std::string &exe, std::string &out, std::string &in, std::string &proc,
-            std::string &fig, std::string &exp, std::string &align,GraphingManager *graphing) :
-    AbstractExpression(exe, out, in, proc, fig, exp, align,graphing){}
+            std::string &fig, std::string &exp, std::string &align,GraphingManager *graphing,
+            QueryData *query) :
+    AbstractExpression(exe, out, in, proc, fig, exp, align,graphing, query){}
 
     virtual std::pair<bool, std::string> verify_files() override ;
-    virtual void execute(std::map<std::string, QuerySequence>&) override ;
-    virtual std::string filter(std::map<std::string, QuerySequence>&) override ;
+    virtual void execute() override ;
+    virtual std::string filter() override ;
     virtual void set_data(int, float, bool) override    ;
 
 private:

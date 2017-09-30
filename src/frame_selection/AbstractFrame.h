@@ -30,11 +30,12 @@
 #define ENTAP_ABSTRACTFRAME_H
 
 #include "../QuerySequence.h"
+#include "../QueryData.h"
 
 class AbstractFrame {
 public:
     AbstractFrame(std::string &exe, std::string &out, std::string &in, std::string &proc,
-                std::string &fig, std::string &frame, GraphingManager *graphing){
+                std::string &fig, std::string &frame, GraphingManager *graphing, QueryData *queryData){
         _exe_path = exe;
         _outpath = out;
         _inpath = in;
@@ -42,12 +43,13 @@ public:
         _figure_path = fig;
         _frame_outpath = frame;
         pGraphingManager = graphing;
+        pQUERY_DATA = queryData;
 
     }
     virtual ~AbstractFrame() = default;
     virtual std::pair<bool, std::string> verify_files()=0;
-    virtual std::string execute(std::map<std::string, QuerySequence>&) = 0;
-    virtual void parse(std::map<std::string, QuerySequence>&) = 0;
+    virtual std::string execute() = 0;
+    virtual void parse() = 0;
 
 
 protected:
@@ -58,6 +60,7 @@ protected:
     std::string _figure_path;
     std::string _frame_outpath;
     GraphingManager *pGraphingManager;
+    QueryData       *pQUERY_DATA;
 };
 
 

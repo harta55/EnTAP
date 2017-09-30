@@ -37,6 +37,7 @@
 #include "EntapConfig.h"
 #include "EntapGlobals.h"
 #include "frame_selection/ModGeneMarkST.h"
+#include "QueryData.h"
 //**************************************************************
 
 
@@ -62,9 +63,10 @@
  */
 FrameSelection::FrameSelection(std::string &input, std::string &out,
                                boost::program_options::variables_map &user_flags,
-                               GraphingManager *graphingManager) {
+                               GraphingManager *graphingManager, QueryData *QUERY_DATA) {
     print_debug("Spawn object - FrameSelection");
     _graphingManager = graphingManager;
+    _QUERY_DATA = QUERY_DATA;
     _exe_path        = GENEMARK_EXE;
     _outpath         = out;
     _inpath          = input;
@@ -97,7 +99,7 @@ FrameSelection::FrameSelection(std::string &input, std::string &out,
  *
  * =====================================================================
  */
-std::string FrameSelection::execute(std::string input, std::map<std::string,QuerySequence> &SEQUENCES) {
+std::string FrameSelection::execute(std::string input) {
 
     std::string output;
     std::pair<bool, std::string> verify_pair;
@@ -111,9 +113,9 @@ std::string FrameSelection::execute(std::string input, std::map<std::string,Quer
         std::unique_ptr<AbstractFrame> ptr = spawn_object();
         verify_pair = ptr->verify_files();
         if (!verify_pair.first) {
-            output = ptr->execute(SEQUENCES);
+            output = ptr->execute();
         } else output = verify_pair.second;
-        ptr->parse(SEQUENCES);
+        ptr->parse();
         ptr.release();
         return output;
     } catch (const ExceptionHandler &e) {throw e;}
@@ -140,12 +142,12 @@ std::unique_ptr<AbstractFrame> FrameSelection::spawn_object() {
         case GENEMARKST:
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
                     _exe_path, _outpath, _inpath, _processed_path, _figure_path,
-                    _frame_outpath, _graphingManager
+                    _frame_outpath, _graphingManager, _QUERY_DATA
             ));
         default:
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
                     _exe_path, _outpath, _inpath, _processed_path, _figure_path,
-                    _frame_outpath, _graphingManager
+                    _frame_outpath, _graphingManager, _QUERY_DATA
             ));
     }
 }

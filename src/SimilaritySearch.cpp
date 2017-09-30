@@ -32,6 +32,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/regex.hpp>
 #include <iomanip>
+#include <fstream>
 #include "SimilaritySearch.h"
 #include "ExceptionHandler.h"
 #include "EntapExecute.h"
@@ -64,8 +65,9 @@
  */
 SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::string input,
                            int threads, std::string out, boost::program_options::variables_map &user_flags,
-                                   GraphingManager *graphingManager) {
+                           GraphingManager *graphingManager, QueryData *queryData) {
     print_debug("Spawn object - SimilaritySearch");
+    _pQUERY_DATA = queryData;
     _database_paths = databases;
     _input_path     = input;
     _threads        = threads;
@@ -171,15 +173,14 @@ std::vector<std::string> SimilaritySearch::execute(std::string updated_input,boo
  * @return              - Pair of output files (hits and no hits)
  * ======================================================================
  */
-std::pair<std::string,std::string> SimilaritySearch::parse_files(std::string new_input,
-                                   std::map<std::string, QuerySequence>& MAP) {
+std::pair<std::string,std::string> SimilaritySearch::parse_files(std::string new_input) {
     _input_path = new_input;
     try {
         switch (_software_flag) {
             case 0:
-                return diamond_parse(_contaminants,MAP);
+                return diamond_parse(_contaminants);
             default:
-                return diamond_parse(_contaminants,MAP);
+                return diamond_parse(_contaminants);
         }
     } catch (ExceptionHandler &e) {throw e;}
 }
@@ -210,7 +211,7 @@ std::vector<std::string> SimilaritySearch::diamond() {
     std::string                 std_out;
 
     if (!file_exists(_input_path)) {
-        throw ExceptionHandler("Transcriptome file not found",ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
+        throw ExceptionHandler("Transcriptome file not found",ENTAP_ERR::E_RUN_SIM_SEARCH_RUN);
     }
     transc_name = _input_path;
     transc_name = transc_name.stem();
@@ -287,20 +288,40 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
     print_debug("\nExecuting Diamond:\n" + diamond_run);
     if (execute_cmd(diamond_run, std_out) != 0) {
         throw ExceptionHandler("Error in DIAMOND run with database located at: " +
-                               database, ENTAP_ERR::E_INIT_TAX_INDEX);
+                               database, ENTAP_ERR::E_RUN_SIM_SEARCH_RUN);
     }
 }
 
+
+/**
+ * ======================================================================
+ * Function std::vector<std::string> SimilaritySearch::verify_diamond_files(
+ *                                      std::string &outpath,
+ *                                      std::string name)
+ *
+ * Description          - Checks whether DIAMOND has already been ran with
+ *                        the same parameters to skip re-running
+ *
+ * Notes                - None
+ *
+ * @param outpath       - Path to out directory
+ * @param name          - Name of input transcriptome
+ *
+ * @return              - None
+ * ======================================================================
+ */
 std::vector<std::string> SimilaritySearch::verify_diamond_files(std::string &outpath, std::string name) {
     print_debug("Override unselected, checking for diamond files of selected databases...");
     std::vector<std::string> out_list;
     std::string              temp_out;
+    std::string              file_name_full;
 
     for (std::string data_path : _database_paths) {
         // assume all paths should be .dmnd
         boostFS::path file_name(data_path);
         file_name = file_name.stem();
-        temp_out = outpath + _blast_type + "_" + name + "_" + file_name.string() + ".out";
+        file_name_full = _blast_type + "_" + name + "_" + file_name.string() + ".out";
+        temp_out = PATHS(outpath, file_name_full);
         if (!file_exists(temp_out)){
             print_debug("File at: " + temp_out + " not found, running diamond");
             out_list.clear();return out_list;
@@ -313,8 +334,7 @@ std::vector<std::string> SimilaritySearch::verify_diamond_files(std::string &out
 }
 
 // input: 3 database string array of selected databases
-std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<std::string>& contams,
-                                                                   std::map<std::string, QuerySequence> &SEQUENCES) {
+std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
     print_debug("Beginning to filter individual diamond_files...");
 
     std::unordered_map<std::string, std::string>    taxonomic_database;
@@ -377,7 +397,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
             new_query.set_contam_type(contam_info.second);
             bool informative = is_informative(stitle);
             new_query.set_is_informative(informative);
-            new_query.setFrame(SEQUENCES[qseqid].getFrame());  // May want to handle differently, SLOW
+            new_query.setFrame((*_pQUERY_DATA->get_pSequences())[qseqid].getFrame());  // May want to handle differently, SLOW
             new_query.set_tax_score(_input_lineage);
             if (evalue > _e_val) {
                 count_under_e++; count_removed++;
@@ -407,16 +427,16 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
                    "\n\tTotal alignments: "               << count_TOTAL_hits   <<
                    "\n\tTotal unselected results: "       << count_removed      <<
                    "\n\t\tWritten to: "                   << out_unselected_tsv;
-        calculate_best_stats(SEQUENCES,database_map,out_stream,out_base_path,false);
+        calculate_best_stats(database_map,out_stream,out_base_path,false);
         std::string out_msg = out_stream.str() + "\n";
         print_statistics(out_msg);
         database_maps.push_back(database_map);
         print_debug("Success!");
     }
-    return process_best_diamond_hit(database_maps,SEQUENCES);
+    return process_best_diamond_hit(database_maps);
 }
 
-std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::map<std::string, QuerySequence>&SEQUENCES,
+std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
                                              std::map<std::string, QuerySequence>&best_hits,
                                              std::stringstream &ss, std::string &base_path, bool is_final) {
 
@@ -446,20 +466,20 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     std::string out_best_contams_fa_nucl         = PATHS(base_bst ,SIM_SEARCH_DATABASE_CONTAM_FA_NUCL);
     std::string out_best_contams_fa_prot         = PATHS(base_bst ,SIM_SEARCH_DATABASE_CONTAM_FA_PROT);
 
-    std::string out_best_hits_tsv                = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_BEST_TSV)).string();
-    std::string out_best_hits_no_contam_tsv      = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_BEST_TSV_NO_CONTAM)).string();
-    std::string out_best_hits_fa_nucl            = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_BEST_FA_NUCL)).string();
-    std::string out_best_hits_fa_prot            = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_BEST_FA_PROT)).string();
-    std::string out_best_hits_fa_nucl_no_contam  = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_BEST_FA_NUCL_NO_CONTAM)).string();
-    std::string out_best_hits_fa_prot_no_contam  = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_BEST_FA_PROT_NO_CONTAM)).string();
+    std::string out_best_hits_tsv                = PATHS(base_bst, SIM_SEARCH_DATABASE_BEST_TSV);
+    std::string out_best_hits_no_contam_tsv      = PATHS(base_bst, SIM_SEARCH_DATABASE_BEST_TSV_NO_CONTAM);
+    std::string out_best_hits_fa_nucl            = PATHS(base_bst, SIM_SEARCH_DATABASE_BEST_FA_NUCL);
+    std::string out_best_hits_fa_prot            = PATHS(base_bst, SIM_SEARCH_DATABASE_BEST_FA_PROT);
+    std::string out_best_hits_fa_nucl_no_contam  = PATHS(base_bst, SIM_SEARCH_DATABASE_BEST_FA_NUCL_NO_CONTAM);
+    std::string out_best_hits_fa_prot_no_contam  = PATHS(base_bst, SIM_SEARCH_DATABASE_BEST_FA_PROT_NO_CONTAM);
 
-    std::string out_no_hits_fa_nucl              = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_NO_HITS_NUCL)).string();
-    std::string out_no_hits_fa_prot              = (base_bst / boostFS::path(SIM_SEARCH_DATABASE_NO_HITS_PROT)).string();
+    std::string out_no_hits_fa_nucl              = PATHS(base_bst, SIM_SEARCH_DATABASE_NO_HITS_NUCL);
+    std::string out_no_hits_fa_prot              = PATHS(base_bst, SIM_SEARCH_DATABASE_NO_HITS_PROT);
 
-    std::string graph_species_txt_path           = (boostFS::path(figure_base) / boostFS::path(GRAPH_SPECIES_BAR_TXT)).string();
-    std::string graph_species_png_path           = (boostFS::path(figure_base) / boostFS::path(GRAPH_SPECIES_BAR_PNG)).string();
-    std::string graph_contam_txt_path            = (boostFS::path(figure_base) / boostFS::path(GRAPH_CONTAM_BAR_TXT)).string();
-    std::string graph_contam_png_path            = (boostFS::path(figure_base) / boostFS::path(GRAPH_CONTAM_BAR_PNG)).string();
+    std::string graph_species_txt_path           = PATHS(figure_base, GRAPH_SPECIES_BAR_TXT);
+    std::string graph_species_png_path           = PATHS(figure_base, GRAPH_SPECIES_BAR_PNG);
+    std::string graph_contam_txt_path            = PATHS(figure_base, GRAPH_CONTAM_BAR_TXT);
+    std::string graph_contam_png_path            = PATHS(figure_base, GRAPH_CONTAM_BAR_PNG);
     std::string graph_sum_txt_path               = PATHS(figure_base, GRAPH_DATABASE_SUM_TXT);
     std::string graph_sum_png_path               = PATHS(figure_base, GRAPH_DATABASE_SUM_PNG);
 
@@ -487,7 +507,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     graph_contam_file  << "Contaminant Species\tCount" << std::endl;
     graph_sum_file     << "Category\tCount"    << std::endl;
 
-    for (auto &pair : SEQUENCES) {
+    for (auto &pair : *_pQUERY_DATA->get_pSequences()) {
         std::map<std::string, QuerySequence>::iterator it = best_hits.find(pair.first);
         // Check if original sequences have hit a database
         if (it == best_hits.end()) {
@@ -608,7 +628,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         }
     }
 
-    ss<<
+    ss <<
        "\n\tTotal unique contaminants: "                                     << count_contam       <<
           "(" << contam_percent << "%): "                                    <<
        "\n\t\tTranscriptome reference sequences labeled as a contaminant (FASTA):\n\t\t\t"<< out_best_contams_fa_prot<<
@@ -683,8 +703,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
  * @param diamond_maps
  * @return - pair of best_hit.fasta, no_hit.fasta
  */
-std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(std::list<std::map<std::string,QuerySequence>> &diamond_maps,
-                                      std::map<std::string, QuerySequence>&SEQUENCES) {
+std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(std::list<std::map<std::string,QuerySequence>> &diamond_maps) {
     print_debug("Compiling similarity results results to find best overall hits...");
 
     std::pair<std::string,std::string>  out_pair;
@@ -710,7 +729,7 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
     out_stream << ENTAP_STATS::SOFTWARE_BREAK
                << "Compiled Similarity Search - Diamond - Best Overall\n"
                << ENTAP_STATS::SOFTWARE_BREAK;
-    out_pair = calculate_best_stats(SEQUENCES,compiled_hit_map,out_stream,_results_path,true);
+    out_pair = calculate_best_stats(compiled_hit_map,out_stream,_results_path,true);
     out_msg = out_stream.str() + "\n";
     print_statistics(out_msg);
     diamond_maps.clear();

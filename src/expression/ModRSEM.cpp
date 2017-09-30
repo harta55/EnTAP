@@ -86,7 +86,7 @@ std::pair<bool, std::string> ModRSEM::verify_files() {
  *
  * =====================================================================
  */
-void ModRSEM::execute(std::map<std::string, QuerySequence> &) {
+void ModRSEM::execute() {
     // return path
     print_debug("Running RSEM...");
 
@@ -156,7 +156,7 @@ void ModRSEM::execute(std::map<std::string, QuerySequence> &) {
  *
  * =====================================================================
  */
-std::string ModRSEM::filter(std::map<std::string, QuerySequence> & MAP) {
+std::string ModRSEM::filter() {
     print_debug("Beginning to filter transcriptome...");
 
     unsigned int        count_removed=0;
@@ -180,6 +180,9 @@ std::string ModRSEM::filter(std::map<std::string, QuerySequence> & MAP) {
     std::string         fig_png_box_path;
     std::stringstream   out_msg;
     GraphingStruct      graphingStruct;
+    QUERY_MAP_T         MAP;
+
+    MAP = *pQUERY_DATA->get_pSequences();
 
     if (!file_exists(_rsem_out)) {
         throw ExceptionHandler("File does not exist at: " + _rsem_out, ENTAP_ERR::E_RUN_RSEM_EXPRESSION);

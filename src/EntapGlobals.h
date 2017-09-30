@@ -40,6 +40,7 @@
 namespace boostFS = boost::filesystem;
 namespace boostPO = boost::program_options;
 namespace boostAR = boost::archive;
+class QuerySequence;
 
 //**************************************************************
 
@@ -87,6 +88,8 @@ struct  struct_go_term {
     }
 };
 
+typedef std::map<std::string, QuerySequence> QUERY_MAP_T;
+
 typedef std::pair<std::string,int> count_pair;
 struct compair {
     bool operator ()(count_pair const& one, count_pair const& two) const {
@@ -94,6 +97,16 @@ struct compair {
     }
 };
 
+enum ExecuteStates {
+    INIT,
+    RSEM,
+    FRAME_SELECTION,
+    FILTER,
+    DIAMOND_RUN,
+    DIAMOND_PARSE,
+    GENE_ONTOLOGY,
+    EXIT
+};
 
 //*********************** Externs *****************************
 
@@ -250,6 +263,7 @@ namespace ENTAP_ERR {
     const unsigned short E_RUN_RSEM_EXPRESSION         = 112;
     const unsigned short E_RUN_FILTER                  = 120;
     const unsigned short E_RUN_SIM_SEARCH_FILTER       = 140;
+    const unsigned short E_RUN_SIM_SEARCH_RUN          = 141;
     const unsigned short E_RUN_ANNOTATION              = 150;
     const unsigned short E_GO_READ                     = 151;
     const unsigned short E_RUN_EGGNOG                  = 160;

@@ -32,13 +32,14 @@
 #include "QuerySequence.h"
 #include "GraphingManager.h"
 #include "expression/AbstractExpression.h"
+#include "QueryData.h"
 
 
 class ExpressionAnalysis {
 public:
     ExpressionAnalysis(std::string&, int, std::string&,boost::program_options::variables_map&,
-                       GraphingManager*);
-    std::string execute(std::string, std::map<std::string, QuerySequence>& );
+                       GraphingManager*, QueryData*);
+    std::string execute(std::string);
 
 private:
 
@@ -64,6 +65,7 @@ private:
     int                 _threads;
     float               _fpkm;
     GraphingManager  *_graphingManager;
+    QueryData        *_query_data;
     ExpressionSoftware SOFTWARE;
 
     std::unique_ptr<AbstractExpression> spawn_object();

@@ -37,12 +37,13 @@ class ModEggnog : public AbstractOntology{
 public:
     ModEggnog(std::string &exe,std::string &out, std::string &in,
               std::string &in_no_hits,std::string &proc,
-            std::string &fig, std::string &ont, GraphingManager *graphing) :
-    AbstractOntology(exe, out, in, in_no_hits,proc, fig, ont, graphing){}
+            std::string &fig, std::string &ont, GraphingManager *graphing,QueryData *queryData,
+            bool blastp) :
+    AbstractOntology(exe, out, in, in_no_hits,proc, fig, ont, graphing, queryData, blastp){}
 
     virtual std::pair<bool, std::string> verify_files() override ;
-    virtual void execute(std::map<std::string, QuerySequence>&) override ;
-    virtual void parse(std::map<std::string, QuerySequence>&) override ;
+    virtual void execute() override ;
+    virtual void parse() override ;
     virtual void set_data(std::vector<short>&, std::string&, int) override ;
 
 private:

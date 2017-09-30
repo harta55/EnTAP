@@ -43,12 +43,13 @@ typedef std::map<std::string,ModGeneMarkST::frame_seq> frame_map_t;
 
 public:
     ModGeneMarkST(std::string &exe, std::string &out, std::string &in, std::string &proc,
-                  std::string &fig, std::string &frame, GraphingManager *graphing) :
-            AbstractFrame(exe, out, in, proc, fig, frame, graphing){}
+                  std::string &fig, std::string &frame, GraphingManager *graphing,
+                  QueryData *querydata) :
+            AbstractFrame(exe, out, in, proc, fig, frame, graphing, querydata){}
 
     virtual std::pair<bool, std::string> verify_files() override ;
-    virtual std::string execute(std::map<std::string, QuerySequence>&) override ;
-    virtual void parse(std::map<std::string, QuerySequence>&) override ;
+    virtual std::string execute() override ;
+    virtual void parse() override ;
 
 private:
 

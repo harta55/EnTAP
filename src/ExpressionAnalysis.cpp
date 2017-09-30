@@ -29,6 +29,7 @@
 #include <csv.h>
 #include <boost/regex.hpp>
 #include <iomanip>
+#include <fstream>
 #include "ExpressionAnalysis.h"
 #include "ExceptionHandler.h"
 #include "EntapConfig.h"
@@ -39,8 +40,10 @@
 namespace boostFS = boost::filesystem;
 
 ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &out
-    , boost::program_options::variables_map& user_flags, GraphingManager *graph) {
+    , boost::program_options::variables_map& user_flags, GraphingManager *graph,
+      QueryData *queryData) {
     print_debug("Spawn object - ExpressionAnalysis");
+    _query_data = queryData;
     _inpath = input;
     _threads = t;
     _exepath = RSEM_EXE_DIR;
@@ -59,8 +62,7 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &ou
     SOFTWARE = static_cast<ExpressionSoftware>(_software_flag);
 }
 
-std::string ExpressionAnalysis::execute(std::string input,
-                                        std::map<std::string, QuerySequence>& MAP) {
+std::string ExpressionAnalysis::execute(std::string input) {
     std::string output;
     std::pair<bool, std::string> verify_pair;
     std::unique_ptr<AbstractExpression> ptr;
@@ -74,8 +76,8 @@ std::string ExpressionAnalysis::execute(std::string input,
         ptr = spawn_object();
         ptr->set_data(_threads, _fpkm, _ispaired);
         verify_pair = ptr->verify_files();
-        if (!verify_pair.first) ptr->execute(MAP);
-        output = ptr->filter(MAP);
+        if (!verify_pair.first) ptr->execute();
+        output = ptr->filter();
         ptr.release();
     } catch (const ExceptionHandler &e) {throw e;}
     return output;
@@ -86,12 +88,12 @@ std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
         case RSEM:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
                     _exepath, _outpath, _inpath, _proc_dir, _figure_dir,
-                    _rsem_dir, _alignpath, _graphingManager
+                    _rsem_dir, _alignpath, _graphingManager, _query_data
             ));
         default:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
                     _exepath, _outpath, _inpath, _proc_dir, _figure_dir,
-                    _rsem_dir, _alignpath, _graphingManager
+                    _rsem_dir, _alignpath, _graphingManager, _query_data
             ));
     }
 }

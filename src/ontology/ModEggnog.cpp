@@ -28,6 +28,7 @@
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <iomanip>
+#include <fstream>
 #include <csv.h>
 #include "ModEggnog.h"
 #include "../ExceptionHandler.h"
@@ -67,7 +68,7 @@ std::pair<bool, std::string> ModEggnog::verify_files() {
  * @param SEQUENCES
  * @param out - <egg results of sequences that hit databases, results of no hits>
  */
-void ModEggnog::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
+void ModEggnog::parse() {
 
     print_debug("Beginning to parse eggnog results...");
 
@@ -130,8 +131,8 @@ void ModEggnog::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
         io::CSVReader<EGGNOG_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(path);
         while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                            best_og, cog_cat, eggnog_annot)) {
-            query_map_struct::iterator it = SEQUENCES.find(qseqid);
-            if (it != SEQUENCES.end()) {
+            query_map_struct::iterator it = (*pQUERY_DATA->get_pSequences()).find(qseqid);
+            if (it != (*pQUERY_DATA->get_pSequences()).end()) {
                 count_TOTAL_hits++;
                 it->second.set_eggnog_results(seed_ortho,seed_e,seed_score,predicted_gene,go_terms,
                                               kegg,tax_scope,ogs, EGGNOG_DATABASE);
@@ -199,7 +200,7 @@ void ModEggnog::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
     std::ofstream file_hits_prot(out_hit_prot, std::ios::out | std::ios::app);
 
     print_debug("Success! Computing overall statistics...");
-    for (auto &pair : SEQUENCES) {
+    for (auto &pair : *pQUERY_DATA->get_pSequences()) {
         if (eggnog_map.find(pair.first) == eggnog_map.end()) {
             // Unannotated sequence
             if (!pair.second.get_sequence_n().empty()) file_no_hits_nucl<<pair.second.get_sequence_n()<<std::endl;
@@ -319,7 +320,7 @@ void ModEggnog::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
     print_debug("Success!");
 }
 
-void ModEggnog::execute(std::map<std::string, QuerySequence> &) {
+void ModEggnog::execute() {
     print_debug("Running eggnog...");
 
     std::string                        annotation_base_flag;
@@ -341,6 +342,7 @@ void ModEggnog::execute(std::map<std::string, QuerySequence> &) {
             {"--cpu",std::to_string(_threads)},
             {"-m", "diamond"}
     };
+    if (!_blastp) eggnog_command_map["--translate"] = " ";
     if (file_exists(_inpath)) {
         for (auto &pair : eggnog_command_map)eggnog_command += pair.first + " " + pair.second + " ";
         print_debug("\nExecuting eggnog mapper against protein sequences that hit databases...\n"

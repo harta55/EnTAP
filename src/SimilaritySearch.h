@@ -36,6 +36,7 @@
 #include <boost/program_options/variables_map.hpp>
 #include "QuerySequence.h"
 #include "GraphingManager.h"
+#include "QueryData.h"
 
 //**************************************************************
 
@@ -50,10 +51,9 @@ public:
     //******************** Public Prototype Functions *********************
     std::vector<std::string> execute(std::string, bool);
     SimilaritySearch(std::vector<std::string>&, std::string, int, std::string,
-                     boost::program_options::variables_map &, GraphingManager *);
+                     boost::program_options::variables_map &, GraphingManager *, QueryData *);
     SimilaritySearch();
-    std::pair<std::string,std::string> parse_files(std::string,
-                                                   std::map<std::string, QuerySequence>&);
+    std::pair<std::string,std::string> parse_files(std::string);
     std::unordered_map<std::string, std::string> read_tax_map();
     //**************************************************************
 
@@ -134,44 +134,43 @@ private:
             &ENTAP_EXECUTE::HEADER_INFORM
     };
 
-    std::vector<std::string>         _database_paths;
-    std::vector<std::string>         _sim_search_paths;
-    std::string                      _diamond_exe;
-    std::string                      _outpath;
-    std::string                      _input_path;
-    std::string                      _sim_search_dir;
-    std::string                      _processed_path;
-    std::string                      _figure_path;
-    std::string                      _results_path;
-    std::string                      _input_lineage;
-    std::string                      _input_species;
-    std::string                      _blast_type;
-    int                              _threads;
-    bool                             _overwrite;
-    bool                             _blastp;
+    std::vector<std::string>        _database_paths;
+    std::vector<std::string>        _sim_search_paths;
+    std::string                     _diamond_exe;
+    std::string                     _outpath;
+    std::string                     _input_path;
+    std::string                     _sim_search_dir;
+    std::string                     _processed_path;
+    std::string                     _figure_path;
+    std::string                     _results_path;
+    std::string                     _input_lineage;
+    std::string                     _input_species;
+    std::string                     _blast_type;
+    int                             _threads;
+    bool                            _overwrite;
+    bool                            _blastp;
     float                           _e_val;
     float                           _qcoverage;
     float                           _tcoverage;
-    short                            _software_flag;
-    std::vector<std::string>         _contaminants;
-    GraphingManager                  *_pGraphingManager;
+    short                           _software_flag;
+    std::vector<std::string>        _contaminants;
+    GraphingManager                 *_pGraphingManager;
+    QueryData                       *_pQUERY_DATA;
     std::unordered_map<std::string,std::string> _file_to_database;
 
     std::vector<std::string> diamond();
     void diamond_blast(std::string, std::string, std::string,std::string&,int&, std::string&);
     std::vector<std::string> verify_diamond_files(std::string&, std::string);
-    std::pair<std::string,std::string> diamond_parse(std::vector<std::string>&,
-                                                     std::map<std::string, QuerySequence>&);
+    std::pair<std::string,std::string> diamond_parse(std::vector<std::string>&);
     std::pair<bool,std::string>  is_contaminant(std::string, std::unordered_map<std::string,
             std::string> &,std::vector<std::string>&);
     std::string get_species(std::string &);
     bool is_informative(std::string);
     std::pair<std::string,std::string> process_best_diamond_hit(std::list<std::map<std::string,
-            QuerySequence>>&,std::map<std::string, QuerySequence>&);
+            QuerySequence>>&);
     void print_header(std::string);
     std::string get_lineage(std::string, std::unordered_map<std::string, std::string>&);
     std::pair<std::string,std::string> calculate_best_stats (std::map<std::string, QuerySequence>&,
-                                 std::map<std::string, QuerySequence>&,
                                  std::stringstream &, std::string&,bool);
 };
 

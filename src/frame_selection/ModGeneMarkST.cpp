@@ -82,7 +82,7 @@ std::pair<bool, std::string> ModGeneMarkST::verify_files() {
  *
  * =====================================================================
  */
-std::string ModGeneMarkST::execute(std::map<std::string, QuerySequence> &SEQUENCES) {
+std::string ModGeneMarkST::execute() {
     // Outfiles: file/path.faa, file/path.fnn
     // assumes working directory as output right now
     std::string     lst_file;
@@ -143,7 +143,7 @@ std::string ModGeneMarkST::execute(std::map<std::string, QuerySequence> &SEQUENC
  * @param protein_path - path to .faa file
  * @param lst_path - path to .lst genemark file
  */
-void ModGeneMarkST::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
+void ModGeneMarkST::parse() {
     // generate maps, query->sequence
     print_debug("Beginning to calculate Genemark statistics...");
 
@@ -162,8 +162,9 @@ void ModGeneMarkST::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
     std::stringstream                       stat_output;
     std::map<std::string, std::ofstream*>   file_map;
     std::map<std::string, unsigned long>    count_map;
-    std::vector<unsigned long>              all_kept_lengths;
-    std::vector<unsigned long>              all_lost_lengths;
+    std::vector<unsigned short>             all_kept_lengths;
+    std::vector<unsigned short>             all_lost_lengths;
+    unsigned short                          length;
     float                                   avg_selected;
     float                                   avg_lost;
     std::pair<unsigned long, unsigned long> kept_n;
@@ -213,7 +214,7 @@ void ModGeneMarkST::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
                 {FRAME_SELECTION_THREE_FLAG,count_partial_3},
         };
 
-        for (auto& pair : SEQUENCES) {
+        for (auto& pair : *pQUERY_DATA->get_pSequences()) {
             std::map<std::string,frame_seq>::iterator p_it = protein_map.find(pair.first);
             if (!pair.second.is_is_expression_kept()) continue; // Skip seqs that were lost to expression
             if (p_it != protein_map.end()) {
@@ -224,7 +225,7 @@ void ModGeneMarkST::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
 
                 std::string sequence = p_it->second.sequence;
                 std::string frame_type = p_it->second.frame_type;
-                unsigned long length = pair.second.getSeq_length();  // Nucleotide sequence length
+                length = (unsigned short) pair.second.getSeq_length();  // Nucleotide sequence length
 
                 if (length < min_selected) {
                     min_selected = length;
@@ -249,7 +250,7 @@ void ModGeneMarkST::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
                 // Lost sequence
                 count_removed++;
                 *file_map[FRAME_SELECTION_LOST_FLAG] << pair.second.get_sequence_n() << std::endl;
-                unsigned long length = pair.second.getSeq_length();  // Nucleotide sequence length
+                length = (unsigned short) pair.second.getSeq_length();  // Nucleotide sequence length
 
                 if (length < min_removed) {
                     min_removed = length;
@@ -273,7 +274,7 @@ void ModGeneMarkST::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
         }
         // Calculate and print stats
         avg_selected = (float)total_kept_len / count_selected;
-        avg_lost = (float)total_removed_len / count_removed;
+        avg_lost     = (float)total_removed_len / count_removed;
         stat_output<<std::fixed<<std::setprecision(2);
         stat_output <<
                     ENTAP_STATS::SOFTWARE_BREAK             <<
@@ -297,7 +298,7 @@ void ModGeneMarkST::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
                     "Frame Selection: New Reference Transcriptome Statistics\n"<<
                     ENTAP_STATS::SOFTWARE_BREAK;
 
-        kept_n = entapExecute::calculate_N_vals(all_kept_lengths,total_kept_len);
+        kept_n = pQUERY_DATA->calculate_N_vals(all_kept_lengths,total_kept_len);
         stat_output <<
                     "\n\tTotal sequences: "      << count_selected <<
                     "\n\tTotal length of transcriptome(bp): "      << total_kept_len <<
@@ -309,7 +310,7 @@ void ModGeneMarkST::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
 
         if (count_removed > 0) {
             std::pair<unsigned long, unsigned long> removed_n =
-                    entapExecute::calculate_N_vals(all_lost_lengths,total_removed_len);
+                    pQUERY_DATA->calculate_N_vals(all_lost_lengths,total_removed_len);
             stat_output <<
                         "\nRemoved Sequences (no frame):"           <<
                         "\n\tTotal sequences: "                     << count_removed    <<
@@ -342,6 +343,15 @@ void ModGeneMarkST::parse(std::map<std::string, QuerySequence> &SEQUENCES) {
         graphingStruct.graph_type     = GRAPH_COMP_BOX_FLAG;
         pGraphingManager->graph(graphingStruct);
         //---------------------------------------------------//
+
+        FrameStats final_stats;
+        final_stats.removed   = count_removed;
+        final_stats.selected  = count_selected;
+        final_stats.partial_3 = count_partial_3;
+        final_stats.partial_5 = count_partial_5;
+        final_stats.internal  = count_internal;
+        final_stats.complete  = count_complete;
+        pQUERY_DATA->set_frame_stats(final_stats);
 
     } catch (ExceptionHandler &e) {throw e;}
     print_debug("Success!");

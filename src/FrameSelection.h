@@ -36,6 +36,7 @@
 #include "QuerySequence.h"
 #include "GraphingManager.h"
 #include "frame_selection/AbstractFrame.h"
+#include "QueryData.h"
 //**************************************************************
 
 
@@ -43,8 +44,9 @@ class FrameSelection {
 
 
 public:
-    std::string execute(std::string,std::map<std::string,QuerySequence>&);
-    FrameSelection(std::string&, std::string&, boost::program_options::variables_map &, GraphingManager*);
+    std::string execute(std::string);
+    FrameSelection(std::string&, std::string&, boost::program_options::variables_map &, GraphingManager*,
+                    QueryData*);
 
 
 private:
@@ -67,6 +69,7 @@ private:
     short            _software_flag;
     GraphingManager  *_graphingManager;
     FrameSoftware    SOFTWARE;
+    QueryData        *_QUERY_DATA;
 
     std::unique_ptr<AbstractFrame> spawn_object();
 };

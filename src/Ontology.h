@@ -40,6 +40,7 @@
 
 class QuerySequence;
 class AbstractOntology;
+class QueryData;
 
 class Ontology {
     typedef std::map<std::string, QuerySequence> query_map_struct;
@@ -47,8 +48,9 @@ class Ontology {
 
 public:
 
-    void execute(query_map_struct&,std::string,std::string);
-    Ontology(int,std::string,std::string, boost::program_options::variables_map &,GraphingManager*);
+    void execute(std::string,std::string);
+    Ontology(int,std::string,std::string, boost::program_options::variables_map &,GraphingManager*,
+             QueryData*, bool);
 
 private:
 
@@ -66,6 +68,7 @@ private:
     int                             _threads;
     short                           _software_flag;
     bool                            _is_overwrite;
+    bool                            _blastp;
     std::string                     _ontology_exe;
     std::string                     _outpath;
     std::string                     _new_input;
@@ -76,7 +79,8 @@ private:
     std::string                     _eggnog_db_path;
     std::vector<const std::string*> _HEADERS;
     std::vector<std::string>        _interpro_databases;
-    GraphingManager  *_graphingManager;
+    GraphingManager                 *_graphingManager;
+    QueryData                       *_QUERY_DATA;
 
     void print_eggnog(query_map_struct&);
     void print_interpro(query_map_struct&);

@@ -71,7 +71,7 @@ The |config_file| file mentioned above has the following defaults:
     * entap_graphing_script=/EnTAP/src/entap_graphing.py
 
 
-These can be changed to whichever path you would prefer. If something is globally installed, just put a space " " after the '='. EnTAP will recognize these paths first and they will override defaults. 
+These can be changed to whichever path you would prefer. If something is globally installed, just put how you'd normally run the software after the '=', such as 'diamond' for DIAMOND. EnTAP will recognize these paths first and they will override defaults. 
 
 
 This configuration file will be automatically detected if it is in the same directory as the EnTAP .exe, otherwise the path to it can be specified through the |flag_path| flag. 
@@ -148,6 +148,8 @@ Configuration can be ran without formatting a database as follows:
 
 
 .. note:: This is the only stage that requires connection to the Internet.
+
+If you experience any trouble in downloading the EnTAP databases (taxonomy and gene ontology), you can use the databases contained in the repo download, databases.tar.gz. Just be sure to set the configuration file to these database paths (as these are the binaries)!
 
 Flags:
 ^^^^^^^^^^^^^^^^^^^^^

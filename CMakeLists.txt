@@ -33,7 +33,8 @@ set(SOURCE_FILES libs
         src/ontology/AbstractOntology.h
         src/ontology/ModEggnog.cpp src/ontology/ModEggnog.h
         src/ontology/AbstractOntology.cpp
-        src/ontology/ModInterpro.cpp src/ontology/ModInterpro.h)
+        src/ontology/ModInterpro.cpp src/ontology/ModInterpro.h
+        src/QueryData.cpp src/QueryData.h)
 
 add_executable(EnTAP ${SOURCE_FILES})
 

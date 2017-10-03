@@ -261,6 +261,7 @@ namespace ENTAP_ERR {
     const unsigned short E_RUN_RSEM_VALIDATE           = 110;
     const unsigned short E_RUN_RSEM_CONVERT            = 111;
     const unsigned short E_RUN_RSEM_EXPRESSION         = 112;
+    const unsigned short E_RUN_RSEM_EXPRESSION_PARSE   = 113;
     const unsigned short E_RUN_FILTER                  = 120;
     const unsigned short E_RUN_SIM_SEARCH_FILTER       = 140;
     const unsigned short E_RUN_SIM_SEARCH_RUN          = 141;

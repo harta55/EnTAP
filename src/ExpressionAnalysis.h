@@ -60,6 +60,7 @@ private:
     std::string         _proc_dir;
     std::string         _figure_dir;
     bool                _ispaired;
+    bool                _trim;
     bool                _overwrite;
     short               _software_flag;
     int                 _threads;

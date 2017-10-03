@@ -52,6 +52,7 @@ public:
     void flag_transcripts(ExecuteStates);
     std::pair<unsigned short, unsigned short> calculate_N_vals(std::vector<unsigned short>&,
                                                                unsigned long long);
+    std::string trim_sequence_header(std::string&, std::string);
     void final_statistics(std::string&, short);
     bool is_protein() const;
     void set_frame_stats(const FrameStats &_frame_stats);
@@ -81,6 +82,7 @@ private:
 
 
     QUERY_MAP_T *_pSequences;
+    bool         _trim;
     bool         _protein;
     bool         _EXPRESSION_SUCCESS;
     bool         _FRAME_SELECTION_SUCCESS;

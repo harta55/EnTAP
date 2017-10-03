@@ -43,14 +43,15 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &ou
     , boost::program_options::variables_map& user_flags, GraphingManager *graph,
       QueryData *queryData) {
     print_debug("Spawn object - ExpressionAnalysis");
-    _query_data = queryData;
-    _inpath = input;
-    _threads = t;
-    _exepath = RSEM_EXE_DIR;
-    _outpath = out;
     _software_flag = 0;
-    _overwrite = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
-    _ispaired = (bool) user_flags.count("paired-end");
+    _query_data    = queryData;
+    _inpath        = input;
+    _threads       = t;
+    _exepath       = RSEM_EXE_DIR;
+    _outpath       = out;
+    _trim          = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_TRIM);
+    _overwrite     = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
+    _ispaired      = (bool) user_flags.count("paired-end");
     if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
         _alignpath = user_flags[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>();
     }
@@ -88,12 +89,12 @@ std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
         case RSEM:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
                     _exepath, _outpath, _inpath, _proc_dir, _figure_dir,
-                    _rsem_dir, _alignpath, _graphingManager, _query_data
+                    _rsem_dir, _alignpath, _graphingManager, _query_data,_trim
             ));
         default:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
                     _exepath, _outpath, _inpath, _proc_dir, _figure_dir,
-                    _rsem_dir, _alignpath, _graphingManager, _query_data
+                    _rsem_dir, _alignpath, _graphingManager, _query_data,_trim
             ));
     }
 }

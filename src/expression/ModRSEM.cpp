@@ -180,9 +180,9 @@ std::string ModRSEM::filter() {
     std::string         fig_png_box_path;
     std::stringstream   out_msg;
     GraphingStruct      graphingStruct;
-    QUERY_MAP_T         MAP;
+    QUERY_MAP_T         *MAP;
 
-    MAP = *pQUERY_DATA->get_pSequences();
+    MAP = pQUERY_DATA->get_pSequences();
 
     if (!file_exists(_rsem_out)) {
         throw ExceptionHandler("File does not exist at: " + _rsem_out, ENTAP_ERR::E_RUN_RSEM_EXPRESSION);
@@ -212,10 +212,16 @@ std::string ModRSEM::filter() {
     in.next_line();
     while (in.read_row(geneid, transid, length, e_leng, e_count, tpm, fpkm_val)) {
         count_total++;
+        pQUERY_DATA->trim_sequence_header(geneid,geneid);
+        QUERY_MAP_T::iterator it = MAP->find(geneid);
+        if (it == MAP->end()) {
+            throw ExceptionHandler("Unable to find sequence: " + geneid,
+                                   ENTAP_ERR::E_RUN_RSEM_EXPRESSION_PARSE);
+        }
+        QuerySequence *querySequence = &it->second;
         if (fpkm_val > _fpkm) {
             // Kept sequence
-            out_file << MAP[geneid].get_sequence() << std::endl;
-            QuerySequence *querySequence = &MAP[geneid];
+            out_file << querySequence->get_sequence() << std::endl;
             querySequence->set_is_expression_kept(true);
             querySequence->set_fpkm(fpkm_val);
             file_fig_box << GRAPH_KEPT_FLAG << '\t' <<
@@ -223,9 +229,10 @@ std::string ModRSEM::filter() {
             count_kept++;
         } else {
             // Removed sequence
-            removed_file << MAP[geneid].get_sequence() << std::endl;
+            removed_file << querySequence->get_sequence() << std::endl;
             file_fig_box << GRAPH_REJECTED_FLAG << '\t'
-                         << std::to_string(MAP[geneid].getSeq_length())<<std::endl;
+                         << std::to_string(querySequence->getSeq_length())
+                         << std::endl;
             count_removed++;
         }
     }

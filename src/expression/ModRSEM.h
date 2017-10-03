@@ -38,8 +38,8 @@ class ModRSEM : public AbstractExpression{
 public:
     ModRSEM(std::string &exe, std::string &out, std::string &in, std::string &proc,
             std::string &fig, std::string &exp, std::string &align,GraphingManager *graphing,
-            QueryData *query) :
-    AbstractExpression(exe, out, in, proc, fig, exp, align,graphing, query){}
+            QueryData *query, bool trim) :
+    AbstractExpression(exe, out, in, proc, fig, exp, align,graphing, query, trim){}
 
     virtual std::pair<bool, std::string> verify_files() override ;
     virtual void execute() override ;

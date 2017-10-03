@@ -92,6 +92,7 @@ namespace entapExecute {
         std::vector<std::string>                other_databases; // -d Command databases
         std::pair<std::string,std::string>      diamond_pair;    // best_hits.fa,no_hits.fa
         std::string                             no_database_hits;// No DIAMOND
+        std::string                             original_input;  // ALWAYS use for Expression
         std::queue<char>                        state_queue;
         bool                                    trim_flag;       // User trim flag selected
         bool                                    state_flag;
@@ -107,6 +108,7 @@ namespace entapExecute {
         _input_path  = user_input[ENTAP_CONFIG::INPUT_FLAG_TRANSCRIPTOME].as<std::string>();
         _threads     = get_supported_threads(user_input);
         _blastp      = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN);
+        original_input = _input_path;
         trim_flag    = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_TRIM);
         is_complete  = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_COMPLETE);
         diamond_pair = std::make_pair(_input_path,"");
@@ -165,7 +167,7 @@ namespace entapExecute {
                     case RSEM: {
                         print_debug("STATE - EXPRESSION");
                         std::unique_ptr<ExpressionAnalysis> expression(new ExpressionAnalysis(
-                                _input_path, _threads, _outpath, user_input, &graphingManager, &QUERY_DATA
+                                original_input, _threads, _outpath, user_input, &graphingManager, &QUERY_DATA
                         ));
                         if (!user_input.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
                             print_debug("No alignment file specified, skipping expression analysis");

@@ -37,16 +37,17 @@ class AbstractExpression {
 public:
     AbstractExpression(std::string &exe, std::string &out, std::string &in, std::string &proc,
                   std::string &fig, std::string &exp, std::string &align,GraphingManager *graphing,
-                  QueryData *query){
+                  QueryData *query, bool trim){
         _exe_path = exe;
-        _outpath = out;
-        _inpath = in;
+        _outpath  = out;
+        _inpath   = in;
         _processed_path = proc;
         _figure_path = fig;
         _expression_outpath = exp;
         pGraphingManager = graphing;
         _alignpath = align;
         pQUERY_DATA = query;
+        _trim = trim;
     }
 
     virtual ~AbstractExpression() = default;
@@ -64,6 +65,7 @@ protected:
     std::string _processed_path;
     std::string _figure_path;
     std::string _expression_outpath;
+    bool        _trim;
     GraphingManager *pGraphingManager;
     QueryData *pQUERY_DATA;
 };

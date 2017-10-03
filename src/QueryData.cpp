@@ -73,6 +73,8 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
     std::vector<unsigned short>              sequence_lengths;
     std::pair<unsigned short, unsigned short>n_vals;
 
+    _trim = trim;
+
     if (!file_exists(input_file)) {
         throw ExceptionHandler("Input file not found at: " + input_file,ENTAP_ERR::E_INPUT_PARSE);
     }
@@ -93,6 +95,10 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
         if (line.empty() && !in_file.eof()) continue;
         if (line.find(">") == 0 || in_file.eof()) {
             if (!seq_id.empty()) {
+                if (in_file.eof()) {
+                    out_file << line << std::endl;
+                    sequence += line + "\n";
+                }
                 QuerySequence query_seq = QuerySequence(_protein,sequence);
                 if (is_complete) query_seq.setFrame(COMPLETE_FLAG);
                 query_seq.setQseqid(seq_id);
@@ -109,16 +115,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
                 sequence_lengths.push_back(len);
             }
             if (in_file.eof()) break;
-            if (trim) {
-                if (line.find(" ") != std::string::npos) {
-                    seq_id = line.substr(line.find(">")+1, line.find(" ")-1);
-                } else seq_id = line.substr(line.find(">")+1);
-                sequence = ">" + seq_id + "\n";
-            } else {
-                line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
-                seq_id = line.substr(line.find(">")+1);
-                sequence = line + "\n";
-            }
+            sequence = trim_sequence_header(seq_id, line);
             out_file << sequence;
         } else {
             out_file << line << std::endl;
@@ -392,6 +389,26 @@ void QueryData::final_statistics(std::string &outpath, short ontology_flag) {
 
     out_msg = ss.str();
     print_statistics(out_msg);
+}
+
+std::string QueryData::trim_sequence_header(std::string &header, std::string line) {
+    std::string   sequence;
+    signed char   pos;
+
+    if (_trim) {
+        if (line.find(">") != std::string::npos) {
+            pos = (signed char) line.find(">");
+        } else pos = -1;
+        if (line.find(" ") != std::string::npos) {
+            header = line.substr(pos+1, line.find(" ")-1);
+        } else header = line.substr(pos+1);
+        sequence = ">" + header + "\n";
+    } else {
+        line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
+        header = line.substr(pos+1);
+        sequence = line + "\n";
+    }
+    return sequence;
 }
 
 void QueryData::set_frame_stats(const FrameStats &_frame_stats) {

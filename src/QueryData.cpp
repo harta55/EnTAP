@@ -393,11 +393,12 @@ void QueryData::final_statistics(std::string &outpath, short ontology_flag) {
 
 std::string QueryData::trim_sequence_header(std::string &header, std::string line) {
     std::string   sequence;
-    signed char   pos;
-    if (line.find(">") != std::string::npos) {
-        pos = (signed char) line.find(">");
-    } else pos = -1;
+    signed short  pos;
+
     if (_trim) {
+        if (line.find(">") != std::string::npos) {
+            pos = (signed short) line.find(">");
+        } else pos = -1;
         if (line.find(" ") != std::string::npos) {
             header = line.substr(pos+1, line.find(" ")-1);
         } else header = line.substr(pos+1);

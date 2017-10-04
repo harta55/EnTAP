@@ -74,6 +74,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
     std::pair<unsigned short, unsigned short>n_vals;
 
     _trim = trim;
+    _pSequences = new QUERY_MAP_T;
 
     if (!file_exists(input_file)) {
         throw ExceptionHandler("Input file not found at: " + input_file,ENTAP_ERR::E_INPUT_PARSE);
@@ -102,7 +103,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
                 QuerySequence query_seq = QuerySequence(_protein,sequence);
                 if (is_complete) query_seq.setFrame(COMPLETE_FLAG);
                 query_seq.setQseqid(seq_id);
-                (*_pSequences).emplace(seq_id, query_seq);
+                _pSequences->emplace(seq_id, query_seq);
                 count_seqs++;
                 len = (unsigned short) query_seq.getSeq_length();
                 total_len += len;

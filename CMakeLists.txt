@@ -39,8 +39,8 @@ set(SOURCE_FILES libs
 add_executable(EnTAP ${SOURCE_FILES})
 
 # Change these paths to the specific boost directory if you're having trouble linking
-set(Boost_INCLUDE_DIR /home/harta55/ClionProjects/Libraries/boost_1_62_0)
-set(Boost_LIBRARY_DIR /home/harta55/ClionProjects/Libraries/boost_1_62_0/stage/lib)
+#set(Boost_INCLUDE_DIR /path/to/boost_1_63_0)
+#set(Boost_LIBRARY_DIR /path/to/boost_1_63_0/stage/lib)
 
 include_directories(libs/pstream)
 include_directories(libs/fast-cpp-csv-parser) # May need to compile with thread control

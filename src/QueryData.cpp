@@ -395,10 +395,10 @@ std::string QueryData::trim_sequence_header(std::string &header, std::string lin
     std::string   sequence;
     signed short  pos;
 
-    if (line.find(">") != std::string::npos) {
-        pos = (signed short) line.find(">");
-    } else pos = -1;
     if (_trim) {
+        if (line.find(">") != std::string::npos) {
+            pos = (signed short) line.find(">");
+        } else pos = -1;
         if (line.find(" ") != std::string::npos) {
             header = line.substr(pos+1, line.find(" ")-1);
         } else header = line.substr(pos+1);

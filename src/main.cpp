@@ -133,8 +133,8 @@ void init_entap(boostPO::variables_map& user_input) {
     std::string config_path;
 
     boost::filesystem::path working_dir(boost::filesystem::current_path());
-    _working_dir = working_dir.string();
-    _outpath     = PATHS(_working_dir, user_input["tag"].as<std::string>());
+    _working_dir    = working_dir.string();
+    _outpath        = PATHS(_working_dir, user_input["tag"].as<std::string>());
     boostFS::create_directories(_outpath);
     DEBUG_FILE_PATH = PATHS(_outpath, ENTAP_CONFIG::DEBUG_FILENAME);
     LOG_FILE_PATH   = PATHS(_outpath, ENTAP_CONFIG::LOG_FILENAME);

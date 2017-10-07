@@ -241,6 +241,7 @@ void QuerySequence::set_eggnog_results(std::string seed_o, std::string seed_o_ev
     this->_eggnog_results.seed_score = seed_score;
     this->_eggnog_results.predicted_gene = predicted;
     this->_eggnog_results.ogs = ogs;
+    this->_is_eggnog_hit = true;
 
     // Lookup/Assign Tax Scope
     if (!annotation_tax.empty()) {
@@ -339,35 +340,9 @@ void QuerySequence::init_sequence() {
     _e_val = 0;
     _coverage = 0;
 
-    _sim_search_results.length      = "";
-    _sim_search_results.mismatch    = "";
-    _sim_search_results.gapopen     = "";
-    _sim_search_results.qstart      = "";
-    _sim_search_results.qend        = "";
-    _sim_search_results.sstart      = "";
-    _sim_search_results.send        = "";
-    _sim_search_results.pident      = "";
-    _sim_search_results.bit_score   = "";
-    _sim_search_results.e_val       = "";
-    _sim_search_results.coverage    = "";
-    _sim_search_results.database_path="";
-    _sim_search_results.qseqid = "";
-    _sim_search_results.sseqid = "";
-    _sim_search_results.stitle = "";
-    _sim_search_results.species = "";
-    _sim_search_results.yes_no_contam = "";
-
-    _eggnog_results.seed_ortholog="";
-    _eggnog_results.seed_evalue="";
-    _eggnog_results.seed_score="";
-    _eggnog_results.predicted_gene="";
-    _eggnog_results.tax_scope="";
-    _eggnog_results.tax_scope_readable="";
-    _eggnog_results.ogs="";
-    _eggnog_results.og_key="";
-    _eggnog_results.sql_kegg="";
-    _eggnog_results.description="";
-    _eggnog_results.protein_domains="";
+    _sim_search_results = {};
+    _eggnog_results     = {};
+    _interpro_results   = {};
 
     _frame = "";
     _sequence_p = "";
@@ -377,12 +352,9 @@ void QuerySequence::init_sequence() {
     _is_one_kegg = false;
     _is_database_hit = false;
     _is_expression_kept = false;
+    _is_eggnog_hit  = false;
+    _is_interpro_hit = false;
 }
-
-void QuerySequence::set_ontology_results(std::map<std::string, std::string> map) {
-//    this->_ontology_results = map;
-}
-
 
 void QuerySequence::set_lineage(const std::string &_lineage) {
     QuerySequence::_sim_search_results.lineage = _lineage;
@@ -474,27 +446,12 @@ std::string QuerySequence::print_tsv(const std::vector<const std::string*>& head
     return ss.str();
 }
 
-std::string QuerySequence::print_tsv(short software, std::vector<const std::string*>& headers,
-                                     short lvl) {
+std::string QuerySequence::print_tsv(std::vector<const std::string*>& headers, short lvl) {
     init_header();
     std::stringstream stream;
     go_struct go_terms;
 
-    switch (software) {
-        case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-//            stream << *this << '\t';
-            go_terms = _eggnog_results.parsed_go;
-            break;
-        case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
-//            stream << *this <<'\t';
-//            for (const std::string &val : headers) {
-//                stream << _ontology_results[val] << '\t'; TODO interpro udpate
-//            }
-            // Set go terms
-            break;
-        default:
-            break;
-    }
+    go_terms = _eggnog_results.parsed_go;
 
     for (const std::string *header : headers) {
         if (*header == ENTAP_EXECUTE::HEADER_EGG_GO_BIO) {
@@ -538,34 +495,39 @@ void QuerySequence::set_fpkm(float _fpkm) {
 
 
 void QuerySequence::init_header() {
-    OUTPUT_MAP ={
-            {&ENTAP_EXECUTE::HEADER_QUERY     , &_sim_search_results.qseqid},
-            {&ENTAP_EXECUTE::HEADER_SUBJECT   , &_sim_search_results.sseqid},
-            {&ENTAP_EXECUTE::HEADER_PERCENT   , &_sim_search_results.pident},
-            {&ENTAP_EXECUTE::HEADER_ALIGN_LEN , &_sim_search_results.length},
-            {&ENTAP_EXECUTE::HEADER_MISMATCH  , &_sim_search_results.mismatch},
-            {&ENTAP_EXECUTE::HEADER_GAP_OPEN  , &_sim_search_results.gapopen},
-            {&ENTAP_EXECUTE::HEADER_QUERY_E   , &_sim_search_results.qend},
-            {&ENTAP_EXECUTE::HEADER_QUERY_S   , &_sim_search_results.qstart},
-            {&ENTAP_EXECUTE::HEADER_SUBJ_S    , &_sim_search_results.sstart},
-            {&ENTAP_EXECUTE::HEADER_SUBJ_E    , &_sim_search_results.send},
-            {&ENTAP_EXECUTE::HEADER_E_VAL     , &_sim_search_results.e_val},
-            {&ENTAP_EXECUTE::HEADER_COVERAGE  , &_sim_search_results.coverage},
-            {&ENTAP_EXECUTE::HEADER_TITLE     , &_sim_search_results.stitle},
-            {&ENTAP_EXECUTE::HEADER_SPECIES   , &_sim_search_results.species},
-            {&ENTAP_EXECUTE::HEADER_DATABASE  , &_sim_search_results.database_path},
-            {&ENTAP_EXECUTE::HEADER_FRAME     , &_frame},
-            {&ENTAP_EXECUTE::HEADER_CONTAM    , &_sim_search_results.yes_no_contam},
-            {&ENTAP_EXECUTE::HEADER_INFORM    , &_sim_search_results.yes_no_inform},
-            {&ENTAP_EXECUTE::HEADER_SEED_ORTH , &_eggnog_results.seed_ortholog},
-            {&ENTAP_EXECUTE::HEADER_SEED_EVAL , &_eggnog_results.seed_evalue},
-            {&ENTAP_EXECUTE::HEADER_SEED_SCORE, &_eggnog_results.seed_score},
-            {&ENTAP_EXECUTE::HEADER_PRED_GENE , &_eggnog_results.predicted_gene},
-            {&ENTAP_EXECUTE::HEADER_TAX_SCOPE , &_eggnog_results.tax_scope_readable},
-            {&ENTAP_EXECUTE::HEADER_EGG_OGS   , &_eggnog_results.ogs},
-            {&ENTAP_EXECUTE::HEADER_EGG_DESC  , &_eggnog_results.description},
-            {&ENTAP_EXECUTE::HEADER_EGG_KEGG  , &_eggnog_results.sql_kegg} ,
-            {&ENTAP_EXECUTE::HEADER_EGG_PROTEIN,&_eggnog_results.protein_domains}
+    OUTPUT_MAP = {
+            {&ENTAP_EXECUTE::HEADER_QUERY           , &_sim_search_results.qseqid},
+            {&ENTAP_EXECUTE::HEADER_SUBJECT         , &_sim_search_results.sseqid},
+            {&ENTAP_EXECUTE::HEADER_PERCENT         , &_sim_search_results.pident},
+            {&ENTAP_EXECUTE::HEADER_ALIGN_LEN       , &_sim_search_results.length},
+            {&ENTAP_EXECUTE::HEADER_MISMATCH        , &_sim_search_results.mismatch},
+            {&ENTAP_EXECUTE::HEADER_GAP_OPEN        , &_sim_search_results.gapopen},
+            {&ENTAP_EXECUTE::HEADER_QUERY_E         , &_sim_search_results.qend},
+            {&ENTAP_EXECUTE::HEADER_QUERY_S         , &_sim_search_results.qstart},
+            {&ENTAP_EXECUTE::HEADER_SUBJ_S          , &_sim_search_results.sstart},
+            {&ENTAP_EXECUTE::HEADER_SUBJ_E          , &_sim_search_results.send},
+            {&ENTAP_EXECUTE::HEADER_E_VAL           , &_sim_search_results.e_val},
+            {&ENTAP_EXECUTE::HEADER_COVERAGE        , &_sim_search_results.coverage},
+            {&ENTAP_EXECUTE::HEADER_TITLE           , &_sim_search_results.stitle},
+            {&ENTAP_EXECUTE::HEADER_SPECIES         , &_sim_search_results.species},
+            {&ENTAP_EXECUTE::HEADER_DATABASE        , &_sim_search_results.database_path},
+            {&ENTAP_EXECUTE::HEADER_FRAME           , &_frame},
+            {&ENTAP_EXECUTE::HEADER_CONTAM          , &_sim_search_results.yes_no_contam},
+            {&ENTAP_EXECUTE::HEADER_INFORM          , &_sim_search_results.yes_no_inform},
+            {&ENTAP_EXECUTE::HEADER_SEED_ORTH       , &_eggnog_results.seed_ortholog},
+            {&ENTAP_EXECUTE::HEADER_SEED_EVAL       , &_eggnog_results.seed_evalue},
+            {&ENTAP_EXECUTE::HEADER_SEED_SCORE      , &_eggnog_results.seed_score},
+            {&ENTAP_EXECUTE::HEADER_PRED_GENE       , &_eggnog_results.predicted_gene},
+            {&ENTAP_EXECUTE::HEADER_TAX_SCOPE       , &_eggnog_results.tax_scope_readable},
+            {&ENTAP_EXECUTE::HEADER_EGG_OGS         , &_eggnog_results.ogs},
+            {&ENTAP_EXECUTE::HEADER_EGG_DESC        , &_eggnog_results.description},
+            {&ENTAP_EXECUTE::HEADER_EGG_KEGG        , &_eggnog_results.sql_kegg} ,
+            {&ENTAP_EXECUTE::HEADER_EGG_PROTEIN     , &_eggnog_results.protein_domains},
+            {&ENTAP_EXECUTE::HEADER_INTER_EVAL      , &_interpro_results.e_value},
+            {&ENTAP_EXECUTE::HEADER_INTER_INTERPRO  , &_interpro_results.interpro_desc_id},
+            {&ENTAP_EXECUTE::HEADER_INTER_DATA_TERM , &_interpro_results.database_desc_id},
+            {&ENTAP_EXECUTE::HEADER_INTER_DATA_TYPE , &_interpro_results.database_type},
+            {&ENTAP_EXECUTE::HEADER_INTER_PATHWAY   , &_interpro_results.pathways}
     };
 }
 
@@ -614,4 +576,15 @@ std::string QuerySequence::format_eggnog(std::string& input) {
         }
     }
     return output;
+}
+
+void QuerySequence::set_interpro_results(std::string& eval, std::string& database_info, std::string& data,
+                                         std::string& interpro_info, std::string& pathway,
+                                         QuerySequence::go_struct& go_terms) {
+    this->_is_interpro_hit                   = true;
+    this->_interpro_results.database_desc_id = database_info;
+    this->_interpro_results.database_type    = data;
+    this->_interpro_results.parsed_go        = go_terms;
+    this->_interpro_results.interpro_desc_id = interpro_info;
+    this->_interpro_results.pathways         = pathway;
 }

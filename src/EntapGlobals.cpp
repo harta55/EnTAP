@@ -53,6 +53,8 @@ namespace ENTAP_EXECUTE {
 
 
     //------------------------Headers-------------------------//
+
+    // Similarity Search
     const std::string HEADER_QUERY     = "Query Seq";
     const std::string HEADER_SUBJECT   = "Subject Seq";
     const std::string HEADER_PERCENT   = "Percent Identical";
@@ -72,6 +74,7 @@ namespace ENTAP_EXECUTE {
     const std::string HEADER_CONTAM    = "Contaminant";
     const std::string HEADER_INFORM    = "Informative";
 
+    // EggNOG
     const std::string HEADER_SEED_ORTH = "Seed Ortholog";
     const std::string HEADER_SEED_EVAL = "Seed E-Value";
     const std::string HEADER_SEED_SCORE= "Seed Score";
@@ -85,11 +88,21 @@ namespace ENTAP_EXECUTE {
     const std::string HEADER_EGG_DESC  = "Eggnog Description";
     const std::string HEADER_EGG_LEVEL = "Full Tax Scope";
     const std::string HEADER_EGG_PROTEIN = "Protein Domains";
+
+    // InterProScan
+    const std::string HEADER_INTER_GO_BIO   = "IPScan GO Biological";
+    const std::string HEADER_INTER_GO_CELL  = "IPScan GO Cellular";
+    const std::string HEADER_INTER_GO_MOLE  = "IPScan GO Molecular";
+    const std::string HEADER_INTER_PATHWAY  = "Pathways";
+    const std::string HEADER_INTER_INTERPRO = "InterPro";
+    const std::string HEADER_INTER_DATA_TYPE= "Protein Database";
+    const std::string HEADER_INTER_DATA_TERM= "Protein Description";
+    const std::string HEADER_INTER_EVAL     = "E Value";
 }
 
 namespace ENTAP_CONFIG {
 
-    const std::string ENTAP_VERSION  = "debug_0.7.4.5";
+    const std::string ENTAP_VERSION  = "debug_0.7.4.6";
     const std::string DEBUG_FILENAME = "debug.txt";
     const std::string LOG_FILENAME   = "log_file.txt";
 
@@ -121,6 +134,7 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_GRAPH         = "graph";
     const std::string INPUT_FLAG_TRIM          = "trim";
     const std::string INPUT_FLAG_STATE         = "state";
+    const std::string INPUT_FLAG_PAIRED_END    = "paired-end";
 
     const std::string INPUT_UNIPROT_SWISS      = "swiss";
     const std::string INPUT_UNIPROT_UR100      = "ur100";

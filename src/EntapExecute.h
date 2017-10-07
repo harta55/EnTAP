@@ -57,6 +57,7 @@ namespace entapExecute {
     std::string filter_transcriptome(std::string &);
     void verify_state(std::queue<char> &, bool &);
     bool valid_state(enum ExecuteStates);
+    void exit_error(ExecuteStates);
     //**************************************************************
 
 

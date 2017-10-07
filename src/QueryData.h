@@ -48,12 +48,13 @@ class QueryData {
 public:
 
     QueryData(std::string&, std::string&, bool&, bool&);
-    QUERY_MAP_T *get_pSequences() const;
+
+    QUERY_MAP_T* get_sequences_ptr();
+
     void flag_transcripts(ExecuteStates);
-    std::pair<unsigned short, unsigned short> calculate_N_vals(std::vector<unsigned short>&,
-                                                               unsigned long long);
+    std::pair<uint16, uint16> calculate_N_vals(std::vector<uint16>&,uint64);
     std::string trim_sequence_header(std::string&, std::string);
-    void final_statistics(std::string&, short);
+    void final_statistics(std::string&, std::vector<uint8>&);
     bool is_protein() const;
     void set_frame_stats(const FrameStats &_frame_stats);
     void set_EXPRESSION_SUCCESS(bool _EXPRESSION_SUCCESS);
@@ -64,12 +65,12 @@ public:
 private:
     void set_input_type(std::string&);
 
-    const unsigned char LINE_COUNT   = 20;
-    const unsigned char NUCLEO_DEV   = 0;
+    const uint8         LINE_COUNT   = 20;
+    const uint8         NUCLEO_DEV   = 0;
     const std::string   NUCLEO_FLAG  = "Nucleotide";
     const std::string   PROTEIN_FLAG = "Protein";
     const std::string   COMPLETE_FLAG= "Complete";
-    const std::map<char,unsigned char> NUCLEO_MAP{
+    const std::map<char,uint8> NUCLEO_MAP{
             {'A', 1},
             {'G', 1},
             {'C', 1},
@@ -80,8 +81,7 @@ private:
     const std::string OUT_ANNOTATED_NUCL   = "final_annotated.fnn";
     const std::string OUT_ANNOTATED_PROT   = "final_annotated.faa";
 
-
-    QUERY_MAP_T *_pSequences;
+    QUERY_MAP_T  _SEQUENCES;
     bool         _trim;
     bool         _protein;
     bool         _EXPRESSION_SUCCESS;

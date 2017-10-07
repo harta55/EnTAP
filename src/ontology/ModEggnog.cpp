@@ -38,10 +38,10 @@ std::pair<bool, std::string> ModEggnog::verify_files() {
     std::string                        annotation_no_flag;
     bool                               verified;
 
-    annotation_base_flag = (boostFS::path(_ontology_dir) / boostFS::path("annotation_results")).string();
-    annotation_no_flag   = (boostFS::path(_ontology_dir) / boostFS::path("annotation_results_no_hits")).string();
-    _out_hits = annotation_base_flag  +".emapper.annotations";
-    _out_no_hits = annotation_no_flag +".emapper.annotations";
+    annotation_base_flag = PATHS(_egg_out_dir, "annotation_results");
+    annotation_no_flag   = PATHS(_egg_out_dir, "annotation_results_no_hits");
+    _out_hits            = annotation_base_flag  +".emapper.annotations";
+    _out_no_hits         = annotation_no_flag +".emapper.annotations";
 
     verified = false;
     print_debug("Overwrite was unselected, verifying output files...");
@@ -86,6 +86,8 @@ void ModEggnog::parse() {
     std::string                              fig_txt_bar_ortho;
     std::string                              fig_png_bar_ortho;
     std::string                              tax_scope_readable;
+    std::string                              fig_txt_go_bar;
+    std::string                              fig_png_go_bar;
     std::map<std::string, struct_go_term>    GO_DATABASE;
     std::map<std::string, int>               eggnog_map;
     unsigned int                             count_total_go_hits=0;
@@ -109,9 +111,9 @@ void ModEggnog::parse() {
     GraphingStruct                           graphingStruct;
 
     ss<<std::fixed<<std::setprecision(2);
-    boostFS::remove_all(_processed_path);
-    boostFS::create_directories(_processed_path);
-    boostFS::create_directories(_figure_path);
+    boostFS::remove_all(_proc_dir);
+    boostFS::create_directories(_proc_dir);
+    boostFS::create_directories(_figure_dir);
     try {
         GO_DATABASE = read_go_map();
     } catch (ExceptionHandler const &e) {throw e;}
@@ -131,8 +133,8 @@ void ModEggnog::parse() {
         io::CSVReader<EGGNOG_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(path);
         while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                            best_og, cog_cat, eggnog_annot)) {
-            query_map_struct::iterator it = (*pQUERY_DATA->get_pSequences()).find(qseqid);
-            if (it != (*pQUERY_DATA->get_pSequences()).end()) {
+            query_map_struct::iterator it = (*pQUERY_DATA->get_sequences_ptr()).find(qseqid);
+            if (it != (*pQUERY_DATA->get_sequences_ptr()).end()) {
                 count_TOTAL_hits++;
                 it->second.set_eggnog_results(seed_ortho,seed_e,seed_score,predicted_gene,go_terms,
                                               kegg,tax_scope,ogs, EGGNOG_DATABASE);
@@ -190,17 +192,17 @@ void ModEggnog::parse() {
     }
 
     EGGNOG_DATABASE.close();
-    out_no_hits_nucl = (boostFS::path(_processed_path) / boostFS::path(OUT_UNANNOTATED_NUCL)).string();
-    out_no_hits_prot = (boostFS::path(_processed_path) / boostFS::path(OUT_UNANNOTATED_PROT)).string();
-    out_hit_nucl     = (boostFS::path(_processed_path) / boostFS::path(OUT_ANNOTATED_NUCL)).string();
-    out_hit_prot     = (boostFS::path(_processed_path) / boostFS::path(OUT_ANNOTATED_PROT)).string();
+    out_no_hits_nucl = (boostFS::path(_proc_dir) / boostFS::path(OUT_UNANNOTATED_NUCL)).string();
+    out_no_hits_prot = (boostFS::path(_proc_dir) / boostFS::path(OUT_UNANNOTATED_PROT)).string();
+    out_hit_nucl     = (boostFS::path(_proc_dir) / boostFS::path(OUT_ANNOTATED_NUCL)).string();
+    out_hit_prot     = (boostFS::path(_proc_dir) / boostFS::path(OUT_ANNOTATED_PROT)).string();
     std::ofstream file_no_hits_nucl(out_no_hits_nucl, std::ios::out | std::ios::app);
     std::ofstream file_no_hits_prot(out_no_hits_prot, std::ios::out | std::ios::app);
     std::ofstream file_hits_nucl(out_hit_nucl, std::ios::out | std::ios::app);
     std::ofstream file_hits_prot(out_hit_prot, std::ios::out | std::ios::app);
 
     print_debug("Success! Computing overall statistics...");
-    for (auto &pair : *pQUERY_DATA->get_pSequences()) {
+    for (auto &pair : *pQUERY_DATA->get_sequences_ptr()) {
         if (eggnog_map.find(pair.first) == eggnog_map.end()) {
             // Unannotated sequence
             if (!pair.second.get_sequence_n().empty()) file_no_hits_nucl<<pair.second.get_sequence_n()<<std::endl;
@@ -227,8 +229,8 @@ void ModEggnog::parse() {
 
     // -------- Top Ten Taxonomic Scopes ------- //
     if (!tax_scope_ct_map.empty()) {
-        std::string fig_txt_tax_bar = (boostFS::path(_figure_path) / GRAPH_EGG_TAX_BAR_TXT).string();
-        std::string fig_png_tax_bar = (boostFS::path(_figure_path) / GRAPH_EGG_TAX_BAR_PNG).string();
+        std::string fig_txt_tax_bar = (boostFS::path(_figure_dir) / GRAPH_EGG_TAX_BAR_TXT).string();
+        std::string fig_png_tax_bar = (boostFS::path(_figure_dir) / GRAPH_EGG_TAX_BAR_PNG).string();
         std::ofstream file_tax_bar(fig_txt_tax_bar, std::ios::out | std::ios::app);
         file_tax_bar << "Taxonomic Scope\tCount" << std::endl;
 
@@ -261,29 +263,29 @@ void ModEggnog::parse() {
       "\nTotal GO terms assigned: " << count_total_go_terms;
 
     if (count_total_go_hits > 0) {
-        for (int lvl : _go_levels) {
+        for (uint16 lvl : _go_levels) {
             for (auto &pair : go_combined_map) {
                 if (pair.first.empty()) continue;
                 // Count maps (biological/molecular/cellular/overall)
-                std::string fig_txt_go_bar = (boostFS::path(_figure_path) / pair.first).string() + std::to_string(lvl)+GRAPH_GO_END_TXT;
-                std::string fig_png_go_bar = (boostFS::path(_figure_path) / pair.first).string() + std::to_string(lvl)+GRAPH_GO_END_PNG;
+                fig_txt_go_bar = (boostFS::path(_figure_dir) / pair.first).string() + std::to_string(lvl)+GRAPH_GO_END_TXT;
+                fig_png_go_bar = (boostFS::path(_figure_dir) / pair.first).string() + std::to_string(lvl)+GRAPH_GO_END_PNG;
                 std::ofstream file_go_bar(fig_txt_go_bar, std::ios::out | std::ios::app);
                 std::vector<count_pair> go_vect(pair.second.begin(),pair.second.end());
                 std::sort(go_vect.begin(),go_vect.end(),compair());
                 file_go_bar << "Gene Ontology Term\tCount" << std::endl;
 
                 // get total count for each level...change, didn't feel like making another
-                unsigned int lvl_ct = 0;   // Use for percentages, total terms for each lvl
-                ct = 0;                    // Use for unique
+                uint32 lvl_ct = 0;   // Use for percentages, total terms for each lvl
+                ct = 0;              // Use for unique count
                 for (count_pair &pair2 : go_vect) {
                     if (pair2.first.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
                         ct++;
                         lvl_ct += pair2.second;
                     }
                 }
-                ss << "\nTotal " << pair.first <<" terms (lvl=" << lvl << "): " << lvl_ct;
-                ss << "\nTotal unique " << pair.first <<" terms (lvl=" << lvl << "): " << ct;
-                ss << "\nTop 10 " << pair.first << " terms assigned (lvl=" << lvl << "): ";
+                ss << "\nTotal "        << pair.first <<" terms (lvl="          << lvl << "): " << lvl_ct;
+                ss << "\nTotal unique " << pair.first <<" terms (lvl="          << lvl << "): " << ct;
+                ss << "\nTop 10 "       << pair.first <<" terms assigned (lvl=" << lvl << "): ";
 
                 ct = 1;
                 for (count_pair &pair2 : go_vect) {
@@ -298,7 +300,7 @@ void ModEggnog::parse() {
                     }
                 }
                 file_go_bar.close();
-                graphingStruct.fig_out_path = fig_png_go_bar;
+                graphingStruct.fig_out_path   = fig_png_go_bar;
                 graphingStruct.text_file_path = fig_txt_go_bar;
                 if (pair.first == GO_BIOLOGICAL_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_BIO_TITLE + "_Level:_"+std::to_string(lvl);
                 if (pair.first == GO_CELLULAR_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_CELL_TITLE+ "_Level:_"+std::to_string(lvl);
@@ -330,10 +332,9 @@ void ModEggnog::execute() {
     std::string                        hit_out;
     std::string                        no_hit_out;
 
-
-    annotation_base_flag = (boostFS::path(_ontology_dir) / boostFS::path("annotation_results")).string();
-    annotation_no_flag   = (boostFS::path(_ontology_dir) / boostFS::path("annotation_results_no_hits")).string();
-    annotation_std       = (boostFS::path(_ontology_dir) / boostFS::path("annotation_std")).string();
+    annotation_base_flag = PATHS(_egg_out_dir, "annotation_results");
+    annotation_no_flag   = PATHS(_egg_out_dir, "annotation_results_no_hits");
+    annotation_std       = PATHS(_egg_out_dir, "annotation_std");
     eggnog_command       = "python " + _exe_path + " ";
 
     std::unordered_map<std::string,std::string> eggnog_command_map = {
@@ -375,11 +376,20 @@ void ModEggnog::execute() {
     print_debug("Success!");
 }
 
-void ModEggnog::set_data(std::vector<short> & lvls, std::string & eggnog_databse, int t) {
+void ModEggnog::set_data(std::string & eggnog_databse, std::vector<std::string>&) {
 
-    _go_levels = lvls;
     _eggnog_db_path = eggnog_databse;
-    _threads = t;
+
+    _egg_out_dir= PATHS(_ontology_dir, EGGNOG_DIRECTORY);
+    _figure_dir = PATHS(_egg_out_dir, FIGURE_DIR);
+    _proc_dir   = PATHS(_egg_out_dir, PROCESSED_OUT_DIR);
+
+    boostFS::remove_all(_figure_dir);
+    boostFS::remove_all(_proc_dir);
+
+    boostFS::create_directories(_egg_out_dir);
+    boostFS::create_directories(_figure_dir);
+    boostFS::create_directories(_proc_dir);
 }
 
 

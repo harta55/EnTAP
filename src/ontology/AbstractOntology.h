@@ -39,28 +39,29 @@ class QueryData;
 class AbstractOntology {
 public:
     AbstractOntology(std::string &exe,std::string &out, std::string &in_hits,
-                     std::string &in_nohits, std::string &proc,
-                     std::string &fig, std::string &ont_out, GraphingManager *graphing,
-                     QueryData *querydata, bool blastp){
+                     std::string &in_nohits, std::string &ont_out, GraphingManager *graphing,
+                     QueryData *querydata, bool blastp, std::vector<uint16>& lvls, uint8 threads){
         _exe_path        = exe;
         _outpath         = out;
         _inpath          = in_hits;
         _in_no_hits      = in_nohits;
-        _processed_path  = proc;
-        _figure_path     = fig;
         _ontology_dir    = ont_out;
         pGraphingManager = graphing;
         pQUERY_DATA      = querydata;
         _blastp          = blastp;
+        _go_levels       = lvls;
+        _threads         = threads;
 
     }
     virtual ~AbstractOntology() = default;
     virtual std::pair<bool, std::string> verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
-    virtual void set_data(std::vector<short>&, std::string&, int)=0;
+    virtual void set_data(std::string&, std::vector<std::string>&)=0;
 
 protected:
+    const std::string PROCESSED_OUT_DIR     = "processed/";
+    const std::string FIGURE_DIR            = "figures/";
 
     const std::string GO_MOLECULAR_FLAG     = "molecular_function";
     const std::string GO_BIOLOGICAL_FLAG    = "biological_process";
@@ -82,16 +83,16 @@ protected:
     const unsigned char GRAPH_ONTOLOGY_FLAG = 4;
     const unsigned char GRAPH_TOP_BAR_FLAG= 1;  // used for tax levels and go term tops
 
-    bool        _blastp;
-    std::string _in_no_hits;
-    std::string _exe_path;
-    std::string _outpath;
-    std::string _inpath;
-    std::string _processed_path;
-    std::string _figure_path;
-    std::string _ontology_dir;
-    GraphingManager *pGraphingManager;
-    QueryData       *pQUERY_DATA;
+    bool               _blastp;
+    uint8              _threads;
+    std::string        _in_no_hits;
+    std::string        _exe_path;
+    std::string        _outpath;
+    std::string        _inpath;
+    std::string        _ontology_dir;
+    std::vector<uint16> _go_levels;
+    GraphingManager    *pGraphingManager;
+    QueryData          *pQUERY_DATA;
 
     typedef std::map<std::string,std::vector<std::string>> go_struct;
     typedef std::map<std::string, QuerySequence> query_map_struct;

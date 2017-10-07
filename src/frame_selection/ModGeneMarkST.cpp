@@ -214,7 +214,7 @@ void ModGeneMarkST::parse() {
                 {FRAME_SELECTION_THREE_FLAG,count_partial_3},
         };
 
-        for (auto& pair : *pQUERY_DATA->get_pSequences()) {
+        for (auto& pair : *pQUERY_DATA->get_sequences_ptr()) {
             std::map<std::string,frame_seq>::iterator p_it = protein_map.find(pair.first);
             if (!pair.second.is_is_expression_kept()) continue; // Skip seqs that were lost to expression
             if (p_it != protein_map.end()) {

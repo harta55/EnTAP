@@ -182,7 +182,7 @@ std::string ModRSEM::filter() {
     GraphingStruct      graphingStruct;
     QUERY_MAP_T         *MAP;
 
-    MAP = pQUERY_DATA->get_pSequences();
+    MAP = pQUERY_DATA->get_sequences_ptr();
 
     if (!file_exists(_rsem_out)) {
         throw ExceptionHandler("File does not exist at: " + _rsem_out, ENTAP_ERR::E_RUN_RSEM_EXPRESSION);

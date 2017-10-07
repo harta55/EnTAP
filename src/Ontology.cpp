@@ -40,34 +40,32 @@
 #include "EntapGlobals.h"
 #include "ontology/AbstractOntology.h"
 #include "ontology/ModEggnog.h"
+#include "ontology/ModInterpro.h"
 
 Ontology::Ontology(int thread, std::string outpath, std::string input,
                    boost::program_options::variables_map &user_input, GraphingManager* graphing,
                    QueryData *queryData, bool blastp) {
     print_debug("Spawn object - Ontology");
-    _ontology_exe    = EGG_EMAPPER_EXE;
-    _threads         = thread;
-    _outpath         = outpath;
-    _new_input       = input;
-    _is_overwrite    = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
-    _blastp          = blastp;
-    _software_flag   = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<short>();
-    _go_levels       = user_input[ENTAP_CONFIG::INPUT_FLAG_GO_LEVELS].as<std::vector<short>>();
-    _ontology_dir    = PATHS(outpath, ONTOLOGY_OUT_PATH);
-    _processed_dir   = PATHS(_ontology_dir, PROCESSED_OUT_DIR);
-    _figure_dir      = PATHS(_processed_dir, FIGURE_DIR);
-    _eggnog_db_path  = EGG_SQL_DB_PATH;
-    _graphingManager = graphing;
-    _QUERY_DATA      = queryData;
-    std::vector<std::string> _interpro_databases =
-            user_input[ENTAP_CONFIG::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
-    SOFTWARE = static_cast<OntologySoftware>(_software_flag);
+    _ontology_exe       = EGG_EMAPPER_EXE;
+    _threads            = (uint8)thread;
+    _outpath            = outpath;
+    _new_input          = input;
+    _is_overwrite       = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
+    _blastp             = blastp;
+    _software_flags     = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<std::vector<uint8>>();
+    _go_levels          = user_input[ENTAP_CONFIG::INPUT_FLAG_GO_LEVELS].as<std::vector<uint16>>();
+    _ontology_dir       = PATHS(outpath, ONTOLOGY_OUT_PATH);
+    _eggnog_db_path     = EGG_SQL_DB_PATH;
+    _graphingManager    = graphing;
+    _QUERY_DATA         = queryData;
+    _interpro_databases = user_input[ENTAP_CONFIG::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
 }
 
 
 void Ontology::execute(std::string input,std::string no_hit) {
 
     std::pair<bool,std::string> verify_pair;
+    std::unique_ptr<AbstractOntology> ptr;
 
     _new_input = input;
     _input_no_hits = no_hit;
@@ -76,44 +74,39 @@ void Ontology::execute(std::string input,std::string no_hit) {
     boostFS::create_directories(_ontology_dir);
     init_headers();
     try {
-        std::unique_ptr<AbstractOntology> ptr = spawn_object();
-        ptr->set_data(_go_levels,_eggnog_db_path,_threads);
-        verify_pair = ptr->verify_files();
-        if (!verify_pair.first) ptr->execute();
-        ptr->parse();
-        print_eggnog(*_QUERY_DATA->get_pSequences());
-
-        // TODO move printing to manager
+        for (uint8 software : _software_flags) {
+            ptr = spawn_object(software);
+            ptr->set_data(_eggnog_db_path, _interpro_databases);
+            verify_pair = ptr->verify_files();
+            if (!verify_pair.first) ptr->execute();
+            ptr->parse();
+            ptr.release();
+        }
+        print_eggnog(*_QUERY_DATA->get_sequences_ptr());
     } catch (ExceptionHandler &e) {throw e;}
+
+    // TODO move printing to querydata
 }
 
 
-std::unique_ptr<AbstractOntology> Ontology::spawn_object() {
-    // Handle any special conditions for each software
-
-    // Each will have separate outpaths implement soon...
-
-    std::string proc_path;
-    std::string exe_path;
-    std::string fig_path;
-    std::string out_path;
-
-    switch (SOFTWARE) {
-        case EGGNOG:
+std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint8 &software) {
+    switch (software) {
+        case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
                     _ontology_exe, _outpath, _new_input, _input_no_hits,
-                    _processed_dir, _figure_dir, _ontology_dir, _graphingManager, _QUERY_DATA, _blastp
+                    _ontology_dir, _graphingManager, _QUERY_DATA, _blastp,
+                    _go_levels, _threads
             ));
-        case INTERPRO:
+        case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
             break;
         default:
-            return std::unique_ptr<AbstractOntology>(new ModEggnog(
+            return std::unique_ptr<AbstractOntology>(new ModInterpro(
                     _ontology_exe, _outpath, _new_input, _input_no_hits,
-                    _processed_dir, _figure_dir, _ontology_dir, _graphingManager, _QUERY_DATA, _blastp
+                    _ontology_dir, _graphingManager, _QUERY_DATA, _blastp,
+                    _go_levels, _threads
             ));
     }
 }
-
 
 
 void Ontology::print_eggnog(query_map_struct &SEQUENCES) {
@@ -121,7 +114,7 @@ void Ontology::print_eggnog(query_map_struct &SEQUENCES) {
     std::map<short, std::ofstream*> file_map;
     std::string file_name;
     std::string outpath;
-    for (short lvl : _go_levels) {
+    for (uint16 lvl : _go_levels) {
         file_name = "final_annotations_lvl" + std::to_string(lvl) + ".tsv";
         outpath = (boostFS::path(_outpath) / boostFS::path(file_name)).string();
         boostFS::remove(outpath);
@@ -133,8 +126,8 @@ void Ontology::print_eggnog(query_map_struct &SEQUENCES) {
         *file_map[lvl] << std::endl;
     }
     for (auto &pair : SEQUENCES) {
-        for (short i : _go_levels) {
-            *file_map[i]<< pair.second.print_tsv(_software_flag,_HEADERS,i)<<std::endl;
+        for (uint16 i : _go_levels) {
+            *file_map[i]<< pair.second.print_tsv(_HEADERS,i)<<std::endl;
         }
     }
     for(auto& pair : file_map) {
@@ -146,72 +139,67 @@ void Ontology::print_eggnog(query_map_struct &SEQUENCES) {
 
 
 void Ontology::init_headers() {
-    switch (_software_flag) {
-        case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-            _HEADERS = {
-                    &ENTAP_EXECUTE::HEADER_QUERY,
-                    &ENTAP_EXECUTE::HEADER_SUBJECT,
-                    &ENTAP_EXECUTE::HEADER_PERCENT,
-                    &ENTAP_EXECUTE::HEADER_ALIGN_LEN,
-                    &ENTAP_EXECUTE::HEADER_MISMATCH,
-                    &ENTAP_EXECUTE::HEADER_GAP_OPEN,
-                    &ENTAP_EXECUTE::HEADER_QUERY_S,
-                    &ENTAP_EXECUTE::HEADER_QUERY_E,
-                    &ENTAP_EXECUTE::HEADER_SUBJ_S,
-                    &ENTAP_EXECUTE::HEADER_SUBJ_E,
-                    &ENTAP_EXECUTE::HEADER_E_VAL,
-                    &ENTAP_EXECUTE::HEADER_COVERAGE,
-                    &ENTAP_EXECUTE::HEADER_TITLE,
-                    &ENTAP_EXECUTE::HEADER_SPECIES,
-                    &ENTAP_EXECUTE::HEADER_DATABASE,
-                    &ENTAP_EXECUTE::HEADER_FRAME,
-                    &ENTAP_EXECUTE::HEADER_CONTAM,
-                    &ENTAP_EXECUTE::HEADER_INFORM,
-                    &ENTAP_EXECUTE::HEADER_SEED_ORTH,
-                    &ENTAP_EXECUTE::HEADER_SEED_EVAL,
-                    &ENTAP_EXECUTE::HEADER_SEED_SCORE,
-                    &ENTAP_EXECUTE::HEADER_PRED_GENE,
-                    &ENTAP_EXECUTE::HEADER_TAX_SCOPE,
-                    &ENTAP_EXECUTE::HEADER_EGG_OGS,
-                    &ENTAP_EXECUTE::HEADER_EGG_DESC,
-                    &ENTAP_EXECUTE::HEADER_EGG_KEGG,
-                    &ENTAP_EXECUTE::HEADER_EGG_PROTEIN,
-                    &ENTAP_EXECUTE::HEADER_EGG_GO_BIO,
-                    &ENTAP_EXECUTE::HEADER_EGG_GO_CELL,
-                    &ENTAP_EXECUTE::HEADER_EGG_GO_MOLE
-            };
-            break;
-        case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
-//            _HEADERS = {
-//                "Protein Database"      ,
-//                "Protein ID"            ,
-//                "Protein Term"          ,
-//                "E_value"               ,
-//                "InterPro ID"           ,
-//                "InterPro Term"         ,
-//                "GO Biological"         ,
-//                "GO Cellular"           ,
-//                "GO Molecular"          ,
-//                "Pathway Terms"
-//            };
-            break;
-        default:
-            break;
+
+    std::vector<const std::string*>     out_header;
+    std::vector<const std::string*>     add_header;
+    // Add default sim search headers
+    out_header = {
+            &ENTAP_EXECUTE::HEADER_QUERY,
+            &ENTAP_EXECUTE::HEADER_SUBJECT,
+            &ENTAP_EXECUTE::HEADER_PERCENT,
+            &ENTAP_EXECUTE::HEADER_ALIGN_LEN,
+            &ENTAP_EXECUTE::HEADER_MISMATCH,
+            &ENTAP_EXECUTE::HEADER_GAP_OPEN,
+            &ENTAP_EXECUTE::HEADER_QUERY_S,
+            &ENTAP_EXECUTE::HEADER_QUERY_E,
+            &ENTAP_EXECUTE::HEADER_SUBJ_S,
+            &ENTAP_EXECUTE::HEADER_SUBJ_E,
+            &ENTAP_EXECUTE::HEADER_E_VAL,
+            &ENTAP_EXECUTE::HEADER_COVERAGE,
+            &ENTAP_EXECUTE::HEADER_TITLE,
+            &ENTAP_EXECUTE::HEADER_SPECIES,
+            &ENTAP_EXECUTE::HEADER_DATABASE,
+            &ENTAP_EXECUTE::HEADER_FRAME,
+            &ENTAP_EXECUTE::HEADER_CONTAM,
+            &ENTAP_EXECUTE::HEADER_INFORM
+    };
+    // Add additional headers for ontology software
+    for (unsigned char &flag : _software_flags) {
+        switch (flag) {
+            case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
+                add_header = {
+                        &ENTAP_EXECUTE::HEADER_SEED_ORTH,
+                        &ENTAP_EXECUTE::HEADER_SEED_EVAL,
+                        &ENTAP_EXECUTE::HEADER_SEED_SCORE,
+                        &ENTAP_EXECUTE::HEADER_PRED_GENE,
+                        &ENTAP_EXECUTE::HEADER_TAX_SCOPE,
+                        &ENTAP_EXECUTE::HEADER_EGG_OGS,
+                        &ENTAP_EXECUTE::HEADER_EGG_DESC,
+                        &ENTAP_EXECUTE::HEADER_EGG_KEGG,
+                        &ENTAP_EXECUTE::HEADER_EGG_PROTEIN,
+                        &ENTAP_EXECUTE::HEADER_EGG_GO_BIO,
+                        &ENTAP_EXECUTE::HEADER_EGG_GO_CELL,
+                        &ENTAP_EXECUTE::HEADER_EGG_GO_MOLE
+                };
+                break;
+            case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
+                add_header = {
+                        &ENTAP_EXECUTE::HEADER_INTER_EVAL,
+                        &ENTAP_EXECUTE::HEADER_INTER_INTERPRO,
+                        &ENTAP_EXECUTE::HEADER_INTER_DATA_TYPE,
+                        &ENTAP_EXECUTE::HEADER_INTER_DATA_TERM,
+                        &ENTAP_EXECUTE::HEADER_INTER_PATHWAY,
+                        &ENTAP_EXECUTE::HEADER_INTER_GO_BIO,
+                        &ENTAP_EXECUTE::HEADER_INTER_GO_CELL,
+                        &ENTAP_EXECUTE::HEADER_INTER_GO_MOLE
+                };
+                break;
+            default:
+                break;
+        }
+        out_header.insert(out_header.end(), add_header.begin(), add_header.end());
     }
-}
-
-// TODO combine with eggnog
-void Ontology::print_interpro(query_map_struct &SEQUENCES) {
-
-//    std::string final_annotations;
-//
-//    final_annotations = (boostFS::path(_outpath) / boostFS::path("final_annotations.tsv")).string();
-//    print_header(final_annotations);
-//    std::ofstream file(final_annotations, std::ios::out | std::ios::app);
-//    for (auto &pair : SEQUENCES) {
-//        file<< pair.second.print_final_results(_software_flag,_HEADERS,0)<<std::endl;
-//    }
-//    file.close();
+    _HEADERS = out_header;
 }
 
 void Ontology::print_header(std::string file) {

@@ -25,37 +25,52 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//
-//#ifndef ENTAP_MODINTERPRO_H
-//#define ENTAP_MODINTERPRO_H
-//
-//
-//#include "AbstractOntology.h"
-//
-//class ModInterpro : public AbstractOntology{
-//
-//    struct interpro_struct {
-//        double _eval;
-//        std::map<std::string,std::string> _results;
-//        std::map<std::string,std::vector<std::string>> _go_map;
-//    };
-//
-//public:
-//    ModInterpro(std::string &exe, std::string &entap,std::string &out, std::string &in,
-//            std::string &in_no_hits,std::string &proc,
-//            std::string &fig, std::string &ont, GraphingManager *graphing) :
-//    AbstractOntology(exe, entap, out, in, in_no_hits,proc, fig, ont, graphing){}
-//
-//    virtual std::pair<bool, std::string> verify_files() override ;
-//    virtual void execute(std::map<std::string, QuerySequence>&) override ;
-//    virtual void parse(std::map<std::string, QuerySequence>&) override ;
-//    virtual void set_data(std::vector<short>&, std::string&, int) override ;
-//
-//
-//private:
-//    static constexpr short INTERPRO_COL_NUM = 15;
-//
-//};
-//
-//
-//#endif //ENTAP_MODINTERPRO_H
+
+#ifndef ENTAP_MODINTERPRO_H
+#define ENTAP_MODINTERPRO_H
+
+
+#include "AbstractOntology.h"
+
+class ModInterpro : public AbstractOntology{
+
+    struct InterProData {
+        std::string interID;
+        std::string interDesc;
+        std::string databaseID;
+        std::string databasetype;
+        std::string databaseDesc;
+        std::string pathways;
+        std::string go_terms;
+        double      eval;
+
+    };
+
+public:
+    ModInterpro(std::string &exe,std::string &out, std::string &in,
+        std::string &in_no_hits,std::string &ont, GraphingManager *graphing,QueryData *queryData,
+        bool blastp,std::vector<uint16>& lvls, uint8 threads) :
+    AbstractOntology(exe, out, in, in_no_hits, ont, graphing, queryData, blastp,
+                     lvls, threads){}
+
+
+    virtual std::pair<bool, std::string> verify_files() override ;
+    virtual void execute() override ;
+    virtual void parse() override ;
+    virtual void set_data(std::string&, std::vector<std::string>&) override ;
+
+
+private:
+    std::string INTERPRO_DIRECTORY          = "InterProScan";
+    std::string INTERPRO_EXT                = ".xml";
+    static constexpr short INTERPRO_COL_NUM = 15;
+
+    std::vector<std::string> _databases;
+    std::string              _interpro_dir;
+    std::string              _proc_dir;
+    std::string              _figure_dir;
+    std::string              _final_outpath;
+};
+
+
+#endif //ENTAP_MODINTERPRO_H

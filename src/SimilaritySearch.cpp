@@ -32,11 +32,11 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/regex.hpp>
 #include <iomanip>
-#include <fstream>
 #include "SimilaritySearch.h"
 #include "ExceptionHandler.h"
 #include "EntapExecute.h"
 #include "EntapGlobals.h"
+#include "common.h"
 //**************************************************************
 
 
@@ -339,9 +339,9 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
 
     std::unordered_map<std::string, std::string>    taxonomic_database;
     std::list<std::map<std::string,QuerySequence>>  database_maps;
-    unsigned int                                    count_removed;
-    unsigned int                                    count_TOTAL_hits;
-    unsigned int                                    count_under_e;
+    uint32                                          count_removed;
+    uint32                                          count_TOTAL_hits;
+    uint32                                          count_under_e;
 
     try {
         taxonomic_database = read_tax_map();
@@ -363,7 +363,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
         // todo have columns from input file, in_read_header for versatility
         std::string qseqid, sseqid, stitle, database_name,pident, bitscore,
                 length, mismatch, gapopen, qstart, qend, sstart, send;
-        double evalue, coverage;
+        fp64 evalue, coverage;
         count_removed = 0;
         count_TOTAL_hits = 0;
         count_under_e = 0;
@@ -397,7 +397,7 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
             new_query.set_contam_type(contam_info.second);
             bool informative = is_informative(stitle);
             new_query.set_is_informative(informative);
-            new_query.setFrame((*_pQUERY_DATA->get_pSequences())[qseqid].getFrame());  // May want to handle differently, SLOW
+            new_query.setFrame((*_pQUERY_DATA->get_sequences_ptr()).at(qseqid).getFrame());  // May want to handle differently, SLOW
             new_query.set_tax_score(_input_lineage);
             if (evalue > _e_val) {
                 count_under_e++; count_removed++;
@@ -507,7 +507,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
     graph_contam_file  << "Contaminant Species\tCount" << std::endl;
     graph_sum_file     << "Category\tCount"    << std::endl;
 
-    for (auto &pair : *_pQUERY_DATA->get_pSequences()) {
+    for (auto &pair : *_pQUERY_DATA->get_sequences_ptr()) {
         std::map<std::string, QuerySequence>::iterator it = best_hits.find(pair.first);
         // Check if original sequences have hit a database
         if (it == best_hits.end()) {

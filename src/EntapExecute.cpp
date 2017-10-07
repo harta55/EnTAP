@@ -51,7 +51,6 @@ namespace entapExecute {
     ExecuteStates           executeStates;
     std::string             _outpath;
     std::string             _entap_outpath;
-    short                   _ontology_flag;
     bool                    _EXPRESSION_SUCCESS;     // True if this stage was ran/success
     bool                    _FRAME_SELETION_SUCCESS;
     bool                    _SIM_SEARCH_SUCCESS;
@@ -89,6 +88,7 @@ namespace entapExecute {
     void execute_main(boost::program_options::variables_map &user_input) {
         print_debug("EnTAP Executing...");
 
+        std::vector<uint8>                      ontology_flags;
         std::vector<std::string>                other_databases; // -d Command databases
         std::pair<std::string,std::string>      diamond_pair;    // best_hits.fa,no_hits.fa
         std::string                             no_database_hits;// No DIAMOND
@@ -98,23 +98,24 @@ namespace entapExecute {
         bool                                    state_flag;
         bool                                    is_complete;     // All input sequences are complete genes
 
-        executeStates = INIT;
+        executeStates           = INIT;
         state_flag              = false;
         _EXPRESSION_SUCCESS     = false;
         _FRAME_SELETION_SUCCESS = false;
         _SIM_SEARCH_SUCCESS     = false;
         _ONTOLOGY_SUCCESS       = false;
 
-        _input_path  = user_input[ENTAP_CONFIG::INPUT_FLAG_TRANSCRIPTOME].as<std::string>();
-        _threads     = get_supported_threads(user_input);
-        _blastp      = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN);
+        _input_path    = user_input[ENTAP_CONFIG::INPUT_FLAG_TRANSCRIPTOME].as<std::string>();
+        _threads       = get_supported_threads(user_input);
+        _blastp        = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN);
         original_input = _input_path;
-        trim_flag    = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_TRIM);
-        is_complete  = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_COMPLETE);
-        diamond_pair = std::make_pair(_input_path,"");
+        trim_flag      = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_TRIM);
+        is_complete    = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_COMPLETE);
+        diamond_pair   = std::make_pair(_input_path,"");
+        ontology_flags = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<std::vector<uint8>>();
 
         boostFS::path working_dir(boostFS::current_path());
-        _outpath = (working_dir / boostFS::path(user_input["tag"].as<std::string>())).string();
+        _outpath       = PATHS(working_dir, user_input["tag"].as<std::string>());
         _entap_outpath = PATHS(_outpath, ENTAP_OUTPUT);
         boostFS::create_directories(_entap_outpath);
         boostFS::create_directories(_outpath);
@@ -214,8 +215,11 @@ namespace entapExecute {
             QUERY_DATA.set_FRAME_SELECTION_SUCCESS(_FRAME_SELETION_SUCCESS);
             QUERY_DATA.set_ONTOLOGY_SUCCESS(_ONTOLOGY_SUCCESS);
             QUERY_DATA.set_SIM_SEARCH_SUCCESS(_SIM_SEARCH_SUCCESS);
-            QUERY_DATA.final_statistics(_outpath, _ontology_flag);
-        } catch (const ExceptionHandler &e) {throw e;}
+            QUERY_DATA.final_statistics(_outpath, ontology_flags);
+        } catch (const ExceptionHandler &e) {
+            exit_error(executeStates);
+            throw e;
+        }
     }
 
 
@@ -446,5 +450,57 @@ namespace entapExecute {
  */
     bool valid_state(ExecuteStates s) {
         return (s >= RSEM && s <= EXIT);
+    }
+
+
+    void exit_error(ExecuteStates s) {
+        std::stringstream ss;
+
+        ss << "------------------------------------\n";
+        switch (s) {
+            case INIT:
+                break;
+            case RSEM:
+                ss <<
+                   "EnTAP failed execution during the Expression Filtering stage with\n"
+                           "previous stages executing correctly.\n";
+                break;
+            case FRAME_SELECTION:
+                ss <<
+                   "EnTAP failed execution during the Expression Filtering stage with\n"
+                           "previous stages executing correctly.\n";
+                break;
+            case FILTER:
+                break;
+            case DIAMOND_RUN:
+                ss <<
+                   "EnTAP failed execution during executing Similarity Searching with\n"
+                           "previous stages executing correctly.\n";
+                break;
+            case DIAMOND_PARSE:
+                ss <<
+                   "EnTAP failed execution during the parsing of Similarity Searching \n"
+                           "data with previous stages executing correctly.\n"
+                           "It seems that the similarity searching worked, but \n"
+                           "some issue in parsing caused an error!\n";
+                break;
+            case GENE_ONTOLOGY:
+                ss <<
+                   "EnTAP failed execution during the Gene Ontology stage with\n"
+                           "previous stages executing correctly.\n";
+                break;
+            default:
+                break;
+        }
+        ss <<
+           "Here are a few ways to help diagnose some general issues:\n"
+                   "\t1. Check the (detailed) printed error message below\n"
+                   "\t2. Review the .err files of the execution stage (they will\n"
+                   "\t\tbe in the directory for whateve stage you failed on\n"
+                   "\t3. Check the debug.txt file that is printed after execution\n"
+                   "\t4. Ensure your paths/inputs are correct in entap_config.txt\n"
+                   "\t\tand log_file.txt (this will show your inputs)\n";
+        ss << "------------------------------------";
+        std::cerr<<ss.str()<<std::endl;
     }
 }

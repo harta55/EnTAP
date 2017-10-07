@@ -57,6 +57,15 @@ public:
         go_struct                parsed_go;
     };
 
+    struct InterProResults {
+        std::string             e_value;
+        std::string             database_desc_id;
+        std::string             database_type;
+        std::string             interpro_desc_id;
+        std::string             pathways;
+        go_struct               parsed_go;
+    };
+
     struct SimSearchResults {
         std::string                       length;
         std::string                       mismatch;
@@ -94,8 +103,10 @@ public:
     // TODO switch to map results
     void set_eggnog_results(std::string,std::string,std::string,std::string,std::string,
                     std::string,std::string,std::string, DatabaseHelper &);
+    void set_interpro_results(std::string&,std::string&,std::string&,std::string&,
+                              std::string&,go_struct&);
     std::string print_tsv(const std::vector<const std::string*>&);
-    std::string print_tsv(short, std::vector<const std::string*>& , short);
+    std::string print_tsv(std::vector<const std::string*>& , short);
     std::string format_eggnog(std::string&);
 
     void set_tax_score(std::string);
@@ -109,7 +120,6 @@ public:
     bool isContaminant() const;
     void setContaminant(bool contaminant);
     void set_is_database_hit(bool _is_database_hit);
-    void set_ontology_results(std::map<std::string,std::string>);
     void set_lineage(const std::string &_lineage);
     void set_go_parsed(const go_struct &_go_parsed, short);
     void setSeq_length(unsigned long seq_length);
@@ -140,10 +150,10 @@ public:
 
 private:
 
-    static constexpr unsigned char E_VAL_DIF     = 8;
-    static constexpr unsigned char COV_DIF       = 5;
-    static constexpr unsigned char INFORM_ADD    = 3;
-    static constexpr float INFORM_FACTOR         = 1.2;
+    static constexpr uint8 E_VAL_DIF     = 8;
+    static constexpr uint8 COV_DIF       = 5;
+    static constexpr uint8 INFORM_ADD    = 3;
+    static constexpr fp32 INFORM_FACTOR  = 1.2;
 
 
     bool                              is_protein;
@@ -154,6 +164,8 @@ private:
     bool                              _is_one_go;
     bool                              _is_one_kegg;
     bool                              _is_expression_kept;
+    bool                              _is_interpro_hit;
+    bool                              _is_eggnog_hit;
     float                             _tax_score;
     float                             _fpkm;
     unsigned long                     _seq_length;
@@ -164,8 +176,8 @@ private:
     std::string                       _frame;
     EggnogResults                     _eggnog_results;
     SimSearchResults                  _sim_search_results;
+    InterProResults                   _interpro_results;
     std::map<const std::string*, std::string*> OUTPUT_MAP;
-
 
     friend std::ostream& operator<<(std::ostream& , const QuerySequence&);
     void init_sequence();

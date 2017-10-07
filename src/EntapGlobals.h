@@ -36,6 +36,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <unordered_map>
+#include "common.h"
 
 namespace boostFS = boost::filesystem;
 namespace boostPO = boost::program_options;
@@ -130,8 +131,10 @@ namespace ENTAP_EXECUTE {
     extern const std::string GO_BIOLOGICAL_FLAG ;
     extern const std::string GO_CELLULAR_FLAG;
     extern const std::string GO_MOLECULAR_FLAG;
-    const short EGGNOG_INT_FLAG = 0;
-    const short INTERPRO_INT_FLAG = 1;
+    const uint8 ONTOLOGY_MIN      = 0;
+    const uint8 EGGNOG_INT_FLAG   = 0;
+    const uint8 INTERPRO_INT_FLAG = 1;
+    const uint8 ONTOLOGY_MAX      = 1;
 
     //------------------------Headers-------------------------//
     extern const std::string HEADER_QUERY;
@@ -153,7 +156,7 @@ namespace ENTAP_EXECUTE {
     extern const std::string HEADER_CONTAM;
     extern const std::string HEADER_INFORM;
 
-
+    // EggNOG Header Information
     extern const std::string HEADER_SEED_ORTH;
     extern const std::string HEADER_SEED_EVAL;
     extern const std::string HEADER_SEED_SCORE;
@@ -167,6 +170,16 @@ namespace ENTAP_EXECUTE {
     extern const std::string HEADER_EGG_DESC;
     extern const std::string HEADER_EGG_LEVEL;
     extern const std::string HEADER_EGG_PROTEIN;
+
+    // Interpro Header Information
+    extern const std::string HEADER_INTER_GO_BIO;
+    extern const std::string HEADER_INTER_GO_CELL;
+    extern const std::string HEADER_INTER_GO_MOLE;
+    extern const std::string HEADER_INTER_PATHWAY;
+    extern const std::string HEADER_INTER_INTERPRO;
+    extern const std::string HEADER_INTER_DATA_TYPE;
+    extern const std::string HEADER_INTER_DATA_TERM;
+    extern const std::string HEADER_INTER_EVAL;
 }
 
 
@@ -204,6 +217,7 @@ namespace ENTAP_CONFIG {
     extern const std::string INPUT_FLAG_GRAPH;
     extern const std::string INPUT_FLAG_TRIM;
     extern const std::string INPUT_FLAG_STATE;
+    extern const std::string INPUT_FLAG_PAIRED_END;
 
     extern const std::string INPUT_UNIPROT_SWISS    ;
     extern const std::string INPUT_UNIPROT_UR100    ;
@@ -234,42 +248,44 @@ namespace ENTAP_CONFIG {
 
 //******************* Global Constants *************************
 namespace ENTAP_ERR {
-    const unsigned short E_INPUT_PARSE = 10;
-    const unsigned short E_SUCCESS = 11;
-    const unsigned short E_CONFIG_PARSE = 12;
-    const unsigned short E_CONFIG_CREATE = 13;
-    const unsigned short E_CONFIG_CREATE_SUCCESS = 14;
-    const unsigned short E_INIT_TAX_DOWN = 20;
-    const unsigned short E_INIT_TAX_INDEX = 21;
-    const unsigned short E_INIT_TAX_SERIAL = 22;
-    const unsigned short E_INIT_INDX_DATA_NOT_FOUND = 30;
-    const unsigned short E_INIT_INDX_DATABASE = 31;
-    const unsigned short E_INIT_DOWNLOAD = 23;
-    const unsigned short E_INIT_EGGNOG   = 40;
+    const uint16 E_INPUT_PARSE                 = 10;
+    const uint16 E_SUCCESS                     = 0;
+    const uint16 E_CONFIG_PARSE                = 12;
+    const uint16 E_CONFIG_CREATE               = 13;
+    const uint16 E_CONFIG_CREATE_SUCCESS       = 14;
+    const uint16 E_INIT_TAX_DOWN               = 20;
+    const uint16 E_INIT_TAX_INDEX              = 21;
+    const uint16 E_INIT_TAX_SERIAL             = 22;
+    const uint16 E_INIT_INDX_DATA_NOT_FOUND    = 30;
+    const uint16 E_INIT_INDX_DATABASE          = 31;
+    const uint16 E_INIT_DOWNLOAD               = 23;
+    const uint16 E_INIT_EGGNOG                 = 40;
 
-    const unsigned short E_INIT_TAX_READ    = 55;
-    const unsigned short E_INIT_GO_DOWNLOAD = 60;
-    const unsigned short E_INIT_GO_UNZIP    = 61;
-    const unsigned short E_INIT_GO_PARSE    = 62;
-    const unsigned short E_INIT_GO_INDEX    = 63;
+    const uint16 E_INIT_TAX_READ               = 55;
+    const uint16 E_INIT_GO_DOWNLOAD            = 60;
+    const uint16 E_INIT_GO_UNZIP               = 61;
+    const uint16 E_INIT_GO_PARSE               = 62;
+    const uint16 E_INIT_GO_INDEX               = 63;
 
-    const unsigned short E_RUN_EXECUTION_PATHS         = 105;
-    const unsigned short E_RUN_VERIFY_DATABASES        = 106;
-    const unsigned short E_RUN_GENEMARK                = 100;
-    const unsigned short E_RUN_GENEMARK_PARSE          = 101;
-    const unsigned short E_RUN_GENEMARK_STATS          = 102;
-    const unsigned short E_RUN_RSEM_VALIDATE           = 110;
-    const unsigned short E_RUN_RSEM_CONVERT            = 111;
-    const unsigned short E_RUN_RSEM_EXPRESSION         = 112;
-    const unsigned short E_RUN_RSEM_EXPRESSION_PARSE   = 113;
-    const unsigned short E_RUN_FILTER                  = 120;
-    const unsigned short E_RUN_SIM_SEARCH_FILTER       = 140;
-    const unsigned short E_RUN_SIM_SEARCH_RUN          = 141;
-    const unsigned short E_RUN_ANNOTATION              = 150;
-    const unsigned short E_GO_READ                     = 151;
-    const unsigned short E_RUN_EGGNOG                  = 160;
-    const unsigned short E_DATABASE_QUERY              = 161;
-    const unsigned short E_PARSE_EGGNOG                = 170;
+    const uint16 E_RUN_EXECUTION_PATHS         = 105;
+    const uint16 E_RUN_VERIFY_DATABASES        = 106;
+    const uint16 E_RUN_GENEMARK                = 100;
+    const uint16 E_RUN_GENEMARK_PARSE          = 101;
+    const uint16 E_RUN_GENEMARK_STATS          = 102;
+    const uint16 E_RUN_RSEM_VALIDATE           = 110;
+    const uint16 E_RUN_RSEM_CONVERT            = 111;
+    const uint16 E_RUN_RSEM_EXPRESSION         = 112;
+    const uint16 E_RUN_RSEM_EXPRESSION_PARSE   = 113;
+    const uint16 E_RUN_FILTER                  = 120;
+    const uint16 E_RUN_SIM_SEARCH_FILTER       = 140;
+    const uint16 E_RUN_SIM_SEARCH_RUN          = 141;
+    const uint16 E_RUN_ANNOTATION              = 150;
+    const uint16 E_GO_READ                     = 151;
+    const uint16 E_RUN_EGGNOG                  = 160;
+    const uint16 E_DATABASE_QUERY              = 161;
+    const uint16 E_PARSE_EGGNOG                = 162;
+    const uint16 E_RUN_INTERPRO                = 170;
+    const uint16 E_PARSE_INTERPRO              = 171;
 }
 
 namespace ENTAP_STATS {

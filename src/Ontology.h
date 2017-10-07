@@ -37,6 +37,7 @@
 #include "DatabaseHelper.h"
 #include "GraphingManager.h"
 #include "ontology/AbstractOntology.h"
+#include "QueryData.h"
 
 class QuerySequence;
 class AbstractOntology;
@@ -44,7 +45,6 @@ class QueryData;
 
 class Ontology {
     typedef std::map<std::string, QuerySequence> query_map_struct;
-
 
 public:
 
@@ -59,14 +59,12 @@ private:
         INTERPRO
     };
 
-    OntologySoftware SOFTWARE;
     const std::string ONTOLOGY_OUT_PATH     = "ontology/";
-    const std::string PROCESSED_OUT_DIR     = "processed/";
-    const std::string FIGURE_DIR            = "figures/";
 
-    std::vector<short>              _go_levels;
-    int                             _threads;
-    short                           _software_flag;
+    std::vector<std::string>        _interpro_databases;
+    std::vector<uint16>              _go_levels;
+    uint8                           _threads;
+    std::vector<uint8>              _software_flags;
     bool                            _is_overwrite;
     bool                            _blastp;
     std::string                     _ontology_exe;
@@ -78,16 +76,13 @@ private:
     std::string                     _figure_dir;
     std::string                     _eggnog_db_path;
     std::vector<const std::string*> _HEADERS;
-    std::vector<std::string>        _interpro_databases;
     GraphingManager                 *_graphingManager;
     QueryData                       *_QUERY_DATA;
 
     void print_eggnog(query_map_struct&);
-    void print_interpro(query_map_struct&);
     void init_headers();
     void print_header(std::string);
-    std::unique_ptr<AbstractOntology> spawn_object();
-
+    std::unique_ptr<AbstractOntology> spawn_object(uint8&);
 };
 
 

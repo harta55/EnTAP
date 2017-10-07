@@ -74,7 +74,6 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
     std::pair<unsigned short, unsigned short>n_vals;
 
     _trim = trim;
-    _pSequences = new QUERY_MAP_T;
 
     if (!file_exists(input_file)) {
         throw ExceptionHandler("Input file not found at: " + input_file,ENTAP_ERR::E_INPUT_PARSE);
@@ -103,7 +102,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
                 QuerySequence query_seq = QuerySequence(_protein,sequence);
                 if (is_complete) query_seq.setFrame(COMPLETE_FLAG);
                 query_seq.setQseqid(seq_id);
-                _pSequences->emplace(seq_id, query_seq);
+                _SEQUENCES.emplace(seq_id, query_seq);
                 count_seqs++;
                 len = (unsigned short) query_seq.getSeq_length();
                 total_len += len;
@@ -151,8 +150,8 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
 
 void QueryData::set_input_type(std::string &in) {
     std::string    line;
-    unsigned char  line_count;
-    unsigned short deviations;
+    uint8          line_count;
+    uint16         deviations;
     std::ifstream in_file(in);
 
     line_count = 0;
@@ -169,10 +168,6 @@ void QueryData::set_input_type(std::string &in) {
     }
     _protein = deviations > NUCLEO_DEV;
     in_file.close();
-}
-
-QUERY_MAP_T *QueryData::get_pSequences() const {
-    return _pSequences;
 }
 
 bool QueryData::is_protein() const {
@@ -225,7 +220,7 @@ std::pair<unsigned short, unsigned short> QueryData::calculate_N_vals
  * ======================================================================
  */
 void QueryData::flag_transcripts(ExecuteStates state) {
-    for (auto &pair : *_pSequences) {
+    for (auto &pair : _SEQUENCES) {
         switch (state) {
             case RSEM:
                 pair.second.set_is_expression_kept(true);
@@ -257,7 +252,7 @@ void QueryData::flag_transcripts(ExecuteStates state) {
  *
  * =====================================================================
  */
-void QueryData::final_statistics(std::string &outpath, short ontology_flag) {
+void QueryData::final_statistics(std::string &outpath, std::vector<uint8> &ontology_flags) {
     print_debug("Pipeline finished! Calculating final statistics...");
 
     std::stringstream      ss;
@@ -298,7 +293,7 @@ void QueryData::final_statistics(std::string &outpath, short ontology_flag) {
     std::ofstream file_annotated_nucl(out_annotated_nucl_path, std::ios::out | std::ios::app);
     std::ofstream file_annotated_prot(out_annotated_prot_path, std::ios::out | std::ios::app);
 
-    for (auto &pair : *_pSequences) {
+    for (auto &pair : _SEQUENCES) {
         count_total_sequences++;
         bool is_exp_kept = pair.second.is_is_expression_kept();
         bool is_prot = pair.second.isIs_protein();
@@ -366,19 +361,23 @@ void QueryData::final_statistics(std::string &outpath, short ontology_flag) {
            "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits;
     }
     if (_ONTOLOGY_SUCCESS) {
-        switch (ontology_flag) {
-            case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-                ss <<
-                   "\nGene Families"        <<
-                   "\n\tTotal unique sequences with family assignment: "    << count_ontology   <<
-                   "\n\tTotal unique sequences without family assignment: " << count_no_ontology<<
-                   "\n\tTotal unique sequences with at least one GO term: " << count_one_go     <<
-                   "\n\tTotal unique sequences with at least one pathway (KEGG) assignment: "   << count_one_kegg;
-                break;
-            case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
-                break;
-            default:
-                break;
+        for (uint8 flag : ontology_flags) {
+            switch (flag) {
+                case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
+                    ss <<
+                       "\nGene Families"        <<
+                       "\n\tTotal unique sequences with family assignment: "    << count_ontology   <<
+                       "\n\tTotal unique sequences without family assignment: " << count_no_ontology<<
+                       "\n\tTotal unique sequences with at least one GO term: " << count_one_go     <<
+                       "\n\tTotal unique sequences with at least one pathway (KEGG) assignment: "   << count_one_kegg;
+                    break;
+                case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
+                    ss <<
+                       "\nFinal InterPro stats coming soon!";
+                    break;
+                default:
+                    break;
+            }
         }
     }
     ss <<
@@ -430,4 +429,8 @@ void QueryData::set_SIM_SEARCH_SUCCESS(bool _SIM_SEARCH_SUCCESS) {
 
 void QueryData::set_ONTOLOGY_SUCCESS(bool _ONTOLOGY_SUCCESS) {
     QueryData::_ONTOLOGY_SUCCESS = _ONTOLOGY_SUCCESS;
+}
+
+QUERY_MAP_T* QueryData::get_sequences_ptr() {
+    return &this->_SEQUENCES;
 }

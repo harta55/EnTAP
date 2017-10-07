@@ -29,16 +29,15 @@
 //*********************** Includes *****************************
 #include <unordered_map>
 #include <boost/program_options/options_description.hpp>
-#include <iostream>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <fstream>
 #include <chrono>
 #include "UserInput.h"
 #include "EntapGlobals.h"
 #include "ExceptionHandler.h"
 #include "GraphingManager.h"
 #include "SimilaritySearch.h"
+#include "common.h"
 
 //**************************************************************
 
@@ -80,90 +79,56 @@ boost::program_options::variables_map parse_arguments_boost(int argc, const char
         boostPO::options_description description("Options");
         // TODO separate out into main options and additional config file with defaults
         description.add_options()
-                ("help,h",
-                 "Print help options")
-                (ENTAP_CONFIG::INPUT_FLAG_CONFIG.c_str(),
-                 "Configure EnTAP for execution later (complete this step first)")
-                (ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN.c_str(),
-                 "Execute EnTAP functionality with input protein sequences\n"
-                         "(this option will skip Frame Selection portion of pipeline)")
-                (ENTAP_CONFIG::INPUT_FLAG_RUNNUCLEOTIDE.c_str(),
-                 "Execute EnTAP functionality with input nucleotide sequences")
+                ("help,h", DESC_HELP)
+                (ENTAP_CONFIG::INPUT_FLAG_CONFIG.c_str(),DESC_CONFIG)
+                (ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN.c_str(),DESC_RUN_PROTEIN)
+                (ENTAP_CONFIG::INPUT_FLAG_RUNNUCLEOTIDE.c_str(),DESC_RUN_NUCLEO)
                 ("ncbi,N",
                  boostPO::value<std::vector<std::string>>()->multitoken()
                          ->default_value(std::vector<std::string>{ENTAP_CONFIG::INPUT_UNIPROT_NULL},""),
-                 "Coming soon!")
+                 DESC_COMING_SOON)
                 (ENTAP_CONFIG::INPUT_FLAG_INTERPRO.c_str(),
                  boostPO::value<std::vector<std::string>>()->multitoken()
-                         ->default_value(std::vector<std::string>{INTERPRO_DEFAULT},""),
-                 "Select which protein databases you would like to download if using Interpro")
+                         ->default_value(std::vector<std::string>{INTERPRO_DEFAULT},""),DESC_INTER_DATA)
                 ("uniprot,U",
                  boostPO::value<std::vector<std::string>>()->multitoken()
                          ->default_value(std::vector<std::string>{ENTAP_CONFIG::INPUT_UNIPROT_NULL},""),
-                 "Coming Soon!")
+                 DESC_COMING_SOON)
                 (ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY.c_str(),
-                 boostPO::value<short>()->default_value(ENTAP_EXECUTE::EGGNOG_INT_FLAG),
-                 "Specify ontology software to use\n0 - eggnog\n1 - interproscan")
-                (ENTAP_CONFIG::INPUT_FLAG_GRAPH.c_str(),
-                "Check whether your system supports graphing")
+                 boostPO::value<std::vector<uint8>>()->multitoken()
+                 ->default_value(std::vector<uint8>{ENTAP_EXECUTE::EGGNOG_INT_FLAG},""),DESC_ONTOLOGY_FLAG)
+                (ENTAP_CONFIG::INPUT_FLAG_GRAPH.c_str(),DESC_GRAPHING)
                 ("tag",
-                 boostPO::value<std::string>()->default_value(OUTFILE_DEFAULT),
-                 "Specify species or unique tag you would like files to be saved as")
+                 boostPO::value<std::string>()->default_value(OUTFILE_DEFAULT),DESC_OUT_FLAG)
                 ("database,d",
-                 boostPO::value<std::vector<std::string>>()->multitoken(),
-                 "Provide the path to a separate database, however this "
-                         "may prohibit taxonomic filtering.")
+                 boostPO::value<std::vector<std::string>>()->multitoken(),DESC_DATABASE)
                 (ENTAP_CONFIG::INPUT_FLAG_GO_LEVELS.c_str(),
-                 boostPO::value<std::vector<short>>()->multitoken()
-                         ->default_value(std::vector<short>{0,3,4},""),
-                 "Gene ontology levels you would like outputted.")
+                 boostPO::value<std::vector<uint16>>()->multitoken()
+                         ->default_value(std::vector<uint16>{0,3,4},""), DESC_ONT_LEVELS)
                 (ENTAP_CONFIG::INPUT_FLAG_FPKM.c_str(),
-                 boostPO::value<float>()->default_value(RSEM_FPKM_DEFAULT),
-                 "FPKM cutoff value")
-                ("e",
-                 boostPO::value<float>()->default_value(E_VALUE),"Specify an e-value")
-                ("version,v",
-                 "Display version number")
-                ("paired-end",
-                 "Flag for paired end reads")
+                 boostPO::value<fp32>()->default_value(RSEM_FPKM_DEFAULT), DESC_FPKM)
+                (ENTAP_CONFIG::INPUT_FLAG_E_VAL.c_str(),
+                 boostPO::value<fp32>()->default_value(E_VALUE),DESC_EVAL)
+                ("version,v", "Display version number")
+                (ENTAP_CONFIG::INPUT_FLAG_PAIRED_END.c_str(), DESC_PAIRED_END)
                 ("threads,t",
-                 boostPO::value<int>()->default_value(1),"Number of threads")
-                ("align,a",
-                 boostPO::value<std::string>(),"Path to BAM/SAM file")
+                 boostPO::value<int>()->default_value(1),DESC_THREADS)
+                ("align,a", boostPO::value<std::string>(),DESC_ALIGN_FILE)
                 ("contam,c",
-                 boostPO::value<std::vector<std::string>>()->multitoken(),
-                 "Contaminant selection")
-                (ENTAP_CONFIG::INPUT_FLAG_TRIM.c_str(),
-                "Trim input sequence headers to first space to make outputs easier to read")
+                 boostPO::value<std::vector<std::string>>()->multitoken(),DESC_CONTAMINANT)
+                (ENTAP_CONFIG::INPUT_FLAG_TRIM.c_str(), DESC_TRIM)
                 (ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE.c_str(),
-                 boostPO::value<float>()->default_value(DEFAULT_QCOVERAGE),
-                 "Select minimum query coverage to be kept for similarity searching")
-                (ENTAP_CONFIG::INPUT_FLAG_EXE_PATH.c_str(),
-                 boostPO::value<std::string>(),
-                 "Specify path to EnTAP exe if it is not detected by the program.")
-                (ENTAP_CONFIG::INPUT_FLAG_DATA_OUT.c_str(),
-                 boostPO::value<std::string>(),
-                 "Specify output directory for diamond formatted databases.")
+                 boostPO::value<fp32>()->default_value(DEFAULT_QCOVERAGE), DESC_QCOVERAGE)
+                (ENTAP_CONFIG::INPUT_FLAG_EXE_PATH.c_str(), boostPO::value<std::string>(), DESC_EXE_PATHS)
+                (ENTAP_CONFIG::INPUT_FLAG_DATA_OUT.c_str(), boostPO::value<std::string>(), DESC_DATA_OUT)
                 (ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE.c_str(),
-                 boostPO::value<float>()->default_value(DEFAULT_TCOVERAGE),
-                 "Select minimum target coverage to be kept for similarity searching")
-                (ENTAP_CONFIG::INPUT_FLAG_SPECIES.c_str(),
-                 boostPO::value<std::string>(),"The type of taxon/species you are analyzing if you would like"
-                         "favoring of hits based upon this. Ensure it is separated by a '_'.\nExample: homo_sapiens")
+                 boostPO::value<fp32>()->default_value(DEFAULT_TCOVERAGE), DESC_TCOVERAGE)
+                (ENTAP_CONFIG::INPUT_FLAG_SPECIES.c_str(), boostPO::value<std::string>(),DESC_TAXON)
                 (ENTAP_CONFIG::INPUT_FLAG_STATE.c_str(),
-                 boostPO::value<std::string>()->default_value(DEFAULT_STATE),
-                 "Select a state value, *EXPERIMENTAL*\n""These commands will run certain "
-                         "elements of the pipeline and stop at certain locations, as such"
-                         "there are several runs that may be invalid as they rely on data from another portion.\n"
-                         "Examples:\n+2x Will start the pipeline from Frame selection and will run RSEM then filter the"
-                         "transcriptome. It will then stop execution there specified by the x.")
-                ("input,i",
-                 boostPO::value<std::string>(), "Input transcriptome file")
-                (ENTAP_CONFIG::INPUT_FLAG_COMPLETE.c_str(),
-                 "Select this option if you have all complete proteins.\n"
-                         "Note: This assumes a protein input")
-                (ENTAP_CONFIG::INPUT_FLAG_OVERWRITE.c_str(),
-                 "Select this option if you wish to overwrite pre-existing files");
+                 boostPO::value<std::string>()->default_value(DEFAULT_STATE), DESC_STATE)
+                ("input,i", boostPO::value<std::string>(), DESC_INPUT_TRAN)
+                (ENTAP_CONFIG::INPUT_FLAG_COMPLETE.c_str(), DESC_COMPLET_PROT)
+                (ENTAP_CONFIG::INPUT_FLAG_OVERWRITE.c_str(), DESC_OVERWRITE);
         boostPO::variables_map vm;
         //TODO verify state commands
 
@@ -177,7 +142,7 @@ boost::program_options::variables_map parse_arguments_boost(int argc, const char
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
             if (vm.count(ENTAP_CONFIG::INPUT_FLAG_VERSION)) {
-                std::cout<<"enTAP version: "<<ENTAP_CONFIG::ENTAP_VERSION<<std::endl;
+                std::cout<<"EnTAP version: "<<ENTAP_CONFIG::ENTAP_VERSION<<std::endl;
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
             print_debug("Success!");
@@ -207,6 +172,7 @@ boost::program_options::variables_map parse_arguments_boost(int argc, const char
  */
 bool verify_user_input(boostPO::variables_map& vm) {
 
+    bool                     is_interpro;
     bool                     is_protein;
     bool                     is_nucleotide;
     bool                     is_config;
@@ -303,7 +269,7 @@ bool verify_user_input(boostPO::variables_map& vm) {
 
             // Verify query coverage
             if (vm.count(ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE)) {
-                float qcoverage = vm[ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE].as<float>();
+                fp32 qcoverage = vm[ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE].as<fp32>();
                 if (qcoverage > COVERAGE_MAX || qcoverage < COVERAGE_MIN) {
                     throw ExceptionHandler("Query coverage is out of range, but be between " +
                                            std::to_string(COVERAGE_MIN) +
@@ -313,7 +279,7 @@ bool verify_user_input(boostPO::variables_map& vm) {
 
             // Verify target coverage
             if (vm.count(ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE)) {
-                float qcoverage = vm[ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE].as<float>();
+                fp32 qcoverage = vm[ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE].as<fp32>();
                 if (qcoverage > COVERAGE_MAX || qcoverage < COVERAGE_MIN) {
                     throw ExceptionHandler("Target coverage is out of range, but be between " +
                                            std::to_string(COVERAGE_MIN) +
@@ -327,6 +293,37 @@ bool verify_user_input(boostPO::variables_map& vm) {
                     throw ExceptionHandler("Taxonomic database could not be found at: " + TAX_DB_PATH +
                                             " make sure to set the path in the configuration file",
                                             ENTAP_ERR::E_INPUT_PARSE);
+                }
+            }
+
+            // Verify Ontology Flags
+            is_interpro = false;
+            if (vm.count(ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY)) {
+                std::vector<uint8> ont_flags =
+                        vm[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<std::vector<uint8>>();
+                for (int i = 0; i < ont_flags.size() ; i++) {
+                    if ((ont_flags[i] > ENTAP_EXECUTE::ONTOLOGY_MAX) ||
+                         ont_flags[i] < ENTAP_EXECUTE::ONTOLOGY_MIN) {
+                        throw ExceptionHandler("Invalid ontology flags being used",
+                                               ENTAP_ERR::E_INPUT_PARSE);
+                    }
+                    if (ont_flags[i] == ENTAP_EXECUTE::INTERPRO_INT_FLAG && !is_interpro) is_interpro = true;
+                }
+            }
+
+            // Verify InterPro databases
+            if (is_interpro) {
+                if (vm.count(ENTAP_CONFIG::INPUT_FLAG_INTERPRO)) {
+                    std::vector<std::string> inter_databases =
+                            vm[ENTAP_CONFIG::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
+                    for (std::string &database : inter_databases) {
+                        if (!verify_interpro(database)) {
+                            throw ExceptionHandler("InterPro database: " + database + " invalid!",
+                                                   ENTAP_ERR::E_INPUT_PARSE);
+                        }
+                    }
+                } else {
+                    throw ExceptionHandler("InterPro selected, but no databases specified.", ENTAP_ERR::E_INPUT_PARSE);
                 }
             }
 
@@ -703,6 +700,7 @@ void init_exe_paths(std::unordered_map<std::string, std::string> &map, std::stri
        "\nRSEM Directory: "                  << temp_rsem         <<
        "\nGeneMarkS-T: "                     << temp_genemark     <<
        "\nDIAMOND: "                         << temp_diamond      <<
+       "\nInterPro: "                        << temp_interpro     <<
        "\nEggNOG Emapper: "                  << temp_eggnog       <<
        "\nEggNOG Download: "                 << temp_eggnog_down  <<
        "\nEggNOG Database: "                 << temp_eggnog_db    <<
@@ -745,4 +743,25 @@ std::string get_exe_path(boostPO::variables_map &vm) {
         return p.string();
     }
     return "";
+}
+
+
+bool verify_interpro(std::string database) {
+    LOWERCASE(database);
+    if (database.compare(INTER_TIGR) == 0) return true;
+    if (database.compare(INTER_SFLD) == 0) return true;
+    if (database.compare(INTER_PRODOM) == 0) return true;
+    if (database.compare(INTER_HAMAP) == 0) return true;
+    if (database.compare(INTER_PFAM) == 0) return true;
+    if (database.compare(INTER_SMART) == 0) return true;
+    if (database.compare(INTER_CDD) == 0) return true;
+    if (database.compare(INTER_PROSITE_PROF) == 0) return true;
+    if (database.compare(INTER_PROSITE_PAT) == 0) return true;
+    if (database.compare(INTER_SUPERFAMILY) == 0) return true;
+    if (database.compare(INTER_PRINTS) == 0) return true;
+    if (database.compare(INTER_PANTHER) == 0) return true;
+    if (database.compare(INTER_GENE) == 0) return true;
+    if (database.compare(INTER_PIRSF) == 0) return true;
+    if (database.compare(INTER_COILS) == 0) return true;
+    return (database.compare(INTER_MOBI) == 0);
 }

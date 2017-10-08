@@ -45,7 +45,7 @@ add_executable(EnTAP ${SOURCE_FILES})
 include_directories(libs/pstream)
 include_directories(libs/fast-cpp-csv-parser) # May need to compile with thread control
 find_package(Boost 1.50.0 COMPONENTS program_options system filesystem iostreams serialization
-        regex REQUIRED)
+        regex date_time REQUIRED)
 
 find_package(Perl)
 if (Perl_FOUND)

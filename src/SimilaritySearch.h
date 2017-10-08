@@ -60,7 +60,7 @@ public:
 
 private:
 
-    const uint8       DIAMOND_FLAG                               = 0;
+    static constexpr uint8 DIAMOND_FLAG                          = 0;
     const std::string _NCBI_REGEX                                = "\\[([^]]+)\\](?!.+\\[.+\\])";
     const std::string _UNIPROT_REGEX                             = "OS=(.+?)\\s\\S\\S=";
     const std::string SIM_SEARCH_DATABASE_BEST_TSV               = "best_hits.tsv";

@@ -103,8 +103,9 @@ namespace ENTAP_EXECUTE {
 namespace ENTAP_CONFIG {
 
     const std::string ENTAP_VERSION  = "debug_0.7.4.6";
-    const std::string DEBUG_FILENAME = "debug.txt";
-    const std::string LOG_FILENAME   = "log_file.txt";
+    const std::string DEBUG_FILENAME = "debug";
+    const std::string LOG_FILENAME   = "log_file";
+    const std::string LOG_EXTENSION  = ".txt";
 
     //------------------USER INPUTS-----------------------//
     const std::string INPUT_FLAG_CONFIG        = "config";

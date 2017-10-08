@@ -509,7 +509,7 @@ namespace entapExecute {
            "Here are a few ways to help diagnose some general issues:\n"
                    "\t1. Check the (detailed) printed error message below\n"
                    "\t2. Review the .err files of the execution stage (they will\n"
-                   "\t\tbe in the directory for whateve stage you failed on\n"
+                   "\t\tbe in the directory for whatever stage you failed on\n"
                    "\t3. Check the debug.txt file that is printed after execution\n"
                    "\t4. Ensure your paths/inputs are correct in entap_config.txt\n"
                    "\t\tand log_file.txt (this will show your inputs)\n";

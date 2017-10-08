@@ -62,9 +62,9 @@ private:
     const std::string ONTOLOGY_OUT_PATH     = "ontology/";
 
     std::vector<std::string>        _interpro_databases;
-    std::vector<uint16>              _go_levels;
+    std::vector<uint16>             _go_levels;
     uint8                           _threads;
-    std::vector<uint16>              _software_flags;
+    std::vector<uint16>             _software_flags;
     bool                            _is_overwrite;
     bool                            _blastp;
     std::string                     _ontology_exe;

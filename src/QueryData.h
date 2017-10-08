@@ -66,7 +66,7 @@ private:
     void set_input_type(std::string&);
 
     const uint8         LINE_COUNT   = 20;
-    const uint8         NUCLEO_DEV   = 0;
+    const uint8         NUCLEO_DEV   = 2;
     const std::string   NUCLEO_FLAG  = "Nucleotide";
     const std::string   PROTEIN_FLAG = "Protein";
     const std::string   COMPLETE_FLAG= "Complete";

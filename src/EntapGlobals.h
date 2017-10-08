@@ -188,6 +188,7 @@ namespace ENTAP_CONFIG {
     extern const std::string ENTAP_VERSION ;
     extern const std::string DEBUG_FILENAME;
     extern const std::string LOG_FILENAME  ;
+    extern const std::string LOG_EXTENSION;
 
     //------------------USER INPUTS-----------------------//
     extern const std::string INPUT_FLAG_CONFIG       ;

@@ -44,10 +44,10 @@
                             "    - Downloading Gene Ontology term database\n"           \
                             "    - Formatting any database you would like for diamond"
 #define DESC_RUN_PROTEIN    "Execute EnTAP functionality through blastp\n"              \
-                            "Note, if your input sequences are protein, they will be"   \
+                            "Note, if your input sequences are nucleotide, they will be"\
                             "frame selected automatically."
 #define DESC_RUN_NUCLEO     "Execute EnTAP functionality through blastx\n"              \
-                            "This will not frame select your sequences and run them"    \
+                            "This will not frame select your sequences and will run them"\
                             "through each stage of the pipeline as nucelotide sequences"
 #define DESC_INTER_DATA     "Select which databases you would like for InterProScan"    \
                             "Databases must be one of the following:\n"                 \

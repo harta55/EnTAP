@@ -157,7 +157,9 @@ void QueryData::set_input_type(std::string &in) {
     line_count = 0;
     deviations = 0;
     while(std::getline(in_file,line)) {
-        if (line.empty() || line_count > LINE_COUNT) continue;
+        if (line.empty()) continue;
+        if (line_count > LINE_COUNT) break;
+        line.pop_back(); // Account for newline/other
         if (line.find('>') == std::string::npos) {
             for (char &c : line) {
                 toupper(c);

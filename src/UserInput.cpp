@@ -561,9 +561,9 @@ void print_user_input(boostPO::variables_map &map, std::string& exe, std::string
 
     ss <<
        ENTAP_STATS::SOFTWARE_BREAK <<
-       "enTAP Run Information\n"   <<
+       "EnTAP Run Information\n"   <<
        ENTAP_STATS::SOFTWARE_BREAK <<
-       "Current enTAP Version: "   << ENTAP_CONFIG::ENTAP_VERSION  <<
+       "Current EnTAP Version: "   << ENTAP_CONFIG::ENTAP_VERSION  <<
        "\nStart time: "            << std::ctime(&time)            <<
        "\nWorking directory has been set to: "  << out        <<
        "\nExecution directory has been set to: "<< exe        <<'\n';

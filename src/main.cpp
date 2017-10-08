@@ -35,6 +35,7 @@
 #include <unordered_map>
 #include <boost/filesystem/operations.hpp>
 #include <chrono>
+#include <iomanip>
 #include "EntapConfig.h"
 #include "ExceptionHandler.h"
 #include "boost/program_options.hpp"
@@ -136,8 +137,6 @@ void init_entap(boostPO::variables_map& user_input) {
     _working_dir    = working_dir.string();
     _outpath        = PATHS(_working_dir, user_input["tag"].as<std::string>());
     boostFS::create_directories(_outpath);
-    DEBUG_FILE_PATH = PATHS(_outpath, ENTAP_CONFIG::DEBUG_FILENAME);
-    LOG_FILE_PATH   = PATHS(_outpath, ENTAP_CONFIG::LOG_FILENAME);
     init_log();
     _exe_path = get_exe_path(user_input);
     print_user_input(user_input, _exe_path, _outpath);
@@ -160,6 +159,23 @@ void init_entap(boostPO::variables_map& user_input) {
  * ======================================================================
  */
 void init_log() {
+    std::chrono::time_point<std::chrono::system_clock> now;
+    std::time_t                                        now_time;
+    std::tm                                            now_tm;
+    std::stringstream                                  ss;
+    std::string                                        log_file_name;
+    std::string                                        debug_file_name;
+    std::string                                        time_date;
+
+    now      = std::chrono::system_clock::now();
+    now_time = std::chrono::system_clock::to_time_t(now);
+    now_tm   = *std::localtime(&now_time);
+    ss << std::put_time(&now_tm, "_%Y.%m.%d-%Hh.%Mm.%Ss");
+    time_date       = ss.str();
+    log_file_name   = ENTAP_CONFIG::LOG_FILENAME   + time_date + ENTAP_CONFIG::LOG_EXTENSION;
+    debug_file_name = ENTAP_CONFIG::DEBUG_FILENAME + time_date + ENTAP_CONFIG::LOG_EXTENSION;
+    DEBUG_FILE_PATH = PATHS(_outpath, debug_file_name);
+    LOG_FILE_PATH   = PATHS(_outpath, log_file_name);
     boostFS::remove(DEBUG_FILE_PATH);
     boostFS::remove(LOG_FILE_PATH);
     print_debug("Start - EnTAP");

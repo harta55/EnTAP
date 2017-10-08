@@ -95,8 +95,8 @@ boost::program_options::variables_map parse_arguments_boost(int argc, const char
                          ->default_value(std::vector<std::string>{ENTAP_CONFIG::INPUT_UNIPROT_NULL},""),
                  DESC_COMING_SOON)
                 (ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY.c_str(),
-                 boostPO::value<std::vector<uint8>>()->multitoken()
-                 ->default_value(std::vector<uint8>{ENTAP_EXECUTE::EGGNOG_INT_FLAG},""),DESC_ONTOLOGY_FLAG)
+                 boostPO::value<std::vector<uint16>>()->multitoken()
+                 ->default_value(std::vector<uint16>{ENTAP_EXECUTE::EGGNOG_INT_FLAG},""),DESC_ONTOLOGY_FLAG)
                 (ENTAP_CONFIG::INPUT_FLAG_GRAPH.c_str(),DESC_GRAPHING)
                 ("tag",
                  boostPO::value<std::string>()->default_value(OUTFILE_DEFAULT),DESC_OUT_FLAG)
@@ -299,8 +299,8 @@ bool verify_user_input(boostPO::variables_map& vm) {
             // Verify Ontology Flags
             is_interpro = false;
             if (vm.count(ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY)) {
-                std::vector<uint8> ont_flags =
-                        vm[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<std::vector<uint8>>();
+                std::vector<uint16> ont_flags =
+                        vm[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<std::vector<uint16>>();
                 for (int i = 0; i < ont_flags.size() ; i++) {
                     if ((ont_flags[i] > ENTAP_EXECUTE::ONTOLOGY_MAX) ||
                          ont_flags[i] < ENTAP_EXECUTE::ONTOLOGY_MIN) {

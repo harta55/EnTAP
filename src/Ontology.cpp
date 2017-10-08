@@ -52,7 +52,7 @@ Ontology::Ontology(int thread, std::string outpath, std::string input,
     _new_input          = input;
     _is_overwrite       = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
     _blastp             = blastp;
-    _software_flags     = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<std::vector<uint8>>();
+    _software_flags     = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<std::vector<uint16>>();
     _go_levels          = user_input[ENTAP_CONFIG::INPUT_FLAG_GO_LEVELS].as<std::vector<uint16>>();
     _ontology_dir       = PATHS(outpath, ONTOLOGY_OUT_PATH);
     _eggnog_db_path     = EGG_SQL_DB_PATH;
@@ -74,7 +74,7 @@ void Ontology::execute(std::string input,std::string no_hit) {
     boostFS::create_directories(_ontology_dir);
     init_headers();
     try {
-        for (uint8 software : _software_flags) {
+        for (uint16 software : _software_flags) {
             ptr = spawn_object(software);
             ptr->set_data(_eggnog_db_path, _interpro_databases);
             verify_pair = ptr->verify_files();
@@ -89,7 +89,7 @@ void Ontology::execute(std::string input,std::string no_hit) {
 }
 
 
-std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint8 &software) {
+std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
     switch (software) {
         case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
@@ -164,7 +164,7 @@ void Ontology::init_headers() {
             &ENTAP_EXECUTE::HEADER_INFORM
     };
     // Add additional headers for ontology software
-    for (unsigned char &flag : _software_flags) {
+    for (uint16 &flag : _software_flags) {
         switch (flag) {
             case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
                 add_header = {

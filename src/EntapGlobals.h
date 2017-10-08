@@ -131,10 +131,10 @@ namespace ENTAP_EXECUTE {
     extern const std::string GO_BIOLOGICAL_FLAG ;
     extern const std::string GO_CELLULAR_FLAG;
     extern const std::string GO_MOLECULAR_FLAG;
-    const uint8 ONTOLOGY_MIN      = 0;
-    const uint8 EGGNOG_INT_FLAG   = 0;
-    const uint8 INTERPRO_INT_FLAG = 1;
-    const uint8 ONTOLOGY_MAX      = 1;
+    const uint16 ONTOLOGY_MIN      = 0;
+    const uint16 EGGNOG_INT_FLAG   = 0;
+    const uint16 INTERPRO_INT_FLAG = 1;
+    const uint16 ONTOLOGY_MAX      = 1;
 
     //------------------------Headers-------------------------//
     extern const std::string HEADER_QUERY;

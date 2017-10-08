@@ -88,7 +88,7 @@ namespace entapExecute {
     void execute_main(boost::program_options::variables_map &user_input) {
         print_debug("EnTAP Executing...");
 
-        std::vector<uint8>                      ontology_flags;
+        std::vector<uint16>                      ontology_flags;
         std::vector<std::string>                other_databases; // -d Command databases
         std::pair<std::string,std::string>      diamond_pair;    // best_hits.fa,no_hits.fa
         std::string                             no_database_hits;// No DIAMOND
@@ -112,7 +112,7 @@ namespace entapExecute {
         trim_flag      = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_TRIM);
         is_complete    = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_COMPLETE);
         diamond_pair   = std::make_pair(_input_path,"");
-        ontology_flags = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<std::vector<uint8>>();
+        ontology_flags = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<std::vector<uint16>>();
 
         boostFS::path working_dir(boostFS::current_path());
         _outpath       = PATHS(working_dir, user_input["tag"].as<std::string>());

@@ -54,7 +54,7 @@ public:
     void flag_transcripts(ExecuteStates);
     std::pair<uint16, uint16> calculate_N_vals(std::vector<uint16>&,uint64);
     std::string trim_sequence_header(std::string&, std::string);
-    void final_statistics(std::string&, std::vector<uint8>&);
+    void final_statistics(std::string&, std::vector<uint16>&);
     bool is_protein() const;
     void set_frame_stats(const FrameStats &_frame_stats);
     void set_EXPRESSION_SUCCESS(bool _EXPRESSION_SUCCESS);
@@ -89,10 +89,6 @@ private:
     bool         _SIM_SEARCH_SUCCESS;
     bool         _ONTOLOGY_SUCCESS;
     FrameStats   _frame_stats;
-
-
-
-
 
 };
 

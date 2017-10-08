@@ -64,7 +64,7 @@ private:
     std::vector<std::string>        _interpro_databases;
     std::vector<uint16>              _go_levels;
     uint8                           _threads;
-    std::vector<uint8>              _software_flags;
+    std::vector<uint16>              _software_flags;
     bool                            _is_overwrite;
     bool                            _blastp;
     std::string                     _ontology_exe;
@@ -82,7 +82,7 @@ private:
     void print_eggnog(query_map_struct&);
     void init_headers();
     void print_header(std::string);
-    std::unique_ptr<AbstractOntology> spawn_object(uint8&);
+    std::unique_ptr<AbstractOntology> spawn_object(uint16&);
 };
 
 

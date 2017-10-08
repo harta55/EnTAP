@@ -252,7 +252,7 @@ void QueryData::flag_transcripts(ExecuteStates state) {
  *
  * =====================================================================
  */
-void QueryData::final_statistics(std::string &outpath, std::vector<uint8> &ontology_flags) {
+void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &ontology_flags) {
     print_debug("Pipeline finished! Calculating final statistics...");
 
     std::stringstream      ss;
@@ -361,7 +361,7 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint8> &ontol
            "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits;
     }
     if (_ONTOLOGY_SUCCESS) {
-        for (uint8 flag : ontology_flags) {
+        for (uint16 flag : ontology_flags) {
             switch (flag) {
                 case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
                     ss <<

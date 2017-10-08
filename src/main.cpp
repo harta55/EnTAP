@@ -37,6 +37,9 @@
 #include <boost/filesystem/operations.hpp>
 #include <chrono>
 #include <iomanip>
+#include <boost/date_time/time_clock.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include "EntapConfig.h"
 #include "ExceptionHandler.h"
 #include "boost/program_options.hpp"
@@ -160,18 +163,28 @@ void init_entap(boostPO::variables_map& user_input) {
  * ======================================================================
  */
 void init_log() {
-    std::chrono::time_point<std::chrono::system_clock> now;
-    std::time_t                                        now_time;
-    std::tm                                            now_tm;
+//    std::chrono::time_point<std::chrono::system_clock> now;
+//    std::time_t                                        now_time;
+//    std::tm                                            now_tm;
     std::stringstream                                  ss;
     std::string                                        log_file_name;
     std::string                                        debug_file_name;
     std::string                                        time_date;
 
-    now      = std::chrono::system_clock::now();
-    now_time = std::chrono::system_clock::to_time_t(now);
-    now_tm   = *std::localtime(&now_time);
-    ss << std::put_time(&now_tm, "_%Y.%m.%d-%Hh.%Mm.%Ss");
+    boost::posix_time::ptime local = boost::posix_time::second_clock::local_time();
+    ss <<
+       "_" <<
+       local.date().year() << "." <<
+       local.date().month().as_number()<< "." <<
+       local.date().day()  << "-" <<
+       local.time_of_day().hours()<< "h"   <<
+       local.time_of_day().minutes()<< "m" <<
+       local.time_of_day().seconds()<< "s";
+
+//    now      = std::chrono::system_clock::now();
+//    now_time = std::chrono::system_clock::to_time_t(now);
+//    now_tm   = *std::localtime(&now_time);
+//    ss << std::put_time(&now_tm, "_%Y.%m.%d-%Hh.%Mm.%Ss");
     time_date       = ss.str();
     log_file_name   = ENTAP_CONFIG::LOG_FILENAME   + time_date + ENTAP_CONFIG::LOG_EXTENSION;
     debug_file_name = ENTAP_CONFIG::DEBUG_FILENAME + time_date + ENTAP_CONFIG::LOG_EXTENSION;

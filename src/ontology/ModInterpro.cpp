@@ -26,14 +26,30 @@
 */
 
 
+//*********************** Includes *****************************
 #include "ModInterpro.h"
 #include "../ExceptionHandler.h"
 #include "boost/property_tree/ptree.hpp"
 #include "boost/property_tree/xml_parser.hpp"
+//**************************************************************
 
 using boost::property_tree::ptree;
 
 
+/**
+ * ======================================================================
+ * Function std::pair<bool, std::string> ModInterpro::verify_files()
+ *
+ * Description          - Checks whether execution has already been ran
+ *                        with the same input (so it can be skipped)
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - Pair of yes/no if files were found and string (not used)
+ *
+ * =====================================================================
+ */
 std::pair<bool, std::string> ModInterpro::verify_files() {
 
     std::string filename;
@@ -49,15 +65,15 @@ void ModInterpro::execute() {
     std::string interpro_cmd;
     std::string std_out;
 
-    print_debug("Executing InterProScan...");
-    std_out = PATHS(_interpro_dir, "interproscan_std");
+    std_out      = PATHS(_interpro_dir, "interproscan_std");
     interpro_cmd =
             INTERPRO_EXE    +
             " -i "          + _inpath +
-            " --goterms"    +
-            " --iprlookup"  +
-            " --pathways";
+            FLAG_GOTERM     +
+            FLAG_IPRLOOK    +
+            FLAG_PATHWAY;
 
+    print_debug("Executing InterProScan:\n" + interpro_cmd);
     if (!_databases.empty()) {
         for (std::string &val : _databases) interpro_cmd += " --appl " + val;
     } else {
@@ -70,21 +86,36 @@ void ModInterpro::execute() {
     }
 }
 
+
+/**
+ * ======================================================================
+ * Function void ModInterpro::parse()
+ *
+ * Description          - Parses XML file produced from InterProScan
+ *                      - Will probably be changed with new library introduction
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void ModInterpro::parse() {
 
-    std::stringstream stats_stream;
-    std::string stats_out;
-    std::string e_str;
-    std::string interpro_output;
-    std::string protein_output;
+    std::stringstream                     stats_stream;
+    std::string                           stats_out;
+    std::string                           e_str;
+    std::string                           interpro_output;
+    std::string                           protein_output;
     std::map<std::string, struct_go_term> GO_DATABASE;
-    std::map<std::string,InterProData> interpro_map;
-    go_struct go_terms_parsed;
-    std::string seq_id;
-    double e_val;
-    bool inter;
-    std::string pathway;
-    ptree pt;
+    std::map<std::string,InterProData>    interpro_map;
+    go_struct                             go_terms_parsed;
+    std::string                           seq_id;
+    fp64                                  e_val;
+    bool                                  inter;
+    std::string                           pathway;
+    ptree                                 pt;
 
     print_debug("Beginning to parse InterProScan data...");
 
@@ -99,10 +130,10 @@ void ModInterpro::parse() {
         throw ExceptionHandler("Unable to locate InterProScan file at: " +
             _final_outpath, ENTAP_ERR::E_PARSE_INTERPRO);
     }
-    for (ptree::value_type const& v : pt.get_child("protein-matches")) {
-        if (v.first == "protein") {
-            seq_id = v.second.get_child("xref").get("<xmlattr>.id","");
-            for (ptree::value_type const& s : v.second.get_child("matches")){
+    for (ptree::value_type const& v : pt.get_child(XML_PRO_M)) {
+        if (v.first == XML_PROTEIN) {
+            seq_id = v.second.get_child(XML_XREF).get("<xmlattr>.id","");
+            for (ptree::value_type const& s : v.second.get_child(XML_MATCHES)){
                 if (s.first.find("-match") != std::string::npos) {
                     e_val = s.second.get("<xmlattr>.evalue", 1.0);
                     if (interpro_map.find(seq_id) != interpro_map.end()) {
@@ -110,22 +141,22 @@ void ModInterpro::parse() {
                     }
                     InterProData interpro1;
                     interpro1.pathways = "";
-                    interpro1.eval = e_val;
+                    interpro1.eval     = e_val;
                     try {
-                        s.second.get_child("signature").get_child("entry");
+                        s.second.get_child(XML_SIGNATURE).get_child(XML_ENTRY);
                         inter = true;
                     } catch (...) {inter = false;}
-                    interpro1.databaseDesc = s.second.get_child("signature").get("<xmlattr>.desc","");
-                    interpro1.databaseID = s.second.get_child("signature").get("<xmlattr>.ac","");
-                    interpro1.databasetype = s.second.get_child("signature").get_child("signature-library-release").
+                    interpro1.databaseDesc = s.second.get_child(XML_SIGNATURE).get("<xmlattr>.desc","");
+                    interpro1.databaseID   = s.second.get_child(XML_SIGNATURE).get("<xmlattr>.ac","");
+                    interpro1.databasetype = s.second.get_child(XML_SIGNATURE).get_child("signature-library-release").
                             get("<xmlattr>.library", "");
                     if (inter) {
-                        interpro1.interDesc = s.second.get_child("signature").get_child("entry").
+                        interpro1.interDesc = s.second.get_child(XML_SIGNATURE).get_child(XML_ENTRY).
                                 get("<xmlattr>.desc", "");
-                        interpro1.interID = s.second.get_child("signature").get_child("entry").
+                        interpro1.interID = s.second.get_child(XML_SIGNATURE).get_child(XML_ENTRY).
                                 get("<xmlattr>.ac", "");
                         std::unordered_map<std::string,std::string> pathway_map;
-                        for (ptree::value_type const& t : s.second.get_child("signature").get_child("entry")) {
+                        for (ptree::value_type const& t : s.second.get_child(XML_SIGNATURE).get_child(XML_ENTRY)) {
                             if (t.first.find("go-xref") == 0) {
                                 interpro1.go_terms += t.second.get("<xmlattr>.id","") + ",";
                             }
@@ -155,7 +186,7 @@ void ModInterpro::parse() {
         }
     }
 
-    print_debug("Sucess! Beginning to update database...");
+    print_debug("Success! Beginning to update query sequences...");
 
     // TODO stats
     for (auto &pair : *pQUERY_DATA->get_sequences_ptr()) {
@@ -174,10 +205,11 @@ void ModInterpro::parse() {
         }
     }
     print_debug("Success! Calculating statistics...");
-
     stats_stream <<
                  ENTAP_STATS::SOFTWARE_BREAK << " Ontology - InterProScan" << ENTAP_STATS::SOFTWARE_BREAK <<
                  "InterProScan statistics coming soon!";
+    stats_out = stats_stream.str();
+    print_statistics(stats_out);
 }
 
 void ModInterpro::set_data(std::string & unused, std::vector<std::string>& interpro) {

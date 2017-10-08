@@ -159,15 +159,15 @@ void ModRSEM::execute() {
 std::string ModRSEM::filter() {
     print_debug("Beginning to filter transcriptome...");
 
-    unsigned int        count_removed=0;
-    unsigned int        count_kept=0;
-    unsigned int        count_total=0;      // Used to warn user if high percentage is removed
-    float               length;
-    float               e_leng;
-    float               e_count;
-    float               tpm;
-    float               fpkm_val;
-    float               rejected_percent;
+    uint32              count_removed=0;
+    uint32              count_kept=0;
+    uint32              count_total=0;      // Used to warn user if high percentage is removed
+    fp32                length;
+    fp32                e_leng;
+    fp32                e_count;
+    fp32                tpm;
+    fp32                fpkm_val;
+    fp32                rejected_percent;
     std::string         geneid;
     std::string         transid;
     std::string         out_str;
@@ -236,8 +236,10 @@ std::string ModRSEM::filter() {
             count_removed++;
         }
     }
+    print_debug("File successfully filtered. Outputs at: " + out_kept + " and: " + out_removed);
 
     //-----------------------STATISTICS-----------------------//
+    print_debug("Beginning to calculate statistics...");
     out_msg<<std::fixed<<std::setprecision(2);
     out_msg << ENTAP_STATS::SOFTWARE_BREAK
             << "Expression Filtering - RSEM\n"
@@ -260,18 +262,19 @@ std::string ModRSEM::filter() {
     out_file.close();
     removed_file.close();
     file_fig_box.close();
-    print_debug("File successfully filtered. Outputs at: " + out_kept + " and: " + out_removed);
-
+    print_debug("Success!");
     //--------------------------------------------------------//
 
 
     //------------------------Graphing------------------------//
+    print_debug("Beginning to send data to graphing manager...");
     graphingStruct.text_file_path   = fig_txt_box_path;
     graphingStruct.graph_title      = GRAPH_TITLE_BOX_PLOT;
     graphingStruct.fig_out_path     = fig_png_box_path;
     graphingStruct.software_flag    = GRAPH_EXPRESSION_FLAG;
     graphingStruct.graph_type       = GRAPH_BOX_FLAG;
     pGraphingManager->graph(graphingStruct);
+    print_debug("Success!");
     //--------------------------------------------------------//
 
     return out_kept;
@@ -345,9 +348,26 @@ bool ModRSEM::rsem_conv_to_bam(std::string file_name) {
 }
 
 
-void ModRSEM::set_data(int thread, float fpmk, bool paired) {
+/**
+ * ======================================================================
+ * Function void ModRSEM::set_data(int thread, float fpmk, bool paired)
+ *
+ * Description          - Sets specific data used by each module (probably
+ *                        will change in adding modules)
+ *
+ * Notes                - None
+ *
+ * @param thread        - Thead count
+ * @param fpkm          - User selected FPKM threshold (for filtering)
+ * @param paired        - Yes/no if reads were paired-end during alignment
+ *
+ * @return              - True if file is empty
+ *
+ * =====================================================================
+ */
+void ModRSEM::set_data(int thread, float fpkm, bool paired) {
     _threads = thread;
-    _fpkm = fpmk;
+    _fpkm = fpkm;
     _ispaired = paired;
 }
 

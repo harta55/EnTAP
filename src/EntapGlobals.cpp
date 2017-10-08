@@ -48,8 +48,8 @@
 namespace ENTAP_EXECUTE {
     //------------------------Ontology-------------------------//
     const std::string GO_BIOLOGICAL_FLAG = "biological_process";
-    const std::string GO_CELLULAR_FLAG = "cellular_component";
-    const std::string GO_MOLECULAR_FLAG = "molecular_function";
+    const std::string GO_CELLULAR_FLAG   = "cellular_component";
+    const std::string GO_MOLECULAR_FLAG  = "molecular_function";
 
 
     //------------------------Headers-------------------------//
@@ -75,29 +75,29 @@ namespace ENTAP_EXECUTE {
     const std::string HEADER_INFORM    = "Informative";
 
     // EggNOG
-    const std::string HEADER_SEED_ORTH = "Seed Ortholog";
-    const std::string HEADER_SEED_EVAL = "Seed E-Value";
-    const std::string HEADER_SEED_SCORE= "Seed Score";
-    const std::string HEADER_PRED_GENE = "Predicted Gene";
-    const std::string HEADER_TAX_SCOPE = "Tax Scope";
-    const std::string HEADER_EGG_OGS   = "OGs";
-    const std::string HEADER_EGG_KEGG  = "KEGG Terms";
-    const std::string HEADER_EGG_GO_BIO = "GO Biological";
+    const std::string HEADER_SEED_ORTH   = "Seed Ortholog";
+    const std::string HEADER_SEED_EVAL   = "Seed E-Value";
+    const std::string HEADER_SEED_SCORE  = "Seed Score";
+    const std::string HEADER_PRED_GENE   = "Predicted Gene";
+    const std::string HEADER_TAX_SCOPE   = "Tax Scope";
+    const std::string HEADER_EGG_OGS     = "OGs";
+    const std::string HEADER_EGG_KEGG    = "KEGG Terms";
+    const std::string HEADER_EGG_GO_BIO  = "GO Biological";
     const std::string HEADER_EGG_GO_CELL = "GO Cellular";
     const std::string HEADER_EGG_GO_MOLE = "GO Molecular";
-    const std::string HEADER_EGG_DESC  = "Eggnog Description";
-    const std::string HEADER_EGG_LEVEL = "Full Tax Scope";
+    const std::string HEADER_EGG_DESC    = "Eggnog Description";
+    const std::string HEADER_EGG_LEVEL   = "Full Tax Scope";
     const std::string HEADER_EGG_PROTEIN = "Protein Domains";
 
     // InterProScan
-    const std::string HEADER_INTER_GO_BIO   = "IPScan GO Biological";
-    const std::string HEADER_INTER_GO_CELL  = "IPScan GO Cellular";
-    const std::string HEADER_INTER_GO_MOLE  = "IPScan GO Molecular";
-    const std::string HEADER_INTER_PATHWAY  = "Pathways";
-    const std::string HEADER_INTER_INTERPRO = "InterPro";
-    const std::string HEADER_INTER_DATA_TYPE= "Protein Database";
-    const std::string HEADER_INTER_DATA_TERM= "Protein Description";
-    const std::string HEADER_INTER_EVAL     = "E Value";
+    const std::string HEADER_INTER_GO_BIO    = "IPScan GO Biological";
+    const std::string HEADER_INTER_GO_CELL   = "IPScan GO Cellular";
+    const std::string HEADER_INTER_GO_MOLE   = "IPScan GO Molecular";
+    const std::string HEADER_INTER_PATHWAY   = "Pathways";
+    const std::string HEADER_INTER_INTERPRO  = "InterPro";
+    const std::string HEADER_INTER_DATA_TYPE = "Protein Database";
+    const std::string HEADER_INTER_DATA_TERM = "Protein Description";
+    const std::string HEADER_INTER_EVAL      = "E Value";
 }
 
 namespace ENTAP_CONFIG {
@@ -143,23 +143,22 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_UNIPROT_NULL       = "null";
     const std::string INPUT_UNIPROT_DEFAULT    = INPUT_UNIPROT_SWISS;
 
-    const std::string UNIPROT_BASE_PATH = "/databases/uniprot_";
+    const std::string UNIPROT_BASE_PATH  = "/databases/uniprot_";
     const std::string UNIPROT_INDEX_PATH = "/bin/uniprot_";
 
     const std::string NCBI_NONREDUNDANT = "nr";
-    const std::string NCBI_BASE_PATH = "/databases/ncbi_";
-    const std::string NCBI_REFSEQ_COMP = "refseq-c";
+    const std::string NCBI_BASE_PATH    = "/databases/ncbi_";
+    const std::string NCBI_REFSEQ_COMP  = "refseq-c";
     const std::string NCBI_REFSEQ_PLANT = "refseq-p";
-    const std::string NCBI_NULL = "null";
-    const std::string NCBI_DEFAULT = NCBI_REFSEQ_COMP;
+    const std::string NCBI_NULL         = "null";
+    const std::string NCBI_DEFAULT      = NCBI_REFSEQ_COMP;
 
     const std::string BIN_PATH          = "bin/";
     const std::string DATABASE_DIR      = "databases/";
     const std::string NCBI_INDEX_PATH   = "/bin/ncbi_";
     const std::string GO_DB_PATH_DEF    = "/bin/go_term.entp";
-    const std::string TAX_DB_DEFAULT      = "/bin/ncbi_tax_bin.entp";
+    const std::string TAX_DB_DEFAULT    = "/bin/ncbi_tax_bin.entp";
 }
-
 
 
 /**
@@ -213,6 +212,21 @@ void print_statistics(std::string &msg) {
 }
 
 
+/**
+ * ======================================================================
+ * Function bool file_exists(std::string path)
+ *
+ * Description          - Checks whether a file exists in the OS
+ *                      - Currently multiplatform boost implementation
+ *
+ * Notes                - None
+ *
+ * @param path          - Path of file to verify
+ *
+ * @return              - true/false of file existing
+ *
+ * =====================================================================
+ */
 bool file_exists(std::string path) {
     /* Non-boost implementation
     struct stat buff;
@@ -222,6 +236,22 @@ bool file_exists(std::string path) {
 }
 
 
+/**
+ * ======================================================================
+ * Function int execute_cmd(std::string cmd, std::string out_path)
+ *
+ * Description          - Terminal stream based on pstreams implementation
+ *                      - Executes commands and prints .err and .out from stream
+ *
+ * Notes                - None
+ *
+ * @param cmd           - Command for child process
+ * @param out_path      - Path to std out/err files to be printed
+ *
+ * @return              - int error code
+ *
+ * =====================================================================
+ */
 int execute_cmd(std::string cmd, std::string out_path) {
     std::ofstream out_file(out_path+".out", std::ios::out | std::ios::app);
     std::ofstream err_file(out_path+".err", std::ios::out | std::ios::app);
@@ -292,9 +322,25 @@ int execute_cmd(std::string cmd) {
 }
 
 
+/**
+ * ======================================================================
+ * Function int get_supported_threads(boost::program_options::variables_map &user_map)
+ *
+ * Description          - Gets threads supported by system and compared with
+ *                        user selection
+ *                      - If thread support is lower, set to that
+ *
+ * Notes                - None
+ *
+ * @param user_map      - Boost parsed input
+ *
+ * @return              - thread number
+ *
+ * =====================================================================
+ */
 int get_supported_threads(boost::program_options::variables_map &user_map) {
 
-    unsigned int supported_threads;
+    uint32       supported_threads;
     int          threads;
 
     supported_threads = std::thread::hardware_concurrency();
@@ -311,8 +357,10 @@ int get_supported_threads(boost::program_options::variables_map &user_map) {
 
 std::string generate_command(std::unordered_map<std::string,std::string> &map,std::string exe_path) {
     std::stringstream ss;
+    std::string       out;
+
     ss << exe_path << " ";
     for (auto &pair : map)ss << pair.first << " " << pair.second << " ";
-    std::string out = ss.str();
+    out = ss.str();
     return out;
 }

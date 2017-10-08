@@ -25,23 +25,51 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+
+//*********************** Includes *****************************
 #include <boost/filesystem.hpp>
 #include <csv.h>
 #include <boost/regex.hpp>
 #include <iomanip>
-#include <fstream>
 #include "ExpressionAnalysis.h"
 #include "ExceptionHandler.h"
 #include "EntapConfig.h"
 #include "EntapGlobals.h"
 #include "EntapExecute.h"
+#include "common.h"
 #include "expression/ModRSEM.h"
+//**************************************************************
 
-namespace boostFS = boost::filesystem;
 
-ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &out
-    , boost::program_options::variables_map& user_flags, GraphingManager *graph,
-      QueryData *queryData) {
+/**
+ * ======================================================================
+ * Function ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t,
+ *                                                 std::string &out,
+ *                                                 boost::program_options::variables_map& user_flags,
+ *                                                 GraphingManager *graph, QueryData *queryData)
+ *
+ * Description          - Main expression analysis constructor
+ *                      - Handles execution of specific packages as well
+ *                        as managing overall results (not currently)
+ *                      - Initializes member variables that will be
+ *                        pushed to specific modules
+ *
+ * Notes                - Constructor
+ *
+ * @param input         - Path to original input fasta file (may change)
+ * @param t             - Thread count
+ * @param out           - Main outfiles directory path
+ * @param user_flags    - Boost parsed user flags
+ * @param graph         - Ptr to graphing manager
+ * @param queryData     - Ptr to query data
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
+ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &out,
+                                       boost::program_options::variables_map& user_flags,
+                                       GraphingManager *graph, QueryData *queryData) {
     print_debug("Spawn object - ExpressionAnalysis");
     _software_flag = 0;
     _query_data    = queryData;
@@ -55,17 +83,35 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &ou
     if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
         _alignpath = user_flags[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>();
     }
-    _fpkm = user_flags[ENTAP_CONFIG::INPUT_FLAG_FPKM].as<float>();
-    _rsem_dir = PATHS(out, RSEM_OUT_DIR);
-    _proc_dir = PATHS(_rsem_dir, RSEM_PROCESSED_DIR);
-    _figure_dir = PATHS(_proc_dir,RSEM_FIGURE_DIR);
+    _fpkm          = user_flags[ENTAP_CONFIG::INPUT_FLAG_FPKM].as<fp32>();
+    _rsem_dir      = PATHS(out, RSEM_OUT_DIR);
+    _proc_dir      = PATHS(_rsem_dir, RSEM_PROCESSED_DIR);
+    _figure_dir    = PATHS(_proc_dir,RSEM_FIGURE_DIR);
     _graphingManager = graph;
-    SOFTWARE = static_cast<ExpressionSoftware>(_software_flag);
+    SOFTWARE       = static_cast<ExpressionSoftware>(_software_flag);
 }
 
+
+/**
+ * ======================================================================
+ * Function std::string ExpressionAnalysis::execute(std::string input)
+ *
+ * Description          - Entry into expression analysis
+ *                      - Spawns whichever module user selects (currently
+ *                        only RSEM)
+ *                      - Creates/removes output directories as instructed
+ *
+ * Notes                - Entry
+ *
+ * @param input         - Path to original input fasta file (may change)
+ *
+ * @return              - Path to filtered fasta file
+ *
+ * =====================================================================
+ */
 std::string ExpressionAnalysis::execute(std::string input) {
-    std::string output;
-    std::pair<bool, std::string> verify_pair;
+    std::string                         output;
+    std::pair<bool, std::string>        verify_pair;
     std::unique_ptr<AbstractExpression> ptr;
 
     _inpath = input;
@@ -84,17 +130,32 @@ std::string ExpressionAnalysis::execute(std::string input) {
     return output;
 }
 
+
+/**
+ * ======================================================================
+ * Function std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object()
+ *
+ * Description          - Spawns module to be used within pipeline (currently
+ *                        only RSEM)
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - Unique ptr (c++11) for module
+ *
+ * =====================================================================
+ */
 std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
     switch (SOFTWARE) {
         case RSEM:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
                     _exepath, _outpath, _inpath, _proc_dir, _figure_dir,
-                    _rsem_dir, _alignpath, _graphingManager, _query_data,_trim
+                    _rsem_dir, _alignpath, _graphingManager, _query_data
             ));
         default:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
                     _exepath, _outpath, _inpath, _proc_dir, _figure_dir,
-                    _rsem_dir, _alignpath, _graphingManager, _query_data,_trim
+                    _rsem_dir, _alignpath, _graphingManager, _query_data
             ));
     }
 }

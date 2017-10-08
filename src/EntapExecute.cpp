@@ -88,7 +88,7 @@ namespace entapExecute {
     void execute_main(boost::program_options::variables_map &user_input) {
         print_debug("EnTAP Executing...");
 
-        std::vector<uint16>                      ontology_flags;
+        std::vector<uint16>                     ontology_flags;
         std::vector<std::string>                other_databases; // -d Command databases
         std::pair<std::string,std::string>      diamond_pair;    // best_hits.fa,no_hits.fa
         std::string                             no_database_hits;// No DIAMOND
@@ -174,7 +174,7 @@ namespace entapExecute {
                             print_debug("No alignment file specified, skipping expression analysis");
                             QUERY_DATA.flag_transcripts(RSEM);
                         } else {
-                            _input_path = expression->execute(_input_path);
+                            _input_path = expression->execute(original_input);
                             _EXPRESSION_SUCCESS = true;
                         }
                         expression.release();
@@ -453,6 +453,19 @@ namespace entapExecute {
     }
 
 
+    /**
+     * ======================================================================
+     * Function void exit_error(ExecuteStates s)
+     *
+     * Description          - Prints a "summary" report for user during a
+     *                        fatal error depending on stage
+     *
+     * Notes                - None
+     *
+     * @param s             - Execution state
+     * @return              - None
+     * ======================================================================
+     */
     void exit_error(ExecuteStates s) {
         std::stringstream ss;
 

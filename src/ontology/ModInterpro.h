@@ -32,6 +32,8 @@
 
 #include "AbstractOntology.h"
 
+#define XML_ATR(x)      "<xmlattr>.x"
+
 class ModInterpro : public AbstractOntology{
 
     struct InterProData {
@@ -42,8 +44,7 @@ class ModInterpro : public AbstractOntology{
         std::string databaseDesc;
         std::string pathways;
         std::string go_terms;
-        double      eval;
-
+        fp64        eval;
     };
 
 public:
@@ -64,6 +65,17 @@ private:
     std::string INTERPRO_DIRECTORY          = "InterProScan";
     std::string INTERPRO_EXT                = ".xml";
     static constexpr short INTERPRO_COL_NUM = 15;
+
+    std::string XML_SIGNATURE = "signature";
+    std::string XML_ENTRY     = "entry";
+    std::string XML_XREF      = "xref";
+    std::string XML_PRO_M     = "protein-matches";
+    std::string XML_PROTEIN   = "protein";
+    std::string XML_MATCHES   = "matches";
+
+    std::string FLAG_GOTERM   = " --goterms";
+    std::string FLAG_IPRLOOK  = " --iprlookup";
+    std::string FLAG_PATHWAY  = " --pathways";
 
     std::vector<std::string> _databases;
     std::string              _interpro_dir;

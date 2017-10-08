@@ -66,18 +66,16 @@ FrameSelection::FrameSelection(std::string &input, std::string &out,
                                GraphingManager *graphingManager, QueryData *QUERY_DATA) {
     print_debug("Spawn object - FrameSelection");
     _graphingManager = graphingManager;
-    _QUERY_DATA = QUERY_DATA;
+    _QUERY_DATA      = QUERY_DATA;
     _exe_path        = GENEMARK_EXE;
     _outpath         = out;
     _inpath          = input;
     _overwrite       = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
     _software_flag   = 0;
-    _processed_path  = (boostFS::path(out) / boostFS::path(FRAME_SELECTION_OUT_DIR) /
-                        boostFS::path(PROCESSED_DIR)).string();
-    _figure_path     = (boostFS::path(out) / boostFS::path(FRAME_SELECTION_OUT_DIR) /
-                        boostFS::path(FIGURE_DIR)).string();
-    _frame_outpath   = (boostFS::path(out) / boostFS::path(FRAME_SELECTION_OUT_DIR)).string();
-    SOFTWARE = static_cast<FrameSoftware >(_software_flag);
+    _frame_outpath   = PATHS(out, FRAME_SELECTION_OUT_DIR);
+    _processed_path  = PATHS(_frame_outpath, PROCESSED_DIR);
+    _figure_path     = PATHS(_frame_outpath, FIGURE_DIR);
+    SOFTWARE         = static_cast<FrameSoftware >(_software_flag);
 }
 
 

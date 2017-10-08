@@ -29,25 +29,73 @@
 #ifndef ENTAP_ABSTRACTEXPRESSION_H
 #define ENTAP_ABSTRACTEXPRESSION_H
 
+//*********************** Includes *****************************
 #include <string>
 #include "../GraphingManager.h"
 #include "../QuerySequence.h"
 
+//**************************************************************
+
+
+/**
+ * ======================================================================
+ * Class AbstractExpression
+ *
+ * Description          - Abstract class/functions for Expression Analysis
+ *                        portion of pipeline
+ *                      - New modules will inherit from this class and
+ *                        implement it's functions to fit into pipeline
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - None
+ * ======================================================================
+ */
 class AbstractExpression {
+
 public:
+
+/**
+ * ======================================================================
+ * Function AbstractExpression(std::string &exe, std::string &out,
+ *                             std::string &in, std::string &proc,
+                               std::string &fig, std::string &exp,
+                               std::string &align,GraphingManager *graphing,
+                               QueryData *query, bool trim)
+ *
+ * Description          - Constructor for Abstract expression class
+ *                      - Initializes protected member variables for
+ *                        expression modules
+ *
+ * Notes                - Constructor
+ *
+ * @param exe           - Path to execution directory (EnTAP, unused)
+ * @param out           - Path to main outfiles directory (unused)
+ * @param in            - Path to original transcriptome from user
+ * @param proc          - Path to processed directory (within rsem for now)
+ * @param fig           - Path to figure directory (within rsem for now)
+ * @param exp           - Path to expression directory
+ * @param align         - Path to SAM/BAM alignment file
+ * @param graphing      - Ptr to graphing manager
+ * @param query         - Pointer to query data
+ * @param trim          - Bool of yes (sequences to be trimmed) or no
+ *
+ * @return              - None
+ * ======================================================================
+ */
     AbstractExpression(std::string &exe, std::string &out, std::string &in, std::string &proc,
                   std::string &fig, std::string &exp, std::string &align,GraphingManager *graphing,
-                  QueryData *query, bool trim){
-        _exe_path = exe;
-        _outpath  = out;
-        _inpath   = in;
-        _processed_path = proc;
-        _figure_path = fig;
+                  QueryData *query){
+        _exe_path           = exe;
+        _outpath            = out;
+        _inpath             = in;
+        _processed_path     = proc;
+        _figure_path        = fig;
         _expression_outpath = exp;
-        pGraphingManager = graphing;
-        _alignpath = align;
-        pQUERY_DATA = query;
-        _trim = trim;
+        pGraphingManager    = graphing;
+        _alignpath          = align;
+        pQUERY_DATA         = query;
     }
 
     virtual ~AbstractExpression() = default;
@@ -58,16 +106,15 @@ public:
 
 
 protected:
-    std::string _alignpath;
-    std::string _exe_path;
-    std::string _outpath;
-    std::string _inpath;
-    std::string _processed_path;
-    std::string _figure_path;
-    std::string _expression_outpath;
-    bool        _trim;
+    std::string     _alignpath;
+    std::string     _exe_path;
+    std::string     _outpath;
+    std::string     _inpath;
+    std::string     _processed_path;
+    std::string     _figure_path;
+    std::string     _expression_outpath;
     GraphingManager *pGraphingManager;
-    QueryData *pQUERY_DATA;
+    QueryData       *pQUERY_DATA;
 };
 
 #endif //ENTAP_ABSTRACTEXPRESSION_H

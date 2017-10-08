@@ -29,23 +29,68 @@
 #ifndef ENTAP_ABSTRACTFRAME_H
 #define ENTAP_ABSTRACTFRAME_H
 
+//*********************** Includes *****************************
 #include "../QuerySequence.h"
 #include "../QueryData.h"
+//**************************************************************
 
+/**
+ * ======================================================================
+ * Class AbstractFrame
+ *
+ * Description          - Abstract class/functions for Frame Selection
+ *                        portion of pipeline
+ *                      - New modules will inherit from this class and
+ *                        implement it's functions to fit into pipeline
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - None
+ * ======================================================================
+ */
 class AbstractFrame {
+
 public:
-    AbstractFrame(std::string &exe, std::string &out, std::string &in, std::string &proc,
-                std::string &fig, std::string &frame, GraphingManager *graphing, QueryData *queryData){
-        _exe_path = exe;
-        _outpath = out;
-        _inpath = in;
-        _processed_path = proc;
-        _figure_path = fig;
-        _frame_outpath = frame;
+
+/**
+ * ======================================================================
+ * Function AbstractFrame(std::string &exe, std::string &out,
+ *                        std::string &in, std::string &proc,
+                          std::string &fig, std::string &frame,
+                          GraphingManager *graphing, QueryData *queryData)
+ *
+ * Description          - Constructor for Abstract frame selection class
+ *                      - Initializes protected member variables for
+ *                        expression modules
+ *
+ * Notes                - Constructor
+ *
+ * @param exe           - Path to execution directory (EnTAP, unused)
+ * @param out           - Path to main outfiles directory (unused)
+ * @param in            - Path to filtered transcriptome
+ * @param proc          - Path to processed directory (within genemark for now)
+ * @param frame         - Path to figure directory (within genemark for now)
+ * @param graphing      - Ptr to graphing manager
+ * @param query         - Ptr to query data
+ *
+ * @return              - None
+ * ======================================================================
+ */
+    AbstractFrame(std::string &exe, std::string &out, std::string &in,
+                  std::string &proc,std::string &fig, std::string &frame,
+                  GraphingManager *graphing, QueryData *queryData){
+        _exe_path        = exe;
+        _outpath         = out;
+        _inpath          = in;
+        _processed_path  = proc;
+        _figure_path     = fig;
+        _frame_outpath   = frame;
         pGraphingManager = graphing;
-        pQUERY_DATA = queryData;
+        pQUERY_DATA      = queryData;
 
     }
+
     virtual ~AbstractFrame() = default;
     virtual std::pair<bool, std::string> verify_files()=0;
     virtual std::string execute() = 0;
@@ -53,12 +98,12 @@ public:
 
 
 protected:
-    std::string _exe_path;
-    std::string _outpath;
-    std::string _inpath;
-    std::string _processed_path;
-    std::string _figure_path;
-    std::string _frame_outpath;
+    std::string     _exe_path;
+    std::string     _outpath;
+    std::string     _inpath;
+    std::string     _processed_path;
+    std::string     _figure_path;
+    std::string     _frame_outpath;
     GraphingManager *pGraphingManager;
     QueryData       *pQUERY_DATA;
 };

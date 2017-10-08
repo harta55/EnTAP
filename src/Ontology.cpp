@@ -67,7 +67,7 @@ void Ontology::execute(std::string input,std::string no_hit) {
     std::pair<bool,std::string> verify_pair;
     std::unique_ptr<AbstractOntology> ptr;
 
-    _new_input = input;
+    _new_input     = input;
     _input_no_hits = no_hit;
 
     if (_is_overwrite) boostFS::remove_all(_ontology_dir);

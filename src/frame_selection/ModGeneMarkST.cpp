@@ -28,6 +28,7 @@
 
 //*********************** Includes *****************************
 #include <iomanip>
+#include "../common.h"
 #include "ModGeneMarkST.h"
 #include "../ExceptionHandler.h"
 #include "../EntapExecute.h"
@@ -52,13 +53,15 @@
 std::pair<bool, std::string> ModGeneMarkST::verify_files() {
     std::string lst_file;
 
+    print_debug("Beggining to verify GeneMark module files...");
+
     boost::filesystem::path file_name(boostFS::path(_inpath).filename());
-    _final_out = (boostFS::path(_frame_outpath) / file_name).string() + ".faa";
-    lst_file = file_name.string() + ".lst";
-    _final_lst = (boostFS::path(_frame_outpath) / boostFS::path(lst_file)).string();
+    _final_out = PATHS(_frame_outpath, file_name) + ".faa";
+    lst_file   = file_name.string() + ".lst";
+    _final_lst = PATHS(_frame_outpath, lst_file);
     if (file_exists(_final_out) && file_exists(_final_lst)) {
         print_debug("File found at: " + _final_out + "\n"
-                "continuing enTAP with this file and skipping frame selection");
+                "continuing EnTAP with this file and skipping frame selection");
         return std::make_pair(true, _final_out);
     }
     print_debug("File not found at " + _final_out + " so continuing frame selection");
@@ -95,12 +98,12 @@ std::string ModGeneMarkST::execute() {
     boost::filesystem::path file_name(boostFS::path(_inpath).filename());
     std::list<std::string> out_names {file_name.string()+".faa",
                                       file_name.string()+".fnn"};
-    lst_file = file_name.string() + ".lst";
-    out_gmst_log = (boostFS::path(_frame_outpath) / boostFS::path(GENEMARK_LOG_FILE)).string();
-    out_hmm_file = (boostFS::path(_frame_outpath) / boostFS::path(GENEMARK_HMM_FILE)).string();
+    lst_file     = file_name.string() + ".lst";
+    out_gmst_log = PATHS(_frame_outpath, GENEMARK_LOG_FILE);
+    out_hmm_file = PATHS(_frame_outpath, GENEMARK_HMM_FILE);
 
-    genemark_cmd = _exe_path + " -faa -fnn " + _inpath;
-    genemark_std_out = (boostFS::path(_frame_outpath) / boostFS::path(GENEMARK_STD_OUT)).string();
+    genemark_cmd     = _exe_path + " -faa -fnn " + _inpath;
+    genemark_std_out = PATHS(_frame_outpath, GENEMARK_STD_OUT);
     print_debug("Running genemark...\n" + genemark_cmd);
 
     if (execute_cmd(genemark_cmd,genemark_std_out) != 0 ) {
@@ -109,12 +112,12 @@ std::string ModGeneMarkST::execute() {
     }
     print_debug("Success!");
     // Format genemarks-t output (remove blank lines)
-    print_debug("Formatting genemark files");
+    print_debug("Formatting genemark files...");
 
     for (std::string path : out_names) {
         std::ifstream in_file(path);
         std::string temp_name = path+"_alt";
-        std::string out_path = (boostFS::path(_frame_outpath) / boostFS::path(path)).string();
+        std::string out_path = PATHS(_frame_outpath, path);
         std::ofstream out_file(path+"_alt");
         while (getline(in_file,line)){
             if (!line.empty()) {
@@ -139,9 +142,17 @@ std::string ModGeneMarkST::execute() {
 
 
 /**
+ * ======================================================================
+ * Function void ModGeneMarkST::parse()
  *
- * @param protein_path - path to .faa file
- * @param lst_path - path to .lst genemark file
+ * Description          - Parses/calculates statistics of GeneMark output
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - None
+ *
+ * =====================================================================
  */
 void ModGeneMarkST::parse() {
     // generate maps, query->sequence
@@ -161,32 +172,42 @@ void ModGeneMarkST::parse() {
     std::string                             max_kept_seq;
     std::stringstream                       stat_output;
     std::map<std::string, std::ofstream*>   file_map;
-    std::map<std::string, unsigned long>    count_map;
-    std::vector<unsigned short>             all_kept_lengths;
-    std::vector<unsigned short>             all_lost_lengths;
-    unsigned short                          length;
-    float                                   avg_selected;
-    float                                   avg_lost;
-    std::pair<unsigned long, unsigned long> kept_n;
+    std::map<std::string, uint64>           count_map;
+    std::vector<uint16>                     all_kept_lengths;
+    std::vector<uint16>                     all_lost_lengths;
+    uint16                                  length;
+    fp32                                    avg_selected;
+    fp32                                    avg_lost;
+    std::pair<uint64, uint64>               kept_n;
     GraphingStruct                          graphingStruct;
 
     boostFS::remove_all(_processed_path);
     boostFS::remove_all(_figure_path);
     boostFS::create_directories(_processed_path);
     boostFS::create_directories(_figure_path);
-    out_removed_path    = (boostFS::path(_processed_path) / boostFS::path(FRAME_SELECTION_LOST)).string();
-    out_internal_path   = (boostFS::path(_processed_path) / boostFS::path(FRAME_SELECTION_INTERNAL)).string();
-    out_complete_path   = (boostFS::path(_processed_path) / boostFS::path(FRAME_SELECTION_COMPLTE)).string();
-    out_partial_path    = (boostFS::path(_processed_path) / boostFS::path(FRAME_SELECTION_PARTIAL)).string();
-    figure_removed_path = (boostFS::path(_figure_path)    / boostFS::path(GRAPH_TEXT_REF_COMPAR)).string();
-    figure_removed_png  = (boostFS::path(_figure_path)    / boostFS::path(GRAPH_FILE_REF_COMPAR)).string();
-    figure_results_path = (boostFS::path(_figure_path)    / boostFS::path(GRAPH_TEXT_FRAME_RESUTS)).string();
-    figure_results_png  = (boostFS::path(_figure_path)    / boostFS::path(GRAPH_FILE_FRAME_RESUTS)).string();
+    out_removed_path    = PATHS(_processed_path, FRAME_SELECTION_LOST);
+    out_internal_path   = PATHS(_processed_path, FRAME_SELECTION_INTERNAL);
+    out_complete_path   = PATHS(_processed_path, FRAME_SELECTION_COMPLTE);
+    out_partial_path    = PATHS(_processed_path, FRAME_SELECTION_PARTIAL);
+    figure_removed_path = PATHS(_figure_path, GRAPH_TEXT_REF_COMPAR);
+    figure_removed_png  = PATHS(_figure_path, GRAPH_FILE_REF_COMPAR);
+    figure_results_path = PATHS(_figure_path, GRAPH_TEXT_FRAME_RESUTS);
+    figure_results_png  = PATHS(_figure_path, GRAPH_FILE_FRAME_RESUTS);
 
     // all nucleotide lengths
-    unsigned long min_removed=10000,min_selected=10000,max_removed=0,max_selected=0,
-            total_removed_len=0,total_kept_len=0, count_selected = 0, count_removed = 0,
-            count_partial_5=0, count_partial_3=0, count_internal=0, count_complete=0;
+    uint32 min_removed=10000;
+    uint32 min_selected=10000;
+    uint32 max_removed=0;
+    uint32 max_selected=0;
+    uint64 total_removed_len=0;
+    uint64 total_kept_len=0;
+    uint64 count_selected=0;
+    uint64 count_removed=0;
+    uint64 count_partial_5=0;
+    uint64 count_partial_3=0;
+    uint64 count_internal=0;
+    uint64 count_complete=0;
+
     try {
         std::map<std::string,frame_seq> protein_map = genemark_parse_protein(_final_out);
         genemark_parse_lst(_final_lst,protein_map);
@@ -210,8 +231,8 @@ void ModGeneMarkST::parse() {
         count_map ={
                 {FRAME_SELECTION_INTERNAL_FLAG,count_internal},
                 {FRAME_SELECTION_COMPLETE_FLAG,count_complete},
-                {FRAME_SELECTION_FIVE_FLAG,count_partial_5},
-                {FRAME_SELECTION_THREE_FLAG,count_partial_3},
+                {FRAME_SELECTION_FIVE_FLAG    ,count_partial_5},
+                {FRAME_SELECTION_THREE_FLAG   ,count_partial_3},
         };
 
         for (auto& pair : *pQUERY_DATA->get_sequences_ptr()) {
@@ -225,7 +246,7 @@ void ModGeneMarkST::parse() {
 
                 std::string sequence = p_it->second.sequence;
                 std::string frame_type = p_it->second.frame_type;
-                length = (unsigned short) pair.second.getSeq_length();  // Nucleotide sequence length
+                length = (uint16) pair.second.getSeq_length();  // Nucleotide sequence length
 
                 if (length < min_selected) {
                     min_selected = length;
@@ -250,7 +271,7 @@ void ModGeneMarkST::parse() {
                 // Lost sequence
                 count_removed++;
                 *file_map[FRAME_SELECTION_LOST_FLAG] << pair.second.get_sequence_n() << std::endl;
-                length = (unsigned short) pair.second.getSeq_length();  // Nucleotide sequence length
+                length = (uint16) pair.second.getSeq_length();  // Nucleotide sequence length
 
                 if (length < min_removed) {
                     min_removed = length;
@@ -273,6 +294,7 @@ void ModGeneMarkST::parse() {
             }
         }
         // Calculate and print stats
+        print_debug("Beginning to calculate statistics...");
         avg_selected = (float)total_kept_len / count_selected;
         avg_lost     = (float)total_removed_len / count_removed;
         stat_output<<std::fixed<<std::setprecision(2);
@@ -309,7 +331,7 @@ void ModGeneMarkST::parse() {
                     "\n\tShortest sequence(bp): "<< min_selected   << " (" << min_kept_seq << ")";
 
         if (count_removed > 0) {
-            std::pair<unsigned long, unsigned long> removed_n =
+            std::pair<uint64, uint64> removed_n =
                     pQUERY_DATA->calculate_N_vals(all_lost_lengths,total_removed_len);
             stat_output <<
                         "\nRemoved Sequences (no frame):"           <<
@@ -322,8 +344,10 @@ void ModGeneMarkST::parse() {
         }
         std::string stat_out_msg = stat_output.str();
         print_statistics(stat_out_msg);
+        print_debug("Success!");
 
         //------------------- Figure handling ---------------//
+        print_debug("Beggining figure handling...");
         file_figure_results << GRAPH_REJECTED_FLAG           << '\t' << std::to_string(count_removed)   <<std::endl;
         file_figure_results << FRAME_SELECTION_FIVE_FLAG     << '\t' << std::to_string(count_map[FRAME_SELECTION_FIVE_FLAG]) <<std::endl;
         file_figure_results << FRAME_SELECTION_THREE_FLAG    << '\t' << std::to_string(count_map[FRAME_SELECTION_THREE_FLAG]) <<std::endl;
@@ -342,6 +366,7 @@ void ModGeneMarkST::parse() {
         graphingStruct.fig_out_path   = figure_removed_png;
         graphingStruct.graph_type     = GRAPH_COMP_BOX_FLAG;
         pGraphingManager->graph(graphingStruct);
+        print_debug("Success!");
         //---------------------------------------------------//
 
         FrameStats final_stats;
@@ -354,7 +379,7 @@ void ModGeneMarkST::parse() {
         pQUERY_DATA->set_frame_stats(final_stats);
 
     } catch (ExceptionHandler &e) {throw e;}
-    print_debug("Success!");
+    print_debug("Success! Parsing complete");
 }
 
 
@@ -382,10 +407,10 @@ ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein(std::string &pr
     std::string     line;
     std::string     sequence;
     std::string     seq_id;
-    unsigned short  first;
-    unsigned short  second;
-    unsigned short  seq_len;
-    unsigned short  line_chars;
+    uint16          first;
+    uint16          second;
+    uint16          seq_len;
+    uint16          line_chars;
 
     if (!file_exists(protein)) {
         throw ExceptionHandler("File located at: " + protein + " does not exist!",
@@ -398,14 +423,14 @@ ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein(std::string &pr
         if (line.find(">")==0 || in_file.eof()) {
             if (!seq_id.empty()) {
                 std::string sub = sequence.substr(sequence.find("\n")+1);
-                line_chars = (unsigned short) std::count(sub.begin(),sub.end(),'\n');
-                seq_len = (unsigned short) (sub.length() - line_chars);
+                line_chars = (uint16) std::count(sub.begin(),sub.end(),'\n');
+                seq_len    = (uint16) (sub.length() - line_chars);
                 protein_sequence = {seq_len,sequence, ""};
                 protein_map.emplace(seq_id,protein_sequence);
             }
             if (in_file.eof()) break;
-            first = (unsigned short) (line.find(">") + 1);
-            second = (unsigned short) line.find("\t");
+            first  = (uint16) (line.find(">") + 1);
+            second = (uint16) line.find("\t");
             seq_id = line.substr(first,second-first);
             sequence = seq_id + "\n";
         } else {
@@ -444,22 +469,22 @@ void ModGeneMarkST::genemark_parse_lst(std::string &lst_path, frame_map_t &curre
     std::string     seq_id;
     bool            prime_5;
     bool            prime_3;
-    unsigned short  first;
+    uint16          first;
 
     std::ifstream in_file(lst_path);
     while (getline(in_file,line)) {
         if (line.empty()) continue;
         line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
         if (line.find("FASTA") == 0) {
-            first = (unsigned short) (line.find(":") + 1);
+            first = (uint16) (line.find(":") + 1);
             seq_id = line.substr(first);
         } else if (isdigit(line.at(0))) {
             prime_5 = line.find("<") != std::string::npos;
             prime_3 = line.find(">") != std::string::npos;
             if (prime_5 && prime_3) {
-                frame = "Internal";
+                frame = FRAME_SELECTION_INTERNAL_FLAG;
             } else if (!prime_5 && !prime_3) {
-                frame = "Complete";
+                frame = FRAME_SELECTION_COMPLETE_FLAG;
             } else if (prime_5) {
                 frame = FRAME_SELECTION_FIVE_FLAG;
             } else frame = FRAME_SELECTION_THREE_FLAG;

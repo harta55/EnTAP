@@ -60,7 +60,7 @@ public:
 
 private:
 
-
+    const uint8       DIAMOND_FLAG                               = 0;
     const std::string _NCBI_REGEX                                = "\\[([^]]+)\\](?!.+\\[.+\\])";
     const std::string _UNIPROT_REGEX                             = "OS=(.+?)\\s\\S\\S=";
     const std::string SIM_SEARCH_DATABASE_BEST_TSV               = "best_hits.tsv";
@@ -81,10 +81,10 @@ private:
     const std::string RESULTS_DIR                                = "overall_results/";
     const std::string FIGURE_DIR                                 = "figures/";
 
-    const unsigned char GRAPH_SOFTWARE_FLAG                      = 3;
-    const unsigned char GRAPH_BAR_FLAG                           = 1;
-    const unsigned char GRAPH_SUM_FLAG                           = 2;
-    const std::string GRAPH_DATABASE_SUM_TITLE                    = "_Summary";
+    const uint8 GRAPH_SOFTWARE_FLAG                              = 3;
+    const uint8 GRAPH_BAR_FLAG                                   = 1;
+    const uint8 GRAPH_SUM_FLAG                                   = 2;
+    const std::string GRAPH_DATABASE_SUM_TITLE                   = "_Summary";
     const std::string GRAPH_DATABASE_SUM_TXT                     = "_summary_bar.txt";
     const std::string GRAPH_DATABASE_SUM_PNG                     = "_summary_bar.png";
     const std::string GRAPH_SPECIES_BAR_TXT                      = "_species_bar.txt";
@@ -149,10 +149,10 @@ private:
     int                             _threads;
     bool                            _overwrite;
     bool                            _blastp;
-    float                           _e_val;
-    float                           _qcoverage;
-    float                           _tcoverage;
-    short                           _software_flag;
+    fp32                            _e_val;
+    fp32                            _qcoverage;
+    fp32                            _tcoverage;
+    uint8                           _software_flag;
     std::vector<std::string>        _contaminants;
     GraphingManager                 *_pGraphingManager;
     QueryData                       *_pQUERY_DATA;

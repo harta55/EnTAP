@@ -116,7 +116,7 @@ The |sim_dir| directory will contain all of the relevant information for the sim
 
 DIAMOND Files: |sim_dir|
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-The files within the |sim_dir| directory contain the results from the similarity searching portion of the pipeline against each database you select. More information can be found at DIAMOND_. With running blastp (protein similarity searching), a generic transcriptome input of "Species.fasta", with a database called "database" the files will have the following format:
+The files within the |sim_dir| directory contain the results from the similarity searching portion of the pipeline against each database you select. More information can be found at DIAMOND_. With running _blastp (protein similarity searching), a generic transcriptome input of "Species.fasta", with a database called "database" the files will have the following format:
 
 * blastp_Species_database.out
 

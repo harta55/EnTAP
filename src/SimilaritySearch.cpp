@@ -67,7 +67,7 @@ SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::str
                            int threads, std::string out, boost::program_options::variables_map &user_flags,
                            GraphingManager *graphingManager, QueryData *queryData) {
     print_debug("Spawn object - SimilaritySearch");
-    _pQUERY_DATA = queryData;
+    _pQUERY_DATA    = queryData;
     _database_paths = databases;
     _input_path     = input;
     _threads        = threads;
@@ -81,10 +81,10 @@ SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::str
         std::transform(_input_species.begin(), _input_species.end(), _input_species.begin(), ::tolower);
         std::replace(_input_species.begin(), _input_species.end(), '_',' ');
     }
-    _qcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE].as<float>();
-    _tcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE].as<float>();
+    _qcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE].as<fp32>();
+    _tcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE].as<fp32>();
     _overwrite = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
-    _e_val     = user_flags[ENTAP_CONFIG::INPUT_FLAG_E_VAL].as<float>();
+    _e_val     = user_flags[ENTAP_CONFIG::INPUT_FLAG_E_VAL].as<fp32>();
 
     // Format contaminants for use in database
     std::vector<std::string> contaminants;
@@ -97,15 +97,15 @@ SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::str
         std::transform(str.begin(), str.end(), str.begin(), ::tolower);
         std::replace(str.begin(), str.end(), '_',' ');
     }
-    _contaminants = contaminants;
-    _software_flag = 0;         // Default DIAMOND software
+    _contaminants    = contaminants;
+    _software_flag   = DIAMOND_FLAG;         // Default DIAMOND software
     _pGraphingManager= graphingManager;
 
     // Set sim search paths/directories
-    _sim_search_dir  = (boostFS::path(out) / boostFS::path(SIM_SEARCH_DIR)).string();
-    _processed_path  = (boostFS::path(_sim_search_dir) / boostFS::path(PROCESSED_DIR)).string();
-    _results_path    = (boostFS::path(_sim_search_dir) / boostFS::path(RESULTS_DIR)).string();
-    _figure_path     = (boostFS::path(_sim_search_dir) / boostFS::path(FIGURE_DIR)).string();
+    _sim_search_dir  = PATHS(out, SIM_SEARCH_DIR);
+    _processed_path  = PATHS(_sim_search_dir, PROCESSED_DIR);
+    _results_path    = PATHS(_sim_search_dir, RESULTS_DIR);
+    _figure_path     = PATHS(_sim_search_dir, FIGURE_DIR);
 }
 
 
@@ -177,7 +177,7 @@ std::pair<std::string,std::string> SimilaritySearch::parse_files(std::string new
     _input_path = new_input;
     try {
         switch (_software_flag) {
-            case 0:
+            case DIAMOND_FLAG:
                 return diamond_parse(_contaminants);
             default:
                 return diamond_parse(_contaminants);
@@ -363,10 +363,11 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
         // todo have columns from input file, in_read_header for versatility
         std::string qseqid, sseqid, stitle, database_name,pident, bitscore,
                 length, mismatch, gapopen, qstart, qend, sstart, send;
-        fp64 evalue, coverage;
-        count_removed = 0;
+        fp64 evalue;
+        fp64 coverage;
+        count_removed    = 0;
         count_TOTAL_hits = 0;
-        count_under_e = 0;
+        count_under_e    = 0;
         std::stringstream out_stream;
 
         if (_file_to_database.find(data) != _file_to_database.end()) {
@@ -445,12 +446,14 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
     std::string                 database;
     std::string                 figure_base;
     std::string                 frame;
-    unsigned long               count_no_hit=0;
-    unsigned long               count_contam=0;
-    unsigned long               count_filtered=0;
-    unsigned long               count_informative=0;
-    unsigned long               count_uninformative=0;
-    double                      contam_percent;
+    uint64                      count_no_hit=0;
+    uint64                      count_contam=0;
+    uint64                      count_filtered=0;
+    uint64                      count_informative=0;
+    uint64                      count_uninformative=0;
+    uint32                      ct;
+    fp64                        percent;
+    fp64                        contam_percent;
     std::map<std::string, int>  contam_map;
     std::map<std::string, int>  species_map;
     std::map<std::string, int>  contam_species_map;
@@ -639,15 +642,15 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
     if (count_contam > 0) {
         ss << "\n\t\tFlagged contaminants (all % based on total contaminants):";
         for (auto &pair : contam_map) {
-            double percent = ((double)pair.second / count_contam) * 100;
+            percent = ((double)pair.second / count_contam) * 100;
             ss
                 << "\n\t\t\t" << pair.first << ": " << pair.second << "(" << percent <<"%)";
         }
         ss << "\n\t\tTop 10 contaminants by species:";
-        int ct = 1;
+        ct = 1;
         for (count_pair pair : contam_species_vect) {
             if (ct > 10) break;
-            double percent = ((double)pair.second / count_contam) * 100;
+            percent = ((double)pair.second / count_contam) * 100;
             ss
                 << "\n\t\t\t" << ct << ")" << pair.first << ": "
                 << pair.second << "(" << percent <<"%)";
@@ -657,10 +660,10 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
     }
 
     ss << "\n\tTop 10 alignments by species:";
-    int ct = 1;
+    ct = 1;
     for (count_pair pair : species_vect) {
         if (ct > 10) break;
-        double percent = ((double)pair.second / count_filtered) * 100;
+        percent = ((double)pair.second / count_filtered) * 100;
         ss
             << "\n\t\t\t" << ct << ")" << pair.first << ": "
             << pair.second << "(" << percent <<"%)";
@@ -674,16 +677,16 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
     graph_species_file.close();
     graph_sum_file.close();
     if (count_contam > 0) {
-        graphingStruct.fig_out_path = graph_contam_png_path;
-        graphingStruct.graph_title  = database + GRAPH_CONTAM_TITLE;
+        graphingStruct.fig_out_path   = graph_contam_png_path;
+        graphingStruct.graph_title    = database + GRAPH_CONTAM_TITLE;
         graphingStruct.text_file_path = graph_contam_txt_path;
-        graphingStruct.graph_type = GRAPH_BAR_FLAG;
+        graphingStruct.graph_type     = GRAPH_BAR_FLAG;
         _pGraphingManager->graph(graphingStruct);
     }
-    graphingStruct.fig_out_path = graph_species_png_path;
-    graphingStruct.graph_title  = database + GRAPH_SPECIES_TITLE;
+    graphingStruct.fig_out_path   = graph_species_png_path;
+    graphingStruct.graph_title    = database + GRAPH_SPECIES_TITLE;
     graphingStruct.text_file_path = graph_species_txt_path;
-    graphingStruct.graph_type = GRAPH_BAR_FLAG;
+    graphingStruct.graph_type     = GRAPH_BAR_FLAG;
     _pGraphingManager->graph(graphingStruct);
 
     graphingStruct.fig_out_path   = graph_sum_png_path;
@@ -730,7 +733,7 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
                << "Compiled Similarity Search - Diamond - Best Overall\n"
                << ENTAP_STATS::SOFTWARE_BREAK;
     out_pair = calculate_best_stats(compiled_hit_map,out_stream,_results_path,true);
-    out_msg = out_stream.str() + "\n";
+    out_msg  = out_stream.str() + "\n";
     print_statistics(out_msg);
     diamond_maps.clear();
     print_debug("Success!");

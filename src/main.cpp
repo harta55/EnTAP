@@ -30,6 +30,7 @@
 #include <iostream>
 #include <fstream>
 #include <array>
+#include <ctime>
 #include <vector>
 #include <cstring>
 #include <unordered_map>

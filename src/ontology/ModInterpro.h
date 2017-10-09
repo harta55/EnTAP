@@ -62,7 +62,9 @@ public:
 
 
 private:
+    std::string INTERPRO_OUTPUT             = "interpro_results";
     std::string INTERPRO_DIRECTORY          = "InterProScan";
+    std::string INTERPRO_STD_OUT            = "interproscan_std";
     std::string INTERPRO_EXT                = ".xml";
     static constexpr short INTERPRO_COL_NUM = 15;
 
@@ -82,6 +84,7 @@ private:
     std::string              _proc_dir;
     std::string              _figure_dir;
     std::string              _final_outpath;
+    std::string              _final_basepath;
 };
 
 

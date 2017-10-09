@@ -451,10 +451,16 @@ std::string QuerySequence::print_tsv(std::vector<const std::string*>& headers, s
     std::stringstream stream;
     go_struct go_terms;
 
-    go_terms = _eggnog_results.parsed_go;
-
     for (const std::string *header : headers) {
-        if (*header == ENTAP_EXECUTE::HEADER_EGG_GO_BIO) {
+
+        if ((*header == ENTAP_EXECUTE::HEADER_EGG_GO_BIO) ||
+            (*header == ENTAP_EXECUTE::HEADER_EGG_GO_CELL)||
+            (*header == ENTAP_EXECUTE::HEADER_EGG_GO_MOLE)) {
+            go_terms = _eggnog_results.parsed_go;
+        } else go_terms = _interpro_results.parsed_go;
+
+        if ((*header == ENTAP_EXECUTE::HEADER_EGG_GO_BIO) ||
+            (*header == ENTAP_EXECUTE::HEADER_INTER_GO_BIO)) {
             if (go_terms.empty()) {
                 stream <<'\t';continue;
             }
@@ -464,7 +470,8 @@ std::string QuerySequence::print_tsv(std::vector<const std::string*>& headers, s
                 }
             }
             stream<<'\t';
-        } else if (*header == ENTAP_EXECUTE::HEADER_EGG_GO_CELL) {
+        } else if ((*header == ENTAP_EXECUTE::HEADER_EGG_GO_CELL) ||
+                   (*header == ENTAP_EXECUTE::HEADER_INTER_GO_CELL)) {
             if (go_terms.empty()) {
                 stream <<'\t';continue;
             }
@@ -474,7 +481,8 @@ std::string QuerySequence::print_tsv(std::vector<const std::string*>& headers, s
                 }
             }
             stream<<'\t';
-        } else if (*header == ENTAP_EXECUTE::HEADER_EGG_GO_MOLE) {
+        } else if ((*header == ENTAP_EXECUTE::HEADER_EGG_GO_MOLE) ||
+                   (*header == ENTAP_EXECUTE::HEADER_INTER_GO_MOLE)) {
             if (go_terms.empty()) {
                 stream <<'\t';continue;
             }

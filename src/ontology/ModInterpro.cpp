@@ -53,9 +53,10 @@ using boost::property_tree::ptree;
 std::pair<bool, std::string> ModInterpro::verify_files() {
 
     std::string filename;
-    boostFS::path input_file(_inpath);
 
-    filename       = input_file.filename().string() + INTERPRO_EXT;
+    filename       = INTERPRO_OUTPUT;
+    _final_basepath= PATHS(_interpro_dir, filename);
+    filename      += INTERPRO_EXT;
     _final_outpath = PATHS(_interpro_dir, filename);
     return std::make_pair(file_exists(_final_outpath), "");
 }
@@ -65,10 +66,11 @@ void ModInterpro::execute() {
     std::string interpro_cmd;
     std::string std_out;
 
-    std_out      = PATHS(_interpro_dir, "interproscan_std");
+    std_out      = PATHS(_interpro_dir, INTERPRO_STD_OUT);
     interpro_cmd =
             INTERPRO_EXE    +
             " -i "          + _inpath +
+            " -b "          + _final_basepath +
             FLAG_GOTERM     +
             FLAG_IPRLOOK    +
             FLAG_PATHWAY;
@@ -210,6 +212,7 @@ void ModInterpro::parse() {
                  "InterProScan statistics coming soon!";
     stats_out = stats_stream.str();
     print_statistics(stats_out);
+    print_debug("Success! InterProScan finished");
 }
 
 void ModInterpro::set_data(std::string & unused, std::vector<std::string>& interpro) {

@@ -407,7 +407,7 @@ ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein(std::string &pr
     std::string     line;
     std::string     sequence;
     std::string     seq_id;
-    std::string     sub
+    std::string     sub;
     uint16          first;
     uint16          second;
     uint16          seq_len;

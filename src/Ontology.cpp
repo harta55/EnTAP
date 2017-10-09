@@ -92,15 +92,22 @@ void Ontology::execute(std::string input,std::string no_hit) {
 std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
     switch (software) {
         case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
+            print_debug("Spawn object - EggNOG");
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
                     _ontology_exe, _outpath, _new_input, _input_no_hits,
                     _ontology_dir, _graphingManager, _QUERY_DATA, _blastp,
                     _go_levels, _threads
             ));
         case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
-            break;
-        default:
+            print_debug("Spawn object - InterPro");
             return std::unique_ptr<AbstractOntology>(new ModInterpro(
+                    _ontology_exe, _outpath, _new_input, _input_no_hits,
+                    _ontology_dir, _graphingManager, _QUERY_DATA, _blastp,
+                    _go_levels, _threads
+            ));
+        default:
+            print_debug("Spawn object - EggNOG");
+            return std::unique_ptr<AbstractOntology>(new ModEggnog(
                     _ontology_exe, _outpath, _new_input, _input_no_hits,
                     _ontology_dir, _graphingManager, _QUERY_DATA, _blastp,
                     _go_levels, _threads

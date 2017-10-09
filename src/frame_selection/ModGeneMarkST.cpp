@@ -407,6 +407,7 @@ ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein(std::string &pr
     std::string     line;
     std::string     sequence;
     std::string     seq_id;
+    std::string     sub
     uint16          first;
     uint16          second;
     uint16          seq_len;
@@ -422,14 +423,17 @@ ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein(std::string &pr
         if (line.empty() && !in_file.eof()) continue;
         if (line.find(">")==0 || in_file.eof()) {
             if (!seq_id.empty()) {
-                std::string sub = sequence.substr(sequence.find("\n")+1);
+                if (in_file.eof()) {
+                    sequence += line + "\n";
+                }
+                sub        = sequence.substr(sequence.find("\n")+1);
                 line_chars = (uint16) std::count(sub.begin(),sub.end(),'\n');
                 seq_len    = (uint16) (sub.length() - line_chars);
                 protein_sequence = {seq_len,sequence, ""};
                 protein_map.emplace(seq_id,protein_sequence);
             }
             if (in_file.eof()) break;
-            first  = (uint16) (line.find(">") + 1);
+            first  = (uint16) line.find(">");
             second = (uint16) line.find("\t");
             seq_id = line.substr(first,second-first);
             sequence = seq_id + "\n";

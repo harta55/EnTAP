@@ -436,7 +436,7 @@ ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein(std::string &pr
             first  = (uint16) line.find(">");
             second = (uint16) line.find("\t");
             seq_id = line.substr(first,second-first);
-            sequence = seq_id + "\n";
+            sequence = ">" + seq_id + "\n";
         } else {
             sequence += line + "\n";
         }

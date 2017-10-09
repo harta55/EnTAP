@@ -38,9 +38,6 @@ set(SOURCE_FILES libs
 
 add_executable(EnTAP ${SOURCE_FILES})
 
-set(Boost_INCLUDE_DIR /home/harta/CLionProjects/enTAP/libs/boost_1_63_0)
-set(Boost_LIBRARY_DIR /home/harta/CLionProjects/enTAP/libs/boost_1_63_0/stage/lib)
-
 # Change these paths to the specific boost directory if you're having trouble linking
 #set(Boost_INCLUDE_DIR /path/to/boost_1_63_0)
 #set(Boost_LIBRARY_DIR /path/to/boost_1_63_0/stage/lib)

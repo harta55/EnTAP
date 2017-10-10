@@ -62,6 +62,9 @@ public:
 
 
 private:
+    std::string NUCLEO_TAG                  = "n";
+    std::string PROTEIN_TAG                 = "p";
+    std::string INTERPRO_TEMP               = "temp/";
     std::string INTERPRO_OUTPUT             = "interpro_results";
     std::string INTERPRO_DIRECTORY          = "InterProScan";
     std::string INTERPRO_STD_OUT            = "interproscan_std";
@@ -75,9 +78,11 @@ private:
     std::string XML_PROTEIN   = "protein";
     std::string XML_MATCHES   = "matches";
 
+    std::string FLAG_SEQTYPE  = " --seqtype";
     std::string FLAG_GOTERM   = " --goterms";
     std::string FLAG_IPRLOOK  = " --iprlookup";
     std::string FLAG_PATHWAY  = " --pathways";
+    std::string FLAG_TEMP     = " --tempdir";
 
     std::vector<std::string> _databases;
     std::string              _interpro_dir;

@@ -65,12 +65,19 @@ void ModInterpro::execute() {
 
     std::string interpro_cmd;
     std::string std_out;
+    std::string blast;
+    std::string temp_dir;
+
+    _blastp ? blast = PROTEIN_TAG : blast = NUCLEO_TAG;
+    temp_dir = PATHS(_interpro_dir, INTERPRO_TEMP);
 
     std_out      = PATHS(_interpro_dir, INTERPRO_STD_OUT);
     interpro_cmd =
             INTERPRO_EXE    +
             " -i "          + _inpath +
             " -b "          + _final_basepath +
+            FLAG_SEQTYPE    + " " + blast     +
+            FLAG_TEMP       + " " + temp_dir  +
             FLAG_GOTERM     +
             FLAG_IPRLOOK    +
             FLAG_PATHWAY;
@@ -85,6 +92,8 @@ void ModInterpro::execute() {
     if (execute_cmd(interpro_cmd, std_out) != 0) {
         throw ExceptionHandler("Error executing InterProScan, consult the error file at: "+
                 std_out, ENTAP_ERR::E_RUN_INTERPRO);
+    } else {
+        boostFS::remove_all(temp_dir);
     }
 }
 

@@ -244,7 +244,7 @@ std::string ModRSEM::filter() {
     out_msg << ENTAP_STATS::SOFTWARE_BREAK
             << "Expression Filtering - RSEM\n"
             << ENTAP_STATS::SOFTWARE_BREAK;
-    rejected_percent = ((float)count_removed / count_kept) * 100;
+    rejected_percent = ((fp32)count_removed / count_kept) * 100;
     if (rejected_percent > REJECTED_ERROR_CUTOFF) {
         // Warn user high percentage of transcriptome was rejected
         out_msg << "Warning: A high percentage of the transcriptome was removed: " << rejected_percent;
@@ -337,10 +337,10 @@ bool ModRSEM::rsem_conv_to_bam(std::string file_name) {
     std::string rsem_arg;
     std::string std_out;
 
-    bam_out = (boostFS::path(_expression_outpath) / boostFS::path(file_name)).string();
+    bam_out  = PATHS(_expression_outpath, file_name);
     rsem_arg = (boostFS::path(_exe_path) / boostFS::path("convert-sam-for-rsem")).string() +
                " -p " + std::to_string(_threads) + " " + _alignpath + " " + bam_out;
-    std_out = _expression_outpath + file_name + "_rsem_convert";
+    std_out  = _expression_outpath + file_name + "_rsem_convert";
     if (execute_cmd(rsem_arg.c_str(), std_out)!=0)return false;
     if (!is_file_empty(std_out+".err")) return false;
     _alignpath = bam_out + ".bam";

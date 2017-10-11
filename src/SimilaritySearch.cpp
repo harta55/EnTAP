@@ -459,9 +459,9 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
     std::map<std::string, int>  contam_species_map;
     graph_sum_t                 graphing_sum_map;
 
-    database = boostFS::path(base_path).filename().string();
-    figure_base = (boostFS::path(base_path) / FIGURE_DIR).string();
-    base_bst = base_path;
+    database    = boostFS::path(base_path).filename().string();
+    figure_base = PATHS(base_path, FIGURE_DIR);
+    base_bst    = base_path;
     boostFS::create_directories(figure_base);
     boostFS::create_directories(base_path);     // should be created before
 
@@ -596,7 +596,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
     std::vector<count_pair> species_vect(species_map.begin(),species_map.end());
     std::sort(contam_species_vect.begin(),contam_species_vect.end(),compair());
     std::sort(species_vect.begin(),species_vect.end(),compair());
-    contam_percent = ((double)count_contam / count_filtered) * 100;
+    contam_percent = ((fp64)count_contam / count_filtered) * 100;
 
     ss <<
        "\n\tTotal unique transcripts with an alignment: "                              << count_filtered          <<
@@ -650,7 +650,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
         ct = 1;
         for (count_pair pair : contam_species_vect) {
             if (ct > 10) break;
-            percent = ((double)pair.second / count_contam) * 100;
+            percent = ((fp64)pair.second / count_contam) * 100;
             ss
                 << "\n\t\t\t" << ct << ")" << pair.first << ": "
                 << pair.second << "(" << percent <<"%)";
@@ -663,7 +663,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
     ct = 1;
     for (count_pair pair : species_vect) {
         if (ct > 10) break;
-        percent = ((double)pair.second / count_filtered) * 100;
+        percent = ((fp64)pair.second / count_filtered) * 100;
         ss
             << "\n\t\t\t" << ct << ")" << pair.first << ": "
             << pair.second << "(" << percent <<"%)";
@@ -696,9 +696,13 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
     _pGraphingManager->graph(graphingStruct);
 
     // check if final - different graph
-    // ************************************ ///
+    // ************************************ //
 
-    return std::pair<std::string,std::string>(out_best_hits_fa_prot,out_no_hits_fa_prot);
+    if (_blastp) {
+        return std::pair<std::string,std::string>(out_best_hits_fa_prot,out_no_hits_fa_prot);
+    } else {
+        return std::pair<std::string, std::string> (out_best_hits_fa_nucl, out_no_hits_fa_nucl);
+    }
 }
 
 /**

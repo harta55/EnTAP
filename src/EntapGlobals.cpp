@@ -108,6 +108,7 @@ namespace ENTAP_CONFIG {
     const std::string LOG_EXTENSION  = ".txt";
 
     //------------------USER INPUTS-----------------------//
+    const std::string INPUT_FLAG_TAG           = "tag";
     const std::string INPUT_FLAG_CONFIG        = "config";
     const std::string INPUT_FLAG_ALIGN         = "align";
     const std::string INPUT_FLAG_RUNPROTEIN    = "runP";

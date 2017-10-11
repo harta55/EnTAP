@@ -62,9 +62,9 @@ private:
     const std::string GRAPH_REJECTED_FLAG           = "Removed";
     const std::string GRAPH_KEPT_FLAG               = "Selected";
 
-    const unsigned char GRAPH_FRAME_FLAG            = 1;    // Ensure these match with entap_graphing.py
-    const unsigned char GRAPH_PIE_RESULTS_FLAG      = 1;
-    const unsigned char GRAPH_COMP_BOX_FLAG         = 2;
+    const uint8       GRAPH_FRAME_FLAG              = 1;    // Ensure these match with entap_graphing.py
+    const uint8       GRAPH_PIE_RESULTS_FLAG        = 1;
+    const uint8       GRAPH_COMP_BOX_FLAG           = 2;
 
     const std::string GENEMARK_LOG_FILE             = "gms.log";
     const std::string GENEMARK_HMM_FILE             = "GeneMark_hmm.mod";
@@ -78,6 +78,7 @@ private:
     const std::string FRAME_SELECTION_THREE_FLAG    = "Partial 3 Prime";
     const std::string FRAME_SELECTION_COMPLETE_FLAG = "Complete";
     const std::string FRAME_SELECTION_INTERNAL_FLAG = "Internal";
+    const std::string FILE_ALT_EXT                  = "_alt";
 
     std::string _final_out;
     std::string _final_lst;

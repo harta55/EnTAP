@@ -115,19 +115,20 @@ namespace entapExecute {
         ontology_flags = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<std::vector<uint16>>();
 
         boostFS::path working_dir(boostFS::current_path());
-        _outpath       = PATHS(working_dir, user_input["tag"].as<std::string>());
+        _outpath       = PATHS(working_dir, user_input[ENTAP_CONFIG::INPUT_FLAG_TAG].as<std::string>());
         _entap_outpath = PATHS(_outpath, ENTAP_OUTPUT);
         boostFS::create_directories(_entap_outpath);
         boostFS::create_directories(_outpath);
 
         // init databases
-        if (user_input.count("database")) {
-            other_databases = user_input["database"].as<std::vector<std::string>>();
+        if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_DATABASE)) {
+            other_databases = user_input[ENTAP_CONFIG::INPUT_FLAG_DATABASE].as<std::vector<std::string>>();
         } else other_databases.push_back(ENTAP_CONFIG::NCBI_NULL);
 
         // init state control
-        if (user_input.count("state")) {
-            std::string user_state_str = user_input["state"].as<std::string>();
+        if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_STATE)) {
+            std::string user_state_str =
+                    user_input[ENTAP_CONFIG::INPUT_FLAG_STATE].as<std::string>();
             for (char c : user_state_str) {
                 state_queue.push(c);
             }

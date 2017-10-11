@@ -64,14 +64,14 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
     std::string                              longest_seq;
     std::string                              shortest_seq;
     std::string                              transcript_type;
-    unsigned long                            count_seqs=0;
-    unsigned long long                       total_len=0;
-    unsigned short                           shortest_len=10000;
-    unsigned short                           longest_len=0;
-    unsigned short                           len;
-    double                                   avg_len;
-    std::vector<unsigned short>              sequence_lengths;
-    std::pair<unsigned short, unsigned short>n_vals;
+    uint32                                   count_seqs=0;
+    uint64                                   total_len=0;
+    uint16                                   shortest_len=10000;
+    uint16                                   longest_len=0;
+    uint16                                   len;
+    fp64                                     avg_len;
+    std::vector<uint16>                      sequence_lengths;
+    std::pair<uint16, uint16>                n_vals;
 
     _trim = trim;
 
@@ -104,7 +104,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
                 query_seq.setQseqid(seq_id);
                 _SEQUENCES.emplace(seq_id, query_seq);
                 count_seqs++;
-                len = (unsigned short) query_seq.getSeq_length();
+                len = (uint16) query_seq.getSeq_length();
                 total_len += len;
                 if (len > longest_len) {
                     longest_len = len;longest_seq = seq_id;
@@ -128,7 +128,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
     // first - n50, second - n90
     n_vals = calculate_N_vals(sequence_lengths, total_len);
 
-    out_msg<<std::fixed<<std::setprecision(2);
+    out_msg <<std::fixed<<std::setprecision(2);
     out_msg << ENTAP_STATS::SOFTWARE_BREAK
             << "Transcriptome Statistics\n"
             << ENTAP_STATS::SOFTWARE_BREAK<<

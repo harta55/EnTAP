@@ -98,7 +98,7 @@ boost::program_options::variables_map parse_arguments_boost(int argc, const char
                  boostPO::value<std::vector<uint16>>()->multitoken()
                  ->default_value(std::vector<uint16>{ENTAP_EXECUTE::EGGNOG_INT_FLAG},""),DESC_ONTOLOGY_FLAG)
                 (ENTAP_CONFIG::INPUT_FLAG_GRAPH.c_str(),DESC_GRAPHING)
-                ("tag",
+                (ENTAP_CONFIG::INPUT_FLAG_TAG.c_str(),
                  boostPO::value<std::string>()->default_value(OUTFILE_DEFAULT),DESC_OUT_FLAG)
                 ("database,d",
                  boostPO::value<std::vector<std::string>>()->multitoken(),DESC_DATABASE)

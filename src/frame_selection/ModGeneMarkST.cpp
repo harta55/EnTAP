@@ -94,6 +94,8 @@ std::string ModGeneMarkST::execute() {
     std::string     genemark_cmd;
     std::string     genemark_std_out;
     std::string     line;
+    std::string     temp_name;
+    std::string     out_path;
 
     boost::filesystem::path file_name(boostFS::path(_inpath).filename());
     std::list<std::string> out_names {file_name.string()+".faa",
@@ -116,9 +118,9 @@ std::string ModGeneMarkST::execute() {
 
     for (std::string path : out_names) {
         std::ifstream in_file(path);
-        std::string temp_name = path+"_alt";
-        std::string out_path = PATHS(_frame_outpath, path);
-        std::ofstream out_file(path+"_alt");
+        temp_name = path + FILE_ALT_EXT;
+        out_path  = PATHS(_frame_outpath, path);
+        std::ofstream out_file(path + FILE_ALT_EXT);
         while (getline(in_file,line)){
             if (!line.empty()) {
                 out_file << line << '\n';
@@ -295,8 +297,8 @@ void ModGeneMarkST::parse() {
         }
         // Calculate and print stats
         print_debug("Beginning to calculate statistics...");
-        avg_selected = (float)total_kept_len / count_selected;
-        avg_lost     = (float)total_removed_len / count_removed;
+        avg_selected = (fp32)total_kept_len / count_selected;
+        avg_lost     = (fp32)total_removed_len / count_removed;
         stat_output<<std::fixed<<std::setprecision(2);
         stat_output <<
                     ENTAP_STATS::SOFTWARE_BREAK             <<
@@ -433,9 +435,9 @@ ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein(std::string &pr
                 protein_map.emplace(seq_id,protein_sequence);
             }
             if (in_file.eof()) break;
-            first  = (uint16) (line.find(">")+1);
-            second = (uint16) line.find("\t");
-            seq_id = line.substr(first,second-first);
+            first    = (uint16) (line.find(">")+1);
+            second   = (uint16) line.find("\t");
+            seq_id   = line.substr(first,second-first);
             sequence = ">" + seq_id + "\n";
         } else {
             sequence += line + "\n";

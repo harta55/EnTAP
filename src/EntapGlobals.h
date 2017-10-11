@@ -191,6 +191,7 @@ namespace ENTAP_CONFIG {
     extern const std::string LOG_EXTENSION;
 
     //------------------USER INPUTS-----------------------//
+    extern const std::string INPUT_FLAG_TAG;
     extern const std::string INPUT_FLAG_CONFIG       ;
     extern const std::string INPUT_FLAG_ALIGN        ;
     extern const std::string INPUT_FLAG_RUNPROTEIN   ;

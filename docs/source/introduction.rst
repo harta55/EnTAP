@@ -21,15 +21,22 @@ EnTAP is optimized to generate extensive functional information for the gene spa
 Pipeline Stages:
 ----------------
     * Transcriptome Filtering: designed to remove assembly artifacts and identify true CDS (complete and partial genes)
-    1. Expression Filtering (RSEM)
-    2. Frame Selection (GeneMARKS-T)
+        1. Expression Filtering (RSEM)
+        2. Frame Selection (GeneMARKS-T)
 
     * Annotation
-    3. Similarity Search: optimized search against user-selected databases (DIAMOND).  
-    4. Contaminant Filtering and Best Hit Selection: selects final annotation and identifies potential contaminants
-    5. Orthologous Group Assignment: independent assignment of translated protein sequences to gene families (eggNOG).  Includes protein  domains (SMART/Pfam), Gene Ontology (GO) terms, and KEGG pathway assignment.
+        3. Similarity Search: optimized search against user-selected databases (DIAMOND).  
+        4. Contaminant Filtering and Best Hit Selection: selects final annotation and identifies potential contaminants
+        5. Orthologous Group Assignment: independent assignment of translated protein sequences to gene families (eggNOG).  Includes protein  domains (SMART/Pfam), Gene Ontology (GO) terms, and KEGG pathway assignment.
 
-All of the software integrated into this pipeline are packaged within the EnTAP repository with the exception of GeneMarkS-T. Installation and usage of EnTAP is documented in this guide.
+.. note:: All of the software integrated into this pipeline are packaged within the EnTAP repository with the exception of GeneMarkS-T (free for academic use). Installation and usage of EnTAP is documented in this guide.
+
+The figure below represents the typical EnTAP pipeline
+
+.. image::    revised_vertical_layout.png
+	:scale: 60%
+	:align: center
+
 
 Citations:
 ----------

@@ -147,6 +147,7 @@ public:
     void set_is_expression_kept(bool _is_expression_kept);
     void set_fpkm(float _fpkm);
     const std::string &get_tax_scope() const;
+    void set_is_interpro_hit(bool _is_interpro_hit);
 
 private:
 

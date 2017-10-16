@@ -595,4 +595,9 @@ void QuerySequence::set_interpro_results(std::string& eval, std::string& databas
     this->_interpro_results.parsed_go        = go_terms;
     this->_interpro_results.interpro_desc_id = interpro_info;
     this->_interpro_results.pathways         = pathway;
+    this->_interpro_results.e_value          = eval;
+}
+
+void QuerySequence::set_is_interpro_hit(bool _is_interpro_hit) {
+    QuerySequence::_is_interpro_hit = _is_interpro_hit;
 }

@@ -72,7 +72,7 @@ void ModEggnog::parse() {
 
     print_debug("Beginning to parse eggnog results...");
 
-    typedef std::map<std::string,std::map<std::string, unsigned int>> GO_top_map_t;
+    typedef std::map<std::string,std::map<std::string, uint32>> GO_top_map_t;
 
     std::stringstream                        ss;
     std::string                              out_msg;
@@ -90,22 +90,22 @@ void ModEggnog::parse() {
     std::string                              fig_png_go_bar;
     std::map<std::string, struct_go_term>    GO_DATABASE;
     std::map<std::string, int>               eggnog_map;
-    unsigned int                             count_total_go_hits=0;
-    unsigned int                             count_total_go_terms=0;
-    unsigned int                             count_go_bio=0;
-    unsigned int                             count_go_cell=0;
-    unsigned int                             count_go_mole=0;
-    unsigned int                             count_no_go=0;
-    unsigned int                             count_no_kegg=0;
-    unsigned int                             count_TOTAL_hits=0;         // All ortho matches
-    unsigned int                             count_total_kegg_terms=0;
-    unsigned int                             count_total_kegg_hits=0;
-    unsigned int                             count_no_hits=0;            // Unannotated OGs
-    unsigned int                             count_tax_scope=0;
-    unsigned int                             ct = 0;
-    float                                    percent;
+    uint32                                   count_total_go_hits=0;
+    uint32                                   count_total_go_terms=0;
+    uint32                                   count_go_bio=0;
+    uint32                                   count_go_cell=0;
+    uint32                                   count_go_mole=0;
+    uint32                                   count_no_go=0;
+    uint32                                   count_no_kegg=0;
+    uint32                                   count_TOTAL_hits=0;         // All ortho matches
+    uint32                                   count_total_kegg_terms=0;
+    uint32                                   count_total_kegg_hits=0;
+    uint32                                   count_no_hits=0;            // Unannotated OGs
+    uint32                                   count_tax_scope=0;
+    uint32                                   ct = 0;
+    fp32                                     percent;
     DatabaseHelper                           EGGNOG_DATABASE;
-    std::map<std::string, unsigned int>      tax_scope_ct_map;
+    std::map<std::string, uint32>            tax_scope_ct_map;
     GO_top_map_t                             go_combined_map;     // Just for convenience
     go_struct                                go_parsed;
     GraphingStruct                           graphingStruct;
@@ -170,7 +170,7 @@ void ModEggnog::parse() {
                 // Compile KEGG information
                 if (!kegg.empty()) {
                     count_total_kegg_hits++;
-                    ct = (unsigned int) std::count(kegg.begin(), kegg.end(), ',');
+                    ct = (uint32) std::count(kegg.begin(), kegg.end(), ',');
                     count_total_kegg_terms += ct + 1;
                     it->second.set_is_one_kegg(true);
                 } else {
@@ -240,7 +240,7 @@ void ModEggnog::parse() {
         std::sort(tax_scope_vect.begin(),tax_scope_vect.end(),compair());
         for (count_pair &pair : tax_scope_vect) {
             if (ct > 10) break;
-            percent = ((float)pair.second / count_tax_scope) * 100;
+            percent = ((fp32)pair.second / count_tax_scope) * 100;
             ss <<
                "\n\t" << ct << ")" << pair.first << ": " << pair.second <<
                "(" << percent << "%)";
@@ -291,7 +291,7 @@ void ModEggnog::parse() {
                 for (count_pair &pair2 : go_vect) {
                     if (ct > 10) break;
                     if (pair2.first.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
-                        percent = ((float)pair2.second / lvl_ct) * 100;
+                        percent = ((fp32)pair2.second / lvl_ct) * 100;
                         ss <<
                            "\n\t" << ct << ")" << pair2.first << ": " << pair2.second <<
                            "(" << percent << "%)";

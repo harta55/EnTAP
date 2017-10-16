@@ -32,8 +32,6 @@
 
 #include "AbstractOntology.h"
 
-#define XML_ATR(x)      "<xmlattr>.x"
-
 class ModInterpro : public AbstractOntology{
 
     struct InterProData {
@@ -54,7 +52,6 @@ public:
     AbstractOntology(exe, out, in, in_no_hits, ont, graphing, queryData, blastp,
                      lvls, threads){}
 
-
     virtual std::pair<bool, std::string> verify_files() override ;
     virtual void execute() override ;
     virtual void parse() override ;
@@ -68,7 +65,12 @@ private:
     std::string INTERPRO_OUTPUT             = "interpro_results";
     std::string INTERPRO_DIRECTORY          = "InterProScan";
     std::string INTERPRO_STD_OUT            = "interproscan_std";
-    std::string INTERPRO_EXT                = ".xml";
+    std::string OUT_NO_HITS_FAA             = "interpro_no_hits.faa";
+    std::string OUT_NO_HITS_FNN             = "interpro_no_hits.fnn";
+    std::string OUT_HITS_FAA                = "interpro_no_hits.faa";
+    std::string OUT_HITS_FNN                = "interpro_no_hits.fnn";
+    std::string INTERPRO_EXT_XML            = ".xml";
+    std::string INTERPRO_EXT_TSV            = ".tsv";
     static constexpr short INTERPRO_COL_NUM = 15;
 
     std::string XML_SIGNATURE = "signature";
@@ -90,6 +92,10 @@ private:
     std::string              _figure_dir;
     std::string              _final_outpath;
     std::string              _final_basepath;
+
+    std::map<std::string,InterProData> parse_xml(void);
+    std::map<std::string,InterProData> parse_tsv(void);
+    std::string format_interpro(void);
 };
 
 

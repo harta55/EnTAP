@@ -27,6 +27,8 @@
 
 
 //*********************** Includes *****************************
+#include <csv.h>
+#include <iomanip>
 #include "ModInterpro.h"
 #include "../ExceptionHandler.h"
 #include "boost/property_tree/ptree.hpp"
@@ -54,9 +56,9 @@ std::pair<bool, std::string> ModInterpro::verify_files() {
 
     std::string filename;
 
-    filename       = INTERPRO_OUTPUT;
-    _final_basepath= PATHS(_interpro_dir, filename);
-    filename      += INTERPRO_EXT;
+    filename        = INTERPRO_OUTPUT;
+    _final_basepath = PATHS(_interpro_dir, filename);
+    _blastp ? filename += INTERPRO_EXT_XML : filename += INTERPRO_EXT_TSV;
     _final_outpath = PATHS(_interpro_dir, filename);
     return std::make_pair(file_exists(_final_outpath), "");
 }
@@ -119,28 +121,106 @@ void ModInterpro::parse() {
     std::string                           e_str;
     std::string                           interpro_output;
     std::string                           protein_output;
+    std::string                           path_no_hits_faa;
+    std::string                           path_no_hits_fnn;
+    std::string                           path_hits_faa;
+    std::string                           path_hits_fnn;
     std::map<std::string, struct_go_term> GO_DATABASE;
     std::map<std::string,InterProData>    interpro_map;
     go_struct                             go_terms_parsed;
+    uint32                                count_hits=0;
+    uint32                                count_no_hits=0;
+
+    print_debug("Beginning to parse InterProScan data...");
+    if (file_exists(_final_outpath)) {
+        print_debug("File found at: " + _final_outpath + " parsing...");
+    } else {
+        throw ExceptionHandler("Unable to locate InterProScan file at: " +
+                               _final_outpath, ENTAP_ERR::E_PARSE_INTERPRO);
+    }
+    try {
+        GO_DATABASE = read_go_map();
+    } catch (ExceptionHandler const &e) {throw e;}
+
+    if (_blastp) {
+        interpro_map = parse_xml();
+    } else {
+        // blastx
+        interpro_map = parse_tsv();
+    }
+
+    print_debug("Success! Beginning to update query sequences...");
+
+    path_no_hits_faa = PATHS(_proc_dir, OUT_NO_HITS_FAA);
+    path_no_hits_fnn = PATHS(_proc_dir, OUT_NO_HITS_FNN);
+    path_hits_faa    = PATHS(_proc_dir, OUT_HITS_FAA);
+    path_hits_fnn    = PATHS(_proc_dir, OUT_HITS_FNN);
+
+    std::ofstream file_no_hits_faa(path_no_hits_faa, std::ios::out | std::ios::app);
+    std::ofstream file_no_hits_fnn(path_no_hits_fnn, std::ios::out | std::ios::app);
+    std::ofstream file_hits_faa(path_hits_faa, std::ios::out | std::ios::app);
+    std::ofstream file_hits_fnn(path_hits_fnn, std::ios::out | std::ios::app);
+
+    // TODO stats
+    for (auto &pair : *pQUERY_DATA->get_sequences_ptr()) {
+        std::map<std::string, InterProData>::iterator it = interpro_map.find(pair.first);
+        if (it != interpro_map.end()) {
+            count_hits++;
+            pair.second.set_is_interpro_hit(true);
+            interpro_output = it->second.interID + "(" + it->second.interDesc + ")";
+            protein_output  = it->second.databaseID + "(" + it->second.databaseDesc + ")";
+            go_terms_parsed = parse_go_list(it->second.go_terms,GO_DATABASE,',');
+            std::stringstream ss;
+            ss << std::scientific << it->second.eval;
+            e_str = ss.str();
+            pair.second.set_interpro_results(e_str, protein_output, it->second.databasetype,
+                                             interpro_output, it->second.pathways, go_terms_parsed);
+            if (!pair.second.get_sequence_n().empty()) file_hits_fnn << pair.second.get_sequence_n() << std::endl;
+            if (!pair.second.get_sequence_p().empty()) file_hits_faa << pair.second.get_sequence_p() << std::endl;
+        } else {
+            // Not InterPro hit
+            count_no_hits++;
+            if (!pair.second.get_sequence_n().empty()) file_no_hits_fnn << pair.second.get_sequence_n() << std::endl;
+            if (!pair.second.get_sequence_p().empty()) file_no_hits_faa << pair.second.get_sequence_p() << std::endl;
+        }
+    }
+    file_no_hits_faa.close();
+    file_no_hits_fnn.close();
+    file_hits_faa.close();
+    file_hits_fnn.close();
+
+    print_debug("Success! Calculating statistics...");
+    stats_stream <<
+                 ENTAP_STATS::SOFTWARE_BREAK << " Ontology - InterProScan" << ENTAP_STATS::SOFTWARE_BREAK <<
+                 "InterProScan statistics coming soon!";
+    stats_out = stats_stream.str();
+    print_statistics(stats_out);
+    print_debug("Success! InterProScan finished");
+}
+
+void ModInterpro::set_data(std::string & unused, std::vector<std::string>& interpro) {
+    _interpro_dir = PATHS(_ontology_dir, INTERPRO_DIRECTORY);
+    _proc_dir     = PATHS(_interpro_dir, PROCESSED_OUT_DIR);
+    _figure_dir   = PATHS(_interpro_dir, FIGURE_DIR);
+    _databases    = interpro;
+
+    boostFS::remove_all(_proc_dir);
+    boostFS::remove_all(_figure_dir);
+
+    boostFS::create_directories(_interpro_dir);
+    boostFS::create_directories(_proc_dir);
+    boostFS::create_directories(_figure_dir);
+}
+
+std::map<std::string,ModInterpro::InterProData> ModInterpro::parse_xml(void) {
     std::string                           seq_id;
     fp64                                  e_val;
     bool                                  inter;
     std::string                           pathway;
     ptree                                 pt;
+    std::map<std::string,InterProData>    interpro_map;
 
-    print_debug("Beginning to parse InterProScan data...");
-
-    try {
-        GO_DATABASE = read_go_map();
-    } catch (ExceptionHandler const &e) {throw e;}
-
-    if (file_exists(_final_outpath)) {
-        boost::property_tree::read_xml(_final_outpath, pt);
-        print_debug("File found at: " + _final_outpath + " parsing...");
-    } else {
-        throw ExceptionHandler("Unable to locate InterProScan file at: " +
-            _final_outpath, ENTAP_ERR::E_PARSE_INTERPRO);
-    }
+    boost::property_tree::read_xml(_final_outpath, pt);
     for (ptree::value_type const& v : pt.get_child(XML_PRO_M)) {
         if (v.first == XML_PROTEIN) {
             seq_id = v.second.get_child(XML_XREF).get("<xmlattr>.id","");
@@ -196,45 +276,80 @@ void ModInterpro::parse() {
             }
         }
     }
+    return interpro_map;
+}
 
-    print_debug("Success! Beginning to update query sequences...");
+std::map<std::string,ModInterpro::InterProData> ModInterpro::parse_tsv(void) {
+    // Made them separate handles for xml vs tsv, can change though...might not need all info
+    InterProData                        interProData;
+    std::map<std::string,InterProData>  interpro_map;
+    std::string temp_file_path;
+    std::string query;
+    std::string md5;
+    std::string length;
+    std::string database;
+    std::string database_id;
+    std::string database_desc;
+    std::string start;
+    std::string stop;
+    fp64        eval;
+    std::string status;
+    std::string date;
+    std::string interpro_id;
+    std::string interpro_desc;
+    std::string go_terms;       // GO:43112|GO:43111 format
+    std::string pathways;       // KEGG: 00290+1.1.1.86|KEGG: 00770+1.1.1.86
 
-    // TODO stats
-    for (auto &pair : *pQUERY_DATA->get_sequences_ptr()) {
-        std::map<std::string, InterProData>::iterator it = interpro_map.find(pair.first);
-        if (it != interpro_map.end()) {
-            interpro_output = it->second.interID + "(" + it->second.interDesc + ")";
-            protein_output  = it->second.databaseID + "(" + it->second.databaseDesc + ")";
-            go_terms_parsed = parse_go_list(it->second.go_terms,GO_DATABASE,',');
-            std::stringstream ss;
-            ss << std::scientific << it->second.eval;
-            e_str = ss.str();
-            pair.second.set_interpro_results(e_str, protein_output, it->second.databasetype,
-                                             interpro_output, it->second.pathways, go_terms_parsed);
-        } else {
-            ;
+    temp_file_path = format_interpro();
+    io::CSVReader<INTERPRO_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(temp_file_path);
+    while (in.read_row(query, md5, length, database, database_id, database_desc,
+                       start, stop, eval, status, date, interpro_id, interpro_desc,
+                       go_terms, pathways)) {
+        if (query.empty()) continue;
+        // InterProScan5 adds underscore to identifier
+        if (query.find_last_of('_') != std::string::npos) {
+            query = query.substr(0,query.find_last_of('_'));
         }
+        std::map<std::string,InterProData>::iterator it = interpro_map.find(query);
+        if (it != interpro_map.end() && it->second.eval < eval) continue;
+        // Current hit is better
+        if (!go_terms.empty() && go_terms.find('|') != std::string::npos) {
+            std::replace(go_terms.begin(), go_terms.end(), '|', ',');
+        }
+        interProData.interID      = interpro_id;
+        interProData.interDesc    = interpro_desc;
+        interProData.databaseID   = database_id;
+        interProData.databasetype = database;
+        interProData.databaseDesc = database_desc;
+        interProData.pathways     = pathways;
+        interProData.go_terms     = go_terms;
+        interProData.eval         = eval;
+        interpro_map[query] = interProData;
     }
-    print_debug("Success! Calculating statistics...");
-    stats_stream <<
-                 ENTAP_STATS::SOFTWARE_BREAK << " Ontology - InterProScan" << ENTAP_STATS::SOFTWARE_BREAK <<
-                 "InterProScan statistics coming soon!";
-    stats_out = stats_stream.str();
-    print_statistics(stats_out);
-    print_debug("Success! InterProScan finished");
+    boostFS::remove(temp_file_path);
+    return interpro_map;
 }
 
-void ModInterpro::set_data(std::string & unused, std::vector<std::string>& interpro) {
-    _interpro_dir = PATHS(_ontology_dir, INTERPRO_DIRECTORY);
-    _proc_dir     = PATHS(_interpro_dir, PROCESSED_OUT_DIR);
-    _figure_dir   = PATHS(_interpro_dir, FIGURE_DIR);
-    _databases    = interpro;
+std::string ModInterpro::format_interpro(void) {
+    // Replace
+    std::string path_temp;
+    std::string line;
+    uint16      tab_ct;
 
-    boostFS::remove_all(_proc_dir);
-    boostFS::remove_all(_figure_dir);
-
-    boostFS::create_directories(_interpro_dir);
-    boostFS::create_directories(_proc_dir);
-    boostFS::create_directories(_figure_dir);
+    path_temp = _final_outpath + "_temp";
+    std::ifstream file_in(_final_outpath);
+    std::ofstream file_temp(path_temp, std::ios::out | std::ios::app);
+    while(std::getline(file_in, line)) {
+        if (line.empty()) continue;
+        file_temp << line;
+        tab_ct = (uint16)std::count(line.begin(), line.end(), '\t');
+        while (tab_ct < INTERPRO_COL_NUM - 1) {
+            file_temp<<'\t';
+            tab_ct++;
+        }
+        file_temp << std::endl;
+    }
+    file_in.close();
+    file_temp.close();
+    return path_temp;
 }
-

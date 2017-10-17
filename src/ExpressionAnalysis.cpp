@@ -125,7 +125,6 @@ std::string ExpressionAnalysis::execute(std::string input) {
         verify_pair = ptr->verify_files();
         if (!verify_pair.first) ptr->execute();
         output = ptr->filter();
-        ptr.release();
     } catch (const ExceptionHandler &e) {throw e;}
     return output;
 }

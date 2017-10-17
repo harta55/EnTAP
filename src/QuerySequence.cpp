@@ -354,6 +354,7 @@ void QuerySequence::init_sequence() {
     _is_expression_kept = false;
     _is_eggnog_hit  = false;
     _is_interpro_hit = false;
+    _kept = true;
 }
 
 void QuerySequence::set_lineage(const std::string &_lineage) {
@@ -600,4 +601,12 @@ void QuerySequence::set_interpro_results(std::string& eval, std::string& databas
 
 void QuerySequence::set_is_interpro_hit(bool _is_interpro_hit) {
     QuerySequence::_is_interpro_hit = _is_interpro_hit;
+}
+
+bool QuerySequence::is_kept() const {
+    return _kept;
+}
+
+void QuerySequence::set_kept(bool _kept) {
+    QuerySequence::_kept = _kept;
 }

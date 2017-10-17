@@ -148,6 +148,8 @@ public:
     void set_fpkm(float _fpkm);
     const std::string &get_tax_scope() const;
     void set_is_interpro_hit(bool _is_interpro_hit);
+    bool is_kept() const;
+    void set_kept(bool _kept);
 
 private:
 
@@ -156,7 +158,7 @@ private:
     static constexpr uint8 INFORM_ADD    = 3;
     static constexpr fp32 INFORM_FACTOR  = 1.2;
 
-
+    bool                              _kept;        // Continually updated
     bool                              is_protein;
     bool                              is_better_hit;
     bool                              _is_informative;

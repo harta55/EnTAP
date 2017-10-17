@@ -51,6 +51,7 @@ class QuerySequence;
 #define NCBI_UNIPROT    0       // Compiler flag for future feature
 #define DEBUG           1
 #define FILE_APPEND     std::ios::out | std::ios::app
+#define FASTA_FLAG      ">"
 
 //**************************************************************
 

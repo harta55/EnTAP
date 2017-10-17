@@ -161,9 +161,9 @@ namespace entapExecute {
                             QUERY_DATA.flag_transcripts(FRAME_SELECTION);
                         } else {
                             _input_path = frame_selection->execute(_input_path);
+                            QUERY_DATA.set_protein(true);
                             _FRAME_SELETION_SUCCESS = true;
                         }
-                        frame_selection.release();
                     }
                         break;
                     case RSEM: {
@@ -178,7 +178,6 @@ namespace entapExecute {
                             _input_path = expression->execute(original_input);
                             _EXPRESSION_SUCCESS = true;
                         }
-                        expression.release();
                     }
                         break;
                     case FILTER:
@@ -203,7 +202,6 @@ namespace entapExecute {
                         ));
                         ontology->execute(_input_path, no_database_hits);
                         _ONTOLOGY_SUCCESS = true;
-                        ontology.release();
                     }
                         break;
                     default:
@@ -481,7 +479,7 @@ namespace entapExecute {
                 break;
             case FRAME_SELECTION:
                 ss <<
-                   "EnTAP failed execution during the Expression Filtering stage with\n"
+                   "EnTAP failed execution during the  Frame Selection stage with\n"
                            "previous stages executing correctly.\n";
                 break;
             case FILTER:

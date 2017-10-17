@@ -272,6 +272,7 @@ void ModGeneMarkST::parse() {
             } else {
                 // Lost sequence
                 count_removed++;
+                pair.second.set_kept(false);
                 *file_map[FRAME_SELECTION_LOST_FLAG] << pair.second.get_sequence_n() << std::endl;
                 length = (uint16) pair.second.getSeq_length();  // Nucleotide sequence length
 

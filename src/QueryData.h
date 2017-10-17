@@ -53,9 +53,11 @@ public:
 
     void flag_transcripts(ExecuteStates);
     std::pair<uint16, uint16> calculate_N_vals(std::vector<uint16>&,uint64);
+    std::pair<uint16, uint16> calculate_N_vals(void);
     std::string trim_sequence_header(std::string&, std::string);
     void final_statistics(std::string&, std::vector<uint16>&);
-    bool is_protein() const;
+    bool is_protein(void) const;
+    void set_protein(bool);
     void set_frame_stats(const FrameStats &_frame_stats);
     void set_EXPRESSION_SUCCESS(bool _EXPRESSION_SUCCESS);
     void set_FRAME_SELECTION_SUCCESS(bool _FRAME_SELECTION_SUCCESS);
@@ -67,6 +69,8 @@ private:
 
     const uint8         LINE_COUNT   = 20;
     const uint8         NUCLEO_DEV   = 2;
+    const fp32          N_50_PERCENT = 0.5;
+    const fp32          N_90_PERCENT = 0.9;
     const std::string   NUCLEO_FLAG  = "Nucleotide";
     const std::string   PROTEIN_FLAG = "Protein";
     const std::string   COMPLETE_FLAG= "Complete";
@@ -88,6 +92,9 @@ private:
     bool         _FRAME_SELECTION_SUCCESS;
     bool         _SIM_SEARCH_SUCCESS;
     bool         _ONTOLOGY_SUCCESS;
+    uint32       _total_sequences;          // Original sequence number
+    uint64       _start_nuc_len;            // Starting total len
+    uint64       _start_prot_len;           // Starting total len
     FrameStats   _frame_stats;
 
 };

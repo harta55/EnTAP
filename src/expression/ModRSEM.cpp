@@ -229,6 +229,7 @@ std::string ModRSEM::filter() {
             count_kept++;
         } else {
             // Removed sequence
+            querySequence->set_kept(false);
             removed_file << querySequence->get_sequence() << std::endl;
             file_fig_box << GRAPH_REJECTED_FLAG << '\t'
                          << std::to_string(querySequence->getSeq_length())

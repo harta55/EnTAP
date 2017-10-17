@@ -80,7 +80,7 @@ void Ontology::execute(std::string input,std::string no_hit) {
             verify_pair = ptr->verify_files();
             if (!verify_pair.first) ptr->execute();
             ptr->parse();
-            ptr.release();
+            ptr.reset();
         }
         print_eggnog(*_QUERY_DATA->get_sequences_ptr());
     } catch (ExceptionHandler &e) {throw e;}

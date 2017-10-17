@@ -114,7 +114,6 @@ std::string FrameSelection::execute(std::string input) {
             output = ptr->execute();
         } else output = verify_pair.second;
         ptr->parse();
-        ptr.release();
         return output;
     } catch (const ExceptionHandler &e) {throw e;}
 }

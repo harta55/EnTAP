@@ -74,6 +74,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
     std::pair<uint16, uint16>                n_vals;
 
     _trim = trim;
+    _total_sequences = 0;
 
     if (!file_exists(input_file)) {
         throw ExceptionHandler("Input file not found at: " + input_file,ENTAP_ERR::E_INPUT_PARSE);
@@ -93,7 +94,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
     while (true) {
         std::getline(in_file, line);
         if (line.empty() && !in_file.eof()) continue;
-        if (line.find(">") == 0 || in_file.eof()) {
+        if (line.find(FASTA_FLAG) == 0 || in_file.eof()) {
             if (!seq_id.empty()) {
                 if (in_file.eof()) {
                     out_file << line << std::endl;
@@ -125,6 +126,8 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
     in_file.close();
     out_file.close();
     avg_len = total_len / count_seqs;
+    _total_sequences = count_seqs;
+    _protein  ? _start_prot_len = total_len : _start_nuc_len = total_len;
     // first - n50, second - n90
     n_vals = calculate_N_vals(sequence_lengths, total_len);
 
@@ -187,13 +190,19 @@ bool QueryData::is_protein() const {
  *
  * @return            - Pair of <n50,n90>
  */
-std::pair<unsigned short, unsigned short> QueryData::calculate_N_vals
-        (std::vector<unsigned short> &seq_lengths, unsigned long long total_len) {
+std::pair<uint16, uint16> QueryData::calculate_N_vals
+        (std::vector<uint16> &seq_lengths, uint64 total_len) {
+
+    uint64 temp_len=0;
+    uint64 n_50=0;
+    uint64 n_90=0;
+    fp64   fifty_len;
+    fp64   ninety_len;
+
     std::sort(seq_lengths.begin(),seq_lengths.end());
-    unsigned long temp_len=0, n_50=0,n_90=0;
-    double fifty_len = total_len * 0.5;
-    double ninety_len = total_len * 0.9;
-    for (unsigned long val : seq_lengths) {
+    fifty_len  = total_len * N_50_PERCENT;
+    ninety_len = total_len * N_90_PERCENT;
+    for (uint16 val : seq_lengths) {
         temp_len += val;
         if (temp_len > fifty_len && n_50 == 0) n_50 = val;
         if (temp_len > ninety_len) {
@@ -201,7 +210,25 @@ std::pair<unsigned short, unsigned short> QueryData::calculate_N_vals
             break;
         }
     }
-    return std::pair<unsigned short, unsigned short> (n_50,n_90);
+    return std::pair<uint16, uint16> (n_50,n_90);
+}
+
+std::pair<uint16, uint16> QueryData::calculate_N_vals (void) {
+    uint64 total_len=0;
+    uint64 temp_len=0;
+    uint64 n_50=0;
+    uint64 n_90=0;
+    uint64 val;
+    fp64   fifty_len;
+    fp64   ninety_len;
+
+    // Recalculate based upon what sequences are left
+    for (auto &pair : _SEQUENCES) {
+        if (pair.second.is_kept()) {
+            total_len += pair.second.getSeq_length();
+        }
+    }
+    return std::pair<uint16, uint16> (n_50,n_90);
 }
 
 
@@ -435,4 +462,8 @@ void QueryData::set_ONTOLOGY_SUCCESS(bool _ONTOLOGY_SUCCESS) {
 
 QUERY_MAP_T* QueryData::get_sequences_ptr() {
     return &this->_SEQUENCES;
+}
+
+void QueryData::set_protein(bool protein) {
+    QueryData::_protein = protein;
 }

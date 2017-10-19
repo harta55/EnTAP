@@ -155,10 +155,8 @@ namespace entapExecute {
                         ));
                         if ((_blastp && QUERY_DATA.is_protein())) {
                             print_debug("Protein sequences input, skipping frame selection");
-                            QUERY_DATA.flag_transcripts(FRAME_SELECTION);
                         } else if (!_blastp) {
                             print_debug("Blastx selected, skipping frame selection");
-                            QUERY_DATA.flag_transcripts(FRAME_SELECTION);
                         } else {
                             _input_path = frame_selection->execute(_input_path);
                             QUERY_DATA.set_protein(true);
@@ -173,7 +171,6 @@ namespace entapExecute {
                         ));
                         if (!user_input.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
                             print_debug("No alignment file specified, skipping expression analysis");
-                            QUERY_DATA.flag_transcripts(RSEM);
                         } else {
                             _input_path = expression->execute(original_input);
                             _EXPRESSION_SUCCESS = true;

@@ -239,11 +239,11 @@ void ModGeneMarkST::parse() {
 
         for (auto& pair : *pQUERY_DATA->get_sequences_ptr()) {
             std::map<std::string,frame_seq>::iterator p_it = protein_map.find(pair.first);
-            if (!pair.second.is_is_expression_kept()) continue; // Skip seqs that were lost to expression
+            if (!pair.second.is_kept()) continue; // Skip seqs that were lost to expression
             if (p_it != protein_map.end()) {
                 // Kept sequence, either partial, complete, or internal
                 count_selected++;
-                pair.second.setSequence(p_it->second.sequence);
+                pair.second.setSequence(p_it->second.sequence); // Sets isprotein flag
                 pair.second.setFrame(p_it->second.frame_type);
 
                 std::string sequence = p_it->second.sequence;
@@ -273,6 +273,7 @@ void ModGeneMarkST::parse() {
                 // Lost sequence
                 count_removed++;
                 pair.second.set_kept(false);
+                pair.second.set_is_frame_kept(false);
                 *file_map[FRAME_SELECTION_LOST_FLAG] << pair.second.get_sequence_n() << std::endl;
                 length = (uint16) pair.second.getSeq_length();  // Nucleotide sequence length
 

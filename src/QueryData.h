@@ -53,7 +53,7 @@ public:
 
     void flag_transcripts(ExecuteStates);
     std::pair<uint16, uint16> calculate_N_vals(std::vector<uint16>&,uint64);
-    std::pair<uint16, uint16> calculate_N_vals(void);
+    std::pair<uint16, uint16> calculate_N_vals(ExecuteStates, bool);
     std::string trim_sequence_header(std::string&, std::string);
     void final_statistics(std::string&, std::vector<uint16>&);
     bool is_protein(void) const;

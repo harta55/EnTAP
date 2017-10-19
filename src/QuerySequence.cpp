@@ -351,9 +351,10 @@ void QuerySequence::init_sequence() {
     _is_one_go = false;
     _is_one_kegg = false;
     _is_database_hit = false;
-    _is_expression_kept = false;
+    _is_expression_kept = true;
     _is_eggnog_hit  = false;
     _is_interpro_hit = false;
+    _is_frame_kept = true;
     _kept = true;
 }
 
@@ -609,4 +610,23 @@ bool QuerySequence::is_kept() const {
 
 void QuerySequence::set_kept(bool _kept) {
     QuerySequence::_kept = _kept;
+}
+
+bool QuerySequence::is_is_frame_kept() const {
+    return _is_frame_kept;
+}
+
+void QuerySequence::set_is_frame_kept(bool _is_frame_kept) {
+    QuerySequence::_is_frame_kept = _is_frame_kept;
+}
+
+bool QuerySequence::get_state_flag(ExecuteStates state) {
+    switch (state) {
+        case RSEM:
+            return this->_is_expression_kept;
+        case FRAME_SELECTION:
+            return this->_is_frame_kept;
+        default:
+            return false;
+    }
 }

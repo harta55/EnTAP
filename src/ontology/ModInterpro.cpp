@@ -191,7 +191,8 @@ void ModInterpro::parse() {
 
     print_debug("Success! Calculating statistics...");
     stats_stream <<
-                 ENTAP_STATS::SOFTWARE_BREAK << " Ontology - InterProScan" << ENTAP_STATS::SOFTWARE_BREAK <<
+                 ENTAP_STATS::SOFTWARE_BREAK << " Ontology - InterProScan\n" <<
+                 ENTAP_STATS::SOFTWARE_BREAK <<
                  "InterProScan statistics coming soon!";
     stats_out = stats_stream.str();
     print_statistics(stats_out);

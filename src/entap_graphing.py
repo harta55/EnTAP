@@ -74,7 +74,9 @@ def verify_package():
         exit(1)
     if has_matplot:
         global plt
+        import matplotlib
         import matplotlib.pyplot as plt
+        plt.switch_backend('agg')
     else:
         print("Matplotlib module not found. Not able to graph data.")
         exit(1)

@@ -150,6 +150,9 @@ public:
     void set_is_interpro_hit(bool _is_interpro_hit);
     bool is_kept() const;
     void set_kept(bool _kept);
+    bool is_is_frame_kept() const;
+    void set_is_frame_kept(bool _is_frame_kept);
+    bool get_state_flag(ExecuteStates);
 
 private:
 
@@ -167,6 +170,7 @@ private:
     bool                              _is_one_go;
     bool                              _is_one_kegg;
     bool                              _is_expression_kept;
+    bool                              _is_frame_kept;
     bool                              _is_interpro_hit;
     bool                              _is_eggnog_hit;
     float                             _tax_score;

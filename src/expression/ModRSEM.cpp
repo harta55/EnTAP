@@ -222,7 +222,6 @@ std::string ModRSEM::filter() {
         if (fpkm_val > _fpkm) {
             // Kept sequence
             out_file << querySequence->get_sequence() << std::endl;
-            querySequence->set_is_expression_kept(true);
             querySequence->set_fpkm(fpkm_val);
             file_fig_box << GRAPH_KEPT_FLAG << '\t' <<
                          std::to_string(querySequence->getSeq_length()) << std::endl;
@@ -230,6 +229,7 @@ std::string ModRSEM::filter() {
         } else {
             // Removed sequence
             querySequence->set_kept(false);
+            querySequence->set_is_expression_kept(false);
             removed_file << querySequence->get_sequence() << std::endl;
             file_fig_box << GRAPH_REJECTED_FLAG << '\t'
                          << std::to_string(querySequence->getSeq_length())

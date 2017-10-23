@@ -133,7 +133,7 @@ std::string ModGeneMarkST::execute() {
     }
     if (rename(lst_file.c_str(),_final_lst.c_str())!=0 ||
         rename(GENEMARK_LOG_FILE.c_str(),out_gmst_log.c_str())!=0 ) {
-        throw ExceptionHandler("Error moving genemark results", ENTAP_ERR::E_INIT_TAX_READ);
+        throw ExceptionHandler("Error moving genemark results", ENTAP_ERR::E_RUN_GENEMARK_MOVE);
     }
     if (file_exists(GENEMARK_HMM_FILE)) {
         rename(GENEMARK_HMM_FILE.c_str(),out_hmm_file.c_str());

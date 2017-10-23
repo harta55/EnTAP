@@ -91,7 +91,7 @@ void ExceptionHandler::print_msg() {
                     "the file from GitHub";
             break;
         case ENTAP_ERR::E_CONFIG_CREATE_SUCCESS:
-            added_msg << "Configuration file was not found and was generated, make sure to "
+            added_msg << "Configuration file was not found and was generated for you, make sure to "
                     "check the paths before continuing.";
             break;
         case ENTAP_ERR::E_INIT_TAX_DOWN:
@@ -118,6 +118,66 @@ void ExceptionHandler::print_msg() {
             added_msg << "Error in parsing EggNOG data. Ensure that EggNOG ran properly and the output "
                       "has the proper data contained within.";
             break;
+        case ENTAP_ERR::E_INIT_TAX_READ:
+            added_msg << "Unable to read the Taxnomic database into memory, ensure the paths are "
+                    "correct along with how you configured the file. You may need to remove it and "
+                    "re-download.";
+            break;
+        case ENTAP_ERR::E_INIT_GO_DOWNLOAD:
+            added_msg << "Error in downloading the Gene Ontology database, ensure you are connected "
+                    "to the internet as well as having the Unix module wget available (this is "
+                    "available by default on most systems).";
+            break;
+        case ENTAP_ERR::E_INIT_GO_UNZIP:
+            added_msg << "Error in unzipping the Gene Ontology data downloaded. This could be due to "
+                    "not having gzip available on your system (generally available by default). You may "
+                    "want to try using the pre-configured database in the Git repo.";
+            break;
+        case ENTAP_ERR::E_INIT_GO_INDEX:
+            added_msg << "Error in indexing Gene Ontology database. This could be due to a poor"
+                    " download of the data or an issue with the required Boost library (serialization).";
+            break;
+        case ENTAP_ERR::E_RUN_GENEMARK_PARSE:
+            added_msg << "Ensure that your GeneMarkS-T run completed successfully and you have "
+                    "sequences in your output file!";
+            break;
+        case ENTAP_ERR::E_RUN_GENEMARK_STATS:
+            added_msg << "Ensure the GeneMarkS-T run finished successfully. If it has, re-run"
+                    " with the --overwrite flag or delete your frame_selection directory.";
+            break;
+        case ENTAP_ERR::E_RUN_GENEMARK_MOVE:
+            added_msg << "Ensure GeneMarkS-T ran properly and the files are all located within "
+                    "the frame_selection directory.";
+            break;
+        case ENTAP_ERR::E_RUN_RSEM_VALIDATE:
+            added_msg << "Ensure that you have specified the correct path to the RSEM "
+                    "directory and have it properly compiled.";
+            break;
+        case ENTAP_ERR::E_RUN_RSEM_EXPRESSION:
+            added_msg << "Ensure that you have specified the correct path to the RSEM "
+                    "directory and have it properly compiled.";
+            break;
+        case ENTAP_ERR::E_RUN_RSEM_EXPRESSION_PARSE:
+            added_msg << "Ensure that RSEM ran properly and the output has sequences in it!";
+            break;
+        case ENTAP_ERR::E_RUN_SIM_SEARCH_FILTER:
+            added_msg << "Ensure the similarity searching finished properly and your output files"
+                    " are not empty.";
+            break;
+        case ENTAP_ERR::E_RUN_SIM_SEARCH_RUN:
+            added_msg << "Ensure you have specified the proper path to the executable. Additionally, "
+                    "the database you are specifying is configured for DIAMOND (.dmnd).";
+            break;
+        case ENTAP_ERR::E_RUN_ANNOTATION:
+            added_msg << "Ensure you have specified the proper path to the executable.";
+            break;
+        case ENTAP_ERR::E_DATABASE_QUERY:
+            added_msg << "Ensure that your EggNOG run finished successfully and the files are not empty.";
+            break;
+        case ENTAP_ERR::E_RUN_INTERPRO:
+            added_msg << "Ensure you have specified the proper path to the InterProScan executable "
+                    "and it is properly compiled on your system. Additionally, ensure you have the "
+                    "proper databases downloaded that you would like to run against.";
         default:
             added_msg << "Error code not recognized.";
             break;

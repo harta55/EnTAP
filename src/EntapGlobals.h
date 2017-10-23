@@ -275,6 +275,7 @@ namespace ENTAP_ERR {
     const uint16 E_RUN_GENEMARK                = 100;
     const uint16 E_RUN_GENEMARK_PARSE          = 101;
     const uint16 E_RUN_GENEMARK_STATS          = 102;
+    const uint16 E_RUN_GENEMARK_MOVE           = 103;
     const uint16 E_RUN_RSEM_VALIDATE           = 110;
     const uint16 E_RUN_RSEM_CONVERT            = 111;
     const uint16 E_RUN_RSEM_EXPRESSION         = 112;

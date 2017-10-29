@@ -31,6 +31,7 @@
 #include <iomanip>
 #include "ModRSEM.h"
 #include "../ExceptionHandler.h"
+#include "../GraphingManager.h"
 
 //**************************************************************
 
@@ -179,7 +180,7 @@ std::string ModRSEM::filter() {
     std::string         fig_txt_box_path;
     std::string         fig_png_box_path;
     std::stringstream   out_msg;
-    GraphingStruct      graphingStruct;
+    GraphingData        graphingStruct;
     QUERY_MAP_T         *MAP;
 
     MAP = pQUERY_DATA->get_sequences_ptr();
@@ -193,8 +194,8 @@ std::string ModRSEM::filter() {
     boostFS::create_directories(_figure_path);
     boostFS::path path (_rsem_out);
 
-    fig_txt_box_path = (boostFS::path(_figure_path) / GRAPH_TXT_BOX_PLOT).string();
-    fig_png_box_path = (boostFS::path(_figure_path) / GRAPH_PNG_BOX_PLOT).string();
+    fig_txt_box_path = PATHS(_figure_path, GRAPH_TXT_BOX_PLOT);
+    fig_png_box_path = PATHS(_figure_path, GRAPH_PNG_BOX_PLOT);
 
     std::ofstream file_fig_box(fig_txt_box_path, std::ios::out | std::ios::app);
     file_fig_box << "flag\tsequence length" << std::endl;    // First line placeholder, not used
@@ -218,7 +219,7 @@ std::string ModRSEM::filter() {
             throw ExceptionHandler("Unable to find sequence: " + geneid,
                                    ENTAP_ERR::E_RUN_RSEM_EXPRESSION_PARSE);
         }
-        QuerySequence *querySequence = &it->second;
+        QuerySequence *querySequence = it->second;
         if (fpkm_val > _fpkm) {
             // Kept sequence
             out_file << querySequence->get_sequence() << std::endl;

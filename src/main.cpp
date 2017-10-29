@@ -27,11 +27,9 @@
 
 
 //*********************** Includes *****************************
-#include <iostream>
-#include <fstream>
+#include "common.h"
 #include <array>
 #include <ctime>
-#include <vector>
 #include <cstring>
 #include <unordered_map>
 #include <boost/filesystem/operations.hpp>
@@ -46,6 +44,7 @@
 #include "EntapGlobals.h"
 #include "EntapExecute.h"
 #include "UserInput.h"
+#include "config.h"
 
 //**************************************************************
 
@@ -139,7 +138,8 @@ void init_entap(boostPO::variables_map& user_input) {
 
     boost::filesystem::path working_dir(boost::filesystem::current_path());
     _working_dir    = working_dir.string();
-    _outpath        = PATHS(_working_dir, user_input["tag"].as<std::string>());
+    _outpath        = PATHS(_working_dir,
+                            user_input[ENTAP_CONFIG::INPUT_FLAG_TAG].as<std::string>());
     boostFS::create_directories(_outpath);
     init_log();
     _exe_path = get_exe_path(user_input);
@@ -163,28 +163,32 @@ void init_entap(boostPO::variables_map& user_input) {
  * ======================================================================
  */
 void init_log() {
-//    std::chrono::time_point<std::chrono::system_clock> now;
-//    std::time_t                                        now_time;
-//    std::tm                                            now_tm;
+#ifndef USE_BOOST
+    std::chrono::time_point<std::chrono::system_clock> now;
+    std::time_t                                        now_time;
+    std::tm                                            now_tm;
+#endif
     std::stringstream                                  ss;
     std::string                                        log_file_name;
     std::string                                        debug_file_name;
     std::string                                        time_date;
 
+#ifdef USE_BOOST
     boost::posix_time::ptime local = boost::posix_time::second_clock::local_time();
     ss <<
        "_" <<
-       local.date().year() << "." <<
+       local.date().year()             << "." <<
        local.date().month().as_number()<< "." <<
-       local.date().day()  << "-" <<
-       local.time_of_day().hours()<< "h"   <<
-       local.time_of_day().minutes()<< "m" <<
-       local.time_of_day().seconds()<< "s";
-
-//    now      = std::chrono::system_clock::now();
-//    now_time = std::chrono::system_clock::to_time_t(now);
-//    now_tm   = *std::localtime(&now_time);
-//    ss << std::put_time(&now_tm, "_%Y.%m.%d-%Hh.%Mm.%Ss");
+       local.date().day()              << "-" <<
+       local.time_of_day().hours()     << "h"   <<
+       local.time_of_day().minutes()   << "m" <<
+       local.time_of_day().seconds()   << "s";
+#else
+    now      = std::chrono::system_clock::now();
+    now_time = std::chrono::system_clock::to_time_t(now);
+    now_tm   = *std::localtime(&now_time);
+    ss << std::put_time(&now_tm, "_%Y.%m.%d-%Hh.%Mm.%Ss");
+#endif
     time_date       = ss.str();
     log_file_name   = ENTAP_CONFIG::LOG_FILENAME   + time_date + ENTAP_CONFIG::LOG_EXTENSION;
     debug_file_name = ENTAP_CONFIG::DEBUG_FILENAME + time_date + ENTAP_CONFIG::LOG_EXTENSION;

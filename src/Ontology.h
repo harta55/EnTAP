@@ -79,7 +79,7 @@ private:
     GraphingManager                 *_graphingManager;
     QueryData                       *_QUERY_DATA;
 
-    void print_eggnog(query_map_struct&);
+    void print_eggnog(QUERY_MAP_T&);
     void init_headers();
     void print_header(std::string);
     std::unique_ptr<AbstractOntology> spawn_object(uint16&);

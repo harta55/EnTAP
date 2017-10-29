@@ -28,8 +28,6 @@
 
 //*********************** Includes *****************************
 #include "GraphingManager.h"
-#include "EntapConfig.h"
-#include "EntapGlobals.h"
 //**************************************************************
 
 /**
@@ -73,7 +71,7 @@ GraphingManager::GraphingManager(std::string path) {
  *
  * =====================================================================
  */
-void GraphingManager::graph(GraphingStruct& graphingStruct) {
+void GraphingManager::graph(GraphingData& graphingStruct) {
     if (!_graphing_enabled) return;
 
     std::unordered_map<std::string,std::string>     cmd_map;

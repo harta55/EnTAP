@@ -33,14 +33,13 @@
 #include "QuerySequence.h"
 #include "EntapExecute.h"
 
-
 struct FrameStats {
-    unsigned long removed;
-    unsigned long selected;
-    unsigned long partial_5;
-    unsigned long partial_3;
-    unsigned long internal;
-    unsigned long complete;
+    uint32 removed;
+    uint32 selected;
+    uint32 partial_5;
+    uint32 partial_3;
+    uint32 internal;
+    uint32 complete;
 };
 
 class QueryData {
@@ -48,6 +47,7 @@ class QueryData {
 public:
 
     QueryData(std::string&, std::string&, bool&, bool&);
+    ~QueryData();
 
     QUERY_MAP_T* get_sequences_ptr();
 

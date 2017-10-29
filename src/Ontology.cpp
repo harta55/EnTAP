@@ -116,7 +116,7 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
 }
 
 
-void Ontology::print_eggnog(query_map_struct &SEQUENCES) {
+void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
     print_debug("Beginning to print final results...");
     std::map<short, std::ofstream*> file_map;
     std::string file_name;
@@ -134,7 +134,7 @@ void Ontology::print_eggnog(query_map_struct &SEQUENCES) {
     }
     for (auto &pair : SEQUENCES) {
         for (uint16 i : _go_levels) {
-            *file_map[i]<< pair.second.print_tsv(_HEADERS,i)<<std::endl;
+            *file_map[i]<< pair.second->print_tsv(_HEADERS,i)<<std::endl;
         }
     }
     for(auto& pair : file_map) {

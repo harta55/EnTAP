@@ -33,17 +33,16 @@
 #include "../ExceptionHandler.h"
 
 
-std::map<std::string,std::vector<std::string>> AbstractOntology::parse_go_list
-        (std::string list, std::map<std::string,struct_go_term> &GO_DATABASE,char delim) {
+go_format_t AbstractOntology::parse_go_list(std::string list, go_serial_map_t &GO_DATABASE,char delim) {
 
-    std::map<std::string,std::vector<std::string>> output;
+    go_format_t output;
     std::string temp;
     std::vector<std::vector<std::string>>results;
 
     if (list.empty()) return output;
     std::istringstream ss(list);
     while (std::getline(ss,temp,delim)) {
-        struct_go_term term_info = GO_DATABASE[temp];
+        GoEntry term_info = GO_DATABASE[temp];
         output[term_info.category].push_back(temp + "-" + term_info.term +
                                              "(L=" + term_info.level + ")");
     }
@@ -52,8 +51,8 @@ std::map<std::string,std::vector<std::string>> AbstractOntology::parse_go_list
 
 
 
-std::map<std::string,struct_go_term> AbstractOntology::read_go_map () {
-    std::map<std::string,struct_go_term> new_map;
+go_serial_map_t AbstractOntology::read_go_map () {
+    go_serial_map_t new_map;
     try {
         {
             std::ifstream ifs(GO_DB_PATH);

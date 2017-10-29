@@ -88,7 +88,7 @@ void ModEggnog::parse() {
     std::string                              tax_scope_readable;
     std::string                              fig_txt_go_bar;
     std::string                              fig_png_go_bar;
-    std::map<std::string, struct_go_term>    GO_DATABASE;
+    go_serial_map_t                          GO_DATABASE;
     std::map<std::string, int>               eggnog_map;
     uint32                                   count_total_go_hits=0;
     uint32                                   count_total_go_terms=0;
@@ -107,8 +107,8 @@ void ModEggnog::parse() {
     DatabaseHelper                           EGGNOG_DATABASE;
     std::map<std::string, uint32>            tax_scope_ct_map;
     GO_top_map_t                             go_combined_map;     // Just for convenience
-    go_struct                                go_parsed;
-    GraphingStruct                           graphingStruct;
+    go_format_t                              go_parsed;
+    GraphingData                             graphingStruct;
 
     ss<<std::fixed<<std::setprecision(2);
     boostFS::remove_all(_proc_dir);
@@ -133,18 +133,18 @@ void ModEggnog::parse() {
         io::CSVReader<EGGNOG_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(path);
         while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                            best_og, cog_cat, eggnog_annot)) {
-            query_map_struct::iterator it = (*pQUERY_DATA->get_sequences_ptr()).find(qseqid);
+            QUERY_MAP_T::iterator it = (*pQUERY_DATA->get_sequences_ptr()).find(qseqid);
             if (it != (*pQUERY_DATA->get_sequences_ptr()).end()) {
                 count_TOTAL_hits++;
-                it->second.set_eggnog_results(seed_ortho,seed_e,seed_score,predicted_gene,go_terms,
+                it->second->set_eggnog_results(seed_ortho,seed_e,seed_score,predicted_gene,go_terms,
                                               kegg,tax_scope,ogs, EGGNOG_DATABASE);
                 go_parsed = parse_go_list(go_terms,GO_DATABASE,',');
-                it->second.set_go_parsed(go_parsed, ENTAP_EXECUTE::EGGNOG_INT_FLAG);
-                it->second.set_is_family_assigned(true);
+                it->second->set_go_parsed(go_parsed, ENTAP_EXECUTE::EGGNOG_INT_FLAG);
+                it->second->set_is_family_assigned(true);
                 eggnog_map[qseqid] = 1;
                 if (!go_parsed.empty()) {
                     count_total_go_hits++;
-                    it->second.set_is_one_go(true);
+                    it->second->set_is_one_go(true);
                     for (auto &pair : go_parsed) {
                         for (std::string &term : pair.second) {
                             count_total_go_terms++;
@@ -172,13 +172,13 @@ void ModEggnog::parse() {
                     count_total_kegg_hits++;
                     ct = (uint32) std::count(kegg.begin(), kegg.end(), ',');
                     count_total_kegg_terms += ct + 1;
-                    it->second.set_is_one_kegg(true);
+                    it->second->set_is_one_kegg(true);
                 } else {
                     count_no_kegg++;
                 }
 
                 // Compile Taxonomic Orthogroup stats
-                tax_scope_readable = it->second.get_tax_scope();
+                tax_scope_readable = it->second->get_tax_scope();
                 if (!tax_scope_readable.empty()) {
                     count_tax_scope++;
                     if (tax_scope_ct_map.count(tax_scope_readable)) {
@@ -192,10 +192,10 @@ void ModEggnog::parse() {
     }
 
     EGGNOG_DATABASE.close();
-    out_no_hits_nucl = (boostFS::path(_proc_dir) / boostFS::path(OUT_UNANNOTATED_NUCL)).string();
-    out_no_hits_prot = (boostFS::path(_proc_dir) / boostFS::path(OUT_UNANNOTATED_PROT)).string();
-    out_hit_nucl     = (boostFS::path(_proc_dir) / boostFS::path(OUT_ANNOTATED_NUCL)).string();
-    out_hit_prot     = (boostFS::path(_proc_dir) / boostFS::path(OUT_ANNOTATED_PROT)).string();
+    out_no_hits_nucl = PATHS(_proc_dir, OUT_UNANNOTATED_NUCL);
+    out_no_hits_prot = PATHS(_proc_dir, OUT_UNANNOTATED_PROT);
+    out_hit_nucl     = PATHS(_proc_dir, OUT_ANNOTATED_NUCL);
+    out_hit_prot     = PATHS(_proc_dir, OUT_ANNOTATED_PROT);
     std::ofstream file_no_hits_nucl(out_no_hits_nucl, std::ios::out | std::ios::app);
     std::ofstream file_no_hits_prot(out_no_hits_prot, std::ios::out | std::ios::app);
     std::ofstream file_hits_nucl(out_hit_nucl, std::ios::out | std::ios::app);
@@ -205,13 +205,13 @@ void ModEggnog::parse() {
     for (auto &pair : *pQUERY_DATA->get_sequences_ptr()) {
         if (eggnog_map.find(pair.first) == eggnog_map.end()) {
             // Unannotated sequence
-            if (!pair.second.get_sequence_n().empty()) file_no_hits_nucl<<pair.second.get_sequence_n()<<std::endl;
-            file_no_hits_prot << pair.second.get_sequence_p() << std::endl;
+            if (!pair.second->get_sequence_n().empty()) file_no_hits_nucl<<pair.second->get_sequence_n()<<std::endl;
+            file_no_hits_prot << pair.second->get_sequence_p() << std::endl;
             count_no_hits++;
         } else {
             // Annotated sequence
-            if (!pair.second.get_sequence_n().empty()) file_hits_nucl<<pair.second.get_sequence_n()<<std::endl;
-            file_hits_prot << pair.second.get_sequence_p() << std::endl;
+            if (!pair.second->get_sequence_n().empty()) file_hits_nucl<<pair.second->get_sequence_n()<<std::endl;
+            file_hits_prot << pair.second->get_sequence_p() << std::endl;
         }
     }
 

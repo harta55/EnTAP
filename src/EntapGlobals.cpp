@@ -28,18 +28,15 @@
 
 //*********************** Includes *****************************
 #include <chrono>
-#include <string>
 #include <ios>
-#include <fstream>
 #include <boost/filesystem/operations.hpp>
 #include <pstream.h>
 #include <thread>
 #include <boost/program_options/variables_map.hpp>
 #include <unordered_map>
-#include <sstream>
 #include <boost/archive/binary_iarchive.hpp>
 #include "EntapGlobals.h"
-#include "ExceptionHandler.h"
+#include "config.h"
 #include <boost/archive/binary_iarchive.hpp>
 
 //**************************************************************
@@ -137,6 +134,8 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_TRIM          = "trim";
     const std::string INPUT_FLAG_STATE         = "state";
     const std::string INPUT_FLAG_PAIRED_END    = "paired-end";
+    const std::string INPUT_FLAG_THREADS       = "threads";
+    const std::string INPUT_FLAG_UNINFORM      = "uninformative";
 
     const std::string INPUT_UNIPROT_SWISS      = "swiss";
     const std::string INPUT_UNIPROT_UR100      = "ur100";
@@ -230,11 +229,12 @@ void print_statistics(std::string &msg) {
  * =====================================================================
  */
 bool file_exists(std::string path) {
-    /* Non-boost implementation
+#ifdef USE_BOOST
+    return boost::filesystem::exists(path);
+#else
     struct stat buff;
     return (stat(path.c_str(), &buff) == 0);
-    */
-    return boost::filesystem::exists(path);
+#endif
 }
 
 
@@ -346,12 +346,12 @@ int get_supported_threads(boost::program_options::variables_map &user_map) {
     int          threads;
 
     supported_threads = std::thread::hardware_concurrency();
-    if (user_map["threads"].as<int>() > supported_threads) {
+    if (user_map[ENTAP_CONFIG::INPUT_FLAG_THREADS].as<int>() > supported_threads) {
         print_debug("Specified thread number is larger than available threads,"
                                        "setting threads to " + std::to_string(supported_threads));
         threads = supported_threads;
     } else {
-        threads = user_map["threads"].as<int>();
+        threads = user_map[ENTAP_CONFIG::INPUT_FLAG_THREADS].as<int>();
     }
     return threads;
 }
@@ -365,4 +365,22 @@ std::string generate_command(std::unordered_map<std::string,std::string> &map,st
     for (auto &pair : map)ss << pair.first << " " << pair.second << " ";
     out = ss.str();
     return out;
+}
+
+
+bool file_empty(std::string path) {
+    std::ifstream file(path);
+    bool empty;
+    std::string line;
+    empty = file.peek() == std::ifstream::traits_type::eof();
+    if (!empty) {
+        empty = true;
+        while (getline(file,line)) {
+            if (line.empty()) continue;
+            empty = false;
+            break;
+        }
+    }
+    file.close();
+    return empty;
 }

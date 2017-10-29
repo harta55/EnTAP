@@ -79,7 +79,7 @@
                             "just check whether the version of Python being used has"   \
                             "MatPlotLib accessible."
 #define DESC_OUT_FLAG       "Specify the output directory you would like the data to"   \
-                            "be saved to."
+                            " be saved to."
 #define DESC_DATABASE       "Provide the paths to the databases you would like to use\n"\
                             "For running: ensure the databases selected are .dmnd"      \
                             "formatted.\n"                                              \
@@ -135,11 +135,24 @@
 #define DESC_INPUT_TRAN     "Path to the input transcriptome file"
 #define DESC_COMPLET_PROT   "Select this option if all of your sequences are complete"  \
                             "proteins.\n"                                               \
-                            "At this point, this flag will merely flag the sequences"
+                            "At this point, this option will merely flag the sequences"
 #define DESC_OVERWRITE      "Select this option if you would like to overwrite previous"\
                             "files\n"                                                   \
                             "Note: do NOT use this if you would like to pickup from"    \
                             "a previous run!"
+#define DESC_UNINFORMATIVE  "Path to a list of keywords that should be used to specify" \
+                            " uninformativeness of hits during similarity searching. "  \
+                            "Generally something along the lines of 'hypothetical' or " \
+                            "'unknown' are used. Each term should be on a new line of " \
+                            "the file being linked to.\nExample (defaults):\n"          \
+                            "    -conserved\n"                                          \
+                            "    -predicted\n"                                          \
+                            "    -unknown\n"                                            \
+                            "    -hypothetical\n"                                       \
+                            "    -putative\n"                                           \
+                            "    -unidentified\n"                                       \
+                            "    -uncultured\n"                                         \
+                            "    -uninformative"
 
 //**************************************************************
 
@@ -162,6 +175,8 @@ void verify_species (boost::program_options::variables_map&, SPECIES_FLAGS);
 void init_exe_paths(std::unordered_map<std::string, std::string> &, std::string);
 std::string get_exe_path(boostPO::variables_map&);
 bool verify_interpro(std::string);
+void process_user_species(std::string&);
+void verify_uninformative(std::string&);
 
 //**************************************************************
 

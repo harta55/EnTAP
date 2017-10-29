@@ -83,6 +83,7 @@ boost::program_options::variables_map parse_arguments_boost(int argc, const char
                 (ENTAP_CONFIG::INPUT_FLAG_CONFIG.c_str(),DESC_CONFIG)
                 (ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN.c_str(),DESC_RUN_PROTEIN)
                 (ENTAP_CONFIG::INPUT_FLAG_RUNNUCLEOTIDE.c_str(),DESC_RUN_NUCLEO)
+                (ENTAP_CONFIG::INPUT_FLAG_UNINFORM.c_str(), boostPO::value<std::string>(),DESC_UNINFORMATIVE)
                 ("ncbi,N",
                  boostPO::value<std::vector<std::string>>()->multitoken()
                          ->default_value(std::vector<std::string>{ENTAP_CONFIG::INPUT_UNIPROT_NULL},""),
@@ -327,11 +328,15 @@ bool verify_user_input(boostPO::variables_map& vm) {
                 }
             }
 
+            // Verify uninformative file list
+            if (vm.count(ENTAP_CONFIG::INPUT_FLAG_UNINFORM)) {
+                std::string uninform_path = vm[ENTAP_CONFIG::INPUT_FLAG_UNINFORM].as<std::string>();
+                verify_uninformative(uninform_path);
+            }
 
         } else {
             // Must be config
             ;
-
         }
 
     }catch (const ExceptionHandler &e) {throw e;}
@@ -616,19 +621,17 @@ void verify_species(boostPO::variables_map &map, SPECIES_FLAGS flag) {
 
     std::vector<std::string> species;
     std::string              raw_species;
-    std::unordered_map<std::string, std::string>    taxonomic_database;
+    tax_serial_map_t         taxonomic_database;
 
 
     if (flag == SPECIES) {
         raw_species = map[ENTAP_CONFIG::INPUT_FLAG_SPECIES].as<std::string>();
-        std::transform(raw_species.begin(), raw_species.end(), raw_species.begin(), ::tolower);
-        std::replace(raw_species.begin(), raw_species.end(), '_',' ');
+        process_user_species(raw_species);
         species.push_back(raw_species);
     } else if (flag == CONTAMINANT) {
         species = map[ENTAP_CONFIG::INPUT_FLAG_CONTAM].as<std::vector<std::string>>();
         for (std::string &contam : species) {
-            std::transform(raw_species.begin(), raw_species.end(), raw_species.begin(), ::tolower);
-            std::replace(raw_species.begin(), raw_species.end(), '_',' ');
+            process_user_species(contam);
         }
     }
     if (species.empty()) return;
@@ -764,4 +767,15 @@ bool verify_interpro(std::string database) {
     if (database.compare(INTER_PIRSF) == 0) return true;
     if (database.compare(INTER_COILS) == 0) return true;
     return (database.compare(INTER_MOBI) == 0);
+}
+
+void process_user_species(std::string &input) {
+    std::transform(input.begin(), input.end(), input.begin(), ::tolower);
+    std::replace(input.begin(), input.end(), '_',' ');
+}
+
+void verify_uninformative(std::string& path) {
+    if (!file_exists(path) || file_empty(path)) {
+        throw ExceptionHandler("Path to uninformative list invalid/empty!",ENTAP_ERR::E_INPUT_PARSE);
+    }
 }

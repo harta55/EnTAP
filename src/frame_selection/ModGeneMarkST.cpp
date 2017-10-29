@@ -181,7 +181,7 @@ void ModGeneMarkST::parse() {
     fp32                                    avg_selected;
     fp32                                    avg_lost;
     std::pair<uint64, uint64>               kept_n;
-    GraphingStruct                          graphingStruct;
+    GraphingData                            graphingStruct;
 
     boostFS::remove_all(_processed_path);
     boostFS::remove_all(_figure_path);
@@ -203,12 +203,14 @@ void ModGeneMarkST::parse() {
     uint32 max_selected=0;
     uint64 total_removed_len=0;
     uint64 total_kept_len=0;
-    uint64 count_selected=0;
-    uint64 count_removed=0;
-    uint64 count_partial_5=0;
-    uint64 count_partial_3=0;
-    uint64 count_internal=0;
-    uint64 count_complete=0;
+
+    // Sequence count
+    uint32 count_selected=0;
+    uint32 count_removed=0;
+    uint32 count_partial_5=0;
+    uint32 count_partial_3=0;
+    uint32 count_internal=0;
+    uint32 count_complete=0;
 
     try {
         std::map<std::string,frame_seq> protein_map = genemark_parse_protein(_final_out);
@@ -239,16 +241,16 @@ void ModGeneMarkST::parse() {
 
         for (auto& pair : *pQUERY_DATA->get_sequences_ptr()) {
             std::map<std::string,frame_seq>::iterator p_it = protein_map.find(pair.first);
-            if (!pair.second.is_kept()) continue; // Skip seqs that were lost to expression
+            if (!pair.second->is_kept()) continue; // Skip seqs that were lost to expression
             if (p_it != protein_map.end()) {
                 // Kept sequence, either partial, complete, or internal
                 count_selected++;
-                pair.second.setSequence(p_it->second.sequence); // Sets isprotein flag
-                pair.second.setFrame(p_it->second.frame_type);
+                pair.second->setSequence(p_it->second.sequence); // Sets isprotein flag
+                pair.second->setFrame(p_it->second.frame_type);
 
                 std::string sequence = p_it->second.sequence;
                 std::string frame_type = p_it->second.frame_type;
-                length = (uint16) pair.second.getSeq_length();  // Nucleotide sequence length
+                length = (uint16) pair.second->getSeq_length();  // Nucleotide sequence length
 
                 if (length < min_selected) {
                     min_selected = length;
@@ -272,10 +274,10 @@ void ModGeneMarkST::parse() {
             } else {
                 // Lost sequence
                 count_removed++;
-                pair.second.set_kept(false);
-                pair.second.set_is_frame_kept(false);
-                *file_map[FRAME_SELECTION_LOST_FLAG] << pair.second.get_sequence_n() << std::endl;
-                length = (uint16) pair.second.getSeq_length();  // Nucleotide sequence length
+                pair.second->set_kept(false);
+                pair.second->set_is_frame_kept(false);
+                *file_map[FRAME_SELECTION_LOST_FLAG] << pair.second->get_sequence_n() << std::endl;
+                length = (uint16) pair.second->getSeq_length();  // Nucleotide sequence length
 
                 if (length < min_removed) {
                     min_removed = length;

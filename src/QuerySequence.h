@@ -34,6 +34,7 @@
 #include <string>
 #include "Ontology.h"
 #include "DatabaseHelper.h"
+#include "EntapExecute.h"
 
 class QuerySequence {
 public:

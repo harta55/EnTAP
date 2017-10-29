@@ -34,6 +34,8 @@
 #include <list>
 #include <fstream>
 #include <iostream>
+#include <sstream>
+#include <algorithm>
 //**************************************************************
 
 

@@ -125,9 +125,9 @@ void ModInterpro::parse() {
     std::string                           path_no_hits_fnn;
     std::string                           path_hits_faa;
     std::string                           path_hits_fnn;
-    std::map<std::string, struct_go_term> GO_DATABASE;
+    go_serial_map_t                       GO_DATABASE;
     std::map<std::string,InterProData>    interpro_map;
-    go_struct                             go_terms_parsed;
+    go_format_t                           go_terms_parsed;
     uint32                                count_hits=0;
     uint32                                count_no_hits=0;
 
@@ -166,22 +166,22 @@ void ModInterpro::parse() {
         std::map<std::string, InterProData>::iterator it = interpro_map.find(pair.first);
         if (it != interpro_map.end()) {
             count_hits++;
-            pair.second.set_is_interpro_hit(true);
+            pair.second->set_is_interpro_hit(true);
             interpro_output = it->second.interID + "(" + it->second.interDesc + ")";
             protein_output  = it->second.databaseID + "(" + it->second.databaseDesc + ")";
             go_terms_parsed = parse_go_list(it->second.go_terms,GO_DATABASE,',');
             std::stringstream ss;
             ss << std::scientific << it->second.eval;
             e_str = ss.str();
-            pair.second.set_interpro_results(e_str, protein_output, it->second.databasetype,
+            pair.second->set_interpro_results(e_str, protein_output, it->second.databasetype,
                                              interpro_output, it->second.pathways, go_terms_parsed);
-            if (!pair.second.get_sequence_n().empty()) file_hits_fnn << pair.second.get_sequence_n() << std::endl;
-            if (!pair.second.get_sequence_p().empty()) file_hits_faa << pair.second.get_sequence_p() << std::endl;
+            if (!pair.second->get_sequence_n().empty()) file_hits_fnn << pair.second->get_sequence_n() << std::endl;
+            if (!pair.second->get_sequence_p().empty()) file_hits_faa << pair.second->get_sequence_p() << std::endl;
         } else {
             // Not InterPro hit
             count_no_hits++;
-            if (!pair.second.get_sequence_n().empty()) file_no_hits_fnn << pair.second.get_sequence_n() << std::endl;
-            if (!pair.second.get_sequence_p().empty()) file_no_hits_faa << pair.second.get_sequence_p() << std::endl;
+            if (!pair.second->get_sequence_n().empty()) file_no_hits_fnn << pair.second->get_sequence_n() << std::endl;
+            if (!pair.second->get_sequence_p().empty()) file_no_hits_faa << pair.second->get_sequence_p() << std::endl;
         }
     }
     file_no_hits_faa.close();

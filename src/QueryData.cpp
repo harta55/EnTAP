@@ -100,12 +100,12 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
                     out_file << line << std::endl;
                     sequence += line + "\n";
                 }
-                QuerySequence query_seq = QuerySequence(_protein,sequence);
-                if (is_complete) query_seq.setFrame(COMPLETE_FLAG);
-                query_seq.setQseqid(seq_id);
+                QuerySequence *query_seq = new QuerySequence(_protein,sequence);
+                if (is_complete) query_seq->setFrame(COMPLETE_FLAG);
+                query_seq->setQseqid(seq_id);
                 _SEQUENCES.emplace(seq_id, query_seq);
                 count_seqs++;
-                len = (uint16) query_seq.getSeq_length();
+                len = (uint16) query_seq->getSeq_length();
                 total_len += len;
                 if (len > longest_len) {
                     longest_len = len;longest_seq = seq_id;
@@ -226,10 +226,10 @@ std::pair<uint16, uint16> QueryData::calculate_N_vals (ExecuteStates state, bool
 
     // Recalculate based upon what sequences are left (kept)
     for (auto &pair : _SEQUENCES) {
-        if (pair.second.is_kept()) {
-            total_len += pair.second.getSeq_length();
+        if (pair.second->is_kept()) {
+            total_len += pair.second->getSeq_length();
             total_seq++;
-            seq_len_vect.push_back((uint16)pair.second.getSeq_length());
+            seq_len_vect.push_back((uint16)pair.second->getSeq_length());
         }
     }
 
@@ -247,8 +247,6 @@ std::pair<uint16, uint16> QueryData::calculate_N_vals (ExecuteStates state, bool
     }
 
     // Print new transcriptome stats
-
-
 
     return std::pair<uint16, uint16> (n_50,n_90);
 }
@@ -274,11 +272,11 @@ void QueryData::flag_transcripts(ExecuteStates state) {
     for (auto &pair : _SEQUENCES) {
         switch (state) {
             case RSEM:
-                pair.second.set_is_expression_kept(true);
+                pair.second->set_is_expression_kept(true);
                 break;
             case FRAME_SELECTION:
-                pair.second.setIs_protein(true);        // Probably already done
-                pair.second.set_is_frame_kept(true);
+                pair.second->setIs_protein(true);        // Probably already done
+                pair.second->set_is_frame_kept(true);
                 break;
             default:
                 break;
@@ -308,26 +306,32 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
     print_debug("Pipeline finished! Calculating final statistics...");
 
     std::stringstream      ss;
-    unsigned int           count_total_sequences=0;
-    unsigned int           count_exp_kept=0;
-    unsigned int           count_exp_reject=0;
-    unsigned int           count_frame_kept=0;
-    unsigned int           count_frame_rejected=0;
-    unsigned int           count_sim_hits=0;
-    unsigned int           count_sim_no_hits=0;
-    unsigned int           count_ontology=0;
-    unsigned int           count_no_ontology=0;
-    unsigned int           count_one_go=0;
-    unsigned int           count_one_kegg=0;
-    unsigned int           count_sim_only=0;
-    unsigned int           count_ontology_only=0;
-    unsigned int           count_TOTAL_ann=0;
-    unsigned int           count_TOTAL_unann=0;
+    uint32                 count_total_sequences=0;
+    uint32                 count_exp_kept=0;
+    uint32                 count_exp_reject=0;
+    uint32                 count_frame_kept=0;
+    uint32                 count_frame_rejected=0;
+    uint32                 count_sim_hits=0;
+    uint32                 count_sim_no_hits=0;
+    uint32                 count_ontology=0;
+    uint32                 count_no_ontology=0;
+    uint32                 count_one_go=0;
+    uint32                 count_one_kegg=0;
+    uint32                 count_sim_only=0;
+    uint32                 count_ontology_only=0;
+    uint32                 count_TOTAL_ann=0;
+    uint32                 count_TOTAL_unann=0;
     std::string            out_unannotated_nucl_path;
     std::string            out_unannotated_prot_path;
     std::string            out_annotated_nucl_path;
     std::string            out_annotated_prot_path;
     std::string            out_msg;
+    bool                   is_exp_kept;
+    bool                   is_prot;
+    bool                   is_hit;
+    bool                   is_ontology;
+    bool                   is_one_go;
+    bool                   is_one_kegg;
 
     out_unannotated_nucl_path = PATHS(outpath, OUT_UNANNOTATED_NUCL);
     out_unannotated_prot_path = PATHS(outpath, OUT_UNANNOTATED_PROT);
@@ -347,12 +351,12 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
 
     for (auto &pair : _SEQUENCES) {
         count_total_sequences++;
-        bool is_exp_kept = pair.second.is_is_expression_kept();
-        bool is_prot = pair.second.isIs_protein();
-        bool is_hit = pair.second.is_is_database_hit();
-        bool is_ontology = pair.second.is_is_family_assigned(); // TODO Fix for interpro
-        bool is_one_go = pair.second.is_is_one_go();
-        bool is_one_kegg = pair.second.is_is_one_kegg();
+        is_exp_kept = pair.second->is_is_expression_kept();
+        is_prot = pair.second->isIs_protein();
+        is_hit = pair.second->is_is_database_hit();
+        is_ontology = pair.second->is_is_family_assigned(); // TODO Fix for interpro
+        is_one_go = pair.second->is_is_one_go();
+        is_one_kegg = pair.second->is_is_one_kegg();
 
         is_exp_kept ? count_exp_kept++ : count_exp_reject++;
         is_prot ? count_frame_kept++ : count_frame_rejected++;
@@ -367,17 +371,17 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
         if (is_hit || is_ontology) {
             // Is annotated
             count_TOTAL_ann++;
-            if (!pair.second.get_sequence_n().empty())
-                file_annotated_nucl<<pair.second.get_sequence_n()<<std::endl;
-            if (!pair.second.get_sequence_p().empty()) {
-                file_annotated_prot<<pair.second.get_sequence_p()<<std::endl;
+            if (!pair.second->get_sequence_n().empty())
+                file_annotated_nucl<<pair.second->get_sequence_n()<<std::endl;
+            if (!pair.second->get_sequence_p().empty()) {
+                file_annotated_prot<<pair.second->get_sequence_p()<<std::endl;
             }
         } else {
             // Not annotated
-            if (!pair.second.get_sequence_n().empty())
-                file_unannotated_nucl<<pair.second.get_sequence_n()<<std::endl;
-            if (!pair.second.get_sequence_p().empty()) {
-                file_unannotated_prot<<pair.second.get_sequence_p()<<std::endl;
+            if (!pair.second->get_sequence_n().empty())
+                file_unannotated_nucl<<pair.second->get_sequence_n()<<std::endl;
+            if (!pair.second->get_sequence_p().empty()) {
+                file_unannotated_prot<<pair.second->get_sequence_p()<<std::endl;
             }
             count_TOTAL_unann++;
         }
@@ -489,4 +493,10 @@ QUERY_MAP_T* QueryData::get_sequences_ptr() {
 
 void QueryData::set_protein(bool protein) {
     QueryData::_protein = protein;
+}
+
+QueryData::~QueryData() {
+    for(QUERY_MAP_T::iterator it = _SEQUENCES.begin(); it != _SEQUENCES.end(); it++) {
+        delete it->second;
+    }
 }

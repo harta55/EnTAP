@@ -28,10 +28,38 @@
 #ifndef ENTAPCONFIG_H
 #define ENTAPCONFIG_H
 
-#include <string>
 #include <boost/serialization/unordered_map.hpp>
 #include <boost/program_options/variables_map.hpp>
+#include "common.h"
 
+struct  GoEntry {
+    std::string go_id;
+    std::string level;
+    std::string category;
+    std::string term;
+    friend class boost::serialization::access;
+    template <typename Archive>
+    void serialize(Archive & ar, const uint32 v) {
+        ar&go_id;
+        ar&level;
+        ar&category;
+        ar&term;
+    }
+};
+
+struct TaxEntry {
+    std::string tax_id;
+    std::string lineage;
+    friend class boost::serialization::access;
+    template<typename Archive>
+    void serialize(Archive & ar, const uint32 v) {
+        ar&tax_id;
+        ar&lineage;
+    }
+    bool is_empty() {
+        return this->tax_id.empty() && this->lineage.empty();
+    }
+};
 
 namespace entapConfig {
     //-----------------------FTP PATHS---------------------------//
@@ -61,8 +89,7 @@ namespace entapConfig {
     int update_database(std::string);
     void init_go_db(std::string&,std::string);
     void init_eggnog(std::string);
-
-
+    void handle_state(void);
 }
 
 #endif //ENTAP_INITHANDLER_H

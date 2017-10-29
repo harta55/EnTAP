@@ -30,22 +30,22 @@
 #define ENTAPGLOBALS_H
 
 //*********************** Includes *****************************
-#include <vector>
-#include <list>
 #include <boost/serialization/access.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <unordered_map>
 #include "common.h"
 
+class QuerySequence;
+struct TaxEntry;
+struct GoEntry;
 namespace boostFS = boost::filesystem;
 namespace boostPO = boost::program_options;
 namespace boostAR = boost::archive;
-class QuerySequence;
 
 //**************************************************************
 
-//*********************** Defines ******************************
+//******************** Defines/Macros **************************
 
 #define PATHS(x,y)      (boostFS::path(x) / boostFS::path(y)).string()
 #define NCBI_UNIPROT    0       // Compiler flag for future feature
@@ -60,6 +60,7 @@ class QuerySequence;
 void print_debug(std::string);
 void print_statistics(std::string &msg);
 bool file_exists (std::string);
+bool file_empty(std::string);
 int execute_cmd(std::string,std::string);
 int execute_cmd(std::string);
 std::string generate_command(std::unordered_map<std::string,std::string>&,
@@ -70,27 +71,10 @@ int get_supported_threads(boost::program_options::variables_map&);
 
 
 //**************** Global Structures/Typedefs ******************
-typedef struct {
-    std::string     text_file_path;
-    std::string     graph_title;
-    std::string     fig_out_path;
-    unsigned char   software_flag;
-    unsigned char   graph_type;
-} GraphingStruct;
-
-struct  struct_go_term {
-    std::string go_id, level, category, term;
-    friend class boost::serialization::access;
-    template <typename Archive>
-    void serialize(Archive & ar, const unsigned int v) {
-        ar&go_id;
-        ar&level;
-        ar&category;
-        ar&term;
-    }
-};
-
-typedef std::map<std::string, QuerySequence> QUERY_MAP_T;
+typedef std::unordered_map<std::string, QuerySequence*> QUERY_MAP_T;
+typedef std::unordered_map<std::string, TaxEntry> tax_serial_map_t;
+typedef std::unordered_map<std::string, GoEntry> go_serial_map_t;
+typedef std::map<std::string,std::vector<std::string>> go_format_t;
 
 typedef std::pair<std::string,int> count_pair;
 struct compair {
@@ -109,6 +93,7 @@ enum ExecuteStates {
     GENE_ONTOLOGY,
     EXIT
 };
+
 
 //*********************** Externs *****************************
 
@@ -221,6 +206,8 @@ namespace ENTAP_CONFIG {
     extern const std::string INPUT_FLAG_TRIM;
     extern const std::string INPUT_FLAG_STATE;
     extern const std::string INPUT_FLAG_PAIRED_END;
+    extern const std::string INPUT_FLAG_THREADS;
+    extern const std::string INPUT_FLAG_UNINFORM;
 
     extern const std::string INPUT_UNIPROT_SWISS    ;
     extern const std::string INPUT_UNIPROT_UR100    ;

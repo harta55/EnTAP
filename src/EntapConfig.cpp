@@ -30,8 +30,6 @@
 #include <map>
 #include "EntapConfig.h"
 #include <sys/stat.h>
-#include <iostream>
-#include <fstream>
 #include <unordered_map>
 #include "pstream.h"
 #include "boost/filesystem.hpp"
@@ -40,7 +38,6 @@
 #include "EntapExecute.h"
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/unordered_map.hpp>
-#include <boost/serialization/map.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
@@ -54,13 +51,21 @@
 
 namespace entapConfig {
 
+    // ID's used for GO level determination
+    std::string BIOLOGICAL_LVL = "6679";
+    std::string MOLECULAR_LVL  = "2892";
+    std::string CELLULAR_LVL   = "311";
+
     enum InitStates {
-        INIT_TAX            = 0x01,
-        INIT_UNIPROT        = 0x02,
-        INIT_NCBI           = 0x04,
-        INIT_DATABASE       = 0x08,
-        INIT_DIAMOND_INDX   = 0x16,
-        INIT_EXIT           = 0x32
+        INIT                = 0,
+        INIT_TAX           ,
+        INIT_UNIPROT       ,
+        INIT_NCBI          ,
+        INIT_DATABASE      ,
+        INIT_DIAMOND_INDX  ,
+        INIT_EGGNOG        ,
+        INIT_GO            ,
+        INIT_EXIT          ,
     };
 
     InitStates               state;
@@ -104,7 +109,7 @@ namespace entapConfig {
         } else database_outdir = exe_path;
 
         _cur_dir  = boostFS::path(boost::filesystem::current_path()).string();
-        _outpath  = (boostFS::path(_cur_dir) / user_map["tag"].as<std::string>()).string();
+        _outpath  = PATHS(_cur_dir, user_map[ENTAP_CONFIG::INPUT_FLAG_TAG].as<std::string>());
         _bin_dir  = PATHS(database_outdir, ENTAP_CONFIG::BIN_PATH);
         _data_dir = PATHS(database_outdir, ENTAP_CONFIG::DATABASE_DIR);
 
@@ -118,24 +123,42 @@ namespace entapConfig {
 
         ncbi_vect = user_map[ENTAP_CONFIG::INPUT_FLAG_NCBI_1].as<std::vector<std::string>>();
         uniprot_vect = user_map[ENTAP_CONFIG::INPUT_FLAG_UNIPROT].as<std::vector<std::string>>();
-        if (user_map.count("database")) {
-            database_vect = user_map["database"].as<std::vector<std::string>>();
+        if (user_map.count(ENTAP_CONFIG::INPUT_FLAG_DATABASE)) {
+            database_vect = user_map[ENTAP_CONFIG::INPUT_FLAG_DATABASE].as<std::vector<std::string>>();
             _compiled_databases = database_vect;
         }
 
         // while state != EXIT_STATE
-        try {
-            init_taxonomic(database_outdir);
-            init_go_db(database_outdir,_data_dir);
+        while (state != INIT_EXIT) {
+            try {
+                switch (state) {
+                    case INIT_TAX:
+                        init_taxonomic(database_outdir);
+                        break;
 #if NCBI_UNIPROT
-            init_uniprot(uniprot_vect, exe_path);
-            init_ncbi(ncbi_vect,exe_path);
+                    case INIT_UNIPROT:
+                        init_uniprot(uniprot_vect, exe_path);
+                        break;
+                    case INIT_NCBI:
+                        iknit_ncbi(ncbi_vect,exe_path);
+                        break;
 #endif
-            init_diamond_index(DIAMOND_EXE,database_outdir, threads);
-            init_eggnog(EGG_DOWNLOAD_EXE);
-
-        }catch (ExceptionHandler &e) {
-            throw ExceptionHandler(e.what(), e.getErr_code());
+                    case INIT_DIAMOND_INDX:
+                        init_diamond_index(DIAMOND_EXE, database_outdir, threads);
+                        break;
+                    case INIT_EGGNOG:
+                        init_eggnog(EGG_DOWNLOAD_EXE);
+                        break;
+                    case INIT_GO:
+                        init_go_db(database_outdir, _data_dir);
+                        break;
+                    default:
+                        break;
+                }
+            handle_state();
+            } catch (ExceptionHandler &e) {
+                throw ExceptionHandler(e.what(), e.getErr_code());
+            }
         }
     }
 
@@ -159,11 +182,11 @@ namespace entapConfig {
         //TODO Integrate gzip/zlib
 
         std::string tax_bin;
-        std::string tax_path;
+        std::string tax_txt_path;
         std::string tax_command;
-        std::unordered_map<std::string, std::string> tax_data_map;
+        tax_serial_map_t tax_data_map;
 
-        tax_path  = (boostFS::path(exe) / boostFS::path(TAX_DATABASE_PATH)).string();
+        tax_txt_path  = PATHS(exe, TAX_DATABASE_PATH);
         if (file_exists(TAX_DB_PATH)) {
             tax_bin = TAX_DB_PATH;
             print_debug("Tax database binary found at: " + tax_bin + " skipping...");
@@ -171,18 +194,18 @@ namespace entapConfig {
             // TODO update!
         } else {
             print_debug("Tax database binary not found at: " + TAX_DB_PATH + " checking non-binary...");
-            if (!file_exists(tax_path)) {
-                print_debug("Tax database not found at: " + tax_path + " downloading...");
-                tax_command = "perl " + TAX_DOWNLOAD_EXE + " " + tax_path;
+            if (!file_exists(tax_txt_path)) {
+                print_debug("Tax database not found at: " + tax_txt_path + " downloading...");
+                tax_command = "perl " + TAX_DOWNLOAD_EXE + " " + tax_txt_path;
                 if (execute_cmd(tax_command) != 0) {
                     throw ExceptionHandler("Command: " + tax_command, ENTAP_ERR::E_INIT_TAX_DOWN);
                 }
-                print_debug("Success! File written to " + tax_path);
-            } else print_debug("Database found at: " + tax_path + " indexing...");
+                print_debug("Success! File written to " + tax_txt_path);
+            } else print_debug("Non-binary database found at: " + tax_txt_path + " indexing...");
         }
 
         print_debug("Indexing taxonomic database...");
-        std::ifstream infile(tax_path);
+        std::ifstream infile(tax_txt_path);
         std::string line;
         try {
             while (std::getline(infile, line)) {
@@ -192,8 +215,11 @@ namespace entapConfig {
                 std::getline(iss, tax_id, '\t');
                 std::getline(iss, lineage, '\t');
 
-                std::string id_lineage = tax_id+"||"+lineage;
-                tax_data_map.emplace(sci_name,id_lineage);
+                TaxEntry taxEntry = {
+                        tax_id,
+                        lineage
+                };
+                tax_data_map.emplace(sci_name,taxEntry);
             }
         } catch (std::exception &e) {
             throw ExceptionHandler(e.what(), ENTAP_ERR::E_INIT_TAX_INDEX);
@@ -237,6 +263,7 @@ namespace entapConfig {
         std::string go_graph_path;
         std::string go_database_zip;
         std::string go_database_out;
+        std::string lvl;
 
         if (file_exists(GO_DB_PATH)) {
             print_debug("Database found at: " + GO_DB_PATH + " skipping creation");
@@ -245,8 +272,8 @@ namespace entapConfig {
             print_debug("Database NOT found at: " + GO_DB_PATH + " , downloading...");
             go_db_path = PATHS(exe, ENTAP_CONFIG::GO_DB_PATH_DEF);
         }
-        go_database_zip = (boostFS::path(database_path) / boostFS::path(GO_DATA_NAME)).string();
-        go_database_out = (boostFS::path(database_path) / boostFS::path(GO_DIR)).string();
+        go_database_zip = PATHS(database_path, GO_DATA_NAME);
+        go_database_out = PATHS(database_path, GO_DIR);
         if (file_exists(go_database_zip)) boostFS::remove(go_database_zip);
         try {
             download_file(GO_DATABASE_FTP,go_database_zip);
@@ -264,25 +291,26 @@ namespace entapConfig {
         io::CSVReader<6, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(go_graph_path);
         std::string index,root,branch, temp, distance, temp2;
         std::map<std::string,std::string> distance_map;
-        const std::string BIOLOGICAL = "6679", MOLECULAR = "2892", CELLULAR = "311";
         while (in.read_row(index,root,branch, temp, distance, temp2)) {
-            if (root.compare(BIOLOGICAL) == 0 || root.compare(MOLECULAR) == 0 || root.compare(CELLULAR) ==0) {
+            if (root.compare(entapConfig::BIOLOGICAL_LVL) == 0     ||
+                    root.compare(entapConfig::MOLECULAR_LVL) == 0  ||
+                    root.compare(entapConfig::CELLULAR_LVL) ==0) {
                 if (distance_map.find(branch) == distance_map.end()) {
                     distance_map.emplace(branch,distance);
                 } else {
                     if (distance.empty()) continue;
-                    long cur = std::stoi(distance_map[branch]);
-                    long query = std::stoi(distance);
+                    fp32 cur   = std::stoi(distance_map[branch]);
+                    fp32 query = std::stoi(distance);
                     if (query > cur) distance_map[branch] = distance;
                 }
             }
         }
-        std::map<std::string,struct_go_term> go_map;
+        go_serial_map_t go_map;
         std::string num,term,cat,go,ex,ex1,ex2;
         io::CSVReader<7, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in2(go_term_path);
         while (in2.read_row(num,term,cat,go,ex,ex1,ex2)) {
-            std::string lvl = distance_map[num];
-            struct_go_term go_data;
+            lvl = distance_map[num];
+            GoEntry go_data;
             go_data.category = cat; go_data.level=lvl;go_data.term=term;
             go_data.go_id=go;
             go_map[go] = go_data;
@@ -533,5 +561,9 @@ namespace entapConfig {
 
     int update_database(std::string file_path) {
         return 0;
+    }
+
+    void handle_state(void) {
+        state = static_cast<InitStates >(state+1);
     }
 }

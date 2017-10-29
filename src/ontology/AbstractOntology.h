@@ -36,6 +36,7 @@
 
 class QuerySequence;
 class QueryData;
+class GoTerm;
 class AbstractOntology {
 public:
     AbstractOntology(std::string &exe,std::string &out, std::string &in_hits,
@@ -80,8 +81,8 @@ protected:
     const std::string GRAPH_GO_BAR_MOLE_TITLE = "Top_10_GO_Molecular_Terms";
     const std::string GRAPH_GO_BAR_ALL_TITLE  = "Top_10_GO_Terms";
 
-    const unsigned char GRAPH_ONTOLOGY_FLAG = 4;
-    const unsigned char GRAPH_TOP_BAR_FLAG= 1;  // used for tax levels and go term tops
+    const uint8 GRAPH_ONTOLOGY_FLAG = 4;
+    const uint8 GRAPH_TOP_BAR_FLAG  = 1;  // used for tax levels and go term tops
 
     bool               _blastp;
     uint8              _threads;
@@ -94,12 +95,8 @@ protected:
     GraphingManager    *pGraphingManager;
     QueryData          *pQUERY_DATA;
 
-    typedef std::map<std::string,std::vector<std::string>> go_struct;
-    typedef std::map<std::string, QuerySequence> query_map_struct;
-
-    std::map<std::string,std::vector<std::string>>
-    parse_go_list(std::string list, std::map<std::string,struct_go_term> &GO_DATABASE,char delim);
-    std::map<std::string,struct_go_term> read_go_map ();
+    std::map<std::string,std::vector<std::string>> parse_go_list(std::string list, go_serial_map_t &GO_DATABASE,char delim);
+    go_serial_map_t read_go_map ();
 
 };
 

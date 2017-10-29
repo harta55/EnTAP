@@ -43,7 +43,7 @@
 
 class SimilaritySearch {
 
-    typedef std::map<std::string,std::map<std::string,unsigned int>> graph_sum_t;
+    typedef std::map<std::string,std::map<std::string,uint32>> graph_sum_t;
 
 
 public:
@@ -54,7 +54,7 @@ public:
                      boost::program_options::variables_map &, GraphingManager *, QueryData *);
     SimilaritySearch();
     std::pair<std::string,std::string> parse_files(std::string);
-    std::unordered_map<std::string, std::string> read_tax_map();
+    tax_serial_map_t read_tax_map();
     //**************************************************************
 
 
@@ -97,10 +97,14 @@ private:
     const std::string INFORMATIVE_FLAG                           = "Informative";
     const std::string NO_HIT_FLAG                                = "No Hits";
 
+    const std::string BLASTX                                     = "blastx";
+    const std::string BLASTP                                     = "blastp";
+
 
     static constexpr int DMND_COL_NUMBER = 14;
 
-    const std::list<std::string> INFORMATIVENESS {
+    // Enter as lowercase
+    const std::vector<std::string> INFORMATIVENESS {
             "conserved",
             "predicted",
             "unnamed",
@@ -136,6 +140,7 @@ private:
 
     std::vector<std::string>        _database_paths;
     std::vector<std::string>        _sim_search_paths;
+    std::vector<std::string>        _uninformative_vect;
     std::string                     _diamond_exe;
     std::string                     _outpath;
     std::string                     _input_path;
@@ -162,16 +167,15 @@ private:
     void diamond_blast(std::string, std::string, std::string,std::string&,int&, std::string&);
     std::vector<std::string> verify_diamond_files(std::string&, std::string);
     std::pair<std::string,std::string> diamond_parse(std::vector<std::string>&);
-    std::pair<bool,std::string>  is_contaminant(std::string, std::unordered_map<std::string,
-            std::string> &,std::vector<std::string>&);
-    std::string get_species(std::string &);
+    std::pair<bool,std::string> is_contaminant(std::string, tax_serial_map_t&,std::vector<std::string>&);
     bool is_informative(std::string);
-    std::pair<std::string,std::string> process_best_diamond_hit(std::list<std::map<std::string,
-            QuerySequence>>&);
+    std::pair<std::string,std::string> process_best_diamond_hit(std::list<std::map<std::string,QuerySequence>>&);
     void print_header(std::string);
-    std::string get_lineage(std::string, std::unordered_map<std::string, std::string>&);
-    std::pair<std::string,std::string> calculate_best_stats (std::map<std::string, QuerySequence>&,
+    void get_tax_entry(std::string, tax_serial_map_t&, TaxEntry&);
+    std::string get_species(std::string &title);
+    std::pair<std::string,std::string> calculate_best_stats (std::map<std::string,QuerySequence>&,
                                  std::stringstream &, std::string&,bool);
+    void read_uninform_file(std::string&);
 };
 
 

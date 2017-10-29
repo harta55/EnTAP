@@ -30,7 +30,6 @@
 
 //*********************** Includes *****************************
 #include "Ontology.h"
-
 #include "QuerySequence.h"
 #include "QueryData.h"
 #include <list>

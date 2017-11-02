@@ -34,6 +34,7 @@
 #include <chrono>
 #include "config.h"
 
+#if 0 // Removed for older compilers, will bring back later
 void FS_open_out(std::string &path, std::ofstream &ofstream) {
     ofstream = std::ofstream(path,std::ios::out | std::ios::app);
     if (!ofstream.is_open()) {
@@ -41,6 +42,7 @@ void FS_open_out(std::string &path, std::ofstream &ofstream) {
             ENTAP_ERR::E_FILE_IO);
     }
 }
+#endif
 
 void FS_close_file(std::ofstream &ofstream) {
     try {
@@ -70,19 +72,15 @@ void FS_dprint(std::string msg) {
 #if DEBUG
     std::chrono::time_point<std::chrono::system_clock> current;
     std::time_t time;
-    std::ofstream debug_file;
 
     current = std::chrono::system_clock::now();
     time = std::chrono::system_clock::to_time_t(current);
     std::string out_time(std::ctime(&time));
-    try {
-        FS_open_out(DEBUG_FILE_PATH, debug_file);
-        debug_file << out_time.substr(0,out_time.length()-1) << ": " + msg << std::endl;
-        FS_close_file(debug_file);
-    } catch (const ExceptionHandler &e) {throw e;}
+    std::ofstream debug_file(DEBUG_FILE_PATH, std::ios::out | std::ios::app);
 
+    debug_file << out_time.substr(0,out_time.length()-1) << ": " + msg << std::endl;
+    FS_close_file(debug_file);
 #endif
-    return;
 }
 
 
@@ -100,12 +98,9 @@ void FS_dprint(std::string msg) {
  * =====================================================================
  */
 void FS_print_stats(std::string &msg) {
-    std::ofstream log_file;
-    try {
-        FS_open_out(LOG_FILE_PATH, log_file);
-        log_file << msg << std::endl;
-        FS_close_file(log_file);
-    } catch (const ExceptionHandler &e){throw e;}
+    std::ofstream log_file(LOG_FILE_PATH, std::ios::out | std::ios::app);
+    log_file << msg << std::endl;
+    FS_close_file(log_file);
 }
 
 
@@ -131,4 +126,9 @@ bool FS_file_exists(std::string path) {
     struct stat buff;
     return (stat(path.c_str(), &buff) == 0);
 #endif
+}
+
+
+bool FS_file_is_open(std::ofstream& ofstream) {
+    return ofstream.is_open();
 }

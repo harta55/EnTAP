@@ -35,7 +35,10 @@
 
 
 //***************** Global Prototype Functions *****************
+#if 0
 void FS_open_out(std::string &, std::ofstream &);
+#endif
+bool FS_file_is_open(std::ofstream&);
 void FS_close_file(std::ofstream&);
 void FS_dprint(std::string);
 void FS_print_stats(std::string &msg);

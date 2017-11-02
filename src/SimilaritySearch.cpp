@@ -501,43 +501,25 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     std::string graph_sum_txt_path               = PATHS(figure_base, GRAPH_DATABASE_SUM_TXT);
     std::string graph_sum_png_path               = PATHS(figure_base, GRAPH_DATABASE_SUM_PNG);
 
-    std::ofstream file_best_hits_tsv;
-    std::ofstream file_best_hits_tsv_no_contam;
-    std::ofstream file_best_hits_fa_nucl;
-    std::ofstream file_best_hits_fa_prot;
-    std::ofstream file_best_hits_fa_nucl_no_contam;
-    std::ofstream file_best_hits_fa_prot_no_contam;
-    std::ofstream file_best_contam_tsv;
-    std::ofstream file_best_contam_fa_prot;
-    std::ofstream file_best_contam_fa_nucl;
-    std::ofstream file_no_hits_nucl;
-    std::ofstream file_no_hits_prot;
+    print_header(out_best_contams_tsv);
+    print_header(out_best_hits_tsv);
+    print_header(out_best_hits_no_contam_tsv);
 
-    std::ofstream graph_species_file;
-    std::ofstream graph_contam_file;
-    std::ofstream graph_sum_file;
+    std::ofstream file_best_hits_tsv(out_best_hits_tsv,std::ios::out | std::ios::app);
+    std::ofstream file_best_hits_tsv_no_contam(out_best_hits_no_contam_tsv,std::ios::out | std::ios::app);
+    std::ofstream file_best_hits_fa_nucl(out_best_hits_fa_nucl,std::ios::out | std::ios::app);
+    std::ofstream file_best_hits_fa_prot(out_best_hits_fa_prot,std::ios::out | std::ios::app);
+    std::ofstream file_best_hits_fa_nucl_no_contam(out_best_hits_fa_nucl_no_contam,std::ios::out | std::ios::app);
+    std::ofstream file_best_hits_fa_prot_no_contam(out_best_hits_fa_prot_no_contam,std::ios::out | std::ios::app);
+    std::ofstream file_best_contam_tsv(out_best_contams_tsv,std::ios::out | std::ios::app);
+    std::ofstream file_best_contam_fa_prot(out_best_contams_fa_prot,std::ios::out | std::ios::app);
+    std::ofstream file_best_contam_fa_nucl(out_best_contams_fa_nucl,std::ios::out | std::ios::app);
+    std::ofstream file_no_hits_nucl(out_no_hits_fa_nucl, std::ios::out | std::ios::app);
+    std::ofstream file_no_hits_prot(out_no_hits_fa_prot, std::ios::out | std::ios::app);
 
-    try {
-        print_header(out_best_contams_tsv);
-        print_header(out_best_hits_tsv);
-        print_header(out_best_hits_no_contam_tsv);
-
-        FS_open_out(out_best_hits_tsv, file_best_hits_tsv);
-        FS_open_out(out_best_hits_no_contam_tsv, file_best_hits_tsv_no_contam);
-        FS_open_out(out_best_hits_fa_nucl, file_best_hits_fa_nucl);
-        FS_open_out(out_best_hits_fa_prot, file_best_hits_fa_prot);
-        FS_open_out(out_best_hits_fa_nucl_no_contam, file_best_hits_fa_nucl_no_contam);
-        FS_open_out(out_best_hits_fa_prot_no_contam, file_best_hits_fa_prot_no_contam);
-        FS_open_out(out_best_contams_tsv, file_best_contam_tsv);
-        FS_open_out(out_best_contams_fa_prot, file_best_contam_fa_prot);
-        FS_open_out(out_best_contams_fa_nucl, file_best_contam_fa_nucl);
-        FS_open_out(out_no_hits_fa_nucl, file_no_hits_nucl);
-        FS_open_out(out_no_hits_fa_prot, file_no_hits_prot);
-
-        FS_open_out(graph_species_txt_path, graph_species_file);
-        FS_open_out(graph_contam_txt_path, graph_contam_file);
-        FS_open_out(graph_sum_txt_path, graph_sum_file);
-    } catch (const ExceptionHandler &e){throw e;}
+    std::ofstream graph_species_file(graph_species_txt_path, std::ios::out | std::ios::app);
+    std::ofstream graph_contam_file(graph_contam_txt_path, std::ios::out | std::ios::app);
+    std::ofstream graph_sum_file(graph_sum_txt_path, std::ios::out | std::ios::app);
 
     try {
         graph_species_file << "Species\tCount"     << std::endl;

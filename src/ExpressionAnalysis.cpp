@@ -38,6 +38,7 @@
 #include "EntapExecute.h"
 #include "common.h"
 #include "expression/ModRSEM.h"
+#include "FileSystem.h"
 //**************************************************************
 
 
@@ -70,7 +71,7 @@
 ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &out,
                                        boost::program_options::variables_map& user_flags,
                                        GraphingManager *graph, QueryData *queryData) {
-    print_debug("Spawn object - ExpressionAnalysis");
+    FS_dprint("Spawn object - ExpressionAnalysis");
     _software_flag = 0;
     _query_data    = queryData;
     _inpath        = input;

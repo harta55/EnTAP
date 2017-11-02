@@ -45,6 +45,7 @@
 #include "EntapExecute.h"
 #include "UserInput.h"
 #include "config.h"
+#include "FileSystem.h"
 
 //**************************************************************
 
@@ -196,7 +197,7 @@ void init_log() {
     LOG_FILE_PATH   = PATHS(_outpath, log_file_name);
     boostFS::remove(DEBUG_FILE_PATH);
     boostFS::remove(LOG_FILE_PATH);
-    print_debug("Start - EnTAP");
+    FS_dprint("Start - EnTAP");
 }
 
 
@@ -218,12 +219,12 @@ void exit_print(States s) {
     std::string       out_time;
     long              min_dif;
 
-    print_debug("End - EnTAP");
+    FS_dprint("End - EnTAP");
     min_dif = std::chrono::duration_cast<std::chrono::minutes>(_end_time - _start_time).count();
 
     out_stream <<
                "\nEnTAP has completed! "           <<
                "\nTotal runtime (minutes): "       << min_dif;
     out_msg = out_stream.str();
-    print_statistics(out_msg);
+    FS_print_stats(out_msg);
 }

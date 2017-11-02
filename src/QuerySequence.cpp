@@ -33,6 +33,7 @@
 #include "QuerySequence.h"
 #include "EntapGlobals.h"
 #include "EggnogLevels.h"
+#include "FileSystem.h"
 
 // best hit selection
 bool QuerySequence::operator>(const QuerySequence &querySequence) {
@@ -317,7 +318,7 @@ void QuerySequence::set_eggnog_results(std::string seed_o, std::string seed_o_ev
             }
         } catch (std::exception &e) {
             // Do not fatal error
-            print_debug(e.what());
+            FS_dprint(e.what());
         }
     }
 }

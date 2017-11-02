@@ -32,6 +32,7 @@
 #include "ModRSEM.h"
 #include "../ExceptionHandler.h"
 #include "../GraphingManager.h"
+#include "../FileSystem.h"
 
 //**************************************************************
 
@@ -59,11 +60,11 @@ std::pair<bool, std::string> ModRSEM::verify_files() {
     _filename = file_name.string();
     _exp_out = (boostFS::path(_expression_outpath)/  _filename).string();
     _rsem_out = _exp_out + ".genes.results";
-    if (file_exists(_rsem_out)) {
-        print_debug("File found at " + _rsem_out +  "\nmoving to filter transcriptome");
+    if (FS_file_exists(_rsem_out)) {
+        FS_dprint("File found at " + _rsem_out +  "\nmoving to filter transcriptome");
         return std::make_pair(true, "");
     }
-    print_debug("File not found at " + _rsem_out +  " Continuing RSEM run.");
+    FS_dprint("File not found at " + _rsem_out +  " Continuing RSEM run.");
 
     return std::make_pair(false, "");
 }
@@ -89,7 +90,7 @@ std::pair<bool, std::string> ModRSEM::verify_files() {
  */
 void ModRSEM::execute() {
     // return path
-    print_debug("Running RSEM...");
+    FS_dprint("Running RSEM...");
 
     boostFS::path                   bam_ext(_alignpath);
     std::string                     bam;
@@ -110,7 +111,7 @@ void ModRSEM::execute() {
                                ENTAP_ERR::E_RUN_RSEM_VALIDATE);
     }
     // Now have valid BAM file to run rsem
-    print_debug("Alignment file valid. Preparing reference...");
+    FS_dprint("Alignment file valid. Preparing reference...");
 
     ref_exe  = (boostFS::path(_exe_path) / RSEM_PREP_REF_EXE).string();
     ref_path = (boostFS::path(_expression_outpath) / _filename).string() + "_ref";
@@ -120,11 +121,11 @@ void ModRSEM::execute() {
                + _inpath + " "
                + ref_path;
     std_out = (boostFS::path(_expression_outpath) / _filename).string() + "_rsem_reference";
-    print_debug("Executing following command\n" + rsem_arg);
+    FS_dprint("Executing following command\n" + rsem_arg);
     execute_cmd(rsem_arg.c_str(), std_out);
-    print_debug("Reference successfully created");
+    FS_dprint("Reference successfully created");
 
-    print_debug("Running expression analysis...");
+    FS_dprint("Running expression analysis...");
     expression_exe = (boostFS::path(_exe_path) / RSEM_CALC_EXP_EXE).string();
     rsem_arg = expression_exe +
                " --" + bam +
@@ -134,7 +135,7 @@ void ModRSEM::execute() {
                _exp_out;
     if (_ispaired) rsem_arg += " --paired-end";
     std_out = (boostFS::path(_expression_outpath) / _filename).string() + "_rsem_exp";
-    print_debug("Executing following command\n" + rsem_arg);
+    FS_dprint("Executing following command\n" + rsem_arg);
     if (execute_cmd(rsem_arg.c_str(), std_out)!=0) {
         throw ExceptionHandler("Error in running expression analysis",ENTAP_ERR::E_INIT_TAX_READ);
     }
@@ -158,7 +159,7 @@ void ModRSEM::execute() {
  * =====================================================================
  */
 std::string ModRSEM::filter() {
-    print_debug("Beginning to filter transcriptome...");
+    FS_dprint("Beginning to filter transcriptome...");
 
     uint32              count_removed=0;
     uint32              count_kept=0;
@@ -185,7 +186,7 @@ std::string ModRSEM::filter() {
 
     MAP = pQUERY_DATA->get_sequences_ptr();
 
-    if (!file_exists(_rsem_out)) {
+    if (!FS_file_exists(_rsem_out)) {
         throw ExceptionHandler("File does not exist at: " + _rsem_out, ENTAP_ERR::E_RUN_RSEM_EXPRESSION);
     }
 
@@ -238,10 +239,10 @@ std::string ModRSEM::filter() {
             count_removed++;
         }
     }
-    print_debug("File successfully filtered. Outputs at: " + out_kept + " and: " + out_removed);
+    FS_dprint("File successfully filtered. Outputs at: " + out_kept + " and: " + out_removed);
 
     //-----------------------STATISTICS-----------------------//
-    print_debug("Beginning to calculate statistics...");
+    FS_dprint("Beginning to calculate statistics...");
     out_msg<<std::fixed<<std::setprecision(2);
     out_msg << ENTAP_STATS::SOFTWARE_BREAK
             << "Expression Filtering - RSEM\n"
@@ -260,23 +261,23 @@ std::string ModRSEM::filter() {
                                ENTAP_ERR::E_RUN_RSEM_EXPRESSION);
     }
     out_str = out_msg.str();
-    print_statistics(out_str);
+    FS_print_stats(out_str);
     out_file.close();
     removed_file.close();
     file_fig_box.close();
-    print_debug("Success!");
+    FS_dprint("Success!");
     //--------------------------------------------------------//
 
 
     //------------------------Graphing------------------------//
-    print_debug("Beginning to send data to graphing manager...");
+    FS_dprint("Beginning to send data to graphing manager...");
     graphingStruct.text_file_path   = fig_txt_box_path;
     graphingStruct.graph_title      = GRAPH_TITLE_BOX_PLOT;
     graphingStruct.fig_out_path     = fig_png_box_path;
     graphingStruct.software_flag    = GRAPH_EXPRESSION_FLAG;
     graphingStruct.graph_type       = GRAPH_BOX_FLAG;
     pGraphingManager->graph(graphingStruct);
-    print_debug("Success!");
+    FS_dprint("Success!");
     //--------------------------------------------------------//
 
     return out_kept;
@@ -300,7 +301,7 @@ std::string ModRSEM::filter() {
  * =====================================================================
  */
 bool ModRSEM::rsem_validate_file(std::string filename) {
-    print_debug("File is detected to be sam file, running validation");
+    FS_dprint("File is detected to be sam file, running validation");
 
     std::string rsem_arg;
     std::string out_path;
@@ -309,9 +310,9 @@ bool ModRSEM::rsem_validate_file(std::string filename) {
                " " + _alignpath;
     out_path = (boostFS::path(_expression_outpath) / boostFS::path(filename)).string() + "_rsem_valdate";
     // only thrown in failure in calling rsem
-    print_debug("Executing RSEM command:\n" + rsem_arg);
+    FS_dprint("Executing RSEM command:\n" + rsem_arg);
     if (execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) return false;
-    print_debug("RSEM validate executed successfully");
+    FS_dprint("RSEM validate executed successfully");
     // RSEM does not always return error code if file is invalid, only seen in .err
     return (is_file_empty(out_path+".err"));
 }
@@ -333,7 +334,7 @@ bool ModRSEM::rsem_validate_file(std::string filename) {
  * =====================================================================
  */
 bool ModRSEM::rsem_conv_to_bam(std::string file_name) {
-    print_debug("Converting SAM to BAM");
+    FS_dprint("Converting SAM to BAM");
 
     std::string bam_out;
     std::string rsem_arg;

@@ -41,11 +41,12 @@
 #include "ontology/AbstractOntology.h"
 #include "ontology/ModEggnog.h"
 #include "ontology/ModInterpro.h"
+#include "FileSystem.h"
 
 Ontology::Ontology(int thread, std::string outpath, std::string input,
                    boost::program_options::variables_map &user_input, GraphingManager* graphing,
                    QueryData *queryData, bool blastp) {
-    print_debug("Spawn object - Ontology");
+    FS_dprint("Spawn object - Ontology");
     _ontology_exe       = EGG_EMAPPER_EXE;
     _threads            = (uint8)thread;
     _outpath            = outpath;
@@ -92,21 +93,21 @@ void Ontology::execute(std::string input,std::string no_hit) {
 std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
     switch (software) {
         case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-            print_debug("Spawn object - EggNOG");
+            FS_dprint("Spawn object - EggNOG");
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
                     _ontology_exe, _outpath, _new_input, _input_no_hits,
                     _ontology_dir, _graphingManager, _QUERY_DATA, _blastp,
                     _go_levels, _threads
             ));
         case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
-            print_debug("Spawn object - InterPro");
+            FS_dprint("Spawn object - InterPro");
             return std::unique_ptr<AbstractOntology>(new ModInterpro(
                     _ontology_exe, _outpath, _new_input, _input_no_hits,
                     _ontology_dir, _graphingManager, _QUERY_DATA, _blastp,
                     _go_levels, _threads
             ));
         default:
-            print_debug("Spawn object - EggNOG");
+            FS_dprint("Spawn object - EggNOG");
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
                     _ontology_exe, _outpath, _new_input, _input_no_hits,
                     _ontology_dir, _graphingManager, _QUERY_DATA, _blastp,
@@ -117,7 +118,7 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
 
 
 void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
-    print_debug("Beginning to print final results...");
+    FS_dprint("Beginning to print final results...");
     std::map<short, std::ofstream*> file_map;
     std::string file_name;
     std::string outpath;
@@ -141,7 +142,7 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
         pair.second->close();
         delete pair.second;
     }
-    print_debug("Success!");
+    FS_dprint("Success!");
 }
 
 

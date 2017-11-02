@@ -38,6 +38,7 @@
 #include "FrameSelection.h"
 #include "ExpressionAnalysis.h"
 #include "SimilaritySearch.h"
+#include "FileSystem.h"
 #include <boost/regex.hpp>
 #include <queue>
 #include <iomanip>
@@ -86,7 +87,7 @@ namespace entapExecute {
  * =====================================================================
  */
     void execute_main(boost::program_options::variables_map &user_input) {
-        print_debug("EnTAP Executing...");
+        FS_dprint("EnTAP Executing...");
 
         std::vector<uint16>                     ontology_flags;
         std::vector<std::string>                other_databases; // -d Command databases
@@ -149,14 +150,14 @@ namespace entapExecute {
             while (executeStates != EXIT) {
                 switch (executeStates) {
                     case FRAME_SELECTION: {
-                        print_debug("STATE - FRAME SELECTION");
+                        FS_dprint("STATE - FRAME SELECTION");
                         std::unique_ptr<FrameSelection> frame_selection(new FrameSelection(
                                 _input_path, _outpath, user_input, &graphingManager, &QUERY_DATA
                         ));
                         if ((_blastp && QUERY_DATA.is_protein())) {
-                            print_debug("Protein sequences input, skipping frame selection");
+                            FS_dprint("Protein sequences input, skipping frame selection");
                         } else if (!_blastp) {
-                            print_debug("Blastx selected, skipping frame selection");
+                            FS_dprint("Blastx selected, skipping frame selection");
                         } else {
                             _input_path = frame_selection->execute(_input_path);
                             QUERY_DATA.set_protein(true);
@@ -165,12 +166,12 @@ namespace entapExecute {
                     }
                         break;
                     case RSEM: {
-                        print_debug("STATE - EXPRESSION");
+                        FS_dprint("STATE - EXPRESSION");
                         std::unique_ptr<ExpressionAnalysis> expression(new ExpressionAnalysis(
                                 original_input, _threads, _outpath, user_input, &graphingManager, &QUERY_DATA
                         ));
                         if (!user_input.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
-                            print_debug("No alignment file specified, skipping expression analysis");
+                            FS_dprint("No alignment file specified, skipping expression analysis");
                         } else {
                             _input_path = expression->execute(original_input);
                             _EXPRESSION_SUCCESS = true;
@@ -181,18 +182,18 @@ namespace entapExecute {
                         _input_path = filter_transcriptome(_input_path);
                         break;
                     case DIAMOND_RUN:
-                        print_debug("STATE - SIM SEARCH RUN");
+                        FS_dprint("STATE - SIM SEARCH RUN");
                         sim_search->execute(_input_path, _blastp);
                         _SIM_SEARCH_SUCCESS = true;
                         break;
                     case DIAMOND_PARSE:
-                        print_debug("STATE - SIM SEARCH PARSE");
+                        FS_dprint("STATE - SIM SEARCH PARSE");
                         diamond_pair = sim_search->parse_files(_input_path);
                         _input_path = diamond_pair.first;
                         no_database_hits = diamond_pair.second;
                         break;
                     case GENE_ONTOLOGY: {
-                        print_debug("STATE - GENE ONTOLOGY");
+                        FS_dprint("STATE - GENE ONTOLOGY");
                         std::unique_ptr<Ontology> ontology(new Ontology(
                                 _threads, _outpath, _input_path, user_input, &graphingManager,
                                 &QUERY_DATA, _blastp
@@ -221,7 +222,7 @@ namespace entapExecute {
 
     std::vector<std::string> verify_databases(std::vector<std::string> uniprot, std::vector<std::string> ncbi,
                                             std::vector<std::string> database, std::string exe) {
-        print_debug("Verifying databases...");
+        FS_dprint("Verifying databases...");
         // return file paths
         // config file paths already exist (checked in main)
         std::vector<std::string>        file_paths;
@@ -289,26 +290,26 @@ namespace entapExecute {
         print_debug("Complete");
 
 #endif
-        print_debug("Verifying other databases...");
+        FS_dprint("Verifying other databases...");
         if (database.size() > 0) {
             for (auto const &data_path:database) {
                 if (data_path.compare(ENTAP_CONFIG::NCBI_NULL) == 0) continue;
-                if (!file_exists(data_path)) {
+                if (!FS_file_exists(data_path)) {
                     throw ExceptionHandler("Database located at: " + data_path + " not found",
                                            ENTAP_ERR::E_INPUT_PARSE);
                 }
                 boostFS::path bpath(data_path);
                 std::string ext = bpath.extension().string();
                 if (ext.compare(".dmnd") == 0) {
-                    print_debug("User has input a diamond indexed database at: " + data_path);
+                    FS_dprint("User has input a diamond indexed database at: " + data_path);
                     file_paths.push_back(data_path);
                     continue;
                 } else {
                     //todo fix not really used yet
-                    print_debug("User has input a database at: " + data_path);
+                    FS_dprint("User has input a database at: " + data_path);
                     std::string test_path = PATHS(exe,ENTAP_CONFIG::BIN_PATH) + data_path + ".dmnd";
-                    print_debug("Checking if indexed file exists at: " + test_path);
-                    if (!file_exists(test_path)) {
+                    FS_dprint("Checking if indexed file exists at: " + test_path);
+                    if (!FS_file_exists(test_path)) {
                         throw ExceptionHandler("Database located at: " + data_path + " not found",
                                                ENTAP_ERR::E_INPUT_PARSE);
                     } else {
@@ -317,15 +318,15 @@ namespace entapExecute {
                 }
             }
         }
-        print_debug("Verification complete!");
+        FS_dprint("Verification complete!");
         if (file_paths.size() > 0) {
             std::string database_final = "\n\nDatabases selected:\n";
             for (std::string base: file_paths) {
                 database_final += base + "\n";
             }
-            print_debug(database_final);
+            FS_dprint(database_final);
         } else {
-            print_debug("No databases selected, some functionality may not be able to run");
+            FS_dprint("No databases selected, some functionality may not be able to run");
         }
         return file_paths;
     }
@@ -346,7 +347,7 @@ namespace entapExecute {
      * =====================================================================
      */
     std::string filter_transcriptome(std::string &input_path) {
-        print_debug("Beginning to copy final transcriptome to be used...");
+        FS_dprint("Beginning to copy final transcriptome to be used...");
 
         boostFS::path file_name;
         std::string   file_name_str;
@@ -357,7 +358,7 @@ namespace entapExecute {
         out_path = (boostFS::path(_entap_outpath) / file_name_str).string();
         boostFS::copy_file(input_path,out_path,boostFS::copy_option::overwrite_if_exists);
 
-        print_debug("Success!");
+        FS_dprint("Success!");
         return out_path;
     }
 
@@ -382,7 +383,7 @@ namespace entapExecute {
  * ======================================================================
  */
     void verify_state(std::queue<char> &queue, bool &test) {
-        print_debug("verifying state...");
+        FS_dprint("verifying state...");
         if (queue.empty()) {
             executeStates = static_cast<ExecuteStates>(executeStates + 1);
             if (!valid_state(executeStates)) executeStates = EXIT;
@@ -427,7 +428,7 @@ namespace entapExecute {
                 verify_state(queue, test);
             }
         }
-        print_debug("Success!");
+        FS_dprint("Success!");
     }
 
 

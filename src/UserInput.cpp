@@ -38,6 +38,7 @@
 #include "GraphingManager.h"
 #include "SimilaritySearch.h"
 #include "common.h"
+#include "FileSystem.h"
 
 //**************************************************************
 
@@ -71,7 +72,7 @@ std::string GRAPHING_EXE;
  * ======================================================================
  */
 boost::program_options::variables_map parse_arguments_boost(int argc, const char** argv) {
-    print_debug("Parsing user input...");
+//    FS_dprint("Parsing user input...");
 
     std::unordered_map<std::string, std::string> input_map;
 
@@ -146,7 +147,7 @@ boost::program_options::variables_map parse_arguments_boost(int argc, const char
                 std::cout<<"EnTAP version: "<<ENTAP_CONFIG::ENTAP_VERSION<<std::endl;
                 throw(ExceptionHandler("",ENTAP_ERR::E_SUCCESS));
             }
-            print_debug("Success!");
+//            FS_dprint("Success!");
             return vm;
         } catch (boost::program_options::required_option& e) {
             throw ExceptionHandler(e.what(),ENTAP_ERR::E_INPUT_PARSE);
@@ -182,7 +183,7 @@ bool verify_user_input(boostPO::variables_map& vm) {
     std::string              input_tran_path;
 
     if (vm.count(ENTAP_CONFIG::INPUT_FLAG_GRAPH)) {
-        if (!file_exists(GRAPHING_EXE)) {
+        if (!FS_file_exists(GRAPHING_EXE)) {
             std::cout<<"Graphing is NOT enabled on this system! Graphing script could not "
                     "be found at: "<<GRAPHING_EXE << std::endl;
         }
@@ -228,7 +229,7 @@ bool verify_user_input(boostPO::variables_map& vm) {
                 throw(ExceptionHandler("Must enter a valid transcriptome",ENTAP_ERR::E_INPUT_PARSE));
             } else {
                 input_tran_path = vm[ENTAP_CONFIG::INPUT_FLAG_TRANSCRIPTOME].as<std::string>();
-                if (!file_exists(input_tran_path)) {
+                if (!FS_file_exists(input_tran_path)) {
                     throw(ExceptionHandler("Transcriptome not found at: " + input_tran_path,
                                            ENTAP_ERR::E_INPUT_PARSE));
                 }
@@ -253,7 +254,7 @@ bool verify_user_input(boostPO::variables_map& vm) {
                     throw ExceptionHandler("Alignment file must have a .bam or .sam extension",
                                            ENTAP_ERR::E_INPUT_PARSE);
                 }
-                if (!file_exists(align_file)) {
+                if (!FS_file_exists(align_file)) {
                     throw ExceptionHandler("Invalid file path for BAM/SAM file, exiting...",
                                            ENTAP_ERR::E_INIT_TAX_READ);
                 }
@@ -290,7 +291,7 @@ bool verify_user_input(boostPO::variables_map& vm) {
 
             // Verify for default state, may need to do a temp run of executables to verify
             if (vm[ENTAP_CONFIG::INPUT_FLAG_STATE].as<std::string>() == DEFAULT_STATE) {
-                if (!file_exists(TAX_DB_PATH)) {
+                if (!FS_file_exists(TAX_DB_PATH)) {
                     throw ExceptionHandler("Taxonomic database could not be found at: " + TAX_DB_PATH +
                                             " make sure to set the path in the configuration file",
                                             ENTAP_ERR::E_INPUT_PARSE);
@@ -333,6 +334,13 @@ bool verify_user_input(boostPO::variables_map& vm) {
                 std::string uninform_path = vm[ENTAP_CONFIG::INPUT_FLAG_UNINFORM].as<std::string>();
                 verify_uninformative(uninform_path);
             }
+
+            // Verify paths
+            if (vm[ENTAP_CONFIG::INPUT_FLAG_STATE].as<std::string>().find(DEFAULT_STATE)==0) {
+
+            }
+
+
 
         } else {
             // Must be config
@@ -412,10 +420,9 @@ void verify_databases(boostPO::variables_map& vm) {
             std::to_string(MAX_DATABASE_SIZE), ENTAP_ERR::E_INPUT_PARSE);
     }
     for (auto const& path: other_data) {
-        if (!file_exists(path)) throw ExceptionHandler("Database path invalid: " +
+        if (!FS_file_exists(path)) throw ExceptionHandler("Database path invalid: " +
             path, ENTAP_ERR::E_INPUT_PARSE);
     }
-
 }
 
 
@@ -436,7 +443,7 @@ void verify_databases(boostPO::variables_map& vm) {
  * ======================================================================
  */
 std::unordered_map<std::string,std::string> parse_config(std::string &config,std::string &exe) {
-    print_debug("Parsing configuration file...");
+    FS_dprint("Parsing configuration file...");
 
     std::unordered_map<std::string,std::string> config_map;
     std::string                                 new_config;
@@ -444,19 +451,19 @@ std::unordered_map<std::string,std::string> parse_config(std::string &config,std
     std::string                                 key;
     std::string                                 val;
 
-    if (!file_exists(config)){
-        print_debug("Config file not found, generating new file...");
+    if (!FS_file_exists(config)){
+        FS_dprint("Config file not found, generating new file...");
         new_config = CONFIG_FILE;
         try {
             generate_config(new_config);
         } catch (std::exception &e){
             throw ExceptionHandler(e.what(),ENTAP_ERR::E_CONFIG_CREATE);
         }
-        print_debug("Config file successfully created");
+        FS_dprint("Config file successfully created");
         throw ExceptionHandler("Configuration file generated at: " + config,
             ENTAP_ERR::E_CONFIG_CREATE_SUCCESS);
     }
-    print_debug("Config file found at: " + config);
+    FS_dprint("Config file found at: " + config);
     std::ifstream in_file(config);
     while (std::getline(in_file,line)) {
         std::istringstream in_line(line);
@@ -471,7 +478,7 @@ std::unordered_map<std::string,std::string> parse_config(std::string &config,std
             }
         }
     }
-    print_debug("Success!");
+    FS_dprint("Success!");
     init_exe_paths(config_map,exe);
     return config_map;
 }
@@ -598,8 +605,8 @@ void print_user_input(boostPO::variables_map &map, std::string& exe, std::string
         } else ss << "null";
     }
     output = ss.str() + "\n";
-    print_statistics(output);
-    print_debug(output+"\n");
+    FS_print_stats(output);
+    FS_dprint(output+"\n");
 }
 
 
@@ -648,7 +655,7 @@ void verify_species(boostPO::variables_map &map, SPECIES_FLAGS flag) {
                                     ENTAP_ERR::E_INPUT_PARSE);
         }
     }
-    print_debug("Taxonomic species verified");
+    FS_dprint("Taxonomic species verified");
     // TODO check it can be found within tax database
 }
 
@@ -666,7 +673,7 @@ void verify_species(boostPO::variables_map &map, SPECIES_FLAGS flag) {
  * ======================================================================
  */
 void init_exe_paths(std::unordered_map<std::string, std::string> &map, std::string exe) {
-    print_debug("Assigning execution paths. Note they are not checked for validity...");
+    FS_dprint("Assigning execution paths. Note they are not checked for validity...");
 
     std::stringstream                  ss;
     std::string                        out_msg;
@@ -713,8 +720,8 @@ void init_exe_paths(std::unordered_map<std::string, std::string> &map, std::stri
        "\nEnTAP Graphing Script: "           << temp_graphing;
 
     out_msg = ss.str();
-    print_debug(out_msg);
-    print_statistics(out_msg);
+    FS_dprint(out_msg);
+    FS_print_stats(out_msg);
 
     DIAMOND_EXE      = temp_diamond;
     GENEMARK_EXE     = temp_genemark;
@@ -728,7 +735,7 @@ void init_exe_paths(std::unordered_map<std::string, std::string> &map, std::stri
     GO_DB_PATH       = temp_go_db;
     GRAPHING_EXE     = temp_graphing;
 
-    print_debug("Success! All exe paths set");
+    FS_dprint("Success! All exe paths set");
 }
 
 
@@ -775,7 +782,7 @@ void process_user_species(std::string &input) {
 }
 
 void verify_uninformative(std::string& path) {
-    if (!file_exists(path) || file_empty(path)) {
+    if (!FS_file_exists(path) || file_empty(path)) {
         throw ExceptionHandler("Path to uninformative list invalid/empty!",ENTAP_ERR::E_INPUT_PARSE);
     }
 }

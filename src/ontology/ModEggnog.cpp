@@ -32,6 +32,7 @@
 #include <csv.h>
 #include "ModEggnog.h"
 #include "../ExceptionHandler.h"
+#include "../FileSystem.h"
 
 std::pair<bool, std::string> ModEggnog::verify_files() {
     std::string                        annotation_base_flag;
@@ -44,20 +45,20 @@ std::pair<bool, std::string> ModEggnog::verify_files() {
     _out_no_hits         = annotation_no_flag +".emapper.annotations";
 
     verified = false;
-    print_debug("Overwrite was unselected, verifying output files...");
-    if (file_exists(_out_hits)) {
-        print_debug("File located at: " + _out_hits + " found");
+    FS_dprint("Overwrite was unselected, verifying output files...");
+    if (FS_file_exists(_out_hits)) {
+        FS_dprint("File located at: " + _out_hits + " found");
         verified = true;
-    } else print_debug("File located at: " + _out_hits + " NOT found");
-    if (file_exists(_out_no_hits)) {
-        print_debug("File located at: " + _out_no_hits + " found");
+    } else FS_dprint("File located at: " + _out_hits + " NOT found");
+    if (FS_file_exists(_out_no_hits)) {
+        FS_dprint("File located at: " + _out_no_hits + " found");
         verified = true;
-    } else print_debug("File located at: " + _out_no_hits + " NOT found");
+    } else FS_dprint("File located at: " + _out_no_hits + " NOT found");
     if (verified) {
-        print_debug("One or more ontology files were found, skipping ontology execution");
+        FS_dprint("One or more ontology files were found, skipping ontology execution");
         return std::make_pair(true, "");
     } else {
-        print_debug("No ontology files were found, continuing with execution");
+        FS_dprint("No ontology files were found, continuing with execution");
         return std::make_pair(false,"");
     }
 }
@@ -70,7 +71,7 @@ std::pair<bool, std::string> ModEggnog::verify_files() {
  */
 void ModEggnog::parse() {
 
-    print_debug("Beginning to parse eggnog results...");
+    FS_dprint("Beginning to parse eggnog results...");
 
     typedef std::map<std::string,std::map<std::string, uint32>> GO_top_map_t;
 
@@ -123,9 +124,9 @@ void ModEggnog::parse() {
 
     for (int i=0; i<2;i++) {
         i == 0 ? path=_out_hits : path=_out_no_hits;
-        print_debug("Eggnog file located at " + path + " being filtered");
-        if (!file_exists(path)) {
-            print_debug("File not found, skipping...");continue;
+        FS_dprint("Eggnog file located at " + path + " being filtered");
+        if (!FS_file_exists(path)) {
+            FS_dprint("File not found, skipping...");continue;
         }
         path = eggnog_format(path);
         std::string qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
@@ -201,7 +202,7 @@ void ModEggnog::parse() {
     std::ofstream file_hits_nucl(out_hit_nucl, std::ios::out | std::ios::app);
     std::ofstream file_hits_prot(out_hit_prot, std::ios::out | std::ios::app);
 
-    print_debug("Success! Computing overall statistics...");
+    FS_dprint("Success! Computing overall statistics...");
     for (auto &pair : *pQUERY_DATA->get_sequences_ptr()) {
         if (eggnog_map.find(pair.first) == eggnog_map.end()) {
             // Unannotated sequence
@@ -317,13 +318,13 @@ void ModEggnog::parse() {
       "\nTotal unique sequences without pathways (KEGG): " << count_no_kegg<<
       "\nTotal pathways (KEGG) assigned: " << count_total_kegg_terms;
     out_msg = ss.str();
-    print_statistics(out_msg);
+    FS_print_stats(out_msg);
     GO_DATABASE.clear();
-    print_debug("Success!");
+    FS_dprint("Success!");
 }
 
 void ModEggnog::execute() {
-    print_debug("Running eggnog...");
+    FS_dprint("Running eggnog...");
 
     std::string                        annotation_base_flag;
     std::string                        annotation_no_flag;
@@ -344,19 +345,19 @@ void ModEggnog::execute() {
             {"-m", "diamond"}
     };
     if (!_blastp) eggnog_command_map["--translate"] = " ";
-    if (file_exists(_inpath)) {
+    if (FS_file_exists(_inpath)) {
         for (auto &pair : eggnog_command_map)eggnog_command += pair.first + " " + pair.second + " ";
-        print_debug("\nExecuting eggnog mapper against protein sequences that hit databases...\n"
+        FS_dprint("\nExecuting eggnog mapper against protein sequences that hit databases...\n"
                     + eggnog_command);
         if (execute_cmd(eggnog_command, annotation_std) !=0) {
             throw ExceptionHandler("Error executing eggnog mapper", ENTAP_ERR::E_RUN_ANNOTATION);
         }
-        print_debug("Success! Results written to: " + annotation_base_flag);
+        FS_dprint("Success! Results written to: " + annotation_base_flag);
     } else {
         throw ExceptionHandler("No input file found at: " + _inpath,
                                ENTAP_ERR::E_RUN_EGGNOG);
     }
-    if (file_exists(_in_no_hits)) {
+    if (FS_file_exists(_in_no_hits)) {
         std::ifstream inFile(_in_no_hits);
         long line_num = std::count(std::istreambuf_iterator<char>(inFile),
                                    std::istreambuf_iterator<char>(), '\n');
@@ -366,14 +367,14 @@ void ModEggnog::execute() {
             eggnog_command_map["--output"] = annotation_no_flag;
             eggnog_command = "python " + _exe_path + " ";
             for (auto &pair : eggnog_command_map) eggnog_command += pair.first + " " + pair.second + " ";
-            print_debug("\nExecuting eggnog mapper against protein sequences that did not hit databases...\n"
+            FS_dprint("\nExecuting eggnog mapper against protein sequences that did not hit databases...\n"
                         + eggnog_command);
             if (execute_cmd(eggnog_command, annotation_std) !=0) {
                 throw ExceptionHandler("Error executing eggnog mapper", ENTAP_ERR::E_RUN_ANNOTATION);
             }
         }
     }
-    print_debug("Success!");
+    FS_dprint("Success!");
 }
 
 void ModEggnog::set_data(std::string & eggnog_databse, std::vector<std::string>&) {

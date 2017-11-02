@@ -28,6 +28,7 @@
 
 //*********************** Includes *****************************
 #include "GraphingManager.h"
+#include "FileSystem.h"
 //**************************************************************
 
 /**
@@ -46,13 +47,13 @@
  * =====================================================================
  */
 GraphingManager::GraphingManager(std::string path) {
-    print_debug("Spawn object - GraphingManager");
+    FS_dprint("Spawn object - GraphingManager");
     _graph_path = path;
     std::string cmd = "python " + path + " -s -1 -g -1 -i /temp -t temp";
     _graphing_enabled = execute_cmd(cmd) == 0;
     if (_graphing_enabled) {
-        print_debug("Graphing is supported");
-    } else print_debug("Graphing is NOT supported");
+        FS_dprint("Graphing is supported");
+    } else FS_dprint("Graphing is NOT supported");
 }
 
 
@@ -85,7 +86,7 @@ void GraphingManager::graph(GraphingData& graphingStruct) {
 
     graphing_cmd = generate_command(cmd_map, "python " + _graph_path);
     if (execute_cmd(graphing_cmd) != 0) {
-        print_debug("\nError generating graph from:\n" + graphing_cmd);
+        FS_dprint("\nError generating graph from:\n" + graphing_cmd);
     }
 }
 

@@ -28,6 +28,7 @@
 #include <iomanip>
 #include "QueryData.h"
 #include "ExceptionHandler.h"
+#include "FileSystem.h"
 
 
 /**
@@ -53,7 +54,7 @@
  * =====================================================================
  */
 QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_complete, bool &trim) {
-    print_debug("Processing transcriptome...");
+    FS_dprint("Processing transcriptome...");
 
     std::stringstream                        out_msg;
     std::string                              out_name;
@@ -76,7 +77,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
     _trim = trim;
     _total_sequences = 0;
 
-    if (!file_exists(input_file)) {
+    if (!FS_file_exists(input_file)) {
         throw ExceptionHandler("Input file not found at: " + input_file,ENTAP_ERR::E_INPUT_PARSE);
     }
 
@@ -145,8 +146,8 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
             "\nShortest sequence(bp): "<< shortest_len<<" ("<<shortest_seq<<")";
     if (is_complete)out_msg<<"\nAll sequences ("<<count_seqs<<") were flagged as complete genes";
     std::string msg = out_msg.str();
-    print_statistics(msg);
-    print_debug("Success!");
+    FS_print_stats(msg);
+    FS_dprint("Success!");
     input_file = out_new_path;
 }
 
@@ -303,7 +304,7 @@ void QueryData::flag_transcripts(ExecuteStates state) {
  * =====================================================================
  */
 void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &ontology_flags) {
-    print_debug("Pipeline finished! Calculating final statistics...");
+    FS_dprint("Pipeline finished! Calculating final statistics...");
 
     std::stringstream      ss;
     uint32                 count_total_sequences=0;
@@ -444,7 +445,7 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
        "\n\tTotal unique sequences unannotated (gene family and/or similarity search): " << count_TOTAL_unann;
 
     out_msg = ss.str();
-    print_statistics(out_msg);
+    FS_print_stats(out_msg);
 }
 
 std::string QueryData::trim_sequence_header(std::string &header, std::string line) {

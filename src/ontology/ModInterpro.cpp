@@ -33,6 +33,7 @@
 #include "../ExceptionHandler.h"
 #include "boost/property_tree/ptree.hpp"
 #include "boost/property_tree/xml_parser.hpp"
+#include "../FileSystem.h"
 //**************************************************************
 
 using boost::property_tree::ptree;
@@ -60,7 +61,7 @@ std::pair<bool, std::string> ModInterpro::verify_files() {
     _final_basepath = PATHS(_interpro_dir, filename);
     _blastp ? filename += INTERPRO_EXT_XML : filename += INTERPRO_EXT_TSV;
     _final_outpath = PATHS(_interpro_dir, filename);
-    return std::make_pair(file_exists(_final_outpath), "");
+    return std::make_pair(FS_file_exists(_final_outpath), "");
 }
 
 void ModInterpro::execute() {
@@ -84,7 +85,7 @@ void ModInterpro::execute() {
             FLAG_IPRLOOK    +
             FLAG_PATHWAY;
 
-    print_debug("Executing InterProScan:\n" + interpro_cmd);
+    FS_dprint("Executing InterProScan:\n" + interpro_cmd);
     if (!_databases.empty()) {
         for (std::string &val : _databases) interpro_cmd += " --appl " + val;
     } else {
@@ -131,9 +132,9 @@ void ModInterpro::parse() {
     uint32                                count_hits=0;
     uint32                                count_no_hits=0;
 
-    print_debug("Beginning to parse InterProScan data...");
-    if (file_exists(_final_outpath)) {
-        print_debug("File found at: " + _final_outpath + " parsing...");
+    FS_dprint("Beginning to parse InterProScan data...");
+    if (FS_file_exists(_final_outpath)) {
+        FS_dprint("File found at: " + _final_outpath + " parsing...");
     } else {
         throw ExceptionHandler("Unable to locate InterProScan file at: " +
                                _final_outpath, ENTAP_ERR::E_PARSE_INTERPRO);
@@ -149,7 +150,7 @@ void ModInterpro::parse() {
         interpro_map = parse_tsv();
     }
 
-    print_debug("Success! Beginning to update query sequences...");
+    FS_dprint("Success! Beginning to update query sequences...");
 
     path_no_hits_faa = PATHS(_proc_dir, OUT_NO_HITS_FAA);
     path_no_hits_fnn = PATHS(_proc_dir, OUT_NO_HITS_FNN);
@@ -189,14 +190,14 @@ void ModInterpro::parse() {
     file_hits_faa.close();
     file_hits_fnn.close();
 
-    print_debug("Success! Calculating statistics...");
+    FS_dprint("Success! Calculating statistics...");
     stats_stream <<
                  ENTAP_STATS::SOFTWARE_BREAK << " Ontology - InterProScan\n" <<
                  ENTAP_STATS::SOFTWARE_BREAK <<
                  "InterProScan statistics coming soon!";
     stats_out = stats_stream.str();
-    print_statistics(stats_out);
-    print_debug("Success! InterProScan finished");
+    FS_print_stats(stats_out);
+    FS_dprint("Success! InterProScan finished");
 }
 
 void ModInterpro::set_data(std::string & unused, std::vector<std::string>& interpro) {

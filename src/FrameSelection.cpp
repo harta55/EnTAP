@@ -38,6 +38,7 @@
 #include "EntapGlobals.h"
 #include "frame_selection/ModGeneMarkST.h"
 #include "QueryData.h"
+#include "FileSystem.h"
 //**************************************************************
 
 
@@ -64,7 +65,7 @@
 FrameSelection::FrameSelection(std::string &input, std::string &out,
                                boost::program_options::variables_map &user_flags,
                                GraphingManager *graphingManager, QueryData *QUERY_DATA) {
-    print_debug("Spawn object - FrameSelection");
+    FS_dprint("Spawn object - FrameSelection");
     _graphingManager = graphingManager;
     _QUERY_DATA      = QUERY_DATA;
     _exe_path        = GENEMARK_EXE;

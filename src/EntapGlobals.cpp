@@ -37,6 +37,7 @@
 #include <boost/archive/binary_iarchive.hpp>
 #include "EntapGlobals.h"
 #include "config.h"
+#include "FileSystem.h"
 #include <boost/archive/binary_iarchive.hpp>
 
 //**************************************************************
@@ -162,81 +163,6 @@ namespace ENTAP_CONFIG {
 }
 
 
-/**
- * ======================================================================
- * Function void print_debug(std::string    msg)
- *
- * Description          - Handles printing to EnTAP debug file
- *                      - Adds timestamp to each entry
- *
- * Notes                - None
- *
- * @param msg           - Message to be sent to debug file
- * @return              - None
- *
- * =====================================================================
- */
-void print_debug(std::string msg) {
-
-#if DEBUG
-    std::chrono::time_point<std::chrono::system_clock> current;
-    std::time_t time;
-
-    current = std::chrono::system_clock::now();
-    time = std::chrono::system_clock::to_time_t(current);
-    std::string out_time(std::ctime(&time));
-    std::ofstream debug_file(DEBUG_FILE_PATH, std::ios::out | std::ios::app);
-    debug_file << out_time.substr(0,out_time.length()-1) << ": " + msg << std::endl;
-    debug_file.close();
-#endif
-    return;
-}
-
-
-/**
- * ======================================================================
- * Function void print_statistics(std::string    &msg)
- *
- * Description          - Handles printing to EnTAP statistics/log file
- *
- * Notes                - None
- *
- * @param msg           - Message to be sent to log file
- * @return              - None
- *
- * =====================================================================
- */
-void print_statistics(std::string &msg) {
-    std::ofstream log_file(LOG_FILE_PATH, std::ios::out | std::ios::app);
-    log_file << msg << std::endl;
-    log_file.close();
-}
-
-
-/**
- * ======================================================================
- * Function bool file_exists(std::string path)
- *
- * Description          - Checks whether a file exists in the OS
- *                      - Currently multiplatform boost implementation
- *
- * Notes                - None
- *
- * @param path          - Path of file to verify
- *
- * @return              - true/false of file existing
- *
- * =====================================================================
- */
-bool file_exists(std::string path) {
-#ifdef USE_BOOST
-    return boost::filesystem::exists(path);
-#else
-    struct stat buff;
-    return (stat(path.c_str(), &buff) == 0);
-#endif
-}
-
 
 /**
  * ======================================================================
@@ -347,7 +273,7 @@ int get_supported_threads(boost::program_options::variables_map &user_map) {
 
     supported_threads = std::thread::hardware_concurrency();
     if (user_map[ENTAP_CONFIG::INPUT_FLAG_THREADS].as<int>() > supported_threads) {
-        print_debug("Specified thread number is larger than available threads,"
+        FS_dprint("Specified thread number is larger than available threads,"
                                        "setting threads to " + std::to_string(supported_threads));
         threads = supported_threads;
     } else {

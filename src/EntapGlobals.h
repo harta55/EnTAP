@@ -57,9 +57,7 @@ namespace boostAR = boost::archive;
 
 
 //***************** Global Prototype Functions *****************
-void print_debug(std::string);
-void print_statistics(std::string &msg);
-bool file_exists (std::string);
+bool FS_file_exists(std::string);
 bool file_empty(std::string);
 int execute_cmd(std::string,std::string);
 int execute_cmd(std::string);
@@ -277,6 +275,7 @@ namespace ENTAP_ERR {
     const uint16 E_PARSE_EGGNOG                = 162;
     const uint16 E_RUN_INTERPRO                = 170;
     const uint16 E_PARSE_INTERPRO              = 171;
+    const uint16 E_FILE_IO                     = 200;
 }
 
 namespace ENTAP_STATS {

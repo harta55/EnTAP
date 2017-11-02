@@ -33,6 +33,7 @@
 #include <exception>
 #include "ExceptionHandler.h"
 #include "EntapGlobals.h"
+#include "FileSystem.h"
 //**************************************************************
 
 /**
@@ -185,7 +186,7 @@ void ExceptionHandler::print_msg() {
 
     added_msg << "\n" << what();
     out_msg = added_msg.str();
-    print_debug(out_msg);
+    if (err_code != ENTAP_ERR::E_INPUT_PARSE) FS_dprint(out_msg);
     std::cerr << out_msg << std::endl;
 }
 

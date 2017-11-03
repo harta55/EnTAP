@@ -132,3 +132,11 @@ bool FS_file_exists(std::string path) {
 bool FS_file_is_open(std::ofstream& ofstream) {
     return ofstream.is_open();
 }
+
+bool FS_file_test_open(std::string& path) {
+    bool is_open;
+    std::ofstream ofstream(path, FILE_APPEND);
+    is_open = ofstream.is_open();
+    ofstream.close();
+    return is_open;
+}

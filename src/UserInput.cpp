@@ -39,6 +39,7 @@
 #include "SimilaritySearch.h"
 #include "common.h"
 #include "FileSystem.h"
+#include "ontology/ModEggnog.h"
 
 //**************************************************************
 
@@ -130,6 +131,7 @@ boost::program_options::variables_map parse_arguments_boost(int argc, const char
                  boostPO::value<std::string>()->default_value(DEFAULT_STATE), DESC_STATE)
                 ("input,i", boostPO::value<std::string>(), DESC_INPUT_TRAN)
                 (ENTAP_CONFIG::INPUT_FLAG_COMPLETE.c_str(), DESC_COMPLET_PROT)
+                (ENTAP_CONFIG::INPUT_FLAG_NOCHECK.c_str(), DESC_NOCHECK)
                 (ENTAP_CONFIG::INPUT_FLAG_OVERWRITE.c_str(), DESC_OVERWRITE);
         boostPO::variables_map vm;
         //TODO verify state commands
@@ -181,6 +183,7 @@ bool verify_user_input(boostPO::variables_map& vm) {
     bool                     is_run;
     std::string              species;
     std::string              input_tran_path;
+    std::vector<uint16>      ont_flags;
 
     if (vm.count(ENTAP_CONFIG::INPUT_FLAG_GRAPH)) {
         if (!FS_file_exists(GRAPHING_EXE)) {
@@ -217,6 +220,8 @@ bool verify_user_input(boostPO::variables_map& vm) {
         throw(ExceptionHandler("Cannot specify both config and run flags",
                                ENTAP_ERR::E_INPUT_PARSE));
     }
+
+    if (vm.count(ENTAP_CONFIG::INPUT_FLAG_NOCHECK)) return is_config;
 
     try {
         verify_databases(vm);
@@ -301,8 +306,7 @@ bool verify_user_input(boostPO::variables_map& vm) {
             // Verify Ontology Flags
             is_interpro = false;
             if (vm.count(ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY)) {
-                std::vector<uint16> ont_flags =
-                        vm[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<std::vector<uint16>>();
+                ont_flags = vm[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<std::vector<uint16>>();
                 for (int i = 0; i < ont_flags.size() ; i++) {
                     if ((ont_flags[i] > ENTAP_EXECUTE::ONTOLOGY_MAX) ||
                          ont_flags[i] < ENTAP_EXECUTE::ONTOLOGY_MIN) {
@@ -335,9 +339,11 @@ bool verify_user_input(boostPO::variables_map& vm) {
                 verify_uninformative(uninform_path);
             }
 
-            // Verify paths
-            if (vm[ENTAP_CONFIG::INPUT_FLAG_STATE].as<std::string>().find(DEFAULT_STATE)==0) {
-
+            // Verify paths from state
+            if (vm[ENTAP_CONFIG::INPUT_FLAG_STATE].as<std::string>().compare(DEFAULT_STATE)==0) {
+                std::string state = vm[ENTAP_CONFIG::INPUT_FLAG_STATE].as<std::string>();
+                // onlty handling default now
+                verify_state(state, is_protein, ont_flags);
             }
 
 
@@ -656,7 +662,6 @@ void verify_species(boostPO::variables_map &map, SPECIES_FLAGS flag) {
         }
     }
     FS_dprint("Taxonomic species verified");
-    // TODO check it can be found within tax database
 }
 
 
@@ -782,7 +787,54 @@ void process_user_species(std::string &input) {
 }
 
 void verify_uninformative(std::string& path) {
-    if (!FS_file_exists(path) || file_empty(path)) {
+    if (!FS_file_exists(path) || FS_file_empty(path) || !FS_file_test_open(path)) {
         throw ExceptionHandler("Path to uninformative list invalid/empty!",ENTAP_ERR::E_INPUT_PARSE);
     }
+}
+
+void verify_state(std::string &state, bool runP, std::vector<uint16> &ontology) {
+    uint8 execute = 0x0;
+    std::pair<bool, std::string> out;
+    ExecuteStates  executeStates;
+    if (state.compare(DEFAULT_STATE) == 0) {
+        execute |= DIAMOND_RUN;
+        execute |= GENE_ONTOLOGY;
+    }
+    out = verify_software(execute, ontology);
+    if (!out.first) throw ExceptionHandler(out.second, ENTAP_ERR::E_INPUT_PARSE);
+}
+
+std::pair<bool,std::string> verify_software(uint8 &states,std::vector<uint16> &ontology) {
+    FS_dprint("Verifying software...");
+
+    if (states & DIAMOND_RUN) {
+        if (!FS_file_exists(TAX_DB_PATH) || FS_file_empty(TAX_DB_PATH))
+            return std::make_pair(false, "Could not find the taxonomic database");
+        if (!SimilaritySearch::is_executable()) {
+            return std::make_pair(false, "Could not execute a test run of DIAMOND, be sure"
+                    " it's properly installed and the path is correct");
+        }
+    }
+    if (states & GENE_ONTOLOGY) {
+        if (!FS_file_exists(GO_DB_PATH) || FS_file_empty(GO_DB_PATH))
+            return std::make_pair(false, "Could not find Gene Ontology database");
+        for (uint16 flag : ontology) {
+            switch (flag) {
+                case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
+                    if (!FS_file_exists(EGG_SQL_DB_PATH))
+                        return std::make_pair(false, "Could not find EggNOG SQL database");
+                    if (!FS_file_exists(EGG_EMAPPER_EXE) || !ModEggnog::is_executable())
+                        return std::make_pair(false, "Could not find or execute EggNOG Emapper");
+                    break;
+                case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
+                    // TODO
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    FS_dprint("Success!");
+    return std::make_pair(true, "");
 }

@@ -153,7 +153,9 @@
                             "    -unidentified\n"                                       \
                             "    -uncultured\n"                                         \
                             "    -uninformative"
-
+#define DESC_NOCHECK        "Use this flag if you don't want your input to EnTAP verifed."\
+                            " This is not advised to use! Your run may fail later on "  \
+                            "if inputs are not checked"
 //**************************************************************
 
 //*********************** Typedefs/Enum ************************
@@ -177,6 +179,8 @@ std::string get_exe_path(boostPO::variables_map&);
 bool verify_interpro(std::string);
 void process_user_species(std::string&);
 void verify_uninformative(std::string&);
+void verify_state(std::string&, bool, std::vector<uint16>&);
+std::pair<bool,std::string> verify_software(uint8&, std::vector<uint16>&);
 
 //**************************************************************
 

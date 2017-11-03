@@ -57,14 +57,11 @@ namespace boostAR = boost::archive;
 
 
 //***************** Global Prototype Functions *****************
-bool FS_file_exists(std::string);
-bool file_empty(std::string);
 int execute_cmd(std::string,std::string);
 int execute_cmd(std::string);
 std::string generate_command(std::unordered_map<std::string,std::string>&,
                              std::string);
 int get_supported_threads(boost::program_options::variables_map&);
-
 //**************************************************************
 
 
@@ -206,6 +203,7 @@ namespace ENTAP_CONFIG {
     extern const std::string INPUT_FLAG_PAIRED_END;
     extern const std::string INPUT_FLAG_THREADS;
     extern const std::string INPUT_FLAG_UNINFORM;
+    extern const std::string INPUT_FLAG_NOCHECK;
 
     extern const std::string INPUT_UNIPROT_SWISS    ;
     extern const std::string INPUT_UNIPROT_UR100    ;

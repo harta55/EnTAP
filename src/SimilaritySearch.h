@@ -55,6 +55,7 @@ public:
     SimilaritySearch();
     std::pair<std::string,std::string> parse_files(std::string);
     tax_serial_map_t read_tax_map();
+    static bool is_executable();
     //**************************************************************
 
 

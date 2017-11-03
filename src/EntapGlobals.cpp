@@ -137,6 +137,7 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_PAIRED_END    = "paired-end";
     const std::string INPUT_FLAG_THREADS       = "threads";
     const std::string INPUT_FLAG_UNINFORM      = "uninformative";
+    const std::string INPUT_FLAG_NOCHECK       = "no-check";
 
     const std::string INPUT_UNIPROT_SWISS      = "swiss";
     const std::string INPUT_UNIPROT_UR100      = "ur100";
@@ -294,7 +295,7 @@ std::string generate_command(std::unordered_map<std::string,std::string> &map,st
 }
 
 
-bool file_empty(std::string path) {
+bool FS_file_empty(std::string path) {
     std::ifstream file(path);
     bool empty;
     std::string line;

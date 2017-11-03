@@ -883,3 +883,10 @@ void SimilaritySearch::read_uninform_file(std::string &path) {
         _uninformative_vect.push_back(line);
     }
 }
+
+bool SimilaritySearch::is_executable() {
+    std::string test_command;
+
+    test_command = DIAMOND_EXE + " --version";
+    return execute_cmd(test_command) == 0;
+}

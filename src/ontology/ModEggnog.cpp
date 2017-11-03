@@ -412,3 +412,13 @@ std::string ModEggnog::eggnog_format(std::string file) {
     out_file.close();
     return out_path;
 }
+
+bool ModEggnog::is_executable() {
+    std::string test_command;
+
+    test_command = "python " +
+            EGG_EMAPPER_EXE  +
+            " --version";
+    FS_dprint("Testing EggNOG:\n" + test_command);
+    return execute_cmd(test_command) == 0;
+}

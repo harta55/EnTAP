@@ -611,7 +611,6 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         FS_close_file(file_no_hits_prot);
     } catch (const ExceptionHandler &e) {throw e;}
 
-
     try {
     std::vector<count_pair> contam_species_vect(contam_species_map.begin(), contam_species_map.end());
     std::vector<count_pair> species_vect(species_map.begin(), species_map.end());

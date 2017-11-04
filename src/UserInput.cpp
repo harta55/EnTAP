@@ -267,7 +267,7 @@ bool verify_user_input(boostPO::variables_map& vm) {
 
             // Verify FPKM
             if (vm.count(ENTAP_CONFIG::INPUT_FLAG_FPKM)) {
-                float fpkm = vm[ENTAP_CONFIG::INPUT_FLAG_FPKM].as<float>();
+                fp32 fpkm = vm[ENTAP_CONFIG::INPUT_FLAG_FPKM].as<fp32>();
                 if (fpkm > FPKM_MAX || fpkm < FPKM_MIN) {
                     throw ExceptionHandler("FPKM is out of range, but be between " + std::to_string(FPKM_MIN) +
                                            " and " + std::to_string(FPKM_MAX), ENTAP_ERR::E_INPUT_PARSE);
@@ -345,7 +345,6 @@ bool verify_user_input(boostPO::variables_map& vm) {
                 // onlty handling default now
                 verify_state(state, is_protein, ont_flags);
             }
-
 
 
         } else {
@@ -744,6 +743,20 @@ void init_exe_paths(std::unordered_map<std::string, std::string> &map, std::stri
 }
 
 
+/**
+ * ======================================================================
+ * Function std::string get_exe_path(boostPO::variables_map &vm)
+ *
+ * Description          - Gets execution path that was used for EnTAP
+ *                      - This is used for default executions with the
+ *                        EnTAP config file
+ *
+ * Notes                - Only implemented for Unix systems now
+ *
+ * @param vm            - Boost map of user inputs
+ * @return              - Path to executable
+ * ======================================================================
+ */
 std::string get_exe_path(boostPO::variables_map &vm) {
     //TODO check different systems
     if (vm.count(ENTAP_CONFIG::INPUT_FLAG_EXE_PATH)) {
@@ -761,6 +774,19 @@ std::string get_exe_path(boostPO::variables_map &vm) {
 }
 
 
+/**
+ * ======================================================================
+ * Function bool verify_interpro(std::string database)
+ *
+ * Description          - Sanity check on user inputs for InterPro
+ *                        databases
+ *
+ * Notes                - None
+ *
+ * @param database      - Selected databases
+ * @return              - True/false is database is valid
+ * ======================================================================
+ */
 bool verify_interpro(std::string database) {
     LOWERCASE(database);
     if (database.compare(INTER_TIGR) == 0) return true;
@@ -781,21 +807,65 @@ bool verify_interpro(std::string database) {
     return (database.compare(INTER_MOBI) == 0);
 }
 
+
+/**
+ * ======================================================================
+ * Function void process_user_species(std::string &input)
+ *
+ * Description          - Format species user has input
+ *
+ * Notes                - Throw error on failure
+ *
+ * @param input         - Species to be formatted
+ * @return              - None
+ * ======================================================================
+ */
 void process_user_species(std::string &input) {
     std::transform(input.begin(), input.end(), input.begin(), ::tolower);
     std::replace(input.begin(), input.end(), '_',' ');
 }
 
+
+/**
+ * ======================================================================
+ * Function void verify_uninformative(std::string& path)
+ *
+ * Description          - Sanity check on uninformative list from user
+ *                      - Only checks existance/read
+ *
+ * Notes                - Throw error on failure
+ *
+ * @param path          - Path to user file
+ * @return              - None
+ * ======================================================================
+ */
 void verify_uninformative(std::string& path) {
     if (!FS_file_exists(path) || FS_file_empty(path) || !FS_file_test_open(path)) {
         throw ExceptionHandler("Path to uninformative list invalid/empty!",ENTAP_ERR::E_INPUT_PARSE);
     }
 }
 
+
+/**
+ * ======================================================================
+ * Function void verify_state(std::string &state, bool runP,
+ *                            std::vector<uint16> &ontology)
+ *
+ * Description          - Entry to check execution paths for software based
+ *                        on state
+ *
+ * Notes                - Throw error on failure
+ *
+ * @param state         - State inputted by user (or default)
+ * @param runP          - Blastp flag (yes/no)
+ * @param ontology      - Vector of ontology flags
+ *
+ * @return              - None
+ * ======================================================================
+ */
 void verify_state(std::string &state, bool runP, std::vector<uint16> &ontology) {
     uint8 execute = 0x0;
     std::pair<bool, std::string> out;
-    ExecuteStates  executeStates;
     if (state.compare(DEFAULT_STATE) == 0) {
         execute |= DIAMOND_RUN;
         execute |= GENE_ONTOLOGY;
@@ -804,6 +874,23 @@ void verify_state(std::string &state, bool runP, std::vector<uint16> &ontology) 
     if (!out.first) throw ExceptionHandler(out.second, ENTAP_ERR::E_INPUT_PARSE);
 }
 
+
+/**
+ * ======================================================================
+ * Function std::pair<bool,std::string> verify_software(uint8 &states,
+ *                                      std::vector<uint16> &ontology)
+ *
+ * Description          - Sanity check on software that will be used during
+ *                        execution
+ *
+ * Notes                - None
+ *
+ * @param states        - State flags
+ * @param ontology      - Vector of ontology flags
+ *
+ * @return              - Pair of yes/no failure and error msg string
+ * ======================================================================
+ */
 std::pair<bool,std::string> verify_software(uint8 &states,std::vector<uint16> &ontology) {
     FS_dprint("Verifying software...");
 
@@ -817,14 +904,15 @@ std::pair<bool,std::string> verify_software(uint8 &states,std::vector<uint16> &o
     }
     if (states & GENE_ONTOLOGY) {
         if (!FS_file_exists(GO_DB_PATH) || FS_file_empty(GO_DB_PATH))
-            return std::make_pair(false, "Could not find Gene Ontology database");
+            return std::make_pair(false, "Could not find Gene Ontology database or invalid");
         for (uint16 flag : ontology) {
             switch (flag) {
                 case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
                     if (!FS_file_exists(EGG_SQL_DB_PATH))
                         return std::make_pair(false, "Could not find EggNOG SQL database");
                     if (!FS_file_exists(EGG_EMAPPER_EXE) || !ModEggnog::is_executable())
-                        return std::make_pair(false, "Could not find or execute EggNOG Emapper");
+                        return std::make_pair(false, "Could not find or test EggNOG Emapper, "
+                                "ensure python is properly installed and the paths are correct");
                     break;
                 case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
                     // TODO

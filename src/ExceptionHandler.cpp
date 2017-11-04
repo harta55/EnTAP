@@ -199,7 +199,3 @@ const char* ExceptionHandler::what() {
 int ExceptionHandler::getErr_code() const {
     return err_code;
 }
-
-
-
-

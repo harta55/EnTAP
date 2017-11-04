@@ -51,11 +51,11 @@
 
 
 enum States {
-    PARSE_ARGS            = 0x01,
-    CONFIG_ENTAP          = 0x02,
-    CONFIG_ENTAP_SUCCESS  = 0x04,
-    EXECUTE_ENTAP         = 0x08,
-    EXECUTE_ENTAP_SUCCESS = 0x16
+    PARSE_ARGS           = 0,
+    CONFIG_ENTAP         ,
+    CONFIG_ENTAP_SUCCESS ,
+    EXECUTE_ENTAP        ,
+    EXECUTE_ENTAP_SUCCESS
 };
 
 std::string _outpath;
@@ -80,7 +80,7 @@ void exit_print(States);
  *
  * Description          - Typical C entry point
  *                      - Initializes logs, inputs
- *                      - Sets EnTAP to execution or configuration states
+ *                      - Sets EnTAP to execution or configuration
  *
  * Notes                - None
  *

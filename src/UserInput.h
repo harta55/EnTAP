@@ -152,7 +152,9 @@
                             "    -putative\n"                                           \
                             "    -unidentified\n"                                       \
                             "    -uncultured\n"                                         \
-                            "    -uninformative"
+                            "    -uninformative\n"                                      \
+                            "Without the extra spaces and hyphen. EnTAP will take the " \
+                            "each line as a new uninformative word!"
 #define DESC_NOCHECK        "Use this flag if you don't want your input to EnTAP verifed."\
                             " This is not advised to use! Your run may fail later on "  \
                             "if inputs are not checked"
@@ -244,7 +246,7 @@ const std::string KEY_GRAPH_SCRIPT         = "entap_graphing_script";
 // Avoid cluttering global namespace / conflicts for config paths
 // All paths based around main EnTAP directory
 namespace Defaults {
-    const std::string RSEM_DEFAULT_EXE         = "/libs/RSEM-1.3.0/";
+    const std::string RSEM_DEFAULT_EXE         = "/libs/RSEM-1.3.0/";   // Directory
     const std::string GENEMARK_DEFAULT_EXE     = "/libs/gmst_linux_64/gmst.pl";
     const std::string DIAMOND_DEFAULT_EXE      = "/libs/diamond-0.8.31/bin/diamond";
     const std::string EGG_EMAPPER_DEFAULT      = "/libs/eggnog-mapper/emapper.py";

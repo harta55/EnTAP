@@ -363,6 +363,21 @@ void QuerySequence::set_lineage(const std::string &_lineage) {
     QuerySequence::_sim_search_results.lineage = _lineage;
 }
 
+/**
+ * ======================================================================
+ * Function void QuerySequence::set_tax_score(std::string input_lineage)
+ *
+ * Description          - Sets tax score based on informativeness and
+ *                        lineage
+ *
+ * Notes                - None
+ *
+ * @param lineage       - Lineage input from  user
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void QuerySequence::set_tax_score(std::string input_lineage) {
     float tax_score = 0;
     std::string lineage = _sim_search_results.lineage;
@@ -449,6 +464,23 @@ std::string QuerySequence::print_tsv(const std::vector<const std::string*>& head
     return ss.str();
 }
 
+/**
+ * ======================================================================
+ * Function std::string QuerySequence::print_tsv(std::vector<const std::string*>& headers,
+ *                                                  short lvl)
+ *
+ * Description          - Formats data from Query Sequence to be print in ontology
+ *                      -
+ *
+ * Notes                - None
+ *
+ * @param headers       - Map of headers from ontology
+ * @param lvl           - Go level that would be normalized to
+ *
+ * @return              - String of output
+ *
+ * =====================================================================
+ */
 std::string QuerySequence::print_tsv(std::vector<const std::string*>& headers, short lvl) {
     init_header();
     std::stringstream stream;

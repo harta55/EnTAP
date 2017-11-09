@@ -43,6 +43,8 @@
 #include "ontology/ModInterpro.h"
 #include "FileSystem.h"
 
+const int16 FINAL_ANNOT_LEN = 3;
+
 Ontology::Ontology(int thread, std::string outpath, std::string input,
                    boost::program_options::variables_map &user_input, GraphingManager* graphing,
                    QueryData *queryData, bool blastp) {
@@ -119,7 +121,7 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
 
 void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
     FS_dprint("Beginning to print final results...");
-    std::map<short, std::ofstream*[FINAL_ANNOT_LEN]> file_map;
+    std::map<uint16, std::ofstream*[FINAL_ANNOT_LEN]> file_map;
     std::string file_name;
     std::string file_contam;
     std::string file_no_contam;
@@ -154,11 +156,9 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
             for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
                 if (i == FINAL_ALL_IND) {
                     *file_map[lvl][i] << pair.second->print_tsv(_HEADERS, i) << std::endl;
-                }
-                if (i == FINAL_CONTAM_IND && pair.second->isContaminant()) {
+                } else if (i == FINAL_CONTAM_IND && pair.second->isContaminant()) {
                     *file_map[lvl][i]<< pair.second->print_tsv(_HEADERS,i)<<std::endl;
-                }
-                if (i == FINAL_NO_CONTAM_IND && !pair.second->isContaminant()) {
+                } else if (i == FINAL_NO_CONTAM_IND && !pair.second->isContaminant()) {
                     *file_map[lvl][i]<< pair.second->print_tsv(_HEADERS,i)<<std::endl;
                 }
             }
@@ -168,7 +168,7 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
         for (uint16 lvl=0; lvl < _go_levels.size(); lvl++) {
             for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
                 pair.second[lvl][i].close();
-                delete pair.second[lvl][i];
+                delete &pair.second[lvl][i];
             }
         }
     }

@@ -43,6 +43,7 @@ class QuerySequence;
 class AbstractOntology;
 class QueryData;
 
+
 class Ontology {
     typedef std::map<std::string, QuerySequence> query_map_struct;
 
@@ -64,10 +65,9 @@ private:
     const std::string FINAL_ANNOT_FILE_CONTAM = "_contam";
     const std::string FINAL_ANNOT_FILE_NO_CONTAM = "_no_contam";
     const std::string ANNOT_FILE_EXT        = ".tsv";
-    const uint16       FINAL_ALL_IND         = 0;
-    const uint16       FINAL_CONTAM_IND      = 1;
-    const uint16       FINAL_NO_CONTAM_IND   = 2;
-    const uint16       FINAL_ANNOT_LEN       = 3;
+    const uint16      FINAL_ALL_IND         = 0;
+    const uint16      FINAL_CONTAM_IND      = 1;
+    const uint16      FINAL_NO_CONTAM_IND   = 2;
 
     std::vector<std::string>        _interpro_databases;
     std::vector<uint16>             _go_levels;

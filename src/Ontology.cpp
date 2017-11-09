@@ -130,12 +130,14 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
     std::string out_no_contam;
     for (uint16 lvl : _go_levels) {
         file_name      = FINAL_ANNOT_FILE + std::to_string(lvl) + ANNOT_FILE_EXT;
-        file_contam    = FINAL_ANNOT_FILE_CONTAM + std::to_string(lvl) + ANNOT_FILE_EXT;
-        file_no_contam = FINAL_ANNOT_FILE_NO_CONTAM + std::to_string(lvl) + ANNOT_FILE_EXT;
+        file_contam    = FINAL_ANNOT_FILE + std::to_string(lvl) + FINAL_ANNOT_FILE_CONTAM + ANNOT_FILE_EXT;
+        file_no_contam = FINAL_ANNOT_FILE + std::to_string(lvl) + FINAL_ANNOT_FILE_NO_CONTAM + ANNOT_FILE_EXT;
         outpath = PATHS(_outpath, file_name);
-        out_contam = PATHS(_outpath, out_contam);
+        out_contam = PATHS(_outpath, file_contam);
         out_no_contam = PATHS(_outpath, file_no_contam);
         boostFS::remove(outpath);
+        boostFS::remove(out_no_contam);
+        boostFS::remove(out_contam);
         file_map[lvl][FINAL_ALL_IND] =
                 new std::ofstream(outpath, std::ios::out | std::ios::app);
         file_map[lvl][FINAL_CONTAM_IND] =
@@ -165,11 +167,9 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
         }
     }
     for(auto& pair : file_map) {
-        for (uint16 lvl=0; lvl < _go_levels.size(); lvl++) {
-            for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
-                pair.second[lvl][i].close();
-                delete &pair.second[lvl][i];
-            }
+        for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
+            pair.second[i]->close();
+            delete pair.second[i];
         }
     }
     FS_dprint("Success!");

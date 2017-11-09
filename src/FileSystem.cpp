@@ -129,14 +129,58 @@ bool FS_file_exists(std::string path) {
 }
 
 
-bool FS_file_is_open(std::ofstream& ofstream) {
+bool FS_file_is_open(std::ofstream &ofstream) {
     return ofstream.is_open();
 }
 
-bool FS_file_test_open(std::string& path) {
+bool FS_file_test_open(std::string &path) {
     bool is_open;
     std::ofstream ofstream(path, FILE_APPEND);
     is_open = ofstream.is_open();
     ofstream.close();
     return is_open;
+}
+
+bool FS_delete_file(std::string path) {
+    FS_dprint("Deleting file: " + path);
+    if (!FS_file_exists(path)) return false;
+    return boostFS::remove(path);
+}
+
+bool FS_directory_iterate(bool del, std::string &path) {
+    FS_dprint("Iterating through directory: " + path);
+    if (!FS_file_exists(path)) return false;
+    try {
+        for (boostFS::recursive_directory_iterator it(path), end; it != end; ++it) {
+            if (!boostFS::is_directory(it->path())) {
+                // Is file
+                if (FS_file_empty(it->path().string()) && del) {
+                    FS_delete_file(it->path().string());
+                    FS_dprint("Deleted: " + it->path().string());
+                }
+            }
+        }
+    } catch (...) {
+        return false;
+    }
+    FS_dprint("Success!");
+    return true;
+}
+
+
+bool FS_file_empty(std::string path) {
+    std::ifstream file(path);
+    bool empty;
+    std::string line;
+    empty = file.peek() == std::ifstream::traits_type::eof();
+    if (!empty) {
+        empty = true;
+        while (getline(file,line)) {
+            if (line.empty()) continue;
+            empty = false;
+            break;
+        }
+    }
+    file.close();
+    return empty;
 }

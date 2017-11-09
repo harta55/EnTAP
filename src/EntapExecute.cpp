@@ -213,6 +213,7 @@ namespace entapExecute {
             QUERY_DATA.set_ONTOLOGY_SUCCESS(_ONTOLOGY_SUCCESS);
             QUERY_DATA.set_SIM_SEARCH_SUCCESS(_SIM_SEARCH_SUCCESS);
             QUERY_DATA.final_statistics(_outpath, ontology_flags);
+            FS_directory_iterate(true, _outpath);   // Delete empty files
         } catch (const ExceptionHandler &e) {
             exit_error(executeStates);
             throw e;

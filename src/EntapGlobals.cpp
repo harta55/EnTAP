@@ -293,21 +293,3 @@ std::string generate_command(std::unordered_map<std::string,std::string> &map,st
     out = ss.str();
     return out;
 }
-
-
-bool FS_file_empty(std::string path) {
-    std::ifstream file(path);
-    bool empty;
-    std::string line;
-    empty = file.peek() == std::ifstream::traits_type::eof();
-    if (!empty) {
-        empty = true;
-        while (getline(file,line)) {
-            if (line.empty()) continue;
-            empty = false;
-            break;
-        }
-    }
-    file.close();
-    return empty;
-}

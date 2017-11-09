@@ -152,7 +152,9 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
     for (auto &pair : SEQUENCES) {
         for (uint16 lvl : _go_levels) {
             for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
-                *file_map[lvl][i]<< pair.second->print_tsv(_HEADERS,i)<<std::endl;
+                if (i == FINAL_ALL_IND) {
+                    *file_map[lvl][i] << pair.second->print_tsv(_HEADERS, i) << std::endl;
+                }
                 if (i == FINAL_CONTAM_IND && pair.second->isContaminant()) {
                     *file_map[lvl][i]<< pair.second->print_tsv(_HEADERS,i)<<std::endl;
                 }

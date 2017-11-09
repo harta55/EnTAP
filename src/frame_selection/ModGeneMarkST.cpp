@@ -303,7 +303,6 @@ void ModGeneMarkST::parse() {
         // Calculate and print stats
         FS_dprint("Beginning to calculate statistics...");
         avg_selected = (fp32)total_kept_len / count_selected;
-        avg_lost     = (fp32)total_removed_len / count_removed;
         stat_output<<std::fixed<<std::setprecision(2);
         stat_output <<
                     ENTAP_STATS::SOFTWARE_BREAK             <<
@@ -329,25 +328,26 @@ void ModGeneMarkST::parse() {
 
         kept_n = pQUERY_DATA->calculate_N_vals(all_kept_lengths,total_kept_len);
         stat_output <<
-                    "\n\tTotal sequences: "      << count_selected <<
-                    "\n\tTotal length of transcriptome(bp): "      << total_kept_len <<
-                    "\n\tAverage length(bp): "   << avg_selected   <<
-                    "\n\tn50: "                  << kept_n.first   <<
-                    "\n\tn90: "                  << kept_n.second  <<
-                    "\n\tLongest sequence(bp): " << max_selected   << " (" << max_kept_seq << ")" <<
-                    "\n\tShortest sequence(bp): "<< min_selected   << " (" << min_kept_seq << ")";
+                    "\nTotal sequences: "      << count_selected <<
+                    "\nTotal length of transcriptome(bp): "      << total_kept_len <<
+                    "\nAverage length(bp): "   << avg_selected   <<
+                    "\nn50: "                  << kept_n.first   <<
+                    "\nn90: "                  << kept_n.second  <<
+                    "\nLongest sequence(bp): " << max_selected   << " (" << max_kept_seq << ")" <<
+                    "\nShortest sequence(bp): "<< min_selected   << " (" << min_kept_seq << ")";
 
         if (count_removed > 0) {
+            avg_lost     = (fp32)total_removed_len / count_removed;
             std::pair<uint64, uint64> removed_n =
                     pQUERY_DATA->calculate_N_vals(all_lost_lengths,total_removed_len);
             stat_output <<
-                        "\nRemoved Sequences (no frame):"           <<
-                        "\n\tTotal sequences: "                     << count_removed    <<
-                        "\n\tAverage sequence length(bp): "         << avg_lost         <<
-                        "\n\tn50: "                                 << removed_n.first  <<
-                        "\n\tn90: "                                 << removed_n.second <<
-                        "\n\tLongest sequence(bp): "  << max_removed<< " (" << max_removed_seq << ")" <<
-                        "\n\tShortest sequence(bp): " << min_removed<< " (" << min_removed_seq << ")" <<"\n";
+                        "\n\nRemoved Sequences (no frame):"       <<
+                        "\nTotal sequences: "                     << count_removed    <<
+                        "\nAverage sequence length(bp): "         << avg_lost         <<
+                        "\nn50: "                                 << removed_n.first  <<
+                        "\nn90: "                                 << removed_n.second <<
+                        "\nLongest sequence(bp): "  << max_removed<< " (" << max_removed_seq << ")" <<
+                        "\nShortest sequence(bp): " << min_removed<< " (" << min_removed_seq << ")" <<"\n";
         }
         std::string stat_out_msg = stat_output.str();
         FS_print_stats(stat_out_msg);

@@ -164,12 +164,20 @@ std::string ModRSEM::filter() {
     uint32              count_removed=0;
     uint32              count_kept=0;
     uint32              count_total=0;      // Used to warn user if high percentage is removed
-    fp32                length;
+    uint32              min_removed=10000;
+    uint32              min_selected=10000;
+    uint32              max_removed=10000;
+    uint32              max_selected=10000;
+    uint64              total_removed_len=0;
+    uint64              total_kept_len=0;
+    uint16              length;
     fp32                e_leng;
     fp32                e_count;
     fp32                tpm;
     fp32                fpkm_val;
-    fp32                rejected_percent;
+    fp32                rejected_percent=0;
+    fp32                avg_removed;
+    fp32                avg_kept;
     std::string         geneid;
     std::string         transid;
     std::string         out_str;
@@ -180,7 +188,14 @@ std::string ModRSEM::filter() {
     std::string         removed_filename;
     std::string         fig_txt_box_path;
     std::string         fig_png_box_path;
+    std::string         min_kept_seq;
+    std::string         max_kept_seq;
+    std::string         max_removed_seq;
+    std::string         min_removed_seq;
     std::stringstream   out_msg;
+    std::vector<uint16> all_kept_lengths;
+    std::vector<uint16> all_lost_lengths;
+    std::pair<uint64,uint64> kept_n;
     GraphingData        graphingStruct;
     QUERY_MAP_T         *MAP;
 
@@ -221,45 +236,96 @@ std::string ModRSEM::filter() {
                                    ENTAP_ERR::E_RUN_RSEM_EXPRESSION_PARSE);
         }
         QuerySequence *querySequence = it->second;
+        length = (uint16)querySequence->getSeq_length();
         if (fpkm_val > _fpkm) {
             // Kept sequence
             out_file << querySequence->get_sequence() << std::endl;
             querySequence->set_fpkm(fpkm_val);
-            file_fig_box << GRAPH_KEPT_FLAG << '\t' <<
-                         std::to_string(querySequence->getSeq_length()) << std::endl;
+            file_fig_box << GRAPH_KEPT_FLAG << '\t' << std::to_string(length) << std::endl;
+            //TODO move to QueryData
+            if (length < min_selected) {
+                min_selected = length;
+                min_kept_seq = geneid;
+            }
+            if (length > max_selected) {
+                max_selected = length;
+                max_kept_seq = geneid;
+            }
+            all_kept_lengths.push_back(length);
+            total_kept_len += length;
             count_kept++;
         } else {
             // Removed sequence
             querySequence->set_kept(false);
             querySequence->set_is_expression_kept(false);
             removed_file << querySequence->get_sequence() << std::endl;
-            file_fig_box << GRAPH_REJECTED_FLAG << '\t'
-                         << std::to_string(querySequence->getSeq_length())
-                         << std::endl;
+            file_fig_box << GRAPH_REJECTED_FLAG << '\t' << std::to_string(length) << std::endl;
+
+            if (length < min_removed) {
+                min_removed = length;
+                min_removed_seq = geneid;
+            }
+            if (length > max_removed) {
+                max_removed_seq = geneid;
+                max_removed = length;
+            }
+            all_lost_lengths.push_back(length);
+            total_removed_len += length;
             count_removed++;
         }
     }
-    FS_dprint("File successfully filtered. Outputs at: " + out_kept + " and: " + out_removed);
+    FS_dprint("File successfully filtered. Outputs at:\n" + out_kept + " and:\n" + out_removed);
 
     //-----------------------STATISTICS-----------------------//
     FS_dprint("Beginning to calculate statistics...");
     out_msg<<std::fixed<<std::setprecision(2);
-    out_msg << ENTAP_STATS::SOFTWARE_BREAK
-            << "Expression Filtering - RSEM\n"
-            << ENTAP_STATS::SOFTWARE_BREAK;
-    rejected_percent = ((fp32)count_removed / count_kept) * 100;
-    if (rejected_percent > REJECTED_ERROR_CUTOFF) {
-        // Warn user high percentage of transcriptome was rejected
-        out_msg << "Warning: A high percentage of the transcriptome was removed: " << rejected_percent;
-    }
-    out_msg<<"MORE STATS COMING SOON!"<<std::endl;
+    out_msg <<
+            ENTAP_STATS::SOFTWARE_BREAK     <<
+            "Expression Filtering - RSEM\n" <<
+            ENTAP_STATS::SOFTWARE_BREAK     <<
+            "Total sequences kept: "        << count_kept     <<
+            "\nTotal sequences removed: "   << count_removed;
 
-    out_msg << "Removed: " << count_removed <<
-            "\nKept: " << count_kept << std::endl;
-    if (count_kept == 0) {
+
+    if (count_kept > 0) {
+        rejected_percent = ((fp32)count_removed / count_kept) * 100;
+        avg_kept = (fp32) total_kept_len / count_kept;
+        kept_n = pQUERY_DATA->calculate_N_vals(all_kept_lengths, total_kept_len);
+        out_msg <<
+                ENTAP_STATS::SOFTWARE_BREAK                                     <<
+                "Expression Filtering: New Reference Transcriptome Statistics"  <<
+                ENTAP_STATS::SOFTWARE_BREAK                                     <<
+                "\nTotal sequenes: "                    << count_kept     <<
+                "\nTotal length of transcriptome (bp)"  << total_kept_len <<
+                "\nAverage length (bp): "               << avg_kept       <<
+                "\nn50: "                               << kept_n.first   <<
+                "\nn90: "                               << kept_n.second  <<
+                "\nLongest sequence (bp): " << max_selected << " (" << max_kept_seq << ")" <<
+                "\nShortest sequence (bp): "<< min_selected << " (" << min_kept_seq << ")\n";
+    } else {
         throw ExceptionHandler("Error in filtering transcriptome, no sequences kept",
                                ENTAP_ERR::E_RUN_RSEM_EXPRESSION);
     }
+
+    if (count_removed > 0) {
+        avg_removed = (fp32) total_removed_len / count_removed;
+        std::pair<uint64, uint64> removed_n =
+                pQUERY_DATA->calculate_N_vals(all_lost_lengths,total_removed_len);
+        out_msg <<
+                "\nRemoved Sequences (no frame):"       <<
+                "\nTotal sequences: "                     << count_removed    <<
+                "\nAverage sequence length(bp): "         << avg_removed      <<
+                "\nn50: "                                 << removed_n.first  <<
+                "\nn90: "                                 << removed_n.second <<
+                "\nLongest sequence(bp): "  << max_removed<< " (" << max_removed_seq << ")" <<
+                "\nShortest sequence(bp): " << min_removed<< " (" << min_removed_seq << ")" <<"\n";
+
+        if (rejected_percent > REJECTED_ERROR_CUTOFF) {
+            // Warn user high percentage of transcriptome was rejected
+            out_msg << "\nWarning: A high percentage of the transcriptome was removed: " << rejected_percent;
+        }
+    }
+
     out_str = out_msg.str();
     FS_print_stats(out_str);
     out_file.close();
@@ -325,7 +391,7 @@ bool ModRSEM::rsem_validate_file(std::string filename) {
  * Description          - Executes convert-sam-for-rsem
  *                      - Converts user inputed file to BAM format
  *
- * Notes                - Not used
+ * Notes                - Not used, done automatically if needed
  *
  * @param filename      - Transcriptome name just to label output
  *

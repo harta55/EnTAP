@@ -119,28 +119,56 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
 
 void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
     FS_dprint("Beginning to print final results...");
-    std::map<short, std::ofstream*> file_map;
+    std::map<short, std::ofstream*[FINAL_ANNOT_LEN]> file_map;
     std::string file_name;
+    std::string file_contam;
+    std::string file_no_contam;
     std::string outpath;
+    std::string out_contam;
+    std::string out_no_contam;
     for (uint16 lvl : _go_levels) {
-        file_name = "final_annotations_lvl" + std::to_string(lvl) + ".tsv";
-        outpath = (boostFS::path(_outpath) / boostFS::path(file_name)).string();
+        file_name      = FINAL_ANNOT_FILE + std::to_string(lvl) + ANNOT_FILE_EXT;
+        file_contam    = FINAL_ANNOT_FILE_CONTAM + std::to_string(lvl) + ANNOT_FILE_EXT;
+        file_no_contam = FINAL_ANNOT_FILE_NO_CONTAM + std::to_string(lvl) + ANNOT_FILE_EXT;
+        outpath = PATHS(_outpath, file_name);
+        out_contam = PATHS(_outpath, out_contam);
+        out_no_contam = PATHS(_outpath, file_no_contam);
         boostFS::remove(outpath);
-        file_map[lvl] =
+        file_map[lvl][FINAL_ALL_IND] =
                 new std::ofstream(outpath, std::ios::out | std::ios::app);
+        file_map[lvl][FINAL_CONTAM_IND] =
+                new std::ofstream(out_contam, std::ios::out | std::ios::app);
+        file_map[lvl][FINAL_NO_CONTAM_IND] =
+                new std::ofstream(out_no_contam, std::ios::out | std::ios::app);
         for (const std::string *header : _HEADERS) {
-            *file_map[lvl] << *header << '\t';
+            *file_map[lvl][FINAL_ALL_IND] << *header << '\t';
+            *file_map[lvl][FINAL_CONTAM_IND] << *header << '\t';
+            *file_map[lvl][FINAL_NO_CONTAM_IND] << *header << '\t';
         }
-        *file_map[lvl] << std::endl;
+        *file_map[lvl][FINAL_ALL_IND] << std::endl;
+        *file_map[lvl][FINAL_CONTAM_IND] << std::endl;
+        *file_map[lvl][FINAL_NO_CONTAM_IND] << std::endl;
     }
     for (auto &pair : SEQUENCES) {
-        for (uint16 i : _go_levels) {
-            *file_map[i]<< pair.second->print_tsv(_HEADERS,i)<<std::endl;
+        for (uint16 lvl : _go_levels) {
+            for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
+                *file_map[lvl][i]<< pair.second->print_tsv(_HEADERS,i)<<std::endl;
+                if (i == FINAL_CONTAM_IND && pair.second->isContaminant()) {
+                    *file_map[lvl][i]<< pair.second->print_tsv(_HEADERS,i)<<std::endl;
+                }
+                if (i == FINAL_NO_CONTAM_IND && !pair.second->isContaminant()) {
+                    *file_map[lvl][i]<< pair.second->print_tsv(_HEADERS,i)<<std::endl;
+                }
+            }
         }
     }
     for(auto& pair : file_map) {
-        pair.second->close();
-        delete pair.second;
+        for (uint16 lvl=0; lvl < _go_levels.size(); lvl++) {
+            for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
+                pair.second[lvl][i].close();
+                delete pair.second[lvl][i];
+            }
+        }
     }
     FS_dprint("Success!");
 }

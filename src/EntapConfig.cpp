@@ -197,7 +197,7 @@ namespace entapConfig {
             FS_dprint("Tax database binary not found at: " + TAX_DB_PATH + " checking non-binary...");
             if (!FS_file_exists(tax_txt_path)) {
                 FS_dprint("Tax database not found at: " + tax_txt_path + " downloading...");
-                tax_command = "perl " + TAX_DOWNLOAD_EXE + " " + tax_txt_path;
+                tax_command = "python " + TAX_DOWNLOAD_EXE + " -o " + tax_txt_path;
                 if (execute_cmd(tax_command) != 0) {
                     throw ExceptionHandler("Command: " + tax_command, ENTAP_ERR::E_INIT_TAX_DOWN);
                 }
@@ -215,6 +215,8 @@ namespace entapConfig {
                 std::getline(iss, sci_name, '\t');
                 std::getline(iss, tax_id, '\t');
                 std::getline(iss, lineage, '\t');
+                LOWERCASE(lineage);        // Both should already be lowercase
+                LOWERCASE(sci_name);
 
                 TaxEntry taxEntry = {
                         tax_id,

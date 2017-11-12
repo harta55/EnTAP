@@ -253,7 +253,7 @@ namespace Defaults {
     const std::string EGG_DOWNLOAD_DEFAULT     = "/libs/eggnog-mapper/download_eggnog_data.py";
     const std::string EGG_SQL_DB_DEFAULT       = "/libs/eggnog-mapper/data/eggnog.db";
     const std::string INTERPRO_DEF_EXE         = "/libs/interproscan-5.22-61.0/interproscan.sh";
-    const std::string TAX_DOWNLOAD_DEF         = "/src/download_tax.pl";
+    const std::string TAX_DOWNLOAD_DEF         = "/src/download_tax.py";
     const std::string GRAPH_SCRIPT_DEF         = "/src/entap_graphing.py";
 }
 

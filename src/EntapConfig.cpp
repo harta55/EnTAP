@@ -110,7 +110,7 @@ namespace entapConfig {
         } else database_outdir = exe_path;
 
         _cur_dir  = boostFS::path(boost::filesystem::current_path()).string();
-        _outpath  = PATHS(_cur_dir, user_map[ENTAP_CONFIG::INPUT_FLAG_TAG].as<std::string>());
+        _outpath  = user_map[ENTAP_CONFIG::INPUT_FLAG_TAG].as<std::string>();
         _bin_dir  = PATHS(database_outdir, ENTAP_CONFIG::BIN_PATH);
         _data_dir = PATHS(database_outdir, ENTAP_CONFIG::DATABASE_DIR);
 

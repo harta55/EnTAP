@@ -60,7 +60,6 @@ enum States {
 
 std::string _outpath;
 std::string _exe_path;
-std::string _working_dir;
 std::chrono::time_point<std::chrono::system_clock> _start_time;
 std::chrono::time_point<std::chrono::system_clock> _end_time;
 std::string DEBUG_FILE_PATH;        // Extern
@@ -137,10 +136,7 @@ void init_entap(boostPO::variables_map& user_input) {
 
     std::string config_path;
 
-    boost::filesystem::path working_dir(boost::filesystem::current_path());
-    _working_dir    = working_dir.string();
-    _outpath        = PATHS(_working_dir,
-                            user_input[ENTAP_CONFIG::INPUT_FLAG_TAG].as<std::string>());
+    _outpath = user_input[ENTAP_CONFIG::INPUT_FLAG_TAG].as<std::string>();
     boostFS::create_directories(_outpath);
     init_log();
     _exe_path = get_exe_path(user_input);

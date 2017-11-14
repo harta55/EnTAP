@@ -113,28 +113,28 @@ void ModRSEM::execute() {
     // Now have valid BAM file to run rsem
     FS_dprint("Alignment file valid. Preparing reference...");
 
-    ref_exe  = (boostFS::path(_exe_path) / RSEM_PREP_REF_EXE).string();
-    ref_path = (boostFS::path(_expression_outpath) / _filename).string() + "_ref";
+    ref_exe  = PATHS(_exe_path, RSEM_PREP_REF_EXE);
+    ref_path = PATHS(_expression_outpath, _filename) + "_ref";
 
     // Prepare reference command
     rsem_arg = ref_exe + " "
                + _inpath + " "
                + ref_path;
-    std_out = (boostFS::path(_expression_outpath) / _filename).string() + "_rsem_reference";
+    std_out = PATHS(_expression_outpath, _filename) + "_rsem_reference";
     FS_dprint("Executing following command\n" + rsem_arg);
     execute_cmd(rsem_arg.c_str(), std_out);
     FS_dprint("Reference successfully created");
 
     FS_dprint("Running expression analysis...");
-    expression_exe = (boostFS::path(_exe_path) / RSEM_CALC_EXP_EXE).string();
+    expression_exe = PATHS(_exe_path, RSEM_CALC_EXP_EXE);
     rsem_arg = expression_exe +
                " --" + bam +
                " -p " + std::to_string(_threads) + " " +
                _alignpath +" "+
                ref_path + " " +
                _exp_out;
-    if (_ispaired) rsem_arg += " --paired-end";
-    std_out = (boostFS::path(_expression_outpath) / _filename).string() + "_rsem_exp";
+    if (!_issingle) rsem_arg += " --paired-end";
+    std_out = PATHS(_expression_outpath, _filename) + "_rsem_exp";
     FS_dprint("Executing following command\n" + rsem_arg);
     if (execute_cmd(rsem_arg.c_str(), std_out)!=0) {
         throw ExceptionHandler("Error in running expression analysis",ENTAP_ERR::E_INIT_TAX_READ);
@@ -434,10 +434,10 @@ bool ModRSEM::rsem_conv_to_bam(std::string file_name) {
  *
  * =====================================================================
  */
-void ModRSEM::set_data(int thread, float fpkm, bool paired) {
+void ModRSEM::set_data(int thread, float fpkm, bool single) {
     _threads = thread;
     _fpkm = fpkm;
-    _ispaired = paired;
+    _issingle = single;
 }
 
 

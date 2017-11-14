@@ -98,9 +98,10 @@
 #define DESC_EVAL           "Specify the E-Value that will be used as a cutoff during"  \
                             "similarity searching"
 #define DESC_THREADS        "Specify the number of threads that will be used throughout\n"
-#define DESC_PAIRED_END     "Specify this flag if your BAM/SAM file was generated\n"    \
-                            "through paired-end reads\n"                                \
-                            "Note: this is only required in expression analysis"
+#define DESC_SINGLE_END     "Specify this flag if your BAM/SAM file was generated\n"    \
+                            "through single-end reads\n"                                \
+                            "Note: this is only required in expression analysis\n"      \
+                            "Default: paired-end"
 #define DESC_ALIGN_FILE     "Specify the path to the BAM/SAM file for expression analysis"
 #define DESC_CONTAMINANT    "Specify the contaminants you would like to filter out"     \
                             "from similarity searching\n"                               \
@@ -217,7 +218,7 @@ const fp32 FPKM_MAX                        = 100.0;
 const uint8 MAX_DATABASE_SIZE              = 5;
 const std::string DEFAULT_STATE            = "+";
 const std::string INTERPRO_DEFAULT         = INTER_PFAM;
-const std::string OUTFILE_DEFAULT          = "outfiles";
+const std::string OUTFILE_DEFAULT          = PATHS(boostFS::current_path(),"outfiles");
 const std::string BAM_EXT                  = ".bam";
 const std::string SAM_EXT                  = ".sam";
 

@@ -104,6 +104,10 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
                 QuerySequence *query_seq = new QuerySequence(_protein,sequence);
                 if (is_complete) query_seq->setFrame(COMPLETE_FLAG);
                 query_seq->setQseqid(seq_id);
+                if (_SEQUENCES.find(seq_id) != _SEQUENCES.end()) {
+                    throw ExceptionHandler("Duplicate headers in your input transcriptome!",
+                        ENTAP_ERR::E_INPUT_PARSE);
+                }
                 _SEQUENCES.emplace(seq_id, query_seq);
                 count_seqs++;
                 len = (uint16) query_seq->getSeq_length();

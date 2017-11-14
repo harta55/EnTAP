@@ -80,7 +80,7 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &ou
     _outpath       = out;
     _trim          = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_TRIM);
     _overwrite     = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
-    _ispaired      = (bool) user_flags.count("paired-end");
+    _issingle      = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_SINGLE_END);
     if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
         _alignpath = user_flags[ENTAP_CONFIG::INPUT_FLAG_ALIGN].as<std::string>();
     }
@@ -122,7 +122,7 @@ std::string ExpressionAnalysis::execute(std::string input) {
     boostFS::create_directories(_proc_dir);
     try {
         ptr = spawn_object();
-        ptr->set_data(_threads, _fpkm, _ispaired);
+        ptr->set_data(_threads, _fpkm, _issingle);
         verify_pair = ptr->verify_files();
         if (!verify_pair.first) ptr->execute();
         output = ptr->filter();

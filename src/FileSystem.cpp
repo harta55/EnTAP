@@ -135,9 +135,9 @@ bool FS_file_is_open(std::ofstream &ofstream) {
 
 bool FS_file_test_open(std::string &path) {
     bool is_open;
-    std::ofstream ofstream(path, FILE_APPEND);
-    is_open = ofstream.is_open();
-    ofstream.close();
+    std::ifstream ifstream(path);
+    is_open = ifstream.is_open();
+    ifstream.close();
     return is_open;
 }
 
@@ -183,4 +183,20 @@ bool FS_file_empty(std::string path) {
     }
     file.close();
     return empty;
+}
+
+
+bool FS_check_fasta(std::string& path) {
+    std::string line;
+    bool valid = false;
+    try {
+        std::ifstream file(path);
+        while (getline(file, line)) {
+            if (line.at(0) == '>') valid = true;
+        }
+        file.close();
+        return valid;
+    } catch (...) {
+        return false;
+    }
 }

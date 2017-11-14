@@ -113,7 +113,7 @@ boost::program_options::variables_map parse_arguments_boost(int argc, const char
                 (ENTAP_CONFIG::INPUT_FLAG_E_VAL.c_str(),
                  boostPO::value<fp32>()->default_value(E_VALUE),DESC_EVAL)
                 ("version,v", "Display version number")
-                (ENTAP_CONFIG::INPUT_FLAG_PAIRED_END.c_str(), DESC_PAIRED_END)
+                (ENTAP_CONFIG::INPUT_FLAG_SINGLE_END.c_str(), DESC_SINGLE_END)
                 ("threads,t",
                  boostPO::value<int>()->default_value(1),DESC_THREADS)
                 ("align,a", boostPO::value<std::string>(),DESC_ALIGN_FILE)
@@ -236,6 +236,12 @@ bool verify_user_input(boostPO::variables_map& vm) {
                 input_tran_path = vm[ENTAP_CONFIG::INPUT_FLAG_TRANSCRIPTOME].as<std::string>();
                 if (!FS_file_exists(input_tran_path)) {
                     throw(ExceptionHandler("Transcriptome not found at: " + input_tran_path,
+                                           ENTAP_ERR::E_INPUT_PARSE));
+                } else if (FS_file_empty(input_tran_path)) {
+                    throw(ExceptionHandler("Transcriptome file empty: "+ input_tran_path,
+                                            ENTAP_ERR::E_INPUT_PARSE));
+                } else if (!FS_check_fasta(input_tran_path)) {
+                    throw(ExceptionHandler("File not in fasta format or corrupt! "+ input_tran_path,
                                            ENTAP_ERR::E_INPUT_PARSE));
                 }
             }

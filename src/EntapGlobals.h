@@ -200,7 +200,7 @@ namespace ENTAP_CONFIG {
     extern const std::string INPUT_FLAG_GRAPH;
     extern const std::string INPUT_FLAG_TRIM;
     extern const std::string INPUT_FLAG_STATE;
-    extern const std::string INPUT_FLAG_PAIRED_END;
+    extern const std::string INPUT_FLAG_SINGLE_END;
     extern const std::string INPUT_FLAG_THREADS;
     extern const std::string INPUT_FLAG_UNINFORM;
     extern const std::string INPUT_FLAG_NOCHECK;

@@ -68,7 +68,7 @@ private:
     std::string _exp_out;
     int         _threads;
     float       _fpkm;
-    bool        _ispaired;
+    bool        _issingle;
 
     bool rsem_validate_file(std::string);
     bool rsem_conv_to_bam(std::string);

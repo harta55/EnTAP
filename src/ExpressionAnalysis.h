@@ -59,7 +59,7 @@ private:
     std::string         _rsem_dir;
     std::string         _proc_dir;
     std::string         _figure_dir;
-    bool                _ispaired;
+    bool                _issingle;
     bool                _trim;
     bool                _overwrite;
     short               _software_flag;

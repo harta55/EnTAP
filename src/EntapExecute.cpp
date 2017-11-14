@@ -115,8 +115,7 @@ namespace entapExecute {
         diamond_pair   = std::make_pair(_input_path,"");
         ontology_flags = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<std::vector<uint16>>();
 
-        boostFS::path working_dir(boostFS::current_path());
-        _outpath       = PATHS(working_dir, user_input[ENTAP_CONFIG::INPUT_FLAG_TAG].as<std::string>());
+        _outpath       = user_input[ENTAP_CONFIG::INPUT_FLAG_TAG].as<std::string>();
         _entap_outpath = PATHS(_outpath, ENTAP_OUTPUT);
         boostFS::create_directories(_entap_outpath);
         boostFS::create_directories(_outpath);

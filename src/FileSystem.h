@@ -45,8 +45,9 @@ void FS_print_stats(std::string &msg);
 bool FS_file_test_open(std::string&);
 bool FS_file_exists(std::string);
 bool FS_file_empty(std::string);
-bool FS__delete_file(std::string);
+bool FS_delete_file(std::string);
 bool FS_directory_iterate(bool, std::string&);
+bool FS_check_fasta(std::string&);
 //**************************************************************
 
 const std::string TXT_EXT = ".txt";

@@ -20,3 +20,4 @@ EnTAP is an eukaryotic non-model annotation pipeline developed by Alexander Hart
    installation.rst
    basic_usage.rst
    interpreting_the_results.rst
+   changelog.rst

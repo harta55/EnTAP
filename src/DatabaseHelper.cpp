@@ -49,6 +49,7 @@
  */
 bool DatabaseHelper::open(std::string file) {
     return sqlite3_open(file.c_str(),&_database) == SQLITE_OK;
+    // Pragma didn't help speed much
     //    sqlite3_exec(_database,"PRAGMA synchronous = OFF", NULL, NULL, NULL);
     //    sqlite3_exec(_database,"PRAGMA count_changes = false", NULL, NULL, NULL);
     //    sqlite3_exec(_database,"PRAGMA journal_mode = OFF", NULL, NULL, NULL);

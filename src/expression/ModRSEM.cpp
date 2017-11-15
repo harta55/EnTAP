@@ -171,6 +171,7 @@ std::string ModRSEM::filter() {
     uint64              total_removed_len=0;
     uint64              total_kept_len=0;
     uint16              length;
+    fp32                in_len;
     fp32                e_leng;
     fp32                e_count;
     fp32                tpm;
@@ -227,7 +228,7 @@ std::string ModRSEM::filter() {
     io::CSVReader<RSEM_COL_NUM, io::trim_chars<' '>,
     io::no_quote_escape<'\t'>> in(_rsem_out);
     in.next_line();
-    while (in.read_row(geneid, transid, length, e_leng, e_count, tpm, fpkm_val)) {
+    while (in.read_row(geneid, transid, in_len, e_leng, e_count, tpm, fpkm_val)) {
         count_total++;
         pQUERY_DATA->trim_sequence_header(geneid,geneid);
         QUERY_MAP_T::iterator it = MAP->find(geneid);

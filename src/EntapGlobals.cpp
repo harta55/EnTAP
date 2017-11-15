@@ -134,7 +134,7 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_GRAPH         = "graph";
     const std::string INPUT_FLAG_TRIM          = "trim";
     const std::string INPUT_FLAG_STATE         = "state";
-    const std::string INPUT_FLAG_SINGLE_END    = "paired-end";
+    const std::string INPUT_FLAG_SINGLE_END    = "single-end";
     const std::string INPUT_FLAG_THREADS       = "threads";
     const std::string INPUT_FLAG_UNINFORM      = "uninformative";
     const std::string INPUT_FLAG_NOCHECK       = "no-check";

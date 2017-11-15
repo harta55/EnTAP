@@ -422,3 +422,7 @@ bool ModEggnog::is_executable() {
     FS_dprint("Testing EggNOG:\n" + test_command);
     return execute_cmd(test_command) == 0;
 }
+
+ModEggnog::~ModEggnog() {
+    FS_dprint("Killing object ModEggnog...");
+}

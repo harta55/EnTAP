@@ -47,8 +47,7 @@
 
 namespace entapExecute {
 
-    //*********************** Globals *****************************
-
+    //*********************** Local Variables ***********************
     ExecuteStates           executeStates;
     std::string             _outpath;
     std::string             _entap_outpath;
@@ -60,6 +59,16 @@ namespace entapExecute {
     std::string             _input_path;      // FASTA changes depending on execution
     int                     _threads;
     std::vector<std::string>_databases;       // NCBI+UNIPROT+Other
+
+    //**************************************************************
+
+    //******************** Local Prototype Functions ***************
+    std::string filter_transcriptome(std::string &);
+    void verify_state(std::queue<char> &, bool &);
+    bool valid_state(enum ExecuteStates);
+    void exit_error(ExecuteStates);
+    std::vector<std::string> verify_databases(std::vector<std::string>, std::vector<std::string>,
+                                              std::vector<std::string>, std::string);
 
     //**************************************************************
 

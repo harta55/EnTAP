@@ -501,6 +501,7 @@ void QueryData::set_protein(bool protein) {
 }
 
 QueryData::~QueryData() {
+    FS_dprint("Killing QueryData object...");
     for(QUERY_MAP_T::iterator it = _SEQUENCES.begin(); it != _SEQUENCES.end(); it++) {
         delete it->second;
     }

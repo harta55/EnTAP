@@ -46,6 +46,7 @@ class ModInterpro : public AbstractOntology{
     };
 
 public:
+    ~ModInterpro();
     ModInterpro(std::string &exe,std::string &out, std::string &in,
         std::string &in_no_hits,std::string &ont, GraphingManager *graphing,QueryData *queryData,
         bool blastp,std::vector<uint16>& lvls, uint8 threads) :

@@ -45,7 +45,6 @@ class QueryData;
 
 
 class Ontology {
-    typedef std::map<std::string, QuerySequence> query_map_struct;
 
 public:
 
@@ -89,7 +88,6 @@ private:
 
     void print_eggnog(QUERY_MAP_T&);
     void init_headers();
-    void print_header(std::string);
     std::unique_ptr<AbstractOntology> spawn_object(uint16&);
 };
 

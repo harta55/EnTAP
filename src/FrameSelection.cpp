@@ -32,9 +32,7 @@
 #include <boost/regex.hpp>
 #include <iomanip>
 #include "FrameSelection.h"
-#include "EntapExecute.h"
 #include "ExceptionHandler.h"
-#include "EntapConfig.h"
 #include "EntapGlobals.h"
 #include "frame_selection/ModGeneMarkST.h"
 #include "QueryData.h"

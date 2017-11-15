@@ -45,6 +45,31 @@
 
 const int16 FINAL_ANNOT_LEN = 3;
 
+
+/**
+ * ======================================================================
+ * Function Ontology::Ontology(int thread, std::string outpath, std::string input,
+                   boost::program_options::variables_map &user_input, GraphingManager* graphing,
+                   QueryData *queryData, bool blastp)
+ *
+ * Description          - Initializes Ontology object with values from user
+ *                        input map/pushed vals
+ *                      - Receives info on software that will be ran
+ *
+ * Notes                - Constructor
+ *
+ * @param thread        - Thread count
+ * @param outpath       - Output directory specified
+ * @param input         - Input fasta file to use (overwritten on execute if normal state)
+ * @param user_input    - Boost map of user input
+ * @param graphing      - Ptr to graphing manager instance
+ * @param queryData     - Ptr to queryData instance
+ * @param blastp        - Blastp yes/no
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 Ontology::Ontology(int thread, std::string outpath, std::string input,
                    boost::program_options::variables_map &user_input, GraphingManager* graphing,
                    QueryData *queryData, bool blastp) {
@@ -65,6 +90,23 @@ Ontology::Ontology(int thread, std::string outpath, std::string input,
 }
 
 
+/**
+ * ======================================================================
+ * Function void Ontology::execute(std::string input,std::string no_hit)
+ *
+ * Description          - Manager of running/parsing software to be ran
+ *                        for ontology analysis
+ *                      - Runs separate analyses for hits and no hits from sim search
+ *
+ * Notes                - Execution entry
+ *
+ * @param input         - Fasta sequences that hit databases
+ * @param no_hit        - Fasta sequences that did not hit sequences
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void Ontology::execute(std::string input,std::string no_hit) {
 
     std::pair<bool,std::string> verify_pair;
@@ -92,6 +134,20 @@ void Ontology::execute(std::string input,std::string no_hit) {
 }
 
 
+/**
+ * ======================================================================
+ * Function std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software)
+ *
+ * Description          - Spawns object for specified ontology software
+ *
+ * Notes                - None
+ *
+ * @param software      - Int flag to specify software
+ *
+ * @return              - Ptr to ontology software object
+ *
+ * =====================================================================
+ */
 std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
     switch (software) {
         case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
@@ -119,6 +175,22 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
 }
 
 
+/**
+ * ======================================================================
+ * Function void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES)
+ *
+ * Description          - Handles printing of final annotation output
+ *                      - Current prints tsv file for all go levels specified,
+ *                        no contam + contam files
+ *
+ * Notes                - None
+ *
+ * @param SEQUENCES     - Map of sequence data
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
     FS_dprint("Beginning to print final results...");
     std::map<uint16, std::ofstream*[FINAL_ANNOT_LEN]> file_map;
@@ -176,6 +248,21 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
 }
 
 
+/**
+ * ======================================================================
+ * Function void Ontology::init_headers()
+ *
+ * Description          - Initializes default headers that will be printed
+ *                        to final tsv as well as extra headers for software
+ *                        being ran
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void Ontology::init_headers() {
 
     std::vector<const std::string*>     out_header;
@@ -238,11 +325,4 @@ void Ontology::init_headers() {
         out_header.insert(out_header.end(), add_header.begin(), add_header.end());
     }
     _HEADERS = out_header;
-}
-
-void Ontology::print_header(std::string file) {
-    std::ofstream ofstream(file, std::ios::out | std::ios::app);
-    for (const std::string *val : _HEADERS) ofstream << *val << '\t';
-    ofstream<<std::endl;
-    ofstream.close();
 }

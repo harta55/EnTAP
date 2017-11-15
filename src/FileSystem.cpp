@@ -200,3 +200,10 @@ bool FS_check_fasta(std::string& path) {
         return false;
     }
 }
+
+
+bool FS_create_dir(std::string& path) {
+#ifdef USE_BOOST
+    return boostFS::create_directories(path);
+#endif
+}

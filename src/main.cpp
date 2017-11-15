@@ -50,6 +50,7 @@
 //**************************************************************
 
 
+//*********************** Local Enum ****************************
 enum States {
     PARSE_ARGS           = 0,
     CONFIG_ENTAP         ,
@@ -58,6 +59,10 @@ enum States {
     EXECUTE_ENTAP_SUCCESS
 };
 
+//**************************************************************
+
+
+//******************** Local Variables *************************
 std::string _outpath;
 std::string _exe_path;
 std::chrono::time_point<std::chrono::system_clock> _start_time;
@@ -65,11 +70,13 @@ std::chrono::time_point<std::chrono::system_clock> _end_time;
 std::string DEBUG_FILE_PATH;        // Extern
 std::string LOG_FILE_PATH;          // Extern
 
+//**************************************************************
 
 //******************** Prototype Functions *********************
 void init_log();
 void init_entap(boostPO::variables_map&);
 void exit_print(States);
+
 //**************************************************************
 
 

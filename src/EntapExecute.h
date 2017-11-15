@@ -49,14 +49,8 @@ namespace entapExecute {
     //**************************************************************
 
 
-    // *******************Prototype Functions******************
-    std::vector<std::string> verify_databases(std::vector<std::string>, std::vector<std::string>,
-                                            std::vector<std::string>, std::string);
+    // ****************** Global Prototype Functions ***************
     void execute_main(boost::program_options::variables_map &);
-    std::string filter_transcriptome(std::string &);
-    void verify_state(std::queue<char> &, bool &);
-    bool valid_state(enum ExecuteStates);
-    void exit_error(ExecuteStates);
     //**************************************************************
 
 

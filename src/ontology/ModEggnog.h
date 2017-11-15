@@ -41,6 +41,7 @@ public:
     AbstractOntology(exe, out, in, in_no_hits,ont, graphing, queryData, blastp,
                      lvls, threads){}
 
+    ~ModEggnog();
     virtual std::pair<bool, std::string> verify_files() override ;
     virtual void execute() override ;
     virtual void parse() override ;

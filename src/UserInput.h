@@ -72,8 +72,8 @@
                             "Note: it is possible to specify more than one! Just use"   \
                             "multiple --ontology flags\n"                               \
                             "Specify flags as follows:\n"                               \
-                            "    1. EggNOG (default)\n"                                 \
-                            "    2. InterProScan"
+                            "    0. EggNOG (default)\n"                                 \
+                            "    1. InterProScan"
 #define DESC_GRAPHING       "Check whether or not your system supports graphing.\n"     \
                             "This option does not require any other flags and will"     \
                             "just check whether the version of Python being used has"   \

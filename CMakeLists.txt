@@ -48,13 +48,6 @@ include_directories(libs/fast-cpp-csv-parser) # May need to compile with thread 
 find_package(Boost 1.50.0 COMPONENTS program_options system filesystem iostreams serialization
         regex date_time REQUIRED)
 
-find_package(Perl)
-if (Perl_FOUND)
-    message("Perl detected! Version: ${PERL_VERSION_STRING}")
-else()
-    message(WARNING "Perl was not detected, taxonomic database download will not be available!")
-endif()
-
 find_package(PythonInterp)
 if (PYTHONINTERP_FOUND)
     message("Python detected! Version: ${PYTHON_VERSION_STRING}")

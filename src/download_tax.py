@@ -120,8 +120,9 @@ def get_ncbi_query_results(database, query):
 
         exp = re.compile('<Count>(\S+)<\/Count>')
         count = int(exp.search(result).group()[7:-8])
-    except ...:
+    except Exception as e:
         print("Error in searching tax database: " + query_url)
+        print(e)
         exit(1)
     return [web_env, key, count]
 

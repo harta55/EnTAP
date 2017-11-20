@@ -192,7 +192,10 @@ bool FS_check_fasta(std::string& path) {
     try {
         std::ifstream file(path);
         while (getline(file, line)) {
-            if (line.at(0) == '>') valid = true;
+            if (line.at(0) == '>') {
+				valid = true;
+				break;
+			}
         }
         file.close();
         return valid;

@@ -61,7 +61,7 @@ The |config_file| file mentioned above has the following defaults:
 
     * diamond_exe_path=/EnTAP/libs/diamond-0.8.31/bin/diamond
     * rsem_exe_path=/EnTAP/libs/RSEM-1.3.0 (this is a path to the directory)
-    * genemarkst_exe_path=/EnTAP//libs/gmst_linux_64/gmst.pl
+    * genemarkst_exe_path=/EnTAP/libs/gmst_linux_64/gmst.pl
     * eggnog_exe_path=/EnTAP/libs/eggnog-mapper/emapper.py
     * eggnog_download_exe=/EnTAP/libs/eggnog-mapper/download_eggnog_data.py
     * eggnog_database=/EnTAP/libs/eggnog-mapper/data/eggnog.db (downloaded during Configuration)
@@ -69,6 +69,7 @@ The |config_file| file mentioned above has the following defaults:
     * entap_tax_download_script=/EnTAP/src/download_tax.pl
     * entap_go_database=/EnTAP/bin/go_term.entp (binary version, downloaded during Configuration)
     * entap_graphing_script=/EnTAP/src/entap_graphing.py
+    * interpro_exe_path=interproscan.sh
 
 
 These can be changed to whichever path you would prefer. If something is globally installed, just put how you'd normally run the software after the '=', such as 'diamond' for DIAMOND. EnTAP will recognize these paths first and they will override defaults. 
@@ -92,9 +93,11 @@ The following FTP sites contain common reference databases that EnTAP can recogn
    * Mammalian RefSeq: |ref_mamm|
    * NR: |ref_nr|
    * SwissProt: |uni_swiss|
+   
        * Reviewed
 
    * TrEMBL: |uni_trembl|
+   
        * Unreviewed
 
 Both Uniprot databases (SwissProt and TrEMBL) can be downloaded on a Unix system through the following command:
@@ -120,6 +123,8 @@ Download:
 Decompress/Concatenate:
 
 .. code-block:: bash
+
+    tar -xvzf nr.*
    
     cat nr.* > nr_database.fasta
     
@@ -229,6 +234,14 @@ Run
 -------------
 The run stage of *EnTAP* is the main annotation pipeline. After configuration is ran at least once, this can be ran continually without requiring configuration to be ran again (unless more databases will be configured). 
 
+The following stages will be ran:
+
+#. :ref:`Expression Filtering<exp-label>` (optional)
+#. :ref:`Frame Selection<frame-label>` (optional)
+#. Similarity Search
+#. Orthologous Group Assignment
+#. InterProScan (optional)
+
 Input Files:
 ^^^^^^^^^^^^
 Required:
@@ -246,8 +259,8 @@ Sample Run:
 
 A specific run flag (**runP/runN**) must be used:
 
-* runP: Indicates protein input transcripts. Selection of this option will skip the frame selection portion of the pipeline.
-* runN: Indicates nucleotide input transcripts. Selection of this option will cause frame selection to be ran. 
+* runP: Indicates blastp. Frame selection will be ran if nucleotide sequences are inputted
+* runN: Indicates blastx. Frame selection will not be ran with this input
 
 
 An example run with a nucleotide transcriptome:
@@ -265,21 +278,25 @@ Flags:
 
 Required Flags:
 
-* (- -runP/- -runN)
-    * Specification of input transcriptome file. runP for protein (skip frame selection) or runN for nucleotide (frame selection will be ran)
+* (- - runP/- - runN)
+    * Specify a blastp or blastx annotation
+    * If - -runP is selected with a nucleotide input, frame selection will be ran and annotation stages will be executed with protein sequences (blastp)
+    * If - -runP is selected with a protein input, frame selection will not be ran and annotation will be executed with protein sequences (blastp)
+    * If - -runN is selected with nucleotide input, frame selection will not be ran and annotation will be executed with nucleotide sequences (blastx)
 
-* (-i/- -input)
+* (-i/- - input)
     * Path to the transcriptome file (either nucleotide or protein)
 
-* (-d/- -database)
-    * Specify up to 4 DIAMOND indexed (.dmnd) databases to run similarity search against
+* (-d/- - database)
+    * Specify up to 5 DIAMOND indexed (.dmnd) databases to run similarity search against
 
 Optional Flags:
 
 * (-a/- -align)
     * Path to alignment file (either SAM or BAM format)
     * **Note:** Ignoring this flag will skip expression filtering
-    * If you have ran alignment with paired end reads be sure to use the - -paired-end flag as well
+    * If you have ran alignment with single end reads be sure to use the - -single-end flag as well (paired-end is default)
+    * Be sure to specify an FPKM threshold
 
 * (- - contam)
     * Specify :ref:`contaminant<tax-label>` level of filtering
@@ -292,8 +309,10 @@ Optional Flags:
 * (- - level)
     * Specify Gene Ontology levels you would like to normalize to
     * Any amount of these flags can be used
+    * Default: 0 (every level), 3, 4
+    * More information at: http://geneontology.org/page/ontology-structure
 
-* (- - tag)
+* (- - out-dir)
     * Specify output folder labelling.
     * Default: /outfiles
 
@@ -317,8 +336,9 @@ Optional Flags:
     * All previously ran files will be overwritten if the same - -tag flag is used
     * Without this flag EnTAP will :ref:`recognize<over-label>` previous runs and skip things that were already ran
 
-* (- - paired-end)
-    * Signify your reads are paired end for RSEM execution
+* (- - single-end)
+    * Signify your reads are single end for RSEM execution
+    * Default: paired-end 
 
 * (- - graph)
     * This will check whether or not your system has graphing functionality supported
@@ -330,11 +350,89 @@ Optional Flags:
 
 * ( - - trim)
     * This flag will trim your sequence headers to anything before a space. It will make your data easier to read if you have a lot of excess information you do not need in your headers.
+    * Example: 
+   
+        * >TRINITY_231.1 protein12312_43_inform
+        * >TRINITY_231.1
 
 * (- - state)
     * Precise control over execution :ref:`stages<state-label>`. This flag allows for certain parts to be ran while skipping others. 
     * Warning: This may cause issues depending on what you plan on running! 
 
+* (- - ontology)
+    * Specify which ontology packages you would like to use
+
+        * 0 - EggNOG (default)
+        * 1 - InterProScan
+
+    * Both or either can be specified with multiple flags
+
+        * Ex: - - ontology 0 - - ontology 1
+        * This will run both EggNOG and InterProScan 
+
+* (- - protein)
+    * Use this option if you would like to run InterProScan
+    * Specify databases to run against (you must have them already installed)
+      
+        * tigrfam
+        * sfld
+        * prodom
+        * hamap
+        * pfam
+        * smart
+        * cdd
+        * prositeprofiles
+        * prositepatterns
+        * superfamily
+        * prints
+        * panther
+        * gene3d
+        * pirsf
+        * coils
+        * mobidblite
+
+* (- - version)
+    * Prints the current EnTAP version you are running
+
+* (- - uninformative)
+    * Path to a list of terms you would like to be deemed "uninformative"
+    * The file **must** be formatted with one term on each line of the file
+    * Example (defaults):
+    
+        * conserved
+        * predicted
+        * unnamed
+        * hypothetical
+        * putative
+        * unidentified
+        * uncharacterized
+        * unknown
+        * uncultured
+        * uninformative
+
+* (- - no-check)
+    * EnTAP checks execution paths and inputs prior to annotating to prevent finding out your input was wrong until midway through a run. Using this flag will eliminate the check (not advised to use!)
+
+
+.. _exp-label:
+
+Expression Analysis
+^^^^^^^^^^^^^^^^^^^^^^^
+The goal of expression filtering, or transcript quantification, is to determine the relative 
+abundance levels of transcripts when taking into account the sequenced reads and how they map 
+back to the assembled transcriptome and using this information to filter out suspect expression 
+profiles possibly originated from poor or incomplete assemblies. Filtering is done through the use
+of the FPKM (fragments per kilobase per of million mapped reads) , or a measurable number of 
+expression. This can be specified with the - -fpkm flag as specified above. EnTAP will use this FPKM value
+and remove any sequences that are below the threshold.
+
+.. _frame-label:
+
+Frame Selection
+^^^^^^^^^^^^^^^^^^
+Frame selection is the process of determining the coding region of a transcript. Oftentimes, due to 
+assembly errors or other factors, a coding region may not be found for a transcript and EnTAP will remove
+this sequence. When a coding region is found, EnTAP will include the sequence for further annotation.
 
 .. _tax-label:
 
@@ -369,7 +467,7 @@ This feature can be utilized with the |flag_taxon| flag. An example command util
 Picking Up Where You Left Off
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In order to save time and make it easier to do different analyses of data, EnTAP allows for picking up where you left off if certain stages were already ran and you'd like analyze data with different contaminant flags or taxonomic favoring. As an example, if similarity searching was ran previously you can skip hitting against the database and analyze the data to save time. However, the - - overwrite flag will not allow for this as it will remove previous runs and not recognize them. 
+In order to save time and make it easier to do different analyses of data, EnTAP allows for picking up where you left off if certain stages were already ran and you'd like analyze data with different contaminant flags or taxonomic favoring. As an example, if similarity searching was ran previously you can skip aligning against the database and analyze the data to save time. However, the - - overwrite flag will not allow for this as it will remove previous runs and not recognize them. 
 
 In order to pick up and skip re-running certain stages again, the files that were ran previously **must** be in the same directories and have the same names. With an input transcriptome name of 'transcriptome' and example database of 'complete.protein':
 
@@ -391,18 +489,26 @@ In order to pick up and skip re-running certain stages again, the files that wer
 
 Since file naming is based on your input as well, the flags below **must** remain the same:
 
+* (- - runN / - - runP)
+
+* (- - ontology)
+
+* (- - protein)
+
 * (-i / - - input)
 
 * (-a / - - align)
 
 * (-d / - - database)
-    * Do not necessarily need to remain the same. If additional databases are added, EnTAP will recognize the new ones and run similarity searching on them    
+    * Does not necessarily need to remain the same. If additional databases are added, EnTAP will recognize the new ones and run similarity searching on them whilst skipping those that have already been ran
 
 * (- - qcoverage)
 
 * (- - tcoverage)
 
 * (- - trim)
+
+* (- - out-dir)
 
 
 .. _state-label:

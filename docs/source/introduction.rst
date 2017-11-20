@@ -28,6 +28,7 @@ Pipeline Stages:
         3. Similarity Search: optimized search against user-selected databases (DIAMOND).  
         4. Contaminant Filtering and Best Hit Selection: selects final annotation and identifies potential contaminants
         5. Orthologous Group Assignment: independent assignment of translated protein sequences to gene families (eggNOG).  Includes protein  domains (SMART/Pfam), Gene Ontology (GO) terms, and KEGG pathway assignment.
+        6. InterProScan (optional): sequence search against the families of InterPro databases to assign protein domains, Gene Ontology terms, and pathway information
 
 .. note:: All of the software integrated into this pipeline are packaged within the EnTAP repository with the exception of GeneMarkS-T (free for academic use). Installation and usage of EnTAP is documented in this guide.
 

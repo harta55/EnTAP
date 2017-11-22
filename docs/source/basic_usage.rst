@@ -85,13 +85,25 @@ This configuration file will be automatically detected if it is in the same dire
 Usage
 ^^^^^
 
-All source databases must be provided in FASTA format so that they can be indexed for use by DIAMOND.  This can be completed independent of EnTAP with DIAMOND or as part of the configuration phase of EnTAP.  While any FASTA database can be used, it is recommended to use NCBI (Genbank) sourced databases such as RefSeq databases or NR.  In addition, EnTAP can easily accept EBI databases such as UniProt/SwissProt.  EnTAP can read the species information from these header formats.  If the individual FASTAs in a custom database do not adhere to one of these two formats, it will just not be possible to weight examine taxanomic or contaminant status from them.  
+All source databases must be provided in FASTA format so that they can be indexed for use by DIAMOND.  This can be completed independent of EnTAP with DIAMOND (- - makedb flag) or as part of the configuration phase of EnTAP.  While any FASTA database can be used, it is recommended to use NCBI (Genbank) sourced databases such as RefSeq databases or NR.  In addition, EnTAP can easily accept EBI databases such as UniProt/SwissProt.  
+
+EnTAP can recognize the species information from these header formats ONLY (NCBI and UniProt):
+
+* [homo sapiens]
+
+* OS=homo sapiens
+
+If the individual FASTAs in a custom database you create do not adhere to one of these two formats, it will not be possible to weight taxonomic or contaminant status from them.  
 
 The following FTP sites contain common reference databases that EnTAP can recognize:
    * RefSeq: |ref_comp|
+
    * Plant RefSeq: |ref_plant|
+
    * Mammalian RefSeq: |ref_mamm|
+
    * NR: |ref_nr|
+
    * SwissProt: |uni_swiss|
    
        * Reviewed
@@ -131,7 +143,7 @@ Decompress/Concatenate:
 
 ....
 
-It is generally recommended that a user select at least three databases with varying levels of NCBI curation.  Unless the species is very non-model (i.e. does not have close relatives in databases such as RefSeq, it is not necessary to use the full NR database which is less curated).
+It is generally recommended that a user select at least three databases with varying levels of curation.  Unless the species is very non-model (i.e. does not have close relatives in databases such as RefSeq, it is not necessary to use the full NR database which is less curated).
 
 
 To run configuration with a sample database, the command is as follows:
@@ -151,10 +163,16 @@ Configuration can be ran without formatting a database as follows:
 
     EnTAP --config
 
+In both cases, the following databases will be downloaded:
+
+* NCBI Taxonomic Database (indexed for EnTAP)
+* Gene Ontology Database (indexed for EnTAP)
+* EggNOG DIAMOND Database
+* EggNOG SQL Database
 
 .. note:: This is the only stage that requires connection to the Internet.
 
-If you experience any trouble in downloading the EnTAP databases (taxonomy and gene ontology), you can use the databases contained in the repo download, databases.tar.gz. Just be sure to set the configuration file to these database paths (as these are the binaries)!
+If you experience any trouble in downloading the databases indexed for EnTAP (taxonomy and gene ontology), you can use the databases contained in the repo download, databases.tar.gz. Just be sure to set the configuration file to these database paths (as these are the binaries)!
 
 Flags:
 ^^^^^^^^^^^^^^^^^^^^^
@@ -181,17 +199,6 @@ Optional Flags:
 
 * (- t/ - - threads)
     * Specify thread number for Configuration
-
-
-Memory Usage:
-^^^^^^^^^^^^^^
-
-Memory usage will vary depending on the number of databases you would like configured. Although, EnTAP will download several other databases as well:
-
-* Gene Ontology References: 6Mb
-* NCBI Taxonomy: 400Mb
-* EggNOG Database: 30Gb
-
 
 .. test-label:
 

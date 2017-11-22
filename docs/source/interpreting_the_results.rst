@@ -18,20 +18,130 @@
 .. _GO: http://www.geneontology.org/
 
 
-
-
 Interpreting the Results
 ============
 
 *EnTAP* provides many output files at each stage of execution to better see how the data is being managed throughout the pipeline:
 
+#. :ref:`Final Annotation Results<final-label>`
+#. :ref:`Log File / Statistics<log-label>`
 #. :ref:`Expression Filtering<exp-label>`
 #. :ref:`Frame Selection<frame-label>`
 #. :ref:`Similarity Searching<sim-label>`
 #. :ref:`Orthologous Groups/Ontology<ont-label>`
 #. :ref:`Protein Families<inter-label>` (optional)
-#. :ref:`Final Annotation Results<final-label>`
 
+The two files to check out first are the :ref:`final annotations<final-label>` and :ref:`log file<log-label>`. These files are the most important and contain a summary of all the information collected at each stage, including statistical analyses. The remaining files are there for a more in depth look at each stage. 
+
+.. _final-label:
+
+Final Annotations
+-----------------------
+
+The final EnTAP annotations are contained within the |final_dir| directory. These files are the summation of each stage of the pipeline and contain the combined information. So these can be considered the most important files! 
+
+All .tsv files in this section will have the following header information (from left to right)
+
+    * Query sequence ID
+    * Subject sequence ID
+    * Percentage of identical matches
+    * Alignment length
+    * Number of mismatches
+    * Number of gap openings
+    * Start of alignment in query
+    * End of alignment in query
+    * Start of alignment in subject
+    * End of alignment in subject
+    * Expect (e) value
+    * Query coverage
+    * Subject title
+    * Species (DIAMOND)
+    * Origin Database (DIAMOND)
+    * ORF (GeneMarkS-T)
+    * Contaminant (yes/no the hit was flagged as a contaminant)
+    * Seed ortholog (EggNOG)
+    * Seed E-Value (EggNOG)
+    * Seed Score (EggNOG)
+    * Predicted Gene (EggNOG)
+    * Taxonomic Scope (EggNOG, tax scope that was matched)
+    * OGs (EggNOG, orthologous groups assigned)
+    * Description (EggNOG)
+    * KEGG Terms (EggNOG)
+    * Protein Domains (EggNOG)
+    * GO Biological (Gene Ontology normalized terms)
+    * GO Cellular (Gene Ontology normalized terms)
+    * GO Molecular (Gene Ontology normalized terms)
+    * ----- Optional Columns If Using InterProScan -----
+    * IPScan GO Biological (InterPro)
+    * IPScan GO Cellular (InterPro)
+    * IPScan GO Molecular (InterPro)
+    * Pathways (InterPro)
+    * InterPro (InterPro, database entry)
+    * Protein Database (InterPro, database assigned. Ex: pfam)
+    * Protein Description (InterPro, description of database entry)
+    * E Value (InterPro, E-value of hit against protein database)
+
+Gene ontology terms are normalized to levels based on the input flag from the user (or the default of 0,3,4). A level of 0 within the filename indicates that ALL GO terms will be printed to the annotation file. Normalization of GO terms to levels is generally done before enrichment analysis and is based upon the hierarchical setup of the Gene Ontology database. More information can be found at GO_. 
+
+    * final_annotations_lvlX.tsv
+
+        * As mentioned above, the 'X' represents the normalized GO terms for the annotation
+        * This .tsv file will have the headers as mentioned previously as a summary of the entire pipeline
+
+    * final_annotated.faa / .fnn
+
+        * Nucleotide and protein fasta files containing all sequences that either hit databases through similarity searching or through the ontology stage
+
+    * final_unannotated.aa / .fnn
+
+        * Nucleotide and protein fasta files containing all sequences that did not hit either through similarity searching nor through the ontology stage
+
+
+.. _log-label:
+
+Log File / Statistics
+----------------------
+
+The log file contains a statistical analysis of each stage of the pipeline that you ran. I'll give a brief outline of some of the stats performed:
+
+#. Initial Statistics
+
+    * Transcriptome statistics: n50, n90, average gene length, longest/shortest gene
+    * Summary of user flags
+    * Summary of execution paths (from config file)
+
+#. Expression analysis
+
+    * Transcriptome statistics: n50, n90, average gene length, longest/shortest gene
+    * Summary of sequences kept/removed after filtering
+
+#. Frame Selection
+
+    * Transcriptome statistics: n50, n90, average gene length, longest/shortest gene
+    * Summary of frame selection: Partial, internal, complete genes. Genes where no frame was found
+
+#. Similarity Searching
+
+    * Contaminant/uninformative/informative count
+    * Phylogenetic/contaminant distribution of alignments
+    * Alignment distribution based upon frame results (partial/internal/complete)
+    * Sequence count that did not align against a database reference
+    * Statistics calculated for each individual database and final results
+
+#. Gene Family Assignment
+
+    * Phylogenetic distribution of gene family assignments
+    * Gene Ontology level distribution (note: level 0 means all levels)
+    * Gene Ontology category distribution (biological processes, molecular function, cellular component)
+
+#. InterProScan
+
+    * Additional statistics coming soon!
+
+#. Final Annotation Statistics
+
+    * Statistical summary of each stage
+    * Runtime
 
 .. _exp-label:
 
@@ -333,66 +443,3 @@ The |egg_fig_dir| will contain figures generated by EnTAP of Gene Ontology and T
 Protein Families (InterProScan)
 ----------------------------------
 Full documentation coming soon!
-
-.. _final-label:
-
-Final Annotations
------------------------
-
-The final EnTAP annotations are contained within the |final_dir| directory. These files are the summation of each stage of the pipeline and contain the combined information. So these can be considered the most important files! 
-
-All .tsv files in this section will have the following header information (from left to right)
-
-    * Query sequence ID
-    * Subject sequence ID
-    * Percentage of identical matches
-    * Alignment length
-    * Number of mismatches
-    * Number of gap openings
-    * Start of alignment in query
-    * End of alignment in query
-    * Start of alignment in subject
-    * End of alignment in subject
-    * Expect (e) value
-    * Query coverage
-    * Subject title
-    * Species (DIAMOND)
-    * Origin Database (DIAMOND)
-    * ORF (GeneMarkS-T)
-    * Contaminant (yes/no the hit was flagged as a contaminant)
-    * Seed ortholog (EggNOG)
-    * Seed E-Value (EggNOG)
-    * Seed Score (EggNOG)
-    * Predicted Gene (EggNOG)
-    * Taxonomic Scope (EggNOG, tax scope that was matched)
-    * OGs (EggNOG, orthologous groups assigned)
-    * Description (EggNOG)
-    * KEGG Terms (EggNOG)
-    * Protein Domains (EggNOG)
-    * GO Biological (Gene Ontology normalized terms)
-    * GO Cellular (Gene Ontology normalized terms)
-    * GO Molecular (Gene Ontology normalized terms)
-    * ----- Optional Columns If Using InterProScan -----
-    * IPScan GO Biological (InterPro)
-    * IPScan GO Cellular (InterPro)
-    * IPScan GO Molecular (InterPro)
-    * Pathways (InterPro)
-    * InterPro (InterPro, database entry)
-    * Protein Database (InterPro, database assigned. Ex: pfam)
-    * Protein Description (InterPro, description of database entry)
-    * E Value (InterPro, E-value of hit against protein database)
-
-Gene ontology terms are normalized to levels based on the input flag from the user (or the default of 0,3,4). A level of 0 within the filename indicates that ALL GO terms will be printed to the annotation file. Normalization of GO terms to levels is generally done before enrichment analysis and is based upon the hierarchical setup of the Gene Ontology database. More information can be found at GO_. 
-
-    * final_annotations_lvlX.tsv
-
-        * As mentioned above, the 'X' represents the normalized GO terms for the annotation
-        * This .tsv file will have the headers as mentioned previously as a summary of the entire pipeline
-
-    * final_annotated.faa / .fnn
-
-        * Nucleotide and protein fasta files containing all sequences that either hit databases through similarity searching or through the ontology stage
-
-    * final_unannotated.aa / .fnn
-
-        * Nucleotide and protein fasta files containing all sequences that did not hit either through similarity searching nor through the ontology stage

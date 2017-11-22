@@ -25,10 +25,12 @@ System Requirements
 -------------------
   
     * Operating System
+
         * UNIX-based systems
         * Tested on 64 bit systems: ubuntu 16.04, Rocks 6.1, Centos 6.3
 
     * Storage Minimum
+
         * Gene Ontology References: 6Mb
         * NCBI Taxonomy: 400Mb
         * EggNOG Database: 30Gb
@@ -37,6 +39,7 @@ System Requirements
         * Typical total: 48Gb (with a fully processed, 30,000 sequence transcriptome) 
 
     * Memory
+
         * At least 16 Gb of RAM (will very depending on DIAMOND database sizes)
 
 .. _dep-label:
@@ -53,8 +56,6 @@ Before continuing on in the installation process, ensure that the following depe
 	
         * Ensure this is installed with the C++11 compiler
 		
-    * Perl_ (5.14 or later)
-	
     * Python_ (2.7.12 or later) with support for the following modules
 	
         * SQLITE

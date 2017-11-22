@@ -45,7 +45,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'enTAP'
+project = u'EnTAP'
 copyright = u'2017, Alex Hart, Jill Wegrzyn'
 author = u'Alex Hart, Jill Wegrzyn'
 

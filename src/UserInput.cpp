@@ -708,7 +708,7 @@ void init_exe_paths(std::unordered_map<std::string, std::string> &map, std::stri
     if (temp_eggnog.empty())  temp_eggnog         = PATHS(exe_path,Defaults::EGG_EMAPPER_DEFAULT);
     if (temp_eggnog_down.empty())temp_eggnog_down = PATHS(exe_path,Defaults::EGG_DOWNLOAD_DEFAULT);
     if (temp_eggnog_db.empty())  temp_eggnog_db   = PATHS(exe_path,Defaults::EGG_SQL_DB_DEFAULT);
-    if (temp_interpro.empty())   temp_interpro    = PATHS(exe_path,Defaults::INTERPRO_DEF_EXE);
+    if (temp_interpro.empty())   temp_interpro    = Defaults::INTERPRO_DEF_EXE;
 
     // EnTAP paths
     if (temp_tax_db.empty()) temp_tax_db     = PATHS(exe_path, ENTAP_CONFIG::TAX_DB_DEFAULT);

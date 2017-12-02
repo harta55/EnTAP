@@ -311,7 +311,7 @@ Optional Flags:
 
 * (- - taxon)
     * This flag will allow for :ref:`taxonomic<tax-label>` 'favoring' of hits that are closer to your target species or lineage. Any lineage can be used as referenced by the NCBI Taxonomic database, such as genus, phylum, or species.
-    * Format **must** replace all spaces with underscores ('_') as follows: "- -species homo_sapiens" or "- -species primates"
+    * Format **must** replace all spaces with underscores ('_') as follows: "- -taxon homo_sapiens" or "- -taxon primates"
 
 * (- - level)
     * Specify Gene Ontology levels you would like to normalize to

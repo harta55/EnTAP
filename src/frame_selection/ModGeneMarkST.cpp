@@ -249,8 +249,6 @@ void ModGeneMarkST::parse() {
                 pair.second->setSequence(p_it->second.sequence); // Sets isprotein flag
                 pair.second->setFrame(p_it->second.frame_type);
 
-                std::string sequence = p_it->second.sequence;
-                std::string frame_type = p_it->second.frame_type;
                 length = (uint16) pair.second->getSeq_length();  // Nucleotide sequence length
 
                 if (length < min_selected) {
@@ -264,10 +262,10 @@ void ModGeneMarkST::parse() {
                 total_kept_len += length;
                 all_kept_lengths.push_back(length);
                 file_figure_removed << GRAPH_KEPT_FLAG << '\t' << std::to_string(length) << std::endl;
-                std::map<std::string, std::ofstream*>::iterator file_it = file_map.find(frame_type);
+                std::map<std::string, std::ofstream*>::iterator file_it = file_map.find(p_it->second.frame_type);
                 if (file_it != file_map.end()) {
-                    *file_it->second << sequence << "\n";
-                    count_map[frame_type]++;
+                    *file_it->second << p_it->second.sequence << std::endl;
+                    count_map[p_it->second.frame_type]++;
                 } else {
                     throw ExceptionHandler("Unknown frame flag found", ENTAP_ERR::E_RUN_GENEMARK_STATS);
                 }

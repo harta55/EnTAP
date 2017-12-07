@@ -44,6 +44,21 @@ void FS_open_out(std::string &path, std::ofstream &ofstream) {
 }
 #endif
 
+
+/**
+ * ======================================================================
+ * Function void FS_close_file(std::ofstream &ofstream)
+ *
+ * Description          - Close a stream
+ *
+ * Notes                - None
+ *
+ * @param ofstream      - File stream
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void FS_close_file(std::ofstream &ofstream) {
     try {
         ofstream.close();
@@ -129,10 +144,37 @@ bool FS_file_exists(std::string path) {
 }
 
 
+/**
+ * ======================================================================
+ * Function bool FS_file_is_open(std::ofstream &ofstream)
+ *
+ * Description          - Checks if an ofstream is opened
+ *
+ * Notes                - Unused b/c older compilers
+ *
+ * @param ofstream      - Stream
+ *
+ * @return              - True/false if open
+ * ======================================================================
+ */
 bool FS_file_is_open(std::ofstream &ofstream) {
     return ofstream.is_open();
 }
 
+
+/**
+ * ======================================================================
+ * Function bool FS_file_test_open(std::string &path)
+ *
+ * Description          - Checks whether a file can be opened successfully
+ *
+ * Notes                - None
+ *
+ * @param path          - Path to file
+ *
+ * @return              - True/false if successful
+ * ======================================================================
+ */
 bool FS_file_test_open(std::string &path) {
     bool is_open;
     std::ifstream ifstream(path);
@@ -141,12 +183,45 @@ bool FS_file_test_open(std::string &path) {
     return is_open;
 }
 
+
+/**
+ * ======================================================================
+ * Function bool FS_delete_file(std::string path)
+ *
+ * Description          - Delete target file
+ *
+ * Notes                - None
+ *
+ * @param path          - Path to file
+ *
+ * @return              - True/false if successful
+ * ======================================================================
+ */
 bool FS_delete_file(std::string path) {
     FS_dprint("Deleting file: " + path);
     if (!FS_file_exists(path)) return false;
+#ifdef USE_BOOST
     return boostFS::remove(path);
+#else
+    return remove(path) == 0;
+#endif
 }
 
+
+/**
+ * ======================================================================
+ * Function bool FS_directory_iterate(bool del, std::string &path)
+ *
+ * Description          - Boost recursive iteration through directory
+ *
+ * Notes                - None
+ *
+ * @param path          - Path to directory
+ * @param del           - True/false to delete files that are empty (unused)
+ *
+ * @return              - True/false if successful
+ * ======================================================================
+ */
 bool FS_directory_iterate(bool del, std::string &path) {
     FS_dprint("Iterating through directory: " + path);
     if (!FS_file_exists(path)) return false;
@@ -168,6 +243,20 @@ bool FS_directory_iterate(bool del, std::string &path) {
 }
 
 
+/**
+ * ======================================================================
+ * Function bool FS_file_empty(std::string path)
+ *
+ * Description          - Check if a file is empty
+ *                      - Checks no line or all empty lines
+ *
+ * Notes                - None
+ *
+ * @param path          - Path to file
+ *
+ * @return              - True/false if file empty
+ * ======================================================================
+ */
 bool FS_file_empty(std::string path) {
     std::ifstream file(path);
     bool empty;
@@ -186,6 +275,19 @@ bool FS_file_empty(std::string path) {
 }
 
 
+/**
+ * ======================================================================
+ * Function bool FS_check_fasta(std::string& path)
+ *
+ * Description          - Minor check on fasta file for format
+ *
+ * Notes                - None
+ *
+ * @param path          - Path to fasta file
+ *
+ * @return              - True/false if fasta file valid
+ * ======================================================================
+ */
 bool FS_check_fasta(std::string& path) {
     std::string line;
     bool valid = false;

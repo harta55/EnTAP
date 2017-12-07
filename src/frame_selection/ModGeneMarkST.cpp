@@ -266,7 +266,7 @@ void ModGeneMarkST::parse() {
                 file_figure_removed << GRAPH_KEPT_FLAG << '\t' << std::to_string(length) << std::endl;
                 std::map<std::string, std::ofstream*>::iterator file_it = file_map.find(frame_type);
                 if (file_it != file_map.end()) {
-                    *file_it->second << sequence;
+                    *file_it->second << sequence << "\n";
                     count_map[frame_type]++;
                 } else {
                     throw ExceptionHandler("Unknown frame flag found", ENTAP_ERR::E_RUN_GENEMARK_STATS);

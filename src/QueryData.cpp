@@ -204,7 +204,7 @@ std::pair<uint16, uint16> QueryData::calculate_N_vals
     fp64   fifty_len;
     fp64   ninety_len;
 
-    std::sort(seq_lengths.begin(),seq_lengths.end());
+    std::sort(seq_lengths.begin(),seq_lengths.end(), std::greater<uint16>());
     fifty_len  = total_len * N_50_PERCENT;
     ninety_len = total_len * N_90_PERCENT;
     for (uint16 val : seq_lengths) {

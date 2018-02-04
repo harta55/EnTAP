@@ -76,6 +76,8 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
 
     _trim = trim;
     _total_sequences = 0;
+    _pipeline_flags = 0;
+    _data_flags = 0;
 
     if (!FS_file_exists(input_file)) {
         throw ExceptionHandler("Input file not found at: " + input_file,ENTAP_ERR::E_INPUT_PARSE);
@@ -277,11 +279,11 @@ void QueryData::flag_transcripts(ExecuteStates state) {
     for (auto &pair : _SEQUENCES) {
         switch (state) {
             case RSEM:
-                pair.second->set_is_expression_kept(true);
+                pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_EXPRESSION_KEPT);
                 break;
             case FRAME_SELECTION:
                 pair.second->setIs_protein(true);        // Probably already done
-                pair.second->set_is_frame_kept(true);
+                pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_FRAME_KEPT);
                 break;
             default:
                 break;
@@ -356,12 +358,12 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
 
     for (auto &pair : _SEQUENCES) {
         count_total_sequences++;
-        is_exp_kept = pair.second->is_is_expression_kept();
+        is_exp_kept = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_EXPRESSION_KEPT);
         is_prot = pair.second->isIs_protein();
-        is_hit = pair.second->is_is_database_hit();
-        is_ontology = pair.second->is_is_family_assigned(); // TODO Fix for interpro
-        is_one_go = pair.second->is_is_one_go();
-        is_one_kegg = pair.second->is_is_one_kegg();
+        is_hit = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_BLAST_HIT);
+        is_ontology = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ASSIGNED); // TODO Fix for interpro
+        is_one_go = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_ONE_GO);
+        is_one_kegg = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_ONE_KEGG);
 
         is_exp_kept ? count_exp_kept++ : count_exp_reject++;
         is_prot ? count_frame_kept++ : count_frame_rejected++;
@@ -403,25 +405,25 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
        ENTAP_STATS::SOFTWARE_BREAK          <<
        "Total Sequences: "                  << count_total_sequences;
 
-    if (_EXPRESSION_SUCCESS) {
+    if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
         ss <<
            "\nExpression Analysis" <<
            "\n\tKept sequences: "  << count_exp_kept    <<
            "\n\tLost sequences: "  << count_exp_reject;
     }
-    if (_FRAME_SELECTION_SUCCESS) {
+    if (DATA_FLAG_GET(SUCCESS_FRAME_SEL)) {
         ss <<
            "\nFrame Selection"              <<
            "\n\tTotal sequences retained: " << count_frame_kept     <<
            "\n\tTotal sequences removed: "  << count_frame_rejected;
     }
-    if (_SIM_SEARCH_SUCCESS) {
+    if (DATA_FLAG_GET(SUCCESS_SIM_SEARCH)) {
         ss <<
            "\nSimilarity Search"                               <<
            "\n\tTotal unique sequences with an alignment: "    << count_sim_hits <<
            "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits;
     }
-    if (_ONTOLOGY_SUCCESS) {
+    if (DATA_FLAG_GET(SUCCESS_ONTOLOGY)) {
         for (uint16 flag : ontology_flags) {
             switch (flag) {
                 case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
@@ -476,22 +478,6 @@ void QueryData::set_frame_stats(const FrameStats &_frame_stats) {
     QueryData::_frame_stats = _frame_stats;
 }
 
-void QueryData::set_EXPRESSION_SUCCESS(bool _EXPRESSION_SUCCESS) {
-    QueryData::_EXPRESSION_SUCCESS = _EXPRESSION_SUCCESS;
-}
-
-void QueryData::set_FRAME_SELECTION_SUCCESS(bool _FRAME_SELECTION_SUCCESS) {
-    QueryData::_FRAME_SELECTION_SUCCESS = _FRAME_SELECTION_SUCCESS;
-}
-
-void QueryData::set_SIM_SEARCH_SUCCESS(bool _SIM_SEARCH_SUCCESS) {
-    QueryData::_SIM_SEARCH_SUCCESS = _SIM_SEARCH_SUCCESS;
-}
-
-void QueryData::set_ONTOLOGY_SUCCESS(bool _ONTOLOGY_SUCCESS) {
-    QueryData::_ONTOLOGY_SUCCESS = _ONTOLOGY_SUCCESS;
-}
-
 QUERY_MAP_T* QueryData::get_sequences_ptr() {
     return &this->_SEQUENCES;
 }
@@ -505,4 +491,16 @@ QueryData::~QueryData() {
     for(QUERY_MAP_T::iterator it = _SEQUENCES.begin(); it != _SEQUENCES.end(); it++) {
         delete it->second;
     }
+}
+
+bool QueryData::DATA_FLAG_GET(DATA_FLAGS flag) {
+    return (_data_flags & flag) != 0;
+}
+
+void QueryData::DATA_FLAG_SET(DATA_FLAGS flag) {
+    _data_flags |= flag;
+}
+
+void QueryData::DATA_FLAG_CLEAR(DATA_FLAGS flag) {
+    _data_flags &= ~flag;
 }

@@ -29,9 +29,17 @@
 #ifndef ENTAP_MODRSEM_H
 #define ENTAP_MODRSEM_H
 
-
+//*********************** Includes *****************************
 #include "AbstractExpression.h"
 #include "../QueryData.h"
+#include <csv.h>
+#include <iomanip>
+#include "../ExceptionHandler.h"
+#include "../GraphingManager.h"
+#include "../FileSystem.h"
+#include "../common.h"
+
+//**************************************************************
 
 class ModRSEM : public AbstractExpression{
 
@@ -48,10 +56,17 @@ public:
 
 private:
 
+    const std::string RSEM_SAM_VALID        = "rsem-sam-validator";
     const std::string RSEM_PREP_REF_EXE     = "rsem-prepare-reference";
     const std::string RSEM_CALC_EXP_EXE     = "rsem-calculate-expression";
+    const std::string RSEM_CONV_SAM         = "convert-sam-for-rsem";
     const std::string RSEM_OUT_KEPT         = "_kept.fasta";
     const std::string RSEM_OUT_REMOVED      = "_removed.fasta";
+    const std::string RSEM_OUT_FILE         = ".genes.results";
+    const std::string STD_REF_OUT           = "_rsem_reference";
+    const std::string STD_EXP_OUT           = "_rsem_exp";
+    const std::string STD_VALID_OUT         = "_rsem_validate";
+    const std::string STD_CONVERT_SAM       = "_rsem_convert";
     const std::string GRAPH_TXT_BOX_PLOT    = "comparison_box.txt";
     const std::string GRAPH_PNG_BOX_PLOT    = "comparison_box.png";
     const std::string GRAPH_TITLE_BOX_PLOT  = "Expression_Analysis";
@@ -72,7 +87,6 @@ private:
 
     bool rsem_validate_file(std::string);
     bool rsem_conv_to_bam(std::string);
-    bool is_file_empty(std::string);
 };
 
 

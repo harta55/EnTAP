@@ -41,6 +41,20 @@ public:
 
     typedef std::map<std::string,std::vector<std::string>> go_struct;
 
+    typedef enum {
+
+        QUERY_BLAST_HIT         = (1 << 0),
+        QUERY_EGGNOG_HIT        = (1 << 1),
+        QUERY_EXPRESSION_KEPT   = (1 << 2),
+        QUERY_FRAME_KEPT        = (1 << 3),
+        QUERY_FAMILY_ASSIGNED   = (1 << 4),
+        QUERY_ONE_KEGG          = (1 << 5),
+        QUERY_ONE_GO            = (1 << 6),
+        QUERY_INFORMATIVE       = (1 << 7),
+        QUERY_INTERPRO          = (1 << 8)
+
+    } QUERY_FLAGS;
+
     struct EggnogResults {
         std::string              seed_ortholog;
         std::string              seed_evalue;
@@ -120,7 +134,6 @@ public:
     void setIs_better_hit(bool is_better_hit);
     bool isContaminant() const;
     void setContaminant(bool contaminant);
-    void set_is_database_hit(bool _is_database_hit);
     void set_lineage(const std::string &_lineage);
     void set_go_parsed(const go_struct &_go_parsed, short);
     void setSeq_length(unsigned long seq_length);
@@ -130,30 +143,18 @@ public:
     const std::string &getFrame() const;
     bool isIs_protein() const;
     const std::string &get_species() const;
-    bool is_informative() const;
     const std::string &get_sequence_p() const;
     void set_sequence_p(const std::string &_sequence_p);
     const std::string &get_sequence_n() const;
     void set_sequence_n(const std::string &_sequence_n);
     const std::string &get_sequence() const;
     void setIs_protein(bool is_protein);
-    bool is_is_database_hit() const;
-    bool is_is_family_assigned() const;
-    void set_is_family_assigned(bool _is_family_assigned);
-    bool is_is_one_go() const;
-    void set_is_one_go(bool _is_one_go);
-    bool is_is_one_kegg() const;
-    void set_is_one_kegg(bool _is_one_kegg);
-    bool is_is_expression_kept() const;
-    void set_is_expression_kept(bool _is_expression_kept);
     void set_fpkm(float _fpkm);
     const std::string &get_tax_scope() const;
-    void set_is_interpro_hit(bool _is_interpro_hit);
-    bool is_kept() const;
-    void set_kept(bool _kept);
-    bool is_is_frame_kept() const;
-    void set_is_frame_kept(bool _is_frame_kept);
-    bool get_state_flag(ExecuteStates);
+    bool is_kept();
+    bool QUERY_FLAG_GET(QUERY_FLAGS);
+    void QUERY_FLAG_SET(QUERY_FLAGS);
+    void QUERY_FLAG_CLEAR(QUERY_FLAGS);
 
 private:
 
@@ -162,23 +163,14 @@ private:
     static constexpr uint8 INFORM_ADD    = 3;
     static constexpr fp32 INFORM_FACTOR  = 1.2;
 
-    bool                              _kept;        // Continually updated
     bool                              is_protein;
     bool                              is_better_hit;
-    bool                              _is_informative;
-    bool                              _is_database_hit;
-    bool                              _is_family_assigned;
-    bool                              _is_one_go;
-    bool                              _is_one_kegg;
-    bool                              _is_expression_kept;
-    bool                              _is_frame_kept;
-    bool                              _is_interpro_hit;
-    bool                              _is_eggnog_hit;
-    float                             _tax_score;
-    float                             _fpkm;
+    uint32                            _query_flags;
+    fp32                              _tax_score;
+    fp32                              _fpkm;
     unsigned long                     _seq_length;
-    double                            _e_val;
-    double                            _coverage;
+    fp64                              _e_val;
+    fp64                              _coverage;
     std::string                       _sequence_p;
     std::string                       _sequence_n;
     std::string                       _frame;

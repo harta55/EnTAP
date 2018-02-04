@@ -28,8 +28,7 @@
 
 //*********************** Includes *****************************
 #include <boost/serialization/unordered_map.hpp>
-#include <fstream>
-#include <map>
+#include "common.h"
 #include "EntapExecute.h"
 #include "ExceptionHandler.h"
 #include "EntapGlobals.h"
@@ -51,10 +50,6 @@ namespace entapExecute {
     ExecuteStates           executeStates;
     std::string             _outpath;
     std::string             _entap_outpath;
-    bool                    _EXPRESSION_SUCCESS;     // True if this stage was ran/success
-    bool                    _FRAME_SELETION_SUCCESS;
-    bool                    _SIM_SEARCH_SUCCESS;
-    bool                    _ONTOLOGY_SUCCESS;
     bool                    _blastp;          // false for blastx, true for _blastp
     std::string             _input_path;      // FASTA changes depending on execution
     int                     _threads;
@@ -110,10 +105,6 @@ namespace entapExecute {
 
         executeStates           = INIT;
         state_flag              = false;
-        _EXPRESSION_SUCCESS     = false;
-        _FRAME_SELETION_SUCCESS = false;
-        _SIM_SEARCH_SUCCESS     = false;
-        _ONTOLOGY_SUCCESS       = false;
 
         _input_path    = user_input[ENTAP_CONFIG::INPUT_FLAG_TRANSCRIPTOME].as<std::string>();
         _threads       = get_supported_threads(user_input);
@@ -126,8 +117,8 @@ namespace entapExecute {
 
         _outpath       = user_input[ENTAP_CONFIG::INPUT_FLAG_TAG].as<std::string>();
         _entap_outpath = PATHS(_outpath, ENTAP_OUTPUT);
-        boostFS::create_directories(_entap_outpath);
-        boostFS::create_directories(_outpath);
+        FS_create_dir(_entap_outpath);
+        FS_create_dir(_outpath);
 
         // init databases
         if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_DATABASE)) {
@@ -169,7 +160,7 @@ namespace entapExecute {
                         } else {
                             _input_path = frame_selection->execute(_input_path);
                             QUERY_DATA.set_protein(true);
-                            _FRAME_SELETION_SUCCESS = true;
+                            QUERY_DATA.DATA_FLAG_SET(QueryData::SUCCESS_FRAME_SEL);
                         }
                     }
                         break;
@@ -182,7 +173,7 @@ namespace entapExecute {
                             FS_dprint("No alignment file specified, skipping expression analysis");
                         } else {
                             _input_path = expression->execute(original_input);
-                            _EXPRESSION_SUCCESS = true;
+                            QUERY_DATA.DATA_FLAG_SET(QueryData::SUCCESS_EXPRESSION);
                         }
                     }
                         break;
@@ -192,7 +183,7 @@ namespace entapExecute {
                     case DIAMOND_RUN:
                         FS_dprint("STATE - SIM SEARCH RUN");
                         sim_search->execute(_input_path, _blastp);
-                        _SIM_SEARCH_SUCCESS = true;
+                        QUERY_DATA.DATA_FLAG_SET(QueryData::SUCCESS_SIM_SEARCH);
                         break;
                     case DIAMOND_PARSE:
                         FS_dprint("STATE - SIM SEARCH PARSE");
@@ -207,7 +198,7 @@ namespace entapExecute {
                                 &QUERY_DATA, _blastp
                         ));
                         ontology->execute(_input_path, no_database_hits);
-                        _ONTOLOGY_SUCCESS = true;
+                        QUERY_DATA.DATA_FLAG_SET(QueryData::SUCCESS_ONTOLOGY);
                     }
                         break;
                     default:
@@ -216,10 +207,6 @@ namespace entapExecute {
                 }
                 verify_state(state_queue, state_flag);
             }
-            QUERY_DATA.set_EXPRESSION_SUCCESS(_EXPRESSION_SUCCESS);
-            QUERY_DATA.set_FRAME_SELECTION_SUCCESS(_FRAME_SELETION_SUCCESS);
-            QUERY_DATA.set_ONTOLOGY_SUCCESS(_ONTOLOGY_SUCCESS);
-            QUERY_DATA.set_SIM_SEARCH_SUCCESS(_SIM_SEARCH_SUCCESS);
             QUERY_DATA.final_statistics(_outpath, ontology_flags);
             FS_directory_iterate(true, _outpath);   // Delete empty files
         } catch (const ExceptionHandler &e) {
@@ -364,7 +351,7 @@ namespace entapExecute {
 
         file_name = input_path;
         file_name_str = file_name.filename().stem().string() + "_final.fasta";
-        out_path = (boostFS::path(_entap_outpath) / file_name_str).string();
+        out_path = PATHS(_entap_outpath, file_name_str);
         boostFS::copy_file(input_path,out_path,boostFS::copy_option::overwrite_if_exists);
 
         FS_dprint("Success!");

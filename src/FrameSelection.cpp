@@ -102,10 +102,10 @@ std::string FrameSelection::execute(std::string input) {
     std::pair<bool, std::string> verify_pair;
 
     _inpath = input;
-    if (_overwrite) boostFS::remove_all(_frame_outpath);
-    boostFS::create_directories(_frame_outpath);
-    boostFS::create_directories(_processed_path);
-    boostFS::create_directories(_figure_path);
+    if (_overwrite) FS_delete_dir(_frame_outpath);
+    FS_create_dir(_frame_outpath);
+    FS_create_dir(_processed_path);
+    FS_create_dir(_figure_path);
     try {
         std::unique_ptr<AbstractFrame> ptr = spawn_object();
         verify_pair = ptr->verify_files();

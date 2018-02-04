@@ -117,9 +117,9 @@ std::string ExpressionAnalysis::execute(std::string input) {
 
     _inpath = input;
     if (_overwrite) boostFS::remove_all(_rsem_dir);
-    boostFS::create_directories(_rsem_dir);
-    boostFS::create_directories(_figure_dir);
-    boostFS::create_directories(_proc_dir);
+    FS_create_dir(_rsem_dir);
+    FS_create_dir(_figure_dir);
+    FS_create_dir(_proc_dir);
     try {
         ptr = spawn_object();
         ptr->set_data(_threads, _fpkm, _issingle);

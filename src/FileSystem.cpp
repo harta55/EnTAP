@@ -307,8 +307,62 @@ bool FS_check_fasta(std::string& path) {
 }
 
 
+/**
+ * ======================================================================
+ * Function bool FS_create_dir(std::string& path)
+ *
+ * Description          - Create directory
+ *
+ * Notes                - None
+ *
+ * @param path          - Path to directory
+ *
+ * @return              - True/false if created successfully
+ * ======================================================================
+ */
 bool FS_create_dir(std::string& path) {
 #ifdef USE_BOOST
     return boostFS::create_directories(path);
 #endif
+}
+
+
+/**
+ * ======================================================================
+ * Function bool FS_delete_dir(std::string& path)
+ *
+ * Description          - Delete directory
+ *
+ * Notes                - None
+ *
+ * @param path          - Path to directory
+ *
+ * @return              - None
+ * ======================================================================
+ */
+void FS_delete_dir(std::string& path) {
+#ifdef USE_BOOST
+    boostFS::remove_all(path);
+#endif
+}
+
+
+/**
+ * ======================================================================
+ * Function FS_file_no_lines(std::string path)
+ *
+ * Description          - Check if specific file is empty (has no lines)
+ *
+ * Notes                - Used for certain RSEM execution that does not
+ *                        relay error code of non-zero on failure
+ *
+ * @param path          - Path to file
+ *
+ * @return              - True if file is empty
+ *
+ * =====================================================================
+ */
+bool FS_file_no_lines(std::string path) {
+    std::ifstream ifstream(path);
+    return ifstream.peek() == std::ifstream::traits_type::eof();
 }

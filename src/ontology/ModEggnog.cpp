@@ -141,11 +141,11 @@ void ModEggnog::parse() {
                                               kegg,tax_scope,ogs, EGGNOG_DATABASE);
                 go_parsed = parse_go_list(go_terms,GO_DATABASE,',');
                 it->second->set_go_parsed(go_parsed, ENTAP_EXECUTE::EGGNOG_INT_FLAG);
-                it->second->set_is_family_assigned(true);
+                it->second->QUERY_FLAG_SET(QuerySequence::QUERY_FAMILY_ASSIGNED);
                 eggnog_map[qseqid] = 1;
                 if (!go_parsed.empty()) {
                     count_total_go_hits++;
-                    it->second->set_is_one_go(true);
+                    it->second->QUERY_FLAG_SET(QuerySequence::QUERY_ONE_GO);
                     for (auto &pair : go_parsed) {
                         for (std::string &term : pair.second) {
                             count_total_go_terms++;
@@ -173,7 +173,7 @@ void ModEggnog::parse() {
                     count_total_kegg_hits++;
                     ct = (uint32) std::count(kegg.begin(), kegg.end(), ',');
                     count_total_kegg_terms += ct + 1;
-                    it->second->set_is_one_kegg(true);
+                    it->second->QUERY_FLAG_SET(QuerySequence::QUERY_ONE_KEGG);
                 } else {
                     count_no_kegg++;
                 }
@@ -385,12 +385,12 @@ void ModEggnog::set_data(std::string & eggnog_databse, std::vector<std::string>&
     _figure_dir = PATHS(_egg_out_dir, FIGURE_DIR);
     _proc_dir   = PATHS(_egg_out_dir, PROCESSED_OUT_DIR);
 
-    boostFS::remove_all(_figure_dir);
-    boostFS::remove_all(_proc_dir);
+    FS_delete_dir(_figure_dir);
+    FS_delete_dir(_proc_dir);
 
-    boostFS::create_directories(_egg_out_dir);
-    boostFS::create_directories(_figure_dir);
-    boostFS::create_directories(_proc_dir);
+    FS_create_dir(_egg_out_dir);
+    FS_create_dir(_figure_dir);
+    FS_create_dir(_proc_dir);
 }
 
 

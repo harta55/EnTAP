@@ -46,6 +46,16 @@ class QueryData {
 
 public:
 
+    typedef enum {
+
+        SUCCESS_EXPRESSION = (1 << 0),
+        SUCCESS_FRAME_SEL  = (1 << 1),
+        SUCCESS_ONTOLOGY   = (1 << 2),
+        SUCCESS_SIM_SEARCH = (1 << 3)
+
+    }DATA_FLAGS;
+
+
     QueryData(std::string&, std::string&, bool&, bool&);
     ~QueryData();
 
@@ -59,10 +69,9 @@ public:
     bool is_protein(void) const;
     void set_protein(bool);
     void set_frame_stats(const FrameStats &_frame_stats);
-    void set_EXPRESSION_SUCCESS(bool _EXPRESSION_SUCCESS);
-    void set_FRAME_SELECTION_SUCCESS(bool _FRAME_SELECTION_SUCCESS);
-    void set_SIM_SEARCH_SUCCESS(bool _SIM_SEARCH_SUCCESS);
-    void set_ONTOLOGY_SUCCESS(bool _ONTOLOGY_SUCCESS);
+    bool DATA_FLAG_GET(DATA_FLAGS);
+    void DATA_FLAG_SET(DATA_FLAGS);
+    void DATA_FLAG_CLEAR(DATA_FLAGS);
 
 private:
     void set_input_type(std::string&);
@@ -88,14 +97,12 @@ private:
     QUERY_MAP_T  _SEQUENCES;
     bool         _trim;
     bool         _protein;
-    bool         _EXPRESSION_SUCCESS;
-    bool         _FRAME_SELECTION_SUCCESS;
-    bool         _SIM_SEARCH_SUCCESS;
-    bool         _ONTOLOGY_SUCCESS;
     uint32       _total_sequences;          // Original sequence number
+    uint32       _data_flags;
     uint64       _start_nuc_len;            // Starting total len
     uint64       _start_prot_len;           // Starting total len
     FrameStats   _frame_stats;
+    uint32       _pipeline_flags;           // Success flags
 
 };
 

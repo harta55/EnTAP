@@ -45,13 +45,20 @@ void FS_print_stats(std::string &msg);
 bool FS_file_test_open(std::string&);
 bool FS_file_exists(std::string);
 bool FS_file_empty(std::string);
+bool FS_file_no_lines(std::string);
 bool FS_delete_file(std::string);
 bool FS_directory_iterate(bool, std::string&);
 bool FS_check_fasta(std::string&);
 bool FS_create_dir(std::string&);
+void FS_delete_dir(std::string&);
 //**************************************************************
 
-const std::string TXT_EXT = ".txt";
+const std::string EXT_TXT = ".txt";
+const std::string EXT_ERR = ".err";
+const std::string EXT_OUT = ".out";
+const std::string EXT_BAM = ".bam";
+const std::string EXT_FAA = ".faa";
+const std::string EXT_FNN = ".fnn";
 
 
 #endif //ENTAP_FILESYSTEM_H

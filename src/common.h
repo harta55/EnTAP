@@ -36,11 +36,13 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include <map>
 //**************************************************************
 
 
 //******************* Defines/Macros ***************************
 #define LOWERCASE(x)        std::transform(x.begin(), x.end(), x.begin(), ::tolower)
+#define STR_REPLACE(x,y,z)  std::replace(x.begin(), x.end(), y, z)
 
 //**************************************************************
 

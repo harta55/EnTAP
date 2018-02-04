@@ -27,7 +27,6 @@
 
 
 //*********************** Includes *****************************
-#include <map>
 #include "EntapConfig.h"
 #include <sys/stat.h>
 #include <unordered_map>
@@ -52,11 +51,6 @@
 
 namespace entapConfig {
 
-    // ID's used for GO level determination
-    std::string BIOLOGICAL_LVL = "6679";
-    std::string MOLECULAR_LVL  = "2892";
-    std::string CELLULAR_LVL   = "311";
-
     enum InitStates {
         INIT                = 0,
         INIT_TAX           ,
@@ -75,6 +69,38 @@ namespace entapConfig {
     std::string              _data_dir;
     std::string              _outpath;
     std::string              _cur_dir;
+
+    //-----------------------FTP PATHS---------------------------//
+    const std::string GO_DATABASE_FTP =
+            "http://archive.geneontology.org/latest-full/go_monthly-termdb-tables.tar.gz";
+    const std::string UNIPROT_FTP_SWISS = "ftp://ftp.uniprot.org/pub/databases/"
+            "uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz";
+    const std::string UNIPROT_FTP_TREMBL = "ftp://ftp.uniprot.org/pub/databases/"
+            "uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz";
+    const std::string GO_TERM_FILE = "term.txt";
+    const std::string GO_GRAPH_FILE = "graph_path.txt";
+    const std::string GO_DATA_NAME = "go_monthly-termdb-tables.tar.gz";
+    const std::string GO_DIR = "go_monthly-termdb-tables/";
+    const std::string ENTAP_CONFIG_DIR = "/entap_config";
+    const std::string TAX_DATABASE_PATH = "/databases/ncbi_tax.entp";
+
+    // ID's used for GO level determination
+    std::string BIOLOGICAL_LVL = "6679";
+    std::string MOLECULAR_LVL  = "2892";
+    std::string CELLULAR_LVL   = "311";
+
+    //****************** Local Prototype Functions******************
+    void init_taxonomic(std::string&);
+    void init_uniprot(std::vector<std::string>&, std::string);
+    void init_ncbi(std::vector<std::string>&, std::string);
+    void init_diamond_index(std::string,std::string,int);
+    std::string download_file(std::string, std::string&,std::string&);
+    std::string download_file(const std::string &,std::string&);
+    void decompress_file(std::string,std::string,short);
+    int update_database(std::string);
+    void init_go_db(std::string&,std::string);
+    void init_eggnog(std::string);
+    void handle_state(void);
 
 
     /**
@@ -116,9 +142,9 @@ namespace entapConfig {
 
         if (database_outdir.empty()) database_outdir = PATHS(_cur_dir,ENTAP_CONFIG_DIR);
 
-        boostFS::create_directories(database_outdir);
-        boostFS::create_directories(_bin_dir);
-        boostFS::create_directories(_data_dir);
+        FS_create_dir(database_outdir);
+        FS_create_dir(_bin_dir);
+        FS_create_dir(_data_dir);
 
         threads = get_supported_threads(user_map);
 
@@ -427,8 +453,8 @@ namespace entapConfig {
             filename     = path.filename().stem().string();
             indexed_path = PATHS(out_path,filename);
             std_out      = indexed_path + "_index";
-            boostFS::remove(std_out+".err");
-            boostFS::remove(std_out+".out");
+            boostFS::remove(std_out + EXT_ERR);
+            boostFS::remove(std_out + EXT_OUT);
 
             // TODO change for updated databases
             if (FS_file_exists(indexed_path + ".dmnd")) {

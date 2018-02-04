@@ -102,7 +102,7 @@ public:
     virtual std::pair<bool, std::string> verify_files()=0;
     virtual void execute() = 0;
     virtual std::string filter() = 0;
-    virtual void set_data(int, float, bool)=0;
+    virtual void set_data(int, fp32, bool)=0;
 
 
 protected:

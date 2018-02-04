@@ -27,12 +27,7 @@
 
 
 //*********************** Includes *****************************
-#include <csv.h>
-#include <iomanip>
 #include "ModRSEM.h"
-#include "../ExceptionHandler.h"
-#include "../GraphingManager.h"
-#include "../FileSystem.h"
 
 //**************************************************************
 
@@ -58,8 +53,8 @@ std::pair<bool, std::string> ModRSEM::verify_files() {
 
     while (file_name.has_extension()) file_name = file_name.stem();
     _filename = file_name.string();
-    _exp_out = (boostFS::path(_expression_outpath)/  _filename).string();
-    _rsem_out = _exp_out + ".genes.results";
+    _exp_out = PATHS(_expression_outpath, _filename);
+    _rsem_out = _exp_out + RSEM_OUT_FILE;
     if (FS_file_exists(_rsem_out)) {
         FS_dprint("File found at " + _rsem_out +  "\nmoving to filter transcriptome");
         return std::make_pair(true, "");
@@ -120,7 +115,7 @@ void ModRSEM::execute() {
     rsem_arg = ref_exe + " "
                + _inpath + " "
                + ref_path;
-    std_out = PATHS(_expression_outpath, _filename) + "_rsem_reference";
+    std_out = PATHS(_expression_outpath, _filename) + STD_REF_OUT;
     FS_dprint("Executing following command\n" + rsem_arg);
     execute_cmd(rsem_arg.c_str(), std_out);
     FS_dprint("Reference successfully created");
@@ -134,7 +129,7 @@ void ModRSEM::execute() {
                ref_path + " " +
                _exp_out;
     if (!_issingle) rsem_arg += " --paired-end";
-    std_out = PATHS(_expression_outpath, _filename) + "_rsem_exp";
+    std_out = PATHS(_expression_outpath, _filename) + STD_EXP_OUT;
     FS_dprint("Executing following command\n" + rsem_arg);
     if (execute_cmd(rsem_arg.c_str(), std_out)!=0) {
         throw ExceptionHandler("Error in running expression analysis",ENTAP_ERR::E_INIT_TAX_READ);
@@ -206,9 +201,9 @@ std::string ModRSEM::filter() {
         throw ExceptionHandler("File does not exist at: " + _rsem_out, ENTAP_ERR::E_RUN_RSEM_EXPRESSION);
     }
 
-    boostFS::remove_all(_processed_path);
-    boostFS::create_directories(_processed_path);
-    boostFS::create_directories(_figure_path);
+    FS_delete_dir(_processed_path);
+    FS_create_dir(_processed_path);
+    FS_create_dir(_figure_path);
     boostFS::path path (_rsem_out);
 
     fig_txt_box_path = PATHS(_figure_path, GRAPH_TXT_BOX_PLOT);
@@ -257,8 +252,7 @@ std::string ModRSEM::filter() {
             count_kept++;
         } else {
             // Removed sequence
-            querySequence->set_kept(false);
-            querySequence->set_is_expression_kept(false);
+            querySequence->QUERY_FLAG_CLEAR(QuerySequence::QUERY_EXPRESSION_KEPT);
             removed_file << querySequence->get_sequence() << std::endl;
             file_fig_box << GRAPH_REJECTED_FLAG << '\t' << std::to_string(length) << std::endl;
 
@@ -373,15 +367,14 @@ bool ModRSEM::rsem_validate_file(std::string filename) {
     std::string rsem_arg;
     std::string out_path;
 
-    rsem_arg = (boostFS::path(_exe_path) / boostFS::path("rsem-sam-validator")).string() +
-               " " + _alignpath;
-    out_path = (boostFS::path(_expression_outpath) / boostFS::path(filename)).string() + "_rsem_valdate";
+    rsem_arg = PATHS(_exe_path, RSEM_SAM_VALID) + " " + _alignpath;
+    out_path = PATHS(_expression_outpath, filename) + STD_VALID_OUT;
     // only thrown in failure in calling rsem
     FS_dprint("Executing RSEM command:\n" + rsem_arg);
     if (execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) return false;
     FS_dprint("RSEM validate executed successfully");
     // RSEM does not always return error code if file is invalid, only seen in .err
-    return (is_file_empty(out_path+".err"));
+    return (FS_file_no_lines(out_path + EXT_ERR));
 }
 
 
@@ -408,12 +401,12 @@ bool ModRSEM::rsem_conv_to_bam(std::string file_name) {
     std::string std_out;
 
     bam_out  = PATHS(_expression_outpath, file_name);
-    rsem_arg = (boostFS::path(_exe_path) / boostFS::path("convert-sam-for-rsem")).string() +
+    rsem_arg = PATHS(_exe_path, RSEM_CONV_SAM) +
                " -p " + std::to_string(_threads) + " " + _alignpath + " " + bam_out;
-    std_out  = _expression_outpath + file_name + "_rsem_convert";
+    std_out  = _expression_outpath + file_name + STD_CONVERT_SAM;
     if (execute_cmd(rsem_arg.c_str(), std_out)!=0)return false;
-    if (!is_file_empty(std_out+".err")) return false;
-    _alignpath = bam_out + ".bam";
+    if (!FS_file_no_lines(std_out+EXT_ERR)) return false;
+    _alignpath = bam_out + EXT_BAM;
     return true;
 }
 
@@ -442,22 +435,3 @@ void ModRSEM::set_data(int thread, float fpkm, bool single) {
 }
 
 
-/**
- * ======================================================================
- * Function ModRSEM::is_file_empty(std::string path)
- *
- * Description          - Check if specific file is empty (has no lines)
- *
- * Notes                - Used for certain RSEM execution that does not
- *                        relay error code of non-zero on failure
- *
- * @param path          - Path to file
- *
- * @return              - True if file is empty
- *
- * =====================================================================
- */
-bool ModRSEM::is_file_empty(std::string path) {
-    std::ifstream ifstream(path);
-    return ifstream.peek() == std::ifstream::traits_type::eof();
-}

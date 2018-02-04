@@ -167,7 +167,7 @@ void ModInterpro::parse() {
             std::map<std::string, InterProData>::iterator it = interpro_map.find(pair.first);
             if (it != interpro_map.end()) {
                 count_hits++;
-                pair.second->set_is_interpro_hit(true);
+                pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_INTERPRO);
                 interpro_output = it->second.interID + "(" + it->second.interDesc + ")";
                 protein_output  = it->second.databaseID + "(" + it->second.databaseDesc + ")";
                 go_terms_parsed = parse_go_list(it->second.go_terms,GO_DATABASE,',');
@@ -228,12 +228,12 @@ void ModInterpro::set_data(std::string & unused, std::vector<std::string>& inter
     _databases    = interpro;
 
     try {
-        boostFS::remove_all(_proc_dir);
-        boostFS::remove_all(_figure_dir);
+        FS_delete_dir(_proc_dir);
+        FS_delete_dir(_figure_dir);
 
-        boostFS::create_directories(_interpro_dir);
-        boostFS::create_directories(_proc_dir);
-        boostFS::create_directories(_figure_dir);
+        FS_create_dir(_interpro_dir);
+        FS_create_dir(_proc_dir);
+        FS_create_dir(_figure_dir);
     } catch (...) {
         throw ExceptionHandler("Unable to remove or create directories", ENTAP_ERR::E_FILE_IO);
     }

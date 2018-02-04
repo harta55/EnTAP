@@ -81,8 +81,8 @@ SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::str
     // Species already checked for validity in Init
     if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_SPECIES)) {
         _input_species = user_flags[ENTAP_CONFIG::INPUT_FLAG_SPECIES].as<std::string>();
-        std::transform(_input_species.begin(), _input_species.end(), _input_species.begin(), ::tolower);
-        std::replace(_input_species.begin(), _input_species.end(), '_',' ');
+        LOWERCASE(_input_species);
+        STR_REPLACE(_input_species, '_', ' ');
     }
     _qcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE].as<fp32>();
     _tcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE].as<fp32>();
@@ -237,7 +237,7 @@ std::vector<std::string> SimilaritySearch::diamond() {
             boostFS::path database_name(data_path);
             database_name = database_name.stem();
             filename = _blast_type + "_" + transc_name.string() + "_" + database_name.string();
-            out_path = PATHS(_sim_search_dir,filename) + ".out";
+            out_path = PATHS(_sim_search_dir,filename) + EXT_OUT;
             std_out  = PATHS(_sim_search_dir,filename) + "_std";
             _file_to_database[out_path] = database_name.string();
             if (FS_file_exists(out_path)) {
@@ -574,7 +574,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
                     species_map[species]++;
                 } else species_map[species] = 1;
 
-                if (it->second.is_informative()) {
+                if (it->second.QUERY_FLAG_GET(QuerySequence::QUERY_INFORMATIVE)) {
                     count_informative++;
                     // Graphing
                     if (graphing_sum_map[frame].find(INFORMATIVE_FLAG) != graphing_sum_map[frame].end()) {
@@ -590,7 +590,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
 
                 if (is_final) {
                     pair.second->set_sim_struct(it->second.get_sim_struct());
-                    pair.second->set_is_database_hit(true);
+                    pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_BLAST_HIT);
                 }
 
             }
@@ -665,7 +665,7 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     if (count_contam > 0) {
         ss << "\n\t\tFlagged contaminants (all % based on total contaminants):";
         for (auto &pair : contam_map) {
-            percent = ((double) pair.second / count_contam) * 100;
+            percent = ((fp64) pair.second / count_contam) * 100;
             ss
                     << "\n\t\t\t" << pair.first << ": " << pair.second << "(" << percent << "%)";
         }
@@ -750,7 +750,7 @@ std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(st
     for (std::map<std::string,QuerySequence> &database_map : diamond_maps) {
         for (auto &pair : database_map) {
             pair.second.setIs_better_hit(false);
-            pair.second.set_is_database_hit(true);
+            pair.second.QUERY_FLAG_SET(QuerySequence::QUERY_BLAST_HIT);
             std::map<std::string,QuerySequence>::iterator it = compiled_hit_map.find(pair.first);
             if (it != compiled_hit_map.end()) {
                 if (pair.second > it->second) it->second = pair.second;
@@ -797,7 +797,7 @@ std::pair<bool,std::string> SimilaritySearch::is_contaminant(std::string lineage
                     std::vector<std::string> &contams) {
     // species and tax database both lowercase
     if (contams.empty()) return std::pair<bool,std::string>(false,"");
-    std::transform(lineage.begin(), lineage.end(), lineage.begin(), ::tolower);
+    LOWERCASE(lineage);
     for (auto const &contaminant:contams) {
         if (lineage.find(contaminant) != std::string::npos){
             return std::pair<bool,std::string>(true,contaminant);
@@ -829,7 +829,7 @@ std::string SimilaritySearch::get_species(std::string &title) {
 }
 
 bool SimilaritySearch::is_informative(std::string title) {
-    std::transform(title.begin(),title.end(),title.begin(),::tolower);
+    LOWERCASE(title);
     for (std::string &item : _uninformative_vect) { // Already lowercase
         if (title.find(item) != std::string::npos) return false;
     }
@@ -847,10 +847,9 @@ void SimilaritySearch::print_header(std::string file) {
 
 void SimilaritySearch::get_tax_entry(std::string species, tax_serial_map_t &database, TaxEntry &taxEntry) {
     std::string temp_species;
-    std::string lineage = "";
 
     if (species.empty()) return;
-    std::transform(species.begin(), species.end(), species.begin(), ::tolower);
+    LOWERCASE(species);
 
     if (database.find(species) != database.end() && !database.at(species).is_empty()) {
         taxEntry = database[species];

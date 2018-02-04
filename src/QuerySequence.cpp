@@ -39,7 +39,7 @@
 bool QuerySequence::operator>(const QuerySequence &querySequence) {
     if (this->is_better_hit) {
         // For hits of the same database "better hit"
-        double eval1 = this->_e_val, eval2 = querySequence._e_val;
+        fp64 eval1 = this->_e_val, eval2 = querySequence._e_val;
         if (eval1 == 0) eval1 = 1E-180;
         if (eval2 == 0) eval2 = 1E-180;
         if (fabs(log10(eval1) - log10(eval2)) < E_VAL_DIF) {
@@ -57,7 +57,7 @@ bool QuerySequence::operator>(const QuerySequence &querySequence) {
         }
     }else {
         // For overall best hits between databases "best hit"
-        double coverage_dif = fabs(this->_coverage - querySequence._coverage);
+        fp64 coverage_dif = fabs(this->_coverage - querySequence._coverage);
         if (coverage_dif > COV_DIF) {
             return this->_coverage > querySequence._coverage;
         }
@@ -76,7 +76,7 @@ void operator+(const QuerySequence &querySequence) {
 void QuerySequence::set_sim_search_results(std::string database,std::string qseqid,std::string sseqid,
                              std::string pident,std::string length, std::string mismatch, std::string gap, std::string qstart,
                              std::string qend , std::string sstart, std::string send, std::string title, std::string bit,
-                             double evalue,  double cover) {
+                             fp64 evalue,  fp64 cover) {
     _sim_search_results.database_path = database;
     _sim_search_results.qseqid = qseqid;
     _sim_search_results.sseqid = sseqid;
@@ -140,7 +140,7 @@ bool QuerySequence::isIs_protein() const {
 
 QuerySequence::QuerySequence(bool is_protein, std::string seq){
     init_sequence();
-    this->_is_database_hit = false;
+    QUERY_FLAG_CLEAR(QUERY_BLAST_HIT);
     this->is_protein = is_protein;
     _seq_length = calc_seq_length(seq,is_protein);
     if (!seq.empty() && seq[seq.length()-1] == '\n') {
@@ -203,7 +203,7 @@ void QuerySequence::setIs_better_hit(bool is_better_hit) {
 }
 
 void QuerySequence::set_is_informative(bool _is_informative) {
-    QuerySequence::_is_informative = _is_informative;
+    QUERY_FLAG_SET(QUERY_INFORMATIVE);
     _is_informative ? _sim_search_results.yes_no_inform = "Yes" : _sim_search_results.yes_no_inform = "No";
 }
 
@@ -219,16 +219,8 @@ const std::string &QuerySequence::get_contam_type() const {
     return _sim_search_results.contam_type;
 }
 
-bool QuerySequence::is_informative() const {
-    return _is_informative;
-}
-
 void QuerySequence::set_contam_type(const std::string &_contam_type) {
     QuerySequence::_sim_search_results.contam_type = _contam_type;
-}
-
-void QuerySequence::set_is_database_hit(bool _is_database_hit) {
-    QuerySequence::_is_database_hit = _is_database_hit;
 }
 
 // TODO move to eggnog module
@@ -242,11 +234,11 @@ void QuerySequence::set_eggnog_results(std::string seed_o, std::string seed_o_ev
     this->_eggnog_results.seed_score = seed_score;
     this->_eggnog_results.predicted_gene = predicted;
     this->_eggnog_results.ogs = ogs;
-    this->_is_eggnog_hit = true;
+    this->QUERY_FLAG_SET(QUERY_EGGNOG_HIT);
 
     // Lookup/Assign Tax Scope
     if (!annotation_tax.empty()) {
-        unsigned short p = (unsigned short) (annotation_tax.find("NOG"));
+        uint16 p = (uint16) (annotation_tax.find("NOG"));
         if (p != std::string::npos) {
             this->_eggnog_results.tax_scope = annotation_tax.substr(0,p+3);
             this->_eggnog_results.tax_scope_readable =
@@ -282,7 +274,7 @@ void QuerySequence::set_eggnog_results(std::string seed_o, std::string seed_o_ev
         std::istringstream ss(ogs);
         std::unordered_map<std::string,std::string> og_map; // Not fully used right now
         while (std::getline(ss,temp,',')) {
-            unsigned short p = (unsigned short) temp.find("@");
+            uint16 p = (uint16) temp.find("@");
             og_map[temp.substr(p+1)] = temp.substr(0,p);
         }
         _eggnog_results.og_key = "";
@@ -348,15 +340,10 @@ void QuerySequence::init_sequence() {
     _frame = "";
     _sequence_p = "";
     _sequence_n = "";
-    _is_family_assigned = false;
-    _is_one_go = false;
-    _is_one_kegg = false;
-    _is_database_hit = false;
-    _is_expression_kept = true;
-    _is_eggnog_hit  = false;
-    _is_interpro_hit = false;
-    _is_frame_kept = true;
-    _kept = true;
+
+    _query_flags = 0;
+    QUERY_FLAG_SET(QUERY_FRAME_KEPT);
+    QUERY_FLAG_SET(QUERY_EXPRESSION_KEPT);
 }
 
 void QuerySequence::set_lineage(const std::string &_lineage) {
@@ -392,9 +379,9 @@ void QuerySequence::set_tax_score(std::string input_lineage) {
         lineage.erase(0,p+del.length());
     }
     if (tax_score == 0) {
-        if(_is_informative) tax_score += INFORM_ADD;
+        if(QUERY_FLAG_GET(QUERY_INFORMATIVE)) tax_score += INFORM_ADD;
     } else {
-        if (_is_informative) tax_score *= INFORM_FACTOR;
+        if (QUERY_FLAG_GET(QUERY_INFORMATIVE)) tax_score *= INFORM_FACTOR;
     }
     _tax_score = tax_score;
 }
@@ -415,42 +402,6 @@ void QuerySequence::set_sim_struct(const SimSearchResults &sim) {
 void QuerySequence::setIs_protein(bool is_protein) {
     QuerySequence::is_protein = is_protein;
 }
-
-bool QuerySequence::is_is_database_hit() const {
-    return _is_database_hit;
-}
-
-bool QuerySequence::is_is_family_assigned() const {
-    return _is_family_assigned;
-}
-
-void QuerySequence::set_is_family_assigned(bool _is_family_assigned) {
-    QuerySequence::_is_family_assigned = _is_family_assigned;
-}
-
-bool QuerySequence::is_is_one_go() const {
-    return _is_one_go;
-}
-
-void QuerySequence::set_is_one_go(bool _is_one_go) {
-    QuerySequence::_is_one_go = _is_one_go;
-}
-
-bool QuerySequence::is_is_one_kegg() const {
-    return _is_one_kegg;
-}
-
-void QuerySequence::set_is_one_kegg(bool _is_one_kegg) {
-    QuerySequence::_is_one_kegg = _is_one_kegg;
-}
-
-bool QuerySequence::is_is_expression_kept() const {
-    return _is_expression_kept;
-}
-
-void QuerySequence::set_is_expression_kept(bool _is_expression_kept) {
-    QuerySequence::_is_expression_kept = _is_expression_kept;
-};
 
 std::string QuerySequence::print_tsv(const std::vector<const std::string*>& headers) {
     std::stringstream ss;
@@ -624,7 +575,7 @@ std::string QuerySequence::format_eggnog(std::string& input) {
 void QuerySequence::set_interpro_results(std::string& eval, std::string& database_info, std::string& data,
                                          std::string& interpro_info, std::string& pathway,
                                          QuerySequence::go_struct& go_terms) {
-    this->_is_interpro_hit                   = true;
+    this->QUERY_FLAG_SET(QUERY_INTERPRO);
     this->_interpro_results.database_desc_id = database_info;
     this->_interpro_results.database_type    = data;
     this->_interpro_results.parsed_go        = go_terms;
@@ -633,33 +584,19 @@ void QuerySequence::set_interpro_results(std::string& eval, std::string& databas
     this->_interpro_results.e_value          = eval;
 }
 
-void QuerySequence::set_is_interpro_hit(bool _is_interpro_hit) {
-    QuerySequence::_is_interpro_hit = _is_interpro_hit;
+bool QuerySequence::is_kept() {
+    return QUERY_FLAG_GET(QUERY_EXPRESSION_KEPT) &&
+            QUERY_FLAG_GET(QUERY_FRAME_KEPT);
 }
 
-bool QuerySequence::is_kept() const {
-    return _kept;
+bool QuerySequence::QUERY_FLAG_GET(QUERY_FLAGS flag) {
+    return (_query_flags & flag) != 0;
 }
 
-void QuerySequence::set_kept(bool _kept) {
-    QuerySequence::_kept = _kept;
+void QuerySequence::QUERY_FLAG_SET(QUERY_FLAGS flag) {
+    _query_flags |= flag;
 }
 
-bool QuerySequence::is_is_frame_kept() const {
-    return _is_frame_kept;
-}
-
-void QuerySequence::set_is_frame_kept(bool _is_frame_kept) {
-    QuerySequence::_is_frame_kept = _is_frame_kept;
-}
-
-bool QuerySequence::get_state_flag(ExecuteStates state) {
-    switch (state) {
-        case RSEM:
-            return this->_is_expression_kept;
-        case FRAME_SELECTION:
-            return this->_is_frame_kept;
-        default:
-            return false;
-    }
+void QuerySequence::QUERY_FLAG_CLEAR(QUERY_FLAGS flag) {
+    _query_flags &= ~flag;
 }

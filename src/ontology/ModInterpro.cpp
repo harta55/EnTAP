@@ -431,5 +431,5 @@ std::string ModInterpro::format_interpro(void) {
 }
 
 ModInterpro::~ModInterpro() {
-    FS_dprint("Killing object ModInterpro...");
+    FS_dprint("Killing object - ModInterpro");
 }

@@ -132,7 +132,7 @@ void ModRSEM::execute() {
     std_out = PATHS(_expression_outpath, _filename) + STD_EXP_OUT;
     FS_dprint("Executing following command\n" + rsem_arg);
     if (execute_cmd(rsem_arg.c_str(), std_out)!=0) {
-        throw ExceptionHandler("Error in running expression analysis",ENTAP_ERR::E_INIT_TAX_READ);
+        throw ExceptionHandler("Error in running expression analysis",ENTAP_ERR::E_RUN_RSEM_EXPRESSION);
     }
 }
 
@@ -432,6 +432,10 @@ void ModRSEM::set_data(int thread, float fpkm, bool single) {
     _threads = thread;
     _fpkm = fpkm;
     _issingle = single;
+}
+
+ModRSEM::~ModRSEM() {
+    FS_dprint("Killing object - ModRSEM");
 }
 
 

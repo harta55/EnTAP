@@ -116,13 +116,11 @@ public:
     void setQseqid(const std::string &qseqid);
     void setSequence(std::string&);
     // TODO switch to map results
-    void set_eggnog_results(std::string,std::string,std::string,std::string,std::string,
-                    std::string,std::string,std::string, DatabaseHelper &);
+    void set_eggnog_results(const EggnogResults&);
     void set_interpro_results(std::string&,std::string&,std::string&,std::string&,
                               std::string&,go_struct&);
     std::string print_tsv(const std::vector<const std::string*>&);
     std::string print_tsv(std::vector<const std::string*>& , short);
-    std::string format_eggnog(std::string&);
 
     void set_tax_score(std::string);
     void init_header();
@@ -135,7 +133,6 @@ public:
     bool isContaminant() const;
     void setContaminant(bool contaminant);
     void set_lineage(const std::string &_lineage);
-    void set_go_parsed(const go_struct &_go_parsed, short);
     void setSeq_length(unsigned long seq_length);
     void setFrame(const std::string &frame);
     void setSpecies(const std::string &species);
@@ -150,7 +147,6 @@ public:
     const std::string &get_sequence() const;
     void setIs_protein(bool is_protein);
     void set_fpkm(float _fpkm);
-    const std::string &get_tax_scope() const;
     bool is_kept();
     bool QUERY_FLAG_GET(QUERY_FLAGS);
     void QUERY_FLAG_SET(QUERY_FLAGS);

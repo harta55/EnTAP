@@ -49,6 +49,8 @@ public:
             QueryData *query) :
     AbstractExpression(exe, out, in, proc, fig, exp, align,graphing, query){}
 
+    ~ModRSEM();
+
     virtual std::pair<bool, std::string> verify_files() override ;
     virtual void execute() override ;
     virtual std::string filter() override ;

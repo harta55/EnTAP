@@ -27,12 +27,10 @@
 
 
 #include <iostream>
-#include <string>
 #include <algorithm>
 #include <sstream>
 #include "QuerySequence.h"
 #include "EntapGlobals.h"
-#include "EggnogLevels.h"
 #include "FileSystem.h"
 
 // best hit selection
@@ -211,10 +209,6 @@ const std::string &QuerySequence::get_species() const {
     return _sim_search_results.species;
 }
 
-const std::string &QuerySequence::get_tax_scope() const {
-    return _eggnog_results.tax_scope_readable;
-}
-
 const std::string &QuerySequence::get_contam_type() const {
     return _sim_search_results.contam_type;
 }
@@ -224,108 +218,11 @@ void QuerySequence::set_contam_type(const std::string &_contam_type) {
 }
 
 // TODO move to eggnog module
-void QuerySequence::set_eggnog_results(std::string seed_o, std::string seed_o_eval,
-                                       std::string seed_score, std::string predicted,
-                                       std::string go_terms, std::string kegg,
-                                       std::string annotation_tax, std::string ogs,
-                                       DatabaseHelper &database) {
-    this->_eggnog_results.seed_ortholog = seed_o;
-    this->_eggnog_results.seed_evalue = seed_o_eval;
-    this->_eggnog_results.seed_score = seed_score;
-    this->_eggnog_results.predicted_gene = predicted;
-    this->_eggnog_results.ogs = ogs;
+void QuerySequence::set_eggnog_results(const EggnogResults &eggnogResults) {
+    this->_eggnog_results = eggnogResults;
     this->QUERY_FLAG_SET(QUERY_EGGNOG_HIT);
+    this->QUERY_FLAG_SET(QUERY_FAMILY_ASSIGNED);
 
-    // Lookup/Assign Tax Scope
-    if (!annotation_tax.empty()) {
-        uint16 p = (uint16) (annotation_tax.find("NOG"));
-        if (p != std::string::npos) {
-            this->_eggnog_results.tax_scope = annotation_tax.substr(0,p+3);
-            this->_eggnog_results.tax_scope_readable =
-                    EGGNOG_LEVELS[this->_eggnog_results.tax_scope];
-        } else {
-            this->_eggnog_results.tax_scope = annotation_tax;
-            this->_eggnog_results.tax_scope_readable = "";
-        }
-    } else {
-        this->_eggnog_results.tax_scope = "";
-        this->_eggnog_results.tax_scope_readable = "";
-    }
-
-    // Push each GO term to a new position in vector array
-    std::string temp;
-    if (!go_terms.empty()) {
-        std::istringstream ss(go_terms);
-        while (std::getline(ss,temp,',')) {
-            this->_eggnog_results.raw_go.push_back(temp);
-        }
-    }
-
-    // Push each KEGG term to a new position in vector array
-    if (!kegg.empty()) {
-        std::istringstream keggs(kegg);
-        while (std::getline(keggs,temp,',')) {
-            this->_eggnog_results.raw_kegg.push_back(temp);
-        }
-    }
-
-    // Find OG query was assigned to
-    if (!ogs.empty()) {
-        std::istringstream ss(ogs);
-        std::unordered_map<std::string,std::string> og_map; // Not fully used right now
-        while (std::getline(ss,temp,',')) {
-            uint16 p = (uint16) temp.find("@");
-            og_map[temp.substr(p+1)] = temp.substr(0,p);
-        }
-        _eggnog_results.og_key = "";
-        if (og_map.find(_eggnog_results.tax_scope) != og_map.end()) {
-            _eggnog_results.og_key = og_map[_eggnog_results.tax_scope];
-        }
-    }
-
-    // Lookup description, KEGG, protein domain from SQL database
-    _eggnog_results.sql_kegg = "";
-    _eggnog_results.description = "";
-    _eggnog_results.protein_domains = "";
-    if (!_eggnog_results.og_key.empty()) {
-        std::vector<std::vector<std::string>>results;
-        std::string sql_kegg;
-        std::string sql_desc;
-        std::string sql_protein;
-
-        char *query = sqlite3_mprintf(
-                "SELECT description, KEGG_freq, SMART_freq FROM og WHERE og=%Q",
-                _eggnog_results.og_key.c_str());
-        try {
-            results = database.query(query);
-            sql_desc = results[0][0];
-            sql_kegg = results[0][1];
-            sql_protein = results[0][2];
-            if (!sql_desc.empty() && sql_desc.find("[]") != 0) _eggnog_results.description = sql_desc;
-            if (!sql_kegg.empty() && sql_kegg.find("[]") != 0) {
-                _eggnog_results.sql_kegg = format_eggnog(sql_kegg);
-            }
-            if (!sql_protein.empty() && sql_protein.find("{}") != 0){
-                _eggnog_results.protein_domains = format_eggnog(sql_protein);
-            }
-        } catch (std::exception &e) {
-            // Do not fatal error
-            FS_dprint(e.what());
-        }
-    }
-}
-
-
-void QuerySequence::set_go_parsed(const QuerySequence::go_struct &_go_parsed, short i) {
-    switch (i) {
-        case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-            _eggnog_results.parsed_go = _go_parsed;
-            break;
-        case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
-            break;
-        default:
-            break;
-    }
 }
 
 void QuerySequence::init_sequence() {
@@ -523,53 +420,6 @@ void QuerySequence::init_header() {
             {&ENTAP_EXECUTE::HEADER_INTER_DATA_TYPE , &_interpro_results.database_type},
             {&ENTAP_EXECUTE::HEADER_INTER_PATHWAY   , &_interpro_results.pathways}
     };
-}
-
-
-std::string QuerySequence::format_eggnog(std::string& input) {
-
-    enum FLAGS {
-        DOM    = 0x01,
-        INNER  = 0x02,
-        INNER2 = 0x04,
-        STR    = 0x08,
-        FOUND  = 0x10
-    };
-
-    unsigned char bracketFlag = 0x0;
-    std::string output = "";
-
-    for (char c : input) {
-        if (c == '{') {
-            bracketFlag |= DOM;
-        } else if (c == '[' && !(bracketFlag & INNER)) {
-            bracketFlag |= INNER;
-            if (bracketFlag & DOM) output += " (";
-        } else if (c == '[' && !(bracketFlag & INNER2)) {
-            bracketFlag |= INNER2;
-        } else if (c == '}') {
-            bracketFlag &= ~DOM;
-            bracketFlag &= ~FOUND;
-            output = output.substr(0,output.length()-2); // Remove trailing ', '
-        } else if (c == ']' && (bracketFlag & INNER2)) {
-            bracketFlag &= ~INNER2;
-            bracketFlag &= ~FOUND;
-            output += ", ";
-        } else if (c == ']' && (bracketFlag & INNER)) {
-            bracketFlag &= ~INNER;
-            bracketFlag &= ~FOUND;
-            output = output.substr(0,output.length()-2); // Remove trailing ', '
-            if (bracketFlag & DOM) output += "), ";
-        } else if (c == '\"') {
-            bracketFlag ^= STR;
-            if (!(bracketFlag & STR)) bracketFlag |= FOUND;
-            if (!(bracketFlag & INNER)) bracketFlag &= ~FOUND;
-        } else {
-            if (bracketFlag & FOUND) continue;
-            if (bracketFlag & STR) output += c;
-        }
-    }
-    return output;
 }
 
 void QuerySequence::set_interpro_results(std::string& eval, std::string& database_info, std::string& data,

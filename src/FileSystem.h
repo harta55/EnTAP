@@ -51,6 +51,7 @@ bool FS_directory_iterate(bool, std::string&);
 bool FS_check_fasta(std::string&);
 bool FS_create_dir(std::string&);
 void FS_delete_dir(std::string&);
+std::vector<std::string> FS_list_to_vect(char, std::string&);
 //**************************************************************
 
 const std::string EXT_TXT = ".txt";

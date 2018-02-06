@@ -47,6 +47,8 @@ public:
                   QueryData *querydata) :
             AbstractFrame(exe, out, in, proc, fig, frame, graphing, querydata){}
 
+    ~ModGeneMarkST();
+
     virtual std::pair<bool, std::string> verify_files() override ;
     virtual std::string execute() override ;
     virtual void parse() override ;

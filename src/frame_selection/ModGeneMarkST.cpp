@@ -345,7 +345,7 @@ void ModGeneMarkST::parse() {
         FS_print_stats(stat_out_msg);
         FS_dprint("Success!");
 
-        //------------------- Figure handling ---------------//
+        //---------------------- Figure handling ----------------------//
         FS_dprint("Beggining figure handling...");
         file_figure_results << GRAPH_REJECTED_FLAG           << '\t' << std::to_string(count_removed)   <<std::endl;
         file_figure_results << FRAME_SELECTION_FIVE_FLAG     << '\t' << std::to_string(count_map[FRAME_SELECTION_FIVE_FLAG]) <<std::endl;
@@ -366,7 +366,7 @@ void ModGeneMarkST::parse() {
         graphingStruct.graph_type     = GRAPH_COMP_BOX_FLAG;
         pGraphingManager->graph(graphingStruct);
         FS_dprint("Success!");
-        //---------------------------------------------------//
+        //-----------------------------------------------------------//
 
         FrameStats final_stats;
         final_stats.removed   = count_removed;
@@ -501,4 +501,8 @@ void ModGeneMarkST::genemark_parse_lst(std::string &lst_path, frame_map_t &curre
         }
     }
     FS_dprint("Success!");
+}
+
+ModGeneMarkST::~ModGeneMarkST() {
+    FS_dprint("Killing object - ModGeneMarkST");
 }

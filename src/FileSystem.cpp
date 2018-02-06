@@ -366,3 +366,33 @@ bool FS_file_no_lines(std::string path) {
     std::ifstream ifstream(path);
     return ifstream.peek() == std::ifstream::traits_type::eof();
 }
+
+
+/**
+ * ======================================================================
+ * Function std::vector<std::string> FS_list_to_vect(char it, std::string &list)
+ *
+ * Description          - Not FS but just threw here...
+ *                      - Turns string of list (red,blue,green) to a vector of these
+ *
+ * Notes                - None
+ *
+ * @param it            - Iterating character
+ * @param list          - String of list (ie: red,blue,green)
+ *
+ * @return              - True if file is empty
+ *
+ * =====================================================================
+ */
+std::vector<std::string> FS_list_to_vect(char it, std::string &list) {
+    std::string temp;
+    std::vector<std::string> output;
+
+    if (list.empty()) return std::vector<std::string>();
+
+    std::istringstream vals(list);
+    while (std::getline(vals,temp,it)) {
+        output.push_back(temp);
+    }
+    return output;
+}

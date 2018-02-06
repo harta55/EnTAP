@@ -50,11 +50,19 @@ public:
 
 private:
 
+    void get_tax_scope(std::string&, QuerySequence::EggnogResults&);
+    void get_sql_data(QuerySequence::EggnogResults&, DatabaseHelper&);
+    std::string format_sql_data(std::string&);
+    void get_og_query(QuerySequence::EggnogResults&);
+
     static constexpr short EGGNOG_COL_NUM     = 12;
     const std::string EGGNOG_DIRECTORY        = "EggNOG/";
     const std::string GRAPH_EGG_TAX_BAR_TITLE = "Top_10_Tax_Levels";
     const std::string GRAPH_EGG_TAX_BAR_PNG   = "eggnog_tax_scope.png";
     const std::string GRAPH_EGG_TAX_BAR_TXT   = "eggnog_tax_scope.txt";
+    const std::string EGG_ANNOT_RESULTS       = "annotation_results";
+    const std::string EGG_ANNOT_NO_HIT_RESULTS= "annotation_results_no_hits";
+    const std::string EGG_ANNOT_STD           = "annotation_std";
 
     std::string _figure_dir;
     std::string _proc_dir;

@@ -33,6 +33,7 @@
 #include "ModEggnog.h"
 #include "../ExceptionHandler.h"
 #include "../FileSystem.h"
+#include "../EggnogLevels.h"
 
 std::pair<bool, std::string> ModEggnog::verify_files() {
     std::string                        annotation_base_flag;
@@ -86,11 +87,9 @@ void ModEggnog::parse() {
     std::string                              fig_png_bar_go_overall;
     std::string                              fig_txt_bar_ortho;
     std::string                              fig_png_bar_ortho;
-    std::string                              tax_scope_readable;
     std::string                              fig_txt_go_bar;
     std::string                              fig_png_go_bar;
     go_serial_map_t                          GO_DATABASE;
-    std::map<std::string, int>               eggnog_map;
     uint32                                   count_total_go_hits=0;
     uint32                                   count_total_go_terms=0;
     uint32                                   count_go_bio=0;
@@ -108,8 +107,9 @@ void ModEggnog::parse() {
     DatabaseHelper                           EGGNOG_DATABASE;
     std::map<std::string, uint32>            tax_scope_ct_map;
     GO_top_map_t                             go_combined_map;     // Just for convenience
-    go_format_t                              go_parsed;
     GraphingData                             graphingStruct;
+
+    QuerySequence::EggnogResults            EggnogResults;
 
     ss<<std::fixed<<std::setprecision(2);
     boostFS::remove_all(_proc_dir);
@@ -137,16 +137,26 @@ void ModEggnog::parse() {
             QUERY_MAP_T::iterator it = (*pQUERY_DATA->get_sequences_ptr()).find(qseqid);
             if (it != (*pQUERY_DATA->get_sequences_ptr()).end()) {
                 count_TOTAL_hits++;
-                it->second->set_eggnog_results(seed_ortho,seed_e,seed_score,predicted_gene,go_terms,
-                                              kegg,tax_scope,ogs, EGGNOG_DATABASE);
-                go_parsed = parse_go_list(go_terms,GO_DATABASE,',');
-                it->second->set_go_parsed(go_parsed, ENTAP_EXECUTE::EGGNOG_INT_FLAG);
-                it->second->QUERY_FLAG_SET(QuerySequence::QUERY_FAMILY_ASSIGNED);
-                eggnog_map[qseqid] = 1;
-                if (!go_parsed.empty()) {
+
+                EggnogResults = {};
+                EggnogResults.seed_ortholog = seed_ortho;
+                EggnogResults.seed_evalue = seed_e;
+                EggnogResults.seed_score = seed_score;
+                EggnogResults.predicted_gene = predicted_gene;
+                EggnogResults.ogs = ogs;
+                EggnogResults.raw_go = FS_list_to_vect(',', go_terms);    // Turn list into vect
+                EggnogResults.raw_kegg = FS_list_to_vect(',', kegg);      // Turn list into vect
+                get_tax_scope(tax_scope, EggnogResults);        // Map virNOG[6] to viridiplantae
+                get_og_query(EggnogResults);               // Requires tax_scope first, pulls key to SQL database
+                get_sql_data(EggnogResults, EGGNOG_DATABASE);
+                EggnogResults.parsed_go = parse_go_list(go_terms,GO_DATABASE,',');
+
+                it->second->set_eggnog_results(EggnogResults);
+
+                if (!EggnogResults.parsed_go.empty()) {
                     count_total_go_hits++;
                     it->second->QUERY_FLAG_SET(QuerySequence::QUERY_ONE_GO);
-                    for (auto &pair : go_parsed) {
+                    for (auto &pair : EggnogResults.parsed_go) {
                         for (std::string &term : pair.second) {
                             count_total_go_terms++;
                             if (pair.first == GO_MOLECULAR_FLAG) {
@@ -179,12 +189,11 @@ void ModEggnog::parse() {
                 }
 
                 // Compile Taxonomic Orthogroup stats
-                tax_scope_readable = it->second->get_tax_scope();
-                if (!tax_scope_readable.empty()) {
+                if (!EggnogResults.tax_scope_readable.empty()) {
                     count_tax_scope++;
-                    if (tax_scope_ct_map.count(tax_scope_readable)) {
-                        tax_scope_ct_map[tax_scope_readable]++;
-                    } else tax_scope_ct_map[tax_scope_readable] = 1;
+                    if (tax_scope_ct_map.count(EggnogResults.tax_scope_readable)) {
+                        tax_scope_ct_map[EggnogResults.tax_scope_readable]++;
+                    } else tax_scope_ct_map[EggnogResults.tax_scope_readable] = 1;
 
                 }
             }
@@ -204,7 +213,7 @@ void ModEggnog::parse() {
 
     FS_dprint("Success! Computing overall statistics...");
     for (auto &pair : *pQUERY_DATA->get_sequences_ptr()) {
-        if (eggnog_map.find(pair.first) == eggnog_map.end()) {
+        if (!pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_EGGNOG_HIT)) {
             // Unannotated sequence
             if (!pair.second->get_sequence_n().empty()) file_no_hits_nucl<<pair.second->get_sequence_n()<<std::endl;
             file_no_hits_prot << pair.second->get_sequence_p() << std::endl;
@@ -228,10 +237,10 @@ void ModEggnog::parse() {
           "\nTotal unique sequences with family assignment: "     << count_TOTAL_hits <<
           "\nTotal unique sequences without family assignment: "  << count_no_hits;
 
-    // -------- Top Ten Taxonomic Scopes ------- //
+    //--------------------- Top Ten Taxonomic Scopes --------------//
     if (!tax_scope_ct_map.empty()) {
-        std::string fig_txt_tax_bar = (boostFS::path(_figure_dir) / GRAPH_EGG_TAX_BAR_TXT).string();
-        std::string fig_png_tax_bar = (boostFS::path(_figure_dir) / GRAPH_EGG_TAX_BAR_PNG).string();
+        std::string fig_txt_tax_bar = PATHS(_figure_dir, GRAPH_EGG_TAX_BAR_TXT);
+        std::string fig_png_tax_bar = PATHS(_figure_dir, GRAPH_EGG_TAX_BAR_PNG);
         std::ofstream file_tax_bar(fig_txt_tax_bar, std::ios::out | std::ios::app);
         file_tax_bar << "Taxonomic Scope\tCount" << std::endl;
 
@@ -256,7 +265,7 @@ void ModEggnog::parse() {
         graphingStruct.graph_type = GRAPH_TOP_BAR_FLAG;
         pGraphingManager->graph(graphingStruct);
     }
-    // --------------------------------------- //
+    //-------------------------------------------------------------//
 
     ss<<
       "\nTotal unique sequences with at least one GO term: " << count_total_go_hits <<
@@ -268,8 +277,8 @@ void ModEggnog::parse() {
             for (auto &pair : go_combined_map) {
                 if (pair.first.empty()) continue;
                 // Count maps (biological/molecular/cellular/overall)
-                fig_txt_go_bar = (boostFS::path(_figure_dir) / pair.first).string() + std::to_string(lvl)+GRAPH_GO_END_TXT;
-                fig_png_go_bar = (boostFS::path(_figure_dir) / pair.first).string() + std::to_string(lvl)+GRAPH_GO_END_PNG;
+                fig_txt_go_bar = PATHS(_figure_dir, pair.first) + std::to_string(lvl)+GRAPH_GO_END_TXT;
+                fig_png_go_bar = PATHS(_figure_dir, pair.first) + std::to_string(lvl)+GRAPH_GO_END_PNG;
                 std::ofstream file_go_bar(fig_txt_go_bar, std::ios::out | std::ios::app);
                 std::vector<count_pair> go_vect(pair.second.begin(),pair.second.end());
                 std::sort(go_vect.begin(),go_vect.end(),compair());
@@ -333,9 +342,9 @@ void ModEggnog::execute() {
     std::string                        hit_out;
     std::string                        no_hit_out;
 
-    annotation_base_flag = PATHS(_egg_out_dir, "annotation_results");
-    annotation_no_flag   = PATHS(_egg_out_dir, "annotation_results_no_hits");
-    annotation_std       = PATHS(_egg_out_dir, "annotation_std");
+    annotation_base_flag = PATHS(_egg_out_dir, EGG_ANNOT_RESULTS);
+    annotation_no_flag   = PATHS(_egg_out_dir, EGG_ANNOT_NO_HIT_RESULTS);
+    annotation_std       = PATHS(_egg_out_dir, EGG_ANNOT_STD);
     eggnog_command       = "python " + _exe_path + " ";
 
     std::unordered_map<std::string,std::string> eggnog_command_map = {
@@ -424,5 +433,130 @@ bool ModEggnog::is_executable() {
 }
 
 ModEggnog::~ModEggnog() {
-    FS_dprint("Killing object ModEggnog...");
+    FS_dprint("Killing object - ModEggnog");
+}
+
+
+/**
+ * ======================================================================
+ * Function std::pair<std::string, std::string>
+ *                              ModEggnog::get_tax_scope(std::string &scope)
+ *
+ * Description          - Pulls the readable taxonomic scope from the EggnogLevels.h
+ *                        file.
+ *
+ * Notes                - These may change, they are not pulled at configu (hardcoded)
+ *
+ * @param raw_scope     - Raw tax scope from EggNOG output (ie. virNOG[6])
+ *
+ * @return              - Pair (first: tax scope in the form virNOG, second: readable
+ *                              viridiplantae)
+ * ======================================================================
+ */
+void ModEggnog::get_tax_scope(std::string &raw_scope,
+                                    QuerySequence::EggnogResults &eggnogResults) {
+    // Lookup/Assign Tax Scope
+
+    if (!raw_scope.empty()) {
+        uint16 p = (uint16) (raw_scope.find("NOG"));
+        if (p != std::string::npos) {
+            eggnogResults.tax_scope = raw_scope.substr(0,p+3);
+            eggnogResults.tax_scope_readable = EGGNOG_LEVELS[eggnogResults.tax_scope];
+            return;
+        }
+    }
+    eggnogResults.tax_scope  = raw_scope;
+    eggnogResults.tax_scope_readable = "";
+}
+
+void ModEggnog::get_sql_data(QuerySequence::EggnogResults &eggnogResults, DatabaseHelper &database) {
+    // Lookup description, KEGG, protein domain from SQL database
+    if (!eggnogResults.og_key.empty()) {
+        std::vector<std::vector<std::string>>results;
+        std::string sql_kegg;
+        std::string sql_desc;
+        std::string sql_protein;
+
+        char *query = sqlite3_mprintf(
+                "SELECT description, KEGG_freq, SMART_freq FROM og WHERE og=%Q",
+                eggnogResults.og_key.c_str());
+        try {
+            results = database.query(query);
+            sql_desc = results[0][0];
+            sql_kegg = results[0][1];
+            sql_protein = results[0][2];
+            if (!sql_desc.empty() && sql_desc.find("[]") != 0) eggnogResults.description = sql_desc;
+            if (!sql_kegg.empty() && sql_kegg.find("[]") != 0) {
+                eggnogResults.sql_kegg = format_sql_data(sql_kegg);
+            }
+            if (!sql_protein.empty() && sql_protein.find("{}") != 0){
+                eggnogResults.protein_domains = format_sql_data(sql_protein);
+            }
+        } catch (std::exception &e) {
+            // Do not fatal error
+            FS_dprint(e.what());
+        }
+    }
+}
+
+void ModEggnog::get_og_query(QuerySequence::EggnogResults &eggnogResults) {
+    // Find OG query was assigned to
+    std::string temp;
+    if (!eggnogResults.ogs.empty()) {
+        std::istringstream ss(eggnogResults.ogs);
+        std::unordered_map<std::string,std::string> og_map; // Not fully used right now
+        while (std::getline(ss,temp,',')) {
+            uint16 p = (uint16) temp.find("@");
+            og_map[temp.substr(p+1)] = temp.substr(0,p);
+        }
+        eggnogResults.og_key = "";
+        if (og_map.find(eggnogResults.tax_scope) != og_map.end()) {
+            eggnogResults.og_key = og_map[eggnogResults.tax_scope];
+        }
+    }
+}
+
+std::string ModEggnog::format_sql_data(std::string &input) {
+    enum FLAGS {
+        DOM    = 0x01,
+        INNER  = 0x02,
+        INNER2 = 0x04,
+        STR    = 0x08,
+        FOUND  = 0x10
+    };
+
+    unsigned char bracketFlag = 0x0;
+    std::string output = "";
+
+    for (char c : input) {
+        if (c == '{') {
+            bracketFlag |= DOM;
+        } else if (c == '[' && !(bracketFlag & INNER)) {
+            bracketFlag |= INNER;
+            if (bracketFlag & DOM) output += " (";
+        } else if (c == '[' && !(bracketFlag & INNER2)) {
+            bracketFlag |= INNER2;
+        } else if (c == '}') {
+            bracketFlag &= ~DOM;
+            bracketFlag &= ~FOUND;
+            output = output.substr(0,output.length()-2); // Remove trailing ', '
+        } else if (c == ']' && (bracketFlag & INNER2)) {
+            bracketFlag &= ~INNER2;
+            bracketFlag &= ~FOUND;
+            output += ", ";
+        } else if (c == ']' && (bracketFlag & INNER)) {
+            bracketFlag &= ~INNER;
+            bracketFlag &= ~FOUND;
+            output = output.substr(0,output.length()-2); // Remove trailing ', '
+            if (bracketFlag & DOM) output += "), ";
+        } else if (c == '\"') {
+            bracketFlag ^= STR;
+            if (!(bracketFlag & STR)) bracketFlag |= FOUND;
+            if (!(bracketFlag & INNER)) bracketFlag &= ~FOUND;
+        } else {
+            if (bracketFlag & FOUND) continue;
+            if (bracketFlag & STR) output += c;
+        }
+    }
+    return output;
 }

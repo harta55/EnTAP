@@ -35,15 +35,29 @@
 #include "../FileSystem.h"
 #include "../EggnogLevels.h"
 
+
+/**
+ * ======================================================================
+ * Function std::pair<bool, std::string> ModEggnog::verify_files()
+ *
+ * Description          - Checks whether eggnog has already been ran
+ *                      - Will not be called if 'overwrite' is selected by user
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - Pair (first: files found, second: unused)
+ * ======================================================================
+ */
 std::pair<bool, std::string> ModEggnog::verify_files() {
     std::string                        annotation_base_flag;
     std::string                        annotation_no_flag;
     bool                               verified;
 
-    annotation_base_flag = PATHS(_egg_out_dir, "annotation_results");
-    annotation_no_flag   = PATHS(_egg_out_dir, "annotation_results_no_hits");
-    _out_hits            = annotation_base_flag  +".emapper.annotations";
-    _out_no_hits         = annotation_no_flag +".emapper.annotations";
+    annotation_base_flag = PATHS(_egg_out_dir, EGG_ANNOT_RESULTS);
+    annotation_no_flag   = PATHS(_egg_out_dir, EGG_ANNOT_NO_HIT_RESULTS);
+    _out_hits            = annotation_base_flag  + EGG_ANNOT_APPEND;
+    _out_no_hits         = annotation_no_flag + EGG_ANNOT_APPEND;
 
     verified = false;
     FS_dprint("Overwrite was unselected, verifying output files...");
@@ -66,9 +80,16 @@ std::pair<bool, std::string> ModEggnog::verify_files() {
 
 
 /**
+ * ======================================================================
+ * Function void ModEggnog::parse()
  *
- * @param SEQUENCES
- * @param out - <egg results of sequences that hit databases, results of no hits>
+ * Description          - Analyzes eggnog output, parsing and graphing results
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - None
+ * ======================================================================
  */
 void ModEggnog::parse() {
 
@@ -332,6 +353,21 @@ void ModEggnog::parse() {
     FS_dprint("Success!");
 }
 
+
+/**
+ * ======================================================================
+ * Function void ModEggnog::execute()
+ *
+ * Description          - Main execution routine
+ *                      - Generates command for pstreams and runs eggnog
+ *                        against DIAMOND hits and DIAMOND no-hits
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - None
+ * ======================================================================
+ */
 void ModEggnog::execute() {
     FS_dprint("Running eggnog...");
 
@@ -386,6 +422,22 @@ void ModEggnog::execute() {
     FS_dprint("Success!");
 }
 
+
+/**
+ * ======================================================================
+ * Function void ModEggnog::set_data(std::string & eggnog_databse, std::vector<std::string>&)
+ *
+ * Description          - Sets data used by this module
+ *                      - Creates directories to be used
+ *
+ * Notes                - None
+ *
+ * @param eggnog_databse- Eggnog SQL database path
+ * @param unused        -
+ *
+ * @return              - None
+ * ======================================================================
+ */
 void ModEggnog::set_data(std::string & eggnog_databse, std::vector<std::string>&) {
 
     _eggnog_db_path = eggnog_databse;
@@ -422,6 +474,21 @@ std::string ModEggnog::eggnog_format(std::string file) {
     return out_path;
 }
 
+
+
+/**
+ * ======================================================================
+ * Function bool ModEggnog::is_executable()
+ *
+ * Description          - Test command to see if eggnog is properly installed
+ *                      - Called from UserInput.c
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - True/false successful execution or not
+ * ======================================================================
+ */
 bool ModEggnog::is_executable() {
     std::string test_command;
 
@@ -439,8 +506,8 @@ ModEggnog::~ModEggnog() {
 
 /**
  * ======================================================================
- * Function std::pair<std::string, std::string>
- *                              ModEggnog::get_tax_scope(std::string &scope)
+ * Function void ModEggnog::get_tax_scope(std::string &raw_scope,
+                                    QuerySequence::EggnogResults &eggnogResults)
  *
  * Description          - Pulls the readable taxonomic scope from the EggnogLevels.h
  *                        file.
@@ -448,9 +515,9 @@ ModEggnog::~ModEggnog() {
  * Notes                - These may change, they are not pulled at configu (hardcoded)
  *
  * @param raw_scope     - Raw tax scope from EggNOG output (ie. virNOG[6])
+ * @param eggnogResults - Current query sequence Eggnog struc
  *
- * @return              - Pair (first: tax scope in the form virNOG, second: readable
- *                              viridiplantae)
+ * @return              - None
  * ======================================================================
  */
 void ModEggnog::get_tax_scope(std::string &raw_scope,
@@ -469,6 +536,23 @@ void ModEggnog::get_tax_scope(std::string &raw_scope,
     eggnogResults.tax_scope_readable = "";
 }
 
+
+/**
+ * ======================================================================
+ * Function void ModEggnog::get_sql_data(QuerySequence::EggnogResults &eggnogResults,
+ *                                          DatabaseHelper &database)
+ *
+ * Description          - Query EggNOG SQL database and pull relevant info
+ *                      - Sets values in EggnogResults struct
+ *
+ * Notes                - None
+ *
+ * @param database      - DatabaseHelper object of Eggnog database
+ * @param eggnogResults - Current query sequence Eggnog struc
+ *
+ * @return              - None
+ * ======================================================================
+ */
 void ModEggnog::get_sql_data(QuerySequence::EggnogResults &eggnogResults, DatabaseHelper &database) {
     // Lookup description, KEGG, protein domain from SQL database
     if (!eggnogResults.og_key.empty()) {
@@ -499,6 +583,21 @@ void ModEggnog::get_sql_data(QuerySequence::EggnogResults &eggnogResults, Databa
     }
 }
 
+
+/**
+ * ======================================================================
+ * Function void ModEggnog::get_og_query(QuerySequence::EggnogResults &eggnogResults)
+ *
+ * Description          - Find specific OG that aligned to database (based on tax scope)
+ *                      - Sets values in EggnogResults struct
+ *
+ * Notes                - None
+ *
+ * @param eggnogResults - Current query sequence Eggnog struc
+ *
+ * @return              - None
+ * ======================================================================
+ */
 void ModEggnog::get_og_query(QuerySequence::EggnogResults &eggnogResults) {
     // Find OG query was assigned to
     std::string temp;
@@ -516,6 +615,20 @@ void ModEggnog::get_og_query(QuerySequence::EggnogResults &eggnogResults) {
     }
 }
 
+
+/**
+ * ======================================================================
+ * Function std::string ModEggnog::format_sql_data(std::string &input)
+ *
+ * Description          - Parses SQL data and puts it in generic format for EnTAP
+ *
+ * Notes                - None
+ *
+ * @param input         - Unformatted SQL data
+ *
+ * @return              - Formatted string
+ * ======================================================================
+ */
 std::string ModEggnog::format_sql_data(std::string &input) {
     enum FLAGS {
         DOM    = 0x01,

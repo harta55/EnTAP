@@ -63,6 +63,7 @@ private:
     const std::string EGG_ANNOT_RESULTS       = "annotation_results";
     const std::string EGG_ANNOT_NO_HIT_RESULTS= "annotation_results_no_hits";
     const std::string EGG_ANNOT_STD           = "annotation_std";
+    const std::string EGG_ANNOT_APPEND        = ".emapper.annotations";
 
     std::string _figure_dir;
     std::string _proc_dir;

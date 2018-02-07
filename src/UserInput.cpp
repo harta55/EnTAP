@@ -541,6 +541,7 @@ void generate_config(std::string &path) {
  * =====================================================================
  */
 bool check_key(std::string& key) {
+    LOWERCASE(key);
     if (key.compare(KEY_DIAMOND_EXE)==0)      return true;
     if (key.compare(KEY_GENEMARK_EXE)==0)     return true;
     if (key.compare(KEY_EGGNOG_EXE)==0)       return true;

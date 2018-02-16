@@ -120,7 +120,11 @@ This will generate a MakeFile. Then execute:
 
     make
 
-Or to install:
+Or to install to a destination directory:
+
+.. code-block :: bash
+
+    cmake CMakeLists.txt -DCMAKE_INSTALL_PREFIX=/destination/dir
 
 .. code-block :: bash
 

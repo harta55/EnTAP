@@ -62,3 +62,6 @@ if(Boost_FOUND)
 else()
     message(FATAL_ERROR "Boost Libraries are required to run EnTAP.")
 endif()
+
+target_link_libraries(EnTAP ${Boost_LIBRARIES})
+install(TARGETS EnTAP DESTINATION bin)

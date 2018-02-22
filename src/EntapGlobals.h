@@ -117,6 +117,10 @@ namespace ENTAP_EXECUTE {
     const uint16 INTERPRO_INT_FLAG = 1;
     const uint16 ONTOLOGY_MAX      = 1;
 
+    const uint16 FRAME_FLAG_GENEMARK = 0;
+
+    const uint16 EXP_FLAG_RSEM       = 0;
+
     //------------------------Headers-------------------------//
     extern const std::string HEADER_QUERY;
     extern const std::string HEADER_SUBJECT;

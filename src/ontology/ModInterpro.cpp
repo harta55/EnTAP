@@ -38,6 +38,27 @@
 
 using boost::property_tree::ptree;
 
+const std::vector<std::string> ModInterpro::INTERPRO_DATABASES ({
+            "tigrfam",
+            "sfld",
+            "prodom",
+            "hamap",
+            "pfam",
+            "smart",
+            "cdd",
+            "prositeprofiles",
+            "prositepatterns",
+            "superfamily",
+            "prints",
+            "panther",
+            "gene3d",
+            "pirsf",
+            "coils",
+            "morbidlite"
+});
+
+const std::string ModInterpro::INTERPRO_DEFAULT = "pfam";
+
 
 /**
  * ======================================================================
@@ -432,4 +453,27 @@ std::string ModInterpro::format_interpro(void) {
 
 ModInterpro::~ModInterpro() {
     FS_dprint("Killing object - ModInterpro");
+}
+
+bool ModInterpro::is_executable() {
+    return true;
+}
+
+bool ModInterpro::valid_input(boostPO::variables_map &vm) {
+    std::vector<std::string> databases;
+
+    if (!vm.count(ENTAP_CONFIG::INPUT_FLAG_INTERPRO)) return false;
+    databases = vm[ENTAP_CONFIG::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
+
+    for (std::string &data : databases) {
+        LOWERCASE(data);
+        if (!(FIND_VECT(data, INTERPRO_DATABASES))) {
+            return false;
+        }
+    }
+    return true;
+}
+
+std::string ModInterpro::get_default() {
+    return INTERPRO_DEFAULT;
 }

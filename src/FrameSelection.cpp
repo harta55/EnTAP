@@ -70,11 +70,10 @@ FrameSelection::FrameSelection(std::string &input, std::string &out,
     _outpath         = out;
     _inpath          = input;
     _overwrite       = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
-    _software_flag   = 0;
+    _software_flag   = ENTAP_EXECUTE::FRAME_FLAG_GENEMARK;
     _frame_outpath   = PATHS(out, FRAME_SELECTION_OUT_DIR);
     _processed_path  = PATHS(_frame_outpath, PROCESSED_DIR);
     _figure_path     = PATHS(_frame_outpath, FIGURE_DIR);
-    SOFTWARE         = static_cast<FrameSoftware >(_software_flag);
 }
 
 
@@ -134,8 +133,8 @@ std::string FrameSelection::execute(std::string input) {
 std::unique_ptr<AbstractFrame> FrameSelection::spawn_object() {
     // Handle any special conditions for each software
 
-    switch (SOFTWARE) {
-        case GENEMARKST:
+    switch (_software_flag) {
+        case ENTAP_EXECUTE::FRAME_FLAG_GENEMARK:
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
                     _exe_path, _outpath, _inpath, _processed_path, _figure_path,
                     _frame_outpath, _graphingManager, _QUERY_DATA

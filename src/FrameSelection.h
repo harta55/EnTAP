@@ -51,10 +51,6 @@ public:
 
 private:
 
-    enum FrameSoftware {
-        GENEMARKST
-    };
-
     const std::string FRAME_SELECTION_OUT_DIR       = "frame_selection/";
     const std::string PROCESSED_DIR                 = "processed/";
     const std::string FIGURE_DIR                    = "figures/";
@@ -68,7 +64,6 @@ private:
     bool             _overwrite;
     short            _software_flag;
     GraphingManager  *_graphingManager;
-    FrameSoftware    SOFTWARE;
     QueryData        *_QUERY_DATA;
 
     std::unique_ptr<AbstractFrame> spawn_object();

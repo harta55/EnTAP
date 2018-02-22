@@ -43,7 +43,8 @@
 //******************* Defines/Macros ***************************
 #define LOWERCASE(x)        std::transform(x.begin(), x.end(), x.begin(), ::tolower)
 #define STR_REPLACE(x,y,z)  std::replace(x.begin(), x.end(), y, z)
-
+#define FIND_VECT(x,y)      std::find(y.begin(), y.end(), x) != y.end() // find x in y
+#define SAFE_DELETE(x)      if (x) delete x; x = nullptr
 //**************************************************************
 
 

@@ -58,6 +58,10 @@ public:
     virtual void parse() override ;
     virtual void set_data(std::string&, std::vector<std::string>&) override ;
 
+    static bool is_executable();
+    static bool valid_input(boostPO::variables_map&);
+    static std::string get_default();
+
 
 private:
     std::string NUCLEO_TAG                  = "n";
@@ -72,6 +76,11 @@ private:
     std::string OUT_HITS_FNN                = "interpro_no_hits.fnn";
     std::string INTERPRO_EXT_XML            = ".xml";
     std::string INTERPRO_EXT_TSV            = ".tsv";
+
+    // Valid databases
+    static const std::vector<std::string> INTERPRO_DATABASES;
+    static const std::string INTERPRO_DEFAULT;
+
     static constexpr short INTERPRO_COL_NUM = 15;
 
     std::string XML_SIGNATURE = "signature";

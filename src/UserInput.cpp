@@ -40,6 +40,8 @@
 #include "common.h"
 #include "FileSystem.h"
 #include "ontology/ModEggnog.h"
+#include "ontology/AbstractOntology.h"
+#include "ontology/ModInterpro.h"
 
 //**************************************************************
 
@@ -92,7 +94,7 @@ boost::program_options::variables_map parse_arguments_boost(int argc, const char
                  DESC_COMING_SOON)
                 (ENTAP_CONFIG::INPUT_FLAG_INTERPRO.c_str(),
                  boostPO::value<std::vector<std::string>>()->multitoken()
-                         ->default_value(std::vector<std::string>{INTERPRO_DEFAULT},""),DESC_INTER_DATA)
+                         ->default_value(std::vector<std::string>{ModInterpro::get_default()},""),DESC_INTER_DATA)
                 ("uniprot,U",
                  boostPO::value<std::vector<std::string>>()->multitoken()
                          ->default_value(std::vector<std::string>{ENTAP_CONFIG::INPUT_UNIPROT_NULL},""),
@@ -204,7 +206,7 @@ bool verify_user_input(boostPO::variables_map& vm) {
 
     // ------------ Config / Run Required beyond this point ---------------- //
 
-    is_config     = (bool) vm.count(ENTAP_CONFIG::INPUT_FLAG_CONFIG);     // ignore 'config config'
+    is_config     = (bool)vm.count(ENTAP_CONFIG::INPUT_FLAG_CONFIG);     // ignore 'config config'
     is_protein    = (bool)vm.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN);
     is_nucleotide = (bool)vm.count(ENTAP_CONFIG::INPUT_FLAG_RUNNUCLEOTIDE);
     if (is_protein && is_nucleotide) {
@@ -324,19 +326,8 @@ bool verify_user_input(boostPO::variables_map& vm) {
             }
 
             // Verify InterPro databases
-            if (is_interpro) {
-                if (vm.count(ENTAP_CONFIG::INPUT_FLAG_INTERPRO)) {
-                    std::vector<std::string> inter_databases =
-                            vm[ENTAP_CONFIG::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
-                    for (std::string &database : inter_databases) {
-                        if (!verify_interpro(database)) {
-                            throw ExceptionHandler("InterPro database: " + database + " invalid!",
-                                                   ENTAP_ERR::E_INPUT_PARSE);
-                        }
-                    }
-                } else {
-                    throw ExceptionHandler("InterPro selected, but no databases specified.", ENTAP_ERR::E_INPUT_PARSE);
-                }
+            if (is_interpro && !ModInterpro::valid_input(vm)) {
+                throw ExceptionHandler("InterPro selected, but invalid databases input!", ENTAP_ERR::E_INPUT_PARSE);
             }
 
             // Verify uninformative file list
@@ -769,6 +760,9 @@ std::string get_exe_path(boostPO::variables_map &vm) {
     if (vm.count(ENTAP_CONFIG::INPUT_FLAG_EXE_PATH)) {
         return vm[ENTAP_CONFIG::INPUT_FLAG_EXE_PATH].as<std::string>();
     }
+    return FS_get_cur_dir();
+
+#if 0
     char buff[1024];
     ssize_t len = ::readlink("/proc/self/exe", buff, sizeof(buff)-1);
     if (len != -1) {
@@ -778,40 +772,7 @@ std::string get_exe_path(boostPO::variables_map &vm) {
         return p.string();
     }
     return "";
-}
-
-
-/**
- * ======================================================================
- * Function bool verify_interpro(std::string database)
- *
- * Description          - Sanity check on user inputs for InterPro
- *                        databases
- *
- * Notes                - None
- *
- * @param database      - Selected databases
- * @return              - True/false is database is valid
- * ======================================================================
- */
-bool verify_interpro(std::string database) {
-    LOWERCASE(database);
-    if (database.compare(INTER_TIGR) == 0) return true;
-    if (database.compare(INTER_SFLD) == 0) return true;
-    if (database.compare(INTER_PRODOM) == 0) return true;
-    if (database.compare(INTER_HAMAP) == 0) return true;
-    if (database.compare(INTER_PFAM) == 0) return true;
-    if (database.compare(INTER_SMART) == 0) return true;
-    if (database.compare(INTER_CDD) == 0) return true;
-    if (database.compare(INTER_PROSITE_PROF) == 0) return true;
-    if (database.compare(INTER_PROSITE_PAT) == 0) return true;
-    if (database.compare(INTER_SUPERFAMILY) == 0) return true;
-    if (database.compare(INTER_PRINTS) == 0) return true;
-    if (database.compare(INTER_PANTHER) == 0) return true;
-    if (database.compare(INTER_GENE) == 0) return true;
-    if (database.compare(INTER_PIRSF) == 0) return true;
-    if (database.compare(INTER_COILS) == 0) return true;
-    return (database.compare(INTER_MOBI) == 0);
+#endif
 }
 
 

@@ -31,6 +31,7 @@
 //*********************** Includes *****************************
 #include <boost/program_options/variables_map.hpp>
 #include "EntapGlobals.h"
+#include "FileSystem.h"
 
 //**************************************************************
 
@@ -179,7 +180,6 @@ void verify_databases(boost::program_options::variables_map&);
 void verify_species (boost::program_options::variables_map&, SPECIES_FLAGS);
 void init_exe_paths(std::unordered_map<std::string, std::string> &, std::string);
 std::string get_exe_path(boostPO::variables_map&);
-bool verify_interpro(std::string);
 void process_user_species(std::string&);
 void verify_uninformative(std::string&);
 void verify_state(std::string&, bool, std::vector<uint16>&);
@@ -190,22 +190,6 @@ std::pair<bool,std::string> verify_software(uint8&, std::vector<uint16>&);
 
 
 //*********************** Constants ****************************
-const std::string INTER_TIGR            = "tigrfam";
-const std::string INTER_SFLD            = "sfld";
-const std::string INTER_PRODOM          = "prodom";
-const std::string INTER_HAMAP           = "hamap";
-const std::string INTER_PFAM            = "pfam";
-const std::string INTER_SMART           = "smart";
-const std::string INTER_CDD             = "cdd";
-const std::string INTER_PROSITE_PROF    = "prositeprofiles";
-const std::string INTER_PROSITE_PAT     = "prositepatterns";
-const std::string INTER_SUPERFAMILY     = "superfamily";
-const std::string INTER_PRINTS          = "prints";
-const std::string INTER_PANTHER         = "panther";
-const std::string INTER_GENE            = "gene3d";
-const std::string INTER_PIRSF           = "pirsf";
-const std::string INTER_COILS           = "coils";
-const std::string INTER_MOBI            = "mobidblite";
 
 const fp32 DEFAULT_QCOVERAGE               = 50.0;
 const fp32 DEFAULT_TCOVERAGE               = 50.0;
@@ -217,8 +201,7 @@ const fp32 FPKM_MIN                        = 0.0;
 const fp32 FPKM_MAX                        = 100.0;
 const uint8 MAX_DATABASE_SIZE              = 5;
 const std::string DEFAULT_STATE            = "+";
-const std::string INTERPRO_DEFAULT         = INTER_PFAM;
-const std::string OUTFILE_DEFAULT          = PATHS(boostFS::current_path(),"outfiles");
+const std::string OUTFILE_DEFAULT          = PATHS(FS_get_cur_dir(),"outfiles");
 const std::string BAM_EXT                  = ".bam";
 const std::string SAM_EXT                  = ".sam";
 

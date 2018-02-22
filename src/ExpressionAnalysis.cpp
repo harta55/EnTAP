@@ -72,7 +72,7 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &ou
                                        boost::program_options::variables_map& user_flags,
                                        GraphingManager *graph, QueryData *queryData) {
     FS_dprint("Spawn object - ExpressionAnalysis");
-    _software_flag = 0;
+    _software_flag = ENTAP_EXECUTE::EXP_FLAG_RSEM;
     _query_data    = queryData;
     _inpath        = input;
     _threads       = t;
@@ -89,7 +89,6 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t, std::string &ou
     _proc_dir      = PATHS(_rsem_dir, RSEM_PROCESSED_DIR);
     _figure_dir    = PATHS(_proc_dir,RSEM_FIGURE_DIR);
     _graphingManager = graph;
-    SOFTWARE       = static_cast<ExpressionSoftware>(_software_flag);
 }
 
 
@@ -146,8 +145,8 @@ std::string ExpressionAnalysis::execute(std::string input) {
  * =====================================================================
  */
 std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
-    switch (SOFTWARE) {
-        case RSEM:
+    switch (_software_flag) {
+        case ENTAP_EXECUTE::EXP_FLAG_RSEM:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
                     _exepath, _outpath, _inpath, _proc_dir, _figure_dir,
                     _rsem_dir, _alignpath, _graphingManager, _query_data

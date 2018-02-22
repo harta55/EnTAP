@@ -43,11 +43,6 @@ public:
 
 private:
 
-    enum ExpressionSoftware {
-        RSEM
-    };
-
-
     const std::string RSEM_OUT_DIR          = "expression/";
     const std::string RSEM_PROCESSED_DIR    = "processed/";
     const std::string RSEM_FIGURE_DIR       = "/figures";
@@ -67,7 +62,6 @@ private:
     float               _fpkm;
     GraphingManager  *_graphingManager;
     QueryData        *_query_data;
-    ExpressionSoftware SOFTWARE;
 
     std::unique_ptr<AbstractExpression> spawn_object();
 };

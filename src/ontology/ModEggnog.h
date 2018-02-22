@@ -46,7 +46,8 @@ public:
     virtual void execute() override ;
     virtual void parse() override ;
     virtual void set_data(std::string&,std::vector<std::string>&) override ;
-    static bool is_executable();
+    static bool is_executable() ;
+    static bool valid_input(boostPO::variables_map&);
 
 private:
 

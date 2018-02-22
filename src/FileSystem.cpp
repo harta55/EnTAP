@@ -396,3 +396,24 @@ std::vector<std::string> FS_list_to_vect(char it, std::string &list) {
     }
     return output;
 }
+
+
+/**
+ * ======================================================================
+ * Function std::string FS_get_cur_dir()
+ *
+ * Description          - Returns the current working directory of execution
+ *
+ * Notes                - None
+ *
+ * @return              - Current directory
+ *
+ * =====================================================================
+ */
+std::string FS_get_cur_dir() {
+
+#ifdef USE_BOOST
+    return boostFS::current_path().string();
+#endif
+
+}

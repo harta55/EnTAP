@@ -104,7 +104,7 @@ int main(int argc, const char** argv) {
     _start_time = std::chrono::system_clock::now();
     try {
         inputs = parse_arguments_boost(argc,argv);
-        init_entap(inputs);
+        init_entap(inputs);     // set up logging
         config = verify_user_input(inputs);
         if (config) {
             state = CONFIG_ENTAP;
@@ -144,7 +144,7 @@ void init_entap(boostPO::variables_map& user_input) {
     std::string config_path;
 
     _outpath = user_input[ENTAP_CONFIG::INPUT_FLAG_TAG].as<std::string>();
-    boostFS::create_directories(_outpath);
+    FS_create_dir(_outpath);
     init_log();
     _exe_path = get_exe_path(user_input);
     print_user_input(user_input, _exe_path, _outpath);

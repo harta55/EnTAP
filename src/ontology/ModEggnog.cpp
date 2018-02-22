@@ -673,3 +673,7 @@ std::string ModEggnog::format_sql_data(std::string &input) {
     }
     return output;
 }
+
+bool ModEggnog::valid_input(boostPO::variables_map &) {
+    return true;
+}

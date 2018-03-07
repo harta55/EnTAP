@@ -223,7 +223,7 @@ To test EnTAP with frame selection, execute the following command:
 
 .. code-block:: bash
 
-    EnTAP --runN -i /test_data/trinity.fnn -d /test_data/uniprot_sprot_test.dmnd
+    EnTAP --runP -i /test_data/trinity.fnn -d /test_data/uniprot_sprot_test.dmnd
 
 To test EnTAP without frame selection, execute the following command:
 

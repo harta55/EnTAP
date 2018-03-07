@@ -84,18 +84,22 @@ public:
  * @return              - None
  * ======================================================================
  */
-    AbstractExpression(std::string &exe, std::string &out, std::string &in, std::string &proc,
-                  std::string &fig, std::string &exp, std::string &align,GraphingManager *graphing,
-                  QueryData *query){
-        _exe_path           = exe;
-        _outpath            = out;
-        _inpath             = in;
-        _processed_path     = proc;
-        _figure_path        = fig;
+    AbstractExpression(std::string &exe,
+                       std::string &out,
+                       std::string &in,
+                       std::string &exp,
+                       std::string &align,
+                       GraphingManager *graphing,
+                       QueryData *query,
+                       FileSystem *fileSystem){
+
         _expression_outpath = exp;
-        pGraphingManager    = graphing;
+        _pGraphingManager    = graphing;
         _alignpath          = align;
-        pQUERY_DATA         = query;
+        _pQueryData         = query;
+        _pFileSystem        = fileSystem;
+        _outpath = out;
+        _exe_path = exe;
     }
 
     virtual ~AbstractExpression() = default;
@@ -106,6 +110,9 @@ public:
 
 
 protected:
+    const std::string RSEM_PROCESSED_DIR    = "processed/";
+    const std::string RSEM_FIGURE_DIR       = "/figures";
+
     std::string     _alignpath;
     std::string     _exe_path;
     std::string     _outpath;
@@ -113,8 +120,9 @@ protected:
     std::string     _processed_path;
     std::string     _figure_path;
     std::string     _expression_outpath;
-    GraphingManager *pGraphingManager;
-    QueryData       *pQUERY_DATA;
+    GraphingManager *_pGraphingManager;
+    QueryData       *_pQueryData;
+    FileSystem      *_pFileSystem;
 };
 
 #endif //ENTAP_ABSTRACTEXPRESSION_H

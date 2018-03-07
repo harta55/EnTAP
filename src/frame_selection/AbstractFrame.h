@@ -77,18 +77,26 @@ public:
  * @return              - None
  * ======================================================================
  */
-    AbstractFrame(std::string &exe, std::string &out, std::string &in,
-                  std::string &proc,std::string &fig, std::string &frame,
-                  GraphingManager *graphing, QueryData *queryData){
+    AbstractFrame(std::string &exe, std::string &in,
+                  std::string &frame,
+                  GraphingManager *graphing,
+                  QueryData *queryData,
+                  FileSystem* filesystem,
+                  UserInput *userinput){
         _exe_path        = exe;
-        _outpath         = out;
         _inpath          = in;
-        _processed_path  = proc;
-        _figure_path     = fig;
         _frame_outpath   = frame;
-        pGraphingManager = graphing;
-        pQUERY_DATA      = queryData;
+        _pGraphingManager = graphing;
+        _pQUERY_DATA      = queryData;
+        _pUserInput       = userinput;
+        _pFileSystem      = filesystem;
 
+        _processed_path = PATHS(frame, PROCESSED_DIR);
+        _figure_path    = PATHS(frame, FIGURE_DIR);
+        filesystem->delete_dir(_processed_path);
+        filesystem->delete_dir(_figure_path);
+        filesystem->create_dir(_processed_path);
+        filesystem->create_dir(_figure_path);
     }
 
     virtual ~AbstractFrame() = default;
@@ -104,8 +112,13 @@ protected:
     std::string     _processed_path;
     std::string     _figure_path;
     std::string     _frame_outpath;
-    GraphingManager *pGraphingManager;
-    QueryData       *pQUERY_DATA;
+    GraphingManager *_pGraphingManager;
+    QueryData       *_pQUERY_DATA;
+    FileSystem      *_pFileSystem;
+    UserInput       *_pUserInput;
+
+    const std::string PROCESSED_DIR                 = "processed/";
+    const std::string FIGURE_DIR                    = "figures/";
 };
 
 

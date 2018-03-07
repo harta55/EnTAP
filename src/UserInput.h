@@ -30,205 +30,13 @@
 
 //*********************** Includes *****************************
 #include <boost/program_options/variables_map.hpp>
+#include <queue>
 #include "EntapGlobals.h"
 #include "FileSystem.h"
-
-//**************************************************************
-
-//*********************** Defines ******************************
-#define DESC_COMING_SOON    "Coming soon!"
-#define DESC_HELP           "Print all the help options for this version of EnTAP!"
-#define DESC_CONFIG         "Configure EnTAP for execution later.\n"                    \
-                            "If this is your first time running EnTAP run this first!"  \
-                            "This will perform the following:\n"                        \
-                            "    - Downloading EnTAP taxonomic database\n"              \
-                            "    - Downloading Gene Ontology term database\n"           \
-                            "    - Formatting any database you would like for diamond"
-#define DESC_RUN_PROTEIN    "Execute EnTAP functionality through blastp\n"              \
-                            "Note, if your input sequences are nucleotide, they will be"\
-                            "frame selected automatically."
-#define DESC_RUN_NUCLEO     "Execute EnTAP functionality through blastx\n"              \
-                            "This will not frame select your sequences and will run them"\
-                            "through each stage of the pipeline as nucelotide sequences"
-#define DESC_INTER_DATA     "Select which databases you would like for InterProScan"    \
-                            "Databases must be one of the following:\n"                 \
-                            "    -tigrfam\n"                                            \
-                            "    -sfld\n"                                               \
-                            "    -prodom\n"                                             \
-                            "    -hamap\n"                                              \
-                            "    -pfam\n"                                               \
-                            "    -smart\n"                                              \
-                            "    -cdd\n"                                                \
-                            "    -prositeprofiles\n"                                    \
-                            "    -prositepatterns\n"                                    \
-                            "    -superfamily\n"                                        \
-                            "    -prints\n"                                             \
-                            "    -panther\n"                                            \
-                            "    -gene3d\n"                                             \
-                            "    -pirsf\n"                                              \
-                            "    -coils\n"                                              \
-                            "    -morbidblite\n"                                        \
-                            "Make sure the database is downloaded, EnTAP will not check!"
-#define DESC_ONTOLOGY_FLAG  "Specify the ontology software you would like to use\n"     \
-                            "Note: it is possible to specify more than one! Just use"   \
-                            "multiple --ontology flags\n"                               \
-                            "Specify flags as follows:\n"                               \
-                            "    0. EggNOG (default)\n"                                 \
-                            "    1. InterProScan"
-#define DESC_GRAPHING       "Check whether or not your system supports graphing.\n"     \
-                            "This option does not require any other flags and will"     \
-                            "just check whether the version of Python being used has"   \
-                            "MatPlotLib accessible."
-#define DESC_OUT_FLAG       "Specify the output directory you would like the data to"   \
-                            " be saved to."
-#define DESC_DATABASE       "Provide the paths to the databases you would like to use\n"\
-                            "For running: ensure the databases selected are .dmnd"      \
-                            "formatted.\n"                                              \
-                            "For configuration: ensure the databases are FASTA format\n"\
-                            "Note: if your databases are not NCBI or Uniprot\n"         \
-                            "databases, taxonomic filtering might not be able to pull"  \
-                            "the species information!"
-#define DESC_ONT_LEVELS     "Specify the Gene Ontology levels you would like printed\n" \
-                            "Default: 0, 3, 4\n"                                        \
-                            "A level of 0 means that every term will be printed!"       \
-                            "It is possible to specify multiple flags as well with\n"   \
-                            "multiple --level flags\n"                                  \
-                            "Example: --level 0 --level 3 --level 1"
-#define DESC_FPKM           "Specify the FPKM threshold with expression analysis\n"     \
-                            "EnTAP will filter out transcripts below this value!"
-#define DESC_EVAL           "Specify the E-Value that will be used as a cutoff during"  \
-                            "similarity searching"
-#define DESC_THREADS        "Specify the number of threads that will be used throughout\n"
-#define DESC_SINGLE_END     "Specify this flag if your BAM/SAM file was generated\n"    \
-                            "through single-end reads\n"                                \
-                            "Note: this is only required in expression analysis\n"      \
-                            "Default: paired-end"
-#define DESC_ALIGN_FILE     "Specify the path to the BAM/SAM file for expression analysis"
-#define DESC_CONTAMINANT    "Specify the contaminants you would like to filter out"     \
-                            "from similarity searching\n"                               \
-                            "Note: since hits are based upon a multitide of factors"    \
-                            "a contaminant might be the best hit for a query!\n"        \
-                            "Contaminants can be selected by species (homo_sapiens)"    \
-                            "or through a specific taxon (homo)\n"                      \
-                            "If your taxon is more than one word just replace the"      \
-                            "spaces with underscores (_)"
-#define DESC_TRIM           "Trim the input sequences to the first space\n"             \
-                            "This may help with readability later on with TSV files\n"  \
-                            "Example:\n"                                                \
-                            ">TRINITY_231.1 Protein Information\n"                      \
-                            "will become...\n"                                          \
-                            ">TRINITY_231.1\n"
-#define DESC_QCOVERAGE      "Select the minimum query coverage to be allowed during"    \
-                            "similarity searching"
-#define DESC_TCOVERAGE      "Select the minimum target coverage to be allowed during"   \
-                            "similarity searching"
-#define DESC_EXE_PATHS      "Specify path to the entap_config.txt file that will"       \
-                            "be used to find all of the executables!"
-#define DESC_DATA_OUT       "Specify the outpath of databases formatted during"         \
-                            "configuration\n"                                           \
-                            "Note: only used in configuration stage"
-#define DESC_TAXON          "Specify the type of species/taxon you are analyzing and"   \
-                            "would like hits closer in taxonomic relevance to be"       \
-                            "favored (based on NCBI Taxonomic Database)\n"              \
-                            "Note: formatting works just like with the contaminants"
-#define DESC_STATE          "Specify the state of execution (EXPERIMENTAL)\n"           \
-                            "More information is available in the documentation\n"      \
-                            "This flag may have undesired affects and may not run properly!"
-#define DESC_INPUT_TRAN     "Path to the input transcriptome file"
-#define DESC_COMPLET_PROT   "Select this option if all of your sequences are complete"  \
-                            "proteins.\n"                                               \
-                            "At this point, this option will merely flag the sequences"
-#define DESC_OVERWRITE      "Select this option if you would like to overwrite previous"\
-                            "files\n"                                                   \
-                            "Note: do NOT use this if you would like to pickup from"    \
-                            "a previous run!"
-#define DESC_UNINFORMATIVE  "Path to a list of keywords that should be used to specify" \
-                            " uninformativeness of hits during similarity searching. "  \
-                            "Generally something along the lines of 'hypothetical' or " \
-                            "'unknown' are used. Each term should be on a new line of " \
-                            "the file being linked to.\nExample (defaults):\n"          \
-                            "    -conserved\n"                                          \
-                            "    -predicted\n"                                          \
-                            "    -unknown\n"                                            \
-                            "    -hypothetical\n"                                       \
-                            "    -putative\n"                                           \
-                            "    -unidentified\n"                                       \
-                            "    -uncultured\n"                                         \
-                            "    -uninformative\n"                                      \
-                            "Without the extra spaces and hyphen. EnTAP will take the " \
-                            "each line as a new uninformative word!"
-#define DESC_NOCHECK        "Use this flag if you don't want your input to EnTAP verifed."\
-                            " This is not advised to use! Your run may fail later on "  \
-                            "if inputs are not checked"
-//**************************************************************
-
-//*********************** Typedefs/Enum ************************
-typedef std::vector<std::string> databases_t;
-
-enum SPECIES_FLAGS {
-    SPECIES,
-    CONTAMINANT
-};
-//******************** Prototype Functions *********************
-boost::program_options::variables_map parse_arguments_boost(int, const char**);
-bool verify_user_input(boost::program_options::variables_map&);
-void print_user_input(boost::program_options::variables_map &map, std::string&, std::string&);
-bool check_key(std::string&);
-std::unordered_map<std::string,std::string> parse_config(std::string&,std::string&);
-void generate_config(std::string&);
-void verify_databases(boost::program_options::variables_map&);
-void verify_species (boost::program_options::variables_map&, SPECIES_FLAGS);
-void init_exe_paths(std::unordered_map<std::string, std::string> &, std::string);
-std::string get_exe_path(boostPO::variables_map&);
-void process_user_species(std::string&);
-void verify_uninformative(std::string&);
-void verify_state(std::string&, bool, std::vector<uint16>&);
-std::pair<bool,std::string> verify_software(uint8&, std::vector<uint16>&);
-
+#include "config.h"
 //**************************************************************
 
 
-
-//*********************** Constants ****************************
-
-const fp32 DEFAULT_QCOVERAGE               = 50.0;
-const fp32 DEFAULT_TCOVERAGE               = 50.0;
-const fp32 COVERAGE_MIN                    = 0.0;
-const fp32 COVERAGE_MAX                    = 100.0;
-const fp32 E_VALUE                         = 1e-5;
-const fp32 RSEM_FPKM_DEFAULT               = 0.5;
-const fp32 FPKM_MIN                        = 0.0;
-const fp32 FPKM_MAX                        = 100.0;
-const uint8 MAX_DATABASE_SIZE              = 5;
-const std::string DEFAULT_STATE            = "+";
-const std::string OUTFILE_DEFAULT          = PATHS(FS_get_cur_dir(),"outfiles");
-const std::string BAM_EXT                  = ".bam";
-const std::string SAM_EXT                  = ".sam";
-
-
-//-------------------Config File----------------------//
-const std::string CONFIG_FILE              = "entap_config.txt";
-const std::string KEY_UNIPROT_SWISS        = "uniprot_swiss_path";
-const std::string KEY_UNIPROT_UR90         = "uniprot_ur90_path";
-const std::string KEY_UNIPROT_UR100        = "uniprot_ur100_path";
-const std::string KEY_UNIPROT_TREMBL       = "uniprot_trembl_path";
-const std::string KEY_NCBI_NR              = "ncbi_nr_path";
-const std::string KEY_NCBI_REFSEQ_COMPLETE = "ncbi_refseq_complete_path";
-const std::string KEY_NCBI_REFSEQ_SEPARATE = "ncbi_refseq_separate_path";
-const std::string KEY_DIAMOND_EXE          = "diamond_exe_path";
-const std::string KEY_RSEM_EXE             = "rsem_exe_path";
-const std::string KEY_GENEMARK_EXE         = "genemarkst_exe_path";
-const std::string KEY_EGGNOG_EXE           = "eggnog_exe_path";
-const std::string KEY_EGGNOG_DOWN          = "eggnog_download_exe";
-const std::string KEY_INTERPRO_EXE         = "interpro_exe_path";
-const std::string KEY_EGGNOG_DB            = "eggnog_database";
-const std::string KEY_TAX_DB               = "entap_tax_database";
-const std::string KEY_GO_DB                = "entap_go_database";
-const std::string KEY_TAX_DOWNLOAD_EXE     = "entap_tax_download_script";
-const std::string KEY_GRAPH_SCRIPT         = "entap_graphing_script";
-
-// Avoid cluttering global namespace / conflicts for config paths
-// All paths based around main EnTAP directory
 namespace Defaults {
     const std::string RSEM_DEFAULT_EXE         = "/libs/RSEM-1.3.0/";   // Directory
     const std::string GENEMARK_DEFAULT_EXE     = "/libs/gmst_linux_64/gmst.pl";
@@ -239,10 +47,115 @@ namespace Defaults {
     const std::string INTERPRO_DEF_EXE         = "interproscan.sh";
     const std::string TAX_DOWNLOAD_DEF         = "/src/download_tax.py";
     const std::string GRAPH_SCRIPT_DEF         = "/src/entap_graphing.py";
+    const std::string BIN_PATH_DEFAULT         = "/bin";
+    const std::string DATABASE_DIR_DEFAULT     = "/databases";
+    const std::string TAX_DATABASE_BIN_DEFAULT = PATHS(BIN_PATH_DEFAULT, "ncbi_tax_bin.entp");
+    const std::string TAX_DATABASE_TXT_DEFAULT = PATHS(DATABASE_DIR_DEFAULT, "ncbi_tax.entp");
+    const std::string GO_DATABASE_BIN_DEFAULT  = PATHS(BIN_PATH_DEFAULT, "go_term.entp");
 }
 
-//**************************************************************
+class UserInput {
 
+public:
+    UserInput(int argc, const char** argv);
+    ~UserInput();
+
+    template<class T>
+    T get_user_input(const std::string &key) {
+#ifdef USE_BOOST
+        if (_user_inputs.count(key)) {
+            return _user_inputs[key].as<T>();
+        } else {
+            return T();
+        }
+#endif
+    }
+
+    bool has_input(const std::string&);
+
+    pair_str_t get_config_path();
+    void set_pFileSystem(FileSystem *_pFileSystem);
+    std::unordered_map<std::string,std::string> parse_config(pair_str_t&);
+    bool verify_user_input();
+    int get_supported_threads();
+    std::queue<char> get_state_queue();
+    std::string get_target_species_str();
+    vect_str_t get_contaminants();
+    vect_str_t get_uninformative_vect();
+
+private:
+    enum SPECIES_FLAGS {
+        SPECIES,
+        CONTAMINANT
+    };
+
+    void parse_arguments_boost(int, const char**);
+    void print_user_input();
+    bool check_key(std::string&);
+    void generate_config(std::string&);
+    void verify_databases(bool);
+    void verify_species (boost::program_options::variables_map&, SPECIES_FLAGS);
+    void init_exe_paths(std::unordered_map<std::string, std::string> &, std::string);
+    void process_user_species(std::string&);
+    void verify_uninformative(std::string&);
+    void verify_state(std::string&, bool, std::vector<uint16>&);
+    std::pair<bool,std::string> verify_software(uint8&, std::vector<uint16>&);
+
+    boostPO::variables_map _user_inputs;
+
+    const fp32 DEFAULT_QCOVERAGE               = 50.0;
+    const fp32 DEFAULT_TCOVERAGE               = 50.0;
+    const fp32 COVERAGE_MIN                    = 0.0;
+    const fp32 COVERAGE_MAX                    = 100.0;
+    const fp64 E_VALUE                         = 1e-5;
+    const fp32 RSEM_FPKM_DEFAULT               = 0.5;
+    const fp32 FPKM_MIN                        = 0.0;
+    const fp32 FPKM_MAX                        = 100.0;
+    const uint8 MAX_DATABASE_SIZE              = 5;
+    const std::string DEFAULT_STATE            = "+";
+    const std::string OUTFILE_DEFAULT          = PATHS(FileSystem::get_cur_dir(),"outfiles");
+    const std::string BAM_EXT                  = ".bam";
+    const std::string SAM_EXT                  = ".sam";
+
+    // Enter as lowercase
+    const std::vector<std::string> INFORMATIVENESS {
+            "conserved",
+            "predicted",
+            "unnamed",
+            "hypothetical",
+            "putative",
+            "unidentified",
+            "uncharacterized",
+            "unknown",
+            "uncultured",
+            "uninformative"
+    };
+
+    //-------------------Config File----------------------//
+    const std::string CONFIG_FILE              = "entap_config.txt";
+    const std::string KEY_UNIPROT_SWISS        = "uniprot_swiss_path";
+    const std::string KEY_UNIPROT_UR90         = "uniprot_ur90_path";
+    const std::string KEY_UNIPROT_UR100        = "uniprot_ur100_path";
+    const std::string KEY_UNIPROT_TREMBL       = "uniprot_trembl_path";
+    const std::string KEY_NCBI_NR              = "ncbi_nr_path";
+    const std::string KEY_NCBI_REFSEQ_COMPLETE = "ncbi_refseq_complete_path";
+    const std::string KEY_NCBI_REFSEQ_SEPARATE = "ncbi_refseq_separate_path";
+    const std::string KEY_DIAMOND_EXE          = "diamond_exe_path";
+    const std::string KEY_RSEM_EXE             = "rsem_exe_path";
+    const std::string KEY_GENEMARK_EXE         = "genemarkst_exe_path";
+    const std::string KEY_EGGNOG_EXE           = "eggnog_exe_path";
+    const std::string KEY_EGGNOG_DOWN          = "eggnog_download_exe";
+    const std::string KEY_INTERPRO_EXE         = "interpro_exe_path";
+    const std::string KEY_EGGNOG_DB            = "eggnog_database";
+    const std::string KEY_TAX_DB               = "entap_tax_database";
+    const std::string KEY_GO_DB                = "entap_go_database";
+    const std::string KEY_TAX_DOWNLOAD_EXE     = "entap_tax_download_script";
+    const std::string KEY_GRAPH_SCRIPT         = "entap_graphing_script";
+
+    FileSystem *_pFileSystem;
+
+//**************************************************************
+};
 
 
 

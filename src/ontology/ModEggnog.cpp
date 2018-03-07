@@ -61,11 +61,11 @@ std::pair<bool, std::string> ModEggnog::verify_files() {
 
     verified = false;
     FS_dprint("Overwrite was unselected, verifying output files...");
-    if (FS_file_exists(_out_hits)) {
+    if (_pFileSystem->file_exists(_out_hits)) {
         FS_dprint("File located at: " + _out_hits + " found");
         verified = true;
     } else FS_dprint("File located at: " + _out_hits + " NOT found");
-    if (FS_file_exists(_out_no_hits)) {
+    if (_pFileSystem->file_exists(_out_no_hits)) {
         FS_dprint("File located at: " + _out_no_hits + " found");
         verified = true;
     } else FS_dprint("File located at: " + _out_no_hits + " NOT found");
@@ -141,12 +141,12 @@ void ModEggnog::parse() {
     } catch (ExceptionHandler const &e) {throw e;}
 
     if (!EGGNOG_DATABASE.open(_eggnog_db_path))
-        throw ExceptionHandler("Unable to open GO database",ENTAP_ERR::E_PARSE_EGGNOG);
+        throw ExceptionHandler("Unable to open GO database",ERR_ENTAP_PARSE_EGGNOG);
 
     for (int i=0; i<2;i++) {
         i == 0 ? path=_out_hits : path=_out_no_hits;
         FS_dprint("Eggnog file located at " + path + " being filtered");
-        if (!FS_file_exists(path)) {
+        if (!_pFileSystem->file_exists(path)) {
             FS_dprint("File not found, skipping...");continue;
         }
         path = eggnog_format(path);
@@ -165,8 +165,8 @@ void ModEggnog::parse() {
                 EggnogResults.seed_score = seed_score;
                 EggnogResults.predicted_gene = predicted_gene;
                 EggnogResults.ogs = ogs;
-                EggnogResults.raw_go = FS_list_to_vect(',', go_terms);    // Turn list into vect
-                EggnogResults.raw_kegg = FS_list_to_vect(',', kegg);      // Turn list into vect
+                EggnogResults.raw_go = _pFileSystem->list_to_vect(',', go_terms);    // Turn list into vect
+                EggnogResults.raw_kegg = _pFileSystem->list_to_vect(',', kegg);      // Turn list into vect
                 get_tax_scope(tax_scope, EggnogResults);        // Map virNOG[6] to viridiplantae
                 get_og_query(EggnogResults);               // Requires tax_scope first, pulls key to SQL database
                 get_sql_data(EggnogResults, EGGNOG_DATABASE);
@@ -348,7 +348,7 @@ void ModEggnog::parse() {
       "\nTotal unique sequences without pathways (KEGG): " << count_no_kegg<<
       "\nTotal pathways (KEGG) assigned: " << count_total_kegg_terms;
     out_msg = ss.str();
-    FS_print_stats(out_msg);
+    _pFileSystem->print_stats(out_msg);
     GO_DATABASE.clear();
     FS_dprint("Success!");
 }
@@ -390,19 +390,19 @@ void ModEggnog::execute() {
             {"-m", "diamond"}
     };
     if (!_blastp) eggnog_command_map["--translate"] = " ";
-    if (FS_file_exists(_inpath)) {
+    if (_pFileSystem->file_exists(_inpath)) {
         for (auto &pair : eggnog_command_map)eggnog_command += pair.first + " " + pair.second + " ";
         FS_dprint("\nExecuting eggnog mapper against protein sequences that hit databases...\n"
                     + eggnog_command);
         if (execute_cmd(eggnog_command, annotation_std) !=0) {
-            throw ExceptionHandler("Error executing eggnog mapper", ENTAP_ERR::E_RUN_ANNOTATION);
+            throw ExceptionHandler("Error executing eggnog mapper", ERR_ENTAP_RUN_ANNOTATION);
         }
         FS_dprint("Success! Results written to: " + annotation_base_flag);
     } else {
         throw ExceptionHandler("No input file found at: " + _inpath,
-                               ENTAP_ERR::E_RUN_EGGNOG);
+                               ERR_ENTAP_RUN_EGGNOG);
     }
-    if (FS_file_exists(_in_no_hits)) {
+    if (_pFileSystem->file_exists(_in_no_hits)) {
         std::ifstream inFile(_in_no_hits);
         long line_num = std::count(std::istreambuf_iterator<char>(inFile),
                                    std::istreambuf_iterator<char>(), '\n');
@@ -415,43 +415,11 @@ void ModEggnog::execute() {
             FS_dprint("\nExecuting eggnog mapper against protein sequences that did not hit databases...\n"
                         + eggnog_command);
             if (execute_cmd(eggnog_command, annotation_std) !=0) {
-                throw ExceptionHandler("Error executing eggnog mapper", ENTAP_ERR::E_RUN_ANNOTATION);
+                throw ExceptionHandler("Error executing eggnog mapper", ERR_ENTAP_RUN_ANNOTATION);
             }
         }
     }
     FS_dprint("Success!");
-}
-
-
-/**
- * ======================================================================
- * Function void ModEggnog::set_data(std::string & eggnog_databse, std::vector<std::string>&)
- *
- * Description          - Sets data used by this module
- *                      - Creates directories to be used
- *
- * Notes                - None
- *
- * @param eggnog_databse- Eggnog SQL database path
- * @param unused        -
- *
- * @return              - None
- * ======================================================================
- */
-void ModEggnog::set_data(std::string & eggnog_databse, std::vector<std::string>&) {
-
-    _eggnog_db_path = eggnog_databse;
-
-    _egg_out_dir= PATHS(_ontology_dir, EGGNOG_DIRECTORY);
-    _figure_dir = PATHS(_egg_out_dir, FIGURE_DIR);
-    _proc_dir   = PATHS(_egg_out_dir, PROCESSED_OUT_DIR);
-
-    FS_delete_dir(_figure_dir);
-    FS_delete_dir(_proc_dir);
-
-    FS_create_dir(_egg_out_dir);
-    FS_create_dir(_figure_dir);
-    FS_create_dir(_proc_dir);
 }
 
 
@@ -676,4 +644,24 @@ std::string ModEggnog::format_sql_data(std::string &input) {
 
 bool ModEggnog::valid_input(boostPO::variables_map &) {
     return true;
+}
+
+ModEggnog::ModEggnog(std::string &exe, std::string &out, std::string &in, std::string &in_no_hits, std::string &ont,
+                     GraphingManager *graphing, QueryData *queryData, bool blastp, std::vector<uint16> &lvls,
+                     int threads, FileSystem* filesystem, UserInput*, std::string& eggnog_sql_path)
+    :AbstractOntology(exe, out, in, in_no_hits,ont, graphing, queryData, blastp,
+                     lvls, threads, filesystem, _pUserInput){
+
+    _eggnog_db_path = eggnog_sql_path;
+
+    _egg_out_dir= PATHS(_ontology_dir, EGGNOG_DIRECTORY);
+    _figure_dir = PATHS(_egg_out_dir, FIGURE_DIR);
+    _proc_dir   = PATHS(_egg_out_dir, PROCESSED_OUT_DIR);
+
+    _pFileSystem->delete_dir(_figure_dir);
+    _pFileSystem->delete_dir(_proc_dir);
+
+    _pFileSystem->create_dir(_egg_out_dir);
+    _pFileSystem->create_dir(_figure_dir);
+    _pFileSystem->create_dir(_proc_dir);
 }

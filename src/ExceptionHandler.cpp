@@ -72,7 +72,7 @@ ExceptionHandler::ExceptionHandler(const std::string& msg, int err) {
  *
  * =====================================================================
  */
-void ExceptionHandler::print_msg() {
+void ExceptionHandler::print_msg(FileSystem* filesystem) {
 
     std::stringstream added_msg;
     std::string out_msg;
@@ -80,102 +80,102 @@ void ExceptionHandler::print_msg() {
     added_msg << "Error code: " << err_code << "\n";
 
     switch (err_code) {
-        case ENTAP_ERR::E_INPUT_PARSE:
+        case ERR_ENTAP_INPUT_PARSE:
             added_msg << "Error in parsing input data, please consult -h for more information.";
             break;
-        case ENTAP_ERR::E_CONFIG_PARSE:
+        case ERR_ENTAP_CONFIG_PARSE:
             added_msg << "Error in parsing the EnTAP configuration file, ensure all parameters are"
                     "in the correct format.";
             break;
-        case ENTAP_ERR::E_CONFIG_CREATE:
+        case ERR_ENTAP_CONFIG_CREATE:
             added_msg << "Error in creating the EnTAP configuration file. If this persists, download"
                     "the file from GitHub";
             break;
-        case ENTAP_ERR::E_CONFIG_CREATE_SUCCESS:
+        case ERR_ENTAP_CONFIG_CREATE_SUCCESS:
             added_msg << "Configuration file was not found and was generated for you, make sure to "
                     "check the paths before continuing.";
             break;
-        case ENTAP_ERR::E_INIT_TAX_DOWN:
+        case ERR_ENTAP_INIT_TAX_DOWN:
             added_msg << "Error in downloading the taxonomic database. Ensure that the script is at "
                       << TAX_DOWNLOAD_EXE;
             break;
-        case ENTAP_ERR::E_INIT_TAX_INDEX:
+        case ERR_ENTAP_INIT_TAX_INDEX:
             added_msg << "Error parsing the downloaded taxonomic database. Ensure that it was downloaded "
                       "correctly. ";
             break;
-        case ENTAP_ERR::E_INIT_TAX_SERIAL:
+        case ERR_ENTAP_INIT_TAX_SERIAL:
             added_msg << "Error in indexing the taxonomic database. This process requires Boost Serialization "
                     "libraries as well as a properly downloaded taxonomic datbase.";
             break;
-        case ENTAP_ERR::E_INIT_EGGNOG:
+        case ERR_ENTAP_INIT_EGGNOG:
             added_msg << "Error in downloading EggNOG databases through EggNOG Python script. Ensure that you "
                     "have a proper EggNOG mapper and Python installation.";
             break;
-        case ENTAP_ERR::E_RUN_EGGNOG:
+        case ERR_ENTAP_RUN_EGGNOG:
             added_msg << "Error in running EggNOG Emapper. EggNOG requires a sqlite module in your"
                     "distribution of Python as well as a global DIAMOND installation to call from.";
             break;
-        case ENTAP_ERR::E_PARSE_EGGNOG:
+        case ERR_ENTAP_PARSE_EGGNOG:
             added_msg << "Error in parsing EggNOG data. Ensure that EggNOG ran properly and the output "
                       "has the proper data contained within.";
             break;
-        case ENTAP_ERR::E_INIT_TAX_READ:
+        case ERR_ENTAP_INIT_TAX_READ:
             added_msg << "Unable to read the Taxnomic database into memory, ensure the paths are "
                     "correct along with how you configured the file. You may need to remove it and "
                     "re-download.";
             break;
-        case ENTAP_ERR::E_INIT_GO_DOWNLOAD:
+        case ERR_ENTAP_INIT_GO_DOWNLOAD:
             added_msg << "Error in downloading the Gene Ontology database, ensure you are connected "
                     "to the internet as well as having the Unix module wget available (this is "
                     "available by default on most systems).";
             break;
-        case ENTAP_ERR::E_INIT_GO_UNZIP:
+        case ERR_ENTAP_INIT_GO_UNZIP:
             added_msg << "Error in unzipping the Gene Ontology data downloaded. This could be due to "
                     "not having gzip available on your system (generally available by default). You may "
                     "want to try using the pre-configured database in the Git repo.";
             break;
-        case ENTAP_ERR::E_INIT_GO_INDEX:
+        case ERR_ENTAP_INIT_GO_INDEX:
             added_msg << "Error in indexing Gene Ontology database. This could be due to a poor"
                     " download of the data or an issue with the required Boost library (serialization).";
             break;
-        case ENTAP_ERR::E_RUN_GENEMARK_PARSE:
+        case ERR_ENTAP_RUN_GENEMARK_PARSE:
             added_msg << "Ensure that your GeneMarkS-T run completed successfully and you have "
                     "sequences in your output file!";
             break;
-        case ENTAP_ERR::E_RUN_GENEMARK_STATS:
+        case ERR_ENTAP_RUN_GENEMARK_STATS:
             added_msg << "Ensure the GeneMarkS-T run finished successfully. If it has, re-run"
                     " with the --overwrite flag or delete your frame_selection directory.";
             break;
-        case ENTAP_ERR::E_RUN_GENEMARK_MOVE:
+        case ERR_ENTAP_RUN_GENEMARK_MOVE:
             added_msg << "Ensure GeneMarkS-T ran properly and the files are all located within "
                     "the frame_selection directory.";
             break;
-        case ENTAP_ERR::E_RUN_RSEM_VALIDATE:
+        case ERR_ENTAP_RUN_RSEM_VALIDATE:
             added_msg << "Ensure that you have specified the correct path to the RSEM "
                     "directory and have it properly compiled.";
             break;
-        case ENTAP_ERR::E_RUN_RSEM_EXPRESSION:
+        case ERR_ENTAP_RUN_RSEM_EXPRESSION:
             added_msg << "Ensure that you have specified the correct path to the RSEM "
                     "directory and have it properly compiled.";
             break;
-        case ENTAP_ERR::E_RUN_RSEM_EXPRESSION_PARSE:
+        case ERR_ENTAP_RUN_RSEM_EXPRESSION_PARSE:
             added_msg << "Ensure that RSEM ran properly and the output has sequences in it!";
             break;
-        case ENTAP_ERR::E_RUN_SIM_SEARCH_FILTER:
+        case ERR_ENTAP_RUN_SIM_SEARCH_FILTER:
             added_msg << "Ensure the similarity searching finished properly and your output files"
                     " are not empty.";
             break;
-        case ENTAP_ERR::E_RUN_SIM_SEARCH_RUN:
+        case ERR_ENTAP_RUN_SIM_SEARCH_RUN:
             added_msg << "Ensure you have specified the proper path to the executable. Additionally, "
                     "the database you are specifying is configured for DIAMOND (.dmnd).";
             break;
-        case ENTAP_ERR::E_RUN_ANNOTATION:
+        case ERR_ENTAP_RUN_ANNOTATION:
             added_msg << "Ensure you have specified the proper path to the executable.";
             break;
-        case ENTAP_ERR::E_DATABASE_QUERY:
+        case ERR_ENTAP_DATABASE_QUERY:
             added_msg << "Ensure that your EggNOG run finished successfully and the files are not empty.";
             break;
-        case ENTAP_ERR::E_RUN_INTERPRO:
+        case ERR_ENTAP_RUN_INTERPRO:
             added_msg << "Ensure you have specified the proper path to the InterProScan executable "
                     "and it is properly compiled on your system. Additionally, ensure you have the "
                     "proper databases downloaded that you would like to run against.";
@@ -186,7 +186,7 @@ void ExceptionHandler::print_msg() {
 
     added_msg << "\n" << what();
     out_msg = added_msg.str();
-    if (err_code != ENTAP_ERR::E_INPUT_PARSE) FS_dprint(out_msg);
+    if (filesystem != nullptr) FS_dprint(out_msg);
     std::cerr << out_msg << std::endl;
 }
 

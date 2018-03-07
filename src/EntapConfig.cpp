@@ -68,7 +68,8 @@ namespace entapConfig {
     std::string              _bin_dir;
     std::string              _data_dir;
     std::string              _outpath;
-    std::string              _cur_dir;
+    FileSystem               *_pFileSystem;
+    UserInput                *_pUserInput;
 
     //-----------------------FTP PATHS---------------------------//
     const std::string GO_DATABASE_FTP =
@@ -77,17 +78,16 @@ namespace entapConfig {
             "uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz";
     const std::string UNIPROT_FTP_TREMBL = "ftp://ftp.uniprot.org/pub/databases/"
             "uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz";
-    const std::string GO_TERM_FILE = "term.txt";
-    const std::string GO_GRAPH_FILE = "graph_path.txt";
-    const std::string GO_DATA_NAME = "go_monthly-termdb-tables.tar.gz";
-    const std::string GO_DIR = "go_monthly-termdb-tables/";
-    const std::string ENTAP_CONFIG_DIR = "/entap_config";
-    const std::string TAX_DATABASE_PATH = "/databases/ncbi_tax.entp";
+    const std::string GO_TERM_FILE             = "term.txt";
+    const std::string GO_GRAPH_FILE            = "graph_path.txt";
+    const std::string GO_DATA_NAME             = "go_monthly-termdb-tables.tar.gz";
+    const std::string GO_DIR                   = "go_monthly-termdb-tables/";
 
     // ID's used for GO level determination
-    std::string BIOLOGICAL_LVL = "6679";
-    std::string MOLECULAR_LVL  = "2892";
-    std::string CELLULAR_LVL   = "311";
+    const std::string BIOLOGICAL_LVL = "6679";
+    const std::string MOLECULAR_LVL  = "2892";
+    const std::string CELLULAR_LVL   = "311";
+
 
     //****************** Local Prototype Functions******************
     void init_taxonomic(std::string&);
@@ -96,6 +96,7 @@ namespace entapConfig {
     void init_diamond_index(std::string,std::string,int);
     std::string download_file(std::string, std::string&,std::string&);
     std::string download_file(const std::string &,std::string&);
+    std::string get_output_dir();
     void decompress_file(std::string,std::string,short);
     int update_database(std::string);
     void init_go_db(std::string&,std::string);
@@ -121,7 +122,7 @@ namespace entapConfig {
      *
      * =====================================================================
      */
-    void init_entap(boost::program_options::variables_map user_map, std::string exe_path) {
+    void execute_main(UserInput *input, FileSystem *filesystem) {
 
         std::string                        database_outdir;
         int                                threads; // change
@@ -130,28 +131,24 @@ namespace entapConfig {
         std::vector<std::string>           uniprot_vect;
         std::vector<std::string>           database_vect;
 
+        _pUserInput = input;
+        _pFileSystem = filesystem;
 
-        if (user_map.count(ENTAP_CONFIG::INPUT_FLAG_DATA_OUT)) {
-            database_outdir = user_map[ENTAP_CONFIG::INPUT_FLAG_DATA_OUT].as<std::string>();
-        } else database_outdir = exe_path;
+        // Get directory to output databases to. Databases may already exist though!
+        // If no database_out flag set, then defaults to outfiles directory
+        database_outdir = get_output_dir();
 
-        _cur_dir  = boostFS::path(boost::filesystem::current_path()).string();
-        _outpath  = user_map[ENTAP_CONFIG::INPUT_FLAG_TAG].as<std::string>();
-        _bin_dir  = PATHS(database_outdir, ENTAP_CONFIG::BIN_PATH);
-        _data_dir = PATHS(database_outdir, ENTAP_CONFIG::DATABASE_DIR);
+        _bin_dir  = PATHS(database_outdir, Defaults::BIN_PATH_DEFAULT);
+        _data_dir = PATHS(database_outdir, Defaults::DATABASE_DIR_DEFAULT);
 
-        if (database_outdir.empty()) database_outdir = PATHS(_cur_dir,ENTAP_CONFIG_DIR);
+        _pFileSystem->create_dir(database_outdir);
+        _pFileSystem->create_dir(_bin_dir);
+        _pFileSystem->create_dir(_data_dir);
 
-        FS_create_dir(database_outdir);
-        FS_create_dir(_bin_dir);
-        FS_create_dir(_data_dir);
+        threads = _pUserInput->get_supported_threads();
 
-        threads = get_supported_threads(user_map);
-
-        ncbi_vect = user_map[ENTAP_CONFIG::INPUT_FLAG_NCBI_1].as<std::vector<std::string>>();
-        uniprot_vect = user_map[ENTAP_CONFIG::INPUT_FLAG_UNIPROT].as<std::vector<std::string>>();
-        if (user_map.count(ENTAP_CONFIG::INPUT_FLAG_DATABASE)) {
-            database_vect = user_map[ENTAP_CONFIG::INPUT_FLAG_DATABASE].as<std::vector<std::string>>();
+        if (_pUserInput->has_input(UInput::INPUT_FLAG_DATABASE)) {
+            database_vect = _pUserInput->get_user_input<vect_str_t>(UInput::INPUT_FLAG_DATABASE);
             _compiled_databases = database_vect;
         }
 
@@ -208,31 +205,45 @@ namespace entapConfig {
         FS_dprint("Downloading taxonomic database...");
         //TODO Integrate gzip/zlib
 
-        std::string tax_bin;
-        std::string tax_txt_path;
+        std::string tax_bin_path;
+        std::string tax_txt_path_default;
+        std::string tax_bin_path_default;
         std::string tax_command;
         tax_serial_map_t tax_data_map;
 
-        tax_txt_path  = PATHS(exe, TAX_DATABASE_PATH);
-        if (FS_file_exists(TAX_DB_PATH)) {
-            tax_bin = TAX_DB_PATH;
-            FS_dprint("Tax database binary found at: " + tax_bin + " skipping...");
+        // Tax txt default is not in the config file, so have to check default
+        tax_txt_path_default  = PATHS(exe, Defaults::TAX_DATABASE_TXT_DEFAULT);
+        // Pull tax bin path from config file paths
+        tax_bin_path          = TAX_DB_PATH;
+        // If it doesn't exist in config file path, will check default path
+        tax_bin_path_default  = PATHS(exe, Defaults::TAX_DATABASE_BIN_DEFAULT);
+
+        if (_pFileSystem->file_exists(TAX_DB_PATH)) {
+            FS_dprint("Tax database binary found at: " + tax_bin_path + " skipping...");
             return;
-            // TODO update!
+            // TODO update database and check date of download
         } else {
+            // No bin database located at config file path!!
             FS_dprint("Tax database binary not found at: " + TAX_DB_PATH + " checking non-binary...");
-            if (!FS_file_exists(tax_txt_path)) {
-                FS_dprint("Tax database not found at: " + tax_txt_path + " downloading...");
-                tax_command = "python " + TAX_DOWNLOAD_EXE + " -o " + tax_txt_path;
+            // Check if bin database exists at the output directory
+            if (_pFileSystem->file_exists(tax_bin_path_default)) {
+                FS_dprint("Tax database binary found at: " + tax_bin_path_default + " skipping...");
+                return;
+            }
+            // Bin database not found! Check if text version does not exist. Then download
+            if (!_pFileSystem->file_exists(tax_txt_path_default)) {
+                FS_dprint("Tax database not found at: " + tax_txt_path_default + " downloading...");
+                tax_command = "python " + TAX_DOWNLOAD_EXE + " -o " + tax_txt_path_default;
                 if (execute_cmd(tax_command) != 0) {
-                    throw ExceptionHandler("Command: " + tax_command, ENTAP_ERR::E_INIT_TAX_DOWN);
+                    throw ExceptionHandler("Command: " + tax_command, ERR_ENTAP_INIT_TAX_DOWN);
                 }
-                FS_dprint("Success! File written to " + tax_txt_path);
-            } else FS_dprint("Non-binary database found at: " + tax_txt_path + " indexing...");
+                FS_dprint("Success! File written to " + tax_txt_path_default);
+            } else FS_dprint("Non-binary database found at: " + tax_txt_path_default + " indexing...");
         }
 
+        // Text version of tax database should exist at this point (either existing or downloaded)
         FS_dprint("Indexing taxonomic database...");
-        std::ifstream infile(tax_txt_path);
+        std::ifstream infile(tax_txt_path_default);
         std::string line;
         try {
             while (std::getline(infile, line)) {
@@ -251,20 +262,21 @@ namespace entapConfig {
                 tax_data_map.emplace(sci_name,taxEntry);
             }
         } catch (std::exception &e) {
-            throw ExceptionHandler(e.what(), ENTAP_ERR::E_INIT_TAX_INDEX);
+            throw ExceptionHandler(e.what(), ERR_ENTAP_INIT_TAX_INDEX);
         }
 
-        tax_bin = PATHS(exe, ENTAP_CONFIG::TAX_DB_DEFAULT);
-        FS_dprint("Success! Writing file to "+ tax_bin);
+        FS_dprint("Success! Writing file to "+ tax_bin_path_default);
         try{
             {
-                std::ofstream ofs(tax_bin);
+                std::ofstream ofs(tax_bin_path);
                 boostAR::binary_oarchive oa(ofs);
                 oa << tax_data_map;
             }
         } catch (std::exception &e) {
-            throw ExceptionHandler(e.what(), ENTAP_ERR::E_INIT_TAX_SERIAL);
+            throw ExceptionHandler(e.what(), ERR_ENTAP_INIT_TAX_SERIAL);
         }
+        // Update extern
+        TAX_DB_PATH = tax_bin_path;
         FS_dprint("Success!");
     }
 
@@ -294,16 +306,16 @@ namespace entapConfig {
         std::string go_database_out;
         std::string lvl;
 
-        if (FS_file_exists(GO_DB_PATH)) {
+        if (_pFileSystem->file_exists(GO_DB_PATH)) {
             FS_dprint("Database found at: " + GO_DB_PATH + " skipping creation");
             return;
         } else {
             FS_dprint("Database NOT found at: " + GO_DB_PATH + " , downloading...");
-            go_db_path = PATHS(exe, ENTAP_CONFIG::GO_DB_PATH_DEF);
+            go_db_path = PATHS(exe, Defaults::GO_DATABASE_BIN_DEFAULT);
         }
         go_database_zip = PATHS(database_path, GO_DATA_NAME);
         go_database_out = PATHS(database_path, GO_DIR);
-        if (FS_file_exists(go_database_zip)) boostFS::remove(go_database_zip);
+        if (_pFileSystem->file_exists(go_database_zip)) boostFS::remove(go_database_zip);
         try {
             download_file(GO_DATABASE_FTP,go_database_zip);
             decompress_file(go_database_zip,database_path,1);
@@ -312,9 +324,9 @@ namespace entapConfig {
 
         go_term_path  = PATHS(go_database_out, GO_TERM_FILE);
         go_graph_path = PATHS(go_database_out, GO_GRAPH_FILE);
-        if (!FS_file_exists(go_term_path) || !FS_file_exists(go_graph_path)) {
+        if (!_pFileSystem->file_exists(go_term_path) || !_pFileSystem->file_exists(go_graph_path)) {
             throw ExceptionHandler("GO term files must be at: " + go_term_path + " and " + go_graph_path +
-                                   " in order to configure database", ENTAP_ERR::E_INIT_GO_INDEX);
+                                   " in order to configure database", ERR_ENTAP_INIT_GO_INDEX);
         }
 
         io::CSVReader<6, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(go_graph_path);
@@ -353,7 +365,7 @@ namespace entapConfig {
                 oa << go_map;
             }
         } catch (std::exception &e) {
-            throw ExceptionHandler(e.what(), ENTAP_ERR::E_INIT_GO_INDEX);
+            throw ExceptionHandler(e.what(), ERR_ENTAP_INIT_GO_INDEX);
         }
         FS_dprint("Success!");
     }
@@ -369,11 +381,11 @@ namespace entapConfig {
             return;
         }
         std::string ftp_address;
-        std::string uniprot_bin = exe + "/" + ENTAP_CONFIG::BIN_PATH + "uniprot_";
-        std::string uniprot_data = exe + ENTAP_CONFIG::UNIPROT_BASE_PATH;
+        std::string uniprot_bin = exe + "/" + UInput::BIN_PATH + "uniprot_";
+        std::string uniprot_data = exe + UInput::UNIPROT_BASE_PATH;
 
         for (auto &flag : flags) {
-            if (flag == ENTAP_CONFIG::INPUT_UNIPROT_NULL) return;
+            if (flag == UInput::INPUT_UNIPROT_NULL) return;
             std::string diamond_path = uniprot_bin + flag + ".dmnd";
             std::string database_path = uniprot_data + flag + ".fasta";
             if (file_exists(database_path)) {
@@ -399,9 +411,9 @@ namespace entapConfig {
             return;
         }
         std::string ftp_address;
-        std::string ncbi_data = exe + ENTAP_CONFIG::NCBI_BASE_PATH;
+        std::string ncbi_data = exe + UInput::NCBI_BASE_PATH;
         for (auto &flag : flags) {
-            if (flag == ENTAP_CONFIG::INPUT_UNIPROT_NULL) return;
+            if (flag == UInput::INPUT_UNIPROT_NULL) return;
             std::string database_path = ncbi_data + flag + ".fasta";
             if (file_exists(database_path)) {
                 print_debug("Database at: " + database_path + " found, updating...");
@@ -453,11 +465,11 @@ namespace entapConfig {
             filename     = path.filename().stem().string();
             indexed_path = PATHS(out_path,filename);
             std_out      = indexed_path + "_index";
-            boostFS::remove(std_out + EXT_ERR);
-            boostFS::remove(std_out + EXT_OUT);
+            boostFS::remove(std_out + FileSystem::EXT_ERR);
+            boostFS::remove(std_out + FileSystem::EXT_OUT);
 
             // TODO change for updated databases
-            if (FS_file_exists(indexed_path + ".dmnd")) {
+            if (_pFileSystem->file_exists(indexed_path + ".dmnd")) {
                 FS_dprint("File found at " + indexed_path + ".dmnd, skipping...");
                 continue;
             }
@@ -469,7 +481,7 @@ namespace entapConfig {
             FS_dprint("Executing DIAMOND command:\n" + index_command);
             if (execute_cmd(index_command,std_out) != 0) {
                 throw ExceptionHandler("Error indexing database at: " + item,
-                                       ENTAP_ERR::E_INIT_INDX_DATABASE);
+                                       ERR_ENTAP_INIT_INDX_DATABASE);
             }
             FS_dprint("Database successfully indexed to: " + indexed_path + ".dmnd");
         }
@@ -498,13 +510,13 @@ namespace entapConfig {
                 "python " + eggnog_exe +
                 " none -y";
 
-        if (!FS_file_exists(eggnog_exe)) {
+        if (!_pFileSystem->file_exists(eggnog_exe)) {
             throw ExceptionHandler("Eggnog download path does not exist at: " +
-                                   eggnog_exe, ENTAP_ERR::E_INIT_EGGNOG);
+                                   eggnog_exe, ERR_ENTAP_INIT_EGGNOG);
         }
         FS_dprint("Executing eggnog download...\n" + eggnog_cmd);
         if (execute_cmd(eggnog_cmd) != 0) {
-            throw ExceptionHandler("EggNOG command: " + eggnog_cmd,ENTAP_ERR::E_INIT_EGGNOG);
+            throw ExceptionHandler("EggNOG command: " + eggnog_cmd,ERR_ENTAP_INIT_EGGNOG);
         }
     }
 
@@ -518,19 +530,12 @@ namespace entapConfig {
 
         output_path = path + flag + ".gz";
 
-        if (flag == ENTAP_CONFIG::INPUT_UNIPROT_SWISS) {
-            ftp_address = UNIPROT_FTP_SWISS;
-
-        } else {
-            throw ExceptionHandler("Invalid uniprot flag", ENTAP_ERR::E_INPUT_PARSE);
-        }
-
         download_command = "wget -O "+ output_path + " " + ftp_address;
         FS_dprint("Downloading uniprot: " + flag + " database from " +
                   ftp_address + "...");
         status = execute_cmd(download_command);
         if (status != 0) {
-            throw ExceptionHandler("Error in downloading uniprot database", ENTAP_ERR::E_INIT_TAX_DOWN);
+            throw ExceptionHandler("Error in downloading uniprot database", ERR_ENTAP_INIT_TAX_DOWN);
         }
         FS_dprint("File successfully downloaded to: " + output_path);
         return output_path;
@@ -544,7 +549,7 @@ namespace entapConfig {
         FS_dprint("Downloading through wget: file from " + ftp + "...");
         status = execute_cmd(download_command);
         if (status != 0) {
-            throw ExceptionHandler("Error in downloading " + ftp, ENTAP_ERR::E_INIT_GO_DOWNLOAD);
+            throw ExceptionHandler("Error in downloading " + ftp, ERR_ENTAP_INIT_GO_DOWNLOAD);
         }
         FS_dprint("Success! File printed to: " + out_path);
         return out_path;
@@ -583,7 +588,7 @@ namespace entapConfig {
         status = execute_cmd(unzip_command,std_out);
         if (status != 0) {
             throw ExceptionHandler("Error in unzipping database at " +
-                    file_path, ENTAP_ERR::E_INIT_GO_UNZIP);
+                    file_path, ERR_ENTAP_INIT_GO_UNZIP);
         }
         FS_dprint("File at: " + file_path + " successfully decompressed");
     }
@@ -593,6 +598,12 @@ namespace entapConfig {
     }
 
     void handle_state(void) {
-        state = static_cast<InitStates >(state+1);
+        state = static_cast<InitStates>(state+1);
+    }
+
+    std::string get_output_dir() {
+        if (_pUserInput->has_input(UInput::INPUT_FLAG_DATA_OUT)) {
+            return _pUserInput->get_user_input<std::string>(UInput::INPUT_FLAG_DATA_OUT);
+        } return _pFileSystem->get_root_path();
     }
 }

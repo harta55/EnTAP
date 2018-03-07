@@ -31,6 +31,53 @@
 #include <string>
 #include <exception>
 #include <sstream>
+#include "FileSystem.h"
+
+enum entap_err {
+
+    ERR_ENTAP_INPUT_PARSE                 = 10u,
+    ERR_ENTAP_SUCCESS                     = 0u,
+    ERR_ENTAP_CONFIG_PARSE                = 12u,
+    ERR_ENTAP_CONFIG_CREATE               = 13u,
+    ERR_ENTAP_CONFIG_CREATE_SUCCESS       = 14u,
+    ERR_ENTAP_INIT_TAX_DOWN               = 20u,
+    ERR_ENTAP_INIT_TAX_INDEX              = 21u,
+    ERR_ENTAP_INIT_TAX_SERIAL             = 22u,
+    ERR_ENTAP_INIT_INDX_DATA_NOT_FOUND    = 30u,
+    ERR_ENTAP_INIT_INDX_DATABASE          = 31u,
+    ERR_ENTAP_INIT_DOWNLOAD               = 23u,
+    ERR_ENTAP_INIT_EGGNOG                 = 40u,
+
+    ERR_ENTAP_INIT_TAX_READ               = 55u,
+    ERR_ENTAP_INIT_GO_DOWNLOAD            = 60u,
+    ERR_ENTAP_INIT_GO_UNZIP               = 61u,
+    ERR_ENTAP_INIT_GO_PARSE               = 62u,
+    ERR_ENTAP_INIT_GO_INDEX               = 63u,
+
+    ERR_ENTAP_RUN_EXECUTION_PATHS         = 105u,
+    ERR_ENTAP_RUN_VERIFY_DATABASES        = 106u,
+    ERR_ENTAP_RUN_GENEMARK                = 100u,
+    ERR_ENTAP_RUN_GENEMARK_PARSE          = 101u,
+    ERR_ENTAP_RUN_GENEMARK_STATS          = 102u,
+    ERR_ENTAP_RUN_GENEMARK_MOVE           = 103u,
+    ERR_ENTAP_RUN_RSEM_VALIDATE           = 110u,
+    ERR_ENTAP_RUN_RSEM_CONVERT            = 111u,
+    ERR_ENTAP_RUN_RSEM_EXPRESSION         = 112u,
+    ERR_ENTAP_RUN_RSEM_EXPRESSION_PARSE   = 113u,
+    ERR_ENTAP_RUN_FILTER                  = 120u,
+    ERR_ENTAP_RUN_SIM_SEARCH_FILTER       = 140u,
+    ERR_ENTAP_RUN_SIM_SEARCH_RUN          = 141u,
+    ERR_ENTAP_RUN_ANNOTATION              = 150u,
+    ERR_ENTAP_GO_READ                     = 151u,
+    ERR_ENTAP_RUN_EGGNOG                  = 160u,
+    ERR_ENTAP_DATABASE_QUERY              = 161u,
+    ERR_ENTAP_PARSE_EGGNOG                = 162u,
+    ERR_ENTAP_RUN_INTERPRO                = 170u,
+    ERR_ENTAP_PARSE_INTERPRO              = 171u,
+    ERR_ENTAP_FILE_IO                     = 200u,
+    ERR_ENTAP_MEM_ALLOC                   = 201u
+};
+
 
 class ExceptionHandler: public std::exception{
 
@@ -38,7 +85,7 @@ class ExceptionHandler: public std::exception{
         ExceptionHandler(const std::string&, int);
         const char* what();
         int getErr_code() const;
-        void print_msg();
+        void print_msg(FileSystem*);
 
     private:
         int err_code;

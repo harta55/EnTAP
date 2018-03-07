@@ -82,7 +82,7 @@ std::pair<bool, std::string> ModInterpro::verify_files() {
     _final_basepath = PATHS(_interpro_dir, filename);
     _blastp ? filename += INTERPRO_EXT_XML : filename += INTERPRO_EXT_TSV;
     _final_outpath = PATHS(_interpro_dir, filename);
-    return std::make_pair(FS_file_exists(_final_outpath), "");
+    return std::make_pair(_pFileSystem->file_exists(_final_outpath), "");
 }
 
 void ModInterpro::execute() {
@@ -111,11 +111,11 @@ void ModInterpro::execute() {
         for (std::string &val : _databases) interpro_cmd += " --appl " + val;
     } else {
         throw ExceptionHandler("No InterPro databases selected!",
-                ENTAP_ERR::E_RUN_INTERPRO);
+                ERR_ENTAP_RUN_INTERPRO);
     }
     if (execute_cmd(interpro_cmd, std_out) != 0) {
         throw ExceptionHandler("Error executing InterProScan, consult the error file at: "+
-                std_out, ENTAP_ERR::E_RUN_INTERPRO);
+                std_out, ERR_ENTAP_RUN_INTERPRO);
     } else {
         boostFS::remove_all(temp_dir);
     }
@@ -154,11 +154,11 @@ void ModInterpro::parse() {
     uint32                                count_no_hits=0;
 
     FS_dprint("Beginning to parse InterProScan data...");
-    if (FS_file_exists(_final_outpath)) {
+    if (_pFileSystem->file_exists(_final_outpath)) {
         FS_dprint("File found at: " + _final_outpath + " parsing...");
     } else {
         throw ExceptionHandler("Unable to locate InterProScan file at: " +
-                               _final_outpath, ENTAP_ERR::E_PARSE_INTERPRO);
+                               _final_outpath, ERR_ENTAP_PARSE_INTERPRO);
     }
     try {
         GO_DATABASE = read_go_map();
@@ -179,7 +179,7 @@ void ModInterpro::parse() {
 
     if (!file_no_hits_faa.is_open() || !file_no_hits_fnn.is_open() ||
         !file_hits_faa.is_open()    || !file_hits_fnn.is_open()) {
-        throw ExceptionHandler("Unable to open files for writing", ENTAP_ERR::E_FILE_IO);
+        throw ExceptionHandler("Unable to open files for writing", ERR_ENTAP_FILE_IO);
     }
 
     // TODO stats
@@ -207,7 +207,7 @@ void ModInterpro::parse() {
             }
         }
     } catch (std::exception &e) {
-        throw ExceptionHandler(e.what(), ENTAP_ERR::E_PARSE_INTERPRO);
+        throw ExceptionHandler(e.what(), ERR_ENTAP_PARSE_INTERPRO);
     }
 
     file_no_hits_faa.close();
@@ -221,44 +221,8 @@ void ModInterpro::parse() {
                  ENTAP_STATS::SOFTWARE_BREAK <<
                  "InterProScan statistics coming soon!";
     stats_out = stats_stream.str();
-    FS_print_stats(stats_out);
+    _pFileSystem->print_stats(stats_out);
     FS_dprint("Success! InterProScan finished");
-}
-
-
-/**
-* ======================================================================
-* Function void ModInterpro::set_data(std::string & unused,
-                                      std::vector<std::string>& interpro)
-*
-* Description          - Sets additional data to be used by InterPro object
-*
-* Notes                - None
-*
-* @param unused        - Unused currently for InterPro object
-* @param interpro      - List of interpro databases
-*
-* @return              - None
-*
-* =====================================================================
-*/
-void ModInterpro::set_data(std::string & unused, std::vector<std::string>& interpro) {
-    _interpro_dir = PATHS(_ontology_dir, INTERPRO_DIRECTORY);
-    _proc_dir     = PATHS(_interpro_dir, PROCESSED_OUT_DIR);
-    _figure_dir   = PATHS(_interpro_dir, FIGURE_DIR);
-    _databases    = interpro;
-
-    try {
-        FS_delete_dir(_proc_dir);
-        FS_delete_dir(_figure_dir);
-
-        FS_create_dir(_interpro_dir);
-        FS_create_dir(_proc_dir);
-        FS_create_dir(_figure_dir);
-    } catch (...) {
-        throw ExceptionHandler("Unable to remove or create directories", ENTAP_ERR::E_FILE_IO);
-    }
-
 }
 
 
@@ -405,9 +369,9 @@ std::map<std::string,ModInterpro::InterProData> ModInterpro::parse_tsv(void) {
             interpro_map[query] = interProData;
         }
     } catch (std::exception &e) {
-        throw ExceptionHandler(e.what(), ENTAP_ERR::E_PARSE_INTERPRO);
+        throw ExceptionHandler(e.what(), ERR_ENTAP_PARSE_INTERPRO);
     }
-    FS_delete_file(temp_file_path);
+    _pFileSystem->delete_file(temp_file_path);
     return interpro_map;
 }
 
@@ -462,8 +426,8 @@ bool ModInterpro::is_executable() {
 bool ModInterpro::valid_input(boostPO::variables_map &vm) {
     std::vector<std::string> databases;
 
-    if (!vm.count(ENTAP_CONFIG::INPUT_FLAG_INTERPRO)) return false;
-    databases = vm[ENTAP_CONFIG::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
+    if (!vm.count(UInput::INPUT_FLAG_INTERPRO)) return false;
+    databases = vm[UInput::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
 
     for (std::string &data : databases) {
         LOWERCASE(data);
@@ -476,4 +440,28 @@ bool ModInterpro::valid_input(boostPO::variables_map &vm) {
 
 std::string ModInterpro::get_default() {
     return INTERPRO_DEFAULT;
+}
+
+ModInterpro::ModInterpro(std::string &exe, std::string &out, std::string &in, std::string &in_no_hits, std::string &ont,
+                         GraphingManager *graphing, QueryData *queryData, bool blastp, std::vector<uint16> &lvls,
+                         int threads, FileSystem *filesystem, UserInput *userinput, vect_str_t databases)
+    : AbstractOntology(exe, out, in, in_no_hits, ont, graphing, queryData, blastp,
+                     lvls, threads, filesystem, userinput){
+
+    _interpro_dir = PATHS(_ontology_dir, INTERPRO_DIRECTORY);
+    _proc_dir     = PATHS(_interpro_dir, PROCESSED_OUT_DIR);
+    _figure_dir   = PATHS(_interpro_dir, FIGURE_DIR);
+    _databases    = databases;
+
+    try {
+        _pFileSystem->delete_dir(_proc_dir);
+        _pFileSystem->delete_dir(_figure_dir);
+
+        _pFileSystem->create_dir(_interpro_dir);
+        _pFileSystem->create_dir(_proc_dir);
+        _pFileSystem->create_dir(_figure_dir);
+    } catch (...) {
+        throw ExceptionHandler("Unable to remove or create directories", ERR_ENTAP_FILE_IO);
+    }
+
 }

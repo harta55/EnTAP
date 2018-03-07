@@ -31,7 +31,6 @@
 #include <ios>
 #include <boost/filesystem/operations.hpp>
 #include <pstream.h>
-#include <thread>
 #include <boost/program_options/variables_map.hpp>
 #include <unordered_map>
 #include <boost/archive/binary_iarchive.hpp>
@@ -39,6 +38,7 @@
 #include "config.h"
 #include "FileSystem.h"
 #include <boost/archive/binary_iarchive.hpp>
+#include <iomanip>
 
 //**************************************************************
 
@@ -98,13 +98,7 @@ namespace ENTAP_EXECUTE {
     const std::string HEADER_INTER_EVAL      = "E Value";
 }
 
-namespace ENTAP_CONFIG {
-
-    const std::string ENTAP_VERSION  = "DEBUG_0.8.0";
-    const std::string DEBUG_FILENAME = "debug";
-    const std::string LOG_FILENAME   = "log_file";
-    const std::string LOG_EXTENSION  = ".txt";
-
+namespace UInput {
     //------------------USER INPUTS-----------------------//
     const std::string INPUT_FLAG_TAG           = "out-dir";
     const std::string INPUT_FLAG_CONFIG        = "config";
@@ -139,31 +133,7 @@ namespace ENTAP_CONFIG {
     const std::string INPUT_FLAG_UNINFORM      = "uninformative";
     const std::string INPUT_FLAG_NOCHECK       = "no-check";
 
-    const std::string INPUT_UNIPROT_SWISS      = "swiss";
-    const std::string INPUT_UNIPROT_UR100      = "ur100";
-    const std::string INPUT_UNIPROT_UR90       = "ur90";
-    const std::string INPUT_UNIPROT_TREMBL     = "trembl";
-    const std::string INPUT_UNIPROT_NULL       = "null";
-    const std::string INPUT_UNIPROT_DEFAULT    = INPUT_UNIPROT_SWISS;
-
-    const std::string UNIPROT_BASE_PATH  = "/databases/uniprot_";
-    const std::string UNIPROT_INDEX_PATH = "/bin/uniprot_";
-
-    const std::string NCBI_NONREDUNDANT = "nr";
-    const std::string NCBI_BASE_PATH    = "/databases/ncbi_";
-    const std::string NCBI_REFSEQ_COMP  = "refseq-c";
-    const std::string NCBI_REFSEQ_PLANT = "refseq-p";
-    const std::string NCBI_NULL         = "null";
-    const std::string NCBI_DEFAULT      = NCBI_REFSEQ_COMP;
-
-    const std::string BIN_PATH          = "bin/";
-    const std::string DATABASE_DIR      = "databases/";
-    const std::string NCBI_INDEX_PATH   = "/bin/ncbi_";
-    const std::string GO_DB_PATH_DEF    = "/bin/go_term.entp";
-    const std::string TAX_DB_DEFAULT    = "/bin/ncbi_tax_bin.entp";
 }
-
-
 
 /**
  * ======================================================================
@@ -251,39 +221,6 @@ int execute_cmd(std::string cmd) {
 }
 
 
-/**
- * ======================================================================
- * Function int get_supported_threads(boost::program_options::variables_map &user_map)
- *
- * Description          - Gets threads supported by system and compared with
- *                        user selection
- *                      - If thread support is lower, set to that
- *
- * Notes                - None
- *
- * @param user_map      - Boost parsed input
- *
- * @return              - thread number
- *
- * =====================================================================
- */
-int get_supported_threads(boost::program_options::variables_map &user_map) {
-
-    uint32       supported_threads;
-    int          threads;
-
-    supported_threads = std::thread::hardware_concurrency();
-    if (user_map[ENTAP_CONFIG::INPUT_FLAG_THREADS].as<int>() > supported_threads) {
-        FS_dprint("Specified thread number is larger than available threads,"
-                                       "setting threads to " + std::to_string(supported_threads));
-        threads = supported_threads;
-    } else {
-        threads = user_map[ENTAP_CONFIG::INPUT_FLAG_THREADS].as<int>();
-    }
-    return threads;
-}
-
-
 std::string generate_command(std::unordered_map<std::string,std::string> &map,std::string exe_path) {
     std::stringstream ss;
     std::string       out;
@@ -292,4 +229,10 @@ std::string generate_command(std::unordered_map<std::string,std::string> &map,st
     for (auto &pair : map)ss << pair.first << " " << pair.second << " ";
     out = ss.str();
     return out;
+}
+
+std::string float_to_string(fp64 val) {
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(2) << val;
+    return ss.str();
 }

@@ -50,7 +50,6 @@ namespace boostAR = boost::archive;
 #define PATHS(x,y)      (boostFS::path(x) / boostFS::path(y)).string()
 #define NCBI_UNIPROT    0       // Compiler flag for future feature
 #define DEBUG           1
-#define FILE_APPEND     std::ios::out | std::ios::app
 #define FASTA_FLAG      ">"
 
 //**************************************************************
@@ -61,7 +60,7 @@ int execute_cmd(std::string,std::string);
 int execute_cmd(std::string);
 std::string generate_command(std::unordered_map<std::string,std::string>&,
                              std::string);
-int get_supported_threads(boost::program_options::variables_map&);
+std::string float_to_string(fp64);
 //**************************************************************
 
 
@@ -70,6 +69,7 @@ typedef std::unordered_map<std::string, QuerySequence*> QUERY_MAP_T;
 typedef std::unordered_map<std::string, TaxEntry> tax_serial_map_t;
 typedef std::unordered_map<std::string, GoEntry> go_serial_map_t;
 typedef std::map<std::string,std::vector<std::string>> go_format_t;
+typedef std::vector<std::string> databases_t;   // Standard database container
 
 typedef std::pair<std::string,int> count_pair;
 struct compair {
@@ -79,12 +79,11 @@ struct compair {
 };
 
 enum ExecuteStates {
-    INIT,
-    RSEM,
+    INIT = 0,
+    EXPRESSION_FILTERING,
     FRAME_SELECTION,
     FILTER,
-    DIAMOND_RUN,
-    DIAMOND_PARSE,
+    SIMILARITY_SEARCH,
     GENE_ONTOLOGY,
     EXIT
 };
@@ -118,8 +117,8 @@ namespace ENTAP_EXECUTE {
     const uint16 ONTOLOGY_MAX      = 1;
 
     const uint16 FRAME_FLAG_GENEMARK = 0;
-
     const uint16 EXP_FLAG_RSEM       = 0;
+    const uint16 SIM_SEARCH_FLAG_DIAMOND = 0;
 
     //------------------------Headers-------------------------//
     extern const std::string HEADER_QUERY;
@@ -167,14 +166,7 @@ namespace ENTAP_EXECUTE {
     extern const std::string HEADER_INTER_EVAL;
 }
 
-
-namespace ENTAP_CONFIG {
-
-    extern const std::string ENTAP_VERSION ;
-    extern const std::string DEBUG_FILENAME;
-    extern const std::string LOG_FILENAME  ;
-    extern const std::string LOG_EXTENSION;
-
+namespace UInput {
     //------------------USER INPUTS-----------------------//
     extern const std::string INPUT_FLAG_TAG;
     extern const std::string INPUT_FLAG_CONFIG       ;
@@ -208,85 +200,10 @@ namespace ENTAP_CONFIG {
     extern const std::string INPUT_FLAG_THREADS;
     extern const std::string INPUT_FLAG_UNINFORM;
     extern const std::string INPUT_FLAG_NOCHECK;
-
-    extern const std::string INPUT_UNIPROT_SWISS    ;
-    extern const std::string INPUT_UNIPROT_UR100    ;
-    extern const std::string INPUT_UNIPROT_UR90     ;
-    extern const std::string INPUT_UNIPROT_TREMBL   ;
-    extern const std::string INPUT_UNIPROT_NULL     ;
-    extern const std::string INPUT_UNIPROT_DEFAULT  ;
-
-    extern const std::string UNIPROT_BASE_PATH ;
-    extern const std::string UNIPROT_INDEX_PATH;
-
-    extern const std::string NCBI_NONREDUNDANT ;
-    extern const std::string NCBI_BASE_PATH ;
-    extern const std::string NCBI_REFSEQ_COMP ;
-    extern const std::string NCBI_REFSEQ_PLANT ;
-    extern const std::string NCBI_NULL;
-    extern const std::string NCBI_DEFAULT;
-
-    extern const std::string GO_DB_PATH_DEF    ;
-    extern const std::string TAX_DB_DEFAULT    ;
-    extern const std::string BIN_PATH          ;
-    extern const std::string DATABASE_DIR      ;
-    extern const std::string NCBI_INDEX_PATH   ;
-}
-
-//**************************************************************
-
-
-//******************* Global Constants *************************
-namespace ENTAP_ERR {
-    const uint16 E_INPUT_PARSE                 = 10;
-    const uint16 E_SUCCESS                     = 0;
-    const uint16 E_CONFIG_PARSE                = 12;
-    const uint16 E_CONFIG_CREATE               = 13;
-    const uint16 E_CONFIG_CREATE_SUCCESS       = 14;
-    const uint16 E_INIT_TAX_DOWN               = 20;
-    const uint16 E_INIT_TAX_INDEX              = 21;
-    const uint16 E_INIT_TAX_SERIAL             = 22;
-    const uint16 E_INIT_INDX_DATA_NOT_FOUND    = 30;
-    const uint16 E_INIT_INDX_DATABASE          = 31;
-    const uint16 E_INIT_DOWNLOAD               = 23;
-    const uint16 E_INIT_EGGNOG                 = 40;
-
-    const uint16 E_INIT_TAX_READ               = 55;
-    const uint16 E_INIT_GO_DOWNLOAD            = 60;
-    const uint16 E_INIT_GO_UNZIP               = 61;
-    const uint16 E_INIT_GO_PARSE               = 62;
-    const uint16 E_INIT_GO_INDEX               = 63;
-
-    const uint16 E_RUN_EXECUTION_PATHS         = 105;
-    const uint16 E_RUN_VERIFY_DATABASES        = 106;
-    const uint16 E_RUN_GENEMARK                = 100;
-    const uint16 E_RUN_GENEMARK_PARSE          = 101;
-    const uint16 E_RUN_GENEMARK_STATS          = 102;
-    const uint16 E_RUN_GENEMARK_MOVE           = 103;
-    const uint16 E_RUN_RSEM_VALIDATE           = 110;
-    const uint16 E_RUN_RSEM_CONVERT            = 111;
-    const uint16 E_RUN_RSEM_EXPRESSION         = 112;
-    const uint16 E_RUN_RSEM_EXPRESSION_PARSE   = 113;
-    const uint16 E_RUN_FILTER                  = 120;
-    const uint16 E_RUN_SIM_SEARCH_FILTER       = 140;
-    const uint16 E_RUN_SIM_SEARCH_RUN          = 141;
-    const uint16 E_RUN_ANNOTATION              = 150;
-    const uint16 E_GO_READ                     = 151;
-    const uint16 E_RUN_EGGNOG                  = 160;
-    const uint16 E_DATABASE_QUERY              = 161;
-    const uint16 E_PARSE_EGGNOG                = 162;
-    const uint16 E_RUN_INTERPRO                = 170;
-    const uint16 E_PARSE_INTERPRO              = 171;
-    const uint16 E_FILE_IO                     = 200;
 }
 
 namespace ENTAP_STATS {
     const std::string SOFTWARE_BREAK = "----------------------------------------------\n";
 }
-
-//***********************************************
-
-
-
 
 #endif //ENTAPGLOBALS_H

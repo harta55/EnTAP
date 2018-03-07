@@ -34,33 +34,55 @@
 //**************************************************************
 
 
-//***************** Global Prototype Functions *****************
-#if 0
-void FS_open_out(std::string &, std::ofstream &);
-#endif
-bool FS_file_is_open(std::ofstream&);
-void FS_close_file(std::ofstream&);
-void FS_dprint(std::string);
-void FS_print_stats(std::string &msg);
-bool FS_file_test_open(std::string&);
-bool FS_file_exists(std::string);
-bool FS_file_empty(std::string);
-bool FS_file_no_lines(std::string);
-bool FS_delete_file(std::string);
-bool FS_directory_iterate(bool, std::string&);
-bool FS_check_fasta(std::string&);
-bool FS_create_dir(std::string&);
-void FS_delete_dir(std::string&);
-std::string FS_get_cur_dir();
-std::vector<std::string> FS_list_to_vect(char, std::string&);
-//**************************************************************
+// Keeping global for now
+void FS_dprint(const std::string&);
 
-const std::string EXT_TXT = ".txt";
-const std::string EXT_ERR = ".err";
-const std::string EXT_OUT = ".out";
-const std::string EXT_BAM = ".bam";
-const std::string EXT_FAA = ".faa";
-const std::string EXT_FNN = ".fnn";
+//***************** Global Prototype Functions *****************
+class FileSystem {
+
+public:
+
+    FileSystem(std::string&);
+    ~FileSystem();
+    void open_out(std::string &, std::ofstream &);
+    bool file_is_open(std::ofstream&);
+    void close_file(std::ofstream&);
+    void print_stats(std::string &msg);
+    bool file_test_open(std::string&);
+    bool file_exists(std::string);
+    bool file_empty(std::string);
+    bool file_no_lines(std::string);
+    bool delete_file(std::string);
+    bool directory_iterate(bool, std::string&);
+    bool check_fasta(std::string&);
+    bool create_dir(std::string&);
+    void delete_dir(std::string&);
+    const std::string &get_root_path() const;
+    std::string get_file_extension(const std::string&);
+
+    static std::string get_cur_dir();
+    std::vector<std::string> list_to_vect(char, std::string&);
+
+//**************************************************************
+    static const std::string EXT_TXT ;
+    static const std::string EXT_ERR ;
+    static const std::string EXT_OUT ;
+    static const std::string EXT_BAM ;
+    static const std::string EXT_FAA ;
+    static const std::string EXT_FNN ;
+    static const std::string EXT_DMND;
+
+    std::string _root_path;     // Root EnTAP output directory
+
+private:
+    void init_log();
+
+    const std::string LOG_FILENAME   = "log_file";
+    const std::string LOG_EXTENSION  = ".txt";
+    const std::string DEBUG_FILENAME = "debug";
+
+};
+
 
 
 #endif //ENTAP_FILESYSTEM_H

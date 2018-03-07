@@ -44,10 +44,15 @@
 class ModRSEM : public AbstractExpression{
 
 public:
-    ModRSEM(std::string &exe, std::string &out, std::string &in, std::string &proc,
-            std::string &fig, std::string &exp, std::string &align,GraphingManager *graphing,
-            QueryData *query) :
-    AbstractExpression(exe, out, in, proc, fig, exp, align,graphing, query){}
+    ModRSEM(std::string &exe,
+            std::string &out,
+            std::string &in,
+            std::string &exp,
+            std::string &align,
+            GraphingManager *graphing,
+            QueryData *query,
+            FileSystem *fileSystem) :
+    AbstractExpression(exe, out, in, exp, align, graphing, query, fileSystem){}
 
     ~ModRSEM();
 

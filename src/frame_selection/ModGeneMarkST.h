@@ -42,10 +42,13 @@ struct frame_seq {
 typedef std::map<std::string,ModGeneMarkST::frame_seq> frame_map_t;
 
 public:
-    ModGeneMarkST(std::string &exe, std::string &out, std::string &in, std::string &proc,
-                  std::string &fig, std::string &frame, GraphingManager *graphing,
-                  QueryData *querydata) :
-            AbstractFrame(exe, out, in, proc, fig, frame, graphing, querydata){}
+    ModGeneMarkST(std::string &exe,
+                  std::string &in,
+                  std::string &frame,
+                  GraphingManager *graphing,
+                  QueryData *querydata,
+                  FileSystem *filesystem,
+                  UserInput *userinput);
 
     ~ModGeneMarkST();
 

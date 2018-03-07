@@ -56,10 +56,10 @@ std::pair<bool, std::string> ModGeneMarkST::verify_files() {
     FS_dprint("Beginning to verify GeneMark module files...");
 
     boost::filesystem::path file_name(boostFS::path(_inpath).filename());
-    _final_out = PATHS(_frame_outpath, file_name) + EXT_FAA;
+    _final_out = PATHS(_frame_outpath, file_name) + FileSystem::EXT_FAA;
     lst_file   = file_name.string() + ".lst";
     _final_lst = PATHS(_frame_outpath, lst_file);
-    if (FS_file_exists(_final_out) && FS_file_exists(_final_lst)) {
+    if (_pFileSystem->file_exists(_final_out) && _pFileSystem->file_exists(_final_lst)) {
         FS_dprint("File found at: " + _final_out + "\n"
                 "continuing EnTAP with this file and skipping frame selection");
         return std::make_pair(true, _final_out);
@@ -98,8 +98,8 @@ std::string ModGeneMarkST::execute() {
     std::string     out_path;
 
     boost::filesystem::path file_name(boostFS::path(_inpath).filename());
-    std::list<std::string> out_names {file_name.string() + EXT_FAA,
-                                      file_name.string() + EXT_FNN};
+    std::list<std::string> out_names {file_name.string() + FileSystem::EXT_FAA,
+                                      file_name.string() + FileSystem::EXT_FNN};
     lst_file     = file_name.string() + ".lst";
     out_gmst_log = PATHS(_frame_outpath, GENEMARK_LOG_FILE);
     out_hmm_file = PATHS(_frame_outpath, GENEMARK_HMM_FILE);
@@ -110,7 +110,7 @@ std::string ModGeneMarkST::execute() {
 
     if (execute_cmd(genemark_cmd,genemark_std_out) != 0 ) {
         throw ExceptionHandler("Error in running genemark at file located at: " +
-                               _inpath, ENTAP_ERR::E_INIT_INDX_DATA_NOT_FOUND);
+                               _inpath, ERR_ENTAP_INIT_INDX_DATA_NOT_FOUND);
     }
     FS_dprint("Success!");
     // Format genemarks-t output (remove blank lines)
@@ -128,14 +128,14 @@ std::string ModGeneMarkST::execute() {
         }
         in_file.close();out_file.close();
         if (remove(path.c_str())!=0 || rename(temp_name.c_str(),out_path.c_str())!=0) {
-            throw ExceptionHandler("Error formatting/moving genemark results", ENTAP_ERR::E_INIT_TAX_READ);
+            throw ExceptionHandler("Error formatting/moving genemark results", ERR_ENTAP_INIT_TAX_READ);
         }
     }
     if (rename(lst_file.c_str(),_final_lst.c_str())!=0 ||
         rename(GENEMARK_LOG_FILE.c_str(),out_gmst_log.c_str())!=0 ) {
-        throw ExceptionHandler("Error moving genemark results", ENTAP_ERR::E_RUN_GENEMARK_MOVE);
+        throw ExceptionHandler("Error moving genemark results", ERR_ENTAP_RUN_GENEMARK_MOVE);
     }
-    if (FS_file_exists(GENEMARK_HMM_FILE)) {
+    if (_pFileSystem->file_exists(GENEMARK_HMM_FILE)) {
         rename(GENEMARK_HMM_FILE.c_str(),out_hmm_file.c_str());
     }
     FS_dprint("Success!");
@@ -183,10 +183,6 @@ void ModGeneMarkST::parse() {
     std::pair<uint64, uint64>               kept_n;
     GraphingData                            graphingStruct;
 
-    FS_delete_dir(_processed_path);
-    FS_delete_dir(_figure_path);
-    FS_create_dir(_processed_path);
-    FS_create_dir(_figure_path);
     out_removed_path    = PATHS(_processed_path, FRAME_SELECTION_LOST);
     out_internal_path   = PATHS(_processed_path, FRAME_SELECTION_INTERNAL);
     out_complete_path   = PATHS(_processed_path, FRAME_SELECTION_COMPLTE);
@@ -235,7 +231,7 @@ void ModGeneMarkST::parse() {
                 {FRAME_SELECTION_THREE_FLAG   ,0 },
         };
 
-        for (auto& pair : *pQUERY_DATA->get_sequences_ptr()) {
+        for (auto& pair : *_pQUERY_DATA->get_sequences_ptr()) {
             std::map<std::string,frame_seq>::iterator p_it = protein_map.find(pair.first);
             if (!pair.second->is_kept()) continue; // Skip seqs that were lost to expression
             if (p_it != protein_map.end()) {
@@ -262,7 +258,7 @@ void ModGeneMarkST::parse() {
                     *file_it->second << p_it->second.sequence << std::endl;
                     count_map[p_it->second.frame_type]++;
                 } else {
-                    throw ExceptionHandler("Unknown frame flag found", ENTAP_ERR::E_RUN_GENEMARK_STATS);
+                    throw ExceptionHandler("Unknown frame flag found", ERR_ENTAP_RUN_GENEMARK_STATS);
                 }
 
             } else {
@@ -318,7 +314,7 @@ void ModGeneMarkST::parse() {
                     "Frame Selection: New Reference Transcriptome Statistics\n"<<
                     ENTAP_STATS::SOFTWARE_BREAK;
 
-        kept_n = pQUERY_DATA->calculate_N_vals(all_kept_lengths,total_kept_len);
+        kept_n = _pQUERY_DATA->calculate_N_vals(all_kept_lengths,total_kept_len);
         stat_output <<
                     "\nTotal sequences: "      << count_selected <<
                     "\nTotal length of transcriptome(bp): "      << total_kept_len <<
@@ -331,7 +327,7 @@ void ModGeneMarkST::parse() {
         if (count_removed > 0) {
             avg_lost     = (fp32)total_removed_len / count_removed;
             std::pair<uint64, uint64> removed_n =
-                    pQUERY_DATA->calculate_N_vals(all_lost_lengths,total_removed_len);
+                    _pQUERY_DATA->calculate_N_vals(all_lost_lengths,total_removed_len);
             stat_output <<
                         "\n\nRemoved Sequences (no frame):"       <<
                         "\nTotal sequences: "                     << count_removed    <<
@@ -342,7 +338,7 @@ void ModGeneMarkST::parse() {
                         "\nShortest sequence(bp): " << min_removed<< " (" << min_removed_seq << ")" <<"\n";
         }
         std::string stat_out_msg = stat_output.str();
-        FS_print_stats(stat_out_msg);
+        _pFileSystem->print_stats(stat_out_msg);
         FS_dprint("Success!");
 
         //---------------------- Figure handling ----------------------//
@@ -358,13 +354,13 @@ void ModGeneMarkST::parse() {
         graphingStruct.fig_out_path   = figure_results_png;
         graphingStruct.software_flag  = GRAPH_FRAME_FLAG;
         graphingStruct.graph_type     = GRAPH_PIE_RESULTS_FLAG;
-        pGraphingManager->graph(graphingStruct);
+        _pGraphingManager->graph(graphingStruct);
 
         graphingStruct.text_file_path = figure_removed_path;
         graphingStruct.graph_title    = GRAPH_TITLE_REF_COMPAR;
         graphingStruct.fig_out_path   = figure_removed_png;
         graphingStruct.graph_type     = GRAPH_COMP_BOX_FLAG;
-        pGraphingManager->graph(graphingStruct);
+        _pGraphingManager->graph(graphingStruct);
         FS_dprint("Success!");
         //-----------------------------------------------------------//
 
@@ -375,7 +371,7 @@ void ModGeneMarkST::parse() {
         final_stats.partial_5 = count_map[FRAME_SELECTION_FIVE_FLAG];
         final_stats.internal  = count_map[FRAME_SELECTION_INTERNAL_FLAG];
         final_stats.complete  = count_map[FRAME_SELECTION_COMPLETE_FLAG];
-        pQUERY_DATA->set_frame_stats(final_stats);
+        _pQUERY_DATA->set_frame_stats(final_stats);
 
     } catch (ExceptionHandler &e) {throw e;}
     FS_dprint("Success! Parsing complete");
@@ -412,9 +408,9 @@ ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein(std::string &pr
     uint16          seq_len;
     uint16          line_chars;
 
-    if (!FS_file_exists(protein)) {
+    if (!_pFileSystem->file_exists(protein)) {
         throw ExceptionHandler("File located at: " + protein + " does not exist!",
-                               ENTAP_ERR::E_RUN_GENEMARK_PARSE);
+                               ERR_ENTAP_RUN_GENEMARK_PARSE);
     }
     std::ifstream in_file(protein);
     while(true) {
@@ -496,7 +492,7 @@ void ModGeneMarkST::genemark_parse_lst(std::string &lst_path, frame_map_t &curre
                 it->second.frame_type = frame;
             } else {
                 throw ExceptionHandler("Sequence: " + seq_id + " not found in map",
-                                       ENTAP_ERR::E_RUN_GENEMARK_PARSE);
+                                       ERR_ENTAP_RUN_GENEMARK_PARSE);
             }
         }
     }
@@ -505,4 +501,15 @@ void ModGeneMarkST::genemark_parse_lst(std::string &lst_path, frame_map_t &curre
 
 ModGeneMarkST::~ModGeneMarkST() {
     FS_dprint("Killing object - ModGeneMarkST");
+}
+
+ModGeneMarkST::ModGeneMarkST(std::string &exe, std::string &in, std::string &frame, GraphingManager *graphing,
+                             QueryData *querydata, FileSystem *filesystem, UserInput *userinput) :
+    AbstractFrame(exe,
+                 in,
+                 frame,
+                 graphing,
+                 querydata,
+                 filesystem,
+                 userinput) {
 }

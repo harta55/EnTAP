@@ -60,20 +60,24 @@
  *
  * =====================================================================
  */
-FrameSelection::FrameSelection(std::string &input, std::string &out,
-                               boost::program_options::variables_map &user_flags,
-                               GraphingManager *graphingManager, QueryData *QUERY_DATA) {
+FrameSelection::FrameSelection(std::string &input,
+                               FileSystem* filesystem,
+                               UserInput *user_input,
+                               GraphingManager *graphingManager,
+                               QueryData *QUERY_DATA) {
     FS_dprint("Spawn object - FrameSelection");
     _graphingManager = graphingManager;
     _QUERY_DATA      = QUERY_DATA;
     _exe_path        = GENEMARK_EXE;
-    _outpath         = out;
     _inpath          = input;
-    _overwrite       = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
+    _pFileSystem     = filesystem;
+    _pUserInput      = user_input;
+
+    _outpath         = filesystem->get_root_path();
+    _overwrite       = user_input->has_input(UInput::INPUT_FLAG_OVERWRITE);
     _software_flag   = ENTAP_EXECUTE::FRAME_FLAG_GENEMARK;
-    _frame_outpath   = PATHS(out, FRAME_SELECTION_OUT_DIR);
-    _processed_path  = PATHS(_frame_outpath, PROCESSED_DIR);
-    _figure_path     = PATHS(_frame_outpath, FIGURE_DIR);
+
+    _frame_outpath   = PATHS(_outpath, FRAME_SELECTION_OUT_DIR);
 }
 
 
@@ -101,10 +105,8 @@ std::string FrameSelection::execute(std::string input) {
     std::pair<bool, std::string> verify_pair;
 
     _inpath = input;
-    if (_overwrite) FS_delete_dir(_frame_outpath);
-    FS_create_dir(_frame_outpath);
-    FS_create_dir(_processed_path);
-    FS_create_dir(_figure_path);
+    if (_overwrite) _pFileSystem->delete_dir(_frame_outpath);
+    _pFileSystem->create_dir(_frame_outpath);
     try {
         std::unique_ptr<AbstractFrame> ptr = spawn_object();
         verify_pair = ptr->verify_files();
@@ -136,13 +138,23 @@ std::unique_ptr<AbstractFrame> FrameSelection::spawn_object() {
     switch (_software_flag) {
         case ENTAP_EXECUTE::FRAME_FLAG_GENEMARK:
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
-                    _exe_path, _outpath, _inpath, _processed_path, _figure_path,
-                    _frame_outpath, _graphingManager, _QUERY_DATA
+                    _exe_path,
+                    _inpath,
+                    _frame_outpath,
+                    _graphingManager,
+                    _QUERY_DATA,
+                    _pFileSystem,
+                    _pUserInput
             ));
         default:
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
-                    _exe_path, _outpath, _inpath, _processed_path, _figure_path,
-                    _frame_outpath, _graphingManager, _QUERY_DATA
+                    _exe_path,
+                    _inpath,
+                    _frame_outpath,
+                    _graphingManager,
+                    _QUERY_DATA,
+                    _pFileSystem,
+                    _pUserInput
             ));
     }
 }

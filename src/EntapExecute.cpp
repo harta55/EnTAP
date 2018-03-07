@@ -41,6 +41,7 @@
 #include <boost/regex.hpp>
 #include <queue>
 #include <iomanip>
+#include "UserInput.h"
 //**************************************************************
 
 
@@ -53,8 +54,9 @@ namespace entapExecute {
     bool                    _blastp;          // false for blastx, true for _blastp
     std::string             _input_path;      // FASTA changes depending on execution
     int                     _threads;
-    std::vector<std::string>_databases;       // NCBI+UNIPROT+Other
-
+    databases_t             _databases;       // NCBI+UNIPROT+Other
+    FileSystem             *_pFileSystem;
+    UserInput              *_pUserInput;
     //**************************************************************
 
     //******************** Local Prototype Functions ***************
@@ -90,7 +92,7 @@ namespace entapExecute {
  *
  * =====================================================================
  */
-    void execute_main(boost::program_options::variables_map &user_input) {
+    void execute_main(UserInput *user_input, FileSystem *filesystem) {
         FS_dprint("EnTAP Executing...");
 
         std::vector<uint16>                     ontology_flags;
@@ -103,47 +105,51 @@ namespace entapExecute {
         bool                                    state_flag;
         bool                                    is_complete;     // All input sequences are complete genes
 
-        executeStates           = INIT;
-        state_flag              = false;
-
-        _input_path    = user_input[ENTAP_CONFIG::INPUT_FLAG_TRANSCRIPTOME].as<std::string>();
-        _threads       = get_supported_threads(user_input);
-        _blastp        = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_RUNPROTEIN);
-        original_input = _input_path;
-        trim_flag      = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_TRIM);
-        is_complete    = (bool) user_input.count(ENTAP_CONFIG::INPUT_FLAG_COMPLETE);
-        diamond_pair   = std::make_pair(_input_path,"");
-        ontology_flags = user_input[ENTAP_CONFIG::INPUT_FLAG_ONTOLOGY].as<std::vector<uint16>>();
-
-        _outpath       = user_input[ENTAP_CONFIG::INPUT_FLAG_TAG].as<std::string>();
-        _entap_outpath = PATHS(_outpath, ENTAP_OUTPUT);
-        FS_create_dir(_entap_outpath);
-        FS_create_dir(_outpath);
-
-        // init databases
-        if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_DATABASE)) {
-            other_databases = user_input[ENTAP_CONFIG::INPUT_FLAG_DATABASE].as<std::vector<std::string>>();
-        } else other_databases.push_back(ENTAP_CONFIG::NCBI_NULL);
-
-        // init state control
-        if (user_input.count(ENTAP_CONFIG::INPUT_FLAG_STATE)) {
-            std::string user_state_str =
-                    user_input[ENTAP_CONFIG::INPUT_FLAG_STATE].as<std::string>();
-            for (char c : user_state_str) {
-                state_queue.push(c);
-            }
+        if (user_input == nullptr || filesystem == nullptr) {
+            throw ExceptionHandler("Unable to allocate memory", ERR_ENTAP_INPUT_PARSE);
         }
 
+        executeStates           = INIT;
+        state_flag              = false;
+        _pUserInput             = user_input;
+        _pFileSystem            = filesystem;
+
+        // Pull relevant info input by the user
+        _input_path    = _pUserInput->get_user_input<std::string>(UInput::INPUT_FLAG_TRANSCRIPTOME);
+        original_input = _input_path;
+        _blastp        = _pUserInput->has_input(UInput::INPUT_FLAG_RUNPROTEIN);
+        trim_flag      = _pUserInput->has_input(UInput::INPUT_FLAG_TRIM);
+        is_complete    = _pUserInput->has_input(UInput::INPUT_FLAG_COMPLETE);
+        ontology_flags = _pUserInput->get_user_input<std::vector<uint16>>(UInput::INPUT_FLAG_ONTOLOGY);
+        other_databases= _pUserInput->get_user_input<vect_str_t>(UInput::INPUT_FLAG_DATABASE);
+        state_queue    = _pUserInput->get_state_queue();    // Will NOT be empty
+        _databases     = _pUserInput->get_user_input<databases_t>(UInput::INPUT_FLAG_DATABASE);
+
+        // Set/create outpaths
+        _outpath       = _pFileSystem->get_root_path();
+        _entap_outpath = PATHS(_outpath, ENTAP_OUTPUT);
+        _pFileSystem->create_dir(_entap_outpath);
+        _pFileSystem->create_dir(_outpath);
+
+        diamond_pair   = std::make_pair(_input_path,"");
+
         try {
-            _databases = verify_databases(user_input["uniprot"].as<std::vector<std::string>>(),
-                                         user_input["ncbi"].as<std::vector<std::string>>(),
-                                         other_databases, "");
             verify_state(state_queue, state_flag);
-            QueryData QUERY_DATA = QueryData(_input_path, _entap_outpath,is_complete, trim_flag);
+            // Read input transcriptome
+            QueryData *pQUERY_DATA = new QueryData(
+                    _input_path,
+                    _entap_outpath,
+                    _pUserInput,
+                    _pFileSystem);
             GraphingManager graphingManager = GraphingManager(GRAPHING_EXE);
+            // Spawn sim search object
             std::unique_ptr<SimilaritySearch> sim_search(new SimilaritySearch(
-                    _databases, _input_path, _threads, _outpath,
-                    user_input, &graphingManager, &QUERY_DATA
+                    _databases,
+                    _input_path,
+                    _pUserInput,
+                    _pFileSystem,
+                    &graphingManager,
+                    pQUERY_DATA
             ));
 
             while (executeStates != EXIT) {
@@ -151,41 +157,47 @@ namespace entapExecute {
                     case FRAME_SELECTION: {
                         FS_dprint("STATE - FRAME SELECTION");
                         std::unique_ptr<FrameSelection> frame_selection(new FrameSelection(
-                                _input_path, _outpath, user_input, &graphingManager, &QUERY_DATA
+                                _input_path,
+                                _pFileSystem,
+                                _pUserInput,
+                                &graphingManager,
+                                pQUERY_DATA
                         ));
-                        if ((_blastp && QUERY_DATA.is_protein())) {
+                        if ((_blastp && pQUERY_DATA->DATA_FLAG_GET(QueryData::IS_PROTEIN))) {
                             FS_dprint("Protein sequences input, skipping frame selection");
                         } else if (!_blastp) {
                             FS_dprint("Blastx selected, skipping frame selection");
                         } else {
                             _input_path = frame_selection->execute(_input_path);
-                            QUERY_DATA.set_protein(true);
-                            QUERY_DATA.DATA_FLAG_SET(QueryData::SUCCESS_FRAME_SEL);
+                            pQUERY_DATA->DATA_FLAG_SET(QueryData::IS_PROTEIN);
+                            pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_FRAME_SEL);
                         }
                     }
                         break;
-                    case RSEM: {
-                        FS_dprint("STATE - EXPRESSION");
+                    case EXPRESSION_FILTERING: {
+                        FS_dprint("STATE - EXPRESSION FILTERING");
                         std::unique_ptr<ExpressionAnalysis> expression(new ExpressionAnalysis(
-                                original_input, _threads, _outpath, user_input, &graphingManager, &QUERY_DATA
+                                original_input,
+                                &graphingManager,
+                                pQUERY_DATA,
+                                _pFileSystem,
+                                _pUserInput
                         ));
-                        if (!user_input.count(ENTAP_CONFIG::INPUT_FLAG_ALIGN)) {
+                        if (!_pUserInput->has_input(UInput::INPUT_FLAG_ALIGN)) {
                             FS_dprint("No alignment file specified, skipping expression analysis");
                         } else {
                             _input_path = expression->execute(original_input);
-                            QUERY_DATA.DATA_FLAG_SET(QueryData::SUCCESS_EXPRESSION);
+                            pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_EXPRESSION);
                         }
                     }
                         break;
                     case FILTER:
                         _input_path = filter_transcriptome(_input_path);
                         break;
-                    case DIAMOND_RUN:
+                    case SIMILARITY_SEARCH:
                         FS_dprint("STATE - SIM SEARCH RUN");
                         sim_search->execute(_input_path, _blastp);
-                        QUERY_DATA.DATA_FLAG_SET(QueryData::SUCCESS_SIM_SEARCH);
-                        break;
-                    case DIAMOND_PARSE:
+                        pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_SIM_SEARCH);
                         FS_dprint("STATE - SIM SEARCH PARSE");
                         diamond_pair = sim_search->parse_files(_input_path);
                         _input_path = diamond_pair.first;
@@ -194,11 +206,14 @@ namespace entapExecute {
                     case GENE_ONTOLOGY: {
                         FS_dprint("STATE - GENE ONTOLOGY");
                         std::unique_ptr<Ontology> ontology(new Ontology(
-                                _threads, _outpath, _input_path, user_input, &graphingManager,
-                                &QUERY_DATA, _blastp
+                                _input_path,
+                                _pUserInput,
+                                &graphingManager,
+                                pQUERY_DATA,
+                                _pFileSystem
                         ));
                         ontology->execute(_input_path, no_database_hits);
-                        QUERY_DATA.DATA_FLAG_SET(QueryData::SUCCESS_ONTOLOGY);
+                        pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_ONTOLOGY);
                     }
                         break;
                     default:
@@ -207,126 +222,17 @@ namespace entapExecute {
                 }
                 verify_state(state_queue, state_flag);
             }
-            QUERY_DATA.final_statistics(_outpath, ontology_flags);
-            FS_directory_iterate(true, _outpath);   // Delete empty files
+
+            // *************************** Exit Stuff ********************** //
+
+            pQUERY_DATA->final_statistics(_outpath, ontology_flags);
+            _pFileSystem->directory_iterate(true, _outpath);   // Delete empty files
+            SAFE_DELETE(pQUERY_DATA);
         } catch (const ExceptionHandler &e) {
-            exit_error(executeStates);
+//            exit_error(executeStates);
             throw e;
         }
     }
-
-
-    std::vector<std::string> verify_databases(std::vector<std::string> uniprot, std::vector<std::string> ncbi,
-                                            std::vector<std::string> database, std::string exe) {
-        FS_dprint("Verifying databases...");
-        // return file paths
-        // config file paths already exist (checked in main)
-        std::vector<std::string>        file_paths;
-        std::string                     path;
-        std::string                     config_path;
-
-#if NCBI_UNIPROT
-        print_debug("Verifying uniprot databases...");
-        if (uniprot.size() > 0) {
-            for (auto const &u_flag:uniprot) {
-                if (u_flag.compare(ENTAP_CONFIG::INPUT_UNIPROT_NULL) != 0) {
-                    if (u_flag == ENTAP_CONFIG::INPUT_UNIPROT_SWISS) {
-                        config_path = config.at(ENTAP_CONFIG::KEY_UNIPROT_SWISS);
-                    } else if (u_flag == ENTAP_CONFIG::INPUT_UNIPROT_TREMBL) {
-                        config_path = config.at(ENTAP_CONFIG::KEY_UNIPROT_TREMBL);
-                    } else if (u_flag == ENTAP_CONFIG::INPUT_UNIPROT_UR90) {
-                        config_path = config.at(ENTAP_CONFIG::KEY_UNIPROT_UR90);
-                    } else if (u_flag == ENTAP_CONFIG::INPUT_UNIPROT_UR100) {
-                        config_path = config.at(ENTAP_CONFIG::KEY_UNIPROT_UR100);
-                    }
-                    if (!config_path.empty()) {
-                        print_debug("Config file database found, using this path at: " +
-                                             config_path);
-                        path = config_path;
-                    } else {
-                        path = exe + ENTAP_CONFIG::UNIPROT_INDEX_PATH + u_flag + ".dmnd";
-                    }
-                    if (!file_exists(path))
-                        throw ExceptionHandler("Database located at: " + path + " not found", ENTAP_ERR::E_INPUT_PARSE);
-                    file_paths.push_back(path);
-                } else {
-                    print_debug("No/null Uniprot databases detected");
-                    break;
-                }
-            }
-        }
-        print_debug("Complete");
-        print_debug("Verifying NCBI databases...");
-        if (ncbi.size() > 0) {
-            for (auto const &u_flag:ncbi) {
-                if (u_flag.compare(ENTAP_CONFIG::NCBI_NULL) != 0) {
-                    if (u_flag == ENTAP_CONFIG::NCBI_NONREDUNDANT) {
-                        config_path = config.at(ENTAP_CONFIG::KEY_NCBI_NR);
-                    } else if (u_flag == ENTAP_CONFIG::NCBI_REFSEQ_PLANT) {
-                        config_path = config.at(ENTAP_CONFIG::KEY_NCBI_REFSEQ_SEPARATE);
-                    } else if (u_flag == ENTAP_CONFIG::NCBI_REFSEQ_COMP) {
-                        config_path = config.at(ENTAP_CONFIG::KEY_NCBI_REFSEQ_COMPLETE);
-                    }
-                    if (!config_path.empty()) {
-                        print_debug("Config file database found, using this path at: " +
-                                             config_path);
-                        path = config_path;
-                    } else {
-                        path = exe + ENTAP_CONFIG::NCBI_INDEX_PATH + u_flag + ".dmnd";
-                    }
-                    if (!file_exists(path))
-                        throw ExceptionHandler("Database located at: " + path + " not found", ENTAP_ERR::E_INPUT_PARSE);
-                    file_paths.push_back(path);
-                } else {
-                    print_debug("No/null NCBI databases detected");
-                    break;
-                }
-            }
-        }
-        print_debug("Complete");
-
-#endif
-        FS_dprint("Verifying other databases...");
-        if (database.size() > 0) {
-            for (auto const &data_path:database) {
-                if (data_path.compare(ENTAP_CONFIG::NCBI_NULL) == 0) continue;
-                if (!FS_file_exists(data_path)) {
-                    throw ExceptionHandler("Database located at: " + data_path + " not found",
-                                           ENTAP_ERR::E_INPUT_PARSE);
-                }
-                boostFS::path bpath(data_path);
-                std::string ext = bpath.extension().string();
-                if (ext.compare(".dmnd") == 0) {
-                    FS_dprint("User has input a diamond indexed database at: " + data_path);
-                    file_paths.push_back(data_path);
-                    continue;
-                } else {
-                    //todo fix not really used yet
-                    FS_dprint("User has input a database at: " + data_path);
-                    std::string test_path = PATHS(exe,ENTAP_CONFIG::BIN_PATH) + data_path + ".dmnd";
-                    FS_dprint("Checking if indexed file exists at: " + test_path);
-                    if (!FS_file_exists(test_path)) {
-                        throw ExceptionHandler("Database located at: " + data_path + " not found",
-                                               ENTAP_ERR::E_INPUT_PARSE);
-                    } else {
-                        file_paths.push_back(test_path);
-                    }
-                }
-            }
-        }
-        FS_dprint("Verification complete!");
-        if (file_paths.size() > 0) {
-            std::string database_final = "\n\nDatabases selected:\n";
-            for (std::string base: file_paths) {
-                database_final += base + "\n";
-            }
-            FS_dprint(database_final);
-        } else {
-            FS_dprint("No databases selected, some functionality may not be able to run");
-        }
-        return file_paths;
-    }
-
 
     /**
      * ======================================================================
@@ -442,7 +348,7 @@ namespace entapExecute {
  * ======================================================================
  */
     bool valid_state(ExecuteStates s) {
-        return (s >= RSEM && s <= EXIT);
+        return (s >= EXPRESSION_FILTERING && s <= EXIT);
     }
 
 
@@ -466,7 +372,7 @@ namespace entapExecute {
         switch (s) {
             case INIT:
                 break;
-            case RSEM:
+            case EXPRESSION_FILTERING:
                 ss <<
                    "EnTAP failed execution during the Expression Filtering stage with\n"
                            "previous stages executing correctly.\n";
@@ -478,15 +384,10 @@ namespace entapExecute {
                 break;
             case FILTER:
                 break;
-            case DIAMOND_RUN:
+            case SIMILARITY_SEARCH:
                 ss <<
-                   "EnTAP failed execution during executing Similarity Searching with\n"
-                           "previous stages executing correctly.\n";
-                break;
-            case DIAMOND_PARSE:
-                ss <<
-                   "EnTAP failed execution during the parsing of Similarity Searching \n"
-                           "data with previous stages executing correctly.\n"
+                   "EnTAP failed execution during the Similarity Searching \n"
+                           " with previous stages executing correctly.\n"
                            "It seems that the similarity searching worked, but \n"
                            "some issue in parsing caused an error!\n";
                 break;

@@ -53,7 +53,8 @@
  *
  * =====================================================================
  */
-QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_complete, bool &trim) {
+QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *userinput,
+                    FileSystem* filesystem) {
     FS_dprint("Processing transcriptome...");
 
     std::stringstream                        out_msg;
@@ -73,14 +74,21 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
     fp64                                     avg_len;
     std::vector<uint16>                      sequence_lengths;
     std::pair<uint16, uint16>                n_vals;
+    bool                                     is_complete;
 
-    _trim = trim;
     _total_sequences = 0;
     _pipeline_flags = 0;
     _data_flags = 0;
+    _pSEQUENCES = new QUERY_MAP_T;
 
-    if (!FS_file_exists(input_file)) {
-        throw ExceptionHandler("Input file not found at: " + input_file,ENTAP_ERR::E_INPUT_PARSE);
+    _pUserInput  = userinput;
+    _pFileSystem = filesystem;
+
+    _trim          = _pUserInput->has_input(UInput::INPUT_FLAG_TRIM);
+    is_complete    = _pUserInput->has_input(UInput::INPUT_FLAG_COMPLETE);
+
+    if (!_pFileSystem->file_exists(input_file)) {
+        throw ExceptionHandler("Input file not found at: " + input_file,ERR_ENTAP_INPUT_PARSE);
     }
 
     boostFS::path path(input_file);
@@ -103,14 +111,13 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
                     out_file << line << std::endl;
                     sequence += line + "\n";
                 }
-                QuerySequence *query_seq = new QuerySequence(_protein,sequence);
+                QuerySequence *query_seq = new QuerySequence(_protein,sequence, seq_id);
                 if (is_complete) query_seq->setFrame(COMPLETE_FLAG);
-                query_seq->setQseqid(seq_id);
-                if (_SEQUENCES.find(seq_id) != _SEQUENCES.end()) {
+                if (_pSEQUENCES->find(seq_id) != _pSEQUENCES->end()) {
                     throw ExceptionHandler("Duplicate headers in your input transcriptome!",
-                        ENTAP_ERR::E_INPUT_PARSE);
+                        ERR_ENTAP_INPUT_PARSE);
                 }
-                _SEQUENCES.emplace(seq_id, query_seq);
+                _pSEQUENCES->emplace(seq_id, query_seq);
                 count_seqs++;
                 len = (uint16) query_seq->getSeq_length();
                 total_len += len;
@@ -152,7 +159,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, bool &is_co
             "\nShortest sequence(bp): "<< shortest_len<<" ("<<shortest_seq<<")";
     if (is_complete)out_msg<<"\nAll sequences ("<<count_seqs<<") were flagged as complete genes";
     std::string msg = out_msg.str();
-    FS_print_stats(msg);
+    _pFileSystem->print_stats(msg);
     FS_dprint("Success!");
     input_file = out_new_path;
 }
@@ -180,10 +187,6 @@ void QueryData::set_input_type(std::string &in) {
     }
     _protein = deviations > NUCLEO_DEV;
     in_file.close();
-}
-
-bool QueryData::is_protein() const {
-    return _protein;
 }
 
 
@@ -232,7 +235,7 @@ std::pair<uint16, uint16> QueryData::calculate_N_vals (ExecuteStates state, bool
     fp64   ninety_len;
 
     // Recalculate based upon what sequences are left (kept)
-    for (auto &pair : _SEQUENCES) {
+    for (auto &pair : *_pSEQUENCES) {
         if (pair.second->is_kept()) {
             total_len += pair.second->getSeq_length();
             total_seq++;
@@ -276,13 +279,13 @@ std::pair<uint16, uint16> QueryData::calculate_N_vals (ExecuteStates state, bool
  * ======================================================================
  */
 void QueryData::flag_transcripts(ExecuteStates state) {
-    for (auto &pair : _SEQUENCES) {
+    for (auto &pair : *_pSEQUENCES) {
         switch (state) {
-            case RSEM:
+            case EXPRESSION_FILTERING:
                 pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_EXPRESSION_KEPT);
                 break;
             case FRAME_SELECTION:
-                pair.second->setIs_protein(true);        // Probably already done
+                pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_IS_PROTEIN);        // Probably already done
                 pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_FRAME_KEPT);
                 break;
             default:
@@ -356,10 +359,10 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
     std::ofstream file_annotated_nucl(out_annotated_nucl_path, std::ios::out | std::ios::app);
     std::ofstream file_annotated_prot(out_annotated_prot_path, std::ios::out | std::ios::app);
 
-    for (auto &pair : _SEQUENCES) {
+    for (auto &pair : *_pSEQUENCES) {
         count_total_sequences++;
         is_exp_kept = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_EXPRESSION_KEPT);
-        is_prot = pair.second->isIs_protein();
+        is_prot = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN);
         is_hit = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_BLAST_HIT);
         is_ontology = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ASSIGNED); // TODO Fix for interpro
         is_one_go = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_ONE_GO);
@@ -451,7 +454,7 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
        "\n\tTotal unique sequences unannotated (gene family and/or similarity search): " << count_TOTAL_unann;
 
     out_msg = ss.str();
-    FS_print_stats(out_msg);
+    _pFileSystem->print_stats(out_msg);
 }
 
 std::string QueryData::trim_sequence_header(std::string &header, std::string line) {
@@ -479,18 +482,16 @@ void QueryData::set_frame_stats(const FrameStats &_frame_stats) {
 }
 
 QUERY_MAP_T* QueryData::get_sequences_ptr() {
-    return &this->_SEQUENCES;
-}
-
-void QueryData::set_protein(bool protein) {
-    QueryData::_protein = protein;
+    return this->_pSEQUENCES;
 }
 
 QueryData::~QueryData() {
     FS_dprint("Killing QueryData object...");
-    for(QUERY_MAP_T::iterator it = _SEQUENCES.begin(); it != _SEQUENCES.end(); it++) {
+    for(QUERY_MAP_T::iterator it = _pSEQUENCES->begin(); it != _pSEQUENCES->end(); it++) {
         delete it->second;
+        it->second = nullptr;
     }
+    SAFE_DELETE(_pSEQUENCES);
 }
 
 bool QueryData::DATA_FLAG_GET(DATA_FLAGS flag) {
@@ -504,3 +505,16 @@ void QueryData::DATA_FLAG_SET(DATA_FLAGS flag) {
 void QueryData::DATA_FLAG_CLEAR(DATA_FLAGS flag) {
     _data_flags &= ~flag;
 }
+
+QuerySequence *QueryData::get_sequence(std::string &query_id) {
+    QUERY_MAP_T::iterator it = _pSEQUENCES->find(query_id);
+    if (it != _pSEQUENCES->end()) {
+        // Sequence found, return
+        return it->second;
+    } else {
+        // Sequence NOT found retun null
+        return nullptr;
+    }
+}
+
+

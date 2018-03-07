@@ -32,17 +32,30 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <chrono>
+#include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/date_time/time_clock.hpp>
 #include "config.h"
+#include <ctime>
+#include <cstring>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
-#if 0 // Removed for older compilers, will bring back later
-void FS_open_out(std::string &path, std::ofstream &ofstream) {
+const std::string FileSystem::EXT_TXT = ".txt";
+const std::string FileSystem::EXT_ERR = ".err";
+const std::string FileSystem::EXT_OUT = ".out";
+const std::string FileSystem::EXT_BAM = ".bam";
+const std::string FileSystem::EXT_FAA = ".faa";
+const std::string FileSystem::EXT_FNN = ".fnn";
+const std::string FileSystem::EXT_DMND= ".dmnd";
+
+
+// Removed for older compilers, may bring back
+void FileSystem::open_out(std::string &path, std::ofstream &ofstream) {
     ofstream = std::ofstream(path,std::ios::out | std::ios::app);
     if (!ofstream.is_open()) {
         throw ExceptionHandler("Error opening file: " + path,
-            ENTAP_ERR::E_FILE_IO);
+             ERR_ENTAP_FILE_IO);
     }
 }
-#endif
 
 
 /**
@@ -59,11 +72,11 @@ void FS_open_out(std::string &path, std::ofstream &ofstream) {
  *
  * =====================================================================
  */
-void FS_close_file(std::ofstream &ofstream) {
+void FileSystem::close_file(std::ofstream &ofstream) {
     try {
         ofstream.close();
     } catch (const std::exception &exception) {
-        throw ExceptionHandler(exception.what(), ENTAP_ERR::E_FILE_IO);
+        throw ExceptionHandler(exception.what(), ERR_ENTAP_FILE_IO);
     }
 }
 
@@ -82,7 +95,7 @@ void FS_close_file(std::ofstream &ofstream) {
  *
  * =====================================================================
  */
-void FS_dprint(std::string msg) {
+void FS_dprint(const std::string &msg) {
 
 #if DEBUG
     std::chrono::time_point<std::chrono::system_clock> current;
@@ -94,7 +107,7 @@ void FS_dprint(std::string msg) {
     std::ofstream debug_file(DEBUG_FILE_PATH, std::ios::out | std::ios::app);
 
     debug_file << out_time.substr(0,out_time.length()-1) << ": " + msg << std::endl;
-    FS_close_file(debug_file);
+    debug_file.close();
 #endif
 }
 
@@ -112,10 +125,10 @@ void FS_dprint(std::string msg) {
  *
  * =====================================================================
  */
-void FS_print_stats(std::string &msg) {
+void FileSystem::print_stats(std::string &msg) {
     std::ofstream log_file(LOG_FILE_PATH, std::ios::out | std::ios::app);
     log_file << msg << std::endl;
-    FS_close_file(log_file);
+    close_file(log_file);
 }
 
 
@@ -134,7 +147,7 @@ void FS_print_stats(std::string &msg) {
  *
  * =====================================================================
  */
-bool FS_file_exists(std::string path) {
+bool FileSystem::file_exists(std::string path) {
 #ifdef USE_BOOST
     return boost::filesystem::exists(path);
 #else
@@ -157,7 +170,7 @@ bool FS_file_exists(std::string path) {
  * @return              - True/false if open
  * ======================================================================
  */
-bool FS_file_is_open(std::ofstream &ofstream) {
+bool FileSystem::file_is_open(std::ofstream &ofstream) {
     return ofstream.is_open();
 }
 
@@ -175,7 +188,7 @@ bool FS_file_is_open(std::ofstream &ofstream) {
  * @return              - True/false if successful
  * ======================================================================
  */
-bool FS_file_test_open(std::string &path) {
+bool FileSystem::file_test_open(std::string &path) {
     bool is_open;
     std::ifstream ifstream(path);
     is_open = ifstream.is_open();
@@ -197,10 +210,10 @@ bool FS_file_test_open(std::string &path) {
  * @return              - True/false if successful
  * ======================================================================
  */
-bool FS_delete_file(std::string path) {
-    FS_dprint("Deleting file: " + path);
-    if (!FS_file_exists(path)) return false;
+bool FileSystem::delete_file(std::string path) {
+    if (!file_exists(path)) return false;
 #ifdef USE_BOOST
+    FS_dprint("Deleting file: " + path);
     return boostFS::remove(path);
 #else
     return remove(path) == 0;
@@ -222,15 +235,15 @@ bool FS_delete_file(std::string path) {
  * @return              - True/false if successful
  * ======================================================================
  */
-bool FS_directory_iterate(bool del, std::string &path) {
+bool FileSystem::directory_iterate(bool del, std::string &path) {
     FS_dprint("Iterating through directory: " + path);
-    if (!FS_file_exists(path)) return false;
+    if (!file_exists(path)) return false;
     try {
         for (boostFS::recursive_directory_iterator it(path), end; it != end; ++it) {
             if (!boostFS::is_directory(it->path())) {
                 // Is file
-                if (FS_file_empty(it->path().string()) && del) {
-                    FS_delete_file(it->path().string());
+                if (file_empty(it->path().string()) && del) {
+                    delete_file(it->path().string());
                     FS_dprint("Deleted: " + it->path().string());
                 }
             }
@@ -257,7 +270,7 @@ bool FS_directory_iterate(bool del, std::string &path) {
  * @return              - True/false if file empty
  * ======================================================================
  */
-bool FS_file_empty(std::string path) {
+bool FileSystem::file_empty(std::string path) {
     std::ifstream file(path);
     bool empty;
     std::string line;
@@ -288,7 +301,7 @@ bool FS_file_empty(std::string path) {
  * @return              - True/false if fasta file valid
  * ======================================================================
  */
-bool FS_check_fasta(std::string& path) {
+bool FileSystem::check_fasta(std::string& path) {
     std::string line;
     bool valid = false;
     try {
@@ -320,7 +333,7 @@ bool FS_check_fasta(std::string& path) {
  * @return              - True/false if created successfully
  * ======================================================================
  */
-bool FS_create_dir(std::string& path) {
+bool FileSystem::create_dir(std::string& path) {
 #ifdef USE_BOOST
     return boostFS::create_directories(path);
 #endif
@@ -340,7 +353,7 @@ bool FS_create_dir(std::string& path) {
  * @return              - None
  * ======================================================================
  */
-void FS_delete_dir(std::string& path) {
+void FileSystem::delete_dir(std::string& path) {
 #ifdef USE_BOOST
     boostFS::remove_all(path);
 #endif
@@ -362,7 +375,7 @@ void FS_delete_dir(std::string& path) {
  *
  * =====================================================================
  */
-bool FS_file_no_lines(std::string path) {
+bool FileSystem::file_no_lines(std::string path) {
     std::ifstream ifstream(path);
     return ifstream.peek() == std::ifstream::traits_type::eof();
 }
@@ -384,7 +397,7 @@ bool FS_file_no_lines(std::string path) {
  *
  * =====================================================================
  */
-std::vector<std::string> FS_list_to_vect(char it, std::string &list) {
+std::vector<std::string> FileSystem::list_to_vect(char it, std::string &list) {
     std::string temp;
     std::vector<std::string> output;
 
@@ -410,10 +423,83 @@ std::vector<std::string> FS_list_to_vect(char it, std::string &list) {
  *
  * =====================================================================
  */
-std::string FS_get_cur_dir() {
+std::string FileSystem::get_cur_dir() {
 
 #ifdef USE_BOOST
     return boostFS::current_path().string();
 #endif
 
+}
+
+FileSystem::~FileSystem() {
+    FS_dprint("Killing Object - FileSystem");
+
+}
+
+FileSystem::FileSystem(std::string &root) {
+    // This routine will process entire root directory here and generate
+    // hierarchy
+
+    _root_path = root;
+    create_dir(root);
+    init_log();
+}
+
+/**
+ * ======================================================================
+ * Function init_log()
+ *
+ * Description          - Initializes log and debug files
+ *
+ * Notes                - None
+ *
+ * @return              - None
+ * ======================================================================
+ */
+void FileSystem::init_log() {
+#ifndef USE_BOOST
+    std::chrono::time_point<std::chrono::system_clock> now;
+    std::time_t                                        now_time;
+    std::tm                                            now_tm;
+#endif
+    std::stringstream                                  ss;
+    std::string                                        log_file_name;
+    std::string                                        debug_file_name;
+    std::string                                        time_date;
+
+#ifdef USE_BOOST
+    boost::posix_time::ptime local = boost::posix_time::second_clock::local_time();
+    ss <<
+       "_" <<
+       local.date().year()             << "." <<
+       local.date().month().as_number()<< "." <<
+       local.date().day()              << "-" <<
+       local.time_of_day().hours()     << "h"   <<
+       local.time_of_day().minutes()   << "m" <<
+       local.time_of_day().seconds()   << "s";
+#else
+    now      = std::chrono::system_clock::now();
+    now_time = std::chrono::system_clock::to_time_t(now);
+    now_tm   = *std::localtime(&now_time);
+    ss << std::put_time(&now_tm, "_%Y.%m.%d-%Hh.%Mm.%Ss");
+#endif
+    time_date       = ss.str();
+    log_file_name   = LOG_FILENAME   + time_date + LOG_EXTENSION;
+    debug_file_name = DEBUG_FILENAME + time_date + LOG_EXTENSION;
+    DEBUG_FILE_PATH = PATHS(_root_path, debug_file_name);
+    LOG_FILE_PATH   = PATHS(_root_path, log_file_name);
+    delete_file(DEBUG_FILE_PATH);
+    delete_file(LOG_FILE_PATH);
+    FS_dprint("Start - EnTAP");
+}
+
+const std::string &FileSystem::get_root_path() const {
+    return _root_path;
+}
+
+std::string FileSystem::get_file_extension(const std::string &path) {
+#ifdef USE_BOOST
+    boostFS::path bpath(path);
+    return bpath.extension().string();
+#endif
 }

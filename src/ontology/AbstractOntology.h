@@ -39,9 +39,18 @@ class QueryData;
 class GoTerm;
 class AbstractOntology {
 public:
-    AbstractOntology(std::string &exe,std::string &out, std::string &in_hits,
-                     std::string &in_nohits, std::string &ont_out, GraphingManager *graphing,
-                     QueryData *querydata, bool blastp, std::vector<uint16>& lvls, uint8 threads){
+    AbstractOntology(std::string &exe,
+                     std::string &out,
+                     std::string &in_hits,
+                     std::string &in_nohits,
+                     std::string &ont_out,
+                     GraphingManager *graphing,
+                     QueryData *querydata,
+                     bool blastp,
+                     std::vector<uint16>& lvls,
+                     int threads,
+                     FileSystem *fileSystem,
+                     UserInput *userinput){
         _exe_path        = exe;
         _outpath         = out;
         _inpath          = in_hits;
@@ -52,13 +61,14 @@ public:
         _blastp          = blastp;
         _go_levels       = lvls;
         _threads         = threads;
-
+        _pFileSystem     = fileSystem;
+        _pUserInput      = userinput;
     }
+
     virtual ~AbstractOntology() = default;
     virtual std::pair<bool, std::string> verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
-    virtual void set_data(std::string&, std::vector<std::string>&)=0;
 
 protected:
     const std::string PROCESSED_OUT_DIR     = "processed/";
@@ -85,7 +95,7 @@ protected:
     const uint8 GRAPH_TOP_BAR_FLAG  = 1;  // used for tax levels and go term tops
 
     bool               _blastp;
-    uint8              _threads;
+    int                _threads;
     std::string        _in_no_hits;
     std::string        _exe_path;
     std::string        _outpath;
@@ -94,6 +104,8 @@ protected:
     std::vector<uint16> _go_levels;
     GraphingManager    *pGraphingManager;
     QueryData          *pQUERY_DATA;
+    UserInput          *_pUserInput;
+    FileSystem         *_pFileSystem;
 
     std::map<std::string,std::vector<std::string>> parse_go_list(std::string list, go_serial_map_t &GO_DATABASE,char delim);
     go_serial_map_t read_go_map ();

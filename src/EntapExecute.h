@@ -50,7 +50,7 @@ namespace entapExecute {
 
 
     // ****************** Global Prototype Functions ***************
-    void execute_main(boost::program_options::variables_map &);
+    void execute_main(UserInput*, FileSystem*);
     //**************************************************************
 
 

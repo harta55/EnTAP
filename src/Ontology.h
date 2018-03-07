@@ -49,8 +49,11 @@ class Ontology {
 public:
 
     void execute(std::string,std::string);
-    Ontology(int,std::string,std::string, boost::program_options::variables_map &,GraphingManager*,
-             QueryData*, bool);
+    Ontology(std::string,
+             UserInput*,
+             GraphingManager*,
+             QueryData*,
+             FileSystem*);
 
 private:
 
@@ -70,7 +73,7 @@ private:
 
     std::vector<std::string>        _interpro_databases;
     std::vector<uint16>             _go_levels;
-    uint8                           _threads;
+    int                              _threads;
     std::vector<uint16>             _software_flags;
     bool                            _is_overwrite;
     bool                            _blastp;
@@ -79,12 +82,12 @@ private:
     std::string                     _new_input;
     std::string                     _input_no_hits;
     std::string                     _ontology_dir;
-    std::string                     _processed_dir;
-    std::string                     _figure_dir;
     std::string                     _eggnog_db_path;
     std::vector<const std::string*> _HEADERS;
-    GraphingManager                 *_graphingManager;
+    GraphingManager                 *_pGraphingManager;
     QueryData                       *_QUERY_DATA;
+    FileSystem                      *_pFileSystem;
+    UserInput                       *_pUserInput;
 
     void print_eggnog(QUERY_MAP_T&);
     void init_headers();

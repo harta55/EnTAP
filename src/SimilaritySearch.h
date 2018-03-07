@@ -50,8 +50,12 @@ public:
 
     //******************** Public Prototype Functions *********************
     std::vector<std::string> execute(std::string, bool);
-    SimilaritySearch(std::vector<std::string>&, std::string, int, std::string,
-                     boost::program_options::variables_map &, GraphingManager *, QueryData *);
+    SimilaritySearch(databases_t&,
+                     std::string,
+                     UserInput*,
+                     FileSystem*,
+                     GraphingManager*,
+                     QueryData*);
     SimilaritySearch();
     std::pair<std::string,std::string> parse_files(std::string);
     tax_serial_map_t read_tax_map();
@@ -61,7 +65,6 @@ public:
 
 private:
 
-    static constexpr uint8 DIAMOND_FLAG                          = 0;
     const std::string _NCBI_REGEX                                = "\\[([^]]+)\\](?!.+\\[.+\\])";
     const std::string _UNIPROT_REGEX                             = "OS=(.+?)\\s\\S\\S=";
     const std::string SIM_SEARCH_DATABASE_BEST_TSV               = "best_hits.tsv";
@@ -104,20 +107,6 @@ private:
 
     static constexpr int DMND_COL_NUMBER = 14;
 
-    // Enter as lowercase
-    const std::vector<std::string> INFORMATIVENESS {
-            "conserved",
-            "predicted",
-            "unnamed",
-            "hypothetical",
-            "putative",
-            "unidentified",
-            "uncharacterized",
-            "unknown",
-            "uncultured",
-            "uninformative"
-    };
-
     const std::vector<const std::string*> DEFAULT_HEADERS {
             &ENTAP_EXECUTE::HEADER_QUERY,
             &ENTAP_EXECUTE::HEADER_SUBJECT,
@@ -152,31 +141,34 @@ private:
     std::string                     _input_lineage;
     std::string                     _input_species;
     std::string                     _blast_type;
+    std::string                     _transcript_shortname;
     int                             _threads;
     bool                            _overwrite;
     bool                            _blastp;
-    fp32                            _e_val;
+    fp64                            _e_val;
     fp32                            _qcoverage;
     fp32                            _tcoverage;
     uint8                           _software_flag;
     std::vector<std::string>        _contaminants;
     GraphingManager                 *_pGraphingManager;
     QueryData                       *_pQUERY_DATA;
+    FileSystem                      *_pFileSystem;
+    UserInput                       *_pUserInput;
     std::unordered_map<std::string,std::string> _file_to_database;
 
     std::vector<std::string> diamond();
     void diamond_blast(std::string, std::string, std::string,std::string&,int&, std::string&);
-    std::vector<std::string> verify_diamond_files(std::string&, std::string);
+    std::vector<std::string> verify_diamond_files();
     std::pair<std::string,std::string> diamond_parse(std::vector<std::string>&);
     std::pair<bool,std::string> is_contaminant(std::string, tax_serial_map_t&,std::vector<std::string>&);
     bool is_informative(std::string);
-    std::pair<std::string,std::string> process_best_diamond_hit(std::list<std::map<std::string,QuerySequence>>&);
-    void print_header(std::string);
+    void print_header(std::ofstream&);
     void get_tax_entry(std::string, tax_serial_map_t&, TaxEntry&);
     std::string get_species(std::string &title);
-    std::pair<std::string,std::string> calculate_best_stats (std::map<std::string,QuerySequence>&,
-                                 std::stringstream &, std::string&,bool);
-    void read_uninform_file(std::string&);
+    std::pair<std::string,std::string> calculate_best_stats (bool,std::string="");
+    std::string get_database_shortname(std::string&);
+    std::string get_transcriptome_shortname();
+
 };
 
 

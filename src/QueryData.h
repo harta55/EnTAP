@@ -47,16 +47,16 @@ class QueryData {
 public:
 
     typedef enum {
-
         SUCCESS_EXPRESSION = (1 << 0),
         SUCCESS_FRAME_SEL  = (1 << 1),
         SUCCESS_ONTOLOGY   = (1 << 2),
-        SUCCESS_SIM_SEARCH = (1 << 3)
+        SUCCESS_SIM_SEARCH = (1 << 3),
+        IS_PROTEIN         = (1 << 4)
 
     }DATA_FLAGS;
 
 
-    QueryData(std::string&, std::string&, bool&, bool&);
+    QueryData(std::string&, std::string&, UserInput*, FileSystem*);
     ~QueryData();
 
     QUERY_MAP_T* get_sequences_ptr();
@@ -66,12 +66,11 @@ public:
     std::pair<uint16, uint16> calculate_N_vals(ExecuteStates, bool);
     std::string trim_sequence_header(std::string&, std::string);
     void final_statistics(std::string&, std::vector<uint16>&);
-    bool is_protein(void) const;
-    void set_protein(bool);
     void set_frame_stats(const FrameStats &_frame_stats);
     bool DATA_FLAG_GET(DATA_FLAGS);
     void DATA_FLAG_SET(DATA_FLAGS);
     void DATA_FLAG_CLEAR(DATA_FLAGS);
+    QuerySequence* get_sequence(std::string&);
 
 private:
     void set_input_type(std::string&);
@@ -94,7 +93,7 @@ private:
     const std::string OUT_ANNOTATED_NUCL   = "final_annotated.fnn";
     const std::string OUT_ANNOTATED_PROT   = "final_annotated.faa";
 
-    QUERY_MAP_T  _SEQUENCES;
+    QUERY_MAP_T  *_pSEQUENCES;
     bool         _trim;
     bool         _protein;
     uint32       _total_sequences;          // Original sequence number
@@ -103,6 +102,8 @@ private:
     uint64       _start_prot_len;           // Starting total len
     FrameStats   _frame_stats;
     uint32       _pipeline_flags;           // Success flags
+    FileSystem  *_pFileSystem;
+    UserInput   *_pUserInput;
 
 };
 

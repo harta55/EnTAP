@@ -37,31 +37,32 @@
 
 class ExpressionAnalysis {
 public:
-    ExpressionAnalysis(std::string&, int, std::string&,boost::program_options::variables_map&,
-                       GraphingManager*, QueryData*);
+    ExpressionAnalysis(std::string&,
+                       GraphingManager*,
+                       QueryData*,
+                       FileSystem*,
+                       UserInput*);
     std::string execute(std::string);
 
 private:
 
     const std::string RSEM_OUT_DIR          = "expression/";
-    const std::string RSEM_PROCESSED_DIR    = "processed/";
-    const std::string RSEM_FIGURE_DIR       = "/figures";
 
     std::string         _inpath;
     std::string         _alignpath;
     std::string         _exepath;
     std::string         _outpath;
     std::string         _rsem_dir;
-    std::string         _proc_dir;
-    std::string         _figure_dir;
     bool                _issingle;
     bool                _trim;
     bool                _overwrite;
     short               _software_flag;
     int                 _threads;
     float               _fpkm;
-    GraphingManager  *_graphingManager;
-    QueryData        *_query_data;
+    GraphingManager  *_pGraphingManager;
+    QueryData        *_pQueryData;
+    FileSystem       *_pFileSystem;
+    UserInput        *_pUserInput;
 
     std::unique_ptr<AbstractExpression> spawn_object();
 };

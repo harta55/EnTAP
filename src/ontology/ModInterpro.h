@@ -48,15 +48,12 @@ class ModInterpro : public AbstractOntology{
 public:
     ~ModInterpro();
     ModInterpro(std::string &exe,std::string &out, std::string &in,
-        std::string &in_no_hits,std::string &ont, GraphingManager *graphing,QueryData *queryData,
-        bool blastp,std::vector<uint16>& lvls, uint8 threads) :
-    AbstractOntology(exe, out, in, in_no_hits, ont, graphing, queryData, blastp,
-                     lvls, threads){}
+                std::string &in_no_hits,std::string &ont, GraphingManager *graphing,QueryData *queryData,
+                bool blastp,std::vector<uint16>& lvls, int threads, FileSystem*, UserInput*,vect_str_t );
 
     virtual std::pair<bool, std::string> verify_files() override ;
     virtual void execute() override ;
     virtual void parse() override ;
-    virtual void set_data(std::string&, std::vector<std::string>&) override ;
 
     static bool is_executable();
     static bool valid_input(boostPO::variables_map&);

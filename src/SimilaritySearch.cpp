@@ -38,6 +38,7 @@
 #include "GraphingManager.h"
 #include "EntapGlobals.h"
 #include "common.h"
+#include "UserInput.h"
 //**************************************************************
 
 
@@ -64,57 +65,48 @@
  * @return              - SimilaritySearch instance
  * ======================================================================
  */
-SimilaritySearch::SimilaritySearch(std::vector<std::string> &databases, std::string input,
-                           int threads, std::string out, boost::program_options::variables_map &user_flags,
-                           GraphingManager *graphingManager, QueryData *queryData) {
+SimilaritySearch::SimilaritySearch(databases_t &databases,
+                                   std::string input,
+                                   UserInput *userinput,
+                                   FileSystem *filesystem,
+                                   GraphingManager *graphingManager,
+                                   QueryData *queryData) {
     FS_dprint("Spawn object - SimilaritySearch");
     std::string uninform_path;
 
     _pQUERY_DATA    = queryData;
+    _pUserInput     = userinput;
+    _pFileSystem    = filesystem;
     _database_paths = databases;
     _input_path     = input;
-    _threads        = threads;
     _diamond_exe    = DIAMOND_EXE;      // Set to extern set previously
-    _outpath        = out;
     _input_species  = "";
 
     // Species already checked for validity in Init
-    if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_SPECIES)) {
-        _input_species = user_flags[ENTAP_CONFIG::INPUT_FLAG_SPECIES].as<std::string>();
-        LOWERCASE(_input_species);
-        STR_REPLACE(_input_species, '_', ' ');
-    }
-    _qcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_QCOVERAGE].as<fp32>();
-    _tcoverage = user_flags[ENTAP_CONFIG::INPUT_FLAG_TCOVERAGE].as<fp32>();
-    _overwrite = (bool) user_flags.count(ENTAP_CONFIG::INPUT_FLAG_OVERWRITE);
-    _e_val     = user_flags[ENTAP_CONFIG::INPUT_FLAG_E_VAL].as<fp32>();
-
-    // Format contaminants for use in database
-    std::vector<std::string> contaminants;
-    if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_CONTAM)) {
-        contaminants = user_flags[ENTAP_CONFIG::INPUT_FLAG_CONTAM].as<std::vector<std::string>>();
-    }
-    for (int ind = 0; ind < contaminants.size(); ind++) {
-        if (contaminants[ind].empty()) continue;
-        std::string &str = contaminants[ind];
-        std::transform(str.begin(), str.end(), str.begin(), ::tolower);
-        std::replace(str.begin(), str.end(), '_',' ');
-    }
-    _contaminants    = contaminants;
-    _software_flag   = DIAMOND_FLAG;         // Default DIAMOND software
-    _pGraphingManager= graphingManager;
+    _input_species    = _pUserInput->get_target_species_str();
+    _qcoverage        = _pUserInput->get_user_input<fp32>(UInput::INPUT_FLAG_QCOVERAGE);
+    _tcoverage        = _pUserInput->get_user_input<fp32>(UInput::INPUT_FLAG_TCOVERAGE);
+    _overwrite        = _pUserInput->has_input(UInput::INPUT_FLAG_OVERWRITE);
+    _e_val            = _pUserInput->get_user_input<fp64>(UInput::INPUT_FLAG_E_VAL);
+    _threads          = _pUserInput->get_supported_threads();
+    _uninformative_vect= _pUserInput->get_uninformative_vect();
+    _outpath          = _pFileSystem->get_root_path();
+    _contaminants     = _pUserInput->get_contaminants();
+    _software_flag    = ENTAP_EXECUTE::SIM_SEARCH_FLAG_DIAMOND; // Default DIAMOND software
+    _pGraphingManager = graphingManager;
 
     // Set sim search paths/directories
-    _sim_search_dir  = PATHS(out, SIM_SEARCH_DIR);
+    _sim_search_dir  = PATHS(_outpath, SIM_SEARCH_DIR);
     _processed_path  = PATHS(_sim_search_dir, PROCESSED_DIR);
     _results_path    = PATHS(_sim_search_dir, RESULTS_DIR);
     _figure_path     = PATHS(_sim_search_dir, FIGURE_DIR);
 
-    // Uninformative
-    if (user_flags.count(ENTAP_CONFIG::INPUT_FLAG_UNINFORM)) {
-        uninform_path = user_flags[ENTAP_CONFIG::INPUT_FLAG_UNINFORM].as<std::string>();
-        read_uninform_file(uninform_path);
-    } else _uninformative_vect = INFORMATIVENESS;
+    if (_overwrite) {
+        _pFileSystem->delete_dir(_sim_search_dir);
+    }
+    _pFileSystem->create_dir(_sim_search_dir);
+
+    _transcript_shortname = get_transcriptome_shortname();
 }
 
 
@@ -186,7 +178,7 @@ std::pair<std::string,std::string> SimilaritySearch::parse_files(std::string new
     _input_path = new_input;
     try {
         switch (_software_flag) {
-            case DIAMOND_FLAG:
+            case ENTAP_EXECUTE::SIM_SEARCH_FLAG_DIAMOND:
                 return diamond_parse(_contaminants);
             default:
                 return diamond_parse(_contaminants);
@@ -214,33 +206,26 @@ std::vector<std::string> SimilaritySearch::diamond() {
     FS_dprint("Beginning to execute DIAMOND...");
 
     std::vector<std::string>    out_paths;
-    boostFS::path               transc_name;
     std::string                 filename;
     std::string                 out_path;
     std::string                 std_out;
+    std::string                 database_name;  // shortened name
 
-    if (!FS_file_exists(_input_path)) {
-        throw ExceptionHandler("Transcriptome file not found",ENTAP_ERR::E_RUN_SIM_SEARCH_RUN);
+    if (!_pFileSystem->file_exists(_input_path)) {
+        throw ExceptionHandler("Transcriptome file not found",ERR_ENTAP_RUN_SIM_SEARCH_RUN);
     }
-    transc_name = _input_path;
-    transc_name = transc_name.stem();
-    if (transc_name.has_stem()) transc_name = transc_name.stem(); //.fasta.faa
-    if (_overwrite) {
-        boostFS::remove_all(_sim_search_dir);
-    }
-    boostFS::create_directories(_sim_search_dir);
+
     // database verification already ran, don't need to verify each path
     try {
         // assume all paths should be .dmnd
         for (std::string data_path : _database_paths) {
             FS_dprint("Searching against database located at: " + data_path + "...");
-            boostFS::path database_name(data_path);
-            database_name = database_name.stem();
-            filename = _blast_type + "_" + transc_name.string() + "_" + database_name.string();
-            out_path = PATHS(_sim_search_dir,filename) + EXT_OUT;
+            database_name = get_database_shortname(data_path);
+            filename = _blast_type + "_" + _transcript_shortname + "_" + database_name + FileSystem::EXT_OUT;
+            out_path = PATHS(_sim_search_dir,filename) ;
             std_out  = PATHS(_sim_search_dir,filename) + "_std";
-            _file_to_database[out_path] = database_name.string();
-            if (FS_file_exists(out_path)) {
+            _file_to_database[out_path] = database_name;
+            if (_pFileSystem->file_exists(out_path)) {
                 FS_dprint("File found at " + out_path + " skipping execution against this database");
                 out_paths.push_back(out_path);
                 continue;
@@ -286,6 +271,7 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
             " -d " + database    +
             " --query-cover "    + std::to_string(_qcoverage) +
             " --subject-cover "  + std::to_string(_tcoverage) +
+            " --evalue "         + std::to_string(_e_val) +
             " --more-sensitive"  +
             " --top 3"           +
             " -q " + input_file  +
@@ -297,7 +283,7 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
     FS_dprint("\nExecuting Diamond:\n" + diamond_run);
     if (execute_cmd(diamond_run, std_out) != 0) {
         throw ExceptionHandler("Error in DIAMOND run with database located at: " +
-                               database, ENTAP_ERR::E_RUN_SIM_SEARCH_RUN);
+                               database, ERR_ENTAP_RUN_SIM_SEARCH_RUN);
     }
 }
 
@@ -319,25 +305,26 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
  * @return              - None
  * ======================================================================
  */
-std::vector<std::string> SimilaritySearch::verify_diamond_files(std::string &outpath, std::string name) {
+std::vector<std::string> SimilaritySearch::verify_diamond_files() {
     FS_dprint("Override unselected, checking for diamond files of selected databases...");
     std::vector<std::string> out_list;
     std::string              temp_out;
     std::string              file_name_full;
+    std::string              database_name;     // shortened version
 
-    for (std::string data_path : _database_paths) {
+    for (std::string &data_path : _database_paths) {
         // assume all paths should be .dmnd
-        boostFS::path file_name(data_path);
-        file_name = file_name.stem();
-        file_name_full = _blast_type + "_" + name + "_" + file_name.string() + ".out";
-        temp_out = PATHS(outpath, file_name_full);
-        if (!FS_file_exists(temp_out)){
+        database_name = get_database_shortname(data_path);
+        file_name_full = _blast_type + "_" + _transcript_shortname + "_" + database_name + FileSystem::EXT_OUT;
+        temp_out = PATHS(_sim_search_dir, file_name_full);
+        if (!_pFileSystem->file_exists(temp_out)){
             FS_dprint("File at: " + temp_out + " not found, running diamond");
-            out_list.clear();return out_list;
+            out_list.clear();
+            return out_list;
         }
         out_list.push_back(temp_out);
     }
-    FS_dprint("All diamond files found, skipping this stage of enTAP");
+    FS_dprint("All diamond files found, skipping this stage of EnTAP");
     _sim_search_paths = out_list;
     return out_list;
 }
@@ -348,124 +335,129 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
 
     tax_serial_map_t                                taxonomic_database;
     std::list<std::map<std::string,QuerySequence>>  database_maps;
-    uint32                                          count_removed;
-    uint32                                          count_TOTAL_hits;
-    uint32                                          count_under_e;
     std::pair<bool,std::string>                     contam_info;
     std::string                                     species;
-    std::string                                     out_base_path;
-    std::string                                     out_unselected_tsv;
     TaxEntry                                        taxEntry;
+    SimSearchResults                                simSearchResults;
 
+    // ------------------ Read from DIAMOND output ---------------------- //
+    std::string qseqid, sseqid, stitle, database_name,pident, bitscore,
+            length, mismatch, gapopen, qstart, qend, sstart, send;
+    fp64 evalue;
+    fp64 coverage;
+    // ----------------------------------------------------------------- //
+
+    // Read tax database into memory
     try {
         taxonomic_database = read_tax_map();
-    } catch (ExceptionHandler &e) {throw e;}
-    if (_sim_search_paths.empty()) {
-        boostFS::path transc_name(_input_path); transc_name=transc_name.stem();
-        if (transc_name.has_stem()) transc_name = transc_name.stem(); //.fasta.faa
-        _sim_search_paths = verify_diamond_files(_sim_search_dir,transc_name.string());
-    }
-    if (_sim_search_paths.empty()) throw ExceptionHandler("No diamond files found", ENTAP_ERR::E_RUN_SIM_SEARCH_FILTER);
+    } catch (const ExceptionHandler &e) {throw e;}
 
-    boostFS::remove_all(_processed_path);
-    boostFS::create_directories(_processed_path);
+    // Clear "processed" directory
+    _pFileSystem->delete_dir(_processed_path);
+    _pFileSystem->create_dir(_processed_path);
+
+    // Get the taxonomic info (lineage) of the target species
     get_tax_entry(_input_species,taxonomic_database, taxEntry); // Input species entry
     _input_lineage = taxEntry.lineage;
 
     for (std::string &data : _sim_search_paths) {
         FS_dprint("Diamond file located at " + data + " being filtered");
-        io::CSVReader<DMND_COL_NUMBER, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(data);
-        // todo have columns from input file, in_read_header for versatility
-        std::string qseqid, sseqid, stitle, database_name,pident, bitscore,
-                length, mismatch, gapopen, qstart, qend, sstart, send;
-        fp64 evalue;
-        fp64 coverage;
-        count_removed    = 0;
-        count_TOTAL_hits = 0;
-        count_under_e    = 0;
         std::stringstream out_stream;
 
-        if (_file_to_database.find(data) != _file_to_database.end()) {
-            database_name = _file_to_database[data];
-        } else database_name = boostFS::path(data).filename().stem().string();
-        out_base_path = PATHS(_processed_path, database_name);
-        out_unselected_tsv = PATHS(out_base_path, SIM_SEARCH_DATABASE_UNSELECTED);
-        boostFS::create_directories(out_base_path);
-        std::ofstream file_unselected_tsv(out_unselected_tsv,std::ios::out | std::ios::app);
-        std::map<std::string,QuerySequence> database_map;
-        print_header(out_unselected_tsv);
+        // Confirm we have legit path
+        if (!_pFileSystem->file_exists(data)) {
+            // Should never fall into here
+            throw ExceptionHandler("File not found: " + data, ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
+        }
 
+        // Set up individual database directories for stats
+        database_name = _file_to_database[data];
+
+        // Begin using CSVReader lib to parse data
+        io::CSVReader<DMND_COL_NUMBER, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(data);
         while (in.read_row(qseqid, sseqid, pident, length, mismatch, gapopen,
                            qstart, qend, sstart, send, evalue, bitscore, coverage,stitle)) {
-            count_TOTAL_hits++;
-
-            QuerySequence new_query = QuerySequence();
+            simSearchResults = {};
             taxEntry = {};
-            new_query.set_sim_search_results(data, qseqid, sseqid, pident, length, mismatch, gapopen,
-                                             qstart, qend, sstart, send, stitle, bitscore, evalue,coverage);
-            new_query.setIs_better_hit(true);
+
+            // get species from database alignment (using regex)
             species = get_species(stitle);
-            new_query.setSpecies(species);
+            // get taxonomic information with species
             get_tax_entry(species, taxonomic_database, taxEntry); // Input species entry
-            new_query.set_lineage(taxEntry.lineage);
+            // get contaminant information
             contam_info = is_contaminant(taxEntry.lineage, taxonomic_database,contams);
-            new_query.setContaminant(contam_info.first);
-            new_query.set_contam_type(contam_info.second);
-            new_query.set_is_informative(is_informative(stitle));
-            new_query.setFrame((*_pQUERY_DATA->get_sequences_ptr()).at(qseqid)->getFrame());  // May want to handle differently
-            new_query.set_tax_score(_input_lineage);
-            if (evalue > _e_val) {
-                count_under_e++; count_removed++;
-                file_unselected_tsv << new_query.print_tsv(DEFAULT_HEADERS) <<std::endl;
-                continue;
+
+            QuerySequence *query = _pQUERY_DATA->get_sequence(qseqid);
+
+            if (query == nullptr) {
+                throw ExceptionHandler("Unable to find sequence: " + qseqid,
+                                       ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
             }
-            std::map<std::string,QuerySequence>::iterator it = database_map.find(qseqid);
-            if (it != database_map.end()) {
-                if (new_query > it->second) {
-                    file_unselected_tsv << it->second.print_tsv(DEFAULT_HEADERS) << std::endl;
-                    it->second = new_query;
-                    count_removed++;
-                } else {
-                    count_removed++;
-                    file_unselected_tsv << new_query.print_tsv(DEFAULT_HEADERS)<< std::endl;
-                }
-            } else database_map.emplace(qseqid, new_query);
+
+            simSearchResults.database_path = data;
+            simSearchResults.qseqid = qseqid;
+            simSearchResults.sseqid = sseqid;
+            simSearchResults.pident = pident;
+            simSearchResults.length = length;
+            simSearchResults.mismatch = mismatch;
+            simSearchResults.gapopen = gapopen;
+            simSearchResults.qstart = qstart;
+            simSearchResults.qend = qend;
+            simSearchResults.sstart = sstart;
+            simSearchResults.send = send;
+            simSearchResults.stitle = stitle;
+            simSearchResults.bit_score = bitscore;
+            simSearchResults.lineage = taxEntry.lineage;
+            simSearchResults.species = species;
+            simSearchResults.e_val_raw = evalue;
+            simSearchResults.e_val = float_to_string(evalue);
+            simSearchResults.coverage_raw = coverage;
+            simSearchResults.coverage = float_to_string(coverage);
+            simSearchResults.contaminant = contam_info.first;
+            simSearchResults.contam_type = contam_info.second;
+            simSearchResults.contaminant ? simSearchResults.yes_no_contam = "Yes" :
+                    simSearchResults.yes_no_contam  = "No";
+            simSearchResults.is_informative = is_informative(stitle);
+            simSearchResults.is_informative ? simSearchResults.yes_no_inform = "Yes" :
+                    simSearchResults.yes_no_inform  = "No";
+
+            query->add_alignment<SimSearchAlignment, SimSearchResults>(
+                    SIMILARITY_SEARCH,
+                    _software_flag,
+                    simSearchResults,
+                    data,
+                    _input_lineage);
         }
+
         FS_dprint("File parsed, calculating statistics and writing output...");
         // final database stats
-        file_unselected_tsv.close();
-        out_stream<<std::fixed<<std::setprecision(2);
-        out_stream << ENTAP_STATS::SOFTWARE_BREAK
-                   << "Similarity Search - Diamond - "    <<database_name<<"\n"
-                   << ENTAP_STATS::SOFTWARE_BREAK <<
-                   "Search results:\n"            << data <<
-                   "\n\tTotal alignments: "               << count_TOTAL_hits   <<
-                   "\n\tTotal unselected results: "       << count_removed      <<
-                   "\n\t\tWritten to: "                   << out_unselected_tsv;
-        calculate_best_stats(database_map,out_stream,out_base_path,false);
-        std::string out_msg = out_stream.str() + "\n";
-        FS_print_stats(out_msg);
-        database_maps.push_back(database_map);
+        calculate_best_stats(false,data);
+
         FS_dprint("Success!");
     }
-    return process_best_diamond_hit(database_maps);
+    return calculate_best_stats(true);
 }
 
-std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::map<std::string,QuerySequence> &best_hits,
-                                             std::stringstream &ss, std::string &base_path,
-                                             bool is_final) {
+std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
+        bool is_final,
+        std::string database_path) {
 
-    boostFS::path               base_bst;
     GraphingData                graphingStruct;
     std::string                 species;
-    std::string                 database;
+    std::string                 database_shortname;
     std::string                 figure_base;
     std::string                 frame;
+    std::string                 base_path;
+    std::string                 temp_file_path;
+    std::string                 contam;
+    std::stringstream           ss;
     uint64                      count_no_hit=0;
     uint64                      count_contam=0;
     uint64                      count_filtered=0;
     uint64                      count_informative=0;
     uint64                      count_uninformative=0;
+    uint64                      count_unselected=0;
+    uint64                      count_TOTAL_alignments=0;
     uint32                      ct;
     fp64                        percent;
     fp64                        contam_percent;
@@ -473,26 +465,64 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     std::map<std::string, int>  species_map;
     std::map<std::string, int>  contam_species_map;
     graph_sum_t                 graphing_sum_map;
+    QuerySequence*              querySequence;
 
-    database    = boostFS::path(base_path).filename().string();
+    // Set up output directories
+    database_shortname    = _file_to_database[database_path];
+    base_path   = PATHS(_processed_path, database_shortname);
     figure_base = PATHS(base_path, FIGURE_DIR);
-    base_bst    = base_path;
-    boostFS::create_directories(figure_base);
-    boostFS::create_directories(base_path);     // should be created before
+    _pFileSystem->create_dir(base_path);     // should be created before
+    _pFileSystem->create_dir(figure_base);
 
-    std::string out_best_contams_tsv             = PATHS(base_bst ,SIM_SEARCH_DATABASE_CONTAM_TSV);
-    std::string out_best_contams_fa_nucl         = PATHS(base_bst ,SIM_SEARCH_DATABASE_CONTAM_FA_NUCL);
-    std::string out_best_contams_fa_prot         = PATHS(base_bst ,SIM_SEARCH_DATABASE_CONTAM_FA_PROT);
+    // Open contam best hit tsv file
+    std::string out_best_contams_tsv = PATHS(base_path ,SIM_SEARCH_DATABASE_CONTAM_TSV);
+    std::ofstream file_best_contam_tsv(out_best_contams_tsv,std::ios::out | std::ios::app);
 
-    std::string out_best_hits_tsv                = PATHS(base_bst, SIM_SEARCH_DATABASE_BEST_TSV);
-    std::string out_best_hits_no_contam_tsv      = PATHS(base_bst, SIM_SEARCH_DATABASE_BEST_TSV_NO_CONTAM);
-    std::string out_best_hits_fa_nucl            = PATHS(base_bst, SIM_SEARCH_DATABASE_BEST_FA_NUCL);
-    std::string out_best_hits_fa_prot            = PATHS(base_bst, SIM_SEARCH_DATABASE_BEST_FA_PROT);
-    std::string out_best_hits_fa_nucl_no_contam  = PATHS(base_bst, SIM_SEARCH_DATABASE_BEST_FA_NUCL_NO_CONTAM);
-    std::string out_best_hits_fa_prot_no_contam  = PATHS(base_bst, SIM_SEARCH_DATABASE_BEST_FA_PROT_NO_CONTAM);
+    // Open contam fasta protein file
+    std::string out_best_contams_fa_prot = PATHS(base_path ,SIM_SEARCH_DATABASE_CONTAM_FA_PROT);
+    std::ofstream file_best_contam_fa_prot(out_best_contams_fa_prot,std::ios::out | std::ios::app);
 
-    std::string out_no_hits_fa_nucl              = PATHS(base_bst, SIM_SEARCH_DATABASE_NO_HITS_NUCL);
-    std::string out_no_hits_fa_prot              = PATHS(base_bst, SIM_SEARCH_DATABASE_NO_HITS_PROT);
+    // Open contam fasta nucleotide file
+    temp_file_path           = PATHS(base_path ,SIM_SEARCH_DATABASE_CONTAM_FA_NUCL);
+    std::ofstream file_best_contam_fa_nucl(temp_file_path,std::ios::out | std::ios::app);
+
+    // Open best hits file (tsv)
+    std::string out_best_hits_tsv         = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_TSV);
+    std::ofstream file_best_hits_tsv(out_best_hits_tsv,std::ios::out | std::ios::app);
+
+    // Open best hits file (fasta nucleotide)
+    std::string out_best_hits_fa_nucl = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_FA_NUCL);
+    std::ofstream file_best_hits_fa_nucl(out_best_hits_fa_nucl,std::ios::out | std::ios::app);
+
+    // Open best hits file (fasta protein)
+    std::string out_best_hits_fa_prot    = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_FA_PROT);
+    std::ofstream file_best_hits_fa_prot(out_best_hits_fa_prot,std::ios::out | std::ios::app);
+
+    // Open best hits file with no contaminants (tsv)
+    temp_file_path           = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_TSV_NO_CONTAM);
+    std::ofstream file_best_hits_tsv_no_contam(temp_file_path,std::ios::out | std::ios::app);
+
+    // Open best hits file with no contaminants (fasta nucleotide)
+    temp_file_path           = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_FA_NUCL_NO_CONTAM);
+    std::ofstream file_best_hits_fa_nucl_no_contam(temp_file_path,std::ios::out | std::ios::app);
+
+    // Open best hits file with no contaminants (fasta protein)
+    temp_file_path           = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_FA_PROT_NO_CONTAM);
+    std::ofstream file_best_hits_fa_prot_no_contam(temp_file_path,std::ios::out | std::ios::app);
+
+    // Open unselected hits, so every hit that was not the best hit (tsv)
+    std::string out_unselected_tsv  = PATHS(base_path, SIM_SEARCH_DATABASE_UNSELECTED);
+    std::ofstream file_unselected_hits(out_unselected_tsv, std::ios::out | std::ios::app);
+
+    // Open no hits file (fasta nucleotide)
+    std::string out_no_hits_fa_nucl = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS_NUCL);
+    std::ofstream file_no_hits_nucl(out_no_hits_fa_nucl, std::ios::out | std::ios::app);
+
+    // Open no hits file (fasta protein)
+    std::string out_no_hits_fa_prot  = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS_PROT);
+    std::ofstream file_no_hits_prot(out_no_hits_fa_prot, std::ios::out | std::ios::app);
+
+    // ------------------- Setup graphing files ------------------------- //
 
     std::string graph_species_txt_path           = PATHS(figure_base, GRAPH_SPECIES_BAR_TXT);
     std::string graph_species_png_path           = PATHS(figure_base, GRAPH_SPECIES_BAR_PNG);
@@ -501,36 +531,33 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     std::string graph_sum_txt_path               = PATHS(figure_base, GRAPH_DATABASE_SUM_TXT);
     std::string graph_sum_png_path               = PATHS(figure_base, GRAPH_DATABASE_SUM_PNG);
 
-    print_header(out_best_contams_tsv);
-    print_header(out_best_hits_tsv);
-    print_header(out_best_hits_no_contam_tsv);
-
-    std::ofstream file_best_hits_tsv(out_best_hits_tsv,std::ios::out | std::ios::app);
-    std::ofstream file_best_hits_tsv_no_contam(out_best_hits_no_contam_tsv,std::ios::out | std::ios::app);
-    std::ofstream file_best_hits_fa_nucl(out_best_hits_fa_nucl,std::ios::out | std::ios::app);
-    std::ofstream file_best_hits_fa_prot(out_best_hits_fa_prot,std::ios::out | std::ios::app);
-    std::ofstream file_best_hits_fa_nucl_no_contam(out_best_hits_fa_nucl_no_contam,std::ios::out | std::ios::app);
-    std::ofstream file_best_hits_fa_prot_no_contam(out_best_hits_fa_prot_no_contam,std::ios::out | std::ios::app);
-    std::ofstream file_best_contam_tsv(out_best_contams_tsv,std::ios::out | std::ios::app);
-    std::ofstream file_best_contam_fa_prot(out_best_contams_fa_prot,std::ios::out | std::ios::app);
-    std::ofstream file_best_contam_fa_nucl(out_best_contams_fa_nucl,std::ios::out | std::ios::app);
-    std::ofstream file_no_hits_nucl(out_no_hits_fa_nucl, std::ios::out | std::ios::app);
-    std::ofstream file_no_hits_prot(out_no_hits_fa_prot, std::ios::out | std::ios::app);
-
     std::ofstream graph_species_file(graph_species_txt_path, std::ios::out | std::ios::app);
     std::ofstream graph_contam_file(graph_contam_txt_path, std::ios::out | std::ios::app);
     std::ofstream graph_sum_file(graph_sum_txt_path, std::ios::out | std::ios::app);
+
+    // ------------------------------------------------------------------ //
+
+
+    // Print headers to relevant tsv files
+    print_header(file_best_contam_tsv);
+    print_header(file_best_hits_tsv);
+    print_header(file_best_hits_tsv_no_contam);
+    print_header(file_unselected_hits);
+
 
     try {
         graph_species_file << "Species\tCount"     << std::endl;
         graph_contam_file  << "Contaminant Species\tCount" << std::endl;
         graph_sum_file     << "Category\tCount"    << std::endl;
 
+        // Cycle through all sequences
         for (auto &pair : *_pQUERY_DATA->get_sequences_ptr()) {
-            std::map<std::string,QuerySequence>::iterator it = best_hits.find(pair.first);
             // Check if original sequences have hit a database
-            if (it == best_hits.end()) {
-                if ((pair.second->isIs_protein() && _blastp) || (!pair.second->isIs_protein() && !_blastp)) {
+            if (!pair.second->hit_database(database_path, SIMILARITY_SEARCH)) {
+                // Did NOT hit a database during sim search
+                // Do NOT log if it was never blasted
+                if ((pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN) && _blastp) ||
+                        (!pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN) && !_blastp)) {
                     // Protein/nucleotide did not hit database
                     count_no_hit++;
                     file_no_hits_nucl << pair.second->get_sequence_n() << std::endl;
@@ -540,25 +567,51 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
                     if (graphing_sum_map[frame].find(NO_HIT_FLAG) != graphing_sum_map[frame].end()) {
                         graphing_sum_map[frame][NO_HIT_FLAG]++;
                     } else graphing_sum_map[frame][NO_HIT_FLAG] = 1;
-
+                } else {
+                    pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_BLASTED);
                 }
             } else {
-                // Have hit a database
-                frame = pair.second->getFrame();     // Used for graphing
+                // HIT a database during sim search
+
+                SimSearchResults *sim_search_data;
+                SimSearchAlignment *best_hit;
+                // Process unselected hits for non-final analysis and set best hit pointer
+                if (is_final) {
+                    best_hit = pair.second->get_best_hit_alignment<SimSearchAlignment>(SIMILARITY_SEARCH,"");
+                    sim_search_data = best_hit->get_results();
+                } else {
+                    best_hit = pair.second->get_best_hit_alignment<SimSearchAlignment>(
+                            SIMILARITY_SEARCH,database_path);
+                    QuerySequence::align_database_hits_t *alignment_data =
+                            pair.second->get_database_hits(database_path,SIMILARITY_SEARCH);
+                    sim_search_data = best_hit->get_results();
+                    for (auto &hit : alignment_data->second) {
+                        count_TOTAL_alignments++;
+                        if (hit != best_hit) {
+                            file_unselected_hits << hit->print_tsv(DEFAULT_HEADERS) << std::endl;
+                            count_unselected++;
+                        } else {
+                            ;
+                        }
+                    }
+                }
+                count_filtered++;
+                // Write to best hits files
                 file_best_hits_fa_nucl << pair.second->get_sequence_n()<<std::endl;
                 file_best_hits_fa_prot << pair.second->get_sequence_p()<<std::endl;
-                file_best_hits_tsv << it->second.print_tsv(DEFAULT_HEADERS) << std::endl;
+                file_best_hits_tsv << best_hit->print_tsv(DEFAULT_HEADERS) << std::endl;
 
-                count_filtered++;
-                if (!it->second.get_species().empty()) {
-                    species = it->second.get_species();
-                }
-                if (it->second.isContaminant()) {
+                frame = pair.second->getFrame();     // Used for graphing
+                species = sim_search_data->species;
+
+                // Determine contaminant information and print to files
+                if (sim_search_data->contaminant) {
+                    // Species is considered a contaminant
                     count_contam++;
                     file_best_contam_fa_nucl << pair.second->get_sequence_n()<<std::endl;
                     file_best_contam_fa_prot << pair.second->get_sequence_p()<<std::endl;
-                    file_best_contam_tsv << it->second.print_tsv(DEFAULT_HEADERS) << std::endl;
-                    std::string contam = it->second.get_contam_type();
+                    file_best_contam_tsv << best_hit->print_tsv(DEFAULT_HEADERS) << std::endl;
+                    contam = sim_search_data->contam_type;
                     if (contam_map.count(contam)) {
                         contam_map[contam]++;
                     } else contam_map[contam] = 1;
@@ -566,15 +619,19 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
                         contam_species_map[species]++;
                     } else contam_species_map[species] = 1;
                 } else {
+                    // Species is NOT a contaminant, print to files
                     file_best_hits_fa_nucl_no_contam << pair.second->get_sequence_n()<<std::endl;
                     file_best_hits_fa_prot_no_contam << pair.second->get_sequence_p()<<std::endl;
-                    file_best_hits_tsv_no_contam << it->second.print_tsv(DEFAULT_HEADERS) << std::endl;
+                    file_best_hits_tsv_no_contam << best_hit->print_tsv(DEFAULT_HEADERS) << std::endl;
                 }
+
+                // Count species type
                 if (species_map.count(species)) {
                     species_map[species]++;
                 } else species_map[species] = 1;
 
-                if (it->second.QUERY_FLAG_GET(QuerySequence::QUERY_INFORMATIVE)) {
+                // Check if this is an informative alignment and respond accordingly
+                if (sim_search_data->is_informative) {
                     count_informative++;
                     // Graphing
                     if (graphing_sum_map[frame].find(INFORMATIVE_FLAG) != graphing_sum_map[frame].end()) {
@@ -587,31 +644,44 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
                         graphing_sum_map[frame][UNINFORMATIVE_FLAG]++;
                     } else graphing_sum_map[frame][UNINFORMATIVE_FLAG] = 1;
                 }
-
-                if (is_final) {
-                    pair.second->set_sim_struct(it->second.get_sim_struct());
-                    pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_BLAST_HIT);
-                }
-
             }
         }
-    } catch (const std::exception &e){throw ExceptionHandler(e.what(), ENTAP_ERR::E_RUN_SIM_SEARCH_FILTER);}
+    } catch (const std::exception &e){throw ExceptionHandler(e.what(), ERR_ENTAP_RUN_SIM_SEARCH_FILTER);}
 
     try {
-        FS_close_file(file_best_hits_tsv);
-        FS_close_file(file_best_hits_tsv_no_contam);
-        FS_close_file(file_best_hits_fa_nucl);
-        FS_close_file(file_best_hits_fa_prot);
-        FS_close_file(file_best_hits_fa_nucl_no_contam);
-        FS_close_file(file_best_hits_fa_prot_no_contam);
-        FS_close_file(file_best_contam_tsv);
-        FS_close_file(file_best_contam_fa_prot);
-        FS_close_file(file_best_contam_fa_nucl);
-        FS_close_file(file_no_hits_nucl);
-        FS_close_file(file_no_hits_prot);
+        _pFileSystem->close_file(file_best_hits_tsv);
+        _pFileSystem->close_file(file_best_hits_tsv_no_contam);
+        _pFileSystem->close_file(file_best_hits_fa_nucl);
+        _pFileSystem->close_file(file_best_hits_fa_prot);
+        _pFileSystem->close_file(file_best_hits_fa_nucl_no_contam);
+        _pFileSystem->close_file(file_best_hits_fa_prot_no_contam);
+        _pFileSystem->close_file(file_best_contam_tsv);
+        _pFileSystem->close_file(file_best_contam_fa_prot);
+        _pFileSystem->close_file(file_best_contam_fa_nucl);
+        _pFileSystem->close_file(file_no_hits_nucl);
+        _pFileSystem->close_file(file_no_hits_prot);
+        _pFileSystem->close_file(file_unselected_hits);
     } catch (const ExceptionHandler &e) {throw e;}
 
-    try {
+
+    // ------------ Calculate statistics and print to output ------------ //
+    ss<<std::fixed<<std::setprecision(2);
+
+    // Different headers if final analysis or database specific analysis
+    if (is_final) {
+        ss << ENTAP_STATS::SOFTWARE_BREAK
+           << "Compiled Similarity Search - Diamond - Best Overall" << "\n"
+           << ENTAP_STATS::SOFTWARE_BREAK;
+    } else {
+        ss << ENTAP_STATS::SOFTWARE_BREAK
+           << "Similarity Search - Diamond - " <<database_shortname << "\n"
+           << ENTAP_STATS::SOFTWARE_BREAK <<
+           "Search results:\n"            << database_path <<
+           "\n\tTotal alignments: "               << count_TOTAL_alignments   <<
+           "\n\tTotal unselected results: "       << count_unselected      <<
+           "\n\t\tWritten to: "                   << out_unselected_tsv;
+    }
+
     std::vector<count_pair> contam_species_vect(contam_species_map.begin(), contam_species_map.end());
     std::vector<count_pair> species_vect(species_map.begin(), species_map.end());
     std::sort(contam_species_vect.begin(), contam_species_vect.end(), compair());
@@ -693,30 +763,31 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
         graph_species_file << pair.first << '\t' << std::to_string(pair.second) << std::endl;
         ct++;
     }
+    std::string out_msg = ss.str() + "\n";
+    _pFileSystem->print_stats(out_msg);
 
-    } catch (const std::exception &e) {throw e;}
 
-
+    // ------------------------------------------------------------------ //
     // ********* Graphing Handle ********** //
     graphingStruct.software_flag = GRAPH_SOFTWARE_FLAG;
-    FS_close_file(graph_contam_file);
-    FS_close_file(graph_species_file);
-    FS_close_file(graph_sum_file);
+    _pFileSystem->close_file(graph_contam_file);
+    _pFileSystem->close_file(graph_species_file);
+    _pFileSystem->close_file(graph_sum_file);
     if (count_contam > 0) {
         graphingStruct.fig_out_path   = graph_contam_png_path;
-        graphingStruct.graph_title    = database + GRAPH_CONTAM_TITLE;
+        graphingStruct.graph_title    = database_shortname + GRAPH_CONTAM_TITLE;
         graphingStruct.text_file_path = graph_contam_txt_path;
         graphingStruct.graph_type     = GRAPH_BAR_FLAG;
         _pGraphingManager->graph(graphingStruct);
     }
     graphingStruct.fig_out_path   = graph_species_png_path;
-    graphingStruct.graph_title    = database + GRAPH_SPECIES_TITLE;
+    graphingStruct.graph_title    = database_shortname + GRAPH_SPECIES_TITLE;
     graphingStruct.text_file_path = graph_species_txt_path;
     graphingStruct.graph_type     = GRAPH_BAR_FLAG;
     _pGraphingManager->graph(graphingStruct);
 
     graphingStruct.fig_out_path   = graph_sum_png_path;
-    graphingStruct.graph_title    = database + GRAPH_DATABASE_SUM_TITLE;
+    graphingStruct.graph_title    = database_shortname + GRAPH_DATABASE_SUM_TITLE;
     graphingStruct.text_file_path = graph_sum_txt_path;
     graphingStruct.graph_type     = GRAPH_SUM_FLAG;
     _pGraphingManager->graph(graphingStruct);
@@ -731,54 +802,15 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (std::
     }
 }
 
-/**
- *
- * @param diamond_maps
- * @return - pair of best_hit.fasta, no_hit.fasta
- */
-std::pair<std::string,std::string> SimilaritySearch::process_best_diamond_hit(std::list<std::map<std::string,QuerySequence>>
-                                                                              &diamond_maps) {
-    FS_dprint("Compiling similarity results results to find best overall hits...");
-
-    std::pair<std::string,std::string>  out_pair;
-    std::stringstream                   out_stream;
-    std::string                         out_msg;
-    std::map<std::string,QuerySequence> compiled_hit_map;
-
-    boostFS::remove_all(_results_path.c_str());
-    boostFS::create_directories(_results_path.c_str());
-    for (std::map<std::string,QuerySequence> &database_map : diamond_maps) {
-        for (auto &pair : database_map) {
-            pair.second.setIs_better_hit(false);
-            pair.second.QUERY_FLAG_SET(QuerySequence::QUERY_BLAST_HIT);
-            std::map<std::string,QuerySequence>::iterator it = compiled_hit_map.find(pair.first);
-            if (it != compiled_hit_map.end()) {
-                if (pair.second > it->second) it->second = pair.second;
-            } else {
-                compiled_hit_map.emplace(pair);
-            }
-        }
-    }
-    out_stream<<std::fixed<<std::setprecision(2);
-    out_stream << ENTAP_STATS::SOFTWARE_BREAK
-               << "Compiled Similarity Search - Diamond - Best Overall\n"
-               << ENTAP_STATS::SOFTWARE_BREAK;
-    out_pair = calculate_best_stats(compiled_hit_map,out_stream,_results_path,true);
-    out_msg  = out_stream.str() + "\n";
-    FS_print_stats(out_msg);
-    diamond_maps.clear();
-    FS_dprint("Success!");
-    return out_pair;
-}
 
 tax_serial_map_t SimilaritySearch::read_tax_map() {
     FS_dprint("Reading taxonomic database into memory...");
 
     tax_serial_map_t restored_map;
 
-    if (!FS_file_exists(TAX_DB_PATH)) {
+    if (!_pFileSystem->file_exists(TAX_DB_PATH)) {
         throw ExceptionHandler("NCBI Taxonomic database not found at: " +
-            TAX_DB_PATH,ENTAP_ERR::E_INIT_TAX_READ);
+            TAX_DB_PATH,ERR_ENTAP_INIT_TAX_READ);
     }
     try {
         {
@@ -787,7 +819,7 @@ tax_serial_map_t SimilaritySearch::read_tax_map() {
             ia >> restored_map;
         }
     } catch (std::exception &exception) {
-        throw ExceptionHandler(exception.what(), ENTAP_ERR::E_INIT_TAX_READ);
+        throw ExceptionHandler(exception.what(), ERR_ENTAP_INIT_TAX_READ);
     }
     FS_dprint("Success!");
     return restored_map;
@@ -836,13 +868,11 @@ bool SimilaritySearch::is_informative(std::string title) {
     return true;
 }
 
-void SimilaritySearch::print_header(std::string file) {
-    std::ofstream ofstream(file, std::ios::out | std::ios::app);
+void SimilaritySearch::print_header(std::ofstream &file_stream) {
     for (const std::string *header : DEFAULT_HEADERS) {
-        ofstream << *header << "\t";
+        file_stream << *header << "\t";
     }
-    ofstream << std::endl;
-    ofstream.close();
+    file_stream << std::endl;
 }
 
 void SimilaritySearch::get_tax_entry(std::string species, tax_serial_map_t &database, TaxEntry &taxEntry) {
@@ -870,21 +900,22 @@ void SimilaritySearch::get_tax_entry(std::string species, tax_serial_map_t &data
     taxEntry.tax_id = "";
 }
 
-void SimilaritySearch::read_uninform_file(std::string &path) {
-    std::ifstream file(path);
-    std::string line;
-
-    while (getline(file,line)) {
-        if (line.empty()) continue;
-        LOWERCASE(line);
-        line.erase(std::remove(line.begin(), line.end(), '\n'),line.end());
-        _uninformative_vect.push_back(line);
-    }
-}
 
 bool SimilaritySearch::is_executable() {
     std::string test_command;
 
     test_command = DIAMOND_EXE + " --version";
     return execute_cmd(test_command) == 0;
+}
+
+// Returns database "shortname" from database full path
+std::string SimilaritySearch::get_database_shortname(std::string &path) {
+    return boostFS::path(path).filename().stem().string();
+}
+
+std::string SimilaritySearch::get_transcriptome_shortname() {
+    boostFS::path transc_name(_input_path);
+    transc_name = transc_name.stem();
+    if (transc_name.has_stem()) transc_name = transc_name.stem(); //.fasta.faa
+    return transc_name.string();
 }

@@ -31,6 +31,7 @@
 #include <boost/serialization/unordered_map.hpp>
 #include <boost/program_options/variables_map.hpp>
 #include "common.h"
+#include "UserInput.h"
 
 struct  GoEntry {
     std::string go_id;
@@ -64,7 +65,7 @@ struct TaxEntry {
 namespace entapConfig {
 
     //****************** Global Prototype Functions******************
-    void init_entap(boost::program_options::variables_map, std::string);
+    void execute_main(UserInput*, FileSystem*);
 }
 
 #endif //ENTAP_INITHANDLER_H

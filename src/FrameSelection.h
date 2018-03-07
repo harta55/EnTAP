@@ -45,19 +45,18 @@ class FrameSelection {
 
 public:
     std::string execute(std::string);
-    FrameSelection(std::string&, std::string&, boost::program_options::variables_map &, GraphingManager*,
-                    QueryData*);
+    FrameSelection(std::string&,
+                   FileSystem*,
+                   UserInput*,
+                   GraphingManager*,
+                   QueryData*);
 
 
 private:
 
     const std::string FRAME_SELECTION_OUT_DIR       = "frame_selection/";
-    const std::string PROCESSED_DIR                 = "processed/";
-    const std::string FIGURE_DIR                    = "figures/";
 
     std::string      _frame_outpath;
-    std::string      _processed_path;
-    std::string      _figure_path;
     std::string      _exe_path;
     std::string      _inpath;
     std::string      _outpath;
@@ -65,6 +64,8 @@ private:
     short            _software_flag;
     GraphingManager  *_graphingManager;
     QueryData        *_QUERY_DATA;
+    FileSystem      *_pFileSystem;
+    UserInput       *_pUserInput;
 
     std::unique_ptr<AbstractFrame> spawn_object();
 };

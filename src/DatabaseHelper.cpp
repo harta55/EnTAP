@@ -109,7 +109,7 @@ std::vector<std::vector<std::string>> DatabaseHelper::query(char *query) {
         }
         sqlite3_finalize(stmt);
     } else {
-        throw ExceptionHandler("Error querying database",ENTAP_ERR::E_DATABASE_QUERY);
+        throw ExceptionHandler("Error querying database",ERR_ENTAP_DATABASE_QUERY);
     }
     return output;
 }

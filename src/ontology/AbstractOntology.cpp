@@ -60,7 +60,7 @@ go_serial_map_t AbstractOntology::read_go_map () {
             ia >> new_map;
         }
     } catch (std::exception &exception) {
-        throw ExceptionHandler(exception.what(), ENTAP_ERR::E_GO_READ);
+        throw ExceptionHandler(exception.what(), ERR_ENTAP_GO_READ);
     }
     return new_map;
 };

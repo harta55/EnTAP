@@ -24,7 +24,7 @@ set(SOURCE_FILES libs
         src/GraphingManager.cpp src/GraphingManager.h
         src/UserInput.cpp src/UserInput.h
         src/EggnogLevels.h
-        src/DatabaseHelper.cpp src/DatabaseHelper.h
+        src/database/DatabaseHelper.cpp src/database/DatabaseHelper.h
         src/sqlite3.c src/sqlite3.h
         src/frame_selection/ModGeneMarkST.cpp src/frame_selection/ModGeneMarkST.h
         src/frame_selection/AbstractFrame.h
@@ -35,7 +35,8 @@ set(SOURCE_FILES libs
         src/ontology/AbstractOntology.cpp
         src/ontology/ModInterpro.cpp src/ontology/ModInterpro.h
         src/QueryData.cpp src/QueryData.h src/common.h src/config.h
-        src/FileSystem.cpp src/FileSystem.h src/version.h)
+        src/FileSystem.cpp src/FileSystem.h src/version.h
+        src/database/EntapDatabase.cpp src/database/EntapDatabase.h)
 
 add_executable(EnTAP ${SOURCE_FILES})
 

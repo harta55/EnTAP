@@ -28,8 +28,8 @@
 
 //*********************** Includes *****************************
 #include "DatabaseHelper.h"
-#include "ExceptionHandler.h"
-#include "EntapGlobals.h"
+#include "../ExceptionHandler.h"
+#include "../EntapGlobals.h"
 //**************************************************************
 
 

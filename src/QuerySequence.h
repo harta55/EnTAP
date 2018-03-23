@@ -33,7 +33,7 @@
 #include <vector>
 #include <string>
 #include "Ontology.h"
-#include "DatabaseHelper.h"
+#include "database/DatabaseHelper.h"
 #include "EntapExecute.h"
 
 

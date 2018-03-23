@@ -282,6 +282,8 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
 
     FS_dprint("\nExecuting Diamond:\n" + diamond_run);
     if (execute_cmd(diamond_run, std_out) != 0) {
+        // Delete output file if run failed
+        _pFileSystem->delete_file(output_file);
         throw ExceptionHandler("Error in DIAMOND run with database located at: " +
                                database, ERR_ENTAP_RUN_SIM_SEARCH_RUN);
     }
@@ -662,6 +664,12 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
         _pFileSystem->close_file(file_no_hits_prot);
         _pFileSystem->close_file(file_unselected_hits);
     } catch (const ExceptionHandler &e) {throw e;}
+
+    // If overall alignments are 0, then throw error
+    if (is_final && count_TOTAL_alignments == 0) {
+        throw ExceptionHandler("No alignments found during Similarity Searching!",
+            ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
+    }
 
 
     // ------------ Calculate statistics and print to output ------------ //

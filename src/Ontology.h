@@ -34,7 +34,7 @@
 #include "EntapConfig.h"
 #include "EntapGlobals.h"
 #include "QuerySequence.h"
-#include "DatabaseHelper.h"
+#include "database/DatabaseHelper.h"
 #include "GraphingManager.h"
 #include "ontology/AbstractOntology.h"
 #include "QueryData.h"

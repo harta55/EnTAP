@@ -33,7 +33,7 @@
 #include "ModEggnog.h"
 #include "../ExceptionHandler.h"
 #include "../FileSystem.h"
-#include "../EggnogLevels.h"
+#include "EggnogLevels.h"
 
 
 /**
@@ -133,9 +133,9 @@ void ModEggnog::parse() {
     QuerySequence::EggnogResults            EggnogResults;
 
     ss<<std::fixed<<std::setprecision(2);
-    boostFS::remove_all(_proc_dir);
-    boostFS::create_directories(_proc_dir);
-    boostFS::create_directories(_figure_dir);
+    _pFileSystem->delete_dir(_proc_dir);
+    _pFileSystem->create_dir(_proc_dir);
+    _pFileSystem->create_dir(_figure_dir);
     try {
         GO_DATABASE = read_go_map();
     } catch (ExceptionHandler const &e) {throw e;}
@@ -395,6 +395,7 @@ void ModEggnog::execute() {
         FS_dprint("\nExecuting eggnog mapper against protein sequences that hit databases...\n"
                     + eggnog_command);
         if (execute_cmd(eggnog_command, annotation_std) !=0) {
+            _pFileSystem->delete_file(annotation_base_flag);
             throw ExceptionHandler("Error executing eggnog mapper", ERR_ENTAP_RUN_ANNOTATION);
         }
         FS_dprint("Success! Results written to: " + annotation_base_flag);
@@ -415,6 +416,7 @@ void ModEggnog::execute() {
             FS_dprint("\nExecuting eggnog mapper against protein sequences that did not hit databases...\n"
                         + eggnog_command);
             if (execute_cmd(eggnog_command, annotation_std) !=0) {
+                _pFileSystem->delete_file(annotation_no_flag);
                 throw ExceptionHandler("Error executing eggnog mapper", ERR_ENTAP_RUN_ANNOTATION);
             }
         }

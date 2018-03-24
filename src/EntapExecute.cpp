@@ -97,13 +97,9 @@ namespace entapExecute {
 
         std::vector<uint16>                     ontology_flags;
         std::vector<std::string>                other_databases; // -d Command databases
-        std::pair<std::string,std::string>      diamond_pair;    // best_hits.fa,no_hits.fa
-        std::string                             no_database_hits;// No DIAMOND
         std::string                             original_input;  // ALWAYS use for Expression
         std::queue<char>                        state_queue;
-        bool                                    trim_flag;       // User trim flag selected
         bool                                    state_flag;
-        bool                                    is_complete;     // All input sequences are complete genes
 
         if (user_input == nullptr || filesystem == nullptr) {
             throw ExceptionHandler("Unable to allocate memory", ERR_ENTAP_INPUT_PARSE);
@@ -118,8 +114,6 @@ namespace entapExecute {
         _input_path    = _pUserInput->get_user_input<std::string>(UInput::INPUT_FLAG_TRANSCRIPTOME);
         original_input = _input_path;
         _blastp        = _pUserInput->has_input(UInput::INPUT_FLAG_RUNPROTEIN);
-        trim_flag      = _pUserInput->has_input(UInput::INPUT_FLAG_TRIM);
-        is_complete    = _pUserInput->has_input(UInput::INPUT_FLAG_COMPLETE);
         ontology_flags = _pUserInput->get_user_input<std::vector<uint16>>(UInput::INPUT_FLAG_ONTOLOGY);
         other_databases= _pUserInput->get_user_input<vect_str_t>(UInput::INPUT_FLAG_DATABASE);
         state_queue    = _pUserInput->get_state_queue();    // Will NOT be empty
@@ -131,8 +125,6 @@ namespace entapExecute {
         _pFileSystem->create_dir(_entap_outpath);
         _pFileSystem->create_dir(_outpath);
 
-        diamond_pair   = std::make_pair(_input_path,"");
-
         try {
             verify_state(state_queue, state_flag);
             // Read input transcriptome
@@ -142,15 +134,6 @@ namespace entapExecute {
                     _pUserInput,
                     _pFileSystem);
             GraphingManager graphingManager = GraphingManager(GRAPHING_EXE);
-            // Spawn sim search object
-            std::unique_ptr<SimilaritySearch> sim_search(new SimilaritySearch(
-                    _databases,
-                    _input_path,
-                    _pUserInput,
-                    _pFileSystem,
-                    &graphingManager,
-                    pQUERY_DATA
-            ));
 
             while (executeStates != EXIT) {
                 switch (executeStates) {
@@ -194,15 +177,23 @@ namespace entapExecute {
                     case FILTER:
                         _input_path = filter_transcriptome(_input_path);
                         break;
-                    case SIMILARITY_SEARCH:
+                    case SIMILARITY_SEARCH: {
                         FS_dprint("STATE - SIM SEARCH RUN");
+                        // Spawn sim search object
+                        std::unique_ptr<SimilaritySearch> sim_search(new SimilaritySearch(
+                                _databases,
+                                _input_path,
+                                _pUserInput,
+                                _pFileSystem,
+                                &graphingManager,
+                                pQUERY_DATA
+                        ));
+
                         sim_search->execute(_input_path, _blastp);
                         pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_SIM_SEARCH);
                         FS_dprint("STATE - SIM SEARCH PARSE");
-                        diamond_pair = sim_search->parse_files(_input_path);
-                        _input_path = diamond_pair.first;
-                        no_database_hits = diamond_pair.second;
                         break;
+                    }
                     case GENE_ONTOLOGY: {
                         FS_dprint("STATE - GENE ONTOLOGY");
                         std::unique_ptr<Ontology> ontology(new Ontology(
@@ -212,10 +203,10 @@ namespace entapExecute {
                                 pQUERY_DATA,
                                 _pFileSystem
                         ));
-                        ontology->execute(_input_path, no_database_hits);
+                        ontology->execute(_input_path);
                         pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_ONTOLOGY);
-                    }
                         break;
+                    }
                     default:
                         executeStates = EXIT;
                         break;
@@ -229,7 +220,7 @@ namespace entapExecute {
             _pFileSystem->directory_iterate(true, _outpath);   // Delete empty files
             SAFE_DELETE(pQUERY_DATA);
         } catch (const ExceptionHandler &e) {
-//            exit_error(executeStates);
+            exit_error(executeStates);
             throw e;
         }
     }
@@ -369,6 +360,7 @@ namespace entapExecute {
         std::stringstream ss;
 
         ss << "------------------------------------\n";
+#if 0
         switch (s) {
             case INIT:
                 break;
@@ -399,6 +391,7 @@ namespace entapExecute {
             default:
                 break;
         }
+#endif
         ss <<
            "Here are a few ways to help diagnose some general issues:\n"
                    "\t1. Check the (detailed) printed error message below\n"

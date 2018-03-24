@@ -51,30 +51,17 @@
  */
 std::pair<bool, std::string> ModEggnog::verify_files() {
     std::string                        annotation_base_flag;
-    std::string                        annotation_no_flag;
-    bool                               verified;
 
     annotation_base_flag = PATHS(_egg_out_dir, EGG_ANNOT_RESULTS);
-    annotation_no_flag   = PATHS(_egg_out_dir, EGG_ANNOT_NO_HIT_RESULTS);
     _out_hits            = annotation_base_flag  + EGG_ANNOT_APPEND;
-    _out_no_hits         = annotation_no_flag + EGG_ANNOT_APPEND;
 
-    verified = false;
     FS_dprint("Overwrite was unselected, verifying output files...");
     if (_pFileSystem->file_exists(_out_hits)) {
-        FS_dprint("File located at: " + _out_hits + " found");
-        verified = true;
-    } else FS_dprint("File located at: " + _out_hits + " NOT found");
-    if (_pFileSystem->file_exists(_out_no_hits)) {
-        FS_dprint("File located at: " + _out_no_hits + " found");
-        verified = true;
-    } else FS_dprint("File located at: " + _out_no_hits + " NOT found");
-    if (verified) {
-        FS_dprint("One or more ontology files were found, skipping ontology execution");
+        FS_dprint("File located at: " + _out_hits + " found, skipping EggNOG execution");
         return std::make_pair(true, "");
     } else {
-        FS_dprint("No ontology files were found, continuing with execution");
-        return std::make_pair(false,"");
+        FS_dprint("File located at: " + _out_hits + " NOT found, continuing execution");
+        return std::make_pair(false, "");
     }
 }
 
@@ -143,84 +130,85 @@ void ModEggnog::parse() {
     if (!EGGNOG_DATABASE.open(_eggnog_db_path))
         throw ExceptionHandler("Unable to open GO database",ERR_ENTAP_PARSE_EGGNOG);
 
-    for (int i=0; i<2;i++) {
-        i == 0 ? path=_out_hits : path=_out_no_hits;
-        FS_dprint("Eggnog file located at " + path + " being filtered");
-        if (!_pFileSystem->file_exists(path)) {
-            FS_dprint("File not found, skipping...");continue;
-        }
-        path = eggnog_format(path);
-        std::string qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
-                best_og, cog_cat, eggnog_annot;
-        io::CSVReader<EGGNOG_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(path);
-        while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
-                           best_og, cog_cat, eggnog_annot)) {
-            QUERY_MAP_T::iterator it = (*pQUERY_DATA->get_sequences_ptr()).find(qseqid);
-            if (it != (*pQUERY_DATA->get_sequences_ptr()).end()) {
-                count_TOTAL_hits++;
+    path = _out_hits;
 
-                EggnogResults = {};
-                EggnogResults.seed_ortholog = seed_ortho;
-                EggnogResults.seed_evalue = seed_e;
-                EggnogResults.seed_score = seed_score;
-                EggnogResults.predicted_gene = predicted_gene;
-                EggnogResults.ogs = ogs;
-                EggnogResults.raw_go = _pFileSystem->list_to_vect(',', go_terms);    // Turn list into vect
-                EggnogResults.raw_kegg = _pFileSystem->list_to_vect(',', kegg);      // Turn list into vect
-                get_tax_scope(tax_scope, EggnogResults);        // Map virNOG[6] to viridiplantae
-                get_og_query(EggnogResults);               // Requires tax_scope first, pulls key to SQL database
-                get_sql_data(EggnogResults, EGGNOG_DATABASE);
-                EggnogResults.parsed_go = parse_go_list(go_terms,GO_DATABASE,',');
+    FS_dprint("Eggnog file located at " + path + " being filtered");
+    if (!_pFileSystem->file_exists(path)) {
+        FS_dprint("File not found, at: " + path);
+        throw ExceptionHandler("EggNOG file not found at: " + path, ERR_ENTAP_PARSE_EGGNOG);
+    }
+    path = eggnog_format(path);
+    std::string qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
+            best_og, cog_cat, eggnog_annot;
+    io::CSVReader<EGGNOG_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(path);
+    while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
+                       best_og, cog_cat, eggnog_annot)) {
+        QUERY_MAP_T::iterator it = (*pQUERY_DATA->get_sequences_ptr()).find(qseqid);
+        if (it != (*pQUERY_DATA->get_sequences_ptr()).end()) {
+            count_TOTAL_hits++;
 
-                it->second->set_eggnog_results(EggnogResults);
+            EggnogResults = {};
+            EggnogResults.seed_ortholog = seed_ortho;
+            EggnogResults.seed_evalue = seed_e;
+            EggnogResults.seed_score = seed_score;
+            EggnogResults.predicted_gene = predicted_gene;
+            EggnogResults.ogs = ogs;
+            EggnogResults.raw_go = _pFileSystem->list_to_vect(',', go_terms);    // Turn list into vect
+            EggnogResults.raw_kegg = _pFileSystem->list_to_vect(',', kegg);      // Turn list into vect
+            get_tax_scope(tax_scope, EggnogResults);        // Map virNOG[6] to viridiplantae
+            get_og_query(EggnogResults);               // Requires tax_scope first, pulls key to SQL database
+            get_sql_data(EggnogResults, EGGNOG_DATABASE);
+            EggnogResults.parsed_go = parse_go_list(go_terms,GO_DATABASE,',');
 
-                if (!EggnogResults.parsed_go.empty()) {
-                    count_total_go_hits++;
-                    it->second->QUERY_FLAG_SET(QuerySequence::QUERY_ONE_GO);
-                    for (auto &pair : EggnogResults.parsed_go) {
-                        for (std::string &term : pair.second) {
-                            count_total_go_terms++;
-                            if (pair.first == GO_MOLECULAR_FLAG) {
-                                count_go_mole++;
-                            } else if (pair.first == GO_CELLULAR_FLAG) {
-                                count_go_cell++;
-                            } else if (pair.first == GO_BIOLOGICAL_FLAG) {
-                                count_go_bio++;
-                            }
-                            if (go_combined_map[pair.first].count(term)) {
-                                go_combined_map[pair.first][term]++;
-                            } else go_combined_map[pair.first][term] = 1;
-                            if (go_combined_map[GO_OVERALL_FLAG].count(term)) {
-                                go_combined_map[GO_OVERALL_FLAG][term]++;
-                            } else go_combined_map[GO_OVERALL_FLAG][term]=1;
+            it->second->set_eggnog_results(EggnogResults);
+
+            if (!EggnogResults.parsed_go.empty()) {
+                count_total_go_hits++;
+                it->second->QUERY_FLAG_SET(QuerySequence::QUERY_ONE_GO);
+                for (auto &pair : EggnogResults.parsed_go) {
+                    for (std::string &term : pair.second) {
+                        count_total_go_terms++;
+                        if (pair.first == GO_MOLECULAR_FLAG) {
+                            count_go_mole++;
+                        } else if (pair.first == GO_CELLULAR_FLAG) {
+                            count_go_cell++;
+                        } else if (pair.first == GO_BIOLOGICAL_FLAG) {
+                            count_go_bio++;
                         }
+                        if (go_combined_map[pair.first].count(term)) {
+                            go_combined_map[pair.first][term]++;
+                        } else go_combined_map[pair.first][term] = 1;
+                        if (go_combined_map[GO_OVERALL_FLAG].count(term)) {
+                            go_combined_map[GO_OVERALL_FLAG][term]++;
+                        } else go_combined_map[GO_OVERALL_FLAG][term]=1;
                     }
-                } else {
-                    count_no_go++;
                 }
+            } else {
+                count_no_go++;
+            }
 
-                // Compile KEGG information
-                if (!kegg.empty()) {
-                    count_total_kegg_hits++;
-                    ct = (uint32) std::count(kegg.begin(), kegg.end(), ',');
-                    count_total_kegg_terms += ct + 1;
-                    it->second->QUERY_FLAG_SET(QuerySequence::QUERY_ONE_KEGG);
-                } else {
-                    count_no_kegg++;
-                }
+            // Compile KEGG information
+            if (!kegg.empty()) {
+                count_total_kegg_hits++;
+                ct = (uint32) std::count(kegg.begin(), kegg.end(), ',');
+                count_total_kegg_terms += ct + 1;
+                it->second->QUERY_FLAG_SET(QuerySequence::QUERY_ONE_KEGG);
+            } else {
+                count_no_kegg++;
+            }
 
-                // Compile Taxonomic Orthogroup stats
-                if (!EggnogResults.tax_scope_readable.empty()) {
-                    count_tax_scope++;
-                    if (tax_scope_ct_map.count(EggnogResults.tax_scope_readable)) {
-                        tax_scope_ct_map[EggnogResults.tax_scope_readable]++;
-                    } else tax_scope_ct_map[EggnogResults.tax_scope_readable] = 1;
+            // Compile Taxonomic Orthogroup stats
+            if (!EggnogResults.tax_scope_readable.empty()) {
+                count_tax_scope++;
+                if (tax_scope_ct_map.count(EggnogResults.tax_scope_readable)) {
+                    tax_scope_ct_map[EggnogResults.tax_scope_readable]++;
+                } else tax_scope_ct_map[EggnogResults.tax_scope_readable] = 1;
 
-                }
             }
         }
-        boostFS::remove(path);
     }
+    // delete temp file
+    _pFileSystem->delete_file(path);
 
     EGGNOG_DATABASE.close();
     out_no_hits_nucl = PATHS(_proc_dir, OUT_UNANNOTATED_NUCL);
@@ -372,14 +360,12 @@ void ModEggnog::execute() {
     FS_dprint("Running eggnog...");
 
     std::string                        annotation_base_flag;
-    std::string                        annotation_no_flag;
     std::string                        annotation_std;
     std::string                        eggnog_command;
     std::string                        hit_out;
     std::string                        no_hit_out;
 
     annotation_base_flag = PATHS(_egg_out_dir, EGG_ANNOT_RESULTS);
-    annotation_no_flag   = PATHS(_egg_out_dir, EGG_ANNOT_NO_HIT_RESULTS);
     annotation_std       = PATHS(_egg_out_dir, EGG_ANNOT_STD);
     eggnog_command       = "python " + _exe_path + " ";
 
@@ -403,24 +389,6 @@ void ModEggnog::execute() {
         throw ExceptionHandler("No input file found at: " + _inpath,
                                ERR_ENTAP_RUN_EGGNOG);
     }
-    if (_pFileSystem->file_exists(_in_no_hits)) {
-        std::ifstream inFile(_in_no_hits);
-        long line_num = std::count(std::istreambuf_iterator<char>(inFile),
-                                   std::istreambuf_iterator<char>(), '\n');
-        inFile.close();
-        if (line_num >1) {
-            eggnog_command_map["-i"] = _in_no_hits;
-            eggnog_command_map["--output"] = annotation_no_flag;
-            eggnog_command = "python " + _exe_path + " ";
-            for (auto &pair : eggnog_command_map) eggnog_command += pair.first + " " + pair.second + " ";
-            FS_dprint("\nExecuting eggnog mapper against protein sequences that did not hit databases...\n"
-                        + eggnog_command);
-            if (execute_cmd(eggnog_command, annotation_std) !=0) {
-                _pFileSystem->delete_file(annotation_no_flag);
-                throw ExceptionHandler("Error executing eggnog mapper", ERR_ENTAP_RUN_ANNOTATION);
-            }
-        }
-    }
     FS_dprint("Success!");
 }
 
@@ -432,7 +400,7 @@ std::string ModEggnog::eggnog_format(std::string file) {
     std::string line;
 
     out_path = file + "_alt";
-    boostFS::remove(out_path);
+    _pFileSystem->delete_file(out_path);
     std::ifstream in_file(file);
     std::ofstream out_file(out_path);
     while (getline(in_file,line)) {
@@ -648,10 +616,10 @@ bool ModEggnog::valid_input(boostPO::variables_map &) {
     return true;
 }
 
-ModEggnog::ModEggnog(std::string &exe, std::string &out, std::string &in, std::string &in_no_hits, std::string &ont,
+ModEggnog::ModEggnog(std::string &exe, std::string &out, std::string &in, std::string &ont,
                      GraphingManager *graphing, QueryData *queryData, bool blastp, std::vector<uint16> &lvls,
                      int threads, FileSystem* filesystem, UserInput*, std::string& eggnog_sql_path)
-    :AbstractOntology(exe, out, in, in_no_hits,ont, graphing, queryData, blastp,
+    :AbstractOntology(exe, out, in,ont, graphing, queryData, blastp,
                      lvls, threads, filesystem, _pUserInput){
 
     _eggnog_db_path = eggnog_sql_path;

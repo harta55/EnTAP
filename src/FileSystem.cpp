@@ -45,6 +45,7 @@ const std::string FileSystem::EXT_OUT = ".out";
 const std::string FileSystem::EXT_BAM = ".bam";
 const std::string FileSystem::EXT_FAA = ".faa";
 const std::string FileSystem::EXT_FNN = ".fnn";
+const std::string FileSystem::EXT_XML = ".xml";
 const std::string FileSystem::EXT_DMND= ".dmnd";
 
 
@@ -501,5 +502,20 @@ std::string FileSystem::get_file_extension(const std::string &path) {
 #ifdef USE_BOOST
     boostFS::path bpath(path);
     return bpath.extension().string();
+#endif
+}
+
+bool FileSystem::copy_file(std::string inpath, std::string outpath, bool overwrite) {
+#ifdef USE_BOOST
+    try {
+        if (overwrite) {
+            boostFS::copy_file(inpath,outpath,boostFS::copy_option::overwrite_if_exists);
+        } else {
+            boostFS::copy_file(inpath,outpath);
+        }
+    } catch (...) {
+        return false;
+    }
+    return true;
 #endif
 }

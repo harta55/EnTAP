@@ -42,7 +42,6 @@ public:
     AbstractOntology(std::string &exe,
                      std::string &out,
                      std::string &in_hits,
-                     std::string &in_nohits,
                      std::string &ont_out,
                      GraphingManager *graphing,
                      QueryData *querydata,
@@ -54,7 +53,6 @@ public:
         _exe_path        = exe;
         _outpath         = out;
         _inpath          = in_hits;
-        _in_no_hits      = in_nohits;
         _ontology_dir    = ont_out;
         pGraphingManager = graphing;
         pQUERY_DATA      = querydata;
@@ -96,7 +94,6 @@ protected:
 
     bool               _blastp;
     int                _threads;
-    std::string        _in_no_hits;
     std::string        _exe_path;
     std::string        _outpath;
     std::string        _inpath;

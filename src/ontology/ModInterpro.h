@@ -48,7 +48,7 @@ class ModInterpro : public AbstractOntology{
 public:
     ~ModInterpro();
     ModInterpro(std::string &exe,std::string &out, std::string &in,
-                std::string &in_no_hits,std::string &ont, GraphingManager *graphing,QueryData *queryData,
+                std::string &ont, GraphingManager *graphing,QueryData *queryData,
                 bool blastp,std::vector<uint16>& lvls, int threads, FileSystem*, UserInput*,vect_str_t );
 
     virtual std::pair<bool, std::string> verify_files() override ;
@@ -67,8 +67,8 @@ private:
     std::string INTERPRO_OUTPUT             = "interpro_results";
     std::string INTERPRO_DIRECTORY          = "InterProScan";
     std::string INTERPRO_STD_OUT            = "interproscan_std";
-    std::string OUT_NO_HITS_FAA             = "interpro_no_hits.faa";
-    std::string OUT_NO_HITS_FNN             = "interpro_no_hits.fnn";
+    std::string OUT_NO_HITS_FAA             = "interpro_hits.faa";
+    std::string OUT_NO_HITS_FNN             = "interpro_hits.fnn";
     std::string OUT_HITS_FAA                = "interpro_no_hits.faa";
     std::string OUT_HITS_FNN                = "interpro_no_hits.fnn";
     std::string INTERPRO_EXT_XML            = ".xml";

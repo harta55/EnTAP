@@ -53,6 +53,7 @@ public:
     bool file_empty(std::string);
     bool file_no_lines(std::string);
     bool delete_file(std::string);
+    bool copy_file(std::string, std::string, bool);
     bool directory_iterate(bool, std::string&);
     bool check_fasta(std::string&);
     bool create_dir(std::string&);
@@ -71,6 +72,7 @@ public:
     static const std::string EXT_FAA ;
     static const std::string EXT_FNN ;
     static const std::string EXT_DMND;
+    static const std::string EXT_XML;
 
     std::string _root_path;     // Root EnTAP output directory
 
@@ -80,7 +82,6 @@ private:
     const std::string LOG_FILENAME   = "log_file";
     const std::string LOG_EXTENSION  = ".txt";
     const std::string DEBUG_FILENAME = "debug";
-
 };
 
 

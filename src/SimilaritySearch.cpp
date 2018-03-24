@@ -174,14 +174,16 @@ std::vector<std::string> SimilaritySearch::execute(std::string updated_input,boo
  * @return              - Pair of output files (hits and no hits)
  * ======================================================================
  */
-std::pair<std::string,std::string> SimilaritySearch::parse_files(std::string new_input) {
+void SimilaritySearch::parse_files(std::string new_input) {
     _input_path = new_input;
     try {
         switch (_software_flag) {
             case ENTAP_EXECUTE::SIM_SEARCH_FLAG_DIAMOND:
-                return diamond_parse(_contaminants);
+                diamond_parse(_contaminants);
+                break;
             default:
-                return diamond_parse(_contaminants);
+                diamond_parse(_contaminants);
+                break;
         }
     } catch (ExceptionHandler &e) {throw e;}
 }
@@ -332,7 +334,7 @@ std::vector<std::string> SimilaritySearch::verify_diamond_files() {
 }
 
 // input: 3 database string array of selected databases
-std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
+void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
     FS_dprint("Beginning to filter individual diamond_files...");
 
     tax_serial_map_t                                taxonomic_database;
@@ -437,12 +439,10 @@ std::pair<std::string,std::string> SimilaritySearch::diamond_parse(std::vector<s
 
         FS_dprint("Success!");
     }
-    return calculate_best_stats(true);
+    calculate_best_stats(true);
 }
 
-std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
-        bool is_final,
-        std::string database_path) {
+void SimilaritySearch::calculate_best_stats (bool is_final, std::string database_path) {
 
     GraphingData                graphingStruct;
     std::string                 species;
@@ -802,12 +802,6 @@ std::pair<std::string,std::string> SimilaritySearch::calculate_best_stats (
 
     // check if final - different graph
     // ************************************ //
-
-    if (_blastp) {
-        return std::pair<std::string,std::string>(out_best_hits_fa_prot,out_no_hits_fa_prot);
-    } else {
-        return std::pair<std::string, std::string> (out_best_hits_fa_nucl, out_no_hits_fa_nucl);
-    }
 }
 
 

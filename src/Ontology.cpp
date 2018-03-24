@@ -109,13 +109,12 @@ Ontology::Ontology(std::string input, UserInput *userinput, GraphingManager* gra
  *
  * =====================================================================
  */
-void Ontology::execute(std::string input,std::string no_hit) {
+void Ontology::execute(std::string input) {
 
     std::pair<bool,std::string> verify_pair;
     std::unique_ptr<AbstractOntology> ptr;
 
     _new_input     = input;
-    _input_no_hits = no_hit;
 
     if (_is_overwrite) boostFS::remove_all(_ontology_dir);
     boostFS::create_directories(_ontology_dir);
@@ -157,7 +156,6 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
                     _ontology_exe,
                     _outpath,
                     _new_input,
-                    _input_no_hits,
                     _ontology_dir,
                     _pGraphingManager,
                     _QUERY_DATA,
@@ -174,7 +172,6 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
                     _ontology_exe,
                     _outpath,
                     _new_input,
-                    _input_no_hits,
                     _ontology_dir,
                     _pGraphingManager,
                     _QUERY_DATA,
@@ -191,7 +188,6 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
                     _ontology_exe,
                     _outpath,
                     _new_input,
-                    _input_no_hits,
                     _ontology_dir,
                     _pGraphingManager,
                     _QUERY_DATA,

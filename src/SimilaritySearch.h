@@ -57,7 +57,7 @@ public:
                      GraphingManager*,
                      QueryData*);
     SimilaritySearch();
-    std::pair<std::string,std::string> parse_files(std::string);
+    void parse_files(std::string);
     tax_serial_map_t read_tax_map();
     static bool is_executable();
     //**************************************************************
@@ -159,13 +159,13 @@ private:
     std::vector<std::string> diamond();
     void diamond_blast(std::string, std::string, std::string,std::string&,int&, std::string&);
     std::vector<std::string> verify_diamond_files();
-    std::pair<std::string,std::string> diamond_parse(std::vector<std::string>&);
+    void diamond_parse(std::vector<std::string>&);
     std::pair<bool,std::string> is_contaminant(std::string, tax_serial_map_t&,std::vector<std::string>&);
     bool is_informative(std::string);
     void print_header(std::ofstream&);
     void get_tax_entry(std::string, tax_serial_map_t&, TaxEntry&);
     std::string get_species(std::string &title);
-    std::pair<std::string,std::string> calculate_best_stats (bool,std::string="");
+    void calculate_best_stats (bool,std::string="");
     std::string get_database_shortname(std::string&);
     std::string get_transcriptome_shortname();
 

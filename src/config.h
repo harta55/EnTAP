@@ -28,6 +28,7 @@
 #ifndef ENTAP_CONFIG_H
 #define ENTAP_CONFIG_H
 
+// Compile with boost libraries? Currently this MUST be selected
 #ifndef USE_BOOST
 #define USE_BOOST   1
 #endif

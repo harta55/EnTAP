@@ -114,6 +114,7 @@ void ModInterpro::execute() {
                 ERR_ENTAP_RUN_INTERPRO);
     }
     if (execute_cmd(interpro_cmd, std_out) != 0) {
+        _pFileSystem->delete_file(_final_outpath);
         throw ExceptionHandler("Error executing InterProScan, consult the error file at: "+
                 std_out, ERR_ENTAP_RUN_INTERPRO);
     } else {
@@ -442,10 +443,10 @@ std::string ModInterpro::get_default() {
     return INTERPRO_DEFAULT;
 }
 
-ModInterpro::ModInterpro(std::string &exe, std::string &out, std::string &in, std::string &in_no_hits, std::string &ont,
+ModInterpro::ModInterpro(std::string &exe, std::string &out, std::string &in, std::string &ont,
                          GraphingManager *graphing, QueryData *queryData, bool blastp, std::vector<uint16> &lvls,
                          int threads, FileSystem *filesystem, UserInput *userinput, vect_str_t databases)
-    : AbstractOntology(exe, out, in, in_no_hits, ont, graphing, queryData, blastp,
+    : AbstractOntology(exe, out, in, ont, graphing, queryData, blastp,
                      lvls, threads, filesystem, userinput){
 
     _interpro_dir = PATHS(_ontology_dir, INTERPRO_DIRECTORY);
@@ -463,5 +464,4 @@ ModInterpro::ModInterpro(std::string &exe, std::string &out, std::string &in, st
     } catch (...) {
         throw ExceptionHandler("Unable to remove or create directories", ERR_ENTAP_FILE_IO);
     }
-
 }

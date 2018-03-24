@@ -48,7 +48,7 @@ class Ontology {
 
 public:
 
-    void execute(std::string,std::string);
+    void execute(std::string);
     Ontology(std::string,
              UserInput*,
              GraphingManager*,
@@ -80,7 +80,6 @@ private:
     std::string                     _ontology_exe;
     std::string                     _outpath;
     std::string                     _new_input;
-    std::string                     _input_no_hits;
     std::string                     _ontology_dir;
     std::string                     _eggnog_db_path;
     std::vector<const std::string*> _HEADERS;

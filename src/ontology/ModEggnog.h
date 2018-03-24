@@ -36,7 +36,7 @@ class ModEggnog : public AbstractOntology{
 
 public:
     ModEggnog(std::string &exe,std::string &out, std::string &in,
-              std::string &in_no_hits,std::string &ont, GraphingManager *graphing,QueryData *queryData,
+              std::string &ont, GraphingManager *graphing,QueryData *queryData,
             bool blastp,std::vector<uint16>& lvls, int threads, FileSystem*, UserInput*,std::string&);
 
     ~ModEggnog();
@@ -59,7 +59,6 @@ private:
     const std::string GRAPH_EGG_TAX_BAR_PNG   = "eggnog_tax_scope.png";
     const std::string GRAPH_EGG_TAX_BAR_TXT   = "eggnog_tax_scope.txt";
     const std::string EGG_ANNOT_RESULTS       = "annotation_results";
-    const std::string EGG_ANNOT_NO_HIT_RESULTS= "annotation_results_no_hits";
     const std::string EGG_ANNOT_STD           = "annotation_std";
     const std::string EGG_ANNOT_APPEND        = ".emapper.annotations";
 
@@ -67,7 +66,6 @@ private:
     std::string _proc_dir;
     std::string _egg_out_dir;
     std::string _eggnog_db_path;
-    std::string _out_no_hits;
     std::string _out_hits;
 
     std::string eggnog_format(std::string);

@@ -23,7 +23,7 @@ set(SOURCE_FILES libs
         src/Ontology.cpp src/Ontology.h
         src/GraphingManager.cpp src/GraphingManager.h
         src/UserInput.cpp src/UserInput.h
-        src/EggnogLevels.h
+        src/ontology/EggnogLevels.h
         src/database/DatabaseHelper.cpp src/database/DatabaseHelper.h
         src/sqlite3.c src/sqlite3.h
         src/frame_selection/ModGeneMarkST.cpp src/frame_selection/ModGeneMarkST.h

@@ -88,13 +88,13 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     is_complete    = _pUserInput->has_input(UInput::INPUT_FLAG_COMPLETE);
 
     if (!_pFileSystem->file_exists(input_file)) {
-        throw ExceptionHandler("Input file not found at: " + input_file,ERR_ENTAP_INPUT_PARSE);
+        throw ExceptionHandler("Input transcriptome not found at: " + input_file,ERR_ENTAP_INPUT_PARSE);
     }
 
     boostFS::path path(input_file);
     out_name     = path.filename().string();
     out_new_path = PATHS(out_path,out_name);
-    boostFS::remove(out_new_path);
+    _pFileSystem->delete_file(out_new_path);
 
     set_input_type(input_file);
     _protein ? transcript_type = PROTEIN_FLAG : transcript_type = NUCLEO_FLAG;

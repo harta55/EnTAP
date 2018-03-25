@@ -44,7 +44,8 @@ class QueryData;
 namespace entapExecute {
 
     // ********************** Global Constants *********************
-    const std::string ENTAP_OUTPUT         = "entap_out/";
+    const std::string ENTAP_OUTPUT            = "transcriptomes/";
+    const std::string FINAL_TRANSCRIPTOME_TAG = "_final.fasta";
 
     //**************************************************************
 
@@ -52,8 +53,6 @@ namespace entapExecute {
     // ****************** Global Prototype Functions ***************
     void execute_main(UserInput*, FileSystem*);
     //**************************************************************
-
-
 }
 
 

@@ -96,13 +96,12 @@ namespace entapExecute {
         FS_dprint("EnTAP Executing...");
 
         std::vector<uint16>                     ontology_flags;
-        std::vector<std::string>                other_databases; // -d Command databases
         std::string                             original_input;  // ALWAYS use for Expression
         std::queue<char>                        state_queue;
         bool                                    state_flag;
 
         if (user_input == nullptr || filesystem == nullptr) {
-            throw ExceptionHandler("Unable to allocate memory", ERR_ENTAP_INPUT_PARSE);
+            throw ExceptionHandler("Unable to allocate memory to EnTAP Execution", ERR_ENTAP_INPUT_PARSE);
         }
 
         executeStates           = INIT;
@@ -115,24 +114,23 @@ namespace entapExecute {
         original_input = _input_path;
         _blastp        = _pUserInput->has_input(UInput::INPUT_FLAG_RUNPROTEIN);
         ontology_flags = _pUserInput->get_user_input<std::vector<uint16>>(UInput::INPUT_FLAG_ONTOLOGY);
-        other_databases= _pUserInput->get_user_input<vect_str_t>(UInput::INPUT_FLAG_DATABASE);
         state_queue    = _pUserInput->get_state_queue();    // Will NOT be empty
         _databases     = _pUserInput->get_user_input<databases_t>(UInput::INPUT_FLAG_DATABASE);
 
         // Set/create outpaths
         _outpath       = _pFileSystem->get_root_path();
-        _entap_outpath = PATHS(_outpath, ENTAP_OUTPUT);
+        _entap_outpath = PATHS(_outpath, ENTAP_OUTPUT);     // transcriptome outpath, original will be copied
         _pFileSystem->create_dir(_entap_outpath);
         _pFileSystem->create_dir(_outpath);
 
         try {
-            verify_state(state_queue, state_flag);
+            verify_state(state_queue, state_flag);         // Set state transition
             // Read input transcriptome
             QueryData *pQUERY_DATA = new QueryData(
-                    _input_path,
-                    _entap_outpath,
-                    _pUserInput,
-                    _pFileSystem);
+                    _input_path,        // User transcriptome
+                    _entap_outpath,     // Transcriptome directory
+                    _pUserInput,        // User input map
+                    _pFileSystem);      // Filesystem object
             GraphingManager graphingManager = GraphingManager(GRAPHING_EXE);
 
             while (executeStates != EXIT) {
@@ -159,23 +157,23 @@ namespace entapExecute {
                         break;
                     case EXPRESSION_FILTERING: {
                         FS_dprint("STATE - EXPRESSION FILTERING");
-                        std::unique_ptr<ExpressionAnalysis> expression(new ExpressionAnalysis(
+                        if (!_pUserInput->has_input(UInput::INPUT_FLAG_ALIGN)) {
+                            FS_dprint("No alignment file specified, skipping expression analysis");
+                        } else {
+                            std::unique_ptr<ExpressionAnalysis> expression(new ExpressionAnalysis(
                                 original_input,
                                 &graphingManager,
                                 pQUERY_DATA,
                                 _pFileSystem,
                                 _pUserInput
-                        ));
-                        if (!_pUserInput->has_input(UInput::INPUT_FLAG_ALIGN)) {
-                            FS_dprint("No alignment file specified, skipping expression analysis");
-                        } else {
+                            ));
                             _input_path = expression->execute(original_input);
                             pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_EXPRESSION);
                         }
                     }
                         break;
                     case FILTER:
-                        _input_path = filter_transcriptome(_input_path);
+                        _input_path = filter_transcriptome(_input_path);  // Just copies final transcriptome
                         break;
                     case SIMILARITY_SEARCH: {
                         FS_dprint("STATE - SIM SEARCH RUN");
@@ -192,6 +190,7 @@ namespace entapExecute {
                         sim_search->execute(_input_path, _blastp);
                         pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_SIM_SEARCH);
                         FS_dprint("STATE - SIM SEARCH PARSE");
+                        sim_search->parse_files(_input_path);
                         break;
                     }
                     case GENE_ONTOLOGY: {
@@ -215,7 +214,6 @@ namespace entapExecute {
             }
 
             // *************************** Exit Stuff ********************** //
-
             pQUERY_DATA->final_statistics(_outpath, ontology_flags);
             _pFileSystem->directory_iterate(true, _outpath);   // Delete empty files
             SAFE_DELETE(pQUERY_DATA);
@@ -247,15 +245,13 @@ namespace entapExecute {
         std::string   out_path;
 
         file_name = input_path;
-        file_name_str = file_name.filename().stem().string() + "_final.fasta";
+        file_name_str = file_name.filename().stem().string() + FINAL_TRANSCRIPTOME_TAG;
         out_path = PATHS(_entap_outpath, file_name_str);
         boostFS::copy_file(input_path,out_path,boostFS::copy_option::overwrite_if_exists);
 
         FS_dprint("Success!");
         return out_path;
     }
-
-
 
 
 /**

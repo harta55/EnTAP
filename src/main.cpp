@@ -158,7 +158,6 @@ void init_entap(int argc, const char** argv) {
  *
  * Notes                - Will be used for state debug reports in future
  *
- * @param s             - State
  * @return              - None
  * ======================================================================
  */

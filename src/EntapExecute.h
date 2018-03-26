@@ -45,7 +45,9 @@ namespace entapExecute {
 
     // ********************** Global Constants *********************
     const std::string ENTAP_OUTPUT            = "transcriptomes/";
-    const std::string FINAL_TRANSCRIPTOME_TAG = "_final.fasta";
+    const std::string TRANSCRIPTOME_FINAL_TAG = "_final.fasta";
+    const std::string TRANSCRIPTOME_FRAME_TAG = "_frame_selected.faa";
+    const std::string TRANSCRIPTOME_FILTERED_TAG = "_filtered.fasta";
 
     //**************************************************************
 

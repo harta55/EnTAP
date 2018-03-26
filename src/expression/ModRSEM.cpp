@@ -49,10 +49,8 @@
  */
 std::pair<bool, std::string> ModRSEM::verify_files() {
 
-    boostFS::path                   file_name(_inpath);
-
-    while (file_name.has_extension()) file_name = file_name.stem();
-    _filename = file_name.string();
+    _filename = _inpath;
+    _pFileSystem->remove_extensions(_filename);
     _exp_out = PATHS(_expression_outpath, _filename);
     _rsem_out = _exp_out + RSEM_OUT_FILE;
     if (_pFileSystem->file_exists(_rsem_out)) {
@@ -87,7 +85,6 @@ void ModRSEM::execute() {
     // return path
     FS_dprint("Running RSEM...");
 
-    boostFS::path                   bam_ext(_alignpath);
     std::string                     bam;
     std::string                     rsem_arg;
     std::string                     out_path;
@@ -96,11 +93,8 @@ void ModRSEM::execute() {
     std::string                     expression_exe;
     std::string                     std_out;    // Outpath for std err and out
 
-    bam_ext = bam_ext.extension();
-    bam = bam_ext.string();
-    std::transform(bam.begin(), bam.end(), bam.begin(), ::tolower);
-    bam = bam.substr(1,3); // just extract extension
-    //todo separate into methods
+    bam = _pFileSystem->get_file_extension(_alignpath, true);
+    LOWERCASE(bam);
     if (!rsem_validate_file(_filename)){
         throw ExceptionHandler("Alignment file can't be validated by RSEM. Check error file!",
                                ERR_ENTAP_RUN_RSEM_VALIDATE);
@@ -198,30 +192,28 @@ std::string ModRSEM::filter() {
     MAP = _pQueryData->get_sequences_ptr();
 
     if (!_pFileSystem->file_exists(_rsem_out)) {
-        throw ExceptionHandler("File does not exist at: " + _rsem_out, ERR_ENTAP_RUN_RSEM_EXPRESSION);
+        throw ExceptionHandler("File does not exist at: " + _rsem_out,
+                               ERR_ENTAP_RUN_RSEM_EXPRESSION);
     }
 
-    boostFS::path path (_rsem_out);
-
-    _pFileSystem->delete_dir(_processed_path);
-    _pFileSystem->create_dir(_processed_path);
-    _pFileSystem->delete_dir(_figure_path);
-    _pFileSystem->create_dir(_figure_path);
-
+    // Setup figure files, directories already created
     fig_txt_box_path = PATHS(_figure_path, GRAPH_TXT_BOX_PLOT);
     fig_png_box_path = PATHS(_figure_path, GRAPH_PNG_BOX_PLOT);
 
+    // Open figure text file
     std::ofstream file_fig_box(fig_txt_box_path, std::ios::out | std::ios::app);
     file_fig_box << "flag\tsequence length" << std::endl;    // First line placeholder, not used
 
-    while (path.has_extension()) path = path = path.stem();
-    original_filename = path.string();
+    // Setup processed file paths, directories already created
+    original_filename = _filename;
     removed_filename  = original_filename + RSEM_OUT_REMOVED;
     kept_filename     = original_filename + RSEM_OUT_KEPT;
     out_kept    = PATHS(_processed_path, kept_filename);
     out_removed = PATHS(_processed_path, removed_filename);
     std::ofstream out_file(out_kept, std::ios::out | std::ios::app);
     std::ofstream removed_file(out_removed, std::ios::out | std::ios::app);
+
+    // Begin to iterate through RSEM output file
     io::CSVReader<RSEM_COL_NUM, io::trim_chars<' '>,
     io::no_quote_escape<'\t'>> in(_rsem_out);
     in.next_line();
@@ -321,6 +313,8 @@ std::string ModRSEM::filter() {
             // Warn user high percentage of transcriptome was rejected
             out_msg << "\nWarning: A high percentage of the transcriptome was removed: " << rejected_percent;
         }
+    } else {
+        out_msg << "\nWarning: No sequences were removed from Expression Filtering";
     }
 
     out_str = out_msg.str();
@@ -437,6 +431,11 @@ void ModRSEM::set_data(int thread, float fpkm, bool single) {
 
     _processed_path = PATHS(_outpath, RSEM_PROCESSED_DIR);
     _figure_path = PATHS(_outpath, RSEM_FIGURE_DIR);
+
+    _pFileSystem->delete_dir(_processed_path);
+    _pFileSystem->create_dir(_processed_path);
+    _pFileSystem->delete_dir(_figure_path);
+    _pFileSystem->create_dir(_figure_path);
 }
 
 ModRSEM::~ModRSEM() {

@@ -75,11 +75,16 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,
                                        UserInput *userinput) {
     FS_dprint("Spawn object - ExpressionAnalysis");
 
-    _pQueryData    = queryData;
-    _pFileSystem   = filesystem;
-    _pUserInput    = userinput;
+    _pQueryData       = queryData;
+    _pFileSystem      = filesystem;
+    _pUserInput       = userinput;
     _pGraphingManager = graph;
-    _inpath        = input;
+    _inpath           = input;
+
+    if (queryData == nullptr || filesystem == nullptr || userinput == nullptr) {
+        throw ExceptionHandler("Unable to allocate memory to ExpressionAnalysis.",
+            ERR_ENTAP_MEM_ALLOC);
+    }
 
     _software_flag = ENTAP_EXECUTE::EXP_FLAG_RSEM;
     _threads       = _pUserInput->get_supported_threads();
@@ -88,7 +93,7 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,
     _trim          = _pUserInput->has_input(UInput::INPUT_FLAG_TRIM);
     _overwrite     = _pUserInput->has_input(UInput::INPUT_FLAG_OVERWRITE);
     _issingle      = _pUserInput->has_input(UInput::INPUT_FLAG_SINGLE_END);
-    if (_pUserInput->has_input(UInput::INPUT_FLAG_ALIGN)) {
+    if (_pUserInput->has_input(UInput::INPUT_FLAG_ALIGN)) { // Will be true
         _alignpath = _pUserInput->get_user_input<std::string>(UInput::INPUT_FLAG_ALIGN);
     }
     _fpkm          = _pUserInput->get_user_input<fp32>(UInput::INPUT_FLAG_FPKM);
@@ -124,7 +129,7 @@ std::string ExpressionAnalysis::execute(std::string input) {
 
     try {
         ptr = spawn_object();
-        ptr->set_data(_threads, _fpkm, _issingle);
+        ptr->set_data(_threads, _fpkm, _issingle);  // Will remove later
         verify_pair = ptr->verify_files();
         if (!verify_pair.first) ptr->execute();
         output = ptr->filter();

@@ -504,7 +504,7 @@ void UserInput::verify_databases(bool isrun) {
         }
         FS_dprint("User has input a database at: " + path);
         // Is file extension diamond?
-        if (_pFileSystem->get_file_extension(path).compare(FileSystem::EXT_DMND) == 0) {
+        if (_pFileSystem->get_file_extension(path, false).compare(FileSystem::EXT_DMND) == 0) {
             // Yes, are we configuring?
             if (!isrun) {
                 throw ExceptionHandler("Cannot input DIAMOND database when configuring!", ERR_ENTAP_INPUT_PARSE);
@@ -1108,6 +1108,14 @@ vect_str_t UserInput::get_uninformative_vect() {
     }
     file.close();
     return output_uninform;
+}
+
+std::string UserInput::get_user_transc_basename() {
+    std::string user_transcriptome;
+
+    user_transcriptome = get_user_input<std::string>(UInput::INPUT_FLAG_TRANSCRIPTOME);
+    boostFS::path path(user_transcriptome);
+    return path.filename().stem().string();
 }
 
 

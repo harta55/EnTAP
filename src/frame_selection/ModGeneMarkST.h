@@ -85,8 +85,9 @@ private:
     const std::string FRAME_SELECTION_INTERNAL_FLAG = "Internal";
     const std::string FILE_ALT_EXT                  = "_alt";
 
-    std::string _final_out;
-    std::string _final_lst;
+    std::string _final_out_path;
+    std::string _final_lst_path;
+    std::string _transcriptome_filename;    // Filename of input transcriptome
 
 
     frame_map_t genemark_parse_protein(std::string&);

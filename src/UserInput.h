@@ -72,7 +72,6 @@ public:
     }
 
     bool has_input(const std::string&);
-
     pair_str_t get_config_path();
     void set_pFileSystem(FileSystem *_pFileSystem);
     std::unordered_map<std::string,std::string> parse_config(pair_str_t&);
@@ -82,6 +81,7 @@ public:
     std::string get_target_species_str();
     vect_str_t get_contaminants();
     vect_str_t get_uninformative_vect();
+    std::string get_user_transc_basename();
 
 private:
     enum SPECIES_FLAGS {

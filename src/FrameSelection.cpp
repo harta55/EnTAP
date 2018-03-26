@@ -66,6 +66,12 @@ FrameSelection::FrameSelection(std::string &input,
                                GraphingManager *graphingManager,
                                QueryData *QUERY_DATA) {
     FS_dprint("Spawn object - FrameSelection");
+
+    if (graphingManager == nullptr || QUERY_DATA == nullptr || user_input == nullptr ||
+            filesystem == nullptr) {
+        throw ExceptionHandler("Unable to allocate memory to FrameSelection" ,
+            ERR_ENTAP_MEM_ALLOC);
+    }
     _graphingManager = graphingManager;
     _QUERY_DATA      = QUERY_DATA;
     _exe_path        = GENEMARK_EXE;

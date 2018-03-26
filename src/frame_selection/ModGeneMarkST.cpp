@@ -55,16 +55,15 @@ std::pair<bool, std::string> ModGeneMarkST::verify_files() {
 
     FS_dprint("Beginning to verify GeneMark module files...");
 
-    boost::filesystem::path file_name(boostFS::path(_inpath).filename());
-    _final_out = PATHS(_frame_outpath, file_name) + FileSystem::EXT_FAA;
-    lst_file   = file_name.string() + ".lst";
-    _final_lst = PATHS(_frame_outpath, lst_file);
-    if (_pFileSystem->file_exists(_final_out) && _pFileSystem->file_exists(_final_lst)) {
-        FS_dprint("File found at: " + _final_out + "\n"
+    _final_out_path = PATHS(_frame_outpath, _transcriptome_filename) + FileSystem::EXT_FAA;
+    lst_file   = _transcriptome_filename + ".lst";
+    _final_lst_path = PATHS(_frame_outpath, lst_file);
+    if (_pFileSystem->file_exists(_final_out_path) && _pFileSystem->file_exists(_final_lst_path)) {
+        FS_dprint("File found at: " + _final_out_path + "\n"
                 "continuing EnTAP with this file and skipping frame selection");
-        return std::make_pair(true, _final_out);
+        return std::make_pair(true, _final_out_path);
     }
-    FS_dprint("File not found at " + _final_out + " so continuing frame selection");
+    FS_dprint("File not found at " + _final_out_path + " so continuing frame selection");
     return std::make_pair(false, "");
 }
 
@@ -97,10 +96,9 @@ std::string ModGeneMarkST::execute() {
     std::string     temp_name;
     std::string     out_path;
 
-    boost::filesystem::path file_name(boostFS::path(_inpath).filename());
-    std::list<std::string> out_names {file_name.string() + FileSystem::EXT_FAA,
-                                      file_name.string() + FileSystem::EXT_FNN};
-    lst_file     = file_name.string() + ".lst";
+    std::list<std::string> out_names {_transcriptome_filename + FileSystem::EXT_FAA,
+                                      _transcriptome_filename + FileSystem::EXT_FNN};
+    lst_file     = _transcriptome_filename + ".lst";
     out_gmst_log = PATHS(_frame_outpath, GENEMARK_LOG_FILE);
     out_hmm_file = PATHS(_frame_outpath, GENEMARK_HMM_FILE);
 
@@ -113,9 +111,9 @@ std::string ModGeneMarkST::execute() {
                                _inpath, ERR_ENTAP_INIT_INDX_DATA_NOT_FOUND);
     }
     FS_dprint("Success!");
+
     // Format genemarks-t output (remove blank lines)
     FS_dprint("Formatting genemark files...");
-
     for (std::string path : out_names) {
         std::ifstream in_file(path);
         temp_name = path + FILE_ALT_EXT;
@@ -126,12 +124,13 @@ std::string ModGeneMarkST::execute() {
                 out_file << line << '\n';
             }
         }
-        in_file.close();out_file.close();
+        in_file.close();
+        out_file.close();
         if (remove(path.c_str())!=0 || rename(temp_name.c_str(),out_path.c_str())!=0) {
             throw ExceptionHandler("Error formatting/moving genemark results", ERR_ENTAP_INIT_TAX_READ);
         }
     }
-    if (rename(lst_file.c_str(),_final_lst.c_str())!=0 ||
+    if (rename(lst_file.c_str(),_final_lst_path.c_str())!=0 ||
         rename(GENEMARK_LOG_FILE.c_str(),out_gmst_log.c_str())!=0 ) {
         throw ExceptionHandler("Error moving genemark results", ERR_ENTAP_RUN_GENEMARK_MOVE);
     }
@@ -139,7 +138,7 @@ std::string ModGeneMarkST::execute() {
         rename(GENEMARK_HMM_FILE.c_str(),out_hmm_file.c_str());
     }
     FS_dprint("Success!");
-    return _final_out;
+    return _final_out_path;
 }
 
 
@@ -183,6 +182,16 @@ void ModGeneMarkST::parse() {
     std::pair<uint64, uint64>               kept_n;
     GraphingData                            graphingStruct;
 
+    // Ensure paths we need exist
+    if (!_pFileSystem->file_exists(_final_out_path)) {
+        throw ExceptionHandler("Final GeneMarkST output not found at: " + _final_out_path,
+            ERR_ENTAP_RUN_GENEMARK_PARSE);
+    } else if (!_pFileSystem->file_exists(_final_lst_path)) {
+        throw ExceptionHandler("Final GeneMarkST lst output not found at: " + _final_lst_path,
+                               ERR_ENTAP_RUN_GENEMARK_PARSE);
+    }
+
+    // Set up outpaths, directories are created by super
     out_removed_path    = PATHS(_processed_path, FRAME_SELECTION_LOST);
     out_internal_path   = PATHS(_processed_path, FRAME_SELECTION_INTERNAL);
     out_complete_path   = PATHS(_processed_path, FRAME_SELECTION_COMPLTE);
@@ -205,8 +214,10 @@ void ModGeneMarkST::parse() {
     uint32 count_removed=0;
 
     try {
-        std::map<std::string,frame_seq> protein_map = genemark_parse_protein(_final_out);
-        genemark_parse_lst(_final_lst,protein_map);
+        // Parse protein file (.faa)
+        std::map<std::string,frame_seq> protein_map = genemark_parse_protein(_final_out_path);
+        // Parse lst file to get info for each sequence (partial, internal...)
+        genemark_parse_lst(_final_lst_path,protein_map);
 
         std::ofstream file_figure_removed(figure_removed_path,std::ios::out | std::ios::app);
         std::ofstream file_figure_results(figure_results_path,std::ios::out | std::ios::app);
@@ -281,6 +292,8 @@ void ModGeneMarkST::parse() {
                 total_removed_len += length;
             }
         }
+
+        // Cleanup/close files
         for(auto& pair : file_map) {
             if (pair.first.compare(FRAME_SELECTION_THREE_FLAG)!=0){
                 pair.second->close();
@@ -288,6 +301,13 @@ void ModGeneMarkST::parse() {
                 pair.second = 0;
             }
         }
+
+        // Ensure some sequences were kept and not all removed before we continue
+        if (count_selected == 0) {
+            throw ExceptionHandler("No sequences were kept after Frame Selection!",
+                ERR_ENTAP_RUN_GENEMARK_PARSE);
+        }
+
         // Calculate and print stats
         FS_dprint("Beginning to calculate statistics...");
         avg_selected = (fp32)total_kept_len / count_selected;
@@ -297,7 +317,7 @@ void ModGeneMarkST::parse() {
                     "Frame Selection: GenemarkS-T\n"        <<
                     ENTAP_STATS::SOFTWARE_BREAK             <<
                     "Total sequences frame selected: "      << count_selected          <<
-                    "\n\tTranslated protein sequences: "    << _final_out              <<
+                    "\n\tTranslated protein sequences: "    << _final_out_path              <<
                     "\nTotal sequences removed (no frame): "<< count_removed           <<
                     "\n\tFrame selected CDS removed: "      << out_removed_path        <<
                     "\nTotal of "                           <<
@@ -336,13 +356,15 @@ void ModGeneMarkST::parse() {
                         "\nn90: "                                 << removed_n.second <<
                         "\nLongest sequence(bp): "  << max_removed<< " (" << max_removed_seq << ")" <<
                         "\nShortest sequence(bp): " << min_removed<< " (" << min_removed_seq << ")" <<"\n";
+        } else {
+            stat_output << "WARNING: No sequences were removed from Frame Selection";
         }
         std::string stat_out_msg = stat_output.str();
         _pFileSystem->print_stats(stat_out_msg);
         FS_dprint("Success!");
 
         //---------------------- Figure handling ----------------------//
-        FS_dprint("Beggining figure handling...");
+        FS_dprint("Beginning figure handling...");
         file_figure_results << GRAPH_REJECTED_FLAG           << '\t' << std::to_string(count_removed)   <<std::endl;
         file_figure_results << FRAME_SELECTION_FIVE_FLAG     << '\t' << std::to_string(count_map[FRAME_SELECTION_FIVE_FLAG]) <<std::endl;
         file_figure_results << FRAME_SELECTION_THREE_FLAG    << '\t' << std::to_string(count_map[FRAME_SELECTION_THREE_FLAG]) <<std::endl;
@@ -408,10 +430,7 @@ ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein(std::string &pr
     uint16          seq_len;
     uint16          line_chars;
 
-    if (!_pFileSystem->file_exists(protein)) {
-        throw ExceptionHandler("File located at: " + protein + " does not exist!",
-                               ERR_ENTAP_RUN_GENEMARK_PARSE);
-    }
+    // Filepath checked before
     std::ifstream in_file(protein);
     while(true) {
         getline(in_file,line);
@@ -470,6 +489,7 @@ void ModGeneMarkST::genemark_parse_lst(std::string &lst_path, frame_map_t &curre
     bool            prime_3;
     uint16          first;
 
+    // Filepath checked before
     std::ifstream in_file(lst_path);
     while (getline(in_file,line)) {
         if (line.empty()) continue;
@@ -491,7 +511,8 @@ void ModGeneMarkST::genemark_parse_lst(std::string &lst_path, frame_map_t &curre
             if (it != current_map.end()) {
                 it->second.frame_type = frame;
             } else {
-                throw ExceptionHandler("Sequence: " + seq_id + " not found in map",
+                throw ExceptionHandler("Sequence: " + seq_id + " not found in map during parsing of "
+                                       "lst file at: " + _final_lst_path,
                                        ERR_ENTAP_RUN_GENEMARK_PARSE);
             }
         }
@@ -512,4 +533,5 @@ ModGeneMarkST::ModGeneMarkST(std::string &exe, std::string &in, std::string &fra
                  querydata,
                  filesystem,
                  userinput) {
+    _transcriptome_filename = filesystem->get_filename(_inpath);
 }

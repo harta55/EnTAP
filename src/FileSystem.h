@@ -59,7 +59,9 @@ public:
     bool create_dir(std::string&);
     void delete_dir(std::string&);
     const std::string &get_root_path() const;
-    std::string get_file_extension(const std::string&);
+    std::string get_file_extension(const std::string&, bool);
+    void remove_extensions(std::string&);
+    std::string get_filename(std::string);
 
     static std::string get_cur_dir();
     std::vector<std::string> list_to_vect(char, std::string&);

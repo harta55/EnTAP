@@ -45,7 +45,6 @@ class SimilaritySearch {
 
     typedef std::map<std::string,std::map<std::string,uint32>> graph_sum_t;
 
-
 public:
 
     //******************** Public Prototype Functions *********************

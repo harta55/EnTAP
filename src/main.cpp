@@ -144,7 +144,7 @@ void init_entap(int argc, const char** argv) {
     // Parse config file
     _pUserInput->parse_config(config_default);
 
-    // Verify and print user input
+    // Verify and print user input, sets if user selected config or execute
     _is_config = _pUserInput->verify_user_input();
 }
 

@@ -498,10 +498,14 @@ const std::string &FileSystem::get_root_path() const {
     return _root_path;
 }
 
-std::string FileSystem::get_file_extension(const std::string &path) {
+std::string FileSystem::get_file_extension(const std::string &path, bool stripped) {
 #ifdef USE_BOOST
     boostFS::path bpath(path);
-    return bpath.extension().string();
+    if (stripped) { // remove period
+        return bpath.extension().string().substr(1);
+    } else {
+        return bpath.extension().string();
+    }
 #endif
 }
 
@@ -517,5 +521,18 @@ bool FileSystem::copy_file(std::string inpath, std::string outpath, bool overwri
         return false;
     }
     return true;
+#endif
+}
+
+void FileSystem::remove_extensions(std::string &file_name) {
+    boostFS::path path(file_name);
+    while (path.has_extension()) path = path.stem();
+    file_name = path.string();
+}
+
+std::string FileSystem::get_filename(std::string path) {
+#ifdef USE_BOOST
+    boostFS::path boost_path(path);
+    return boost_path.filename().string();
 #endif
 }

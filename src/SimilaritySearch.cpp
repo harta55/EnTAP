@@ -74,13 +74,18 @@ SimilaritySearch::SimilaritySearch(databases_t &databases,
     FS_dprint("Spawn object - SimilaritySearch");
     std::string uninform_path;
 
+    if (userinput == nullptr || filesystem == nullptr || graphingManager == nullptr ||
+            queryData == nullptr) {
+        throw ExceptionHandler("Unable to allocate memory for SimilaritySearch",
+            ERR_ENTAP_MEM_ALLOC);
+    }
+
     _pQUERY_DATA    = queryData;
     _pUserInput     = userinput;
     _pFileSystem    = filesystem;
     _database_paths = databases;
     _input_path     = input;
     _diamond_exe    = DIAMOND_EXE;      // Set to extern set previously
-    _input_species  = "";
 
     // Species already checked for validity in Init
     _input_species    = _pUserInput->get_target_species_str();
@@ -99,12 +104,16 @@ SimilaritySearch::SimilaritySearch(databases_t &databases,
     _sim_search_dir  = PATHS(_outpath, SIM_SEARCH_DIR);
     _processed_path  = PATHS(_sim_search_dir, PROCESSED_DIR);
     _results_path    = PATHS(_sim_search_dir, RESULTS_DIR);
-    _figure_path     = PATHS(_sim_search_dir, FIGURE_DIR);
 
     if (_overwrite) {
         _pFileSystem->delete_dir(_sim_search_dir);
     }
+
     _pFileSystem->create_dir(_sim_search_dir);
+    _pFileSystem->delete_dir(_processed_path);
+    _pFileSystem->create_dir(_processed_path);
+    _pFileSystem->delete_dir(_results_path);
+    _pFileSystem->create_dir(_results_path);
 
     _transcript_shortname = get_transcriptome_shortname();
 }
@@ -345,7 +354,8 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
     SimSearchResults                                simSearchResults;
 
     // ------------------ Read from DIAMOND output ---------------------- //
-    std::string qseqid, sseqid, stitle, database_name,pident, bitscore,
+    std::string qseqid;
+    std::string sseqid, stitle, database_name,pident, bitscore,
             length, mismatch, gapopen, qstart, qend, sstart, send;
     fp64 evalue;
     fp64 coverage;
@@ -356,9 +366,7 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
         taxonomic_database = read_tax_map();
     } catch (const ExceptionHandler &e) {throw e;}
 
-    // Clear "processed" directory
-    _pFileSystem->delete_dir(_processed_path);
-    _pFileSystem->create_dir(_processed_path);
+    // Processed directory cleared earlier
 
     // Get the taxonomic info (lineage) of the target species
     get_tax_entry(_input_species,taxonomic_database, taxEntry); // Input species entry
@@ -391,10 +399,11 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
             // get contaminant information
             contam_info = is_contaminant(taxEntry.lineage, taxonomic_database,contams);
 
+            // Get pointer to sequence in overall map
             QuerySequence *query = _pQUERY_DATA->get_sequence(qseqid);
 
             if (query == nullptr) {
-                throw ExceptionHandler("Unable to find sequence: " + qseqid,
+                throw ExceptionHandler("Unable to find sequence: " + qseqid + " from file: " + data,
                                        ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
             }
 
@@ -434,7 +443,6 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
         }
 
         FS_dprint("File parsed, calculating statistics and writing output...");
-        // final database stats
         calculate_best_stats(false,data);
 
         FS_dprint("Success!");
@@ -469,11 +477,11 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
     graph_sum_t                 graphing_sum_map;
     QuerySequence*              querySequence;
 
-    // Set up output directories
+    // Set up output directories (processed directory cleared earlier so these will be empty)
     database_shortname    = _file_to_database[database_path];
     base_path   = PATHS(_processed_path, database_shortname);
     figure_base = PATHS(base_path, FIGURE_DIR);
-    _pFileSystem->create_dir(base_path);     // should be created before
+    _pFileSystem->create_dir(base_path);
     _pFileSystem->create_dir(figure_base);
 
     // Open contam best hit tsv file
@@ -539,7 +547,6 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
 
     // ------------------------------------------------------------------ //
 
-
     // Print headers to relevant tsv files
     print_header(file_best_contam_tsv);
     print_header(file_best_hits_tsv);
@@ -597,7 +604,7 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
                         }
                     }
                 }
-                count_filtered++;
+                count_filtered++;   // increment best hit
                 // Write to best hits files
                 file_best_hits_fa_nucl << pair.second->get_sequence_n()<<std::endl;
                 file_best_hits_fa_prot << pair.second->get_sequence_p()<<std::endl;
@@ -665,13 +672,6 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
         _pFileSystem->close_file(file_unselected_hits);
     } catch (const ExceptionHandler &e) {throw e;}
 
-    // If overall alignments are 0, then throw error
-    if (is_final && count_TOTAL_alignments == 0) {
-        throw ExceptionHandler("No alignments found during Similarity Searching!",
-            ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
-    }
-
-
     // ------------ Calculate statistics and print to output ------------ //
     ss<<std::fixed<<std::setprecision(2);
 
@@ -688,6 +688,20 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
            "\n\tTotal alignments: "               << count_TOTAL_alignments   <<
            "\n\tTotal unselected results: "       << count_unselected      <<
            "\n\t\tWritten to: "                   << out_unselected_tsv;
+    }
+
+    // If overall alignments are 0, then throw error
+    if (is_final && (count_TOTAL_alignments == 0 || count_filtered == 0)) {
+        throw ExceptionHandler("No alignments found during Similarity Searching!",
+                               ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
+    }
+
+    // If no alignments for this database, return and warn user
+    if (count_TOTAL_alignments == 0 || count_filtered == 0) {
+        ss << "WARNING: No alignments for this database";
+        std::string out_msg = ss.str() + "\n";
+        _pFileSystem->print_stats(out_msg);
+        return;
     }
 
     std::vector<count_pair> contam_species_vect(contam_species_map.begin(), contam_species_map.end());

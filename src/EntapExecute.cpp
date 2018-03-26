@@ -53,6 +53,7 @@ namespace entapExecute {
     std::string             _entap_outpath;
     bool                    _blastp;          // false for blastx, true for _blastp
     std::string             _input_path;      // FASTA changes depending on execution
+    std::string             _input_basename;
     int                     _threads;
     databases_t             _databases;       // NCBI+UNIPROT+Other
     FileSystem             *_pFileSystem;
@@ -64,9 +65,6 @@ namespace entapExecute {
     void verify_state(std::queue<char> &, bool &);
     bool valid_state(enum ExecuteStates);
     void exit_error(ExecuteStates);
-    std::vector<std::string> verify_databases(std::vector<std::string>, std::vector<std::string>,
-                                              std::vector<std::string>, std::string);
-
     //**************************************************************
 
 /**
@@ -114,7 +112,7 @@ namespace entapExecute {
         original_input = _input_path;
         _blastp        = _pUserInput->has_input(UInput::INPUT_FLAG_RUNPROTEIN);
         ontology_flags = _pUserInput->get_user_input<std::vector<uint16>>(UInput::INPUT_FLAG_ONTOLOGY);
-        state_queue    = _pUserInput->get_state_queue();    // Will NOT be empty
+        state_queue    = _pUserInput->get_state_queue();    // Will NOT be empty, default is +
         _databases     = _pUserInput->get_user_input<databases_t>(UInput::INPUT_FLAG_DATABASE);
 
         // Set/create outpaths
@@ -122,6 +120,7 @@ namespace entapExecute {
         _entap_outpath = PATHS(_outpath, ENTAP_OUTPUT);     // transcriptome outpath, original will be copied
         _pFileSystem->create_dir(_entap_outpath);
         _pFileSystem->create_dir(_outpath);
+        _input_basename = _pUserInput->get_user_transc_basename();
 
         try {
             verify_state(state_queue, state_flag);         // Set state transition
@@ -137,21 +136,24 @@ namespace entapExecute {
                 switch (executeStates) {
                     case FRAME_SELECTION: {
                         FS_dprint("STATE - FRAME SELECTION");
-                        std::unique_ptr<FrameSelection> frame_selection(new FrameSelection(
-                                _input_path,
-                                _pFileSystem,
-                                _pUserInput,
-                                &graphingManager,
-                                pQUERY_DATA
-                        ));
                         if ((_blastp && pQUERY_DATA->DATA_FLAG_GET(QueryData::IS_PROTEIN))) {
                             FS_dprint("Protein sequences input, skipping frame selection");
                         } else if (!_blastp) {
                             FS_dprint("Blastx selected, skipping frame selection");
                         } else {
+                            FS_dprint("Continuing with frame selection process...");
+                            std::unique_ptr<FrameSelection> frame_selection(new FrameSelection(
+                                    _input_path,
+                                    _pFileSystem,
+                                    _pUserInput,
+                                    &graphingManager,
+                                    pQUERY_DATA
+                            ));
                             _input_path = frame_selection->execute(_input_path);
                             pQUERY_DATA->DATA_FLAG_SET(QueryData::IS_PROTEIN);
                             pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_FRAME_SEL);
+                            std::string transcriptome_protein = _input_basename + TRANSCRIPTOME_FRAME_TAG;
+                            _pFileSystem->copy_file(_input_path, transcriptome_protein, true);
                         }
                     }
                         break;
@@ -160,6 +162,7 @@ namespace entapExecute {
                         if (!_pUserInput->has_input(UInput::INPUT_FLAG_ALIGN)) {
                             FS_dprint("No alignment file specified, skipping expression analysis");
                         } else {
+                            // Proceed with frame selection
                             std::unique_ptr<ExpressionAnalysis> expression(new ExpressionAnalysis(
                                 original_input,
                                 &graphingManager,
@@ -169,6 +172,8 @@ namespace entapExecute {
                             ));
                             _input_path = expression->execute(original_input);
                             pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_EXPRESSION);
+                            std::string transcriptome_filtered = _input_basename + TRANSCRIPTOME_FILTERED_TAG;
+                            _pFileSystem->copy_file(_input_path, transcriptome_filtered, true);
                         }
                     }
                         break;
@@ -245,7 +250,7 @@ namespace entapExecute {
         std::string   out_path;
 
         file_name = input_path;
-        file_name_str = file_name.filename().stem().string() + FINAL_TRANSCRIPTOME_TAG;
+        file_name_str = file_name.filename().stem().string() + TRANSCRIPTOME_FINAL_TAG;
         out_path = PATHS(_entap_outpath, file_name_str);
         boostFS::copy_file(input_path,out_path,boostFS::copy_option::overwrite_if_exists);
 

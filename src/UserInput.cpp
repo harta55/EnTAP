@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -1114,8 +1114,8 @@ std::string UserInput::get_user_transc_basename() {
     std::string user_transcriptome;
 
     user_transcriptome = get_user_input<std::string>(UInput::INPUT_FLAG_TRANSCRIPTOME);
-    boostFS::path path(user_transcriptome);
-    return path.filename().stem().string();
+    _pFileSystem->get_filename_no_extensions(user_transcriptome);
+    return user_transcriptome;
 }
 
 

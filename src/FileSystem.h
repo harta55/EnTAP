@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -60,9 +60,8 @@ public:
     void delete_dir(std::string&);
     const std::string &get_root_path() const;
     std::string get_file_extension(const std::string&, bool);
-    void remove_extensions(std::string&);
+    void get_filename_no_extensions(std::string &);
     std::string get_filename(std::string);
-
     static std::string get_cur_dir();
     std::vector<std::string> list_to_vect(char, std::string&);
 
@@ -76,14 +75,13 @@ public:
     static const std::string EXT_DMND;
     static const std::string EXT_XML;
 
-    std::string _root_path;     // Root EnTAP output directory
-
 private:
     void init_log();
 
     const std::string LOG_FILENAME   = "log_file";
     const std::string LOG_EXTENSION  = ".txt";
     const std::string DEBUG_FILENAME = "debug";
+    std::string _root_path;     // Root EnTAP output directory
 };
 
 

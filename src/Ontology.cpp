@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -73,6 +73,11 @@ const int16 FINAL_ANNOT_LEN = 3;
 Ontology::Ontology(std::string input, UserInput *userinput, GraphingManager* graphing,
                    QueryData *queryData, FileSystem *filesystem) {
     FS_dprint("Spawn object - Ontology");
+
+    if (userinput == nullptr || graphing == nullptr || queryData == nullptr || filesystem == nullptr) {
+        throw ExceptionHandler("Error allocating memory for Ontology", ERR_ENTAP_MEM_ALLOC);
+    }
+
     _ontology_exe       = EGG_EMAPPER_EXE;
     _new_input          = input;
     _pGraphingManager   = graphing;
@@ -87,8 +92,14 @@ Ontology::Ontology(std::string input, UserInput *userinput, GraphingManager* gra
     _go_levels          = userinput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_GO_LEVELS);
     _blastp             = userinput->has_input(UInput::INPUT_FLAG_RUNPROTEIN);
     _ontology_dir       = PATHS(_outpath, ONTOLOGY_OUT_PATH);
+    _final_outpath_dir  = PATHS(_outpath, ENTAP_FINAL_OUTPUT);
     _eggnog_db_path     = EGG_SQL_DB_PATH;
     _interpro_databases = userinput->get_user_input<vect_str_t>(UInput::INPUT_FLAG_INTERPRO);
+
+    if (_is_overwrite) _pFileSystem->delete_dir(_ontology_dir);
+    _pFileSystem->create_dir(_ontology_dir);
+    _pFileSystem->delete_dir(_final_outpath_dir);
+    _pFileSystem->create_dir(_final_outpath_dir);
 }
 
 
@@ -109,15 +120,11 @@ Ontology::Ontology(std::string input, UserInput *userinput, GraphingManager* gra
  *
  * =====================================================================
  */
-void Ontology::execute(std::string input) {
+void Ontology::execute() {
 
     std::pair<bool,std::string> verify_pair;
     std::unique_ptr<AbstractOntology> ptr;
 
-    _new_input     = input;
-
-    if (_is_overwrite) boostFS::remove_all(_ontology_dir);
-    boostFS::create_directories(_ontology_dir);
     init_headers();
     try {
         for (uint16 software : _software_flags) {
@@ -227,16 +234,15 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
     std::string outpath;
     std::string out_contam;
     std::string out_no_contam;
+
     for (uint16 lvl : _go_levels) {
         file_name      = FINAL_ANNOT_FILE + std::to_string(lvl) + ANNOT_FILE_EXT;
         file_contam    = FINAL_ANNOT_FILE + std::to_string(lvl) + FINAL_ANNOT_FILE_CONTAM + ANNOT_FILE_EXT;
         file_no_contam = FINAL_ANNOT_FILE + std::to_string(lvl) + FINAL_ANNOT_FILE_NO_CONTAM + ANNOT_FILE_EXT;
-        outpath = PATHS(_outpath, file_name);
-        out_contam = PATHS(_outpath, file_contam);
-        out_no_contam = PATHS(_outpath, file_no_contam);
-        boostFS::remove(outpath);
-        boostFS::remove(out_no_contam);
-        boostFS::remove(out_contam);
+        outpath = PATHS(_final_outpath_dir, file_name);
+        out_contam = PATHS(_final_outpath_dir, file_contam);
+        out_no_contam = PATHS(_final_outpath_dir, file_no_contam);
+
         file_map[lvl][FINAL_ALL_IND] =
                 new std::ofstream(outpath, std::ios::out | std::ios::app);
         file_map[lvl][FINAL_CONTAM_IND] =

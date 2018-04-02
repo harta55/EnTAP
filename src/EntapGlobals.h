@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -203,7 +203,7 @@ namespace UInput {
 }
 
 namespace ENTAP_STATS {
-    const std::string SOFTWARE_BREAK = "----------------------------------------------\n";
+    const std::string SOFTWARE_BREAK = "------------------------------------------------------\n";
 }
 
 #endif //ENTAPGLOBALS_H

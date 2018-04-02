@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -87,7 +87,6 @@ namespace entapConfig {
     const std::string BIOLOGICAL_LVL = "6679";
     const std::string MOLECULAR_LVL  = "2892";
     const std::string CELLULAR_LVL   = "311";
-
 
     //****************** Local Prototype Functions******************
     void init_taxonomic(std::string&);

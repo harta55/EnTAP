@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -120,7 +120,7 @@ namespace entapExecute {
         _entap_outpath = PATHS(_outpath, ENTAP_OUTPUT);     // transcriptome outpath, original will be copied
         _pFileSystem->create_dir(_entap_outpath);
         _pFileSystem->create_dir(_outpath);
-        _input_basename = _pUserInput->get_user_transc_basename();
+        _input_basename = _pUserInput->get_user_transc_basename();  // Returns filename (no extension) of transcriptome
 
         try {
             verify_state(state_queue, state_flag);         // Set state transition
@@ -150,10 +150,15 @@ namespace entapExecute {
                                     pQUERY_DATA
                             ));
                             _input_path = frame_selection->execute(_input_path);
+
+                            // Set flags for query data
                             pQUERY_DATA->DATA_FLAG_SET(QueryData::IS_PROTEIN);
                             pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_FRAME_SEL);
-                            std::string transcriptome_protein = _input_basename + TRANSCRIPTOME_FRAME_TAG;
-                            _pFileSystem->copy_file(_input_path, transcriptome_protein, true);
+
+                            // Copy frame selected file to the trancriptome directory
+                            std::string transc_protein_filename = _input_basename + TRANSCRIPTOME_FRAME_TAG;
+                            std::string transc_protein_outpath  = PATHS(_entap_outpath, transc_protein_filename);
+                            _pFileSystem->copy_file(_input_path, transc_protein_outpath, true);
                         }
                     }
                         break;
@@ -171,9 +176,14 @@ namespace entapExecute {
                                 _pUserInput
                             ));
                             _input_path = expression->execute(original_input);
+
+                            // Set flags for query data
                             pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_EXPRESSION);
-                            std::string transcriptome_filtered = _input_basename + TRANSCRIPTOME_FILTERED_TAG;
-                            _pFileSystem->copy_file(_input_path, transcriptome_filtered, true);
+
+                            // Copy filtered file to entap transcriptome directory
+                            std::string transc_filter_filename = _input_basename + TRANSCRIPTOME_FILTERED_TAG;
+                            std::string transc_filter_outpath  = PATHS(_entap_outpath, transc_filter_filename);
+                            _pFileSystem->copy_file(_input_path, transc_filter_outpath, true);
                         }
                     }
                         break;
@@ -207,7 +217,7 @@ namespace entapExecute {
                                 pQUERY_DATA,
                                 _pFileSystem
                         ));
-                        ontology->execute(_input_path);
+                        ontology->execute();
                         pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_ONTOLOGY);
                         break;
                     }
@@ -252,7 +262,7 @@ namespace entapExecute {
         file_name = input_path;
         file_name_str = file_name.filename().stem().string() + TRANSCRIPTOME_FINAL_TAG;
         out_path = PATHS(_entap_outpath, file_name_str);
-        boostFS::copy_file(input_path,out_path,boostFS::copy_option::overwrite_if_exists);
+        _pFileSystem->copy_file(input_path,out_path,true);
 
         FS_dprint("Success!");
         return out_path;

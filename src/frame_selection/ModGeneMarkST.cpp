@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -314,7 +314,7 @@ void ModGeneMarkST::parse() {
         stat_output<<std::fixed<<std::setprecision(2);
         stat_output <<
                     ENTAP_STATS::SOFTWARE_BREAK             <<
-                    "Frame Selection: GenemarkS-T\n"        <<
+                    "Frame Selected Transcripts (GenemarkS-T)\n"        <<
                     ENTAP_STATS::SOFTWARE_BREAK             <<
                     "Total sequences frame selected: "      << count_selected          <<
                     "\n\tTranslated protein sequences: "    << _final_out_path              <<

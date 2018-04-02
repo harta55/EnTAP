@@ -1,5 +1,4 @@
 /*
- *
  * Developed by Alexander Hart
  * Plant Computational Genomics Lab
  * University of Connecticut
@@ -7,7 +6,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -63,7 +62,6 @@ struct TaxEntry {
 };
 
 namespace entapConfig {
-
     //****************** Global Prototype Functions******************
     void execute_main(UserInput*, FileSystem*);
 }

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -524,7 +524,7 @@ bool FileSystem::copy_file(std::string inpath, std::string outpath, bool overwri
 #endif
 }
 
-void FileSystem::remove_extensions(std::string &file_name) {
+void FileSystem::get_filename_no_extensions(std::string &file_name) {
     boostFS::path path(file_name);
     while (path.has_extension()) path = path.stem();
     file_name = path.string();

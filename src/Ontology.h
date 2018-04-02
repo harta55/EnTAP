@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -48,7 +48,7 @@ class Ontology {
 
 public:
 
-    void execute(std::string);
+    void execute();
     Ontology(std::string,
              UserInput*,
              GraphingManager*,
@@ -57,12 +57,8 @@ public:
 
 private:
 
-    enum OntologySoftware {
-        EGGNOG,
-        INTERPRO
-    };
-
     const std::string ONTOLOGY_OUT_PATH     = "ontology/";
+    const std::string ENTAP_FINAL_OUTPUT    = "final_results/";
     const std::string FINAL_ANNOT_FILE      = "final_annotations_lvl";
     const std::string FINAL_ANNOT_FILE_CONTAM = "_contam";
     const std::string FINAL_ANNOT_FILE_NO_CONTAM = "_no_contam";
@@ -82,6 +78,7 @@ private:
     std::string                     _new_input;
     std::string                     _ontology_dir;
     std::string                     _eggnog_db_path;
+    std::string                     _final_outpath_dir;
     std::vector<const std::string*> _HEADERS;
     GraphingManager                 *_pGraphingManager;
     QueryData                       *_QUERY_DATA;

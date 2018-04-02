@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -50,7 +50,7 @@
 std::pair<bool, std::string> ModRSEM::verify_files() {
 
     _filename = _inpath;
-    _pFileSystem->remove_extensions(_filename);
+    _pFileSystem->get_filename_no_extensions(_filename);
     _exp_out = PATHS(_expression_outpath, _filename);
     _rsem_out = _exp_out + RSEM_OUT_FILE;
     if (_pFileSystem->file_exists(_rsem_out)) {
@@ -270,7 +270,7 @@ std::string ModRSEM::filter() {
     out_msg<<std::fixed<<std::setprecision(2);
     out_msg <<
             ENTAP_STATS::SOFTWARE_BREAK     <<
-            "Expression Filtering - RSEM\n" <<
+            "Expression Filtering (RSEM) with FPKM Cutoff " << _fpkm << "\n" <<
             ENTAP_STATS::SOFTWARE_BREAK     <<
             "Total sequences kept: "        << count_kept     <<
             "\nTotal sequences removed: "   << count_removed;
@@ -311,10 +311,10 @@ std::string ModRSEM::filter() {
 
         if (rejected_percent > REJECTED_ERROR_CUTOFF) {
             // Warn user high percentage of transcriptome was rejected
-            out_msg << "\nWarning: A high percentage of the transcriptome was removed: " << rejected_percent;
+            out_msg << "\nWARNING: A high percentage of the transcriptome was removed: " << rejected_percent;
         }
     } else {
-        out_msg << "\nWarning: No sequences were removed from Expression Filtering";
+        out_msg << "\nWARNING: No sequences were removed from Expression Filtering";
     }
 
     out_str = out_msg.str();

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -54,6 +54,8 @@ private:
     void get_og_query(QuerySequence::EggnogResults&);
 
     static constexpr short EGGNOG_COL_NUM     = 12;
+    static constexpr uint8 COUNT_TOP_TAX_SCOPE= 10;
+    static constexpr uint8 COUNT_TOP_GO       = 10;
     const std::string EGGNOG_DIRECTORY        = "EggNOG/";
     const std::string GRAPH_EGG_TAX_BAR_TITLE = "Top_10_Tax_Levels";
     const std::string GRAPH_EGG_TAX_BAR_PNG   = "eggnog_tax_scope.png";

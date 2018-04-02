@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -120,9 +120,6 @@ void ModEggnog::parse() {
     QuerySequence::EggnogResults            EggnogResults;
 
     ss<<std::fixed<<std::setprecision(2);
-    _pFileSystem->delete_dir(_proc_dir);
-    _pFileSystem->create_dir(_proc_dir);
-    _pFileSystem->create_dir(_figure_dir);
     try {
         GO_DATABASE = read_go_map();
     } catch (ExceptionHandler const &e) {throw e;}
@@ -137,16 +134,24 @@ void ModEggnog::parse() {
         FS_dprint("File not found, at: " + path);
         throw ExceptionHandler("EggNOG file not found at: " + path, ERR_ENTAP_PARSE_EGGNOG);
     }
+
+    // Format EggNOG output - remove comments (the command doesn't work correctly), make sure all columns are equal
     path = eggnog_format(path);
+
+    // Begin to read through TSV file
     std::string qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
             best_og, cog_cat, eggnog_annot;
     io::CSVReader<EGGNOG_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(path);
     while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                        best_og, cog_cat, eggnog_annot)) {
+        // Check if the query matches one of our original transcriptome sequences
         QUERY_MAP_T::iterator it = (*pQUERY_DATA->get_sequences_ptr()).find(qseqid);
         if (it != (*pQUERY_DATA->get_sequences_ptr()).end()) {
-            count_TOTAL_hits++;
+            // EggNOG hit matches one of our original queries (from transcriptome)
 
+            count_TOTAL_hits++;     // Increment number of EggNOG hits we got
+
+            // Compile EggNOG results to be added to overall info
             EggnogResults = {};
             EggnogResults.seed_ortholog = seed_ortho;
             EggnogResults.seed_evalue = seed_e;
@@ -160,13 +165,16 @@ void ModEggnog::parse() {
             get_sql_data(EggnogResults, EGGNOG_DATABASE);
             EggnogResults.parsed_go = parse_go_list(go_terms,GO_DATABASE,',');
 
-            it->second->set_eggnog_results(EggnogResults);
+            it->second->set_eggnog_results(EggnogResults);  // Set EggNOG results to maintained data
 
+            //  Analyze Gene Ontology Stats
             if (!EggnogResults.parsed_go.empty()) {
                 count_total_go_hits++;
                 it->second->QUERY_FLAG_SET(QuerySequence::QUERY_ONE_GO);
                 for (auto &pair : EggnogResults.parsed_go) {
+                    // pair - first: GO category, second; vector of terms
                     for (std::string &term : pair.second) {
+                        // Cycle through all terms in each category
                         count_total_go_terms++;
                         if (pair.first == GO_MOLECULAR_FLAG) {
                             count_go_mole++;
@@ -175,19 +183,21 @@ void ModEggnog::parse() {
                         } else if (pair.first == GO_BIOLOGICAL_FLAG) {
                             count_go_bio++;
                         }
+                        // Count the terms we've found for individual category
                         if (go_combined_map[pair.first].count(term)) {
                             go_combined_map[pair.first][term]++;
                         } else go_combined_map[pair.first][term] = 1;
+                        // Count the terms we've found overall (not category specific)
                         if (go_combined_map[GO_OVERALL_FLAG].count(term)) {
                             go_combined_map[GO_OVERALL_FLAG][term]++;
                         } else go_combined_map[GO_OVERALL_FLAG][term]=1;
                     }
                 }
             } else {
-                count_no_go++;
+                count_no_go++;  // Increment number of EggNOG hits that did not have a GO term
             }
 
-            // Compile KEGG information
+            // Analyze KEGG stats
             if (!kegg.empty()) {
                 count_total_kegg_hits++;
                 ct = (uint32) std::count(kegg.begin(), kegg.end(), ',');
@@ -200,17 +210,24 @@ void ModEggnog::parse() {
             // Compile Taxonomic Orthogroup stats
             if (!EggnogResults.tax_scope_readable.empty()) {
                 count_tax_scope++;
+                // Count number of individual groups
                 if (tax_scope_ct_map.count(EggnogResults.tax_scope_readable)) {
                     tax_scope_ct_map[EggnogResults.tax_scope_readable]++;
                 } else tax_scope_ct_map[EggnogResults.tax_scope_readable] = 1;
 
             }
+        } else {
+            // EggNOG hit does NOT match one of our original transcripts (must be some formatting error)
+            throw ExceptionHandler("Sequence ID does not match in transcriptome: " + qseqid, ERR_ENTAP_PARSE_EGGNOG);
         }
     }
     // delete temp file
     _pFileSystem->delete_file(path);
 
+    // Close EggNOG SQL database
     EGGNOG_DATABASE.close();
+
+    // Prepare output files
     out_no_hits_nucl = PATHS(_proc_dir, OUT_UNANNOTATED_NUCL);
     out_no_hits_prot = PATHS(_proc_dir, OUT_UNANNOTATED_PROT);
     out_hit_nucl     = PATHS(_proc_dir, OUT_ANNOTATED_NUCL);
@@ -221,6 +238,7 @@ void ModEggnog::parse() {
     std::ofstream file_hits_prot(out_hit_prot, std::ios::out | std::ios::app);
 
     FS_dprint("Success! Computing overall statistics...");
+    // Find how many original sequences did/did not hit the EggNOG database
     for (auto &pair : *pQUERY_DATA->get_sequences_ptr()) {
         if (!pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_EGGNOG_HIT)) {
             // Unannotated sequence
@@ -246,42 +264,46 @@ void ModEggnog::parse() {
           "\nTotal unique sequences with family assignment: "     << count_TOTAL_hits <<
           "\nTotal unique sequences without family assignment: "  << count_no_hits;
 
-    //--------------------- Top Ten Taxonomic Scopes --------------//
-    if (!tax_scope_ct_map.empty()) {
-        std::string fig_txt_tax_bar = PATHS(_figure_dir, GRAPH_EGG_TAX_BAR_TXT);
-        std::string fig_png_tax_bar = PATHS(_figure_dir, GRAPH_EGG_TAX_BAR_PNG);
-        std::ofstream file_tax_bar(fig_txt_tax_bar, std::ios::out | std::ios::app);
-        file_tax_bar << "Taxonomic Scope\tCount" << std::endl;
-
-        ss << "\nTop 10 Taxonomic Scopes Assigned:";
-        ct = 1;
-        std::vector<count_pair> tax_scope_vect(tax_scope_ct_map.begin(),tax_scope_ct_map.end());
-        std::sort(tax_scope_vect.begin(),tax_scope_vect.end(),compair());
-        for (count_pair &pair : tax_scope_vect) {
-            if (ct > 10) break;
-            percent = ((fp32)pair.second / count_tax_scope) * 100;
-            ss <<
-               "\n\t" << ct << ")" << pair.first << ": " << pair.second <<
-               "(" << percent << "%)";
-            file_tax_bar << pair.first << '\t' << std::to_string(pair.second) << std::endl;
-            ct++;
-        }
-        file_tax_bar.close();
-        graphingStruct.fig_out_path = fig_png_tax_bar;
-        graphingStruct.text_file_path = fig_txt_tax_bar;
-        graphingStruct.graph_title = GRAPH_EGG_TAX_BAR_TITLE;
-        graphingStruct.software_flag = GRAPH_ONTOLOGY_FLAG;
-        graphingStruct.graph_type = GRAPH_TOP_BAR_FLAG;
-        pGraphingManager->graph(graphingStruct);
-    }
-    //-------------------------------------------------------------//
-
-    ss<<
-      "\nTotal unique sequences with at least one GO term: " << count_total_go_hits <<
-      "\nTotal unique sequences without GO terms: " << count_no_go <<
-      "\nTotal GO terms assigned: " << count_total_go_terms;
-
+    // Make sure we have hits before doing anything
     if (count_total_go_hits > 0) {
+
+        //--------------------- Top Ten Taxonomic Scopes --------------//
+        if (!tax_scope_ct_map.empty()) {
+            // Setup graphing files
+            std::string fig_txt_tax_bar = PATHS(_figure_dir, GRAPH_EGG_TAX_BAR_TXT);
+            std::string fig_png_tax_bar = PATHS(_figure_dir, GRAPH_EGG_TAX_BAR_PNG);
+            std::ofstream file_tax_bar(fig_txt_tax_bar, std::ios::out | std::ios::app);
+            file_tax_bar << "Taxonomic Scope\tCount" << std::endl;
+
+            ss << "\nTop 10 Taxonomic Scopes Assigned:";
+            ct = 1;
+            // Sort count map
+            std::vector<count_pair> tax_scope_vect(tax_scope_ct_map.begin(),tax_scope_ct_map.end());
+            std::sort(tax_scope_vect.begin(),tax_scope_vect.end(),compair());
+            for (count_pair &pair : tax_scope_vect) {
+                if (ct > COUNT_TOP_TAX_SCOPE) break;
+                percent = ((fp32)pair.second / count_tax_scope) * 100;
+                ss <<
+                   "\n\t" << ct << ")" << pair.first << ": " << pair.second <<
+                   "(" << percent << "%)";
+                file_tax_bar << pair.first << '\t' << std::to_string(pair.second) << std::endl;
+                ct++;
+            }
+            file_tax_bar.close();
+            graphingStruct.fig_out_path = fig_png_tax_bar;
+            graphingStruct.text_file_path = fig_txt_tax_bar;
+            graphingStruct.graph_title = GRAPH_EGG_TAX_BAR_TITLE;
+            graphingStruct.software_flag = GRAPH_ONTOLOGY_FLAG;
+            graphingStruct.graph_type = GRAPH_TOP_BAR_FLAG;
+            pGraphingManager->graph(graphingStruct);
+        }
+        //-------------------------------------------------------------//
+
+        ss<<
+          "\nTotal unique sequences with at least one GO term: " << count_total_go_hits <<
+          "\nTotal unique sequences without GO terms: " << count_no_go <<
+          "\nTotal GO terms assigned: " << count_total_go_terms;
+
         for (uint16 lvl : _go_levels) {
             for (auto &pair : go_combined_map) {
                 if (pair.first.empty()) continue;
@@ -289,9 +311,11 @@ void ModEggnog::parse() {
                 fig_txt_go_bar = PATHS(_figure_dir, pair.first) + std::to_string(lvl)+GRAPH_GO_END_TXT;
                 fig_png_go_bar = PATHS(_figure_dir, pair.first) + std::to_string(lvl)+GRAPH_GO_END_PNG;
                 std::ofstream file_go_bar(fig_txt_go_bar, std::ios::out | std::ios::app);
+                file_go_bar << "Gene Ontology Term\tCount" << std::endl;
+
+                // Sort count maps
                 std::vector<count_pair> go_vect(pair.second.begin(),pair.second.end());
                 std::sort(go_vect.begin(),go_vect.end(),compair());
-                file_go_bar << "Gene Ontology Term\tCount" << std::endl;
 
                 // get total count for each level...change, didn't feel like making another
                 uint32 lvl_ct = 0;   // Use for percentages, total terms for each lvl
@@ -308,7 +332,7 @@ void ModEggnog::parse() {
 
                 ct = 1;
                 for (count_pair &pair2 : go_vect) {
-                    if (ct > 10) break;
+                    if (ct > COUNT_TOP_GO) break;
                     if (pair2.first.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
                         percent = ((fp32)pair2.second / lvl_ct) * 100;
                         ss <<
@@ -325,20 +349,23 @@ void ModEggnog::parse() {
                 if (pair.first == GO_CELLULAR_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_CELL_TITLE+ "_Level:_"+std::to_string(lvl);
                 if (pair.first == GO_MOLECULAR_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_MOLE_TITLE+ "_Level:_"+std::to_string(lvl);
                 if (pair.first == GO_OVERALL_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_ALL_TITLE+ "_Level:_"+std::to_string(lvl);
-                // Other params can stay the same
+                graphingStruct.software_flag = GRAPH_ONTOLOGY_FLAG;
+                graphingStruct.graph_type = GRAPH_TOP_BAR_FLAG;
                 pGraphingManager->graph(graphingStruct);
             }
         }
-
+        ss<<
+          "\nTotal unique sequences with at least one pathway (KEGG) assignment: " << count_total_kegg_hits<<
+          "\nTotal unique sequences without pathways (KEGG): " << count_no_kegg<<
+          "\nTotal pathways (KEGG) assigned: " << count_total_kegg_terms;
+    } else {
+        // NO alignments for EggNOG, warn user!!. Don't fatal error
+        FS_dprint("Warning: No EggNOG alignments found!!");
+        ss << "\nWarning: No EggNOG Alignments";
     }
-    ss<<
-      "\nTotal unique sequences with at least one pathway (KEGG) assignment: " << count_total_kegg_hits<<
-      "\nTotal unique sequences without pathways (KEGG): " << count_no_kegg<<
-      "\nTotal pathways (KEGG) assigned: " << count_total_kegg_terms;
     out_msg = ss.str();
     _pFileSystem->print_stats(out_msg);
-    GO_DATABASE.clear();
-    FS_dprint("Success!");
+    FS_dprint("Success! EggNOG results parsed");
 }
 
 
@@ -386,15 +413,15 @@ void ModEggnog::execute() {
         }
         FS_dprint("Success! Results written to: " + annotation_base_flag);
     } else {
-        throw ExceptionHandler("No input file found at: " + _inpath,
-                               ERR_ENTAP_RUN_EGGNOG);
+        throw ExceptionHandler("No input file found at: " + _inpath, ERR_ENTAP_RUN_EGGNOG);
     }
-    FS_dprint("Success!");
+    FS_dprint("Success! EggNOG execution complete");
 }
 
 
 // TODO remove
 std::string ModEggnog::eggnog_format(std::string file) {
+    FS_dprint("Reformatting EggNOG output: " + file);
 
     std::string out_path;
     std::string line;
@@ -409,6 +436,7 @@ std::string ModEggnog::eggnog_format(std::string file) {
     }
     in_file.close();
     out_file.close();
+    FS_dprint("Success! File printed to: " + out_path);
     return out_path;
 }
 
@@ -612,7 +640,21 @@ std::string ModEggnog::format_sql_data(std::string &input) {
     return output;
 }
 
-bool ModEggnog::valid_input(boostPO::variables_map &) {
+/**
+ * ======================================================================
+ * Function bool ModEggnog::valid_input(boostPO::variables_map &)
+ *
+ * Description          - Ensure the input from the user is valid
+ *                      - Called in UserInput
+ *
+ * Notes                - None
+ *
+ * @param user_map      - Map of user input (Boost)
+ *
+ * @return              - None
+ * ======================================================================
+ */
+bool ModEggnog::valid_input(boostPO::variables_map &user_map) {
     return true;
 }
 

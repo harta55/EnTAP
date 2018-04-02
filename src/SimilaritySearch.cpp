@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -376,10 +376,10 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
         FS_dprint("Diamond file located at " + data + " being filtered");
         std::stringstream out_stream;
 
-        // Confirm we have legit path
-        if (!_pFileSystem->file_exists(data)) {
+        // Confirm we have legit path / not empty
+        if (!_pFileSystem->file_exists(data) || _pFileSystem->file_empty(data)) {
             // Should never fall into here
-            throw ExceptionHandler("File not found: " + data, ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
+            throw ExceptionHandler("File not found or empty: " + data, ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
         }
 
         // Set up individual database directories for stats
@@ -403,10 +403,11 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
             QuerySequence *query = _pQUERY_DATA->get_sequence(qseqid);
 
             if (query == nullptr) {
-                throw ExceptionHandler("Unable to find sequence: " + qseqid + " from file: " + data,
+                throw ExceptionHandler("Unable to find sequence in transcriptome: " + qseqid + " from file: " + data,
                                        ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
             }
 
+            // Compile sim search data
             simSearchResults.database_path = data;
             simSearchResults.qseqid = qseqid;
             simSearchResults.sseqid = sseqid;
@@ -475,7 +476,6 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
     std::map<std::string, int>  species_map;
     std::map<std::string, int>  contam_species_map;
     graph_sum_t                 graphing_sum_map;
-    QuerySequence*              querySequence;
 
     // Set up output directories (processed directory cleared earlier so these will be empty)
     database_shortname    = _file_to_database[database_path];
@@ -596,11 +596,11 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
                     sim_search_data = best_hit->get_results();
                     for (auto &hit : alignment_data->second) {
                         count_TOTAL_alignments++;
-                        if (hit != best_hit) {
+                        if (hit != best_hit) {  // If this hit is not the best hit
                             file_unselected_hits << hit->print_tsv(DEFAULT_HEADERS) << std::endl;
                             count_unselected++;
                         } else {
-                            ;
+                            ;   // Do notthing
                         }
                     }
                 }
@@ -764,7 +764,7 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
         ss << "\n\t\tTop 10 contaminants by species:";
         ct = 1;
         for (count_pair pair : contam_species_vect) {
-            if (ct > 10) break;
+            if (ct > COUNT_TOP_SPECIES) break;
             percent = ((fp64) pair.second / count_contam) * 100;
             ss
                     << "\n\t\t\t" << ct << ")" << pair.first << ": "
@@ -777,7 +777,7 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
     ss << "\n\tTop 10 alignments by species:";
     ct = 1;
     for (count_pair pair : species_vect) {
-        if (ct > 10) break;
+        if (ct > COUNT_TOP_SPECIES) break;
         percent = ((fp64) pair.second / count_filtered) * 100;
         ss
                 << "\n\t\t\t" << ct << ")" << pair.first << ": "

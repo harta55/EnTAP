@@ -44,7 +44,7 @@ public:
 
     FileSystem(std::string&);
     ~FileSystem();
-    void open_out(std::string &, std::ofstream &);
+    //void open_out(std::string &, std::ofstream &);
     bool file_is_open(std::ofstream&);
     void close_file(std::ofstream&);
     void print_stats(std::string &msg);

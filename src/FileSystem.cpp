@@ -50,6 +50,7 @@ const std::string FileSystem::EXT_DMND= ".dmnd";
 
 
 // Removed for older compilers, may bring back
+#if 0
 void FileSystem::open_out(std::string &path, std::ofstream &ofstream) {
     ofstream = std::ofstream(path,std::ios::out | std::ios::app);
     if (!ofstream.is_open()) {
@@ -57,6 +58,7 @@ void FileSystem::open_out(std::string &path, std::ofstream &ofstream) {
              ERR_ENTAP_FILE_IO);
     }
 }
+#endif
 
 
 /**

@@ -95,6 +95,7 @@ namespace entapExecute {
 
         std::vector<uint16>                     ontology_flags;
         std::string                             original_input;  // ALWAYS use for Expression
+        std::string                             final_out_dir;
         std::queue<char>                        state_queue;
         bool                                    state_flag;
 
@@ -117,6 +118,7 @@ namespace entapExecute {
 
         // Set/create outpaths
         _outpath       = _pFileSystem->get_root_path();
+        final_out_dir = _pFileSystem->get_final_outdir();
         _entap_outpath = PATHS(_outpath, ENTAP_OUTPUT);     // transcriptome outpath, original will be copied
         _pFileSystem->create_dir(_entap_outpath);
         _pFileSystem->create_dir(_outpath);
@@ -229,7 +231,7 @@ namespace entapExecute {
             }
 
             // *************************** Exit Stuff ********************** //
-            pQUERY_DATA->final_statistics(_outpath, ontology_flags);
+            pQUERY_DATA->final_statistics(final_out_dir, ontology_flags);
             _pFileSystem->directory_iterate(true, _outpath);   // Delete empty files
             SAFE_DELETE(pQUERY_DATA);
         } catch (const ExceptionHandler &e) {
@@ -255,13 +257,11 @@ namespace entapExecute {
     std::string filter_transcriptome(std::string &input_path) {
         FS_dprint("Beginning to copy final transcriptome to be used...");
 
-        boostFS::path file_name;
-        std::string   file_name_str;
+        std::string   file_name;
         std::string   out_path;
 
-        file_name = input_path;
-        file_name_str = file_name.filename().stem().string() + TRANSCRIPTOME_FINAL_TAG;
-        out_path = PATHS(_entap_outpath, file_name_str);
+        file_name = _input_basename + TRANSCRIPTOME_FINAL_TAG;
+        out_path = PATHS(_entap_outpath, file_name);
         _pFileSystem->copy_file(input_path,out_path,true);
 
         FS_dprint("Success!");

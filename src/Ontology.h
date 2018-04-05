@@ -58,7 +58,6 @@ public:
 private:
 
     const std::string ONTOLOGY_OUT_PATH     = "ontology/";
-    const std::string ENTAP_FINAL_OUTPUT    = "final_results/";
     const std::string FINAL_ANNOT_FILE      = "final_annotations_lvl";
     const std::string FINAL_ANNOT_FILE_CONTAM = "_contam";
     const std::string FINAL_ANNOT_FILE_NO_CONTAM = "_no_contam";

@@ -138,7 +138,7 @@ void init_entap(int argc, const char** argv) {
     _pUserInput->set_pFileSystem(_pFileSystem);
 
     // get config file path and default to find exe paths
-    // First: config path, Second: current directory
+    // First: config path, Second: Software directory defaults
     config_default = _pUserInput->get_config_path();
 
     // Parse config file

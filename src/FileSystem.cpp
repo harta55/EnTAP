@@ -443,8 +443,14 @@ FileSystem::FileSystem(std::string &root) {
     // This routine will process entire root directory here and generate
     // hierarchy
 
-    _root_path = root;
+    _root_path     = root;
+    _final_outpath = PATHS(root, ENTAP_FINAL_OUTPUT);
+
+    // Make sure directories are created (or already created)
     create_dir(root);
+    create_dir(_final_outpath);
+
+    // generate log file
     init_log();
 }
 
@@ -537,4 +543,9 @@ std::string FileSystem::get_filename(std::string path) {
     boostFS::path boost_path(path);
     return boost_path.filename().string();
 #endif
+}
+
+
+std::string FileSystem::get_final_outdir() {
+    return this->_final_outpath;
 }

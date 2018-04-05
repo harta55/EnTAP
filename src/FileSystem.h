@@ -64,6 +64,7 @@ public:
     std::string get_filename(std::string);
     static std::string get_cur_dir();
     std::vector<std::string> list_to_vect(char, std::string&);
+    std::string get_final_outdir();
 
 //**************************************************************
     static const std::string EXT_TXT ;
@@ -81,7 +82,9 @@ private:
     const std::string LOG_FILENAME   = "log_file";
     const std::string LOG_EXTENSION  = ".txt";
     const std::string DEBUG_FILENAME = "debug";
+    const std::string ENTAP_FINAL_OUTPUT    = "final_results/";
     std::string _root_path;     // Root EnTAP output directory
+    std::string _final_outpath; // Path to final files after entap has finished
 };
 
 

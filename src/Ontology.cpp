@@ -92,7 +92,7 @@ Ontology::Ontology(std::string input, UserInput *userinput, GraphingManager* gra
     _go_levels          = userinput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_GO_LEVELS);
     _blastp             = userinput->has_input(UInput::INPUT_FLAG_RUNPROTEIN);
     _ontology_dir       = PATHS(_outpath, ONTOLOGY_OUT_PATH);
-    _final_outpath_dir  = PATHS(_outpath, ENTAP_FINAL_OUTPUT);
+    _final_outpath_dir  = filesystem->get_final_outdir();
     _eggnog_db_path     = EGG_SQL_DB_PATH;
     _interpro_databases = userinput->get_user_input<vect_str_t>(UInput::INPUT_FLAG_INTERPRO);
 

@@ -27,10 +27,10 @@
 #ifndef ENTAP_VERSION_H
 #define ENTAP_VERSION_H
 
-#define LICENSE_YEAR      2017
+#include "config.h"
 
-// Comment this out if it is debug code
-//#define RELEASE_BUILD
+#define LICENSE_YEAR_START      2017
+#define LICENSE_YEAR_END        2018
 
 #define MAJOR_VERSION     0
 #define MINOR_VERSION     8

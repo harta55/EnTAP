@@ -100,6 +100,7 @@ private:
     void verify_uninformative(std::string&);
     void verify_state(std::string&, bool, std::vector<uint16>&);
     std::pair<bool,std::string> verify_software(uint8&, std::vector<uint16>&);
+    std::string get_executable_dir();
 
     boostPO::variables_map _user_inputs;
 

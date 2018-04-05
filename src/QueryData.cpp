@@ -77,9 +77,9 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     bool                                     is_complete;
 
     _total_sequences = 0;
-    _pipeline_flags = 0;
-    _data_flags = 0;
-    _pSEQUENCES = new QUERY_MAP_T;
+    _pipeline_flags  = 0;
+    _data_flags      = 0;
+    _pSEQUENCES      = new QUERY_MAP_T;
 
     _pUserInput  = userinput;
     _pFileSystem = filesystem;
@@ -91,8 +91,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
         throw ExceptionHandler("Input transcriptome not found at: " + input_file,ERR_ENTAP_INPUT_PARSE);
     }
 
-    boostFS::path path(input_file);
-    out_name     = path.filename().string();
+    out_name     = _pFileSystem->get_filename(input_file);
     out_new_path = PATHS(out_path,out_name);
     _pFileSystem->delete_file(out_new_path);
 
@@ -114,7 +113,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
                 QuerySequence *query_seq = new QuerySequence(_protein,sequence, seq_id);
                 if (is_complete) query_seq->setFrame(COMPLETE_FLAG);
                 if (_pSEQUENCES->find(seq_id) != _pSEQUENCES->end()) {
-                    throw ExceptionHandler("Duplicate headers in your input transcriptome!",
+                    throw ExceptionHandler("Duplicate headers in your input transcriptome: " + seq_id,
                         ERR_ENTAP_INPUT_PARSE);
                 }
                 _pSEQUENCES->emplace(seq_id, query_seq);
@@ -175,7 +174,7 @@ void QueryData::set_input_type(std::string &in) {
     deviations = 0;
     while(std::getline(in_file,line)) {
         if (line.empty()) continue;
-        if (line_count > LINE_COUNT) break;
+        if (line_count++ > LINE_COUNT) break;
         line.pop_back(); // Account for newline/other
         if (line.find('>') == std::string::npos) {
             for (char &c : line) {
@@ -183,7 +182,6 @@ void QueryData::set_input_type(std::string &in) {
                 if (NUCLEO_MAP.find(c) == NUCLEO_MAP.end()) deviations++;
             }
         }
-        line_count++;
     }
     _protein = deviations > NUCLEO_DEV;
     in_file.close();
@@ -348,11 +346,11 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
     out_annotated_nucl_path   = PATHS(outpath, OUT_ANNOTATED_NUCL);
     out_annotated_prot_path   = PATHS(outpath, OUT_ANNOTATED_PROT);
 
-    // Switch to entap_out dir
-    boostFS::remove(out_unannotated_nucl_path);
-    boostFS::remove(out_unannotated_prot_path);
-    boostFS::remove(out_annotated_nucl_path);
-    boostFS::remove(out_annotated_prot_path);
+    // Re-write these files
+    _pFileSystem->delete_file(out_unannotated_nucl_path);
+    _pFileSystem->delete_file(out_unannotated_prot_path);
+    _pFileSystem->delete_file(out_annotated_nucl_path);
+    _pFileSystem->delete_file(out_annotated_prot_path);
 
     std::ofstream file_unannotated_nucl(out_unannotated_nucl_path, std::ios::out | std::ios::app);
     std::ofstream file_unannotated_prot(out_unannotated_prot_path, std::ios::out | std::ios::app);

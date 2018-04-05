@@ -777,7 +777,7 @@ void UserInput::verify_species(boostPO::variables_map &map, SPECIES_FLAGS flag) 
  * ======================================================================
  */
 void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map, std::string exe) {
-    FS_dprint("Assigning execution paths. Note they are not checked for validity...");
+    FS_dprint("Assigning execution paths. Note they are not checked for validity yet...");
 
     std::stringstream                  ss;
     std::string                        out_msg;
@@ -828,15 +828,15 @@ void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map
 
 /**
  * ======================================================================
- * Function std::string get_exe_path(boostPO::variables_map &vm)
+ * Function std::string get_config_path()
  *
- * Description          - Gets execution path that was used for EnTAP
- *                      - This is used for default executions with the
- *                        EnTAP config file
+ * Description          - Gets the configuration file path either from
+ *                        user input or default
+ *                      - Calls separate routine to pull execution directory
+ *                        for defaults
  *
- * Notes                - Only implemented for Unix systems now
  *
- * @return              - Path to executable
+ * @return              - Pair (first:config path, second:exe directory)
  * ======================================================================
  */
 pair_str_t UserInput::get_config_path() {
@@ -848,28 +848,17 @@ pair_str_t UserInput::get_config_path() {
         output.first = get_user_input<std::string>(UInput::INPUT_FLAG_EXE_PATH);
         FS_dprint("User input config filepath at: " + output.first);
     } else {
+        // if no config input, use default path found in cwd
         output.first = PATHS(_pFileSystem->get_cur_dir(), CONFIG_FILE);
-        FS_dprint("NO inputted config file, using default: " + output.first);
+        FS_dprint("No inputted config file, using default: " + output.first);
     }
     if (!_pFileSystem->file_exists(output.first)) {
         throw ExceptionHandler("No configuration file with execution paths found at: " +
                 output.first, ERR_ENTAP_INPUT_PARSE);
     }
 
-    output.second = _pFileSystem->get_cur_dir();
+    output.second = get_executable_dir();
     return output;
-
-#if 0
-    char buff[1024];
-    ssize_t len = ::readlink("/proc/self/exe", buff, sizeof(buff)-1);
-    if (len != -1) {
-        buff[len] = '\0';
-        std::string path = std::string(buff);
-        boost::filesystem::path p(path);p.remove_filename();
-        return p.string();
-    }
-    return "";
-#endif
 }
 
 
@@ -1119,4 +1108,28 @@ std::string UserInput::get_user_transc_basename() {
 }
 
 
-
+/**
+ * ======================================================================
+ * Function std::string UserInput::get_executable_dir()
+ *
+ * Description          - Gets the directory that the executable was detected
+ *                        in
+ *
+ * Notes                - Only implemented for UNIX systems now!
+ *
+ *
+ * @return              - Path to directory that EnTAP exe was found
+ * ======================================================================
+ */
+std::string UserInput::get_executable_dir() {
+    char buff[1024];
+    ssize_t len = ::readlink("/proc/self/exe", buff, sizeof(buff)-1);
+    if (len != -1) {
+        buff[len] = '\0';
+        std::string path = std::string(buff);
+        boost::filesystem::path p(path);
+        return p.remove_filename().string();
+    }
+    FS_dprint("EnTAP execution path was NOT found!");
+    return "";
+}

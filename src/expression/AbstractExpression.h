@@ -85,7 +85,6 @@ public:
  * ======================================================================
  */
     AbstractExpression(std::string &exe,
-                       std::string &out,
                        std::string &in,
                        std::string &exp,
                        std::string &align,
@@ -94,12 +93,12 @@ public:
                        FileSystem *fileSystem){
 
         _expression_outpath = exp;
-        _pGraphingManager    = graphing;
+        _pGraphingManager   = graphing;
         _alignpath          = align;
         _pQueryData         = query;
         _pFileSystem        = fileSystem;
-        _outpath = out;
-        _exe_path = exe;
+        _exe_path           = exe;
+        _inpath             = in;
     }
 
     virtual ~AbstractExpression() = default;
@@ -115,7 +114,6 @@ protected:
 
     std::string     _alignpath;
     std::string     _exe_path;
-    std::string     _outpath;
     std::string     _inpath;
     std::string     _processed_path;
     std::string     _figure_path;

@@ -45,14 +45,13 @@ class ModRSEM : public AbstractExpression{
 
 public:
     ModRSEM(std::string &exe,
-            std::string &out,
             std::string &in,
             std::string &exp,
             std::string &align,
             GraphingManager *graphing,
             QueryData *query,
             FileSystem *fileSystem) :
-    AbstractExpression(exe, out, in, exp, align, graphing, query, fileSystem){}
+    AbstractExpression(exe, in, exp, align, graphing, query, fileSystem){}
 
     ~ModRSEM();
 
@@ -94,6 +93,8 @@ private:
 
     bool rsem_validate_file(std::string);
     bool rsem_conv_to_bam(std::string);
+    bool rsem_generate_reference(std::string&);
+    bool rsem_expression_analysis(std::string&, std::string&);
 };
 
 

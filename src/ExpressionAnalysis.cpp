@@ -157,7 +157,6 @@ std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
         case ENTAP_EXECUTE::EXP_FLAG_RSEM:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
                     _exepath,
-                    _outpath,
                     _inpath,
                     _rsem_dir,
                     _alignpath,
@@ -168,7 +167,6 @@ std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
         default:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
                     _exepath,
-                    _outpath,
                     _inpath,
                     _rsem_dir,
                     _alignpath,

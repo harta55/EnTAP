@@ -51,7 +51,7 @@ std::pair<bool, std::string> ModRSEM::verify_files() {
 
     _filename = _inpath;
     _pFileSystem->get_filename_no_extensions(_filename);
-    _exp_out = PATHS(_expression_outpath, _filename);
+    _exp_out  = PATHS(_expression_outpath, _filename);
     _rsem_out = _exp_out + RSEM_OUT_FILE;
     if (_pFileSystem->file_exists(_rsem_out)) {
         FS_dprint("File found at " + _rsem_out +  "\nmoving to filter transcriptome");
@@ -102,30 +102,18 @@ void ModRSEM::execute() {
     // Now have valid BAM file to run rsem
     FS_dprint("Alignment file valid. Preparing reference...");
 
-    ref_exe  = PATHS(_exe_path, RSEM_PREP_REF_EXE);
-    ref_path = PATHS(_expression_outpath, _filename) + "_ref";
-
     // Prepare reference command
-    rsem_arg = ref_exe + " "
-               + _inpath + " "
-               + ref_path;
-    std_out = PATHS(_expression_outpath, _filename) + STD_REF_OUT;
-    FS_dprint("Executing following command\n" + rsem_arg);
-    execute_cmd(rsem_arg.c_str(), std_out);
-    FS_dprint("Reference successfully created");
+    if (rsem_generate_reference(ref_path)) {
+        FS_dprint("Reference successfully created");
+    } else {
+        throw ExceptionHandler("Unable to generate RSEM reference", ERR_ENTAP_RUN_RSEM_EXPRESSION);
+    }
 
+    // Run expression analysis
     FS_dprint("Running expression analysis...");
-    expression_exe = PATHS(_exe_path, RSEM_CALC_EXP_EXE);
-    rsem_arg = expression_exe +
-               " --" + bam +
-               " -p " + std::to_string(_threads) + " " +
-               _alignpath +" "+
-               ref_path + " " +
-               _exp_out;
-    if (!_issingle) rsem_arg += " --paired-end";
-    std_out = PATHS(_expression_outpath, _filename) + STD_EXP_OUT;
-    FS_dprint("Executing following command\n" + rsem_arg);
-    if (execute_cmd(rsem_arg.c_str(), std_out)!=0) {
+    if (rsem_expression_analysis(ref_path, bam)) {
+        FS_dprint("Expression analysis complete!");
+    } else {
         throw ExceptionHandler("Error in running expression analysis",ERR_ENTAP_RUN_RSEM_EXPRESSION);
     }
 }
@@ -429,8 +417,8 @@ void ModRSEM::set_data(int thread, float fpkm, bool single) {
     _fpkm = fpkm;
     _issingle = single;
 
-    _processed_path = PATHS(_outpath, RSEM_PROCESSED_DIR);
-    _figure_path = PATHS(_outpath, RSEM_FIGURE_DIR);
+    _processed_path = PATHS(_expression_outpath, RSEM_PROCESSED_DIR);
+    _figure_path = PATHS(_expression_outpath, RSEM_FIGURE_DIR);
 
     _pFileSystem->delete_dir(_processed_path);
     _pFileSystem->create_dir(_processed_path);
@@ -443,3 +431,37 @@ ModRSEM::~ModRSEM() {
 }
 
 
+bool ModRSEM::rsem_generate_reference(std::string& reference_path_out) {
+    std::string ref_exe;    // executable path to reference generation
+    std::string ref_path;   // reference path
+    std::string rsem_arg;
+    std::string std_out;
+
+    ref_exe  = PATHS(_exe_path, RSEM_PREP_REF_EXE);
+    ref_path = PATHS(_expression_outpath, _filename) + "_ref";
+    rsem_arg = ref_exe + " "
+               + _inpath + " "
+               + ref_path;
+    std_out = PATHS(_expression_outpath, _filename) + STD_REF_OUT;
+    FS_dprint("Executing following command\n" + rsem_arg);
+    reference_path_out = ref_path;
+    return execute_cmd(rsem_arg.c_str(), std_out) == 0;
+}
+
+bool ModRSEM::rsem_expression_analysis(std::string& ref_path, std::string& bam) {
+    std::string expression_exe;
+    std::string rsem_arg;
+    std::string std_out;
+
+    expression_exe = PATHS(_exe_path, RSEM_CALC_EXP_EXE);
+    rsem_arg = expression_exe +
+               " --" + bam +
+               " -p " + std::to_string(_threads) + " " +
+               _alignpath +" "+
+               ref_path + " " +
+               _exp_out;
+    if (!_issingle) rsem_arg += " --paired-end";
+    std_out = PATHS(_expression_outpath, _filename) + STD_EXP_OUT;
+    FS_dprint("Executing following command\n" + rsem_arg);
+    return execute_cmd(rsem_arg.c_str(), std_out) == 0;
+}

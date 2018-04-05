@@ -261,7 +261,7 @@ std::string ModRSEM::filter() {
             "Expression Filtering (RSEM) with FPKM Cutoff " << _fpkm << "\n" <<
             ENTAP_STATS::SOFTWARE_BREAK     <<
             "Total sequences kept: "        << count_kept     <<
-            "\nTotal sequences removed: "   << count_removed;
+            "\nTotal sequences removed: "   << count_removed  <<std::endl;
 
 
     if (count_kept > 0) {

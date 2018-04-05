@@ -448,7 +448,9 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
 
         FS_dprint("Success!");
     }
+    FS_dprint("Calculating overall Similarity Searching statistics...");
     calculate_best_stats(true);
+    FS_dprint("Success!");
 }
 
 void SimilaritySearch::calculate_best_stats (bool is_final, std::string database_path) {
@@ -682,7 +684,7 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
            << ENTAP_STATS::SOFTWARE_BREAK;
     } else {
         ss << ENTAP_STATS::SOFTWARE_BREAK
-           << "Similarity Search - Diamond - " <<database_shortname << "\n"
+           << "Similarity Search - Diamond - " << database_shortname << "\n"
            << ENTAP_STATS::SOFTWARE_BREAK <<
            "Search results:\n"            << database_path <<
            "\n\tTotal alignments: "               << count_TOTAL_alignments   <<
@@ -691,13 +693,13 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
     }
 
     // If overall alignments are 0, then throw error
-    if (is_final && (count_TOTAL_alignments == 0 || count_filtered == 0)) {
+    if (is_final && count_filtered == 0) {
         throw ExceptionHandler("No alignments found during Similarity Searching!",
                                ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
     }
 
-    // If no alignments for this database, return and warn user
-    if (count_TOTAL_alignments == 0 || count_filtered == 0) {
+    // If no total or filtered alignments for this database, return and warn user
+    if (!is_final && (count_TOTAL_alignments == 0 || count_filtered == 0)) {
         ss << "WARNING: No alignments for this database";
         std::string out_msg = ss.str() + "\n";
         _pFileSystem->print_stats(out_msg);

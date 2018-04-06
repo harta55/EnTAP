@@ -698,7 +698,7 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
                                ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
     }
 
-    // If no total or filtered alignments for this database, return and warn user
+    // If no total or filealignments for this database, return and warn user
     if (!is_final && (count_TOTAL_alignments == 0 || count_filtered == 0)) {
         ss << "WARNING: No alignments for this database";
         std::string out_msg = ss.str() + "\n";
@@ -763,7 +763,7 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
             ss
                     << "\n\t\t\t" << pair.first << ": " << pair.second << "(" << percent << "%)";
         }
-        ss << "\n\t\tTop 10 contaminants by species:";
+        ss << "\n\t\tTop " << COUNT_TOP_SPECIES << " contaminants by species:";
         ct = 1;
         for (count_pair pair : contam_species_vect) {
             if (ct > COUNT_TOP_SPECIES) break;
@@ -776,7 +776,7 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
         }
     }
 
-    ss << "\n\tTop 10 alignments by species:";
+    ss << "\n\tTop " << COUNT_TOP_SPECIES << " alignments by species:";
     ct = 1;
     for (count_pair pair : species_vect) {
         if (ct > COUNT_TOP_SPECIES) break;

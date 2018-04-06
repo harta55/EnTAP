@@ -270,7 +270,7 @@ std::string ModRSEM::filter() {
         kept_n = _pQueryData->calculate_N_vals(all_kept_lengths, total_kept_len);
         out_msg <<
                 ENTAP_STATS::SOFTWARE_BREAK                                     <<
-                "Expression Filtering: New Reference Transcriptome Statistics"  <<
+                "Expression Filtering: New Reference Transcriptome Statistics\n"<<
                 ENTAP_STATS::SOFTWARE_BREAK                                     <<
                 "\nTotal sequenes: "                    << count_kept     <<
                 "\nTotal length of transcriptome (bp)"  << total_kept_len <<

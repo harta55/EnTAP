@@ -236,3 +236,12 @@ std::string float_to_string(fp64 val) {
     ss << std::fixed << std::setprecision(2) << val;
     return ss.str();
 }
+
+std::string float_to_sci(fp64 val, int precision) {
+    std::stringstream ss;
+    ss << std::fixed <<
+          std::setprecision(precision) <<
+          std::scientific              <<
+          val;
+    return ss.str();
+}

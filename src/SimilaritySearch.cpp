@@ -424,7 +424,7 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
             simSearchResults.lineage = taxEntry.lineage;
             simSearchResults.species = species;
             simSearchResults.e_val_raw = evalue;
-            simSearchResults.e_val = float_to_string(evalue);
+            simSearchResults.e_val = float_to_sci(evalue,2);
             simSearchResults.coverage_raw = coverage;
             simSearchResults.coverage = float_to_string(coverage);
             simSearchResults.contaminant = contam_info.first;

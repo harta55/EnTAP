@@ -61,6 +61,7 @@ int execute_cmd(std::string);
 std::string generate_command(std::unordered_map<std::string,std::string>&,
                              std::string);
 std::string float_to_string(fp64);
+std::string float_to_sci(fp64, int);
 //**************************************************************
 
 

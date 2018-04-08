@@ -123,7 +123,6 @@ void QuerySequence::set_eggnog_results(const EggnogResults &eggnogResults) {
     this->_eggnog_results = eggnogResults;
     this->QUERY_FLAG_SET(QUERY_EGGNOG_HIT);
     this->QUERY_FLAG_SET(QUERY_FAMILY_ASSIGNED);
-
 }
 
 void QuerySequence::init_sequence() {

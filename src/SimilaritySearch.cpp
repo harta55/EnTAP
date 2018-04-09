@@ -480,8 +480,15 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
     graph_sum_t                 graphing_sum_map;
 
     // Set up output directories (processed directory cleared earlier so these will be empty)
-    database_shortname    = _file_to_database[database_path];
-    base_path   = PATHS(_processed_path, database_shortname);
+    if (is_final) {
+        // Overall results across databases
+        base_path = _results_path;
+        database_shortname = "";
+    } else {
+        // Individual database results
+        base_path   = PATHS(_processed_path, database_shortname);
+        database_shortname = _file_to_database[database_path];
+    }
     figure_base = PATHS(base_path, FIGURE_DIR);
     _pFileSystem->create_dir(base_path);
     _pFileSystem->create_dir(figure_base);

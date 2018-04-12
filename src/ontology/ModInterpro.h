@@ -67,10 +67,10 @@ private:
     std::string INTERPRO_OUTPUT             = "interpro_results";
     std::string INTERPRO_DIRECTORY          = "InterProScan";
     std::string INTERPRO_STD_OUT            = "interproscan_std";
-    std::string OUT_NO_HITS_FAA             = "interpro_hits.faa";
-    std::string OUT_NO_HITS_FNN             = "interpro_hits.fnn";
-    std::string OUT_HITS_FAA                = "interpro_no_hits.faa";
-    std::string OUT_HITS_FNN                = "interpro_no_hits.fnn";
+    std::string OUT_HITS_FAA                = "interpro_hits.faa";
+    std::string OUT_HITS_FNN                = "interpro_hits.fnn";
+    std::string OUT_NO_HITS_FAA             = "interpro_no_hits.faa";
+    std::string OUT_NO_HITS_FNN             = "interpro_no_hits.fnn";
     std::string INTERPRO_EXT_XML            = ".xml";
     std::string INTERPRO_EXT_TSV            = ".tsv";
 

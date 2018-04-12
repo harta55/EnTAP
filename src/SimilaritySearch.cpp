@@ -486,8 +486,8 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
         database_shortname = "";
     } else {
         // Individual database results
-        base_path   = PATHS(_processed_path, database_shortname);
         database_shortname = _file_to_database[database_path];
+        base_path   = PATHS(_processed_path, database_shortname);
     }
     figure_base = PATHS(base_path, FIGURE_DIR);
     _pFileSystem->create_dir(base_path);

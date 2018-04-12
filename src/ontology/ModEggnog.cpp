@@ -242,13 +242,13 @@ void ModEggnog::parse() {
     for (auto &pair : *pQUERY_DATA->get_sequences_ptr()) {
         if (!pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_EGGNOG_HIT)) {
             // Unannotated sequence
-            if (!pair.second->get_sequence_n().empty()) file_no_hits_nucl<<pair.second->get_sequence_n()<<std::endl;
-            file_no_hits_prot << pair.second->get_sequence_p() << std::endl;
+            if (!pair.second->get_sequence_n().empty()) file_no_hits_nucl << pair.second->get_sequence_n() << std::endl;
+            if (!pair.second->get_sequence_p().empty()) file_no_hits_prot << pair.second->get_sequence_p() << std::endl;
             count_no_hits++;
         } else {
             // Annotated sequence
-            if (!pair.second->get_sequence_n().empty()) file_hits_nucl<<pair.second->get_sequence_n()<<std::endl;
-            file_hits_prot << pair.second->get_sequence_p() << std::endl;
+            if (!pair.second->get_sequence_n().empty()) file_hits_nucl << pair.second->get_sequence_n() << std::endl;
+            if (!pair.second->get_sequence_p().empty()) file_hits_prot << pair.second->get_sequence_p() << std::endl;
         }
     }
 

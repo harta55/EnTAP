@@ -34,6 +34,6 @@
 #endif
 
 // Comment this out if it is debug code
-//#define RELEASE_BUILD
+#define RELEASE_BUILD
 
 #endif //ENTAP_CONFIG_H

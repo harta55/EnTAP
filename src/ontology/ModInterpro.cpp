@@ -80,7 +80,7 @@ std::pair<bool, std::string> ModInterpro::verify_files() {
 
     filename        = INTERPRO_OUTPUT;
     _final_basepath = PATHS(_interpro_dir, filename);
-    _blastp ? filename += INTERPRO_EXT_XML : filename += INTERPRO_EXT_TSV;
+    filename += INTERPRO_EXT_TSV;
     _final_outpath = PATHS(_interpro_dir, filename);
     return std::make_pair(_pFileSystem->file_exists(_final_outpath), "");
 }
@@ -163,7 +163,7 @@ void ModInterpro::parse() {
     }
     try {
         GO_DATABASE = read_go_map();
-        _blastp ? interpro_map = parse_xml() : interpro_map = parse_tsv();
+        interpro_map = parse_tsv();
     } catch (ExceptionHandler const &e) {throw e;}
 
     FS_dprint("Success! Beginning to update query sequences...");
@@ -221,6 +221,10 @@ void ModInterpro::parse() {
                  ENTAP_STATS::SOFTWARE_BREAK << " Ontology - InterProScan\n" <<
                  ENTAP_STATS::SOFTWARE_BREAK <<
                  "InterProScan statistics coming soon!";
+
+    if (count_hits == 0) {
+        stats_stream << "\nWarning: No InterProScan results found!";
+    }
     stats_out = stats_stream.str();
     _pFileSystem->print_stats(stats_out);
     FS_dprint("Success! InterProScan finished");
@@ -343,35 +347,44 @@ std::map<std::string,ModInterpro::InterProData> ModInterpro::parse_tsv(void) {
     std::string pathways;       // KEGG: 00290+1.1.1.86|KEGG: 00770+1.1.1.86
 
     temp_file_path = format_interpro();
-    try {
-        io::CSVReader<INTERPRO_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(temp_file_path);
-        while (in.read_row(query, md5, length, database, database_id, database_desc,
-                           start, stop, eval, status, date, interpro_id, interpro_desc,
-                           go_terms, pathways)) {
-            if (query.empty()) continue;
+
+    io::CSVReader<INTERPRO_COL_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(temp_file_path);
+    while (in.read_row(query, md5, length, database, database_id, database_desc,
+                       start, stop, eval, status, date, interpro_id, interpro_desc,
+                       go_terms, pathways)) {
+        if (query.empty()) continue;
+
+        std::map<std::string,InterProData>::iterator it = interpro_map.find(query);
+        if (it != interpro_map.end() && it->second.eval < eval) continue;
+        // Current hit is better
+        if (!go_terms.empty() && go_terms.find('|') != std::string::npos) {
+            std::replace(go_terms.begin(), go_terms.end(), '|', ',');
+        }
+
+        if (pQUERY_DATA->get_sequence(query) == nullptr) {
             // InterProScan5 adds underscore to identifier
             if (query.find_last_of('_') != std::string::npos) {
                 query = query.substr(0,query.find_last_of('_'));
+                // Check if query is good
+                if (pQUERY_DATA->get_sequence(query) == nullptr) {
+                    throw ExceptionHandler("InterPro Query: " + query + " not found in transcriptome!",
+                                           ERR_ENTAP_PARSE_INTERPRO);
+                }
             }
-            std::map<std::string,InterProData>::iterator it = interpro_map.find(query);
-            if (it != interpro_map.end() && it->second.eval < eval) continue;
-            // Current hit is better
-            if (!go_terms.empty() && go_terms.find('|') != std::string::npos) {
-                std::replace(go_terms.begin(), go_terms.end(), '|', ',');
-            }
-            interProData.interID      = interpro_id;
-            interProData.interDesc    = interpro_desc;
-            interProData.databaseID   = database_id;
-            interProData.databasetype = database;
-            interProData.databaseDesc = database_desc;
-            interProData.pathways     = pathways;
-            interProData.go_terms     = go_terms;
-            interProData.eval         = eval;
-            interpro_map[query] = interProData;
         }
-    } catch (std::exception &e) {
-        throw ExceptionHandler(e.what(), ERR_ENTAP_PARSE_INTERPRO);
+
+        interProData = {};
+        interProData.interID      = interpro_id;
+        interProData.interDesc    = interpro_desc;
+        interProData.databaseID   = database_id;
+        interProData.databasetype = database;
+        interProData.databaseDesc = database_desc;
+        interProData.pathways     = pathways;
+        interProData.go_terms     = go_terms;
+        interProData.eval         = eval;
+        interpro_map[query] = interProData;
     }
+
     _pFileSystem->delete_file(temp_file_path);
     return interpro_map;
 }
@@ -399,6 +412,7 @@ std::string ModInterpro::format_interpro(void) {
     uint16      tab_ct;
 
     path_temp = _final_outpath + "_temp";
+    _pFileSystem->delete_file(path_temp);
     std::ifstream file_in(_final_outpath);
     std::ofstream file_temp(path_temp, std::ios::out | std::ios::app);
     while(std::getline(file_in, line)) {

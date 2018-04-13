@@ -127,7 +127,7 @@ std::string ModGeneMarkST::execute() {
         in_file.close();
         out_file.close();
         if (remove(path.c_str())!=0 || rename(temp_name.c_str(),out_path.c_str())!=0) {
-            throw ExceptionHandler("Error formatting/moving genemark results", ERR_ENTAP_INIT_TAX_READ);
+            throw ExceptionHandler("Error formatting/moving genemark results", ERR_ENTAP_RUN_GENEMARK_PARSE);
         }
     }
     if (rename(lst_file.c_str(),_final_lst_path.c_str())!=0 ||

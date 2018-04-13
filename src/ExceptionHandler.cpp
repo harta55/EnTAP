@@ -120,7 +120,7 @@ void ExceptionHandler::print_msg(FileSystem* filesystem) {
                       "has the proper data contained within.";
             break;
         case ERR_ENTAP_INIT_TAX_READ:
-            added_msg << "Unable to read the Taxnomic database into memory, ensure the paths are "
+            added_msg << "Unable to read the Taxonomic database into memory, ensure the paths are "
                     "correct along with how you configured the file. You may need to remove it and "
                     "re-download.";
             break;

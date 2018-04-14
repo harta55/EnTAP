@@ -86,7 +86,8 @@ private:
             {'A', 1},
             {'G', 1},
             {'C', 1},
-            {'T', 1}
+            {'T', 1},
+            {'N', 1}
     };
     const std::string OUT_UNANNOTATED_NUCL = "final_unannotated.fnn";
     const std::string OUT_UNANNOTATED_PROT = "final_unannotated.faa";

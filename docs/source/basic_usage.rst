@@ -65,7 +65,8 @@ The |config_file| file mentioned above has the following defaults:
     * eggnog_exe_path=/EnTAP/libs/eggnog-mapper/emapper.py
     * eggnog_download_exe=/EnTAP/libs/eggnog-mapper/download_eggnog_data.py
     * eggnog_database=/EnTAP/libs/eggnog-mapper/data/eggnog.db (downloaded during Configuration)
-    * entap_tax_database=/EnTAP/bin/ncbi_tax_bin.entp (binary version, downloaded during Configuration)
+    * entap_tax_bin_database=/EnTAP/bin/ncbi_tax_bin.entp (binary version, downloaded during Configuration)
+    * entap_tax_text_database=/EnTAP/databases/ncbi_tax.entp (text version, downloaded during Configuration)
     * entap_tax_download_script=/EnTAP/src/download_tax.pl
     * entap_go_database=/EnTAP/bin/go_term.entp (binary version, downloaded during Configuration)
     * entap_graphing_script=/EnTAP/src/entap_graphing.py
@@ -75,7 +76,7 @@ The |config_file| file mentioned above has the following defaults:
 These can be changed to whichever path you would prefer. If something is globally installed, just put how you'd normally run the software after the '=', such as 'diamond' for DIAMOND. EnTAP will recognize these paths first and they will override defaults. 
 
 
-This configuration file will be automatically detected if it is in the same directory as the EnTAP .exe, otherwise the path to it can be specified through the |flag_path| flag. 
+This configuration file will be automatically detected if it is in the working directory, otherwise the path to it can be specified through the |flag_path| flag. The config file is mandatory!
 
 .. note:: Be sure you set the paths before moving on (besides the databases that haven't been downloaded yet)!
 
@@ -174,6 +175,8 @@ In both cases, the following databases will be downloaded:
 
 If you experience any trouble in downloading the databases indexed for EnTAP (taxonomy and gene ontology), you can use the databases contained in the repo download, databases.tar.gz. Just be sure to set the configuration file to these database paths (as these are the binaries)!
 
+EnTAP will always check the databases specified in the configuration file first. Otherwise, EnTAP will check a different location for the databases during Configuration. This location will be either the path specified by - -database-out or, if not selected, the current working directory. The final databases will also be sent there! As a result, the **- -database-out flag is recommended for Configuration.**
+
 Flags:
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -193,7 +196,7 @@ Optional Flags:
     * Point to |config_file| for specifying paths
 
 * (- - database-out)
-    * Specify an output directory for the databases to be sent to
+    * Specify an output directory for the databases to be sent to (recommended)
     * This will send the Taxonomic Database, GO Database, and any DIAMOND databases to this location
     * EggNOG database will not be sent here as it must remain in the EggNOG directory
 
@@ -531,7 +534,6 @@ State control of EnTAP allows you to further customize your runs. This is separa
 #. Frame Selection
 #. Transcriptome Filtering (selection of final transcriptome)
 #. Similarity Search
-#. Best Hit Selection
 #. Gene Ontology / Gene Families
 
 With this functionality of EnTAP, you can execute whatever states you would like with certain commands. Using a '+' will execute from that state to the end, while using a 'x' will stop at that state. These basic commands can be combined to execute whatever you would like. It's easier if I lay out some examples:
@@ -539,14 +541,13 @@ With this functionality of EnTAP, you can execute whatever states you would like
 * (- - state 1+)
     * This will start at expression filtering and continue to the end of the pipeline
 
-* (- - state 1+5x)
-    * This will start at expression filtering and stop at best hit selection
+* (- - state 1+4x)
+    * This will start at expression filtering and stop after similarity search
 
 * (- - state 4x)
     * This will just execute similarity search and stop
 
-* (- - state 1+3x5+)
+* (- - state 1+3x5)
     * This will essentially execute every stage besides similarity searching
-    * This is an example of something that may fail, since best hit selection relies on similarity search results
 
 The default 'state' of EnTAP is merely '+'. This executes every stage of the pipeline (or attempts to if the correct commands are in place). 

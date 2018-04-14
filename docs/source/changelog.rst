@@ -1,6 +1,28 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.8.0-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.8.1-beta
+
+EnTAP Beta v0.8.1-beta
+------------------------
+
+    * Added additional error logging to provide more information when something goes wrong
+    * Configuration file made mandatory (default place to look is current working directory)
+    * Added deletion of empty files if a certain stage failed (preventing re-reading an empty file)
+    * Added errors/warnings for no alignments/hits in each stage
+    * entap_out directory changed to transcriptomes to be more clear (holds only transcriptomic data)
+    * Final EnTAP output files moved from the root outfiles directory to final_results directory
+    * Several filename changes to add consistency in new transcriptomes directory (final transcriptome is now _final.fasta. 
+    * Several title changes to the log file to mitigate confusion
+    * EggNOG no longer broken down into separate files - those that hit and those that did not hit a database. Now entire transcriptome is pushed with one output file
+    * 10 species/contaminants/other in similarity searching statistics has been changed to 20 to provide more information to the user
+    * Best hit selection state combined with similarity search
+    * Added 'N' as an accepted nucleotide
+    * Several behind the scenes changes
+    * Fixed Cmake global installation issue
+    * Fixed incorrect error codes
+    * Fixed InterPro printing bug to no hits/hits files
+    * Fixed Frame Selection not printing new lines for certain files
+
 
 EnTAP Beta v0.8.0-beta
 ------------------------

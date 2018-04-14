@@ -148,7 +148,8 @@ private:
     const std::string KEY_EGGNOG_DOWN          = "eggnog_download_exe";
     const std::string KEY_INTERPRO_EXE         = "interpro_exe_path";
     const std::string KEY_EGGNOG_DB            = "eggnog_database";
-    const std::string KEY_TAX_DB               = "entap_tax_database";
+    const std::string KEY_TAX_DB               = "entap_tax_bin_database";
+    const std::string KEY_TAX_DB_TEXT          = "entap_tax_text_database";
     const std::string KEY_GO_DB                = "entap_go_database";
     const std::string KEY_TAX_DOWNLOAD_EXE     = "entap_tax_download_script";
     const std::string KEY_GRAPH_SCRIPT         = "entap_graphing_script";

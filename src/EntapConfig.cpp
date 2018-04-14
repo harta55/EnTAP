@@ -205,44 +205,68 @@ namespace entapConfig {
         //TODO Integrate gzip/zlib
 
         std::string tax_bin_path;
+        std::string tax_txt_path;
         std::string tax_txt_path_default;
         std::string tax_bin_path_default;
+        std::string tax_txt_path_found;     // Found path, or outpath
         std::string tax_command;
         tax_serial_map_t tax_data_map;
 
-        // Tax txt default is not in the config file, so have to check default
+        // Note, default paths are taken from database-out flag or outfiles
+
+        // Pull tax text path from config file paths
+        tax_txt_path          = TAX_DB_PATH_TEXT;
+        // If it doesn't exist in config file path, will check default path
         tax_txt_path_default  = PATHS(exe, Defaults::TAX_DATABASE_TXT_DEFAULT);
         // Pull tax bin path from config file paths
         tax_bin_path          = TAX_DB_PATH;
         // If it doesn't exist in config file path, will check default path
         tax_bin_path_default  = PATHS(exe, Defaults::TAX_DATABASE_BIN_DEFAULT);
 
+        // Check config path
         if (_pFileSystem->file_exists(TAX_DB_PATH)) {
             FS_dprint("Tax database binary found at: " + tax_bin_path + " skipping...");
+            TAX_DB_PATH = tax_bin_path;
             return;
             // TODO update database and check date of download
         } else {
             // No bin database located at config file path!!
             FS_dprint("Tax database binary not found at: " + TAX_DB_PATH + " checking non-binary...");
-            // Check if bin database exists at the output directory
+            // Check if bin database exists at the default directory
             if (_pFileSystem->file_exists(tax_bin_path_default)) {
                 FS_dprint("Tax database binary found at: " + tax_bin_path_default + " skipping...");
+                TAX_DB_PATH = tax_bin_path_default;
                 return;
             }
-            // Bin database not found! Check if text version does not exist. Then download
+        }
+
+        // Bin database not found! Check if text version does not exist. Then download
+        // Check config path
+        if (_pFileSystem->file_exists(tax_txt_path)) {
+            FS_dprint("Non-binary database found at: " + tax_txt_path + " indexing...");
+            tax_txt_path_found = tax_txt_path;
+        } else {
+            // Text not found at config path, check default
+            FS_dprint("Non-binary Tax database not found at: " + tax_txt_path + " checking default...");
+
             if (!_pFileSystem->file_exists(tax_txt_path_default)) {
-                FS_dprint("Tax database not found at: " + tax_txt_path_default + " downloading...");
+                FS_dprint("Non-binary database not found at: " + tax_txt_path_default + " downloading...");
                 tax_command = "python " + TAX_DOWNLOAD_EXE + " -o " + tax_txt_path_default;
                 if (execute_cmd(tax_command) != 0) {
+                    _pFileSystem->delete_file(tax_txt_path_default);
                     throw ExceptionHandler("Command: " + tax_command, ERR_ENTAP_INIT_TAX_DOWN);
                 }
                 FS_dprint("Success! File written to " + tax_txt_path_default);
-            } else FS_dprint("Non-binary database found at: " + tax_txt_path_default + " indexing...");
+                tax_txt_path_found = tax_txt_path_default;
+            } else {
+                FS_dprint("Non-binary database found at: " + tax_txt_path_default + " indexing...");
+                tax_txt_path_found = tax_txt_path_default;
+            }
         }
 
         // Text version of tax database should exist at this point (either existing or downloaded)
         FS_dprint("Indexing taxonomic database...");
-        std::ifstream infile(tax_txt_path_default);
+        std::ifstream infile(tax_txt_path_found);
         std::string line;
         try {
             while (std::getline(infile, line)) {
@@ -267,7 +291,7 @@ namespace entapConfig {
         FS_dprint("Success! Writing file to "+ tax_bin_path_default);
         try{
             {
-                std::ofstream ofs(tax_bin_path);
+                std::ofstream ofs(tax_bin_path_default);
                 boostAR::binary_oarchive oa(ofs);
                 oa << tax_data_map;
             }
@@ -275,7 +299,7 @@ namespace entapConfig {
             throw ExceptionHandler(e.what(), ERR_ENTAP_INIT_TAX_SERIAL);
         }
         // Update extern
-        TAX_DB_PATH = tax_bin_path;
+        TAX_DB_PATH = tax_bin_path_default;
         FS_dprint("Success!");
     }
 

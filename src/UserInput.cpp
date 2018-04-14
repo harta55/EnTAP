@@ -179,9 +179,10 @@ std::string EGG_EMAPPER_EXE;
 std::string EGG_SQL_DB_PATH;
 std::string EGG_DOWNLOAD_EXE;
 std::string INTERPRO_EXE;
-std::string TAX_DB_PATH;
+std::string TAX_DB_PATH;        // binary
+std::string TAX_DB_PATH_TEXT;
 std::string TAX_DOWNLOAD_EXE;
-std::string GO_DB_PATH;
+std::string GO_DB_PATH;         // binary
 std::string GRAPHING_EXE;
 
 
@@ -602,6 +603,7 @@ void UserInput::generate_config(std::string &path) {
                 KEY_EGGNOG_DB                 <<"=\n"<<
                 KEY_INTERPRO_EXE              <<"=\n"<<
                 KEY_TAX_DB                    <<"=\n"<<
+                KEY_TAX_DB_TEXT               <<"=\n"<<
                 KEY_TAX_DOWNLOAD_EXE          <<"=\n"<<
                 KEY_GO_DB                     <<"=\n"<<
                 KEY_GRAPH_SCRIPT              <<"=\n"
@@ -632,6 +634,7 @@ bool UserInput::check_key(std::string& key) {
     if (key.compare(KEY_EGGNOG_DB)==0)        return true;
     if (key.compare(KEY_INTERPRO_EXE)==0)     return true;
     if (key.compare(KEY_TAX_DB)==0)           return true;
+    if (key.compare(KEY_TAX_DB_TEXT)==0)      return true;
     if (key.compare(KEY_GO_DB)==0)            return true;
     if (key.compare(KEY_TAX_DOWNLOAD_EXE)==0) return true;
     if (key.compare(KEY_GRAPH_SCRIPT)==0)     return true;
@@ -673,17 +676,18 @@ void UserInput::print_user_input() {
        "\nStart time: "            << std::ctime(&time)            <<
        "\nWorking directory has been set to: "  << _pFileSystem->get_root_path()<<
        "\n\nExecution Paths/Commands:"
-       "\n\nRSEM Directory: "                << RSEM_EXE_DIR      <<
-       "\nGeneMarkS-T: "                     << GENEMARK_EXE      <<
-       "\nDIAMOND: "                         << DIAMOND_EXE       <<
-       "\nInterPro: "                        << INTERPRO_EXE      <<
-       "\nEggNOG Emapper: "                  << EGG_EMAPPER_EXE   <<
-       "\nEggNOG Download: "                 << EGG_DOWNLOAD_EXE  <<
-       "\nEggNOG Database: "                 << EGG_SQL_DB_PATH   <<
-       "\nEnTAP Taxonomic Database: "        << TAX_DB_PATH       <<
-       "\nEnTAP Taxonomic Download Script: " << TAX_DOWNLOAD_EXE  <<
-       "\nEnTAP Gene Ontology Database: "    << GO_DB_PATH        <<
-       "\nEnTAP Graphing Script: "           << GRAPHING_EXE      <<
+       "\n\nRSEM Directory: "                  << RSEM_EXE_DIR      <<
+       "\nGeneMarkS-T: "                       << GENEMARK_EXE      <<
+       "\nDIAMOND: "                           << DIAMOND_EXE       <<
+       "\nInterPro: "                          << INTERPRO_EXE      <<
+       "\nEggNOG Emapper: "                    << EGG_EMAPPER_EXE   <<
+       "\nEggNOG Download: "                   << EGG_DOWNLOAD_EXE  <<
+       "\nEggNOG Database: "                   << EGG_SQL_DB_PATH   <<
+       "\nEnTAP Taxonomic Database (binary): " << TAX_DB_PATH       <<
+       "\nEnTAP Taxonomic Database (text): "   << TAX_DB_PATH_TEXT  <<
+       "\nEnTAP Taxonomic Download Script: "   << TAX_DOWNLOAD_EXE  <<
+       "\nEnTAP Gene Ontology Database: "      << GO_DB_PATH        <<
+       "\nEnTAP Graphing Script: "             << GRAPHING_EXE      <<
        "\n\nUser Inputs:\n";
 
     for (const auto& it : _user_inputs) {
@@ -791,6 +795,7 @@ void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map
     std::string temp_eggnog_down       = map[KEY_EGGNOG_DOWN];
     std::string temp_eggnog_db         = map[KEY_EGGNOG_DB];
     std::string temp_tax_db            = map[KEY_TAX_DB];
+    std::string temp_tax_db_text       = map[KEY_TAX_DB_TEXT];
     std::string temp_go_db             = map[KEY_GO_DB];
     std::string temp_tax_download      = map[KEY_TAX_DOWNLOAD_EXE];
     std::string temp_graphing          = map[KEY_GRAPH_SCRIPT];
@@ -805,7 +810,8 @@ void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map
     if (temp_interpro.empty())   temp_interpro    = Defaults::INTERPRO_DEF_EXE;
 
     // EnTAP paths
-    if (temp_tax_db.empty()) temp_tax_db     = PATHS(exe_path, Defaults::TAX_DATABASE_BIN_DEFAULT);
+    if (temp_tax_db.empty()) temp_tax_db             = PATHS(exe_path, Defaults::TAX_DATABASE_BIN_DEFAULT);
+    if (temp_tax_db_text.empty()) temp_tax_db_text   = PATHS(exe_path, Defaults::TAX_DATABASE_TXT_DEFAULT);
     if (temp_tax_download.empty()) temp_tax_download = PATHS(exe_path, Defaults::TAX_DOWNLOAD_DEF);
     if (temp_go_db.empty()) temp_go_db       = PATHS(exe_path, Defaults::GO_DATABASE_BIN_DEFAULT);
     if (temp_graphing.empty()) temp_graphing = PATHS(exe_path, Defaults::GRAPH_SCRIPT_DEF);
@@ -818,6 +824,7 @@ void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map
     EGG_EMAPPER_EXE  = temp_eggnog;
     INTERPRO_EXE     = temp_interpro;
     TAX_DB_PATH      = temp_tax_db;
+    TAX_DB_PATH_TEXT = temp_tax_db_text;
     TAX_DOWNLOAD_EXE = temp_tax_download;
     GO_DB_PATH       = temp_go_db;
     GRAPHING_EXE     = temp_graphing;

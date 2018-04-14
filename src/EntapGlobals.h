@@ -102,6 +102,7 @@ extern std::string EGG_SQL_DB_PATH;
 extern std::string EGG_DOWNLOAD_EXE;
 extern std::string INTERPRO_EXE;
 extern std::string TAX_DB_PATH;     // binary
+extern std::string TAX_DB_PATH_TEXT;// Text
 extern std::string TAX_DOWNLOAD_EXE;
 extern std::string GO_DB_PATH;      // binary
 extern std::string GRAPHING_EXE;

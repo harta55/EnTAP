@@ -860,8 +860,9 @@ pair_str_t UserInput::get_config_path() {
         FS_dprint("No inputted config file, using default: " + output.first);
     }
     if (!_pFileSystem->file_exists(output.first)) {
-        throw ExceptionHandler("No configuration file with execution paths found at: " +
-                output.first, ERR_ENTAP_INPUT_PARSE);
+        FS_dprint("No configuration file with execution paths found at: " +
+                output.first);
+        // Will be printed later
     }
 
     output.second = get_executable_dir();

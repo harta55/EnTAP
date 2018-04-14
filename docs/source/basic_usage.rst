@@ -76,7 +76,7 @@ The |config_file| file mentioned above has the following defaults:
 These can be changed to whichever path you would prefer. If something is globally installed, just put how you'd normally run the software after the '=', such as 'diamond' for DIAMOND. EnTAP will recognize these paths first and they will override defaults. 
 
 
-This configuration file will be automatically detected if it is in the working directory, otherwise the path to it can be specified through the |flag_path| flag. The config file is mandatory!
+This configuration file will be automatically detected if it is in the working directory, otherwise the path to it can be specified through the |flag_path| flag. The config file is mandatory! The entap_tax_text_database will only be used in Configuration and thus is not needed in Execution.You can specify this if you downloaded the text version of the database (from python script) separately
 
 .. note:: Be sure you set the paths before moving on (besides the databases that haven't been downloaded yet)!
 

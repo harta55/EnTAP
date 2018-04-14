@@ -6,7 +6,9 @@ EnTAP Beta v0.8.1-beta
 ------------------------
 
     * Added additional error logging to provide more information when something goes wrong
-    * Configuration file made mandatory (default place to look is current working directory)
+    * Configuration file mandatory (default place to look is current working directory)
+    * Changed tax database paths in config file to avoid confusion (separate text and bin). Config file must be re-downloaded/generated!
+    * Defaults/output during configuration changed to config file then if not found, database-out flag
     * Added deletion of empty files if a certain stage failed (preventing re-reading an empty file)
     * Added errors/warnings for no alignments/hits in each stage
     * entap_out directory changed to transcriptomes to be more clear (holds only transcriptomic data)

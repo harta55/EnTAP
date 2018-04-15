@@ -26,6 +26,12 @@
 
 #include "EntapDatabase.h"
 
-EntapDatabase::EntapDatabase(std::string &) {
+EntapDatabase::EntapDatabase() {
+    // Initialize
 
 }
+
+void EntapDatabase::set_database(DATABASE_TYPE type) {
+
+}
+

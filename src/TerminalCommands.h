@@ -25,20 +25,7 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef ENTAP_CONFIG_H
-#define ENTAP_CONFIG_H
+#ifndef ENTAP_TERMINALCOMMANDS_H
+#define ENTAP_TERMINALCOMMANDS_H
 
-// Compile with boost libraries? Currently this MUST be selected
-#ifndef USE_BOOST
-#define USE_BOOST   1
-#endif
-
-// Compile with CURL
-#ifndef USE_CURL
-#define USE_CURL
-#endif
-
-// Comment this out if it is debug code
-//#define RELEASE_BUILD
-
-#endif //ENTAP_CONFIG_H
+#endif //ENTAP_TERMINALCOMMANDS_H

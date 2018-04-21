@@ -36,7 +36,7 @@
 #include "ExceptionHandler.h"
 #include "EntapExecute.h"
 #include "SimilaritySearch.h"
-#include "database/DatabaseHelper.h"
+#include "database/SQLDatabaseHelper.h"
 #include "EntapGlobals.h"
 #include "ontology/AbstractOntology.h"
 #include "ontology/ModEggnog.h"

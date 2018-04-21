@@ -37,6 +37,12 @@
 // Keeping global for now
 void FS_dprint(const std::string&);
 
+typedef enum {
+    FILE_TAR_GZ,
+    FILE_ZIP
+
+} ENT_FILE_TYPES;
+
 //***************** Global Prototype Functions *****************
 class FileSystem {
 
@@ -65,6 +71,10 @@ public:
     static std::string get_cur_dir();
     std::vector<std::string> list_to_vect(char, std::string&);
     std::string get_final_outdir();
+    std::string get_temp_outdir();
+
+    bool download_ftp_file(std::string&,std::string&);
+    bool extract_file(std::string &in_path, std::string &out_path);
 
 //**************************************************************
     static const std::string EXT_TXT ;
@@ -83,8 +93,10 @@ private:
     const std::string LOG_EXTENSION  = ".txt";
     const std::string DEBUG_FILENAME = "debug";
     const std::string ENTAP_FINAL_OUTPUT    = "final_results/";
+    const std::string TEMP_DIRECTORY        = "temp/";
     std::string _root_path;     // Root EnTAP output directory
     std::string _final_outpath; // Path to final files after entap has finished
+    std::string _temp_outpath;  // Temp directory for EnTAP usage
 };
 
 

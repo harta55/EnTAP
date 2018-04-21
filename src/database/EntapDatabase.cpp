@@ -26,12 +26,93 @@
 
 #include "EntapDatabase.h"
 
-EntapDatabase::EntapDatabase() {
+EntapDatabase::EntapDatabase(FileSystem* filesystem) {
     // Initialize
+    _pFilesystem     = filesystem;
+    _temp_directory  = filesystem->get_temp_outdir();    // created previously
+}
+
+EntapDatabase::DATABASE_ERR EntapDatabase::set_database(DATABASE_TYPE type) {
 
 }
 
-void EntapDatabase::set_database(DATABASE_TYPE type) {
-
+EntapDatabase::DATABASE_ERR EntapDatabase::download_database(EntapDatabase::DATABASE_TYPE type, std::string &path) {
+    switch (type) {
+        case ENTAP_SQL:
+            download_entap_sql(path);
+            break;
+        default:
+            return DATA_OK;
+    }
 }
+
+EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(EntapDatabase::DATABASE_TYPE type, std::string &path) {
+    switch (type) {
+        case ENTAP_SQL:
+            download_entap_sql(path);
+        default:
+            return DATA_OK;
+    }
+}
+
+EntapDatabase::DATABASE_ERR EntapDatabase::download_entap_sql(std::string &outpath) {
+    DATABASE_ERR err_code;
+
+    FS_dprint("Creating EnTAP SQL database...");
+
+    if (_pDatabaseHelper != nullptr) {
+        // SQL should not already have been created
+        return DATA_SQL_DUPLICATE;
+    } else if (_pFilesystem->file_exists(outpath)) {
+        // Out file should NOT exist yet
+        return DATA_FILE_EXISTS;
+    }
+
+    // Create sql database (will create if doesn't exist)
+    FS_dprint("Creating SQL database...");
+    _pDatabaseHelper = new SQLDatabaseHelper();
+    if (!_pDatabaseHelper->create(outpath)) {
+        // Return error if can't create
+        return DATA_SQL_CREATE;
+    }
+    FS_dprint("Success!");
+
+    // Generate tax entries, don't need a path - using SQL member
+    err_code = generate_entap_tax(ENTAP_SQL, "");
+    if (err_code != DATA_OK) return err_code;
+
+    // Generate go entries
+
+
+
+
+
+
+
+    return DATA_OK;
+}
+
+EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_sql(std::string &) {
+    return DATA_OK;
+}
+
+EntapDatabase::~EntapDatabase() {
+    if (_pDatabaseHelper != nullptr) {
+        _pDatabaseHelper->close();
+        delete(_pDatabaseHelper);
+    }
+}
+
+EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DATABASE_TYPE, std::string) {
+    std::string temp_outpath;   // Path
+
+    FS_dprint("Generating EnTAP Tax database entries");
+
+    return DATA_OK;
+}
+
+EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATABASE_TYPE, std::string) {
+    return DATA_OK;
+}
+
 

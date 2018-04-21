@@ -27,7 +27,7 @@
 
 
 //*********************** Includes *****************************
-#include "DatabaseHelper.h"
+#include "SQLDatabaseHelper.h"
 #include "../ExceptionHandler.h"
 #include "../EntapGlobals.h"
 //**************************************************************
@@ -39,15 +39,15 @@
  *
  * Description          - Opens sql database through sqlite3
  *
- * Notes                - None
+ * Notes                - This is used as a creation routine as well
  *
  * @param file          - Path to database
  *
- * @return              - None
+ * @return              - True/false if successful
  *
  * =====================================================================
  */
-bool DatabaseHelper::open(std::string file) {
+bool SQLDatabaseHelper::open(std::string file) {
     return sqlite3_open(file.c_str(),&_database) == SQLITE_OK;
     // Pragma didn't help speed much
     //    sqlite3_exec(_database,"PRAGMA synchronous = OFF", NULL, NULL, NULL);
@@ -69,8 +69,28 @@ bool DatabaseHelper::open(std::string file) {
  *
  * =====================================================================
  */
-void DatabaseHelper::close() {
+void SQLDatabaseHelper::close() {
     sqlite3_close(_database);
+}
+
+
+/**
+ * ======================================================================
+ * Function bool DatabaseHelper::create(std::string file)
+ *
+ * Description          - Creates SQL database
+ *                      - Calls open (which uses SQLITE_OPEN_CREATE)
+ *
+ * Notes                - None
+ *
+ * @param file          - Path to database
+ *
+ * @return              - True/false if successful
+ *
+ * =====================================================================
+ */
+bool SQLDatabaseHelper::create(std::string file) {
+    return open(file);
 }
 
 
@@ -89,7 +109,7 @@ void DatabaseHelper::close() {
  *
  * =====================================================================
  */
-std::vector<std::vector<std::string>> DatabaseHelper::query(char *query) {
+std::vector<std::vector<std::string>> SQLDatabaseHelper::query(char *query) {
     sqlite3_stmt *stmt;
     query_struct output;
     if (sqlite3_prepare_v2(_database,query,-1,&stmt,0) == SQLITE_OK) {
@@ -115,12 +135,12 @@ std::vector<std::vector<std::string>> DatabaseHelper::query(char *query) {
 }
 
 
-DatabaseHelper::DatabaseHelper() {
+SQLDatabaseHelper::SQLDatabaseHelper() {
     _database = NULL;
 }
 
 
-DatabaseHelper::~DatabaseHelper() {
+SQLDatabaseHelper::~SQLDatabaseHelper() {
     close();
 }
 

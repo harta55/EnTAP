@@ -49,7 +49,7 @@ public:
 private:
 
     void get_tax_scope(std::string&, QuerySequence::EggnogResults&);
-    void get_sql_data(QuerySequence::EggnogResults&, DatabaseHelper&);
+    void get_sql_data(QuerySequence::EggnogResults&, SQLDatabaseHelper&);
     std::string format_sql_data(std::string&);
     void get_og_query(QuerySequence::EggnogResults&);
 

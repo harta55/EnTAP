@@ -112,7 +112,7 @@ void ModEggnog::parse() {
     uint32                                   count_tax_scope=0;
     uint32                                   ct = 0;
     fp32                                     percent;
-    DatabaseHelper                           EGGNOG_DATABASE;
+    SQLDatabaseHelper                           EGGNOG_DATABASE;
     std::map<std::string, uint32>            tax_scope_ct_map;
     GO_top_map_t                             go_combined_map;     // Just for convenience
     GraphingData                             graphingStruct;
@@ -519,7 +519,7 @@ void ModEggnog::get_tax_scope(std::string &raw_scope,
  * @return              - None
  * ======================================================================
  */
-void ModEggnog::get_sql_data(QuerySequence::EggnogResults &eggnogResults, DatabaseHelper &database) {
+void ModEggnog::get_sql_data(QuerySequence::EggnogResults &eggnogResults, SQLDatabaseHelper &database) {
     // Lookup description, KEGG, protein domain from SQL database
     if (!eggnogResults.og_key.empty()) {
         std::vector<std::vector<std::string>>results;

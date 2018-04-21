@@ -445,10 +445,12 @@ FileSystem::FileSystem(std::string &root) {
 
     _root_path     = root;
     _final_outpath = PATHS(root, ENTAP_FINAL_OUTPUT);
+    _temp_outpath  = PATHS(root, TEMP_DIRECTORY);
 
     // Make sure directories are created (or already created)
     create_dir(root);
     create_dir(_final_outpath);
+    create_dir(_temp_outpath);
 
     // generate log file
     init_log();
@@ -533,9 +535,11 @@ bool FileSystem::copy_file(std::string inpath, std::string outpath, bool overwri
 }
 
 void FileSystem::get_filename_no_extensions(std::string &file_name) {
+#ifdef USE_BOOST
     boostFS::path path(file_name);
     while (path.has_extension()) path = path.stem();
     file_name = path.string();
+#endif
 }
 
 std::string FileSystem::get_filename(std::string path) {
@@ -548,4 +552,20 @@ std::string FileSystem::get_filename(std::string path) {
 
 std::string FileSystem::get_final_outdir() {
     return this->_final_outpath;
+}
+
+std::string FileSystem::get_temp_outdir() {
+    return this->_temp_outpath;
+}
+
+bool FileSystem::download_ftp_file(std::string &ftp_path, std::string& out_path) {
+#ifdef USE_CURL
+
+
+#endif
+    return false;
+}
+
+bool FileSystem::extract_file(std::string &in_path, std::string &out_path) {
+    return false;
 }

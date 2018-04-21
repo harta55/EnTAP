@@ -144,3 +144,21 @@ SQLDatabaseHelper::~SQLDatabaseHelper() {
     close();
 }
 
+bool SQLDatabaseHelper::execute_cmd(char* cmd) {
+    int err;
+    char* err_msg = 0;
+
+//    FS_dprint("Executing SQL cmd:\n" + cmd);
+
+    err = sqlite3_exec(_database, cmd, NULL, 0, &err_msg);
+
+    if( err != SQLITE_OK ){
+        std::string err_str = err_msg;
+        FS_dprint("SQL Error: " + err_str);
+        sqlite3_free(err_msg);
+        return false;
+    } else {
+//        FS_dprint("Success!");
+        return true;
+    }
+}

@@ -50,6 +50,7 @@ struct  GoEntry {
 struct TaxEntry {
     std::string tax_id;
     std::string lineage;
+    std::string tax_name;
     friend class boost::serialization::access;
     template<typename Archive>
     void serialize(Archive & ar, const uint32 v) {

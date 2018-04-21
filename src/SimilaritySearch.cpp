@@ -292,7 +292,7 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
                      "qstart qend sstart send evalue bitscore qcovhsp stitle";
 
     FS_dprint("\nExecuting Diamond:\n" + diamond_run);
-    if (execute_cmd(diamond_run, std_out) != 0) {
+    if (TC_execute_cmd(diamond_run, std_out) != 0) {
         // Delete output file if run failed
         _pFileSystem->delete_file(output_file);
         throw ExceptionHandler("Error in DIAMOND run with database located at: " +
@@ -930,7 +930,7 @@ bool SimilaritySearch::is_executable() {
     std::string test_command;
 
     test_command = DIAMOND_EXE + " --version";
-    return execute_cmd(test_command) == 0;
+    return TC_execute_cmd(test_command) == 0;
 }
 
 // Returns database "shortname" from database full path

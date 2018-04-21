@@ -30,7 +30,7 @@
 #define ENTAP_DATABASEHELPER_H
 
 #include <iostream>
-#include <vector>
+#include "../common.h"
 #include "sqlite3.h"
 
 
@@ -43,6 +43,7 @@ public:
     ~SQLDatabaseHelper();
     bool open(std::string file);
     bool create(std::string file);
+    bool execute_cmd(char*);
     void close();
     query_struct query(char* query);
 

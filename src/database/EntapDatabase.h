@@ -51,7 +51,9 @@ public:
         DATA_WRITE,
         DATA_READ,
         DATA_SQL_DUPLICATE,
-        DATA_SQL_CREATE,
+        DATA_SQL_CREATE_DATABASE,
+        DATA_SQL_CREATE_TABLE,
+        DATA_SQL_CREATE_ENTRY,
         DATA_FILE_EXISTS,
         DATA_TAX_CREATION
 
@@ -62,6 +64,16 @@ public:
         go_serial_map_t  gene_ontology_data;
     };
 
+    // Node for NCBI taxonomy
+    struct TaxonomyNode{
+        std::string parent_id;
+        std::string ncbi_id;
+        std::string sci_name;
+        vect_str_t  names;
+
+        TaxonomyNode(std::string id);
+    };
+
     EntapDatabase(FileSystem*);
     ~EntapDatabase();
     DATABASE_ERR set_database(DATABASE_TYPE);
@@ -69,21 +81,38 @@ public:
     DATABASE_ERR generate_database(DATABASE_TYPE, std::string&);
 
 private:
-
     DATABASE_ERR download_entap_sql(std::string&);
     DATABASE_ERR generate_entap_sql(std::string&);
     DATABASE_ERR generate_entap_tax(DATABASE_TYPE, std::string);
     DATABASE_ERR generate_entap_go(DATABASE_TYPE, std::string);
-
+    std::string  entap_tax_get_lineage(TaxonomyNode &,
+                                       std::unordered_map<std::string, TaxonomyNode>&);
+    bool sql_add_tax_entry(TaxEntry&);
+    bool create_sql_table(DATABASE_TYPE);
 
     const std::string FTP_ENTAP_DATABASE_SQL = "temp/ftp.com";
     const std::string NCBI_TAX_ROOT          = "root[Subtree]"; // Unused
     const std::string NCBI_TAX_DATABASE      = "taxonomy";      // Unused
     const std::string NCBI_TAX_DUMP_FTP_TARGZ= "ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz";
+    const std::string NCBI_TAX_DUMP_FILENAME = "taxdump.tar.gz";
     const std::string NCBI_TAX_DUMP_FTP_NAMES= "names.dmp";
     const std::string NCBI_TAX_DUMP_FTP_NODES= "nodes.dmp";
+    const char        NCBI_TAX_DUMP_DELIM    = '\t';
+    // NCBI Taxonomy dump columns
+    const int NCBI_TAX_DUMP_COL_NAME_CLASS = 6; // Name type (scientific, authority...)
+    const int NCBI_TAX_DUMP_COL_ID         = 0;
+    const int NCBI_TAX_DUMP_COL_NAME       = 2; // Actual name
+    const int NCBI_TAX_DUMP_COL_PARENT     = 2; // Parent node in database
+    const std::string NCBI_TAX_DUMP_SCIENTIFIC = "scientific name";
 
-    EntapDatabaseStruct *_pDATABASE;
+    // SQL Database Namings
+    const std::string SQL_TABLE_NCBI_TAX_TITLE = "TAXONOMY";
+    const std::string SQL_COL_NCBI_TAX_TAXID   = "TAXID";
+    const std::string SQL_COL_NCBI_TAX_LINEAGE = "LINEAGE";
+    const std::string SQL_COL_NCBI_TAX_NAME    = "TAXNAME";
+    const std::string SQL_TABLE_GO_TITLE       = "GENEONTOLOGY";
+
+    EntapDatabaseStruct *_pSerializedDatabase;
     FileSystem          *_pFilesystem;
     SQLDatabaseHelper   *_pDatabaseHelper;
     std::string          _temp_directory;

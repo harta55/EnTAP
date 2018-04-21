@@ -33,9 +33,14 @@
 #define USE_BOOST   1
 #endif
 
-// Compile with CURL
+// Compile with CURL? Will use wget command otherwise
 #ifndef USE_CURL
-#define USE_CURL
+//#define USE_CURL    1
+#endif
+
+// Compile with ZLIB? Will use tar command otherwise
+#ifndef USE_ZLIB
+//#define USE_ZLIB    1
 #endif
 
 // Comment this out if it is debug code

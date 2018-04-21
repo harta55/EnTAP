@@ -50,7 +50,7 @@ GraphingManager::GraphingManager(std::string path) {
     FS_dprint("Spawn object - GraphingManager");
     _graph_path = path;
     std::string cmd = "python " + path + " -s -1 -g -1 -i /temp -t temp";
-    _graphing_enabled = execute_cmd(cmd) == 0;
+    _graphing_enabled = TC_execute_cmd(cmd) == 0;
     if (_graphing_enabled) {
         FS_dprint("Graphing is supported");
     } else FS_dprint("Graphing is NOT supported");
@@ -85,7 +85,7 @@ void GraphingManager::graph(GraphingData& graphingStruct) {
     cmd_map[FLAG_GRAPH]      = std::to_string(graphingStruct.graph_type);
 
     graphing_cmd = generate_command(cmd_map, "python " + _graph_path);
-    if (execute_cmd(graphing_cmd) != 0) {
+    if (TC_execute_cmd(graphing_cmd) != 0) {
         FS_dprint("\nError generating graph from:\n" + graphing_cmd);
     }
 }

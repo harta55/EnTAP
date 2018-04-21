@@ -252,7 +252,7 @@ namespace entapConfig {
             if (!_pFileSystem->file_exists(tax_txt_path_default)) {
                 FS_dprint("Non-binary database not found at: " + tax_txt_path_default + " downloading...");
                 tax_command = "python " + TAX_DOWNLOAD_EXE + " -o " + tax_txt_path_default;
-                if (execute_cmd(tax_command) != 0) {
+                if (TC_execute_cmd(tax_command) != 0) {
                     _pFileSystem->delete_file(tax_txt_path_default);
                     throw ExceptionHandler("Command: " + tax_command, ERR_ENTAP_INIT_TAX_DOWN);
                 }
@@ -502,7 +502,7 @@ namespace entapConfig {
                     " -p "      +std::to_string(threads);
 
             FS_dprint("Executing DIAMOND command:\n" + index_command);
-            if (execute_cmd(index_command,std_out) != 0) {
+            if (TC_execute_cmd(index_command, std_out) != 0) {
                 throw ExceptionHandler("Error indexing database at: " + item,
                                        ERR_ENTAP_INIT_INDX_DATABASE);
             }
@@ -538,7 +538,7 @@ namespace entapConfig {
                                    eggnog_exe, ERR_ENTAP_INIT_EGGNOG);
         }
         FS_dprint("Executing eggnog download...\n" + eggnog_cmd);
-        if (execute_cmd(eggnog_cmd) != 0) {
+        if (TC_execute_cmd(eggnog_cmd) != 0) {
             throw ExceptionHandler("EggNOG command: " + eggnog_cmd,ERR_ENTAP_INIT_EGGNOG);
         }
     }
@@ -556,7 +556,7 @@ namespace entapConfig {
         download_command = "wget -O "+ output_path + " " + ftp_address;
         FS_dprint("Downloading uniprot: " + flag + " database from " +
                   ftp_address + "...");
-        status = execute_cmd(download_command);
+        status = TC_execute_cmd(download_command);
         if (status != 0) {
             throw ExceptionHandler("Error in downloading uniprot database", ERR_ENTAP_INIT_TAX_DOWN);
         }
@@ -570,7 +570,7 @@ namespace entapConfig {
         boostFS::path path(out_path);
         std::string download_command = "wget -O "+ out_path + " " + ftp;
         FS_dprint("Downloading through wget: file from " + ftp + "...");
-        status = execute_cmd(download_command);
+        status = TC_execute_cmd(download_command);
         if (status != 0) {
             throw ExceptionHandler("Error in downloading " + ftp, ERR_ENTAP_INIT_GO_DOWNLOAD);
         }
@@ -608,7 +608,7 @@ namespace entapConfig {
             unzip_command = "tar -xzf " + file_path + " -C " + out_path;
         }
         std_out = out_path + "_std";
-        status = execute_cmd(unzip_command,std_out);
+        status = TC_execute_cmd(unzip_command, std_out);
         if (status != 0) {
             throw ExceptionHandler("Error in unzipping database at " +
                     file_path, ERR_ENTAP_INIT_GO_UNZIP);

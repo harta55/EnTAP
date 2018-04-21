@@ -56,12 +56,11 @@ namespace boostAR = boost::archive;
 
 
 //***************** Global Prototype Functions *****************
-int execute_cmd(std::string,std::string);
-int execute_cmd(std::string);
 std::string generate_command(std::unordered_map<std::string,std::string>&,
                              std::string);
 std::string float_to_string(fp64);
 std::string float_to_sci(fp64, int);
+vect_str_t  split_string(std::string, char);
 //**************************************************************
 
 

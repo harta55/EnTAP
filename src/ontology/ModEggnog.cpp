@@ -407,7 +407,7 @@ void ModEggnog::execute() {
         for (auto &pair : eggnog_command_map)eggnog_command += pair.first + " " + pair.second + " ";
         FS_dprint("\nExecuting eggnog mapper against protein sequences that hit databases...\n"
                     + eggnog_command);
-        if (execute_cmd(eggnog_command, annotation_std) !=0) {
+        if (TC_execute_cmd(eggnog_command, annotation_std) !=0) {
             _pFileSystem->delete_file(annotation_base_flag);
             throw ExceptionHandler("Error executing eggnog mapper", ERR_ENTAP_RUN_ANNOTATION);
         }
@@ -462,7 +462,7 @@ bool ModEggnog::is_executable() {
             EGG_EMAPPER_EXE  +
             " --version";
     FS_dprint("Testing EggNOG:\n" + test_command);
-    return execute_cmd(test_command) == 0;
+    return TC_execute_cmd(test_command) == 0;
 }
 
 ModEggnog::~ModEggnog() {

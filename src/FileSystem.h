@@ -31,22 +31,23 @@
 
 //*********************** Includes *****************************
 #include "common.h"
+#include "TerminalCommands.h"
 //**************************************************************
 
 
 // Keeping global for now
 void FS_dprint(const std::string&);
 
-typedef enum {
-    FILE_TAR_GZ,
-    FILE_ZIP
-
-} ENT_FILE_TYPES;
-
 //***************** Global Prototype Functions *****************
 class FileSystem {
 
 public:
+
+    typedef enum {
+        FILE_TAR_GZ,
+        FILE_ZIP
+
+    } ENT_FILE_TYPES;
 
     FileSystem(std::string&);
     ~FileSystem();
@@ -73,8 +74,8 @@ public:
     std::string get_final_outdir();
     std::string get_temp_outdir();
 
-    bool download_ftp_file(std::string&,std::string&);
-    bool extract_file(std::string &in_path, std::string &out_path);
+    bool download_ftp_file(std::string,std::string&);
+    bool decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES);
 
 //**************************************************************
     static const std::string EXT_TXT ;

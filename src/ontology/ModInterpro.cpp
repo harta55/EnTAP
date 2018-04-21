@@ -113,7 +113,7 @@ void ModInterpro::execute() {
         throw ExceptionHandler("No InterPro databases selected!",
                 ERR_ENTAP_RUN_INTERPRO);
     }
-    if (execute_cmd(interpro_cmd, std_out) != 0) {
+    if (TC_execute_cmd(interpro_cmd, std_out) != 0) {
         _pFileSystem->delete_file(_final_outpath);
         throw ExceptionHandler("Error executing InterProScan, consult the error file at: "+
                 std_out, ERR_ENTAP_RUN_INTERPRO);

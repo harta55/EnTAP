@@ -106,7 +106,7 @@ std::string ModGeneMarkST::execute() {
     genemark_std_out = PATHS(_frame_outpath, GENEMARK_STD_OUT);
     FS_dprint("Running genemark...\n" + genemark_cmd);
 
-    if (execute_cmd(genemark_cmd,genemark_std_out) != 0 ) {
+    if (TC_execute_cmd(genemark_cmd, genemark_std_out) != 0 ) {
         throw ExceptionHandler("Error in running genemark at file located at: " +
                                _inpath, ERR_ENTAP_INIT_INDX_DATA_NOT_FOUND);
     }

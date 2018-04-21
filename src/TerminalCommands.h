@@ -28,4 +28,10 @@
 #ifndef ENTAP_TERMINALCOMMANDS_H
 #define ENTAP_TERMINALCOMMANDS_H
 
+#include "common.h"
+
+int TC_execute_cmd(std::string, std::string);
+int TC_execute_cmd(std::string);
+
+
 #endif //ENTAP_TERMINALCOMMANDS_H

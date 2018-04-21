@@ -39,6 +39,10 @@
 #include <cstring>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#ifdef USE_CURL
+#include "curl/curl.h"
+#endif
+
 const std::string FileSystem::EXT_TXT = ".txt";
 const std::string FileSystem::EXT_ERR = ".err";
 const std::string FileSystem::EXT_OUT = ".out";
@@ -558,14 +562,68 @@ std::string FileSystem::get_temp_outdir() {
     return this->_temp_outpath;
 }
 
-bool FileSystem::download_ftp_file(std::string &ftp_path, std::string& out_path) {
+bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) {
+
+    FS_dprint("Downloading FTP file at: " + ftp_path);
+
 #ifdef USE_CURL
+    FS_dprint("Using CURL...");
+    CURL *curl;
+    CURLcode res;
+    FILE *out_file;
 
+    curl = curl_easy_init();
+    if (curl) {
+        out_file = fopen(out_path.c_str(),"wb");
+        curl_easy_setopt(curl, CURLOPT_URL, ftp_path.c_str());
+        // We dont need a callback for now
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, out_file);
+        res = curl_easy_perform(curl);
+        curl_easy_cleanup(curl);
+        fclose(out_file);
 
+        if(CURLE_OK != res) {
+            // Failed
+            FS_dprint("CURL download has failed");
+            return false;
+        }
+    } else {
+        FS_dprint("CURL has failed!");
+        return false;
+    }
+    return true;
+#else
+    // Not compiled with CURL usage, use terminal command
+    FS_dprint("Using wget terminal command...");
+
+    std::string terminal_cmd =
+        "wget -o " + out_path + " " + ftp_path;
+    FS_dprint("Executing cmd:\n" + terminal_cmd);
+
+    return TC_execute_cmd(terminal_cmd) == 0;
 #endif
-    return false;
 }
 
-bool FileSystem::extract_file(std::string &in_path, std::string &out_path) {
+bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES type) {
+    FS_dprint("Decompressing file at: " + in_path);
+#ifdef USE_ZLIB
+    return false;
+#else
+    // Not compiled with ZLIB usage, use terminal command
+    FS_dprint("Using terminal command...");
+    std::string terminal_cmd;
+
+    switch (type) {
+        case FILE_TAR_GZ:
+            terminal_cmd =
+                "tar -xzf " + in_path +
+                        " -C " + out_dir;
+            break;
+        default:
+            return false;
+    }
+#endif
+
     return false;
 }

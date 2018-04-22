@@ -47,6 +47,7 @@
 #include "boost/archive/text_oarchive.hpp"
 #include "boost/archive/text_iarchive.hpp"
 #include "FileSystem.h"
+#include "database/EntapDatabase.h"
 //**************************************************************
 
 namespace entapConfig {
@@ -72,31 +73,17 @@ namespace entapConfig {
     UserInput                *_pUserInput;
 
     //-----------------------FTP PATHS---------------------------//
-    const std::string GO_DATABASE_FTP =
-            "http://archive.geneontology.org/latest-full/go_monthly-termdb-tables.tar.gz";
     const std::string UNIPROT_FTP_SWISS = "ftp://ftp.uniprot.org/pub/databases/"
             "uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz";
     const std::string UNIPROT_FTP_TREMBL = "ftp://ftp.uniprot.org/pub/databases/"
             "uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz";
-    const std::string GO_TERM_FILE             = "term.txt";
-    const std::string GO_GRAPH_FILE            = "graph_path.txt";
-    const std::string GO_DATA_NAME             = "go_monthly-termdb-tables.tar.gz";
-    const std::string GO_DIR                   = "go_monthly-termdb-tables/";
-
-    // ID's used for GO level determination
-    const std::string BIOLOGICAL_LVL = "6679";
-    const std::string MOLECULAR_LVL  = "2892";
-    const std::string CELLULAR_LVL   = "311";
 
     //****************** Local Prototype Functions******************
     void init_taxonomic(std::string&);
     void init_uniprot(std::vector<std::string>&, std::string);
     void init_ncbi(std::vector<std::string>&, std::string);
     void init_diamond_index(std::string,std::string,int);
-    std::string download_file(std::string, std::string&,std::string&);
-    std::string download_file(const std::string &,std::string&);
     std::string get_output_dir();
-    void decompress_file(std::string,std::string,short);
     int update_database(std::string);
     void init_go_db(std::string&,std::string);
     void init_eggnog(std::string);
@@ -336,61 +323,6 @@ namespace entapConfig {
             FS_dprint("Database NOT found at: " + GO_DB_PATH + " , downloading...");
             go_db_path = PATHS(exe, Defaults::GO_DATABASE_BIN_DEFAULT);
         }
-        go_database_zip = PATHS(database_path, GO_DATA_NAME);
-        go_database_out = PATHS(database_path, GO_DIR);
-        if (_pFileSystem->file_exists(go_database_zip)) boostFS::remove(go_database_zip);
-        try {
-            download_file(GO_DATABASE_FTP,go_database_zip);
-            decompress_file(go_database_zip,database_path,1);
-            boostFS::remove(go_database_zip);
-        } catch (ExceptionHandler const &e ){ throw e;}
-
-        go_term_path  = PATHS(go_database_out, GO_TERM_FILE);
-        go_graph_path = PATHS(go_database_out, GO_GRAPH_FILE);
-        if (!_pFileSystem->file_exists(go_term_path) || !_pFileSystem->file_exists(go_graph_path)) {
-            throw ExceptionHandler("GO term files must be at: " + go_term_path + " and " + go_graph_path +
-                                   " in order to configure database", ERR_ENTAP_INIT_GO_INDEX);
-        }
-
-        io::CSVReader<6, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(go_graph_path);
-        std::string index,root,branch, temp, distance, temp2;
-        std::map<std::string,std::string> distance_map;
-        while (in.read_row(index,root,branch, temp, distance, temp2)) {
-            if (root.compare(entapConfig::BIOLOGICAL_LVL) == 0     ||
-                    root.compare(entapConfig::MOLECULAR_LVL) == 0  ||
-                    root.compare(entapConfig::CELLULAR_LVL) ==0) {
-                if (distance_map.find(branch) == distance_map.end()) {
-                    distance_map.emplace(branch,distance);
-                } else {
-                    if (distance.empty()) continue;
-                    fp32 cur   = std::stoi(distance_map[branch]);
-                    fp32 query = std::stoi(distance);
-                    if (query > cur) distance_map[branch] = distance;
-                }
-            }
-        }
-        go_serial_map_t go_map;
-        std::string num,term,cat,go,ex,ex1,ex2;
-        io::CSVReader<7, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in2(go_term_path);
-        while (in2.read_row(num,term,cat,go,ex,ex1,ex2)) {
-            lvl = distance_map[num];
-            GoEntry go_data;
-            go_data.category = cat; go_data.level=lvl;go_data.term=term;
-            go_data.go_id=go;
-            go_map[go] = go_data;
-        }
-        boostFS::remove_all(go_database_out);
-        FS_dprint("Success! Writing file to "+ go_db_path + "...");
-        try{
-            {
-                std::ofstream ofs(go_db_path);
-                boostAR::binary_oarchive oa(ofs);
-                oa << go_map;
-            }
-        } catch (std::exception &e) {
-            throw ExceptionHandler(e.what(), ERR_ENTAP_INIT_GO_INDEX);
-        }
-        FS_dprint("Success!");
     }
 
 
@@ -541,79 +473,6 @@ namespace entapConfig {
         if (TC_execute_cmd(eggnog_cmd) != 0) {
             throw ExceptionHandler("EggNOG command: " + eggnog_cmd,ERR_ENTAP_INIT_EGGNOG);
         }
-    }
-
-    std::string download_file(std::string flag, std::string &path, std::string temp) {
-        // TODO libcurl
-
-        std::string ftp_address;
-        int status;
-        std::string download_command;
-        std::string output_path;
-
-        output_path = path + flag + ".gz";
-
-        download_command = "wget -O "+ output_path + " " + ftp_address;
-        FS_dprint("Downloading uniprot: " + flag + " database from " +
-                  ftp_address + "...");
-        status = TC_execute_cmd(download_command);
-        if (status != 0) {
-            throw ExceptionHandler("Error in downloading uniprot database", ERR_ENTAP_INIT_TAX_DOWN);
-        }
-        FS_dprint("File successfully downloaded to: " + output_path);
-        return output_path;
-    }
-
-    std::string download_file(const std::string &ftp, std::string &out_path) {
-        int status;
-
-        boostFS::path path(out_path);
-        std::string download_command = "wget -O "+ out_path + " " + ftp;
-        FS_dprint("Downloading through wget: file from " + ftp + "...");
-        status = TC_execute_cmd(download_command);
-        if (status != 0) {
-            throw ExceptionHandler("Error in downloading " + ftp, ERR_ENTAP_INIT_GO_DOWNLOAD);
-        }
-        FS_dprint("Success! File printed to: " + out_path);
-        return out_path;
-    }
-
-
-    /**
-     * ======================================================================
-     * Function decompress_file(std::string file_path, std::string out_path,short flag)
-     *
-     * Description          - Decompresses file using unix commands
-     *
-     * Notes                - Will be replaced with library
-     *
-     * @param file_path     - Path to file to be unzipped
-     * @param out_path      - Output file path
-     * @param flag          - Gzip/tar flag
-     *
-     * @return              - None
-     *
-     * =====================================================================
-     */
-    void decompress_file(std::string file_path, std::string out_path,short flag) {
-        FS_dprint("Decompressing file at: " + file_path);
-
-        std::string unzip_command;
-        std::string std_out;
-        int status;
-
-        if (flag == 0){
-            unzip_command = "gzip -d " + file_path;
-        } else {
-            unzip_command = "tar -xzf " + file_path + " -C " + out_path;
-        }
-        std_out = out_path + "_std";
-        status = TC_execute_cmd(unzip_command, std_out);
-        if (status != 0) {
-            throw ExceptionHandler("Error in unzipping database at " +
-                    file_path, ERR_ENTAP_INIT_GO_UNZIP);
-        }
-        FS_dprint("File at: " + file_path + " successfully decompressed");
     }
 
     int update_database(std::string file_path) {

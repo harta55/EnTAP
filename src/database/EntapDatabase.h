@@ -40,22 +40,30 @@ public:
 
         ENTAP_SQL=0,        // SQL database (uniprot mapping, tax data)
         ENTAP_TAXONOMY,     // NCBI tax database
-        ENTAP_GENE_ONTOLOGY,// GO database (serial)
+        ENTAP_GENE_ONTOLOGY,// GO database
+        ENTAP_SERIALIZED,   // Serialized database (uniprot, tax, go)
         EGGNOG_SQL,         // EggNOG SQL database
         EGGNOG_DIAMOND,     // EggNOG DIAMOND database
+        EGGNOG_FASTA        // EggNOG fasta (non-diamond)
+
     } DATABASE_TYPE;
 
     typedef enum {
 
-        DATA_OK=0,
-        DATA_WRITE,
-        DATA_READ,
-        DATA_SQL_DUPLICATE,
-        DATA_SQL_CREATE_DATABASE,
-        DATA_SQL_CREATE_TABLE,
-        DATA_SQL_CREATE_ENTRY,
-        DATA_FILE_EXISTS,
-        DATA_TAX_CREATION
+        ERR_DATA_OK=0,
+        ERR_DATA_WRITE,
+        ERR_DATA_READ,
+        ERR_DATA_SQL_DUPLICATE,
+        ERR_DATA_SQL_CREATE_DATABASE,
+        ERR_DATA_SQL_CREATE_TABLE,
+        ERR_DATA_SQL_CREATE_ENTRY,
+        ERR_DATA_FILE_EXISTS,
+        ERR_DATA_TAX_CREATED,
+        ERR_DATA_TAX_DOWNLOAD,
+        ERR_DATA_FILE_DECOMPRESS,
+        ERR_DATA_GO_DOWNLOAD,
+        ERR_DATA_GO_DECOMPRESS,
+        ERR_DATA_GO_ENTRY
 
     } DATABASE_ERR;
 
@@ -83,21 +91,30 @@ public:
 private:
     DATABASE_ERR download_entap_sql(std::string&);
     DATABASE_ERR generate_entap_sql(std::string&);
+    DATABASE_ERR generate_entap_serial(std::string&);
     DATABASE_ERR generate_entap_tax(DATABASE_TYPE, std::string);
     DATABASE_ERR generate_entap_go(DATABASE_TYPE, std::string);
     std::string  entap_tax_get_lineage(TaxonomyNode &,
                                        std::unordered_map<std::string, TaxonomyNode>&);
     bool sql_add_tax_entry(TaxEntry&);
+    bool sql_add_go_entry(GoEntry&);
     bool create_sql_table(DATABASE_TYPE);
 
-    const std::string FTP_ENTAP_DATABASE_SQL = "temp/ftp.com";
+    // FTP Paths
+    const std::string FTP_GO_DATABASE =
+            "http://archive.geneontology.org/latest-full/go_monthly-termdb-tables.tar.gz";
+    const std::string FTP_NCBI_TAX_DUMP_TARGZ =
+            "ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz";
+    const std::string FTP_ENTAP_DATABASE_SQL = "temp/ftp";
+
+    // NCBI Taxonomy filenames
     const std::string NCBI_TAX_ROOT          = "root[Subtree]"; // Unused
     const std::string NCBI_TAX_DATABASE      = "taxonomy";      // Unused
-    const std::string NCBI_TAX_DUMP_FTP_TARGZ= "ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz";
     const std::string NCBI_TAX_DUMP_FILENAME = "taxdump.tar.gz";
     const std::string NCBI_TAX_DUMP_FTP_NAMES= "names.dmp";
     const std::string NCBI_TAX_DUMP_FTP_NODES= "nodes.dmp";
     const char        NCBI_TAX_DUMP_DELIM    = '\t';
+
     // NCBI Taxonomy dump columns
     const int NCBI_TAX_DUMP_COL_NAME_CLASS = 6; // Name type (scientific, authority...)
     const int NCBI_TAX_DUMP_COL_ID         = 0;
@@ -111,6 +128,21 @@ private:
     const std::string SQL_COL_NCBI_TAX_LINEAGE = "LINEAGE";
     const std::string SQL_COL_NCBI_TAX_NAME    = "TAXNAME";
     const std::string SQL_TABLE_GO_TITLE       = "GENEONTOLOGY";
+    const std::string SQL_TABLE_GO_COL_ID      = "GOID";
+    const std::string SQL_TABLE_GO_COL_DESC    = "DESCRIPTION";
+    const std::string SQL_TABLE_GO_COL_CATEGORY= "CATEGORY";
+    const std::string SQL_TABLE_GO_COL_LEVEL   = "LEVEL";
+
+    // Gene Ontology constants
+    const std::string GO_BIOLOGICAL_LVL = "6679";
+    const std::string GO_MOLECULAR_LVL  = "2892";
+    const std::string GO_CELLULAR_LVL   = "311";
+    const std::string GO_TERM_FILE      = "term.txt";
+    const std::string GO_GRAPH_FILE     = "graph_path.txt";
+    const std::string GO_TERMDB_FILE    = "go_monthly-termdb-tables.tar.gz";
+    const std::string GO_TERMDB_DIR     = "go_monthly-termdb-tables/";
+
+    const uint8 STATUS_UPDATES = 5;     // Percentage of updates when downloading/configuring
 
     EntapDatabaseStruct *_pSerializedDatabase;
     FileSystem          *_pFilesystem;

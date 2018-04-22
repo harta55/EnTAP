@@ -440,7 +440,7 @@ std::string FileSystem::get_cur_dir() {
 
 FileSystem::~FileSystem() {
     FS_dprint("Killing Object - FileSystem");
-
+    delete_dir(_temp_outpath);
 }
 
 FileSystem::FileSystem(std::string &root) {
@@ -598,15 +598,24 @@ bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) 
     FS_dprint("Using wget terminal command...");
 
     std::string terminal_cmd =
-        "wget -o " + out_path + " " + ftp_path;
-    FS_dprint("Executing cmd:\n" + terminal_cmd);
+        "wget -O " + out_path + " " + ftp_path;
 
-    return TC_execute_cmd(terminal_cmd) == 0;
+    if (TC_execute_cmd(terminal_cmd) == 0) {
+        FS_dprint("Success, file saved to: " + out_path);
+        return true;
+    } else {
+        FS_dprint("Error. Did not complete");
+        return false;
+    }
 #endif
 }
 
 bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES type) {
     FS_dprint("Decompressing file at: " + in_path);
+    if (!file_exists(in_path)) {
+        FS_dprint("File does not exist!");
+        return false;
+    }
 #ifdef USE_ZLIB
     return false;
 #else
@@ -619,11 +628,16 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
             terminal_cmd =
                 "tar -xzf " + in_path +
                         " -C " + out_dir;
+            if (TC_execute_cmd(terminal_cmd) == 0) {
+                FS_dprint("Success! Exported to: " + out_dir);
+                return true;
+            } else {
+                FS_dprint("Error! Unable to decompress file");
+                return false;
+            }
             break;
         default:
             return false;
     }
 #endif
-
-    return false;
 }

@@ -29,6 +29,7 @@
 #include <pstream.h>
 #include "TerminalCommands.h"
 #include "common.h"
+#include "FileSystem.h"
 
 /**
  * ======================================================================
@@ -47,6 +48,7 @@
  * =====================================================================
  */
 int TC_execute_cmd(std::string cmd, std::string out_path) {
+    FS_dprint("Executing command: \n" + cmd);
     std::ofstream out_file(out_path+".out", std::ios::out | std::ios::app);
     std::ofstream err_file(out_path+".err", std::ios::out | std::ios::app);
     const redi::pstreams::pmode mode = redi::pstreams::pstdout|redi::pstreams::pstderr;
@@ -84,6 +86,7 @@ int TC_execute_cmd(std::string cmd, std::string out_path) {
 // todo, may want to handle differently
 // TODO change to sending map of flags as command
 int TC_execute_cmd(std::string cmd) {
+    FS_dprint("Executing command: \n" + cmd);
     const redi::pstreams::pmode mode = redi::pstreams::pstdout|redi::pstreams::pstderr;
     redi::ipstream child(cmd, mode);
     char buf[1024];

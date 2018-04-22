@@ -48,11 +48,14 @@
  * =====================================================================
  */
 bool SQLDatabaseHelper::open(std::string file) {
-    return sqlite3_open(file.c_str(),&_database) == SQLITE_OK;
-    // Pragma didn't help speed much
-    //    sqlite3_exec(_database,"PRAGMA synchronous = OFF", NULL, NULL, NULL);
-    //    sqlite3_exec(_database,"PRAGMA count_changes = false", NULL, NULL, NULL);
-    //    sqlite3_exec(_database,"PRAGMA journal_mode = OFF", NULL, NULL, NULL);
+    int err_code;
+    err_code = sqlite3_open(file.c_str(),&_database);
+    if (err_code == SQLITE_OK) {
+        sqlite3_exec(_database,"PRAGMA synchronous = OFF", NULL, NULL, NULL);
+        sqlite3_exec(_database,"PRAGMA count_changes = false", NULL, NULL, NULL);
+        sqlite3_exec(_database,"PRAGMA journal_mode = OFF", NULL, NULL, NULL);
+    }
+    return err_code == SQLITE_OK;
 }
 
 

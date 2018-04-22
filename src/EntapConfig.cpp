@@ -255,6 +255,7 @@ namespace entapConfig {
         FS_dprint("Indexing taxonomic database...");
         std::ifstream infile(tax_txt_path_found);
         std::string line;
+        TaxEntry taxEntry;
         try {
             while (std::getline(infile, line)) {
                 std::istringstream iss(line);
@@ -265,10 +266,10 @@ namespace entapConfig {
                 LOWERCASE(lineage);        // Both should already be lowercase
                 LOWERCASE(sci_name);
 
-                TaxEntry taxEntry = {
-                        tax_id,
-                        lineage
-                };
+                taxEntry = {};
+                taxEntry.lineage = lineage;
+                taxEntry.tax_id = tax_id;
+                taxEntry.tax_name = sci_name;
                 tax_data_map.emplace(sci_name,taxEntry);
             }
         } catch (std::exception &e) {

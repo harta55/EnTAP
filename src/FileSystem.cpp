@@ -641,3 +641,19 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
     }
 #endif
 }
+
+bool FileSystem::rename_file(std::string &in, std::string &out) {
+    FS_dprint("Moving/renaming file: " + in );
+    if (!file_exists(in)) return false;
+    try {
+#ifdef USE_BOOST
+        boostFS::rename(in, out);
+        FS_dprint("Success!");
+        return true;
+#endif
+    } catch (...) {
+        FS_dprint("Move failed!");
+        return false;
+    }
+    return false;
+}

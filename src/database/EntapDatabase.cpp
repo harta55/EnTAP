@@ -45,6 +45,8 @@ EntapDatabase::DATABASE_ERR EntapDatabase::download_database(EntapDatabase::DATA
         case ENTAP_SQL:
             download_entap_sql(path);
             break;
+        case ENTAP_SERIALIZED:
+            download_entap_serial(path);
         default:
             return ERR_DATA_OK;
     }
@@ -224,9 +226,11 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DAT
     for (auto &pair : taxonomy_nodes) {
         // want a separate entry for each name (doing this for now, may change)
         for (std::string name : pair.second.names) {
+            LOWERCASE(name);
             current_entries++;
             taxEntry = {};
             taxEntry.lineage = entap_tax_get_lineage(pair.second, taxonomy_nodes);
+            LOWERCASE(taxEntry.lineage);
             taxEntry.tax_id  = pair.second.ncbi_id;
             taxEntry.tax_name= name;
 
@@ -444,6 +448,143 @@ bool EntapDatabase::sql_add_go_entry(GoEntry &goEntry) {
 
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_serial(std::string &) {
     return ERR_DATA_OK;
+}
+
+EntapDatabase::DATABASE_ERR EntapDatabase::download_entap_serial(std::string &out_path) {
+    std::string temp_targz_path;
+    std::string temp_decompressed_path;
+
+    FS_dprint("Downloading EnTAP serialized database...");
+
+    // set temp path (will be downloaded to this then decompressed)
+    temp_targz_path = PATHS(_temp_directory, ENTAP_SERIAL_FILENAME_TARGZ);
+    temp_decompressed_path = PATHS(_temp_directory, ENTAP_SERIAL_FILENAME);
+
+    // download file (will be compressed as tar.gz)
+    if (!_pFilesystem->download_ftp_file(FTP_ENTAP_DATABASE_SERIAL, temp_targz_path)) {
+        // File download failed!
+        return ERR_DATA_SERIAL_FTP;
+    }
+
+    // decompress file to same directory
+    if (!_pFilesystem->decompress_file(temp_targz_path, _temp_directory, FileSystem::FILE_TAR_GZ)) {
+        // Decompression failed!
+        return ERR_DATA_SERIAL_DECOMPRESS;
+    }
+
+    // rename to proper outpath directory
+    if (!_pFilesystem->rename_file(temp_decompressed_path, out_path)) {
+        // File move failed
+        return ERR_DATA_FILE_MOVE;
+    }
+    // remove compressed file
+    _pFilesystem->delete_file(temp_targz_path);
+
+    return ERR_DATA_OK;
+}
+
+GoEntry EntapDatabase::get_go_entry(std::string &go_id, bool use_serial) {
+    GoEntry goEntry;
+
+    if (use_serial) {
+        // Using serialized database
+        go_serial_map_t::iterator it = _pSerializedDatabase->gene_ontology_data.find(go_id);
+        if (it == _pSerializedDatabase->gene_ontology_data.end()) {
+            FS_dprint("Unable to find GO ID: " + go_id);
+            return GoEntry();
+        } else return it->second;
+
+    } else {
+        // Using SQL database
+        std::vector<std::vector<std::string>> results;
+        // Generate SQL query
+        char *query = sqlite3_mprintf(
+                "SELECT %Q, %Q, %Q, %Q FROM %Q WHERE %Q=%Q",
+                SQL_TABLE_GO_COL_ID.c_str(),
+                SQL_TABLE_GO_COL_DESC.c_str(),
+                SQL_TABLE_GO_COL_CATEGORY.c_str(),
+                SQL_TABLE_GO_COL_LEVEL.c_str(),
+                SQL_TABLE_GO_TITLE.c_str(),
+                SQL_TABLE_GO_COL_ID.c_str(),
+                go_id.c_str()
+        );
+        try {
+            if (results.empty()) return GoEntry();
+            results = _pDatabaseHelper->query(query);
+            goEntry.go_id    = results[0][0];
+            goEntry.term     = results[0][1];
+            goEntry.category = results[0][2];
+            goEntry.level    = results[0][3];
+            return goEntry;
+        } catch (std::exception &e) {
+            // Do not fatal error
+            FS_dprint(e.what());
+            return GoEntry();
+        }
+    }
+}
+
+TaxEntry EntapDatabase::get_tax_entry(std::string &species, bool use_serial) {
+    TaxEntry taxEntry;
+    std::string temp_species;
+    uint64 index;
+
+    LOWERCASE(species); // ensure lowercase (database is based on this for direct matching)
+
+    if (use_serial) {
+        // Using serialized database
+        tax_serial_map_t::iterator it = _pSerializedDatabase->taxonomic_data.find(species);
+        if (it == _pSerializedDatabase->taxonomic_data.end()) {
+            // If we can't find species, keep trying by making it more broad
+            temp_species = species;
+            while (true) {
+                index = temp_species.find_last_of(" ");
+                if (index == std::string::npos) break;
+                temp_species = temp_species.substr(0, index);
+                it = _pSerializedDatabase->taxonomic_data.find(temp_species);
+                if (it != _pSerializedDatabase->taxonomic_data.end()) {
+                    return it->second;
+                }
+            }
+            return TaxEntry();
+        } else return it->second;
+
+    } else {
+        // Using SQL database
+        std::vector<std::vector<std::string>> results;
+        temp_species = species;
+        try {
+            // If we can't find species, keep trying by making it more broad
+            while (true) {
+                // Generate SQL query
+                char *query = sqlite3_mprintf(
+                        "SELECT %Q, %Q FROM %Q WHERE %Q=%Q",
+                        SQL_COL_NCBI_TAX_TAXID.c_str(),
+                        SQL_COL_NCBI_TAX_LINEAGE.c_str(),
+                        SQL_TABLE_NCBI_TAX_TITLE.c_str(),
+                        SQL_COL_NCBI_TAX_NAME.c_str(),
+                        temp_species.c_str()
+                );
+                results = _pDatabaseHelper->query(query);
+                if (results.empty()) {
+                    index = temp_species.find_last_of(" ");
+                    if (index == std::string::npos) break;
+                    temp_species = temp_species.substr(0, index);
+                } else break;
+            }
+
+            taxEntry.tax_id  = results[0][0];
+            taxEntry.lineage = results[0][1];
+            taxEntry.tax_name= temp_species;
+            return taxEntry;
+
+        } catch (std::exception &e) {
+            // Do not fatal error
+            FS_dprint(e.what());
+            return TaxEntry();
+        }
+    }
+    return TaxEntry();
 }
 
 EntapDatabase::TaxonomyNode::TaxonomyNode(std::string id) {

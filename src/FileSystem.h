@@ -73,6 +73,7 @@ public:
     std::vector<std::string> list_to_vect(char, std::string&);
     std::string get_final_outdir();
     std::string get_temp_outdir();
+    bool rename_file(std::string& in, std::string& out);
 
     bool download_ftp_file(std::string,std::string&);
     bool decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES);

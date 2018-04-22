@@ -45,6 +45,12 @@ struct  GoEntry {
         ar&category;
         ar&term;
     }
+    GoEntry() {
+        go_id = "";
+        level = "";
+        category = "";
+        term = "";
+    }
 };
 
 struct TaxEntry {
@@ -59,6 +65,11 @@ struct TaxEntry {
     }
     bool is_empty() {
         return this->tax_id.empty() && this->lineage.empty();
+    }
+    TaxEntry() {
+        tax_id = "";
+        lineage = "";
+        tax_name = "";
     }
 };
 

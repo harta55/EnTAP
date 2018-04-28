@@ -27,19 +27,7 @@
 
 
 //*********************** Includes *****************************
-#include <chrono>
-#include <ios>
-#include <boost/filesystem/operations.hpp>
-#include <pstream.h>
-#include <boost/program_options/variables_map.hpp>
-#include <unordered_map>
-#include <boost/archive/binary_iarchive.hpp>
 #include "EntapGlobals.h"
-#include "config.h"
-#include "FileSystem.h"
-#include <boost/archive/binary_iarchive.hpp>
-#include <iomanip>
-
 //**************************************************************
 
 
@@ -118,7 +106,6 @@ namespace UInput {
     const std::string INPUT_FLAG_GO_LEVELS     = "level";
     const std::string INPUT_FLAG_EXE_PATH      = "paths";
     const std::string INPUT_FLAG_FPKM          = "fpkm";
-    const std::string INPUT_FLAG_DATA_OUT      = "database-out";
     const std::string INPUT_FLAG_CONTAM        = "contam";
     const std::string INPUT_FLAG_E_VAL         = "e";
     const std::string INPUT_FLAG_HELP          = "help";
@@ -132,7 +119,8 @@ namespace UInput {
     const std::string INPUT_FLAG_THREADS       = "threads";
     const std::string INPUT_FLAG_UNINFORM      = "uninformative";
     const std::string INPUT_FLAG_NOCHECK       = "no-check";
-
+    const std::string INPUT_FLAG_GENERATE      = "data-generate";
+    const std::string INPUT_FLAG_DATABASE_TYPE = "data-type";
 }
 
 std::string generate_command(std::unordered_map<std::string,std::string> &map,std::string exe_path) {

@@ -29,14 +29,14 @@
 #define ENTAP_ENTAPEXECUTE_H
 
 //*********************** Includes *****************************
-#include "Ontology.h"
+#include "ExceptionHandler.h"
+#include "EntapGlobals.h"
 #include "QuerySequence.h"
-#include "QueryData.h"
-#include <list>
-#include <boost/program_options/variables_map.hpp>
-#include <map>
-#include <unordered_map>
-#include <queue>
+#include "FrameSelection.h"
+#include "ExpressionAnalysis.h"
+#include "SimilaritySearch.h"
+#include "FileSystem.h"
+#include "UserInput.h"
 
 //**************************************************************
 

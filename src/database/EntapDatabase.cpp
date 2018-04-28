@@ -34,23 +34,45 @@ EntapDatabase::EntapDatabase(FileSystem* filesystem) {
     _temp_directory  = filesystem->get_temp_outdir();    // created previously
     _pSerializedDatabase = nullptr;
     _pDatabaseHelper     = nullptr;
+    _use_serial          = true;
 }
 
-EntapDatabase::DATABASE_ERR EntapDatabase::set_database(DATABASE_TYPE type) {
-    return ERR_DATA_OK;
+bool EntapDatabase::set_database(DATABASE_TYPE type, std::string path) {
+
+    switch (type) {
+        case ENTAP_SERIALIZED:
+            // Filepath checked in routine
+            _use_serial = true;
+            return serialize_database_read(SERIALIZE_DEFAULT, ENTAP_DATABASE_BIN_PATH) == ERR_DATA_OK;
+        case ENTAP_SQL:
+            _use_serial = false;
+            if (!_pFilesystem->file_exists(ENTAP_DATABASE_SQL_PATH)) {
+                FS_dprint("Database not found at: " + ENTAP_DATABASE_BIN_PATH);
+                return false;
+            }
+            if (_pDatabaseHelper != nullptr) return true;   // already generated
+            _pDatabaseHelper = new SQLDatabaseHelper();
+            return _pDatabaseHelper->open(ENTAP_DATABASE_SQL_PATH);
+        default:
+            return false;
+    }
 }
 
 EntapDatabase::DATABASE_ERR EntapDatabase::download_database(EntapDatabase::DATABASE_TYPE type, std::string &path) {
+    DATABASE_ERR err;
+
     switch (type) {
         case ENTAP_SQL:
-            download_entap_sql(path);
+            err = download_entap_sql(path);
             break;
         case ENTAP_SERIALIZED:
-            download_entap_serial(path);
+            err = download_entap_serial(path);
+            break;
         default:
             return ERR_DATA_OK;
     }
-    return ERR_DATA_OK;
+    if (err != ERR_DATA_OK) _pFilesystem->delete_file(path);
+    return err;
 }
 
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(EntapDatabase::DATABASE_TYPE type, std::string &path) {
@@ -107,8 +129,45 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_sql(std::string &outpa
     return ERR_DATA_OK;
 }
 
-EntapDatabase::DATABASE_ERR EntapDatabase::download_entap_sql(std::string &) {
-    return ERR_DATA_OK;
+EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_serial(std::string &path) {
+    // May do more here
+    DATABASE_ERR err_code;
+
+    FS_dprint("Creating EnTAP SQL database...");
+
+
+    if (_pSerializedDatabase != nullptr) {
+        // Database should not already have been created
+        FS_dprint("Serialized database already set!!");
+        return ERR_DATA_SERIAL_DUPLICATE;
+    } else if (_pFilesystem->file_exists(path)) {
+        // Out file should NOT exist yet
+        FS_dprint("Serialized database already found!!");
+        return ERR_DATA_FILE_EXISTS;
+    }
+
+    // Create database
+    _pSerializedDatabase = new EntapDatabaseStruct();
+
+    // Generate tax entries, don't need path (will be global struct)
+    err_code = generate_entap_tax(ENTAP_SERIALIZED, "");
+    if (err_code != ERR_DATA_OK) {
+        return err_code;
+    }
+
+    // Generate go entries
+    err_code = generate_entap_go(ENTAP_SERIALIZED, "");
+    if (err_code != ERR_DATA_OK) {
+        return err_code;
+    }
+
+    // Finished adding entries, now serialize
+    FS_dprint("All entries added to database, serializing...");
+    err_code = serialize_database_save(SERIALIZE_DEFAULT, path);
+    if (err_code != ERR_DATA_OK) {
+        FS_dprint("Unable to serialize database!");
+    }
+    return err_code;
 }
 
 EntapDatabase::~EntapDatabase() {
@@ -116,6 +175,8 @@ EntapDatabase::~EntapDatabase() {
         _pDatabaseHelper->close();
         delete(_pDatabaseHelper);
     }
+
+    SAFE_DELETE(_pSerializedDatabase);
 }
 
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DATABASE_TYPE type,
@@ -446,47 +507,63 @@ bool EntapDatabase::sql_add_go_entry(GoEntry &goEntry) {
     return _pDatabaseHelper->execute_cmd(sql_cmd);
 }
 
-EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_serial(std::string &) {
-    return ERR_DATA_OK;
-}
-
 EntapDatabase::DATABASE_ERR EntapDatabase::download_entap_serial(std::string &out_path) {
-    std::string temp_targz_path;
-    std::string temp_decompressed_path;
+    std::string temp_gz_path;
 
     FS_dprint("Downloading EnTAP serialized database...");
 
     // set temp path (will be downloaded to this then decompressed)
-    temp_targz_path = PATHS(_temp_directory, ENTAP_SERIAL_FILENAME_TARGZ);
-    temp_decompressed_path = PATHS(_temp_directory, ENTAP_SERIAL_FILENAME);
+    temp_gz_path = PATHS(_temp_directory, Defaults::ENTAP_DATABASE_SERIAL_GZ);
 
-    // download file (will be compressed as tar.gz)
-    if (!_pFilesystem->download_ftp_file(FTP_ENTAP_DATABASE_SERIAL, temp_targz_path)) {
+    // download file (will be compressed as gz)
+    if (!_pFilesystem->download_ftp_file(FTP_ENTAP_DATABASE_SERIAL, temp_gz_path)) {
         // File download failed!
         return ERR_DATA_SERIAL_FTP;
     }
 
-    // decompress file to same directory
-    if (!_pFilesystem->decompress_file(temp_targz_path, _temp_directory, FileSystem::FILE_TAR_GZ)) {
+    // decompress file to outpath
+    if (!_pFilesystem->decompress_file(temp_gz_path, out_path, FileSystem::FILE_GZ)) {
         // Decompression failed!
         return ERR_DATA_SERIAL_DECOMPRESS;
     }
 
-    // rename to proper outpath directory
-    if (!_pFilesystem->rename_file(temp_decompressed_path, out_path)) {
-        // File move failed
-        return ERR_DATA_FILE_MOVE;
-    }
-    // remove compressed file
-    _pFilesystem->delete_file(temp_targz_path);
+    // remove compressed file (already
+    _pFilesystem->delete_file(temp_gz_path);
 
     return ERR_DATA_OK;
 }
 
-GoEntry EntapDatabase::get_go_entry(std::string &go_id, bool use_serial) {
+EntapDatabase::DATABASE_ERR EntapDatabase::download_entap_sql(std::string &path) {
+    std::string temp_gz_path;
+
+    FS_dprint("Downloading EnTAP sql database...");
+
+    // set temp path (will be downloaded to this then decompressed)
+    temp_gz_path = PATHS(_temp_directory, Defaults::ENTAP_DATABASE_SQL_GZ);
+
+    // download file (will be compressed as gz)
+    if (!_pFilesystem->download_ftp_file(FTP_ENTAP_DATABASE_SERIAL, temp_gz_path)) {
+        // File download failed!
+        return ERR_DATA_SQL_FTP;
+    }
+
+    // decompress file to outpath
+    if (!_pFilesystem->decompress_file(temp_gz_path, path, FileSystem::FILE_GZ)) {
+        // Decompression failed!
+        return ERR_DATA_SQL_DECOMPRESS;
+    }
+
+    // remove compressed file (already done)
+    _pFilesystem->delete_file(temp_gz_path);
+
+    return ERR_DATA_OK;
+}
+
+
+GoEntry EntapDatabase::get_go_entry(std::string &go_id) {
     GoEntry goEntry;
 
-    if (use_serial) {
+    if (_use_serial) {
         // Using serialized database
         go_serial_map_t::iterator it = _pSerializedDatabase->gene_ontology_data.find(go_id);
         if (it == _pSerializedDatabase->gene_ontology_data.end()) {
@@ -524,14 +601,14 @@ GoEntry EntapDatabase::get_go_entry(std::string &go_id, bool use_serial) {
     }
 }
 
-TaxEntry EntapDatabase::get_tax_entry(std::string &species, bool use_serial) {
+TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
     TaxEntry taxEntry;
     std::string temp_species;
     uint64 index;
 
     LOWERCASE(species); // ensure lowercase (database is based on this for direct matching)
 
-    if (use_serial) {
+    if (_use_serial) {
         // Using serialized database
         tax_serial_map_t::iterator it = _pSerializedDatabase->taxonomic_data.find(species);
         if (it == _pSerializedDatabase->taxonomic_data.end()) {
@@ -584,7 +661,106 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species, bool use_serial) {
             return TaxEntry();
         }
     }
-    return TaxEntry();
+}
+
+EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_save(SERIALIZATION_TYPE type, std::string &out_path) {
+    FS_dprint("Serializing EnTAP database to:" + out_path);
+
+    if (_pSerializedDatabase == nullptr) {
+        // Error in allocating memory
+        FS_dprint("Error allocating memory to EnTAP Database");
+        return ERR_DATA_SERIALIZE_SAVE;
+    }
+
+    try {
+        std::ofstream file(out_path);
+        switch (type) {
+            case BOOST_TEXT_ARCHIVE: {
+                boostAR::text_oarchive oa(file);
+                oa << *_pSerializedDatabase;
+                break;
+            }
+
+            case BOOST_BIN_ARCHIVE: {
+                boostAR::binary_oarchive oa_bin(file);
+                oa_bin << *_pSerializedDatabase;
+                break;
+            }
+
+            default:
+                return ERR_DATA_SERIALIZE_SAVE;
+        }
+        file.close();
+    } catch (std::exception &e) {
+        FS_dprint("Error in serializing EnTAP database!");
+        return ERR_DATA_SERIALIZE_SAVE;
+    }
+    return ERR_DATA_OK;
+}
+
+EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_read(SERIALIZATION_TYPE type, std::string &in_path) {
+    FS_dprint("Reading serialized database from: " + in_path);
+
+    if (!_pFilesystem->file_exists(in_path)) {
+        FS_dprint("File does not exist!!");
+        return ERR_DATA_SERIALIZE_READ;
+    }
+
+    // Already generated?
+    if (_pSerializedDatabase != nullptr) return ERR_DATA_OK;
+
+    try {
+        switch (type) {
+            case BOOST_TEXT_ARCHIVE:
+            {
+                std::ifstream ifs(in_path);
+                boost::archive::text_iarchive ia(ifs);
+                ia >> *_pSerializedDatabase;
+                ifs.close();
+                break;
+            }
+
+            case BOOST_BIN_ARCHIVE:
+            {
+                std::ifstream ifs(in_path);
+                boost::archive::binary_iarchive ia(ifs);
+                ia >> *_pSerializedDatabase;
+                ifs.close();
+                break;
+            }
+
+            default:
+                return ERR_DATA_SERIALIZE_READ;
+        }
+
+    } catch (std::exception &e) {
+        FS_dprint("Error in reading serialized database!");
+        return ERR_DATA_SERIALIZE_READ;
+    }
+
+    return ERR_DATA_OK;
+}
+
+std::string EntapDatabase::print_error_log(EntapDatabase::DATABASE_ERR err_code) {
+    switch (err_code) {
+        case ERR_DATA_SQL_CREATE_DATABASE:
+            return "Unable to generate the EnTAP SQL database.";
+        case ERR_DATA_SERIALIZE_SAVE:
+            return "Unable to generate the serialized EnTAP database";
+        case ERR_DATA_GO_ENTRY:
+            return "Error in parsing Gene Ontology data.";
+        case ERR_DATA_SERIAL_FTP:
+            return "Error in downloading Serialized database from FTP site.";
+        case ERR_DATA_SERIAL_DECOMPRESS:
+            return "Error in decompressing compressed database from FTP site.";
+        case ERR_DATA_SQL_FTP:
+            return "Error in downloading SQL database from FTP site";
+        case ERR_DATA_SQL_DECOMPRESS:
+            return "Error in decompressing SQL database from FTP site";
+        default:
+            return "Unrecognized database error code. Update coming soon!";
+            break;
+    }
 }
 
 EntapDatabase::TaxonomyNode::TaxonomyNode(std::string id) {

@@ -31,9 +31,10 @@
 #include "../EntapGlobals.h"
 #include "AbstractOntology.h"
 #include "../ExceptionHandler.h"
+#include "../database/EntapDatabase.h"
 
 
-go_format_t AbstractOntology::parse_go_list(std::string list, go_serial_map_t &GO_DATABASE,char delim) {
+go_format_t AbstractOntology::parse_go_list(std::string list, EntapDatabase* database,char delim) {
 
     go_format_t output;
     std::string temp;
@@ -42,25 +43,10 @@ go_format_t AbstractOntology::parse_go_list(std::string list, go_serial_map_t &G
     if (list.empty()) return output;
     std::istringstream ss(list);
     while (std::getline(ss,temp,delim)) {
-        GoEntry term_info = GO_DATABASE[temp];
+        GoEntry term_info =
+                database->get_go_entry(temp);
         output[term_info.category].push_back(temp + "-" + term_info.term +
                                              "(L=" + term_info.level + ")");
     }
     return output;
 }
-
-
-
-go_serial_map_t AbstractOntology::read_go_map () {
-    go_serial_map_t new_map;
-    try {
-        {
-            std::ifstream ifs(GO_DB_PATH);
-            boost::archive::binary_iarchive ia(ifs);
-            ia >> new_map;
-        }
-    } catch (std::exception &exception) {
-        throw ExceptionHandler(exception.what(), ERR_ENTAP_GO_READ);
-    }
-    return new_map;
-};

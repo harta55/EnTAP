@@ -70,31 +70,28 @@ const int16 FINAL_ANNOT_LEN = 3;
  *
  * =====================================================================
  */
-Ontology::Ontology(std::string input, UserInput *userinput, GraphingManager* graphing,
-                   QueryData *queryData, FileSystem *filesystem) {
+Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
     FS_dprint("Spawn object - Ontology");
 
-    if (userinput == nullptr || graphing == nullptr || queryData == nullptr || filesystem == nullptr) {
-        throw ExceptionHandler("Error allocating memory for Ontology", ERR_ENTAP_MEM_ALLOC);
-    }
-
-    _ontology_exe       = EGG_EMAPPER_EXE;
     _new_input          = input;
-    _pGraphingManager   = graphing;
-    _QUERY_DATA         = queryData;
-    _pFileSystem        = filesystem;
-    _pUserInput         = userinput;
+    _pGraphingManager   = entap_data._pGraphingManager;
+    _QUERY_DATA         = entap_data._pQueryData;
+    _pFileSystem        = entap_data._pFileSystem;
+    _pUserInput         = entap_data._pUserInput;
+    _pEntapDatabase     = entap_data._pEntapDatbase;
 
-    _threads            = userinput->get_supported_threads();
-    _outpath            = filesystem->get_root_path();
-    _is_overwrite       = userinput->has_input(UInput::INPUT_FLAG_OVERWRITE);
-    _software_flags     = userinput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_ONTOLOGY);
-    _go_levels          = userinput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_GO_LEVELS);
-    _blastp             = userinput->has_input(UInput::INPUT_FLAG_RUNPROTEIN);
+    _entap_data_ptrs = entap_data;
+
+    _threads            = _pUserInput->get_supported_threads();
+    _outpath            = _pFileSystem->get_root_path();
+    _is_overwrite       = _pUserInput->has_input(UInput::INPUT_FLAG_OVERWRITE);
+    _software_flags     = _pUserInput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_ONTOLOGY);
+    _go_levels          = _pUserInput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_GO_LEVELS);
+    _blastp             = _pUserInput->has_input(UInput::INPUT_FLAG_RUNPROTEIN);
     _ontology_dir       = PATHS(_outpath, ONTOLOGY_OUT_PATH);
-    _final_outpath_dir  = filesystem->get_final_outdir();
+    _final_outpath_dir  = _pFileSystem->get_final_outdir();
     _eggnog_db_path     = EGG_SQL_DB_PATH;
-    _interpro_databases = userinput->get_user_input<vect_str_t>(UInput::INPUT_FLAG_INTERPRO);
+    _interpro_databases = _pUserInput->get_user_input<vect_str_t>(UInput::INPUT_FLAG_INTERPRO);
 
     if (_is_overwrite) _pFileSystem->delete_dir(_ontology_dir);
     _pFileSystem->create_dir(_ontology_dir);
@@ -160,49 +157,34 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
         case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
             FS_dprint("Spawn object - EggNOG");
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
-                    _ontology_exe,
                     _outpath,
                     _new_input,
                     _ontology_dir,
-                    _pGraphingManager,
-                    _QUERY_DATA,
                     _blastp,
                     _go_levels,
-                    _threads,
-                    _pFileSystem,
-                    _pUserInput,
+                    _entap_data_ptrs,
                     _eggnog_db_path    // additional data
             ));
         case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
             FS_dprint("Spawn object - InterPro");
             return std::unique_ptr<AbstractOntology>(new ModInterpro(
-                    _ontology_exe,
                     _outpath,
                     _new_input,
                     _ontology_dir,
-                    _pGraphingManager,
-                    _QUERY_DATA,
                     _blastp,
                     _go_levels,
-                    _threads,
-                    _pFileSystem,
-                    _pUserInput,
+                    _entap_data_ptrs,
                     _interpro_databases       // Additional data
             ));
         default:
             FS_dprint("Spawn object - EggNOG");
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
-                    _ontology_exe,
                     _outpath,
                     _new_input,
                     _ontology_dir,
-                    _pGraphingManager,
-                    _QUERY_DATA,
                     _blastp,
                     _go_levels,
-                    _threads,
-                    _pFileSystem,
-                    _pUserInput,
+                    _entap_data_ptrs,
                     _eggnog_db_path    // additional data
             ));
     }

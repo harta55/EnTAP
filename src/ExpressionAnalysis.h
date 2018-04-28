@@ -27,21 +27,24 @@
 
 #ifndef ENTAP_EXPRESSIONANALYSIS_H
 #define ENTAP_EXPRESSIONANALYSIS_H
-#include <iostream>
-#include <boost/program_options/variables_map.hpp>
+
 #include "QuerySequence.h"
 #include "GraphingManager.h"
 #include "expression/AbstractExpression.h"
 #include "QueryData.h"
+#include "ExceptionHandler.h"
+#include "EntapConfig.h"
+#include "EntapGlobals.h"
+#include "EntapExecute.h"
+#include "common.h"
+#include "expression/ModRSEM.h"
+#include "FileSystem.h"
 
+class AbstractExpression;
 
 class ExpressionAnalysis {
 public:
-    ExpressionAnalysis(std::string&,
-                       GraphingManager*,
-                       QueryData*,
-                       FileSystem*,
-                       UserInput*);
+    ExpressionAnalysis(std::string&,EntapDataPtrs&);
     std::string execute(std::string);
 
 private:
@@ -63,6 +66,7 @@ private:
     QueryData        *_pQueryData;
     FileSystem       *_pFileSystem;
     UserInput        *_pUserInput;
+    EntapDataPtrs    _entap_data;
 
     std::unique_ptr<AbstractExpression> spawn_object();
 };

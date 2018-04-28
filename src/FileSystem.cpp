@@ -617,6 +617,7 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
         return false;
     }
 #ifdef USE_ZLIB
+    FS_dprint("Using ZLIB...");
     return false;
 #else
     // Not compiled with ZLIB usage, use terminal command
@@ -626,18 +627,21 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
     switch (type) {
         case FILE_TAR_GZ:
             terminal_cmd =
-                "tar -xzf " + in_path +
-                        " -C " + out_dir;
-            if (TC_execute_cmd(terminal_cmd) == 0) {
-                FS_dprint("Success! Exported to: " + out_dir);
-                return true;
-            } else {
-                FS_dprint("Error! Unable to decompress file");
-                return false;
-            }
+                "tar -xzf " + in_path + " -C " + out_dir;
             break;
+
+        case FILE_GZ:
+            terminal_cmd =
+                "gunzip -c " + in_path + " > " + out_dir; //outdir will be outpath in this case
         default:
             return false;
+    }
+    if (TC_execute_cmd(terminal_cmd) == 0) {
+        FS_dprint("Success! Exported to: " + out_dir);
+        return true;
+    } else {
+        FS_dprint("Error! Unable to decompress file");
+        return false;
     }
 #endif
 }

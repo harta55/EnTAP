@@ -48,10 +48,8 @@ public:
             std::string &in,
             std::string &exp,
             std::string &align,
-            GraphingManager *graphing,
-            QueryData *query,
-            FileSystem *fileSystem) :
-    AbstractExpression(exe, in, exp, align, graphing, query, fileSystem){}
+            EntapDataPtrs &entapdata) :
+    AbstractExpression(exe, in, exp, align, entapdata){}
 
     ~ModRSEM();
 

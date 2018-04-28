@@ -524,14 +524,10 @@ ModGeneMarkST::~ModGeneMarkST() {
     FS_dprint("Killing object - ModGeneMarkST");
 }
 
-ModGeneMarkST::ModGeneMarkST(std::string &exe, std::string &in, std::string &frame, GraphingManager *graphing,
-                             QueryData *querydata, FileSystem *filesystem, UserInput *userinput) :
+ModGeneMarkST::ModGeneMarkST(std::string &exe, std::string &in, std::string &frame, EntapDataPtrs &entap_data) :
     AbstractFrame(exe,
                  in,
                  frame,
-                 graphing,
-                 querydata,
-                 filesystem,
-                 userinput) {
-    _transcriptome_filename = filesystem->get_filename(_inpath);
+                 entap_data) {
+    _transcriptome_filename = _pFileSystem->get_filename(_inpath);
 }

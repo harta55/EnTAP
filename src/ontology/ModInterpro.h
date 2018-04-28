@@ -47,9 +47,9 @@ class ModInterpro : public AbstractOntology{
 
 public:
     ~ModInterpro();
-    ModInterpro(std::string &exe,std::string &out, std::string &in,
-                std::string &ont, GraphingManager *graphing,QueryData *queryData,
-                bool blastp,std::vector<uint16>& lvls, int threads, FileSystem*, UserInput*,vect_str_t );
+    ModInterpro(std::string &out, std::string &in,
+                std::string &ont, bool blastp,
+                std::vector<uint16>& lvls, EntapDataPtrs& entap_data, vect_str_t );
 
     virtual std::pair<bool, std::string> verify_files() override ;
     virtual void execute() override ;

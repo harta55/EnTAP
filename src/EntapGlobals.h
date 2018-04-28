@@ -33,17 +33,10 @@
 #include <boost/serialization/access.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
-#include <unordered_map>
+#include "config.h"
 #include "common.h"
-
-class QuerySequence;
-struct TaxEntry;
-struct GoEntry;
-namespace boostFS = boost::filesystem;
-namespace boostPO = boost::program_options;
-namespace boostAR = boost::archive;
-
-//**************************************************************
+#include <chrono>
+#include <ios>
 
 //******************** Defines/Macros **************************
 
@@ -53,6 +46,22 @@ namespace boostAR = boost::archive;
 #define FASTA_FLAG      ">"
 
 //**************************************************************
+
+
+class QuerySequence;
+class EntapDatabase;
+class FileSystem;
+class UserInput;
+class GraphingManager;
+class QueryData;
+struct TaxEntry;
+struct GoEntry;
+namespace boostFS = boost::filesystem;
+namespace boostPO = boost::program_options;
+namespace boostAR = boost::archive;
+
+//**************************************************************
+
 
 
 //***************** Global Prototype Functions *****************
@@ -88,6 +97,27 @@ enum ExecuteStates {
     EXIT
 };
 
+struct EntapDataPtrs {
+    EntapDatabase* _pEntapDatbase;
+    FileSystem*    _pFileSystem;
+    UserInput*     _pUserInput;
+    GraphingManager* _pGraphingManager;
+    QueryData*     _pQueryData;
+
+    bool is_null() {
+        return _pEntapDatbase == nullptr || _pFileSystem == nullptr ||
+        _pUserInput == nullptr || _pGraphingManager == nullptr ||
+        _pQueryData == nullptr;
+    }
+
+    EntapDataPtrs() {
+        _pEntapDatbase = nullptr;
+        _pFileSystem   = nullptr;
+        _pUserInput    = nullptr;
+        _pGraphingManager = nullptr;
+        _pQueryData    = nullptr;
+    }
+};
 
 //*********************** Externs *****************************
 
@@ -100,10 +130,8 @@ extern std::string EGG_EMAPPER_EXE;
 extern std::string EGG_SQL_DB_PATH;
 extern std::string EGG_DOWNLOAD_EXE;
 extern std::string INTERPRO_EXE;
-extern std::string TAX_DB_PATH;     // binary
-extern std::string TAX_DB_PATH_TEXT;// Text
-extern std::string TAX_DOWNLOAD_EXE;
-extern std::string GO_DB_PATH;      // binary
+extern std::string ENTAP_DATABASE_BIN_PATH;
+extern std::string ENTAP_DATABASE_SQL_PATH;
 extern std::string GRAPHING_EXE;
 
 
@@ -187,7 +215,6 @@ namespace UInput {
     extern const std::string INPUT_FLAG_GO_LEVELS    ;
     extern const std::string INPUT_FLAG_EXE_PATH     ;
     extern const std::string INPUT_FLAG_FPKM         ;
-    extern const std::string INPUT_FLAG_DATA_OUT     ;
     extern const std::string INPUT_FLAG_CONTAM       ;
     extern const std::string INPUT_FLAG_E_VAL        ;
     extern const std::string INPUT_FLAG_HELP         ;
@@ -201,6 +228,8 @@ namespace UInput {
     extern const std::string INPUT_FLAG_THREADS;
     extern const std::string INPUT_FLAG_UNINFORM;
     extern const std::string INPUT_FLAG_NOCHECK;
+    extern const std::string INPUT_FLAG_GENERATE;
+    extern const std::string INPUT_FLAG_DATABASE_TYPE;
 }
 
 namespace ENTAP_STATS {

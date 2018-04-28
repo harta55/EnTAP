@@ -48,9 +48,11 @@
  * =====================================================================
  */
 int TC_execute_cmd(std::string cmd, std::string out_path) {
-    FS_dprint("Executing command: \n" + cmd);
     std::ofstream out_file(out_path+".out", std::ios::out | std::ios::app);
     std::ofstream err_file(out_path+".err", std::ios::out | std::ios::app);
+    FS_dprint("Executing command: \n" + cmd +
+                      "\nStd Out: " + out_path + ".out" +
+                      "\nStd Err: " + out_path + ".err");
     const redi::pstreams::pmode mode = redi::pstreams::pstdout|redi::pstreams::pstderr;
     redi::ipstream child(cmd, mode);
     char buf[1024];

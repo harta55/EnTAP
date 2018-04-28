@@ -45,6 +45,7 @@ public:
 
     typedef enum {
         FILE_TAR_GZ,
+        FILE_GZ,
         FILE_ZIP
 
     } ENT_FILE_TYPES;

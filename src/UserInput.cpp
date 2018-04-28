@@ -43,11 +43,11 @@
 #include "ontology/ModEggnog.h"
 #include "ontology/ModInterpro.h"
 #include "version.h"
+#include "database/EntapDatabase.h"
 
 //**************************************************************
 
 //*********************** Defines ******************************
-#define DESC_COMING_SOON    "Coming soon!"
 #define DESC_HELP           "Print all the help options for this version of EnTAP!"
 #define DESC_CONFIG         "Configure EnTAP for execution later.\n"                    \
                             "If this is your first time running EnTAP run this first!"  \
@@ -135,9 +135,19 @@
                             "similarity searching"
 #define DESC_EXE_PATHS      "Specify path to the entap_config.txt file that will"       \
                             "be used to find all of the executables!"
-#define DESC_DATA_OUT       "Specify the outpath of databases formatted during"         \
-                            "configuration\n"                                           \
-                            "Note: only used in configuration stage"
+#define DESC_DATA_GENERATE  "Specify whether you would like to generate EnTAP databases"\
+                            " instead of downloading them.\nDefault: Download\nIf you"  \
+                            " are encountering issues with the downloaded databases "   \
+                            "you can try this"
+#define DESC_DATABASE_TYPE  "Specify which EnTAP database you would like to download/"  \
+                            "generate.\n"                                               \
+                            "    0. Serialized Database (default)\n"                    \
+                            "    1. SQLITE Database\n"                                  \
+                            "Either or both can be selected with an additional flag. "  \
+                            "The serialized database will be faster although requires " \
+                            "more memory usage. THe SQLITE database may be slightly "   \
+                            "slower and does not require the Boost libraries if you "   \
+                            "are experiencing any incompatibility there."
 #define DESC_TAXON          "Specify the type of species/taxon you are analyzing and"   \
                             "would like hits closer in taxonomic relevance to be"       \
                             "favored (based on NCBI Taxonomic Database)\n"              \
@@ -179,10 +189,8 @@ std::string EGG_EMAPPER_EXE;
 std::string EGG_SQL_DB_PATH;
 std::string EGG_DOWNLOAD_EXE;
 std::string INTERPRO_EXE;
-std::string TAX_DB_PATH;        // binary
-std::string TAX_DB_PATH_TEXT;
-std::string TAX_DOWNLOAD_EXE;
-std::string GO_DB_PATH;         // binary
+std::string ENTAP_DATABASE_BIN_PATH;
+std::string ENTAP_DATABASE_SQL_PATH;
 std::string GRAPHING_EXE;
 
 
@@ -241,7 +249,10 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
                 (UInput::INPUT_FLAG_QCOVERAGE.c_str(),
                  boostPO::value<fp32>()->default_value(DEFAULT_QCOVERAGE), DESC_QCOVERAGE)
                 (UInput::INPUT_FLAG_EXE_PATH.c_str(), boostPO::value<std::string>(), DESC_EXE_PATHS)
-                (UInput::INPUT_FLAG_DATA_OUT.c_str(), boostPO::value<std::string>(), DESC_DATA_OUT)
+                (UInput::INPUT_FLAG_GENERATE.c_str(), DESC_DATA_GENERATE)
+                (UInput::INPUT_FLAG_DATABASE_TYPE.c_str(),
+                 boostPO::value<std::vector<uint16>>()->multitoken()
+                        ->default_value(std::vector<uint16>{EntapDatabase::ENTAP_SERIALIZED},""), DESC_DATABASE_TYPE)
                 (UInput::INPUT_FLAG_TCOVERAGE.c_str(),
                  boostPO::value<fp32>()->default_value(DEFAULT_TCOVERAGE), DESC_TCOVERAGE)
                 (UInput::INPUT_FLAG_SPECIES.c_str(), boostPO::value<std::string>(),DESC_TAXON)
@@ -345,6 +356,18 @@ bool UserInput::verify_user_input() {
         // Handle EnTAP execution commands
         if (is_run) {
 
+            // Verify EnTAP database can be generated
+            EntapDatabase *pEntapDatabase = new EntapDatabase(_pFileSystem);
+            // Find database type that will be used by the rest (use 0 index no matter what)
+            vect_uint16_t entap_database_types =
+                    get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_DATABASE_TYPE);
+            EntapDatabase::DATABASE_TYPE type =
+                    static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
+            if (!pEntapDatabase->set_database(type, "")) {
+                throw ExceptionHandler("Unable to generate EnTAP database from paths given",
+                                       ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
+            }
+
             // Verify input transcriptome
             if (!has_input(UInput::INPUT_FLAG_TRANSCRIPTOME)) {
                 throw(ExceptionHandler("Must enter a valid transcriptome",ERR_ENTAP_INPUT_PARSE));
@@ -364,12 +387,12 @@ bool UserInput::verify_user_input() {
 
             // Verify species for taxonomic relevance
             if (has_input(UInput::INPUT_FLAG_SPECIES)) {
-                verify_species(_user_inputs, SPECIES);
+                verify_species(SPECIES, pEntapDatabase);
             }
 
             // Verify contaminant
             if (has_input(UInput::INPUT_FLAG_CONTAM)) {
-                verify_species(_user_inputs, CONTAMINANT);
+                verify_species(CONTAMINANT, pEntapDatabase);
             }
 
             // Verify path + extension for alignment file
@@ -416,18 +439,6 @@ bool UserInput::verify_user_input() {
                 }
             }
 
-            // Verify for default state, may need to do a temp run of executables to verify
-            if (_user_inputs[UInput::INPUT_FLAG_STATE].as<std::string>() == DEFAULT_STATE) {
-                if (!_pFileSystem->file_exists(TAX_DB_PATH)) {
-                    throw ExceptionHandler("Taxonomic database could not be found at: " + TAX_DB_PATH +
-                                            " make sure to set the path in the configuration file",
-                                            ERR_ENTAP_INPUT_PARSE);
-                }
-            } else {
-                // This should never be thrown as there is a default state '+'
-                throw ExceptionHandler("State must be selected, default is +", ERR_ENTAP_INPUT_PARSE);
-            }
-
             // Verify Ontology Flags
             is_interpro = false;
             if (has_input(UInput::INPUT_FLAG_ONTOLOGY)) {
@@ -456,7 +467,7 @@ bool UserInput::verify_user_input() {
             // Verify paths from state
             if (_user_inputs[UInput::INPUT_FLAG_STATE].as<std::string>().compare(DEFAULT_STATE)==0) {
                 std::string state = _user_inputs[UInput::INPUT_FLAG_STATE].as<std::string>();
-                // onlty handling default now
+                // only handling default now
                 verify_state(state, is_protein, ont_flags);
             }
 
@@ -602,10 +613,8 @@ void UserInput::generate_config(std::string &path) {
                 KEY_EGGNOG_DOWN               <<"=\n"<<
                 KEY_EGGNOG_DB                 <<"=\n"<<
                 KEY_INTERPRO_EXE              <<"=\n"<<
-                KEY_TAX_DB                    <<"=\n"<<
-                KEY_TAX_DB_TEXT               <<"=\n"<<
-                KEY_TAX_DOWNLOAD_EXE          <<"=\n"<<
-                KEY_GO_DB                     <<"=\n"<<
+                KEY_ENTAP_DATABASE_SQL        <<"=\n"<<
+                KEY_ENTAP_DATABASE_BIN        <<"=\n"<<
                 KEY_GRAPH_SCRIPT              <<"=\n"
                 << std::endl;
     config_file.close();
@@ -633,10 +642,8 @@ bool UserInput::check_key(std::string& key) {
     if (key.compare(KEY_EGGNOG_DOWN)==0)      return true;
     if (key.compare(KEY_EGGNOG_DB)==0)        return true;
     if (key.compare(KEY_INTERPRO_EXE)==0)     return true;
-    if (key.compare(KEY_TAX_DB)==0)           return true;
-    if (key.compare(KEY_TAX_DB_TEXT)==0)      return true;
-    if (key.compare(KEY_GO_DB)==0)            return true;
-    if (key.compare(KEY_TAX_DOWNLOAD_EXE)==0) return true;
+    if (key.compare(KEY_ENTAP_DATABASE_BIN)==0) return true;
+    if (key.compare(KEY_ENTAP_DATABASE_SQL)==0) return true;
     if (key.compare(KEY_GRAPH_SCRIPT)==0)     return true;
     return key.compare(KEY_RSEM_EXE) == 0;
 }
@@ -683,10 +690,8 @@ void UserInput::print_user_input() {
        "\nEggNOG Emapper: "                    << EGG_EMAPPER_EXE   <<
        "\nEggNOG Download: "                   << EGG_DOWNLOAD_EXE  <<
        "\nEggNOG Database: "                   << EGG_SQL_DB_PATH   <<
-       "\nEnTAP Taxonomic Database (binary): " << TAX_DB_PATH       <<
-       "\nEnTAP Taxonomic Database (text): "   << TAX_DB_PATH_TEXT  <<
-       "\nEnTAP Taxonomic Download Script: "   << TAX_DOWNLOAD_EXE  <<
-       "\nEnTAP Gene Ontology Database: "      << GO_DB_PATH        <<
+       "\nEnTAP Database (binary): "           << ENTAP_DATABASE_BIN_PATH <<
+       "\nEnTAP Database (SQL): "              << ENTAP_DATABASE_SQL_PATH <<
        "\nEnTAP Graphing Script: "             << GRAPHING_EXE      <<
        "\n\nUser Inputs:\n";
 
@@ -734,12 +739,12 @@ void UserInput::print_user_input() {
  * @return              - None
  * ======================================================================
  */
-void UserInput::verify_species(boostPO::variables_map &map, SPECIES_FLAGS flag) {
+void UserInput::verify_species(SPECIES_FLAGS flag, EntapDatabase *database) {
 
     std::vector<std::string> species;
     std::string              raw_species;
-    tax_serial_map_t         taxonomic_database;
 
+    if (database == nullptr) return;
 
     if (flag == SPECIES) {
         raw_species = get_target_species_str();
@@ -752,13 +757,8 @@ void UserInput::verify_species(boostPO::variables_map &map, SPECIES_FLAGS flag) 
     }
     if (species.empty()) return;
 
-    try {
-        SimilaritySearch similaritySearch = SimilaritySearch();
-        taxonomic_database = similaritySearch.read_tax_map();
-    } catch (const ExceptionHandler &e) {throw e;}
-
     for (std::string &s : species) {
-        if (taxonomic_database.find(s) == taxonomic_database.end()) {
+        if (database->get_tax_entry(s).is_empty()) {
             throw ExceptionHandler("Error in one of your inputted taxons: " + s + " it is not located"
                                    " within the taxonomic database. You may remove it or select another",
                                     ERR_ENTAP_INPUT_PARSE);
@@ -794,10 +794,8 @@ void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map
     std::string temp_interpro          = map[KEY_INTERPRO_EXE];
     std::string temp_eggnog_down       = map[KEY_EGGNOG_DOWN];
     std::string temp_eggnog_db         = map[KEY_EGGNOG_DB];
-    std::string temp_tax_db            = map[KEY_TAX_DB];
-    std::string temp_tax_db_text       = map[KEY_TAX_DB_TEXT];
-    std::string temp_go_db             = map[KEY_GO_DB];
-    std::string temp_tax_download      = map[KEY_TAX_DOWNLOAD_EXE];
+    std::string temp_entap_sql_db      = map[KEY_ENTAP_DATABASE_SQL];
+    std::string temp_entap_bin_db      = map[KEY_ENTAP_DATABASE_BIN];
     std::string temp_graphing          = map[KEY_GRAPH_SCRIPT];
 
     // Included software paths
@@ -810,10 +808,8 @@ void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map
     if (temp_interpro.empty())   temp_interpro    = Defaults::INTERPRO_DEF_EXE;
 
     // EnTAP paths
-    if (temp_tax_db.empty()) temp_tax_db             = PATHS(exe_path, Defaults::TAX_DATABASE_BIN_DEFAULT);
-    if (temp_tax_db_text.empty()) temp_tax_db_text   = PATHS(exe_path, Defaults::TAX_DATABASE_TXT_DEFAULT);
-    if (temp_tax_download.empty()) temp_tax_download = PATHS(exe_path, Defaults::TAX_DOWNLOAD_DEF);
-    if (temp_go_db.empty()) temp_go_db       = PATHS(exe_path, Defaults::GO_DATABASE_BIN_DEFAULT);
+    if (temp_entap_sql_db.empty()) temp_entap_sql_db = PATHS(exe_path, Defaults::ENTAP_DATABASE_SQL_DEFAULT);
+    if (temp_entap_bin_db.empty()) temp_entap_bin_db = PATHS(exe_path, Defaults::ENTAP_DATABASE_BIN_DEFAULT);
     if (temp_graphing.empty()) temp_graphing = PATHS(exe_path, Defaults::GRAPH_SCRIPT_DEF);
 
     DIAMOND_EXE      = temp_diamond;
@@ -823,10 +819,8 @@ void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map
     EGG_DOWNLOAD_EXE = temp_eggnog_down;
     EGG_EMAPPER_EXE  = temp_eggnog;
     INTERPRO_EXE     = temp_interpro;
-    TAX_DB_PATH      = temp_tax_db;
-    TAX_DB_PATH_TEXT = temp_tax_db_text;
-    TAX_DOWNLOAD_EXE = temp_tax_download;
-    GO_DB_PATH       = temp_go_db;
+    ENTAP_DATABASE_BIN_PATH = temp_entap_bin_db;
+    ENTAP_DATABASE_SQL_PATH = temp_entap_sql_db;
     GRAPHING_EXE     = temp_graphing;
 
     FS_dprint("Success! All exe paths set");
@@ -958,23 +952,19 @@ std::pair<bool,std::string> UserInput::verify_software(uint8 &states,std::vector
     FS_dprint("Verifying software...");
 
     if (states & SIMILARITY_SEARCH) {
-        if (!_pFileSystem->file_exists(TAX_DB_PATH) || _pFileSystem->file_empty(TAX_DB_PATH))
-            return std::make_pair(false, "Could not find the taxonomic database");
         if (!SimilaritySearch::is_executable()) {
             return std::make_pair(false, "Could not execute a test run of DIAMOND, be sure"
                     " it's properly installed and the path is correct");
         }
     }
     if (states & GENE_ONTOLOGY) {
-        if (!_pFileSystem->file_exists(GO_DB_PATH) || _pFileSystem->file_empty(GO_DB_PATH))
-            return std::make_pair(false, "Could not find Gene Ontology database or invalid");
         for (uint16 flag : ontology) {
             switch (flag) {
                 case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
                     if (!_pFileSystem->file_exists(EGG_SQL_DB_PATH))
                         return std::make_pair(false, "Could not find EggNOG SQL database");
-                    if (!_pFileSystem->file_exists(EGG_EMAPPER_EXE) || !ModEggnog::is_executable())
-                        return std::make_pair(false, "Could not find or test EggNOG Emapper, "
+                    if (!ModEggnog::is_executable())
+                        return std::make_pair(false, "Test of EggNOG Emapper failed, "
                                 "ensure python is properly installed and the paths are correct");
                     break;
                 case ENTAP_EXECUTE::INTERPRO_INT_FLAG:

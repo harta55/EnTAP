@@ -162,7 +162,6 @@ void ModInterpro::parse() {
                                _final_outpath, ERR_ENTAP_PARSE_INTERPRO);
     }
     try {
-        GO_DATABASE = read_go_map();
         interpro_map = parse_tsv();
     } catch (ExceptionHandler const &e) {throw e;}
 
@@ -185,14 +184,14 @@ void ModInterpro::parse() {
 
     // TODO stats
     try {
-        for (auto &pair : *pQUERY_DATA->get_sequences_ptr()) {
+        for (auto &pair : *_pQUERY_DATA->get_sequences_ptr()) {
             std::map<std::string, InterProData>::iterator it = interpro_map.find(pair.first);
             if (it != interpro_map.end()) {
                 count_hits++;
                 pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_INTERPRO);
                 interpro_output = it->second.interID + "(" + it->second.interDesc + ")";
                 protein_output  = it->second.databaseID + "(" + it->second.databaseDesc + ")";
-                go_terms_parsed = parse_go_list(it->second.go_terms,GO_DATABASE,',');
+                go_terms_parsed = parse_go_list(it->second.go_terms,_pEntapDatabase,',');
                 std::stringstream ss;
                 ss << std::scientific << it->second.eval;
                 e_str = ss.str();
@@ -361,12 +360,12 @@ std::map<std::string,ModInterpro::InterProData> ModInterpro::parse_tsv(void) {
             std::replace(go_terms.begin(), go_terms.end(), '|', ',');
         }
 
-        if (pQUERY_DATA->get_sequence(query) == nullptr) {
+        if (_pQUERY_DATA->get_sequence(query) == nullptr) {
             // InterProScan5 adds underscore to identifier
             if (query.find_last_of('_') != std::string::npos) {
                 query = query.substr(0,query.find_last_of('_'));
                 // Check if query is good
-                if (pQUERY_DATA->get_sequence(query) == nullptr) {
+                if (_pQUERY_DATA->get_sequence(query) == nullptr) {
                     throw ExceptionHandler("InterPro Query: " + query + " not found in transcriptome!",
                                            ERR_ENTAP_PARSE_INTERPRO);
                 }
@@ -457,11 +456,11 @@ std::string ModInterpro::get_default() {
     return INTERPRO_DEFAULT;
 }
 
-ModInterpro::ModInterpro(std::string &exe, std::string &out, std::string &in, std::string &ont,
-                         GraphingManager *graphing, QueryData *queryData, bool blastp, std::vector<uint16> &lvls,
-                         int threads, FileSystem *filesystem, UserInput *userinput, vect_str_t databases)
-    : AbstractOntology(exe, out, in, ont, graphing, queryData, blastp,
-                     lvls, threads, filesystem, userinput){
+ModInterpro::ModInterpro(std::string &out, std::string &in, std::string &ont,
+                         bool blastp, std::vector<uint16> &lvls,
+                         EntapDataPtrs& entap_data, vect_str_t databases)
+    : AbstractOntology(out, in, ont,
+                       blastp, lvls, entap_data){
 
     _interpro_dir = PATHS(_ontology_dir, INTERPRO_DIRECTORY);
     _proc_dir     = PATHS(_interpro_dir, PROCESSED_OUT_DIR);

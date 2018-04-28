@@ -26,10 +26,8 @@
 */
 
 //*********************** Includes *****************************
-#include <boost/filesystem.hpp>
 #include <boost/range/iterator_range_core.hpp>
 #include <csv.h>
-#include <boost/archive/binary_iarchive.hpp>
 #include <boost/regex.hpp>
 #include <iomanip>
 #include "SimilaritySearch.h"
@@ -39,6 +37,7 @@
 #include "EntapGlobals.h"
 #include "common.h"
 #include "UserInput.h"
+#include "database/EntapDatabase.h"
 //**************************************************************
 
 
@@ -66,23 +65,15 @@
  * ======================================================================
  */
 SimilaritySearch::SimilaritySearch(databases_t &databases,
-                                   std::string input,
-                                   UserInput *userinput,
-                                   FileSystem *filesystem,
-                                   GraphingManager *graphingManager,
-                                   QueryData *queryData) {
+                                   std::string input, EntapDataPtrs& entap_data) {
     FS_dprint("Spawn object - SimilaritySearch");
     std::string uninform_path;
 
-    if (userinput == nullptr || filesystem == nullptr || graphingManager == nullptr ||
-            queryData == nullptr) {
-        throw ExceptionHandler("Unable to allocate memory for SimilaritySearch",
-            ERR_ENTAP_MEM_ALLOC);
-    }
-
-    _pQUERY_DATA    = queryData;
-    _pUserInput     = userinput;
-    _pFileSystem    = filesystem;
+    _pQUERY_DATA    = entap_data._pQueryData;
+    _pUserInput     = entap_data._pUserInput;
+    _pFileSystem    = entap_data._pFileSystem;
+    _pEntapDatabase = entap_data._pEntapDatbase;
+    _pGraphingManager = entap_data._pGraphingManager;
     _database_paths = databases;
     _input_path     = input;
     _diamond_exe    = DIAMOND_EXE;      // Set to extern set previously
@@ -98,7 +89,6 @@ SimilaritySearch::SimilaritySearch(databases_t &databases,
     _outpath          = _pFileSystem->get_root_path();
     _contaminants     = _pUserInput->get_contaminants();
     _software_flag    = ENTAP_EXECUTE::SIM_SEARCH_FLAG_DIAMOND; // Default DIAMOND software
-    _pGraphingManager = graphingManager;
 
     // Set sim search paths/directories
     _sim_search_dir  = PATHS(_outpath, SIM_SEARCH_DIR);
@@ -361,15 +351,8 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
     fp64 coverage;
     // ----------------------------------------------------------------- //
 
-    // Read tax database into memory
-    try {
-        taxonomic_database = read_tax_map();
-    } catch (const ExceptionHandler &e) {throw e;}
-
-    // Processed directory cleared earlier
-
     // Get the taxonomic info (lineage) of the target species
-    get_tax_entry(_input_species,taxonomic_database, taxEntry); // Input species entry
+    taxEntry = _pEntapDatabase->get_tax_entry(_input_species);
     _input_lineage = taxEntry.lineage;
 
     for (std::string &data : _sim_search_paths) {
@@ -390,12 +373,11 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
         while (in.read_row(qseqid, sseqid, pident, length, mismatch, gapopen,
                            qstart, qend, sstart, send, evalue, bitscore, coverage,stitle)) {
             simSearchResults = {};
-            taxEntry = {};
 
             // get species from database alignment (using regex)
             species = get_species(stitle);
             // get taxonomic information with species
-            get_tax_entry(species, taxonomic_database, taxEntry); // Input species entry
+            taxEntry = _pEntapDatabase->get_tax_entry(species);
             // get contaminant information
             contam_info = is_contaminant(taxEntry.lineage, taxonomic_database,contams);
 
@@ -827,29 +809,6 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
     // ************************************ //
 }
 
-
-tax_serial_map_t SimilaritySearch::read_tax_map() {
-    FS_dprint("Reading taxonomic database into memory...");
-
-    tax_serial_map_t restored_map;
-
-    if (!_pFileSystem->file_exists(TAX_DB_PATH)) {
-        throw ExceptionHandler("NCBI Taxonomic database not found at: " +
-            TAX_DB_PATH,ERR_ENTAP_INIT_TAX_READ);
-    }
-    try {
-        {
-            std::ifstream ifs(TAX_DB_PATH);
-            boost::archive::binary_iarchive ia(ifs);
-            ia >> restored_map;
-        }
-    } catch (std::exception &exception) {
-        throw ExceptionHandler(exception.what(), ERR_ENTAP_INIT_TAX_READ);
-    }
-    FS_dprint("Success!");
-    return restored_map;
-}
-
 std::pair<bool,std::string> SimilaritySearch::is_contaminant(std::string lineage, tax_serial_map_t &database,
                     std::vector<std::string> &contams) {
     // species and tax database both lowercase
@@ -899,32 +858,6 @@ void SimilaritySearch::print_header(std::ofstream &file_stream) {
     }
     file_stream << std::endl;
 }
-
-void SimilaritySearch::get_tax_entry(std::string species, tax_serial_map_t &database, TaxEntry &taxEntry) {
-    std::string temp_species;
-
-    if (species.empty()) return;
-    LOWERCASE(species);
-
-    if (database.find(species) != database.end() && !database.at(species).is_empty()) {
-        taxEntry = database[species];
-        return;
-    } else {
-        temp_species = species;
-        while (true) {
-            uint64 index = temp_species.find_last_of(" ");
-            if (index == std::string::npos)break;
-            temp_species = temp_species.substr(0,index);
-            if (database.find(temp_species) != database.end()) {
-                taxEntry = database[temp_species];
-                return;
-            }
-        }
-    }
-    taxEntry.lineage = "";
-    taxEntry.tax_id = "";
-}
-
 
 bool SimilaritySearch::is_executable() {
     std::string test_command;

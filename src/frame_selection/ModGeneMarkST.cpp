@@ -104,7 +104,6 @@ std::string ModGeneMarkST::execute() {
 
     genemark_cmd     = _exe_path + " -faa -fnn " + _inpath;
     genemark_std_out = PATHS(_frame_outpath, GENEMARK_STD_OUT);
-    FS_dprint("Running genemark...\n" + genemark_cmd);
 
     if (TC_execute_cmd(genemark_cmd, genemark_std_out) != 0 ) {
         throw ExceptionHandler("Error in running genemark at file located at: " +

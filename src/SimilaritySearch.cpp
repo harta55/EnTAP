@@ -281,7 +281,6 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
             " -f " + "6 qseqid sseqid pident length mismatch gapopen "
                      "qstart qend sstart send evalue bitscore qcovhsp stitle";
 
-    FS_dprint("\nExecuting Diamond:\n" + diamond_run);
     if (TC_execute_cmd(diamond_run, std_out) != 0) {
         // Delete output file if run failed
         _pFileSystem->delete_file(output_file);

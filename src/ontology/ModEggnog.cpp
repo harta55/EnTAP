@@ -401,8 +401,6 @@ void ModEggnog::execute() {
     if (!_blastp) eggnog_command_map["--translate"] = " ";
     if (_pFileSystem->file_exists(_inpath)) {
         for (auto &pair : eggnog_command_map)eggnog_command += pair.first + " " + pair.second + " ";
-        FS_dprint("\nExecuting eggnog mapper against protein sequences that hit databases...\n"
-                    + eggnog_command);
         if (TC_execute_cmd(eggnog_command, annotation_std) !=0) {
             _pFileSystem->delete_file(annotation_base_flag);
             throw ExceptionHandler("Error executing eggnog mapper", ERR_ENTAP_RUN_ANNOTATION);
@@ -457,7 +455,6 @@ bool ModEggnog::is_executable() {
     test_command = "python " +
             EGG_EMAPPER_EXE  +
             " --version";
-    FS_dprint("Testing EggNOG:\n" + test_command);
     return TC_execute_cmd(test_command) == 0;
 }
 

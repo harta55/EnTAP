@@ -71,6 +71,8 @@ EntapDatabase::DATABASE_ERR EntapDatabase::download_database(EntapDatabase::DATA
         default:
             return ERR_DATA_OK;
     }
+    _pFilesystem->delete_dir(_temp_directory);
+    _pFilesystem->create_dir(_temp_directory);
     if (err != ERR_DATA_OK) _pFilesystem->delete_file(path);
     return err;
 }
@@ -88,6 +90,8 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(EntapDatabase::DATA
         default:
             return ERR_DATA_OK;
     }
+    _pFilesystem->delete_dir(_temp_directory);
+    _pFilesystem->create_dir(_temp_directory);
     if (err != ERR_DATA_OK) _pFilesystem->delete_file(path);
     return err;
 }
@@ -442,12 +446,13 @@ bool EntapDatabase::sql_add_tax_entry(TaxEntry &taxEntry) {
 bool EntapDatabase::create_sql_table(DATABASE_TYPE type) {
     std::string table_title;
     char *sql_cmd;
+    bool success;
 
     if (_pDatabaseHelper == nullptr) return false;
-    FS_dprint("Creating table...");
 
     switch (type) {
         case ENTAP_TAXONOMY:
+            FS_dprint("Creating SQL Taxonomy table...");
             table_title = SQL_TABLE_NCBI_TAX_TITLE;
             sql_cmd = sqlite3_mprintf(
                     "CREATE TABLE %Q ("                 \
@@ -461,9 +466,11 @@ bool EntapDatabase::create_sql_table(DATABASE_TYPE type) {
                     SQL_COL_NCBI_TAX_LINEAGE.c_str(),
                     SQL_COL_NCBI_TAX_NAME.c_str()
             );
-            return _pDatabaseHelper->execute_cmd(sql_cmd);
+            success = _pDatabaseHelper->execute_cmd(sql_cmd);
+            break;
 
         case ENTAP_GENE_ONTOLOGY:
+            FS_dprint("Creating SQL Gene Ontology table...");
             table_title = SQL_TABLE_GO_TITLE;
             sql_cmd = sqlite3_mprintf(
                     "CREATE TABLE %Q ("                     \
@@ -479,10 +486,17 @@ bool EntapDatabase::create_sql_table(DATABASE_TYPE type) {
                     SQL_TABLE_GO_COL_CATEGORY.c_str(),
                     SQL_TABLE_GO_COL_LEVEL.c_str()
             );
-            return _pDatabaseHelper->execute_cmd(sql_cmd);
+            success = _pDatabaseHelper->execute_cmd(sql_cmd);
         default:
             return false;
     }
+    if (success) {
+        FS_dprint("Success!");
+    } else {
+        std::string temp = sql_cmd;
+        FS_dprint("Error Unable to create table with command: \n" + temp);
+    }
+    return success;
 }
 
 bool EntapDatabase::sql_add_go_entry(GoEntry &goEntry) {

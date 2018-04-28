@@ -354,7 +354,6 @@ bool ModRSEM::rsem_validate_file(std::string filename) {
     rsem_arg = PATHS(_exe_path, RSEM_SAM_VALID) + " " + _alignpath;
     out_path = PATHS(_expression_outpath, filename) + STD_VALID_OUT;
     // only thrown in failure in calling rsem
-    FS_dprint("Executing RSEM command:\n" + rsem_arg);
     if (TC_execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) return false;
     FS_dprint("RSEM validate executed successfully");
     // RSEM does not always return error code if file is invalid, only seen in .err
@@ -443,7 +442,6 @@ bool ModRSEM::rsem_generate_reference(std::string& reference_path_out) {
                + _inpath + " "
                + ref_path;
     std_out = PATHS(_expression_outpath, _filename) + STD_REF_OUT;
-    FS_dprint("Executing following command\n" + rsem_arg);
     reference_path_out = ref_path;
     return TC_execute_cmd(rsem_arg.c_str(), std_out) == 0;
 }
@@ -462,6 +460,5 @@ bool ModRSEM::rsem_expression_analysis(std::string& ref_path, std::string& bam) 
                _exp_out;
     if (!_issingle) rsem_arg += " --paired-end";
     std_out = PATHS(_expression_outpath, _filename) + STD_EXP_OUT;
-    FS_dprint("Executing following command\n" + rsem_arg);
     return TC_execute_cmd(rsem_arg.c_str(), std_out) == 0;
 }

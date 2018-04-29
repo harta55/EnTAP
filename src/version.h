@@ -34,7 +34,7 @@
 
 #define MAJOR_VERSION     0
 #define MINOR_VERSION     8
-#define BUILD_VERSION     1
+#define BUILD_VERSION     2
 
 #ifndef RELEASE_BUILD
     #define DEBUG_BUILD

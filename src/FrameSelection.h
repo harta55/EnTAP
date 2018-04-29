@@ -30,26 +30,21 @@
 #define ENTAP_FRAMESELECTION_H
 
 //*********************** Includes *****************************
-#include <iostream>
-#include <map>
 #include <boost/program_options/variables_map.hpp>
 #include "QuerySequence.h"
 #include "GraphingManager.h"
 #include "frame_selection/AbstractFrame.h"
 #include "QueryData.h"
+#include "common.h"
 //**************************************************************
 
-
+class AbstractFrame;
 class FrameSelection {
 
 
 public:
     std::string execute(std::string);
-    FrameSelection(std::string&,
-                   FileSystem*,
-                   UserInput*,
-                   GraphingManager*,
-                   QueryData*);
+    FrameSelection(std::string&, EntapDataPtrs&);
 
 
 private:
@@ -62,10 +57,11 @@ private:
     std::string      _outpath;
     bool             _overwrite;
     short            _software_flag;
-    GraphingManager  *_graphingManager;
+    GraphingManager  *_pGraphingManager;
     QueryData        *_QUERY_DATA;
-    FileSystem      *_pFileSystem;
-    UserInput       *_pUserInput;
+    FileSystem       *_pFileSystem;
+    UserInput        *_pUserInput;
+    EntapDataPtrs    _entap_data_ptrs;
 
     std::unique_ptr<AbstractFrame> spawn_object();
 };

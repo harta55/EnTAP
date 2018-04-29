@@ -28,10 +28,8 @@
 
 //*********************** Includes *****************************
 #include "common.h"
-#include <unordered_map>
 #include <boost/filesystem/operations.hpp>
 #include <chrono>
-#include <iomanip>
 #include <boost/date_time/time_clock.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>

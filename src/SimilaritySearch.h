@@ -37,6 +37,7 @@
 #include "QuerySequence.h"
 #include "GraphingManager.h"
 #include "QueryData.h"
+#include "database/EntapDatabase.h"
 
 //**************************************************************
 
@@ -49,15 +50,9 @@ public:
 
     //******************** Public Prototype Functions *********************
     std::vector<std::string> execute(std::string, bool);
-    SimilaritySearch(databases_t&,
-                     std::string,
-                     UserInput*,
-                     FileSystem*,
-                     GraphingManager*,
-                     QueryData*);
+    SimilaritySearch(databases_t&, std::string,EntapDataPtrs&);
     SimilaritySearch();
     void parse_files(std::string);
-    tax_serial_map_t read_tax_map();
     static bool is_executable();
     //**************************************************************
 
@@ -154,6 +149,7 @@ private:
     QueryData                       *_pQUERY_DATA;
     FileSystem                      *_pFileSystem;
     UserInput                       *_pUserInput;
+    EntapDatabase                   *_pEntapDatabase;
     std::unordered_map<std::string,std::string> _file_to_database;
 
     std::vector<std::string> diamond();
@@ -163,7 +159,6 @@ private:
     std::pair<bool,std::string> is_contaminant(std::string, tax_serial_map_t&,std::vector<std::string>&);
     bool is_informative(std::string);
     void print_header(std::ofstream&);
-    void get_tax_entry(std::string, tax_serial_map_t&, TaxEntry&);
     std::string get_species(std::string &title);
     void calculate_best_stats (bool,std::string="");
     std::string get_database_shortname(std::string&);

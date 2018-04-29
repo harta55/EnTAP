@@ -24,8 +24,8 @@ set(SOURCE_FILES libs
         src/GraphingManager.cpp src/GraphingManager.h
         src/UserInput.cpp src/UserInput.h
         src/ontology/EggnogLevels.h
-        src/database/DatabaseHelper.cpp src/database/DatabaseHelper.h
-        src/sqlite3.c src/sqlite3.h
+        src/database/SQLDatabaseHelper.cpp src/database/SQLDatabaseHelper.h
+        src/database/sqlite3.c src/database/sqlite3.h
         src/frame_selection/ModGeneMarkST.cpp src/frame_selection/ModGeneMarkST.h
         src/frame_selection/AbstractFrame.h
         src/expression/AbstractExpression.h
@@ -36,13 +36,14 @@ set(SOURCE_FILES libs
         src/ontology/ModInterpro.cpp src/ontology/ModInterpro.h
         src/QueryData.cpp src/QueryData.h src/common.h src/config.h
         src/FileSystem.cpp src/FileSystem.h src/version.h
-        src/database/EntapDatabase.cpp src/database/EntapDatabase.h)
+        src/database/EntapDatabase.cpp src/database/EntapDatabase.h
+        src/TerminalCommands.cpp src/TerminalCommands.h)
 
 add_executable(EnTAP ${SOURCE_FILES})
 
 # Change these paths to the specific boost directory if you're having trouble linking
-#set(Boost_INCLUDE_DIR /path/to/boost_1_63_0)
-#set(Boost_LIBRARY_DIR /path/to/boost_1_63_0/stage/lib)
+# set(Boost_INCLUDE_DIR /path/to/boost_1_50_0)
+# set(Boost_LIBRARY_DIR /path/to/boost_1_50_0/stage/lib)
 
 include_directories(libs/pstream)
 include_directories(libs/fast-cpp-csv-parser) # May need to compile with thread control

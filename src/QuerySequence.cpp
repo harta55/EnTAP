@@ -380,7 +380,7 @@ bool SimSearchAlignment::operator>(const SimSearchAlignment &alignment) {
     if (eval1 == 0) eval1 = 1E-200;
     if (eval2 == 0) eval2 = 1E-200;
     fp64 cov1 = this->_sim_search_results.coverage_raw;
-    fp64 cov2 = fabs(alignment._sim_search_results.coverage_raw);
+    fp64 cov2 = alignment._sim_search_results.coverage_raw;
     fp64 coverage_dif = fabs(cov1 - cov2);
     if (!this->_best_hit) {
         // For hits of the same database "better hit"

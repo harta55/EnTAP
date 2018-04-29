@@ -27,27 +27,14 @@
 
 
 //*********************** Includes *****************************
-#include <boost/filesystem.hpp>
-#include <csv.h>
-#include <boost/regex.hpp>
-#include <iomanip>
 #include "ExpressionAnalysis.h"
-#include "ExceptionHandler.h"
-#include "EntapConfig.h"
-#include "EntapGlobals.h"
-#include "EntapExecute.h"
-#include "common.h"
-#include "expression/ModRSEM.h"
-#include "FileSystem.h"
+
 //**************************************************************
 
 
 /**
  * ======================================================================
- * Function ExpressionAnalysis::ExpressionAnalysis(std::string &input,int t,
- *                                                 std::string &out,
- *                                                 boost::program_options::variables_map& user_flags,
- *                                                 GraphingManager *graph, QueryData *queryData)
+ * Function ExpressionAnalysis::ExpressionAnalysis(std::string &input, EntapDataPtrs entap_data)
  *
  * Description          - Main expression analysis constructor
  *                      - Handles execution of specific packages as well
@@ -58,33 +45,22 @@
  * Notes                - Constructor
  *
  * @param input         - Path to original input fasta file (may change)
- * @param t             - Thread count
- * @param out           - Main outfiles directory path
- * @param user_flags    - Boost parsed user flags
- * @param graph         - Ptr to graphing manager
- * @param queryData     - Ptr to query data
+ * @param entap_data    - Entap data pointers
  *
  * @return              - None
  *
  * =====================================================================
  */
-ExpressionAnalysis::ExpressionAnalysis(std::string &input,
-                                       GraphingManager *graph,
-                                       QueryData *queryData,
-                                       FileSystem *filesystem,
-                                       UserInput *userinput) {
+ExpressionAnalysis::ExpressionAnalysis(std::string &input,EntapDataPtrs& entap_data) {
     FS_dprint("Spawn object - ExpressionAnalysis");
 
-    _pQueryData       = queryData;
-    _pFileSystem      = filesystem;
-    _pUserInput       = userinput;
-    _pGraphingManager = graph;
+    _pQueryData       = entap_data._pQueryData;
+    _pFileSystem      = entap_data._pFileSystem;
+    _pUserInput       = entap_data._pUserInput;
+    _pGraphingManager = entap_data._pGraphingManager;
     _inpath           = input;
 
-    if (queryData == nullptr || filesystem == nullptr || userinput == nullptr) {
-        throw ExceptionHandler("Unable to allocate memory to ExpressionAnalysis.",
-            ERR_ENTAP_MEM_ALLOC);
-    }
+    _entap_data = entap_data;
 
     _software_flag = ENTAP_EXECUTE::EXP_FLAG_RSEM;
     _threads       = _pUserInput->get_supported_threads();
@@ -160,9 +136,8 @@ std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
                     _inpath,
                     _rsem_dir,
                     _alignpath,
-                    _pGraphingManager,
-                    _pQueryData,
-                    _pFileSystem
+                    _entap_data
+
             ));
         default:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
@@ -170,9 +145,7 @@ std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
                     _inpath,
                     _rsem_dir,
                     _alignpath,
-                    _pGraphingManager,
-                    _pQueryData,
-                    _pFileSystem
+                    _entap_data
             ));
     }
 }

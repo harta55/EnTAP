@@ -35,9 +35,8 @@
 class ModEggnog : public AbstractOntology{
 
 public:
-    ModEggnog(std::string &exe,std::string &out, std::string &in,
-              std::string &ont, GraphingManager *graphing,QueryData *queryData,
-            bool blastp,std::vector<uint16>& lvls, int threads, FileSystem*, UserInput*,std::string&);
+    ModEggnog(std::string &out, std::string &in, std::string &ont,
+            bool blastp,std::vector<uint16>& lvls, EntapDataPtrs &entap_data, std::string&);
 
     ~ModEggnog();
     virtual std::pair<bool, std::string> verify_files() override ;
@@ -49,7 +48,7 @@ public:
 private:
 
     void get_tax_scope(std::string&, QuerySequence::EggnogResults&);
-    void get_sql_data(QuerySequence::EggnogResults&, DatabaseHelper&);
+    void get_sql_data(QuerySequence::EggnogResults&, SQLDatabaseHelper&);
     std::string format_sql_data(std::string&);
     void get_og_query(QuerySequence::EggnogResults&);
 

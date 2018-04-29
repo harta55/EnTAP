@@ -27,39 +27,11 @@
 #ifndef ENTAPCONFIG_H
 #define ENTAPCONFIG_H
 
-#include <boost/serialization/unordered_map.hpp>
-#include <boost/program_options/variables_map.hpp>
-#include "common.h"
 #include "UserInput.h"
-
-struct  GoEntry {
-    std::string go_id;
-    std::string level;
-    std::string category;
-    std::string term;
-    friend class boost::serialization::access;
-    template <typename Archive>
-    void serialize(Archive & ar, const uint32 v) {
-        ar&go_id;
-        ar&level;
-        ar&category;
-        ar&term;
-    }
-};
-
-struct TaxEntry {
-    std::string tax_id;
-    std::string lineage;
-    friend class boost::serialization::access;
-    template<typename Archive>
-    void serialize(Archive & ar, const uint32 v) {
-        ar&tax_id;
-        ar&lineage;
-    }
-    bool is_empty() {
-        return this->tax_id.empty() && this->lineage.empty();
-    }
-};
+#include "EntapGlobals.h"
+#include "ExceptionHandler.h"
+#include "FileSystem.h"
+#include "database/EntapDatabase.h"
 
 namespace entapConfig {
     //****************** Global Prototype Functions******************

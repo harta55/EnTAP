@@ -64,7 +64,7 @@ Before continuing on in the installation process, ensure that the following depe
 		
     * Unix wget (generally included in most distros)
 	
-    * Unix gzip (generally included in most distros)
+    * Unix gzip/tar (generally included in most distros)
 
 
 .. _pipe-label:

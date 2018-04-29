@@ -34,7 +34,7 @@
 #include "EntapConfig.h"
 #include "EntapGlobals.h"
 #include "QuerySequence.h"
-#include "database/DatabaseHelper.h"
+#include "database/SQLDatabaseHelper.h"
 #include "GraphingManager.h"
 #include "ontology/AbstractOntology.h"
 #include "QueryData.h"
@@ -49,11 +49,7 @@ class Ontology {
 public:
 
     void execute();
-    Ontology(std::string,
-             UserInput*,
-             GraphingManager*,
-             QueryData*,
-             FileSystem*);
+    Ontology(std::string, EntapDataPtrs &);
 
 private:
 
@@ -72,7 +68,6 @@ private:
     std::vector<uint16>             _software_flags;
     bool                            _is_overwrite;
     bool                            _blastp;
-    std::string                     _ontology_exe;
     std::string                     _outpath;
     std::string                     _new_input;
     std::string                     _ontology_dir;
@@ -83,6 +78,8 @@ private:
     QueryData                       *_QUERY_DATA;
     FileSystem                      *_pFileSystem;
     UserInput                       *_pUserInput;
+    EntapDatabase                   *_pEntapDatabase;
+    EntapDataPtrs                   _entap_data_ptrs;
 
     void print_eggnog(QUERY_MAP_T&);
     void init_headers();

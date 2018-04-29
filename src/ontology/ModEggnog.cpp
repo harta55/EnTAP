@@ -97,7 +97,6 @@ void ModEggnog::parse() {
     std::string                              fig_png_bar_ortho;
     std::string                              fig_txt_go_bar;
     std::string                              fig_png_go_bar;
-    go_serial_map_t                          GO_DATABASE;
     uint32                                   count_total_go_hits=0;
     uint32                                   count_total_go_terms=0;
     uint32                                   count_go_bio=0;
@@ -112,7 +111,7 @@ void ModEggnog::parse() {
     uint32                                   count_tax_scope=0;
     uint32                                   ct = 0;
     fp32                                     percent;
-    DatabaseHelper                           EGGNOG_DATABASE;
+    SQLDatabaseHelper                           EGGNOG_DATABASE;
     std::map<std::string, uint32>            tax_scope_ct_map;
     GO_top_map_t                             go_combined_map;     // Just for convenience
     GraphingData                             graphingStruct;
@@ -120,9 +119,6 @@ void ModEggnog::parse() {
     QuerySequence::EggnogResults            EggnogResults;
 
     ss<<std::fixed<<std::setprecision(2);
-    try {
-        GO_DATABASE = read_go_map();
-    } catch (ExceptionHandler const &e) {throw e;}
 
     if (!EGGNOG_DATABASE.open(_eggnog_db_path))
         throw ExceptionHandler("Unable to open GO database",ERR_ENTAP_PARSE_EGGNOG);
@@ -145,8 +141,8 @@ void ModEggnog::parse() {
     while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                        best_og, cog_cat, eggnog_annot)) {
         // Check if the query matches one of our original transcriptome sequences
-        QUERY_MAP_T::iterator it = (*pQUERY_DATA->get_sequences_ptr()).find(qseqid);
-        if (it != (*pQUERY_DATA->get_sequences_ptr()).end()) {
+        QUERY_MAP_T::iterator it = (*_pQUERY_DATA->get_sequences_ptr()).find(qseqid);
+        if (it != (*_pQUERY_DATA->get_sequences_ptr()).end()) {
             // EggNOG hit matches one of our original queries (from transcriptome)
 
             count_TOTAL_hits++;     // Increment number of EggNOG hits we got
@@ -163,7 +159,7 @@ void ModEggnog::parse() {
             get_tax_scope(tax_scope, EggnogResults);        // Map virNOG[6] to viridiplantae
             get_og_query(EggnogResults);               // Requires tax_scope first, pulls key to SQL database
             get_sql_data(EggnogResults, EGGNOG_DATABASE);
-            EggnogResults.parsed_go = parse_go_list(go_terms,GO_DATABASE,',');
+            EggnogResults.parsed_go = parse_go_list(go_terms,_pEntapDatabase,',');
 
             it->second->set_eggnog_results(EggnogResults);  // Set EggNOG results to maintained data
 
@@ -239,7 +235,7 @@ void ModEggnog::parse() {
 
     FS_dprint("Success! Computing overall statistics...");
     // Find how many original sequences did/did not hit the EggNOG database
-    for (auto &pair : *pQUERY_DATA->get_sequences_ptr()) {
+    for (auto &pair : *_pQUERY_DATA->get_sequences_ptr()) {
         if (!pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_EGGNOG_HIT)) {
             // Unannotated sequence
             if (!pair.second->get_sequence_n().empty()) file_no_hits_nucl << pair.second->get_sequence_n() << std::endl;
@@ -295,7 +291,7 @@ void ModEggnog::parse() {
             graphingStruct.graph_title = GRAPH_EGG_TAX_BAR_TITLE;
             graphingStruct.software_flag = GRAPH_ONTOLOGY_FLAG;
             graphingStruct.graph_type = GRAPH_TOP_BAR_FLAG;
-            pGraphingManager->graph(graphingStruct);
+            _pGraphingManager->graph(graphingStruct);
         }
         //-------------------------------------------------------------//
 
@@ -351,7 +347,7 @@ void ModEggnog::parse() {
                 if (pair.first == GO_OVERALL_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_ALL_TITLE+ "_Level:_"+std::to_string(lvl);
                 graphingStruct.software_flag = GRAPH_ONTOLOGY_FLAG;
                 graphingStruct.graph_type = GRAPH_TOP_BAR_FLAG;
-                pGraphingManager->graph(graphingStruct);
+                _pGraphingManager->graph(graphingStruct);
             }
         }
         ss<<
@@ -394,7 +390,7 @@ void ModEggnog::execute() {
 
     annotation_base_flag = PATHS(_egg_out_dir, EGG_ANNOT_RESULTS);
     annotation_std       = PATHS(_egg_out_dir, EGG_ANNOT_STD);
-    eggnog_command       = "python " + _exe_path + " ";
+    eggnog_command       = "python " + EGG_EMAPPER_EXE + " ";
 
     std::unordered_map<std::string,std::string> eggnog_command_map = {
             {"-i",_inpath},
@@ -405,9 +401,7 @@ void ModEggnog::execute() {
     if (!_blastp) eggnog_command_map["--translate"] = " ";
     if (_pFileSystem->file_exists(_inpath)) {
         for (auto &pair : eggnog_command_map)eggnog_command += pair.first + " " + pair.second + " ";
-        FS_dprint("\nExecuting eggnog mapper against protein sequences that hit databases...\n"
-                    + eggnog_command);
-        if (execute_cmd(eggnog_command, annotation_std) !=0) {
+        if (TC_execute_cmd(eggnog_command, annotation_std) !=0) {
             _pFileSystem->delete_file(annotation_base_flag);
             throw ExceptionHandler("Error executing eggnog mapper", ERR_ENTAP_RUN_ANNOTATION);
         }
@@ -461,8 +455,7 @@ bool ModEggnog::is_executable() {
     test_command = "python " +
             EGG_EMAPPER_EXE  +
             " --version";
-    FS_dprint("Testing EggNOG:\n" + test_command);
-    return execute_cmd(test_command) == 0;
+    return TC_execute_cmd(test_command) == 0;
 }
 
 ModEggnog::~ModEggnog() {
@@ -519,7 +512,7 @@ void ModEggnog::get_tax_scope(std::string &raw_scope,
  * @return              - None
  * ======================================================================
  */
-void ModEggnog::get_sql_data(QuerySequence::EggnogResults &eggnogResults, DatabaseHelper &database) {
+void ModEggnog::get_sql_data(QuerySequence::EggnogResults &eggnogResults, SQLDatabaseHelper &database) {
     // Lookup description, KEGG, protein domain from SQL database
     if (!eggnogResults.og_key.empty()) {
         std::vector<std::vector<std::string>>results;
@@ -658,11 +651,10 @@ bool ModEggnog::valid_input(boostPO::variables_map &user_map) {
     return true;
 }
 
-ModEggnog::ModEggnog(std::string &exe, std::string &out, std::string &in, std::string &ont,
-                     GraphingManager *graphing, QueryData *queryData, bool blastp, std::vector<uint16> &lvls,
-                     int threads, FileSystem* filesystem, UserInput*, std::string& eggnog_sql_path)
-    :AbstractOntology(exe, out, in,ont, graphing, queryData, blastp,
-                     lvls, threads, filesystem, _pUserInput){
+ModEggnog::ModEggnog(std::string &out, std::string &in, std::string &ont,
+                     bool blastp, std::vector<uint16> &lvls,EntapDataPtrs &entap_data,
+                     std::string& eggnog_sql_path)
+    :AbstractOntology(out, in,ont, blastp, lvls, entap_data){
 
     _eggnog_db_path = eggnog_sql_path;
 

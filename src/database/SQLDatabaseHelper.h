@@ -30,18 +30,20 @@
 #define ENTAP_DATABASEHELPER_H
 
 #include <iostream>
-#include <vector>
-#include "../sqlite3.h"
+#include "../common.h"
+#include "sqlite3.h"
 
 
-class DatabaseHelper {
+class SQLDatabaseHelper {
 
 typedef std::vector<std::vector<std::string>> query_struct;
 
 public:
-    DatabaseHelper();
-    ~DatabaseHelper();
+    SQLDatabaseHelper();
+    ~SQLDatabaseHelper();
     bool open(std::string file);
+    bool create(std::string file);
+    bool execute_cmd(char*);
     void close();
     query_struct query(char* query);
 

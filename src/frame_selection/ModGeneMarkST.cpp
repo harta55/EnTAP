@@ -104,9 +104,8 @@ std::string ModGeneMarkST::execute() {
 
     genemark_cmd     = _exe_path + " -faa -fnn " + _inpath;
     genemark_std_out = PATHS(_frame_outpath, GENEMARK_STD_OUT);
-    FS_dprint("Running genemark...\n" + genemark_cmd);
 
-    if (execute_cmd(genemark_cmd,genemark_std_out) != 0 ) {
+    if (TC_execute_cmd(genemark_cmd, genemark_std_out) != 0 ) {
         throw ExceptionHandler("Error in running genemark at file located at: " +
                                _inpath, ERR_ENTAP_INIT_INDX_DATA_NOT_FOUND);
     }
@@ -524,14 +523,10 @@ ModGeneMarkST::~ModGeneMarkST() {
     FS_dprint("Killing object - ModGeneMarkST");
 }
 
-ModGeneMarkST::ModGeneMarkST(std::string &exe, std::string &in, std::string &frame, GraphingManager *graphing,
-                             QueryData *querydata, FileSystem *filesystem, UserInput *userinput) :
+ModGeneMarkST::ModGeneMarkST(std::string &exe, std::string &in, std::string &frame, EntapDataPtrs &entap_data) :
     AbstractFrame(exe,
                  in,
                  frame,
-                 graphing,
-                 querydata,
-                 filesystem,
-                 userinput) {
-    _transcriptome_filename = filesystem->get_filename(_inpath);
+                 entap_data) {
+    _transcriptome_filename = _pFileSystem->get_filename(_inpath);
 }

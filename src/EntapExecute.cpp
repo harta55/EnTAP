@@ -30,18 +30,6 @@
 #include <boost/serialization/unordered_map.hpp>
 #include "common.h"
 #include "EntapExecute.h"
-#include "ExceptionHandler.h"
-#include "EntapGlobals.h"
-#include <thread>
-#include "QuerySequence.h"
-#include "FrameSelection.h"
-#include "ExpressionAnalysis.h"
-#include "SimilaritySearch.h"
-#include "FileSystem.h"
-#include <boost/regex.hpp>
-#include <queue>
-#include <iomanip>
-#include "UserInput.h"
 //**************************************************************
 
 
@@ -98,6 +86,11 @@ namespace entapExecute {
         std::string                             final_out_dir;
         std::queue<char>                        state_queue;
         bool                                    state_flag;
+        vect_uint16_t                           entap_database_types;
+        EntapDatabase::DATABASE_TYPE            entap_database_type;
+        EntapDataPtrs                           entap_data_ptrs;
+        EntapDatabase*                          pEntapDatabase;
+
 
         if (user_input == nullptr || filesystem == nullptr) {
             throw ExceptionHandler("Unable to allocate memory to EnTAP Execution", ERR_ENTAP_INPUT_PARSE);
@@ -107,6 +100,7 @@ namespace entapExecute {
         state_flag              = false;
         _pUserInput             = user_input;
         _pFileSystem            = filesystem;
+        entap_data_ptrs         = EntapDataPtrs();
 
         // Pull relevant info input by the user
         _input_path    = _pUserInput->get_user_input<std::string>(UInput::INPUT_FLAG_TRANSCRIPTOME);
@@ -116,9 +110,13 @@ namespace entapExecute {
         state_queue    = _pUserInput->get_state_queue();    // Will NOT be empty, default is +
         _databases     = _pUserInput->get_user_input<databases_t>(UInput::INPUT_FLAG_DATABASE);
 
+        // Find database type that will be used by the rest (use 0 index no matter what)
+        entap_database_types = _pUserInput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_DATABASE_TYPE);
+        entap_database_type = static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
+
         // Set/create outpaths
         _outpath       = _pFileSystem->get_root_path();
-        final_out_dir = _pFileSystem->get_final_outdir();
+        final_out_dir  = _pFileSystem->get_final_outdir();
         _entap_outpath = PATHS(_outpath, ENTAP_OUTPUT);     // transcriptome outpath, original will be copied
         _pFileSystem->create_dir(_entap_outpath);
         _pFileSystem->create_dir(_outpath);
@@ -126,13 +124,31 @@ namespace entapExecute {
 
         try {
             verify_state(state_queue, state_flag);         // Set state transition
-            // Read input transcriptome
+
+            // Initialize Query Data
             QueryData *pQUERY_DATA = new QueryData(
                     _input_path,        // User transcriptome
                     _entap_outpath,     // Transcriptome directory
                     _pUserInput,        // User input map
                     _pFileSystem);      // Filesystem object
-            GraphingManager graphingManager = GraphingManager(GRAPHING_EXE);
+
+            // Initialize Graphing Manager
+            GraphingManager* pGraphingManager = new GraphingManager(GRAPHING_EXE);
+
+            // Initialize EnTAP database
+            pEntapDatabase = new EntapDatabase(filesystem);
+            if (!pEntapDatabase->set_database(entap_database_type, "")) {
+                throw ExceptionHandler("Unable to initialize EnTAP database", ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
+            }
+
+            entap_data_ptrs._pEntapDatbase = pEntapDatabase;
+            entap_data_ptrs._pFileSystem   = filesystem;
+            entap_data_ptrs._pUserInput    = user_input;
+            entap_data_ptrs._pGraphingManager = pGraphingManager;
+            entap_data_ptrs._pQueryData    = pQUERY_DATA;
+            if (entap_data_ptrs.is_null()) {
+                throw ExceptionHandler("Unable to allocate memory", ERR_ENTAP_MEM_ALLOC);
+            }
 
             while (executeStates != EXIT) {
                 switch (executeStates) {
@@ -145,11 +161,7 @@ namespace entapExecute {
                         } else {
                             FS_dprint("Continuing with frame selection process...");
                             std::unique_ptr<FrameSelection> frame_selection(new FrameSelection(
-                                    _input_path,
-                                    _pFileSystem,
-                                    _pUserInput,
-                                    &graphingManager,
-                                    pQUERY_DATA
+                                    _input_path, entap_data_ptrs
                             ));
                             _input_path = frame_selection->execute(_input_path);
 
@@ -171,11 +183,7 @@ namespace entapExecute {
                         } else {
                             // Proceed with frame selection
                             std::unique_ptr<ExpressionAnalysis> expression(new ExpressionAnalysis(
-                                original_input,
-                                &graphingManager,
-                                pQUERY_DATA,
-                                _pFileSystem,
-                                _pUserInput
+                                original_input, entap_data_ptrs
                             ));
                             _input_path = expression->execute(original_input);
 
@@ -198,10 +206,7 @@ namespace entapExecute {
                         std::unique_ptr<SimilaritySearch> sim_search(new SimilaritySearch(
                                 _databases,
                                 _input_path,
-                                _pUserInput,
-                                _pFileSystem,
-                                &graphingManager,
-                                pQUERY_DATA
+                                entap_data_ptrs
                         ));
 
                         sim_search->execute(_input_path, _blastp);
@@ -214,10 +219,7 @@ namespace entapExecute {
                         FS_dprint("STATE - GENE ONTOLOGY");
                         std::unique_ptr<Ontology> ontology(new Ontology(
                                 _input_path,
-                                _pUserInput,
-                                &graphingManager,
-                                pQUERY_DATA,
-                                _pFileSystem
+                                entap_data_ptrs
                         ));
                         ontology->execute();
                         pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_ONTOLOGY);

@@ -28,9 +28,7 @@
 #ifndef ENTAP_EXCEPTIONHANDLER_H
 #define ENTAP_EXCEPTIONHANDLER_H
 
-#include <string>
-#include <exception>
-#include <sstream>
+#include "EntapGlobals.h"
 #include "FileSystem.h"
 
 enum entap_err {
@@ -43,9 +41,14 @@ enum entap_err {
     ERR_ENTAP_INIT_TAX_DOWN               = 20u,
     ERR_ENTAP_INIT_TAX_INDEX              = 21u,
     ERR_ENTAP_INIT_TAX_SERIAL             = 22u,
+    ERR_ENTAP_INIT_DOWNLOAD               = 23u,
     ERR_ENTAP_INIT_INDX_DATA_NOT_FOUND    = 30u,
     ERR_ENTAP_INIT_INDX_DATABASE          = 31u,
-    ERR_ENTAP_INIT_DOWNLOAD               = 23u,
+    ERR_ENTAP_INIT_GEN_SERIAL_DATA        = 32u,
+    ERR_ENTAP_INIT_GEN_SQL_DATA           = 33u,
+    ERR_ENTAP_INIT_DOWN_SQL_DATA          = 34u,
+    ERR_ENTAP_INIT_DOWN_SERIAL_DATA       = 35u,
+    ERR_ENTAP_INIT_DATA_GENERIC           = 36u,
     ERR_ENTAP_INIT_EGGNOG                 = 40u,
 
     ERR_ENTAP_INIT_TAX_READ               = 55u,
@@ -53,6 +56,9 @@ enum entap_err {
     ERR_ENTAP_INIT_GO_UNZIP               = 61u,
     ERR_ENTAP_INIT_GO_PARSE               = 62u,
     ERR_ENTAP_INIT_GO_INDEX               = 63u,
+    ERR_ENTAP_READ_ENTAP_SERIAL_DATA      = 70u,
+    ERR_ENTAP_READ_ENTAP_SQL_DATA         = 71u,
+    ERR_ENTAP_READ_ENTAP_DATA_GENERIC     = 72u,
 
     ERR_ENTAP_RUN_EXECUTION_PATHS         = 105u,
     ERR_ENTAP_RUN_VERIFY_DATABASES        = 106u,

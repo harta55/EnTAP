@@ -45,10 +45,7 @@ public:
     ModGeneMarkST(std::string &exe,
                   std::string &in,
                   std::string &frame,
-                  GraphingManager *graphing,
-                  QueryData *querydata,
-                  FileSystem *filesystem,
-                  UserInput *userinput);
+                  EntapDataPtrs&);
 
     ~ModGeneMarkST();
 

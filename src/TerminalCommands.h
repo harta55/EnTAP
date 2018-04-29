@@ -1,4 +1,5 @@
 /*
+ *
  * Developed by Alexander Hart
  * Plant Computational Genomics Lab
  * University of Connecticut
@@ -24,31 +25,13 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef ENTAP_VERSION_H
-#define ENTAP_VERSION_H
+#ifndef ENTAP_TERMINALCOMMANDS_H
+#define ENTAP_TERMINALCOMMANDS_H
 
-#include "config.h"
+#include "common.h"
 
-#define LICENSE_YEAR_START      2017
-#define LICENSE_YEAR_END        2018
+int TC_execute_cmd(std::string, std::string);
+int TC_execute_cmd(std::string);
 
-#define MAJOR_VERSION     0
-#define MINOR_VERSION     8
-#define BUILD_VERSION     2
 
-#ifndef RELEASE_BUILD
-    #define DEBUG_BUILD
-#endif
-
-#define TO_STR2(x)             #x
-#define TO_STR(x)              TO_STR2(x)
-
-#ifdef DEBUG_BUILD
-    #define ENTAP_VERSION_STR       (TO_STR(MAJOR_VERSION) "." TO_STR(MINOR_VERSION) "." \
-                                    TO_STR(BUILD_VERSION) "-DEBUG")
-#else
-    #define ENTAP_VERSION_STR      (TO_STR(MAJOR_VERSION) "." TO_STR(MINOR_VERSION) "." \
-                                    TO_STR(BUILD_VERSION))
-#endif
-
-#endif //ENTAP_VERSION_H
+#endif //ENTAP_TERMINALCOMMANDS_H

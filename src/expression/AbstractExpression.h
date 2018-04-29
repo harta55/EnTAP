@@ -88,17 +88,15 @@ public:
                        std::string &in,
                        std::string &exp,
                        std::string &align,
-                       GraphingManager *graphing,
-                       QueryData *query,
-                       FileSystem *fileSystem){
+                       EntapDataPtrs &entap_data){
 
         _expression_outpath = exp;
-        _pGraphingManager   = graphing;
         _alignpath          = align;
-        _pQueryData         = query;
-        _pFileSystem        = fileSystem;
         _exe_path           = exe;
         _inpath             = in;
+        _pGraphingManager   = entap_data._pGraphingManager;
+        _pQueryData         = entap_data._pQueryData;
+        _pFileSystem        = entap_data._pFileSystem;
     }
 
     virtual ~AbstractExpression() = default;

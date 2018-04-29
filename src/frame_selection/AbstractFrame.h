@@ -79,24 +79,21 @@ public:
  */
     AbstractFrame(std::string &exe, std::string &in,
                   std::string &frame,
-                  GraphingManager *graphing,
-                  QueryData *queryData,
-                  FileSystem* filesystem,
-                  UserInput *userinput){
+                  EntapDataPtrs &entap_data){
         _exe_path        = exe;
         _inpath          = in;
         _frame_outpath   = frame;
-        _pGraphingManager = graphing;
-        _pQUERY_DATA      = queryData;
-        _pUserInput       = userinput;
-        _pFileSystem      = filesystem;
+        _pGraphingManager = entap_data._pGraphingManager;
+        _pQUERY_DATA      = entap_data._pQueryData;
+        _pUserInput       = entap_data._pUserInput;
+        _pFileSystem      = entap_data._pFileSystem;
 
         _processed_path = PATHS(frame, PROCESSED_DIR);
         _figure_path    = PATHS(frame, FIGURE_DIR);
-        filesystem->delete_dir(_processed_path);
-        filesystem->delete_dir(_figure_path);
-        filesystem->create_dir(_processed_path);
-        filesystem->create_dir(_figure_path);
+        _pFileSystem->delete_dir(_processed_path);
+        _pFileSystem->delete_dir(_figure_path);
+        _pFileSystem->create_dir(_processed_path);
+        _pFileSystem->create_dir(_figure_path);
     }
 
     virtual ~AbstractFrame() = default;

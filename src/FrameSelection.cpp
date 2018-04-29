@@ -60,27 +60,20 @@
  *
  * =====================================================================
  */
-FrameSelection::FrameSelection(std::string &input,
-                               FileSystem* filesystem,
-                               UserInput *user_input,
-                               GraphingManager *graphingManager,
-                               QueryData *QUERY_DATA) {
+FrameSelection::FrameSelection(std::string &input, EntapDataPtrs &entap_data) {
     FS_dprint("Spawn object - FrameSelection");
 
-    if (graphingManager == nullptr || QUERY_DATA == nullptr || user_input == nullptr ||
-            filesystem == nullptr) {
-        throw ExceptionHandler("Unable to allocate memory to FrameSelection" ,
-            ERR_ENTAP_MEM_ALLOC);
-    }
-    _graphingManager = graphingManager;
-    _QUERY_DATA      = QUERY_DATA;
-    _exe_path        = GENEMARK_EXE;
-    _inpath          = input;
-    _pFileSystem     = filesystem;
-    _pUserInput      = user_input;
+    _pGraphingManager = entap_data._pGraphingManager;
+    _QUERY_DATA       = entap_data._pQueryData;
+    _exe_path         = GENEMARK_EXE;
+    _inpath           = input;
+    _pFileSystem      = entap_data._pFileSystem;
+    _pUserInput       = entap_data._pUserInput;
 
-    _outpath         = filesystem->get_root_path();
-    _overwrite       = user_input->has_input(UInput::INPUT_FLAG_OVERWRITE);
+    _entap_data_ptrs = entap_data;
+
+    _outpath         = _pFileSystem->get_root_path();
+    _overwrite       = _pUserInput->has_input(UInput::INPUT_FLAG_OVERWRITE);
     _software_flag   = ENTAP_EXECUTE::FRAME_FLAG_GENEMARK;
 
     _frame_outpath   = PATHS(_outpath, FRAME_SELECTION_OUT_DIR);
@@ -147,20 +140,14 @@ std::unique_ptr<AbstractFrame> FrameSelection::spawn_object() {
                     _exe_path,
                     _inpath,
                     _frame_outpath,
-                    _graphingManager,
-                    _QUERY_DATA,
-                    _pFileSystem,
-                    _pUserInput
+                    _entap_data_ptrs
             ));
         default:
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
                     _exe_path,
                     _inpath,
                     _frame_outpath,
-                    _graphingManager,
-                    _QUERY_DATA,
-                    _pFileSystem,
-                    _pUserInput
+                    _entap_data_ptrs
             ));
     }
 }

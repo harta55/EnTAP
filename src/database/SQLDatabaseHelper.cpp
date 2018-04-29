@@ -27,7 +27,7 @@
 
 
 //*********************** Includes *****************************
-#include "DatabaseHelper.h"
+#include "SQLDatabaseHelper.h"
 #include "../ExceptionHandler.h"
 #include "../EntapGlobals.h"
 //**************************************************************
@@ -39,20 +39,24 @@
  *
  * Description          - Opens sql database through sqlite3
  *
- * Notes                - None
+ * Notes                - This is used as a creation routine as well
  *
  * @param file          - Path to database
  *
- * @return              - None
+ * @return              - True/false if successful
  *
  * =====================================================================
  */
-bool DatabaseHelper::open(std::string file) {
-    return sqlite3_open(file.c_str(),&_database) == SQLITE_OK;
-    // Pragma didn't help speed much
-    //    sqlite3_exec(_database,"PRAGMA synchronous = OFF", NULL, NULL, NULL);
-    //    sqlite3_exec(_database,"PRAGMA count_changes = false", NULL, NULL, NULL);
-    //    sqlite3_exec(_database,"PRAGMA journal_mode = OFF", NULL, NULL, NULL);
+bool SQLDatabaseHelper::open(std::string file) {
+    FS_dprint("Opening SQL database at: " + file);
+    int err_code;
+    err_code = sqlite3_open(file.c_str(),&_database);
+    if (err_code == SQLITE_OK) {
+        sqlite3_exec(_database,"PRAGMA synchronous = OFF", NULL, NULL, NULL);
+        sqlite3_exec(_database,"PRAGMA count_changes = false", NULL, NULL, NULL);
+        sqlite3_exec(_database,"PRAGMA journal_mode = OFF", NULL, NULL, NULL);
+    }
+    return err_code == SQLITE_OK;
 }
 
 
@@ -69,8 +73,28 @@ bool DatabaseHelper::open(std::string file) {
  *
  * =====================================================================
  */
-void DatabaseHelper::close() {
+void SQLDatabaseHelper::close() {
     sqlite3_close(_database);
+}
+
+
+/**
+ * ======================================================================
+ * Function bool DatabaseHelper::create(std::string file)
+ *
+ * Description          - Creates SQL database
+ *                      - Calls open (which uses SQLITE_OPEN_CREATE)
+ *
+ * Notes                - None
+ *
+ * @param file          - Path to database
+ *
+ * @return              - True/false if successful
+ *
+ * =====================================================================
+ */
+bool SQLDatabaseHelper::create(std::string file) {
+    return open(file);
 }
 
 
@@ -89,7 +113,7 @@ void DatabaseHelper::close() {
  *
  * =====================================================================
  */
-std::vector<std::vector<std::string>> DatabaseHelper::query(char *query) {
+std::vector<std::vector<std::string>> SQLDatabaseHelper::query(char *query) {
     sqlite3_stmt *stmt;
     query_struct output;
     if (sqlite3_prepare_v2(_database,query,-1,&stmt,0) == SQLITE_OK) {
@@ -115,12 +139,30 @@ std::vector<std::vector<std::string>> DatabaseHelper::query(char *query) {
 }
 
 
-DatabaseHelper::DatabaseHelper() {
+SQLDatabaseHelper::SQLDatabaseHelper() {
     _database = NULL;
 }
 
 
-DatabaseHelper::~DatabaseHelper() {
+SQLDatabaseHelper::~SQLDatabaseHelper() {
     close();
 }
 
+bool SQLDatabaseHelper::execute_cmd(char* cmd) {
+    int err;
+    char* err_msg = 0;
+
+//    FS_dprint("Executing SQL cmd:\n" + cmd);
+
+    err = sqlite3_exec(_database, cmd, NULL, 0, &err_msg);
+
+    if( err != SQLITE_OK ){
+        std::string err_str = err_msg;
+        FS_dprint("SQL Error: " + err_str);
+        sqlite3_free(err_msg);
+        return false;
+    } else {
+//        FS_dprint("Success!");
+        return true;
+    }
+}

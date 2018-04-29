@@ -27,13 +27,8 @@
 
 
 //*********************** Includes *****************************
-#include <iostream>
-#include <ctime>
-#include <fstream>
-#include <exception>
+
 #include "ExceptionHandler.h"
-#include "EntapGlobals.h"
-#include "FileSystem.h"
 //**************************************************************
 
 /**
@@ -96,8 +91,7 @@ void ExceptionHandler::print_msg(FileSystem* filesystem) {
                     "check the paths before continuing.";
             break;
         case ERR_ENTAP_INIT_TAX_DOWN:
-            added_msg << "Error in downloading the taxonomic database. Ensure that the script is at "
-                      << TAX_DOWNLOAD_EXE;
+            added_msg << "Error in downloading the taxonomic database."; // No longer used
             break;
         case ERR_ENTAP_INIT_TAX_INDEX:
             added_msg << "Error parsing the downloaded taxonomic database. Ensure that it was downloaded "
@@ -179,6 +173,20 @@ void ExceptionHandler::print_msg(FileSystem* filesystem) {
             added_msg << "Ensure you have specified the proper path to the InterProScan executable "
                     "and it is properly compiled on your system. Additionally, ensure you have the "
                     "proper databases downloaded that you would like to run against.";
+            break;
+        case ERR_ENTAP_INIT_GEN_SERIAL_DATA:
+            added_msg << "Ensure you have the proper Boost libraries installed as well as an " \
+                         "internet connection. You may also try downloading them!";
+            break;
+        case ERR_ENTAP_INIT_GEN_SQL_DATA:
+            added_msg << "Ensure you have a proper internet connection";
+            break;
+        case ERR_ENTAP_INIT_DOWN_SERIAL_DATA:
+            added_msg << "Ensure you have a proper internet connection and wget available";
+            break;
+        case ERR_ENTAP_INIT_DOWN_SQL_DATA:
+            added_msg << "Ensure you have a proper internet connection and wget available";
+            break;
         default:
             added_msg << "Error code not recognized.";
             break;

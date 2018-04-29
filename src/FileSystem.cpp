@@ -39,6 +39,10 @@
 #include <cstring>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#ifdef USE_CURL
+#include "curl/curl.h"
+#endif
+
 const std::string FileSystem::EXT_TXT = ".txt";
 const std::string FileSystem::EXT_ERR = ".err";
 const std::string FileSystem::EXT_OUT = ".out";
@@ -436,7 +440,7 @@ std::string FileSystem::get_cur_dir() {
 
 FileSystem::~FileSystem() {
     FS_dprint("Killing Object - FileSystem");
-
+    delete_dir(_temp_outpath);
 }
 
 FileSystem::FileSystem(std::string &root) {
@@ -445,10 +449,12 @@ FileSystem::FileSystem(std::string &root) {
 
     _root_path     = root;
     _final_outpath = PATHS(root, ENTAP_FINAL_OUTPUT);
+    _temp_outpath  = PATHS(root, TEMP_DIRECTORY);
 
     // Make sure directories are created (or already created)
     create_dir(root);
     create_dir(_final_outpath);
+    create_dir(_temp_outpath);
 
     // generate log file
     init_log();
@@ -533,9 +539,11 @@ bool FileSystem::copy_file(std::string inpath, std::string outpath, bool overwri
 }
 
 void FileSystem::get_filename_no_extensions(std::string &file_name) {
+#ifdef USE_BOOST
     boostFS::path path(file_name);
     while (path.has_extension()) path = path.stem();
     file_name = path.string();
+#endif
 }
 
 std::string FileSystem::get_filename(std::string path) {
@@ -548,4 +556,108 @@ std::string FileSystem::get_filename(std::string path) {
 
 std::string FileSystem::get_final_outdir() {
     return this->_final_outpath;
+}
+
+std::string FileSystem::get_temp_outdir() {
+    return this->_temp_outpath;
+}
+
+bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) {
+
+    FS_dprint("Downloading FTP file at: " + ftp_path);
+
+#ifdef USE_CURL
+    FS_dprint("Using CURL...");
+    CURL *curl;
+    CURLcode res;
+    FILE *out_file;
+
+    curl = curl_easy_init();
+    if (curl) {
+        out_file = fopen(out_path.c_str(),"wb");
+        curl_easy_setopt(curl, CURLOPT_URL, ftp_path.c_str());
+        // We dont need a callback for now
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, NULL);
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, out_file);
+        res = curl_easy_perform(curl);
+        curl_easy_cleanup(curl);
+        fclose(out_file);
+
+        if(CURLE_OK != res) {
+            // Failed
+            FS_dprint("CURL download has failed");
+            return false;
+        }
+    } else {
+        FS_dprint("CURL has failed!");
+        return false;
+    }
+    return true;
+#else
+    // Not compiled with CURL usage, use terminal command
+    FS_dprint("Using wget terminal command...");
+
+    std::string terminal_cmd =
+        "wget -O " + out_path + " " + ftp_path;
+
+    if (TC_execute_cmd(terminal_cmd) == 0) {
+        FS_dprint("Success, file saved to: " + out_path);
+        return true;
+    } else {
+        FS_dprint("Error. Did not complete");
+        return false;
+    }
+#endif
+}
+
+bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES type) {
+    FS_dprint("Decompressing file at: " + in_path);
+    if (!file_exists(in_path)) {
+        FS_dprint("File does not exist!");
+        return false;
+    }
+#ifdef USE_ZLIB
+    FS_dprint("Using ZLIB...");
+    return false;
+#else
+    // Not compiled with ZLIB usage, use terminal command
+    FS_dprint("Using terminal command...");
+    std::string terminal_cmd;
+
+    switch (type) {
+        case FILE_TAR_GZ:
+            terminal_cmd =
+                "tar -xzf " + in_path + " -C " + out_dir;
+            break;
+
+        case FILE_GZ:
+            terminal_cmd =
+                "gunzip -c " + in_path + " > " + out_dir; //outdir will be outpath in this case
+        default:
+            return false;
+    }
+    if (TC_execute_cmd(terminal_cmd) == 0) {
+        FS_dprint("Success! Exported to: " + out_dir);
+        return true;
+    } else {
+        FS_dprint("Error! Unable to decompress file");
+        return false;
+    }
+#endif
+}
+
+bool FileSystem::rename_file(std::string &in, std::string &out) {
+    FS_dprint("Moving/renaming file: " + in );
+    if (!file_exists(in)) return false;
+    try {
+#ifdef USE_BOOST
+        boostFS::rename(in, out);
+        FS_dprint("Success!");
+        return true;
+#endif
+    } catch (...) {
+        FS_dprint("Move failed!");
+        return false;
+    }
+    return false;
 }

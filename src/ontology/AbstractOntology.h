@@ -33,34 +33,33 @@
 #include "../GraphingManager.h"
 #include "../QuerySequence.h"
 #include "../QueryData.h"
+#include "../database/EntapDatabase.h"
+#include "../EntapGlobals.h"
 
 class QuerySequence;
 class QueryData;
 class GoTerm;
 class AbstractOntology {
 public:
-    AbstractOntology(std::string &exe,
-                     std::string &out,
+    AbstractOntology(std::string &out,
                      std::string &in_hits,
                      std::string &ont_out,
-                     GraphingManager *graphing,
-                     QueryData *querydata,
                      bool blastp,
                      std::vector<uint16>& lvls,
-                     int threads,
-                     FileSystem *fileSystem,
-                     UserInput *userinput){
-        _exe_path        = exe;
+                     EntapDataPtrs &entap_data){
         _outpath         = out;
         _inpath          = in_hits;
         _ontology_dir    = ont_out;
-        pGraphingManager = graphing;
-        pQUERY_DATA      = querydata;
         _blastp          = blastp;
         _go_levels       = lvls;
-        _threads         = threads;
-        _pFileSystem     = fileSystem;
-        _pUserInput      = userinput;
+
+        _pGraphingManager = entap_data._pGraphingManager;
+        _pQUERY_DATA      = entap_data._pQueryData;
+        _pFileSystem      = entap_data._pFileSystem;
+        _pUserInput       = entap_data._pUserInput;
+        _pEntapDatabase   = entap_data._pEntapDatbase;
+
+        _threads         = _pUserInput->get_supported_threads();
     }
 
     virtual ~AbstractOntology() = default;
@@ -94,19 +93,17 @@ protected:
 
     bool               _blastp;
     int                _threads;
-    std::string        _exe_path;
     std::string        _outpath;
     std::string        _inpath;
     std::string        _ontology_dir;
     std::vector<uint16> _go_levels;
-    GraphingManager    *pGraphingManager;
-    QueryData          *pQUERY_DATA;
+    GraphingManager    *_pGraphingManager;
+    QueryData          *_pQUERY_DATA;
     UserInput          *_pUserInput;
     FileSystem         *_pFileSystem;
+    EntapDatabase      *_pEntapDatabase;
 
-    std::map<std::string,std::vector<std::string>> parse_go_list(std::string list, go_serial_map_t &GO_DATABASE,char delim);
-    go_serial_map_t read_go_map ();
-
+    std::map<std::string,std::vector<std::string>> parse_go_list(std::string list, EntapDatabase*,char delim);
 };
 
 

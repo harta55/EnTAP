@@ -29,11 +29,9 @@
 #define ENTAP_USERINPUT_H
 
 //*********************** Includes *****************************
-#include <boost/program_options/variables_map.hpp>
-#include <queue>
 #include "EntapGlobals.h"
+#include <boost/program_options/variables_map.hpp>
 #include "FileSystem.h"
-#include "config.h"
 //**************************************************************
 
 
@@ -49,9 +47,12 @@ namespace Defaults {
     const std::string GRAPH_SCRIPT_DEF         = "/src/entap_graphing.py";
     const std::string BIN_PATH_DEFAULT         = "/bin";
     const std::string DATABASE_DIR_DEFAULT     = "/databases";
-    const std::string TAX_DATABASE_BIN_DEFAULT = PATHS(BIN_PATH_DEFAULT, "ncbi_tax_bin.entp");
-    const std::string TAX_DATABASE_TXT_DEFAULT = PATHS(DATABASE_DIR_DEFAULT, "ncbi_tax.entp");
-    const std::string GO_DATABASE_BIN_DEFAULT  = PATHS(BIN_PATH_DEFAULT, "go_term.entp");
+    const std::string ENTAP_DATABASE_SQL_FILENAME    = "entap_database.db";
+    const std::string ENTAP_DATABASE_SQL_GZ    = "entap_database.db.gz";
+    const std::string ENTAP_DATABASE_SERIAL_FILENAME = "entap_database.bin";
+    const std::string ENTAP_DATABASE_SERIAL_GZ = "entap_database.bin.gz";
+    const std::string ENTAP_DATABASE_BIN_DEFAULT = PATHS(BIN_PATH_DEFAULT, ENTAP_DATABASE_SERIAL_FILENAME);
+    const std::string ENTAP_DATABASE_SQL_DEFAULT = PATHS(DATABASE_DIR_DEFAULT, ENTAP_DATABASE_SQL_FILENAME);
 }
 
 class UserInput {
@@ -94,7 +95,7 @@ private:
     bool check_key(std::string&);
     void generate_config(std::string&);
     void verify_databases(bool);
-    void verify_species (boost::program_options::variables_map&, SPECIES_FLAGS);
+    void verify_species (SPECIES_FLAGS, EntapDatabase*);
     void init_exe_paths(std::unordered_map<std::string, std::string> &, std::string);
     void process_user_species(std::string&);
     void verify_uninformative(std::string&);
@@ -148,10 +149,8 @@ private:
     const std::string KEY_EGGNOG_DOWN          = "eggnog_download_exe";
     const std::string KEY_INTERPRO_EXE         = "interpro_exe_path";
     const std::string KEY_EGGNOG_DB            = "eggnog_database";
-    const std::string KEY_TAX_DB               = "entap_tax_bin_database";
-    const std::string KEY_TAX_DB_TEXT          = "entap_tax_text_database";
-    const std::string KEY_GO_DB                = "entap_go_database";
-    const std::string KEY_TAX_DOWNLOAD_EXE     = "entap_tax_download_script";
+    const std::string KEY_ENTAP_DATABASE_BIN   = "entap_database_bin_path";
+    const std::string KEY_ENTAP_DATABASE_SQL   = "entap_database_sql_path";
     const std::string KEY_GRAPH_SCRIPT         = "entap_graphing_script";
 
     FileSystem *_pFileSystem;

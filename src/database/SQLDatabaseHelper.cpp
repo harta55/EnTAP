@@ -48,6 +48,7 @@
  * =====================================================================
  */
 bool SQLDatabaseHelper::open(std::string file) {
+    FS_dprint("Opening SQL database at: " + file);
     int err_code;
     err_code = sqlite3_open(file.c_str(),&_database);
     if (err_code == SQLITE_OK) {

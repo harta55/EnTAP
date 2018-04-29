@@ -47,8 +47,8 @@ namespace Defaults {
     const std::string GRAPH_SCRIPT_DEF         = "/src/entap_graphing.py";
     const std::string BIN_PATH_DEFAULT         = "/bin";
     const std::string DATABASE_DIR_DEFAULT     = "/databases";
-    const std::string ENTAP_DATABASE_SQL_FILENAME    = "entap_database.sql";
-    const std::string ENTAP_DATABASE_SQL_GZ    = "entap_database.sql.gz";
+    const std::string ENTAP_DATABASE_SQL_FILENAME    = "entap_database.db";
+    const std::string ENTAP_DATABASE_SQL_GZ    = "entap_database.db.gz";
     const std::string ENTAP_DATABASE_SERIAL_FILENAME = "entap_database.bin";
     const std::string ENTAP_DATABASE_SERIAL_GZ = "entap_database.bin.gz";
     const std::string ENTAP_DATABASE_BIN_DEFAULT = PATHS(BIN_PATH_DEFAULT, ENTAP_DATABASE_SERIAL_FILENAME);

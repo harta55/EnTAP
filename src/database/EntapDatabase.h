@@ -250,6 +250,7 @@ private:
     FileSystem          *_pFilesystem;
     SQLDatabaseHelper   *_pDatabaseHelper;
     std::string          _temp_directory;
+    go_serial_map_t      _sql_go_helper;    // Using to increase speeds for now, change later
     bool                 _use_serial;
 
 

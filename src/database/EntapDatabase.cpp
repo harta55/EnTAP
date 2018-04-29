@@ -487,6 +487,7 @@ bool EntapDatabase::create_sql_table(DATABASE_TYPE type) {
                     SQL_TABLE_GO_COL_LEVEL.c_str()
             );
             success = _pDatabaseHelper->execute_cmd(sql_cmd);
+            break;
         default:
             return false;
     }
@@ -556,7 +557,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::download_entap_sql(std::string &path)
     temp_gz_path = PATHS(_temp_directory, Defaults::ENTAP_DATABASE_SQL_GZ);
 
     // download file (will be compressed as gz)
-    if (!_pFilesystem->download_ftp_file(FTP_ENTAP_DATABASE_SERIAL, temp_gz_path)) {
+    if (!_pFilesystem->download_ftp_file(FTP_ENTAP_DATABASE_SQL, temp_gz_path)) {
         // File download failed!
         return ERR_DATA_SQL_FTP;
     }
@@ -577,6 +578,8 @@ EntapDatabase::DATABASE_ERR EntapDatabase::download_entap_sql(std::string &path)
 GoEntry EntapDatabase::get_go_entry(std::string &go_id) {
     GoEntry goEntry;
 
+    if (go_id.empty()) return GoEntry();
+
     if (_use_serial) {
         // Using serialized database
         go_serial_map_t::iterator it = _pSerializedDatabase->gene_ontology_data.find(go_id);
@@ -588,9 +591,12 @@ GoEntry EntapDatabase::get_go_entry(std::string &go_id) {
     } else {
         // Using SQL database
         std::vector<std::vector<std::string>> results;
+        // Check temp if previously found (increase speeds)
+        go_serial_map_t::iterator it = _sql_go_helper.find(go_id);
+        if (it != _sql_go_helper.end()) return it->second;
         // Generate SQL query
         char *query = sqlite3_mprintf(
-                "SELECT %Q, %Q, %Q, %Q FROM %Q WHERE %Q=%Q",
+                "SELECT %q, %q, %q, %q FROM %q WHERE %q=%Q",
                 SQL_TABLE_GO_COL_ID.c_str(),
                 SQL_TABLE_GO_COL_DESC.c_str(),
                 SQL_TABLE_GO_COL_CATEGORY.c_str(),
@@ -606,6 +612,7 @@ GoEntry EntapDatabase::get_go_entry(std::string &go_id) {
             goEntry.term     = results[0][1];
             goEntry.category = results[0][2];
             goEntry.level    = results[0][3];
+            _sql_go_helper[go_id] = goEntry;
             return goEntry;
         } catch (std::exception &e) {
             // Do not fatal error
@@ -619,6 +626,8 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
     TaxEntry taxEntry;
     std::string temp_species;
     uint64 index;
+
+    if (species.empty()) return TaxEntry();
 
     LOWERCASE(species); // ensure lowercase (database is based on this for direct matching)
 
@@ -649,7 +658,7 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
             while (true) {
                 // Generate SQL query
                 char *query = sqlite3_mprintf(
-                        "SELECT %Q, %Q FROM %Q WHERE %Q=%Q",
+                        "SELECT %q, %q FROM %q WHERE %q=%Q",
                         SQL_COL_NCBI_TAX_TAXID.c_str(),
                         SQL_COL_NCBI_TAX_LINEAGE.c_str(),
                         SQL_TABLE_NCBI_TAX_TITLE.c_str(),
@@ -659,9 +668,9 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
                 results = _pDatabaseHelper->query(query);
                 if (results.empty()) {
                     index = temp_species.find_last_of(" ");
-                    if (index == std::string::npos) break;
+                    if (index == std::string::npos) return TaxEntry(); // couldn't find
                     temp_species = temp_species.substr(0, index);
-                } else break;
+                } else break; // Found species
             }
 
             taxEntry.tax_id  = results[0][0];
@@ -720,8 +729,9 @@ EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_read(SERIALIZATION
         return ERR_DATA_SERIALIZE_READ;
     }
 
-    // Already generated?
+    // Already generated? If no, generate
     if (_pSerializedDatabase != nullptr) return ERR_DATA_OK;
+    _pSerializedDatabase = new EntapDatabaseStruct();
 
     try {
         switch (type) {

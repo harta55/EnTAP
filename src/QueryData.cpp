@@ -175,6 +175,7 @@ void QueryData::set_input_type(std::string &in) {
     while(std::getline(in_file,line)) {
         if (line.empty()) continue;
         if (line_count++ > LINE_COUNT) break;
+        if (line_count < SEQ_DPRINT_CONUT) FS_dprint("Transcriptome Line: \n" + line);
         line.pop_back(); // Account for newline/other
         if (line.find('>') == std::string::npos) {
             for (char &c : line) {

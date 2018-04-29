@@ -76,6 +76,7 @@ private:
     void set_input_type(std::string&);
 
     const uint8         LINE_COUNT   = 20;
+    const uint8         SEQ_DPRINT_CONUT = 10;
     const uint8         NUCLEO_DEV   = 2;
     const fp32          N_50_PERCENT = 0.5;
     const fp32          N_90_PERCENT = 0.9;

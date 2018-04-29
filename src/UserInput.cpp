@@ -357,6 +357,7 @@ bool UserInput::verify_user_input() {
         if (is_run) {
 
             // Verify EnTAP database can be generated
+            FS_dprint("Verifying EnTAP database...");
             EntapDatabase *pEntapDatabase = new EntapDatabase(_pFileSystem);
             // Find database type that will be used by the rest (use 0 index no matter what)
             vect_uint16_t entap_database_types =
@@ -367,6 +368,7 @@ bool UserInput::verify_user_input() {
                 throw ExceptionHandler("Unable to generate EnTAP database from paths given",
                                        ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
             }
+            FS_dprint("Success!");
 
             // Verify input transcriptome
             if (!has_input(UInput::INPUT_FLAG_TRANSCRIPTOME)) {
@@ -470,8 +472,7 @@ bool UserInput::verify_user_input() {
                 // only handling default now
                 verify_state(state, is_protein, ont_flags);
             }
-
-
+            delete pEntapDatabase;
         } else {
             // Must be config
             ;
@@ -714,7 +715,11 @@ void UserInput::print_user_input() {
         } else if (auto v = boost::any_cast<int>(&value)) {
             ss << *v;
         } else if (auto v = boost::any_cast<std::vector<short>>(&value)) {
-            for (auto const& val:*v) {
+            for (auto const &val:*v) {
+                ss << val << " ";
+            }
+        } else if (auto v = boost::any_cast<vect_uint16_t>(&value)) {
+            for (auto const &val:*v) {
                 ss << val << " ";
             }
         } else ss << "null";

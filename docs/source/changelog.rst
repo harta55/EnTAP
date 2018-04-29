@@ -1,6 +1,17 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.8.1-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.8.2-beta
+
+EnTAP Beta v0.8.2-beta
+------------------------
+
+    * Revamped configuration stage of EnTAP (reduced time and hopefully made things clear/more compatible across systems)
+    * Removed - -database-out flag (seemed a bit redundant to me). - -outfiles flag will be the default when indexing databases
+    * Added - -data-generate flag. This can be specified in EnTAP config stage (no effect during execution) for whether you'd like to generate the EnTAP databases rather than downloading from FTP address
+    * Added - -data-type flag. This can be used in either configuration or execution. Specifies which database you'd like to download/generate or use during execution. Binary (0, default) or SQL (1). Binary is faster with more memory usage, SQL will be slower but easier compatibility.
+    * Combined EnTAP databases into one (entap_database.sql/entap_database.bin). WARNING: Re-download or configuration of databases is REQUIRED with this newer version.
+    * Removed download_tax.py script (no longer necessary)
+
 
 EnTAP Beta v0.8.1-beta
 ------------------------

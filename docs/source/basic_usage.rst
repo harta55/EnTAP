@@ -20,6 +20,8 @@
 .. |ref_nr| replace:: ftp://ftp.ncbi.nlm.nih.gov/blast/db/
 .. |uni_swiss| replace:: ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
 .. |uni_trembl| replace:: ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz
+.. |entap_bin_ftp| replace:: https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.bin.gz
+.. |entap_sql_ftp| replace:: https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.db.gz
 
 .. |flag_path| replace:: paths
 .. |flag_taxon| replace:: taxon
@@ -65,21 +67,22 @@ The |config_file| file mentioned above has the following defaults:
     * eggnog_exe_path=/EnTAP/libs/eggnog-mapper/emapper.py
     * eggnog_download_exe=/EnTAP/libs/eggnog-mapper/download_eggnog_data.py
     * eggnog_database=/EnTAP/libs/eggnog-mapper/data/eggnog.db (downloaded during Configuration)
-    * entap_tax_bin_database=/EnTAP/bin/ncbi_tax_bin.entp (binary version, downloaded during Configuration)
-    * entap_tax_text_database=/EnTAP/databases/ncbi_tax.entp (text version, downloaded during Configuration)
-    * entap_tax_download_script=/EnTAP/src/download_tax.pl
-    * entap_go_database=/EnTAP/bin/go_term.entp (binary version, downloaded during Configuration)
+    * entap_database_bin_path=/EnTAP/bin/entap_database.bin (binary version, downloaded during Configuration)
+    * entap_database_sql_path=/EnTAP/databases/entap_database.db (text version, downloaded during Configuration)
     * entap_graphing_script=/EnTAP/src/entap_graphing.py
     * interpro_exe_path=interproscan.sh
 
 
 These can be changed to whichever path you would prefer. If something is globally installed, just put how you'd normally run the software after the '=', such as 'diamond' for DIAMOND. EnTAP will recognize these paths first and they will override defaults. 
 
+This configuration file will be automatically detected if it is in the working directory, otherwise the path to it can be specified through the |flag_path| flag. The config file is mandatory! 
 
-This configuration file will be automatically detected if it is in the working directory, otherwise the path to it can be specified through the |flag_path| flag. The config file is mandatory! The entap_tax_text_database will only be used in Configuration and thus is not needed in Execution.You can specify this if you downloaded the text version of the database (from python script) separately
+During configuration, the EnTAP database will default to being downloaded from the following FTP address (you can also generate them locally if you are having compatibility issues)
+
+    * |entap_bin_ftp|
+    * |entap_sql_ftp|
 
 .. note:: Be sure you set the paths before moving on (besides the databases that haven't been downloaded yet)!
-
 
 .. _usage-label:
 
@@ -195,13 +198,25 @@ Optional Flags:
 * (- - |flag_path|)
     * Point to |config_file| for specifying paths
 
-* (- - database-out)
+* (- -  out-dir)
     * Specify an output directory for the databases to be sent to (recommended)
-    * This will send the Taxonomic Database, GO Database, and any DIAMOND databases to this location
-    * EggNOG database will not be sent here as it must remain in the EggNOG directory
+    * This will send the EnTAP database and DIAMOND databases to this location
+    * EggNOG database will not be sent here as it must remain in the EggNOG directory (downloaded through the Emapper script)
 
 * (- t/ - - threads)
     * Specify thread number for Configuration
+
+* (- - data-generate)
+    * Specify this flag is you would like to generate the EnTAP database rather than downloading from FTP (default)
+    * I'd only use this if you're having issues with the FTP
+
+* (- - data-type)
+    * Specify which databases you'd like to generate/download
+
+        * 0. Binary Database (default) - This will be much quicker and is recommended
+        * 1. SQL Database - Slower although will be more easily compatible with every system
+
+    * This can be flagged multiple times (ex: - - data-type 0 - - data-type 1)
 
 .. test-label:
 
@@ -422,6 +437,14 @@ Optional Flags:
 
 * (- - no-check)
     * EnTAP checks execution paths and inputs prior to annotating to prevent finding out your input was wrong until midway through a run. Using this flag will eliminate the check (not advised to use!)
+
+* (- - data-type)
+    * Specify which database you'd like to execute against
+
+        * 0. Binary Database (default) - This will be much quicker and is recommended
+        * 1. SQL Database - Slower although will be more easily compatible with every system
+
+    * If you flag this multiple times during execution, EnTAP will just select the first one you input
 
 
 .. _exp-label:

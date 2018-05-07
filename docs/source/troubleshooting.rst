@@ -37,3 +37,11 @@ EnTAP has quite a few error codes that are generally going to have messages atta
 
 FAQs
 -------------------
+
+#. I'm having issues reading the EnTAP database!
+
+        * First, ensure you are specifying the correct paths in the configuration file. Next, attempt to generate the database locally (through - - data-generate flag during configuration). This is likely the result of incompatibility in Boost versions. The SQL version should always be compatible with your system as well, although slower.
+
+#. Eggnog-mapper is failing when running DIAMOND.
+
+        * Eggnog-mapper leverages DIAMOND to search against the EggNOG databases. In order to do this, it uses a global call to DIAMOND. This may not work if you do not have it installed globally. Additionally, the DIAMOND EggNOG database may not be compatible with your local DIAMOND version. If so, you'll have to re-index the fasta version of this database (found from the EggNOG FTP) with your version of DIAMOND. 

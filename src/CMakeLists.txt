@@ -12,8 +12,6 @@ set(SOURCE_FILES ../libs
         GraphingManager.cpp GraphingManager.h
         UserInput.cpp UserInput.h
         ontology/EggnogLevels.h
-        database/SQLDatabaseHelper.cpp database/SQLDatabaseHelper.h
-        database/sqlite3.c database/sqlite3.h
         frame_selection/ModGeneMarkST.cpp frame_selection/ModGeneMarkST.h
         frame_selection/AbstractFrame.h
         expression/AbstractExpression.h
@@ -24,16 +22,20 @@ set(SOURCE_FILES ../libs
         ontology/ModInterpro.cpp ontology/ModInterpro.h
         QueryData.cpp QueryData.h common.h config.h
         FileSystem.cpp FileSystem.h version.h
-        database/EntapDatabase.cpp database/EntapDatabase.h
         TerminalCommands.cpp TerminalCommands.h)
 
 include_directories(../libs/pstream)
 include_directories(../libs/fast-cpp-csv-parser) # May need to compile with thread control
 
+include_directories(database)
+link_directories(database)
+add_subdirectory(database)
+
 include_directories(${Boost_INCLUDE_DIRS})
 add_executable(EnTAP ${SOURCE_FILES})
-target_link_libraries(EnTAP boost pthread dl)
 
-# target_link_libraries(EnTAP ${Boost_LIBRARIES})
+
+target_link_libraries(EnTAP boost pthread EntapDatabase SQLDatabaseHelper sqlite3)
 install(TARGETS EnTAP DESTINATION bin)
+
 

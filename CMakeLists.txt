@@ -11,6 +11,11 @@ else()
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support.")
 endif()
 
+set(Boost_USE_STATIC_LIBS ON)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
+
+
 find_package(Boost 1.50.0 COMPONENTS program_options system filesystem iostreams serialization regex date_time REQUIRED)
 if(Boost_FOUND)
     add_library(boost INTERFACE IMPORTED)

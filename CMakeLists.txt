@@ -11,10 +11,15 @@ else()
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support.")
 endif()
 
-set(Boost_USE_STATIC_LIBS ON)
+option(Boost_USE_STATIC_LIBS "Link with static Boost libraries" OFF)
+if(Boost_USE_STATIC_LIBS)
+    set(Boost_USE_STATIC_LIBS ON)
+else()
+    add_definitions( -DBOOST_ALL_DYN_LINK )
+endif()
+
 set(Boost_USE_MULTITHREADED ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
-
 
 find_package(Boost 1.50.0 COMPONENTS program_options system filesystem iostreams serialization regex date_time REQUIRED)
 if(Boost_FOUND)
@@ -34,6 +39,5 @@ if (PYTHONINTERP_FOUND)
 else()
     message(WARNING "Python was not detected, EnTAP graphing and EggNOG functionality will not be allowed")
 endif()
-
 
 add_subdirectory(src)

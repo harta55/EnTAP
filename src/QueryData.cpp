@@ -179,8 +179,8 @@ void QueryData::set_input_type(std::string &in) {
         line.pop_back(); // Account for newline/other
         if (line.find('>') == std::string::npos) {
             for (char &c : line) {
-                toupper(c);
-                if (NUCLEO_MAP.find(c) == NUCLEO_MAP.end()) deviations++;
+                // toupper(c);
+                if (NUCLEO_MAP.find(toupper(c)) == NUCLEO_MAP.end()) deviations++;
             }
         }
     }

@@ -445,7 +445,7 @@ bool UserInput::verify_user_input() {
             is_interpro = false;
             if (has_input(UInput::INPUT_FLAG_ONTOLOGY)) {
                 ont_flags = _user_inputs[UInput::INPUT_FLAG_ONTOLOGY].as<std::vector<uint16>>();
-                for (int i = 0; i < ont_flags.size() ; i++) {
+                for (uint i = 0; i < ont_flags.size() ; i++) {
                     if ((ont_flags[i] > ENTAP_EXECUTE::ONTOLOGY_MAX) ||
                          ont_flags[i] < ENTAP_EXECUTE::ONTOLOGY_MIN) {
                         throw ExceptionHandler("Invalid ontology flags being used",
@@ -1136,3 +1136,4 @@ std::string UserInput::get_executable_dir() {
     FS_dprint("EnTAP execution path was NOT found!");
     return "";
 }
+

@@ -89,14 +89,14 @@ unsigned long QuerySequence::calc_seq_length(std::string &seq,bool protein) {
     return seq_len;
 }
 
-std::ostream& operator<<(std::ostream &ostream, const QuerySequence &query) {
+/* std::ostream& operator<<(std::ostream &ostream, const QuerySequence &query) {
 //    return ostream<<query._qseqid<<'\t' <<query._sseqid<<'\t'  <<query._pident<<'\t'<<
 //                    query._length<<'\t' <<query._mismatch<<'\t'<<
 //                    query._gapopen<<'\t'<<query._qstart<<'\t'  <<query._qend<<'\t'<<
 //                    query._sstart<<'\t' <<query._send<<'\t'    <<query._e_val<<'\t'<< query._coverage<<"\t"<<
 //                    query._stitle<<'\t' <<query._species<<'\t' <<query._database_path<<'\t'<<
 //                    query._frame;
-}
+}*/
 
 const std::string &QuerySequence::getFrame() const {
     return _frame;

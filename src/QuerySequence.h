@@ -71,8 +71,8 @@ class QueryAlignment {
 
 public:
     QueryAlignment(QuerySequence*, uint16, std::string);
-
     virtual std::string print_tsv(const std::vector<const std::string*>&)=0;
+    virtual ~QueryAlignment() = default;
 
 protected:
     QuerySequence   *_parent_sequence;
@@ -312,7 +312,6 @@ private:
     SimSearchAlignmentData            *_sim_search_alignment_data;  // contains all alignment data
     std::map<const std::string*, std::string*> OUTPUT_MAP;
 
-    friend std::ostream& operator<<(std::ostream& , const QuerySequence&);
     void init_sequence();
     unsigned long calc_seq_length(std::string &,bool);
     void update_query_flags(ExecuteStates);

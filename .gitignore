@@ -1,1 +1,9 @@
+# CMake and Make Files
 CMakeCache.txt
+CMakeFiles
+Makefile
+cmake_install.cmake
+
+# Other
+build/
+.idea

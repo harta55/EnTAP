@@ -111,7 +111,7 @@ void ModEggnog::parse() {
     uint32                                   count_tax_scope=0;
     uint32                                   ct = 0;
     fp32                                     percent;
-    SQLDatabaseHelper                           EGGNOG_DATABASE;
+    SQLDatabaseHelper                        EGGNOG_DATABASE;
     std::map<std::string, uint32>            tax_scope_ct_map;
     GO_top_map_t                             go_combined_map;     // Just for convenience
     GraphingData                             graphingStruct;
@@ -121,7 +121,7 @@ void ModEggnog::parse() {
     ss<<std::fixed<<std::setprecision(2);
 
     if (!EGGNOG_DATABASE.open(_eggnog_db_path))
-        throw ExceptionHandler("Unable to open GO database",ERR_ENTAP_PARSE_EGGNOG);
+        throw ExceptionHandler("Unable to open EggNOG database",ERR_ENTAP_PARSE_EGGNOG);
 
     path = _out_hits;
 

@@ -445,7 +445,7 @@ bool UserInput::verify_user_input() {
             is_interpro = false;
             if (has_input(UInput::INPUT_FLAG_ONTOLOGY)) {
                 ont_flags = _user_inputs[UInput::INPUT_FLAG_ONTOLOGY].as<std::vector<uint16>>();
-                for (uint i = 0; i < ont_flags.size() ; i++) {
+                for (uint8 i = 0; i < ont_flags.size() ; i++) {
                     if ((ont_flags[i] > ENTAP_EXECUTE::ONTOLOGY_MAX) ||
                          ont_flags[i] < ENTAP_EXECUTE::ONTOLOGY_MIN) {
                         throw ExceptionHandler("Invalid ontology flags being used",
@@ -1032,8 +1032,8 @@ int UserInput::get_supported_threads() {
 
     supported_threads = std::thread::hardware_concurrency();
     user_threads = get_user_input<int>(UInput::INPUT_FLAG_THREADS);
-
-    if (user_threads > supported_threads) {
+    // assuming positive
+    if ((uint32) user_threads > supported_threads) {
         FS_dprint("Specified thread number is larger than available threads,"
                                         "setting threads to " + std::to_string(supported_threads));
         threads = supported_threads;

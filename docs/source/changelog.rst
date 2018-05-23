@@ -1,6 +1,13 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.8.2-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.8.3-beta
+
+EnTAP Beta v0.8.3-beta
+------------------------
+
+    * Minor bug fixes
+    * Changes to CMake to hopefully resolve issues a couple users had with linking to Boost Libraries
+
 
 EnTAP Beta v0.8.2-beta
 ------------------------

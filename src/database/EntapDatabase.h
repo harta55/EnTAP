@@ -88,6 +88,10 @@ struct TaxEntry {
     }
 };
 
+struct UniprotEntry {
+
+};
+
 
 class EntapDatabase {
 
@@ -205,6 +209,7 @@ private:
             "ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz";
     const std::string FTP_ENTAP_DATABASE_SQL    = "https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.db.gz";
     const std::string FTP_ENTAP_DATABASE_SERIAL = "https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.bin.gz";
+    const std::string FTP_UNIPROT_FLAT_FILE     = "ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.dat.gz";
 
     // NCBI Taxonomy filenames
     const std::string NCBI_TAX_ROOT          = "root[Subtree]"; // Unused

@@ -1,5 +1,4 @@
 /*
- *
  * Developed by Alexander Hart
  * Plant Computational Genomics Lab
  * University of Connecticut
@@ -25,25 +24,28 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef ENTAP_CONFIG_H
-#define ENTAP_CONFIG_H
+#include "GenFileReader.h"
 
-// Compile with boost libraries? Currently this MUST be selected
-#ifndef USE_BOOST
-#define USE_BOOST   1
-#endif
+GenFileReader::GenFileReader(std::string &file_path, FileSystem::ENT_FILE_TYPES file_type,
+                            FileSystem *filesystem) {
 
-// Compile with CURL? Will use wget command otherwise
-#ifndef USE_CURL
-//#define USE_CURL    1
-#endif
+    _pFileSystem = filesystem;
+    _file_type = file_type;
+    _file_path = file_path;
+}
 
-// Compile with ZLIB? Will use tar command otherwise
-#ifndef USE_ZLIB
-//#define USE_ZLIB    1
-#endif
+bool GenFileReader::open_file() {
 
-// Comment this out if it is debug code
-//#define RELEASE_BUILD
+    if (!_pFileSystem->file_exists(_file_path) || _pFileSystem->file_empty(_file_path)) {
+        return false;
+    }
 
-#endif //ENTAP_CONFIG_H
+    switch (_file_type) {
+        case FileSystem::FILE_DELIMINATED:
+            break;
+        default:
+            break;
+
+    }
+    return false;
+}

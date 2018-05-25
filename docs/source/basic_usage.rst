@@ -178,7 +178,7 @@ In both cases, the following databases will be downloaded:
 
 If you experience any trouble in downloading the databases indexed for EnTAP (taxonomy and gene ontology), you can use the databases contained in the repo download, databases.tar.gz. Just be sure to set the configuration file to these database paths (as these are the binaries)!
 
-EnTAP will always check the databases specified in the configuration file first. Otherwise, EnTAP will check a different location for the databases during Configuration. This location will be either the path specified by - -database-out or, if not selected, the current working directory. The final databases will also be sent there! As a result, the **- -database-out flag is recommended for Configuration.**
+EnTAP will always check the databases specified in the configuration file first. Otherwise, EnTAP will check a different location for the databases during Configuration. This location will be either the path specified by - -out-dir or, if not selected, the current working directory. The final databases will also be sent there! As a result, the **- -out-dir flag is recommended for Configuration.**
 
 Flags:
 ^^^^^^^^^^^^^^^^^^^^^
@@ -228,7 +228,7 @@ Before we begin, make sure that the paths in the configuration file are correct.
 
 .. code-block:: bash
 
-    EnTAP --config -d /test_data/swiss_prot_test.fasta --database-out /test_data
+    EnTAP --config -d /test_data/swiss_prot_test.fasta --out-dir /test_data
 
 
 This should finish very shortly without any errors and you should find a uniprot_sprot_test.dmnd file within the |test_dir| directory. 

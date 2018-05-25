@@ -85,18 +85,10 @@ Software:
 If you have downloaded the full repository from the GitLab page, each of these (with the exception of GeneMarkS-T) are contained within the /libs directory. GeneMarkS-T must be acquired from the website linked previously due to licensing (free for academic use). 
 
 
-RSEM and DIAMOND both require compilation from source code while EggNOG-Emapper or GeneMarkS-T does not. To compile these, run the script within the main directory: 
-
-.. code-block :: bash
-
-    ./setup.sh
+RSEM and DIAMOND both require compilation from source code while EggNOG-Emapper or GeneMarkS-T does not. To compile these, view the respective installation instructions on GitHub.
 
 
-This will make+install DIAMOND and make RSEM. 
-
-.. warning:: Ensure that DIAMOND was properly installed (global installation required by EggNOG-Emapper)
-
-If there are any problems with the setup script, installation steps can be found on the GitHub pages for each. 
+.. warning:: Ensure that DIAMOND was globally installed (global installation required by EggNOG-Emapper)
 
 .. _entap-label:
 

@@ -29,7 +29,6 @@
 #include <iostream>
 #include <algorithm>
 #include <sstream>
-#include <netinet/in.h>
 #include "QuerySequence.h"
 #include "EntapGlobals.h"
 #include "FileSystem.h"
@@ -42,7 +41,6 @@ unsigned long QuerySequence::getSeq_length() const {
 
 QuerySequence::QuerySequence() {
     init_sequence();
-
 }
 
 void QuerySequence::setSequence( std::string &seq) {
@@ -101,15 +99,6 @@ void QuerySequence::setSeq_length(unsigned long seq_length) {
     QuerySequence::_seq_length = seq_length;
 }
 
-const std::string &QuerySequence::get_species() const {
-    return _sim_search_alignment_data->results->species;
-}
-
-const std::string &QuerySequence::get_contam_type() const {
-    return _sim_search_alignment_data->results->contam_type;
-}
-
-
 void QuerySequence::set_eggnog_results(const EggnogResults &eggnogResults) {
     this->_eggnog_results = eggnogResults;
     this->QUERY_FLAG_SET(QUERY_EGGNOG_HIT);
@@ -120,9 +109,7 @@ void QuerySequence::init_sequence() {
     _seq_length = 0;
     _fpkm = 0;
 
-    _sim_search_alignment_data = new SimSearchAlignmentData();
-    _eggnog_results     = {};
-    _interpro_results   = {};
+    _total_alignment_data = AlignmentData();
 
     _frame = "";
     _sequence_p = "";
@@ -231,26 +218,9 @@ void QuerySequence::set_fpkm(float _fpkm) {
 
 
 void QuerySequence::init_header() {
-
     OUTPUT_MAP = {
             {&ENTAP_EXECUTE::HEADER_QUERY           , &_seq_id},
-            {&ENTAP_EXECUTE::HEADER_SUBJECT         , &_sim_search_alignment_data->results->sseqid},
-            {&ENTAP_EXECUTE::HEADER_PERCENT         , &_sim_search_alignment_data->results->pident},
-            {&ENTAP_EXECUTE::HEADER_ALIGN_LEN       , &_sim_search_alignment_data->results->length},
-            {&ENTAP_EXECUTE::HEADER_MISMATCH        , &_sim_search_alignment_data->results->mismatch},
-            {&ENTAP_EXECUTE::HEADER_GAP_OPEN        , &_sim_search_alignment_data->results->gapopen},
-            {&ENTAP_EXECUTE::HEADER_QUERY_E         , &_sim_search_alignment_data->results->qend},
-            {&ENTAP_EXECUTE::HEADER_QUERY_S         , &_sim_search_alignment_data->results->qstart},
-            {&ENTAP_EXECUTE::HEADER_SUBJ_S          , &_sim_search_alignment_data->results->sstart},
-            {&ENTAP_EXECUTE::HEADER_SUBJ_E          , &_sim_search_alignment_data->results->send},
-            {&ENTAP_EXECUTE::HEADER_E_VAL           , &_sim_search_alignment_data->results->e_val},
-            {&ENTAP_EXECUTE::HEADER_COVERAGE        , &_sim_search_alignment_data->results->coverage},
-            {&ENTAP_EXECUTE::HEADER_TITLE           , &_sim_search_alignment_data->results->stitle},
-            {&ENTAP_EXECUTE::HEADER_SPECIES         , &_sim_search_alignment_data->results->species},
-            {&ENTAP_EXECUTE::HEADER_DATABASE        , &_sim_search_alignment_data->results->database_path},
             {&ENTAP_EXECUTE::HEADER_FRAME           , &_frame},
-            {&ENTAP_EXECUTE::HEADER_CONTAM          , &_sim_search_alignment_data->results->yes_no_contam},
-            {&ENTAP_EXECUTE::HEADER_INFORM          , &_sim_search_alignment_data->results->yes_no_inform},
             {&ENTAP_EXECUTE::HEADER_SEED_ORTH       , &_eggnog_results.seed_ortholog},
             {&ENTAP_EXECUTE::HEADER_SEED_EVAL       , &_eggnog_results.seed_evalue},
             {&ENTAP_EXECUTE::HEADER_SEED_SCORE      , &_eggnog_results.seed_score},
@@ -267,23 +237,26 @@ void QuerySequence::init_header() {
             {&ENTAP_EXECUTE::HEADER_INTER_PATHWAY   , &_interpro_results.pathways}
     };
 
-    if (!QUERY_FLAG_GET(QUERY_BLAST_HIT)) {
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_SUBJECT] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_PERCENT] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_ALIGN_LEN] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_MISMATCH] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_GAP_OPEN] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_QUERY_E] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_QUERY_S] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_SUBJ_S] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_SUBJ_E] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_E_VAL] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_COVERAGE] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_TITLE] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_SPECIES] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_DATABASE] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_CONTAM] = nullptr;
-        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_INFORM] = nullptr;
+    SimSearchAlignment *alignment = get_best_hit_alignment<SimSearchAlignment>(SIMILARITY_SEARCH,
+                                                                               ENTAP_EXECUTE::SIM_SEARCH_FLAG_DIAMOND, "");
+    if (alignment != nullptr) {
+        SimSearchResults *sim_search_results = alignment->get_results();
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_SUBJECT  ] = &sim_search_results->sseqid;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_PERCENT  ] = &sim_search_results->pident;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_ALIGN_LEN] = &sim_search_results->length;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_MISMATCH ] = &sim_search_results->mismatch;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_GAP_OPEN ] = &sim_search_results->gapopen;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_QUERY_E  ] = &sim_search_results->qend;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_QUERY_S  ] = &sim_search_results->qstart;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_SUBJ_S   ] = &sim_search_results->sstart;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_SUBJ_E   ] = &sim_search_results->send;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_E_VAL    ] = &sim_search_results->e_val;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_COVERAGE ] = &sim_search_results->coverage;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_TITLE    ] = &sim_search_results->stitle;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_SPECIES  ] = &sim_search_results->species;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_DATABASE ] = &sim_search_results->database_path;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_CONTAM   ] = &sim_search_results->yes_no_contam;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_INFORM   ] = &sim_search_results->yes_no_inform;
     }
 }
 
@@ -318,143 +291,72 @@ void QuerySequence::QUERY_FLAG_CLEAR(QUERY_FLAGS flag) {
 
 
 QuerySequence::~QuerySequence() {
-    for (auto &pair : (_sim_search_alignment_data->alignments)) {
-        // first: database, second: pair of best hit to all hits (vector)
-        for (QueryAlignment *alignment : pair.second.second) {
-            // cycle through alignments
-            delete(alignment);
-        }
-    }
-    delete _sim_search_alignment_data;
-}
-
-// **********************************************************************
-
-
-SimSearchAlignment::SimSearchAlignment(QuerySequence * a, uint16 b, std::string c, SimSearchResults d, std::string &lineage)
-        : QueryAlignment(a,b,c){
-    this->_sim_search_results = d;
-    this->_best_hit = false;
-    this->set_tax_score(lineage);
-
-    this->OUTPUT_MAP = {
-            {&ENTAP_EXECUTE::HEADER_QUERY           , &_sim_search_results.qseqid},
-            {&ENTAP_EXECUTE::HEADER_SUBJECT         , &_sim_search_results.sseqid},
-            {&ENTAP_EXECUTE::HEADER_PERCENT         , &_sim_search_results.pident},
-            {&ENTAP_EXECUTE::HEADER_ALIGN_LEN       , &_sim_search_results.length},
-            {&ENTAP_EXECUTE::HEADER_MISMATCH        , &_sim_search_results.mismatch},
-            {&ENTAP_EXECUTE::HEADER_GAP_OPEN        , &_sim_search_results.gapopen},
-            {&ENTAP_EXECUTE::HEADER_QUERY_E         , &_sim_search_results.qend},
-            {&ENTAP_EXECUTE::HEADER_QUERY_S         , &_sim_search_results.qstart},
-            {&ENTAP_EXECUTE::HEADER_SUBJ_S          , &_sim_search_results.sstart},
-            {&ENTAP_EXECUTE::HEADER_SUBJ_E          , &_sim_search_results.send},
-            {&ENTAP_EXECUTE::HEADER_E_VAL           , &_sim_search_results.e_val},
-            {&ENTAP_EXECUTE::HEADER_COVERAGE        , &_sim_search_results.coverage},
-            {&ENTAP_EXECUTE::HEADER_TITLE           , &_sim_search_results.stitle},
-            {&ENTAP_EXECUTE::HEADER_SPECIES         , &_sim_search_results.species},
-            {&ENTAP_EXECUTE::HEADER_DATABASE        , &_sim_search_results.database_path},
-            {&ENTAP_EXECUTE::HEADER_FRAME           , &_frame},
-            {&ENTAP_EXECUTE::HEADER_CONTAM          , &_sim_search_results.yes_no_contam},
-            {&ENTAP_EXECUTE::HEADER_INFORM          , &_sim_search_results.yes_no_inform}
-    };
-}
-
-SimSearchResults *SimSearchAlignment::get_results() {
-    return &_sim_search_results;
-}
-
-bool SimSearchAlignment::operator>(const SimSearchAlignment &alignment) {
-
-    fp64 eval1 = this->_sim_search_results.e_val_raw;
-    fp64 eval2 = alignment._sim_search_results.e_val_raw;
-    // Avoid error on taking log
-    if (eval1 == 0) eval1 = 1E-200;
-    if (eval2 == 0) eval2 = 1E-200;
-    fp64 cov1 = this->_sim_search_results.coverage_raw;
-    fp64 cov2 = alignment._sim_search_results.coverage_raw;
-    fp64 coverage_dif = fabs(cov1 - cov2);
-    if (!this->_best_hit) {
-        // For hits of the same database "better hit"
-        if (fabs(log10(eval1) - log10(eval2)) < E_VAL_DIF) {
-            if (coverage_dif > COV_DIF) {
-                return cov1 > cov2;
+    // Clear alignment data
+    // Cycle through vector
+    for (ALIGNMENT_DATA_T &alignment_data : _total_alignment_data._alignment_data) {
+        // Cycle through databases
+        for (auto &pair : alignment_data) {
+            // Through alignments
+            for (QueryAlignment *alignment : pair.second.second) {
+                delete alignment;
             }
-            if (this->_sim_search_results.contaminant && !alignment._sim_search_results.contaminant) return false;
-            if (!this->_sim_search_results.contaminant && alignment._sim_search_results.contaminant) return true;
-            if (this->_sim_search_results.tax_score == alignment._sim_search_results.tax_score)
-                return eval1 < eval2;
-            return this->_sim_search_results.tax_score > alignment._sim_search_results.tax_score;
-        } else {
-            return eval1 < eval2;
         }
-    }else {
-        // For overall best hits between databases "best hit"
-        if (coverage_dif > COV_DIF) {
-            return cov1 > cov2;
+    }
+}
+
+bool QuerySequence::hit_database(ExecuteStates state, uint16 software, std::string database) {
+    // If we want overall best alignment
+    if (database.empty()) {
+        return _total_alignment_data.index_best_align(state,software) != nullptr;
+    } else {
+        // If we hit a specific database
+        ALIGNMENT_DATA_T *data = _total_alignment_data.index_data(state,software);
+        return data->find(database) != data->end();
+    }
+}
+
+void QuerySequence::update_best_hit(ExecuteStates state, uint16 software, std::string &database) {
+    // Always will have hit this database
+    align_database_hits_t *database_data =
+            &_total_alignment_data.index_data(state,software)->at(database);
+
+    // Cycle through all hits of this database
+    for (auto *alignment : database_data->second) {
+        // See if we should update this databases alignment
+        alignment->set_compare_overall_alignment(false);
+        if (database_data->first == nullptr || *alignment > *database_data->first) {
+            // If it is, set that to current alignment
+            database_data->first = alignment;
         }
-        if (this->_sim_search_results.contaminant && !alignment._sim_search_results.contaminant) return false;
-        if (!this->_sim_search_results.contaminant && alignment._sim_search_results.contaminant) return true;
-        return this->_sim_search_results.tax_score > alignment._sim_search_results.tax_score;
+
+        // See if this alignment is better than the overall alignment
+        alignment->set_compare_overall_alignment(true);
+        if (_total_alignment_data.index_best_align(state,software) == nullptr ||
+                *alignment > *_total_alignment_data.index_best_align(state,software)) {
+            _total_alignment_data.set_best_align(state,software,alignment);
+        }
     }
+    // Update any overall flags that may have changed with best hit changes
+    update_query_flags(state, software);
 }
 
-QueryAlignment::QueryAlignment(QuerySequence *parent, uint16 flag, std::string database) {
-    _software_flag = flag;
-    _parent_sequence = parent;
-    _database = database;
-    _frame = parent->getFrame();
-}
-
-std::string QueryAlignment::print_tsv(const std::vector<const std::string *> &headers)  {
-    std::stringstream stream;
-
-    for (const std::string *header : headers) {
-        stream << *OUTPUT_MAP[header] << "\t";
-    }
-    return stream.str();
-}
-
-bool QuerySequence::hit_database(std::string &database, ExecuteStates state) {
+void QuerySequence::update_query_flags(ExecuteStates state, uint16 software) {
     switch (state) {
-        case SIMILARITY_SEARCH:
-            if (_sim_search_alignment_data == nullptr) return false;
-            if (_sim_search_alignment_data->alignments.empty()) return false;
-            if (!database.empty()) {
-                return (_sim_search_alignment_data->alignments.find(database) !=\
-                    _sim_search_alignment_data->alignments.end());
-            } else {
-                return QUERY_FLAG_GET(QUERY_BLAST_HIT);
-            }
-        default:
-            return false;
-    }
-}
-
-
-QuerySequence::align_database_hits_t* QuerySequence::get_database_hits(std::string &database, ExecuteStates state) {
-    switch (state) {
-        case SIMILARITY_SEARCH:
-            return &this->_sim_search_alignment_data->alignments[database];
-        default:
-            return nullptr;
-    }
-}
-
-void QuerySequence::update_query_flags(ExecuteStates state) {
-    switch (state) {
-        case SIMILARITY_SEARCH:
-            _sim_search_alignment_data-> results = _sim_search_alignment_data->best_hit->get_results();
-            if (this->_sim_search_alignment_data->results->is_informative) {
+        case SIMILARITY_SEARCH: {
+            SimSearchAlignment *best_align = get_best_hit_alignment<SimSearchAlignment>(state, software, "");
+            SimSearchResults *results = best_align->get_results();
+            if (results->is_informative) {
                 QUERY_FLAG_SET(QUERY_INFORMATIVE);
             } else {
                 QUERY_FLAG_CLEAR(QUERY_INFORMATIVE);
             }
-            if (this->_sim_search_alignment_data->results->contaminant) {
+            if (results->contaminant) {
                 QUERY_FLAG_SET(QUERY_CONTAMINANT);
             } else {
                 QUERY_FLAG_CLEAR(QUERY_CONTAMINANT);
             }
             break;
+        }
         default:
             break;
     }
@@ -464,6 +366,31 @@ void QuerySequence::update_query_flags(ExecuteStates state) {
 bool QuerySequence::isContaminant() {
     return this->QUERY_FLAG_GET(QUERY_CONTAMINANT);
 }
+
+QuerySequence::align_database_hits_t *QuerySequence::get_database_hits(std::string &database, ExecuteStates state,uint16 software) {
+    return &_total_alignment_data.index_data(state,software)->at(database);
+}
+
+std::string QuerySequence::get_header_data(const std::string *header) {
+    init_header();
+    return *OUTPUT_MAP[header];
+}
+
+//**********************************************************************
+//**********************************************************************
+//                 QueryAlignment Nested Class
+//**********************************************************************
+//**********************************************************************
+
+
+QuerySequence::QueryAlignment::QueryAlignment() {
+    _compare_overall_alignment = false;
+}
+
+void QuerySequence::QueryAlignment::set_compare_overall_alignment(bool val) {
+    _compare_overall_alignment = val;
+}
+
 
 /**
  * ======================================================================
@@ -480,7 +407,7 @@ bool QuerySequence::isContaminant() {
  *
  * =====================================================================
  */
-void SimSearchAlignment::set_tax_score(std::string &input_lineage) {
+void QuerySequence::SimSearchAlignment::set_tax_score(std::string &input_lineage) {
     float tax_score = 0;
     std::string lineage = this->_sim_search_results.lineage;
     std::remove_if(lineage.begin(),lineage.end(), ::isspace);
@@ -501,4 +428,118 @@ void SimSearchAlignment::set_tax_score(std::string &input_lineage) {
     this->_sim_search_results.tax_score = tax_score;
 }
 
+QuerySequence::SimSearchAlignment::~SimSearchAlignment() {
 
+}
+
+
+
+QuerySequence::SimSearchAlignment::SimSearchAlignment(SimSearchResults d, std::string &lineage, QuerySequence* parent) {
+    _sim_search_results = d;
+    set_tax_score(lineage);
+    _parent = parent;
+
+
+    ALIGN_OUTPUT_MAP = {
+            {&ENTAP_EXECUTE::HEADER_QUERY           , _sim_search_results.qseqid},
+            {&ENTAP_EXECUTE::HEADER_SUBJECT         , _sim_search_results.sseqid},
+            {&ENTAP_EXECUTE::HEADER_PERCENT         , _sim_search_results.pident},
+            {&ENTAP_EXECUTE::HEADER_ALIGN_LEN       , _sim_search_results.length},
+            {&ENTAP_EXECUTE::HEADER_MISMATCH        , _sim_search_results.mismatch},
+            {&ENTAP_EXECUTE::HEADER_GAP_OPEN        , _sim_search_results.gapopen},
+            {&ENTAP_EXECUTE::HEADER_QUERY_E         , _sim_search_results.qend},
+            {&ENTAP_EXECUTE::HEADER_QUERY_S         , _sim_search_results.qstart},
+            {&ENTAP_EXECUTE::HEADER_SUBJ_S          , _sim_search_results.sstart},
+            {&ENTAP_EXECUTE::HEADER_SUBJ_E          , _sim_search_results.send},
+            {&ENTAP_EXECUTE::HEADER_E_VAL           , _sim_search_results.e_val},
+            {&ENTAP_EXECUTE::HEADER_COVERAGE        , _sim_search_results.coverage},
+            {&ENTAP_EXECUTE::HEADER_TITLE           , _sim_search_results.stitle},
+            {&ENTAP_EXECUTE::HEADER_SPECIES         , _sim_search_results.species},
+            {&ENTAP_EXECUTE::HEADER_DATABASE        , _sim_search_results.database_path},
+            {&ENTAP_EXECUTE::HEADER_CONTAM          , _sim_search_results.yes_no_contam},
+            {&ENTAP_EXECUTE::HEADER_INFORM          , _sim_search_results.yes_no_inform}
+    };
+}
+
+QuerySequence::SimSearchResults* QuerySequence::SimSearchAlignment::get_results() {
+    return &_sim_search_results;
+}
+
+bool QuerySequence::SimSearchAlignment::operator>(const QueryAlignment &alignment) {
+
+    // Don't need to check typeid
+    const SimSearchAlignment alignment_cast = static_cast<const SimSearchAlignment&>(alignment);
+
+    fp64 eval1 = this->_sim_search_results.e_val_raw;
+    fp64 eval2 = alignment_cast._sim_search_results.e_val_raw;
+    // Avoid error on taking log
+    if (eval1 == 0) eval1 = 1E-200;
+    if (eval2 == 0) eval2 = 1E-200;
+    fp64 cov1 = this->_sim_search_results.coverage_raw;
+    fp64 cov2 = alignment_cast._sim_search_results.coverage_raw;
+    fp64 coverage_dif = fabs(cov1 - cov2);
+    if (!this->_compare_overall_alignment) {
+        // For hits of the same database "better hit"
+        if (fabs(log10(eval1) - log10(eval2)) < E_VAL_DIF) {
+            if (coverage_dif > COV_DIF) {
+                return cov1 > cov2;
+            }
+            if (this->_sim_search_results.contaminant && !alignment_cast._sim_search_results.contaminant) return false;
+            if (!this->_sim_search_results.contaminant && alignment_cast._sim_search_results.contaminant) return true;
+            if (this->_sim_search_results.tax_score == alignment_cast._sim_search_results.tax_score)
+                return eval1 < eval2;
+            return this->_sim_search_results.tax_score > alignment_cast._sim_search_results.tax_score;
+        } else {
+            return eval1 < eval2;
+        }
+    }else {
+        // For overall best hits between databases "best hit"
+        if (coverage_dif > COV_DIF) {
+            return cov1 > cov2;
+        }
+        if (this->_sim_search_results.contaminant && !alignment_cast._sim_search_results.contaminant) return false;
+        if (!this->_sim_search_results.contaminant && alignment_cast._sim_search_results.contaminant) return true;
+        return this->_sim_search_results.tax_score > alignment_cast._sim_search_results.tax_score;
+    }
+}
+
+std::string QuerySequence::QueryAlignment::print_tsv(const std::vector<const std::string *> &headers)  {
+    std::stringstream stream;
+
+    for (const std::string *header : headers) {
+        if (ALIGN_OUTPUT_MAP.find(header) != ALIGN_OUTPUT_MAP.end()) {
+            stream << ALIGN_OUTPUT_MAP[header] << "\t";
+        } else {
+            stream << _parent->get_header_data(header) << "\t";
+        }
+    }
+    return stream.str();
+}
+
+//**********************************************************************
+//**********************************************************************
+//                 AlignmentData Struct
+//**********************************************************************
+//**********************************************************************
+
+QuerySequence::AlignmentData::AlignmentData() {
+    _alignment_data = std::vector<ALIGNMENT_DATA_T>(ENTAP_EXECUTE::SOFTWARE_MAX * EXECUTION_MAX, ALIGNMENT_DATA_T());
+    _alignment_best = std::vector<QueryAlignment*>(ENTAP_EXECUTE::SOFTWARE_MAX * EXECUTION_MAX, nullptr);
+}
+
+QuerySequence::AlignmentData::~AlignmentData() {
+
+}
+
+QuerySequence::ALIGNMENT_DATA_T* QuerySequence::AlignmentData::index_data(ExecuteStates state, uint16 software) {
+    return &_alignment_data.at(state * ENTAP_EXECUTE::SOFTWARE_MAX + software);
+}
+
+QuerySequence::QueryAlignment *QuerySequence::AlignmentData::index_best_align(ExecuteStates state, uint16 software) {
+    return _alignment_best.at(state * ENTAP_EXECUTE::SOFTWARE_MAX + software);
+}
+
+void
+QuerySequence::AlignmentData::set_best_align(ExecuteStates state, uint16 software, QuerySequence::QueryAlignment *alignment) {
+    _alignment_best.at(state * ENTAP_EXECUTE::SOFTWARE_MAX + software) = alignment;
+}

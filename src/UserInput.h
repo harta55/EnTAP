@@ -39,9 +39,8 @@ namespace Defaults {
     const std::string RSEM_DEFAULT_EXE         = "/libs/RSEM-1.3.0/";   // Directory
     const std::string GENEMARK_DEFAULT_EXE     = "/libs/gmst_linux_64/gmst.pl";
     const std::string DIAMOND_DEFAULT_EXE      = "/libs/diamond-0.8.31/bin/diamond";
-    const std::string EGG_EMAPPER_DEFAULT      = "/libs/eggnog-mapper/emapper.py";
-    const std::string EGG_DOWNLOAD_DEFAULT     = "/libs/eggnog-mapper/download_eggnog_data.py";
-    const std::string EGG_SQL_DB_DEFAULT       = "/libs/eggnog-mapper/data/eggnog.db";
+    const std::string EGG_SQL_DB_FILENAME      = "eggnog.db";
+    const std::string EGG_DMND_FILENAME        = "eggnog_proteins.dmnd";
     const std::string INTERPRO_DEF_EXE         = "interproscan.sh";
     const std::string TAX_DOWNLOAD_DEF         = "/src/download_tax.py";
     const std::string GRAPH_SCRIPT_DEF         = "/src/entap_graphing.py";
@@ -53,6 +52,8 @@ namespace Defaults {
     const std::string ENTAP_DATABASE_SERIAL_GZ = "entap_database.bin.gz";
     const std::string ENTAP_DATABASE_BIN_DEFAULT = PATHS(BIN_PATH_DEFAULT, ENTAP_DATABASE_SERIAL_FILENAME);
     const std::string ENTAP_DATABASE_SQL_DEFAULT = PATHS(DATABASE_DIR_DEFAULT, ENTAP_DATABASE_SQL_FILENAME);
+    const std::string EGG_SQL_DB_DEFAULT         = PATHS(DATABASE_DIR_DEFAULT, EGG_SQL_DB_FILENAME);
+    const std::string EGG_DMND_DEFAULT           = PATHS(BIN_PATH_DEFAULT, EGG_DMND_FILENAME);
 }
 
 class UserInput {
@@ -148,7 +149,8 @@ private:
     const std::string KEY_EGGNOG_EXE           = "eggnog_exe_path";
     const std::string KEY_EGGNOG_DOWN          = "eggnog_download_exe";
     const std::string KEY_INTERPRO_EXE         = "interpro_exe_path";
-    const std::string KEY_EGGNOG_DB            = "eggnog_database";
+    const std::string KEY_EGGNOG_SQL_DB        = "eggnog_sql_database";
+    const std::string KEY_EGGNOG_DMND          = "eggnog_dmnd_database";
     const std::string KEY_ENTAP_DATABASE_BIN   = "entap_database_bin_path";
     const std::string KEY_ENTAP_DATABASE_SQL   = "entap_database_sql_path";
     const std::string KEY_GRAPH_SCRIPT         = "entap_graphing_script";

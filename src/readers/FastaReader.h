@@ -1,5 +1,4 @@
 /*
- *
  * Developed by Alexander Hart
  * Plant Computational Genomics Lab
  * University of Connecticut
@@ -25,30 +24,30 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef ENTAP_CONFIG_H
-#define ENTAP_CONFIG_H
+#ifndef ENTAP_GENFILEREADER_H
+#define ENTAP_GENFILEREADER_H
 
-// Compile with boost libraries? Currently this MUST be selected
-#ifndef USE_BOOST
-#define USE_BOOST   1
-#endif
+#include "../FileSystem.h"
+#include "BaseReader.h"
 
-// Use EggNOG mapper (not supported, leaving for now)
-#ifndef EGGNOG_MAPPER
-//#define EGGNOG_MAPPER 1
-#endif
 
-// Compile with CURL? Will use wget command otherwise (not supported yet)
-#ifndef USE_CURL
-//#define USE_CURL    1
-#endif
+class FastaReader : public BaseReader{
 
-// Compile with ZLIB? Will use tar command otherwise (not supported yet)
-#ifndef USE_ZLIB
-//#define USE_ZLIB    1
-#endif
+public:
 
-// Comment this out if it is debug code
-//#define RELEASE_BUILD
+    FastaReader(std::string& file_path, FileSystem *filesystem, FileSystem::ENT_FILE_TYPES);
+    ~FastaReader();
 
-#endif //ENTAP_CONFIG_H
+    bool parse_file();
+
+private:
+
+    FileSystem                *_pFileSystem;
+    std::string                _file_path;
+    FileSystem::ENT_FILE_TYPES _file_type;
+
+
+};
+
+
+#endif //ENTAP_GENFILEREADER_H

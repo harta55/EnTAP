@@ -184,9 +184,8 @@
 std::string RSEM_EXE_DIR;
 std::string GENEMARK_EXE;
 std::string DIAMOND_EXE;
-std::string EGG_EMAPPER_EXE;
 std::string EGG_SQL_DB_PATH;
-std::string EGG_DOWNLOAD_EXE;
+std::string EGG_DMND_PATH;
 std::string INTERPRO_EXE;
 std::string ENTAP_DATABASE_BIN_PATH;
 std::string ENTAP_DATABASE_SQL_PATH;
@@ -609,9 +608,8 @@ void UserInput::generate_config(std::string &path) {
                 KEY_DIAMOND_EXE               <<"=\n"<<
                 KEY_RSEM_EXE                  <<"=\n"<<
                 KEY_GENEMARK_EXE              <<"=\n"<<
-                KEY_EGGNOG_EXE                <<"=\n"<<
-                KEY_EGGNOG_DOWN               <<"=\n"<<
-                KEY_EGGNOG_DB                 <<"=\n"<<
+                KEY_EGGNOG_SQL_DB                 <<"=\n"<<
+                KEY_EGGNOG_DMND                 <<"=\n"<<
                 KEY_INTERPRO_EXE              <<"=\n"<<
                 KEY_ENTAP_DATABASE_SQL        <<"=\n"<<
                 KEY_ENTAP_DATABASE_BIN        <<"=\n"<<
@@ -638,9 +636,8 @@ bool UserInput::check_key(std::string& key) {
     LOWERCASE(key);
     if (key.compare(KEY_DIAMOND_EXE)==0)      return true;
     if (key.compare(KEY_GENEMARK_EXE)==0)     return true;
-    if (key.compare(KEY_EGGNOG_EXE)==0)       return true;
-    if (key.compare(KEY_EGGNOG_DOWN)==0)      return true;
-    if (key.compare(KEY_EGGNOG_DB)==0)        return true;
+    if (key.compare(KEY_EGGNOG_SQL_DB)==0)        return true;
+    if (key.compare(KEY_EGGNOG_DMND)==0)        return true;
     if (key.compare(KEY_INTERPRO_EXE)==0)     return true;
     if (key.compare(KEY_ENTAP_DATABASE_BIN)==0) return true;
     if (key.compare(KEY_ENTAP_DATABASE_SQL)==0) return true;
@@ -687,9 +684,8 @@ void UserInput::print_user_input() {
        "\nGeneMarkS-T: "                       << GENEMARK_EXE      <<
        "\nDIAMOND: "                           << DIAMOND_EXE       <<
        "\nInterPro: "                          << INTERPRO_EXE      <<
-       "\nEggNOG Emapper: "                    << EGG_EMAPPER_EXE   <<
-       "\nEggNOG Download: "                   << EGG_DOWNLOAD_EXE  <<
-       "\nEggNOG Database: "                   << EGG_SQL_DB_PATH   <<
+       "\nEggNOG SQL Database: "               << EGG_SQL_DB_PATH   <<
+       "\nEggNOG DIAMOND Database: "           << EGG_DMND_PATH     <<
        "\nEnTAP Database (binary): "           << ENTAP_DATABASE_BIN_PATH <<
        "\nEnTAP Database (SQL): "              << ENTAP_DATABASE_SQL_PATH <<
        "\nEnTAP Graphing Script: "             << GRAPHING_EXE      <<
@@ -794,10 +790,9 @@ void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map
     std::string temp_rsem              = map[KEY_RSEM_EXE];
     std::string temp_diamond           = map[KEY_DIAMOND_EXE];
     std::string temp_genemark          = map[KEY_GENEMARK_EXE];
-    std::string temp_eggnog            = map[KEY_EGGNOG_EXE];
     std::string temp_interpro          = map[KEY_INTERPRO_EXE];
-    std::string temp_eggnog_down       = map[KEY_EGGNOG_DOWN];
-    std::string temp_eggnog_db         = map[KEY_EGGNOG_DB];
+    std::string temp_eggnog_sql_db     = map[KEY_EGGNOG_SQL_DB];
+    std::string temp_eggnog_dmnd_db    = map[KEY_EGGNOG_DMND];
     std::string temp_entap_sql_db      = map[KEY_ENTAP_DATABASE_SQL];
     std::string temp_entap_bin_db      = map[KEY_ENTAP_DATABASE_BIN];
     std::string temp_graphing          = map[KEY_GRAPH_SCRIPT];
@@ -806,10 +801,11 @@ void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map
     if (temp_rsem.empty())    temp_rsem           = PATHS(exe_path,Defaults::RSEM_DEFAULT_EXE);
     if (temp_diamond.empty()) temp_diamond        = PATHS(exe_path,Defaults::DIAMOND_DEFAULT_EXE);
     if (temp_genemark.empty())temp_genemark       = PATHS(exe_path,Defaults::GENEMARK_DEFAULT_EXE);
-    if (temp_eggnog.empty())  temp_eggnog         = PATHS(exe_path,Defaults::EGG_EMAPPER_DEFAULT);
-    if (temp_eggnog_down.empty())temp_eggnog_down = PATHS(exe_path,Defaults::EGG_DOWNLOAD_DEFAULT);
-    if (temp_eggnog_db.empty())  temp_eggnog_db   = PATHS(exe_path,Defaults::EGG_SQL_DB_DEFAULT);
     if (temp_interpro.empty())   temp_interpro    = Defaults::INTERPRO_DEF_EXE;
+
+    // EggNOG paths
+    if (temp_eggnog_sql_db.empty())  temp_eggnog_sql_db   = PATHS(exe_path,Defaults::EGG_SQL_DB_DEFAULT);
+    if (temp_eggnog_dmnd_db.empty())  temp_eggnog_dmnd_db   = PATHS(exe_path,Defaults::EGG_DMND_DEFAULT);
 
     // EnTAP paths
     if (temp_entap_sql_db.empty()) temp_entap_sql_db = PATHS(exe_path, Defaults::ENTAP_DATABASE_SQL_DEFAULT);
@@ -819,9 +815,8 @@ void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map
     DIAMOND_EXE      = temp_diamond;
     GENEMARK_EXE     = temp_genemark;
     RSEM_EXE_DIR     = temp_rsem;
-    EGG_SQL_DB_PATH  = temp_eggnog_db;
-    EGG_DOWNLOAD_EXE = temp_eggnog_down;
-    EGG_EMAPPER_EXE  = temp_eggnog;
+    EGG_SQL_DB_PATH  = temp_eggnog_sql_db;
+    EGG_DMND_PATH    = temp_eggnog_dmnd_db;
     INTERPRO_EXE     = temp_interpro;
     ENTAP_DATABASE_BIN_PATH = temp_entap_bin_db;
     ENTAP_DATABASE_SQL_PATH = temp_entap_sql_db;

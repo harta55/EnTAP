@@ -1,5 +1,4 @@
 /*
- *
  * Developed by Alexander Hart
  * Plant Computational Genomics Lab
  * University of Connecticut
@@ -25,30 +24,33 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef ENTAP_CONFIG_H
-#define ENTAP_CONFIG_H
+#ifndef ENTAP_BASEREADER_H
+#define ENTAP_BASEREADER_H
 
-// Compile with boost libraries? Currently this MUST be selected
-#ifndef USE_BOOST
-#define USE_BOOST   1
-#endif
 
-// Use EggNOG mapper (not supported, leaving for now)
-#ifndef EGGNOG_MAPPER
-//#define EGGNOG_MAPPER 1
-#endif
+#include "../FileSystem.h"
 
-// Compile with CURL? Will use wget command otherwise (not supported yet)
-#ifndef USE_CURL
-//#define USE_CURL    1
-#endif
+class BaseReader {
 
-// Compile with ZLIB? Will use tar command otherwise (not supported yet)
-#ifndef USE_ZLIB
-//#define USE_ZLIB    1
-#endif
+protected:
+    typedef enum {
 
-// Comment this out if it is debug code
-//#define RELEASE_BUILD
+        ERR_READ_OK=0,
+        ERR_READ_FILE_OPEN,  // cannot open file
+        ERR_READ_FILE_EMPTY, // file empty
+        ERR_READ_FILE_PARSE,
 
-#endif //ENTAP_CONFIG_H
+    } READER_ERR;
+
+    std::string print_err();
+    BaseReader(std::string& file_path, FileSystem* fileSystem, FileSystem::ENT_FILE_TYPES file_type);
+    virtual ~BaseReader(){};
+
+    FileSystem                *_pFileSystem;
+    std::string                _file_path;
+    READER_ERR                 _reader_err;
+    FileSystem::ENT_FILE_TYPES _file_type;
+};
+
+
+#endif //ENTAP_BASEREADER_H

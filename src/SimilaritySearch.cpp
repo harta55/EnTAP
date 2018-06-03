@@ -340,7 +340,7 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
     std::pair<bool,std::string>                     contam_info;
     std::string                                     species;
     TaxEntry                                        taxEntry;
-    SimSearchResults                                simSearchResults;
+    QuerySequence::SimSearchResults                 simSearchResults;
 
     // ------------------ Read from DIAMOND output ---------------------- //
     std::string qseqid;
@@ -416,7 +416,7 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
             simSearchResults.is_informative ? simSearchResults.yes_no_inform = "Yes" :
                     simSearchResults.yes_no_inform  = "No";
 
-            query->add_alignment<SimSearchAlignment, SimSearchResults>(
+            query->add_alignment<QuerySequence::SimSearchResults>(
                     SIMILARITY_SEARCH,
                     _software_flag,
                     simSearchResults,
@@ -552,7 +552,7 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
         // Cycle through all sequences
         for (auto &pair : *_pQUERY_DATA->get_sequences_ptr()) {
             // Check if original sequences have hit a database
-            if (!pair.second->hit_database(database_path, SIMILARITY_SEARCH)) {
+            if (!pair.second->hit_database(SIMILARITY_SEARCH, ENTAP_EXECUTE::SIM_SEARCH_FLAG_DIAMOND, database_path)) {
                 // Did NOT hit a database during sim search
                 // Do NOT log if it was never blasted
                 if ((pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN) && _blastp) ||
@@ -572,17 +572,19 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
             } else {
                 // HIT a database during sim search
 
-                SimSearchResults *sim_search_data;
-                SimSearchAlignment *best_hit;
+                QuerySequence::SimSearchResults *sim_search_data;
+                QuerySequence::SimSearchAlignment *best_hit;
                 // Process unselected hits for non-final analysis and set best hit pointer
                 if (is_final) {
-                    best_hit = pair.second->get_best_hit_alignment<SimSearchAlignment>(SIMILARITY_SEARCH,"");
+                    best_hit =
+                            pair.second->get_best_hit_alignment<QuerySequence::SimSearchAlignment>(
+                                    SIMILARITY_SEARCH,ENTAP_EXECUTE::SIM_SEARCH_FLAG_DIAMOND,"");
                     sim_search_data = best_hit->get_results();
                 } else {
-                    best_hit = pair.second->get_best_hit_alignment<SimSearchAlignment>(
-                            SIMILARITY_SEARCH,database_path);
+                    best_hit = pair.second->get_best_hit_alignment<QuerySequence::SimSearchAlignment>(
+                            SIMILARITY_SEARCH,ENTAP_EXECUTE::SIM_SEARCH_FLAG_DIAMOND,database_path);
                     QuerySequence::align_database_hits_t *alignment_data =
-                            pair.second->get_database_hits(database_path,SIMILARITY_SEARCH);
+                            pair.second->get_database_hits(database_path,SIMILARITY_SEARCH, ENTAP_EXECUTE::SIM_SEARCH_FLAG_DIAMOND);
                     sim_search_data = best_hit->get_results();
                     for (auto &hit : alignment_data->second) {
                         count_TOTAL_alignments++;
@@ -876,3 +878,4 @@ std::string SimilaritySearch::get_transcriptome_shortname() {
     if (transc_name.has_stem()) transc_name = transc_name.stem(); //.fasta.faa
     return transc_name.string();
 }
+

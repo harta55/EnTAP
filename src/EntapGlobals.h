@@ -94,7 +94,8 @@ enum ExecuteStates {
     FILTER,
     SIMILARITY_SEARCH,
     GENE_ONTOLOGY,
-    EXIT
+    EXIT,
+    EXECUTION_MAX
 };
 
 struct EntapDataPtrs {
@@ -126,9 +127,8 @@ extern std::string LOG_FILE_PATH;
 extern std::string RSEM_EXE_DIR;
 extern std::string GENEMARK_EXE;
 extern std::string DIAMOND_EXE;
-extern std::string EGG_EMAPPER_EXE;
 extern std::string EGG_SQL_DB_PATH;
-extern std::string EGG_DOWNLOAD_EXE;
+extern std::string EGG_DMND_PATH;
 extern std::string INTERPRO_EXE;
 extern std::string ENTAP_DATABASE_BIN_PATH;
 extern std::string ENTAP_DATABASE_SQL_PATH;
@@ -148,6 +148,9 @@ namespace ENTAP_EXECUTE {
     const uint16 FRAME_FLAG_GENEMARK = 0;
     const uint16 EXP_FLAG_RSEM       = 0;
     const uint16 SIM_SEARCH_FLAG_DIAMOND = 0;
+
+    const uint16 SOFTWARE_MAX = 2;
+
 
     //------------------------Headers-------------------------//
     extern const std::string HEADER_QUERY;

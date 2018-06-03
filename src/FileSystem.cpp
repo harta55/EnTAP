@@ -439,7 +439,7 @@ std::string FileSystem::get_cur_dir() {
 }
 
 FileSystem::~FileSystem() {
-    FS_dprint("Killing Object - FileSystem");
+    FS_dprint("Killing object - FileSystem");
     delete_dir(_temp_outpath);
 }
 
@@ -618,6 +618,7 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
     }
 #ifdef USE_ZLIB
     FS_dprint("Using ZLIB...");
+    FS_dprint("ZLIP NOT SUPPORTED");
     return false;
 #else
     // Not compiled with ZLIB usage, use terminal command

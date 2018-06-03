@@ -1,5 +1,4 @@
 /*
- *
  * Developed by Alexander Hart
  * Plant Computational Genomics Lab
  * University of Connecticut
@@ -25,30 +24,32 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef ENTAP_CONFIG_H
-#define ENTAP_CONFIG_H
+#include "FastaReader.h"
 
-// Compile with boost libraries? Currently this MUST be selected
-#ifndef USE_BOOST
-#define USE_BOOST   1
-#endif
+FastaReader::FastaReader(std::string &file_path,
+                            FileSystem *filesystem,
+                         FileSystem::ENT_FILE_TYPES file_type) :
+BaseReader(file_path, filesystem, file_type)
+{
+    // Fasta reader constructor
+}
 
-// Use EggNOG mapper (not supported, leaving for now)
-#ifndef EGGNOG_MAPPER
-//#define EGGNOG_MAPPER 1
-#endif
+FastaReader::~FastaReader() {
+    FS_dprint("Killing FastaReader object...");
+};
 
-// Compile with CURL? Will use wget command otherwise (not supported yet)
-#ifndef USE_CURL
-//#define USE_CURL    1
-#endif
+bool FastaReader::parse_file() {
 
-// Compile with ZLIB? Will use tar command otherwise (not supported yet)
-#ifndef USE_ZLIB
-//#define USE_ZLIB    1
-#endif
+    if (!_pFileSystem->file_exists(_file_path) || _pFileSystem->file_empty(_file_path)) {
+        return false;
+    }
 
-// Comment this out if it is debug code
-//#define RELEASE_BUILD
+    switch (_file_type) {
+        case FileSystem::FILE_DELIMINATED:
+            break;
+        default:
+            break;
 
-#endif //ENTAP_CONFIG_H
+    }
+    return false;
+}

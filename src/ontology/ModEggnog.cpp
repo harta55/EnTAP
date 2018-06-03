@@ -451,11 +451,15 @@ std::string ModEggnog::eggnog_format(std::string file) {
  */
 bool ModEggnog::is_executable() {
     std::string test_command;
+    uint8 err_code = 0;
 
+#if EGGNOG_EMAPPER
     test_command = "python " +
             EGG_EMAPPER_EXE  +
             " --version";
-    return TC_execute_cmd(test_command) == 0;
+    err_code = TC_execute_cmd(test_command) == 0;
+#endif
+    return err_code == 0;
 }
 
 ModEggnog::~ModEggnog() {

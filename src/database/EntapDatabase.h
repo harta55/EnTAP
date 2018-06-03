@@ -104,9 +104,6 @@ public:
         ENTAP_TAXONOMY,     // NCBI tax database
         ENTAP_GENE_ONTOLOGY,// GO database
         ENTAP_UNIPROT_MAP,  // UniProt mapping database
-        EGGNOG_SQL,         // EggNOG SQL database
-        EGGNOG_DIAMOND,     // EggNOG DIAMOND database
-        EGGNOG_FASTA        // EggNOG fasta (non-diamond)
 
     } DATABASE_TYPE;
 

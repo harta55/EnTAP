@@ -69,6 +69,7 @@ private:
     std::string _eggnog_db_path;
     std::string _out_hits;
 
+    static std::string EGG_EMAPPER_EXE;
     std::string eggnog_format(std::string);
 };
 

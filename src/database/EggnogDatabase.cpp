@@ -27,7 +27,7 @@
 
 #include "EggnogDatabase.h"
 
-const std::map<std::string,std::string> EGGNOG_LEVELS = {
+const std::unordered_map<std::string,std::string> EggnogDatabase::EGGNOG_LEVELS = {
         {"acoNOG", "Aconoidasida"},
         {"agaNOG", "Agaricales"},
         {"agarNOG", "Agaricomycetes"},
@@ -137,6 +137,101 @@ const std::map<std::string,std::string> EGGNOG_LEVELS = {
         {"NOG", "Ancestor"}
 };
 
+const std::unordered_map<std::string, vect_str_t> EggnogDatabase::LEVEL_CONTENT = {
+        {"NOG", {"arNOG","bactNOG","euNOG","thaNOG","eurNOG","creNOG","synNOG","spiNOG","firmNOG","fusoNOG","aquNOG","aciNOG",
+                "therNOG","tenNOG","proNOG","defNOG","plaNOG","actNOG","chloNOG","cyaNOG","deiNOG","bctoNOG","chlNOG",
+                 "chlaNOG","verNOG","kinNOG","perNOG","virNOG","apiNOG","opiNOG","arcNOG","metNOG","methNOG","thermNOG",
+                 "methaNOG","halNOG","theNOG","negNOG","cloNOG","eryNOG","bacNOG","acidNOG","delNOG","gproNOG","aproNOG",
+                 "bproNOG","chlorNOG","dehNOG","cytNOG","bacteNOG","sphNOG","flaNOG","verrNOG","strNOG","chloroNOG",
+                 "acoNOG","cocNOG","meNOG","fuNOG","dproNOG","eproNOG","braNOG","lilNOG","haeNOG","cryNOG","biNOG",
+                 "basNOG","ascNOG","poaNOG","nemNOG","artNOG","chorNOG","agarNOG","treNOG","saccNOG","euroNOG","sordNOG",
+                 "dotNOG","chrNOG","inNOG","veNOG","agaNOG","sacNOG","debNOG","eurotNOG","onyNOG","hypNOG","magNOG","sorNOG",
+                 "pleNOG","rhaNOG","lepNOG","dipNOG","hymNOG","fiNOG","aveNOG","maNOG","arthNOG","necNOG","chaNOG","droNOG",
+                 "spriNOG","carNOG","prNOG","roNOG","homNOG"}},
+        {"arNOG", {"thaNOG","eurNOG","creNOG","arcNOG","metNOG","methNOG","thermNOG",
+                   "methaNOG","halNOG","theNOG"}},
+        {"bactNOG", {"synNOG","spiNOG","firmNOG","fusoNOG","aquNOG","aciNOG",
+                     "therNOG","tenNOG","proNOG","defNOG","plaNOG","actNOG",
+                     "chloNOG","cyaNOG","deiNOG","bctoNOG","chlNOG","chlaNOG",
+                     "verNOG","negNOG","cloNOG","eryNOG","bacNOG","acidNOG",
+                     "delNOG","gproNOG","aproNOG","bproNOG","chlorNOG","dehNOG",
+                     "cytNOG","bacteNOG","sphNOG","flaNOG","verrNOG","dproNOG","eproNOG"}},
+        {"euNOG", {"kinNOG","perNOG","virNOG","apiNOG","opiNOG","strNOG",
+                   "chloroNOG","acoNOG","cocNOG","meNOG","fuNOG","braNOG",
+                   "lilNOG","haeNOG","cryNOG","biNOG","basNOG","ascNOG",
+                   "poaNOG","nemNOG","artNOG","chorNOG","agarNOG","treNOG",
+                   "saccNOG","euroNOG","sordNOG","dotNOG","chrNOG","inNOG",
+                   "veNOG","agaNOG","sacNOG","debNOG","eurotNOG","onyNOG",
+                   "hypNOG","magNOG","sorNOG","pleNOG","rhaNOG","lepNOG",
+                   "dipNOG","hymNOG","fiNOG","aveNOG","maNOG","arthNOG",
+                   "necNOG","chaNOG","droNOG","spriNOG","carNOG","prNOG",
+                   "roNOG","homNOG"}},
+        {"eurNOG", {"arcNOG","metNOG","methNOG","thermNOG","methaNOG","halNOG","theNOG"}},
+        {"firmNOG", {"negNOG","cloNOG","eryNOG","bacNOG"}},
+        {"aciNOG", {"acidNOG"}},
+        {"proNOG", {"delNOG","gproNOG","aproNOG","bproNOG","dproNOG","eproNOG"}},
+        {"chloNOG", {"chlorNOG","dehNOG"}},
+        {"bctoNOG", {"cytNOG","bacteNOG","sphNOG","flaNOG"}},
+        {"verNOG", {"verrNOG"}},
+        {"virNOG", {"strNOG","chloroNOG","braNOG","lilNOG","poaNOG"}},
+        {"apiNOG", {"acoNOG","cocNOG","haeNOG","cryNOG"}},
+        {"opiNOG", {"meNOG","fuNOG","biNOG","basNOG","ascNOG","nemNOG",
+                    "artNOG","chorNOG","agarNOG","treNOG","saccNOG",
+                    "euroNOG","sordNOG","dotNOG","chrNOG","inNOG",
+                    "veNOG","agaNOG","sacNOG","debNOG","eurotNOG",
+                    "onyNOG","hypNOG","magNOG","sorNOG","pleNOG","rhaNOG",
+                    "lepNOG","dipNOG","hymNOG","fiNOG","aveNOG","maNOG",
+                    "arthNOG","necNOG","chaNOG","droNOG","spriNOG","carNOG",
+                    "prNOG","roNOG","homNOG"}},
+        {"delNOG", {"dproNOG","eproNOG"}},
+        {"strNOG", {"braNOG","lilNOG","poaNOG"}},
+        {"acoNOG", {"haeNOG"}},
+        {"cocNOG", {"cryNOG"}},
+        {"meNOG", {"biNOG","nemNOG","artNOG","chorNOG","chrNOG","inNOG",
+                   "veNOG","rhaNOG","lepNOG","dipNOG","hymNOG","fiNOG",
+                   "aveNOG","maNOG","droNOG","spriNOG","carNOG","prNOG",
+                   "roNOG","homNOG"}},
+        {"fuNOG", {"basNOG","ascNOG","agarNOG","treNOG","saccNOG",
+                   "euroNOG","sordNOG","dotNOG","agaNOG","sacNOG",
+                   "debNOG","eurotNOG","onyNOG","hypNOG","magNOG",
+                   "sorNOG","pleNOG","arthNOG","necNOG","chaNOG"}},
+        {"lilNOG", {"poaNOG"}},
+        {"biNOG", {"nemNOG","artNOG","chorNOG","chrNOG","inNOG",
+                   "veNOG","rhaNOG","lepNOG","dipNOG","hymNOG",
+                   "fiNOG","aveNOG","maNOG","droNOG","spriNOG",
+                   "carNOG","prNOG","roNOG","homNOG"}},
+        {"basNOG", {"agarNOG","treNOG","agaNOG"}},
+        {"ascNOG", {"saccNOG","euroNOG","sordNOG",
+                    "dotNOG","sacNOG","debNOG","eurotNOG","onyNOG",
+                    "hypNOG","magNOG","sorNOG","pleNOG","arthNOG",
+                    "necNOG","chaNOG"}},
+        {"nemNOG", {"chrNOG","rhaNOG"}},
+        {"artNOG", {"inNOG","lepNOG","dipNOG","hymNOG","droNOG"}},
+        {"chorNOG", {"veNOG","fiNOG","aveNOG","maNOG","spriNOG",
+                     "carNOG","prNOG","roNOG","homNOG"}},
+        {"agarNOG", {"agaNOG"}},
+        {"saccNOG", {"sacNOG","debNOG"}},
+        {"euroNOG", {"eurotNOG","onyNOG","arthNOG"}},
+        {"sordNOG", {"hypNOG","magNOG","sorNOG","necNOG","chaNOG"}},
+        {"dotNOG", {"pleNOG"}},
+        {"chrNOG", {"rhaNOG"}},
+        {"inNOG", {"lepNOG","dipNOG","hymNOG","droNOG"}},
+        {"veNOG", {"fiNOG","aveNOG","maNOG","spriNOG","carNOG","prNOG",
+                   "roNOG","homNOG"}},
+        {"onyNOG", {"arthNOG"}},
+        {"hypNOG", {"necNOG"}},
+        {"sorNOG", {"chaNOG"}},
+        {"dipNOG", {"droNOG"}},
+        {"maNOG", {"spriNOG","carNOG","prNOG","roNOG","homNOG"}},
+        {"spriNOG", {"prNOG","roNOG","homNOG"}},
+        {"prNOG", {"homNOG"}}
+};
+
+const vect_str_t EggnogDatabase::TAXONOMIC_RESOLUTION = {"apiNOG", "virNOG", "nemNOG", "artNOG",
+                                         "maNOG","fiNOG", "aveNOG", "meNOG",
+                                         "fuNOG", "opiNOG", "euNOG", "arNOG", "bactNOG",
+                                         "NOG"};
+
 
 EggnogDatabase::EggnogDatabase(FileSystem* filesystem) {
     _pFilesystem = filesystem;
@@ -240,12 +335,50 @@ std::string EggnogDatabase::print_err() {
 }
 
 QuerySequence::EggnogResults EggnogDatabase::get_eggnog_entry(std::string &accession) {
+    std::set<std::string> unique_groups;    // Unique member orthologous groups
+    std::string           temp;
+    member_orthologs_t    member_orthologs;
+    std::set<std::string> level_set;
+
     QuerySequence::EggnogResults eggnog_data = {};
 
-    eggnog_data.best_hit_query = accession;
+    eggnog_data.best_hit_query = accession;     // 34740.HMEL017225-PA
 
-    // Get member ogs (0A01R@biNOG,0V8CP@meNOG) from best hit query
+    // Get member orthologous groups (0A01R@biNOG,0V8CP@meNOG) from best hit query
     get_member_ogs(eggnog_data);
+    if (eggnog_data.member_ogs.empty()) return eggnog_data;
+
+
+    // Get unique tax groups (split "0V8CP@meNOG" to meNOG) and max level
+    std::istringstream iss(eggnog_data.member_ogs);
+    while(std::getline(iss, temp, ',')) {
+        unique_groups.insert(temp.substr(temp.find("@")+1));    // add meNOG
+    }
+    // For default taxonomic scope (may want to allow user to change later)
+    for (const std::string &level : EggnogDatabase::TAXONOMIC_RESOLUTION) {
+        if (unique_groups.find(level) != unique_groups.end()) {
+            _it_vect_str = LEVEL_CONTENT.find(level);
+            if (_it_vect_str != LEVEL_CONTENT.end()) {
+                std::copy(_it_vect_str->second.begin(),
+                      _it_vect_str->second.end(),
+                      std::inserter(level_set,level_set.end()));
+            }
+            level_set.insert(level);
+            eggnog_data.tax_scope_lvl_max = level + std::to_string(level_set.size());
+        }
+    }
+
+
+    // Get all member orthologs
+    get_member_orthologs(member_orthologs, accession, level_set);
+
+
+
+
+
+
+
+
 
 
 
@@ -424,7 +557,6 @@ std::string EggnogDatabase::format_sql_data(std::string &input) {
     return output;
 }
 
-
 void EggnogDatabase::get_member_ogs(QuerySequence::EggnogResults& eggnog_results) {
     std::vector<std::vector<std::string>>results;
 
@@ -438,8 +570,66 @@ void EggnogDatabase::get_member_ogs(QuerySequence::EggnogResults& eggnog_results
             eggnog_results.best_hit_query);
     results = _pSQLDatabase->query(query);
     if (!results.empty()) {
-        eggnog_results.member_ogs = results[0][1];
+        eggnog_results.member_ogs = results[0][0];
     }
 }
 
+void EggnogDatabase::get_member_orthologs(EggnogDatabase::member_orthologs_t &member_orthologs,
+                                          std::string &best_hit,
+                                          std::set<std::string> &target_lvls) {
+    std::string                     taxon;  // Tax number from match
+    std::string                     event_indexes;
+    std::set<std::string>           target_members;
+    char*                           sql_query;
+    SQLDatabaseHelper::query_struct sql_results;
 
+    taxon = best_hit.substr(0, best_hit.find_first_of('.'));    // "34740"
+    target_members.insert(best_hit);                            // 34740.HMEL017225-PA
+
+    sql_query = sqlite3_mprintf(
+            "SELECT %q FROM %q WHERE %q=%q",
+            SQL_MEMBER_ORTHOINDEX,
+            SQL_MEMBER_TABLE,
+            SQL_MEMBER_NAME,
+            best_hit);
+    sql_results = _pSQLDatabase->query(sql_query);
+    if (!sql_results.empty()) {
+        event_indexes = sql_results[0][0];
+    } else return;
+
+    // Can specify levels as well here
+    sql_query = sqlite3_mprintf(
+            "SELECT %q, %q, %q FROM %q WHERE %q IN %q AND %q IN %q",
+            SQL_EVENT_LEVEL,
+            SQL_EVENT_SIDE1,
+            SQL_EVENT_SIDE2,
+            SQL_EVENT_TABLE,
+            SQL_EVENT_I,
+            event_indexes,
+            SQL_EVENT_LEVEL,
+            container_to_string<std::string>(target_lvls,",")
+    );
+    sql_results = _pSQLDatabase->query(sql_query);
+
+    for (std::vector<std::string> &hit : sql_results) {
+        std::string level = hit[0];
+        std::string side1 = hit[1];
+        std::string side2 = hit[2];
+
+        std::unordered_map
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+}

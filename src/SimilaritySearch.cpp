@@ -455,9 +455,9 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
     uint32                      ct;
     fp64                        percent;
     fp64                        contam_percent;
-    std::map<std::string, int>  contam_map;
-    std::map<std::string, int>  species_map;
-    std::map<std::string, int>  contam_species_map;
+    Compair<std::string>        contam_counter;
+    Compair<std::string>        species_counter;
+    Compair<std::string>        contam_species_counter;
     graph_sum_t                 graphing_sum_map;
 
     // Set up output directories (processed directory cleared earlier so these will be empty)
@@ -613,12 +613,8 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
                     file_best_contam_fa_prot << pair.second->get_sequence_p()<<std::endl;
                     file_best_contam_tsv << best_hit->print_tsv(DEFAULT_HEADERS) << std::endl;
                     contam = sim_search_data->contam_type;
-                    if (contam_map.count(contam)) {
-                        contam_map[contam]++;
-                    } else contam_map[contam] = 1;
-                    if (contam_species_map.count(species)) {
-                        contam_species_map[species]++;
-                    } else contam_species_map[species] = 1;
+                    contam_counter.add_value(contam);
+                    contam_species_counter.add_value(species);
                 } else {
                     // Species is NOT a contaminant, print to files
                     file_best_hits_fa_nucl_no_contam << pair.second->get_sequence_n()<<std::endl;
@@ -627,9 +623,7 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
                 }
 
                 // Count species type
-                if (species_map.count(species)) {
-                    species_map[species]++;
-                } else species_map[species] = 1;
+                species_counter.add_value(species);
 
                 // Check if this is an informative alignment and respond accordingly
                 if (sim_search_data->is_informative) {
@@ -696,10 +690,10 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
         return;
     }
 
-    std::vector<count_pair> contam_species_vect(contam_species_map.begin(), contam_species_map.end());
-    std::vector<count_pair> species_vect(species_map.begin(), species_map.end());
-    std::sort(contam_species_vect.begin(), contam_species_vect.end(), compair());
-    std::sort(species_vect.begin(), species_vect.end(), compair());
+    // Sort counters
+    contam_species_counter.sort(true);
+    species_counter.sort(true);
+
     contam_percent = ((fp64) count_contam / count_filtered) * 100;
 
     ss <<
@@ -748,14 +742,14 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
     // ********** Contaminant Calculations ************** //
     if (count_contam > 0) {
         ss << "\n\t\tFlagged contaminants (all % based on total contaminants):";
-        for (auto &pair : contam_map) {
+        for (auto &pair : contam_counter._data) {
             percent = ((fp64) pair.second / count_contam) * 100;
             ss
                     << "\n\t\t\t" << pair.first << ": " << pair.second << "(" << percent << "%)";
         }
         ss << "\n\t\tTop " << COUNT_TOP_SPECIES << " contaminants by species:";
         ct = 1;
-        for (count_pair pair : contam_species_vect) {
+        for (auto &pair : contam_species_counter._sorted) {
             if (ct > COUNT_TOP_SPECIES) break;
             percent = ((fp64) pair.second / count_contam) * 100;
             ss
@@ -768,7 +762,7 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
 
     ss << "\n\tTop " << COUNT_TOP_SPECIES << " alignments by species:";
     ct = 1;
-    for (count_pair pair : species_vect) {
+    for (auto &pair : species_counter._sorted) {
         if (ct > COUNT_TOP_SPECIES) break;
         percent = ((fp64) pair.second / count_filtered) * 100;
         ss

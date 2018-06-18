@@ -71,6 +71,7 @@ private:
 
     static std::string EGG_EMAPPER_EXE;
     std::string eggnog_format(std::string);
+    std::string get_output_dmnd_filepath();
 };
 
 

@@ -38,6 +38,8 @@ class EggnogDatabase {
 
 public:
 
+    typedef std::unordered_map<std::string,std::set<std::string>> member_orthologs_t;
+
     typedef enum {
         EGGNOG_SQL,         // EggNOG SQL database
         EGGNOG_DIAMOND,     // EggNOG DIAMOND database
@@ -78,20 +80,32 @@ private:
     const std::string TEMP_FAST_GZ = "temp_egg_fasta.gz";
 
     // SQL Data
-    const std::string SQL_MEMBER_TABLE = "member";
-    const std::string SQL_MEMBER_GROUP = "groups";
-    const std::string SQL_MEMBER_NAME  = "name";
+    const std::string SQL_MEMBER_TABLE      = "member";     // Changed to 'orthologs' in newer versions
+    const std::string SQL_MEMBER_GROUP      = "groups";
+    const std::string SQL_MEMBER_NAME       = "name";
+    const std::string SQL_MEMBER_ORTHOINDEX = "orthoindex";
+    const std::string SQL_EVENT_TABLE       = "event";
+    const std::string SQL_EVENT_LEVEL       = "level";
+    const std::string SQL_EVENT_SIDE1       = "side1";
+    const std::string SQL_EVENT_SIDE2       = "side2";
+    const std::string SQL_EVENT_I           = "i";
 
+    typename std::unordered_map<std::string, vect_str_t>::const_iterator _it_vect_str;
     SQLDatabaseHelper *_pSQLDatabase;
     FileSystem        *_pFilesystem;
     std::string        _err_msg;
-    static const std::map<std::string,std::string> EGGNOG_LEVELS;   // Mappings from tax lvl to full name
+    static const std::unordered_map<std::string,std::string> EGGNOG_LEVELS;   // Mappings from tax lvl to full name
+    static const std::unordered_map<std::string, vect_str_t> LEVEL_CONTENT;
+    static const vect_str_t                                  TAXONOMIC_RESOLUTION;
 
     void get_tax_scope(std::string&, QuerySequence::EggnogResults&);
     void get_sql_data(QuerySequence::EggnogResults&, SQLDatabaseHelper&);
     std::string format_sql_data(std::string&);
     void get_og_query(QuerySequence::EggnogResults&);
     void get_member_ogs(QuerySequence::EggnogResults& eggnog_results);
+    void get_member_orthologs(member_orthologs_t &member_orthologs,
+                              std::string &best_hit,
+                              std::set<std::string> &target_lvls);
 
 };
 

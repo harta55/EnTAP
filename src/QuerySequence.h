@@ -29,9 +29,7 @@
 #ifndef ENTAP_QUERYSEQUENCE_H
 #define ENTAP_QUERYSEQUENCE_H
 
-#include <iostream>
-#include <vector>
-#include <string>
+#include "common.h"
 #include "Ontology.h"
 #include "database/SQLDatabaseHelper.h"
 #include "EntapExecute.h"
@@ -69,6 +67,7 @@ public:
         std::string              seed_evalue;
         std::string              seed_score;
         std::string              predicted_gene;
+        std::string              tax_scope_lvl_max; // virNOG[6]
         std::string              tax_scope;         // virNOG NOT virNOG[6]
         std::string              tax_scope_readable;// Ascomycota
         std::string              ogs;

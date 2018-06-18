@@ -36,9 +36,9 @@
 
 class SQLDatabaseHelper {
 
-typedef std::vector<std::vector<std::string>> query_struct;
-
 public:
+    typedef std::vector<std::vector<std::string>> query_struct;
+
     SQLDatabaseHelper();
     ~SQLDatabaseHelper();
     bool open(std::string file);

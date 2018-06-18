@@ -43,14 +43,15 @@
 #include "curl/curl.h"
 #endif
 
-const std::string FileSystem::EXT_TXT = ".txt";
-const std::string FileSystem::EXT_ERR = ".err";
-const std::string FileSystem::EXT_OUT = ".out";
-const std::string FileSystem::EXT_BAM = ".bam";
-const std::string FileSystem::EXT_FAA = ".faa";
-const std::string FileSystem::EXT_FNN = ".fnn";
-const std::string FileSystem::EXT_XML = ".xml";
-const std::string FileSystem::EXT_DMND= ".dmnd";
+const std::string FileSystem::EXT_TXT  = ".txt";
+const std::string FileSystem::EXT_ERR  = ".err";
+const std::string FileSystem::EXT_OUT  = ".out";
+const std::string FileSystem::EXT_BAM  = ".bam";
+const std::string FileSystem::EXT_FAA  = ".faa";
+const std::string FileSystem::EXT_FNN  = ".fnn";
+const std::string FileSystem::EXT_XML  = ".xml";
+const std::string FileSystem::EXT_DMND = ".dmnd";
+const std::string FileSystem::EXT_STD  = "_std";
 
 
 // Removed for older compilers, may bring back

@@ -80,12 +80,72 @@ typedef std::unordered_map<std::string, GoEntry> go_serial_map_t;
 typedef std::map<std::string,std::vector<std::string>> go_format_t;
 typedef std::vector<std::string> databases_t;   // Standard database container
 
-typedef std::pair<std::string,int> count_pair;
-struct compair {
-    bool operator ()(count_pair const& one, count_pair const& two) const {
-        return one.second > two.second;
+
+template <typename T>
+struct Compair {
+
+    typedef std::pair<T,uint32> count_pair;
+    std::unordered_map<T, uint32> _data;
+    typename std::unordered_map<T, uint32>::iterator _it;
+    std::vector<count_pair> _sorted;
+    uint32 _ct_unique;
+    uint32 _ct_total;
+
+    struct sort_descending{
+        bool operator ()(count_pair const& one, count_pair const& two) const {
+            return one.second > two.second;
+        }
+    };
+
+    struct sort_ascending {
+        bool operator ()(count_pair const& one, count_pair const& two) const {
+            return one.second < two.second;
+        }
+    };
+
+    Compair() {
+        _data = {};
+        _sorted = {};
+        _ct_unique = 0;
+        _ct_total = 0;
+    }
+
+    bool add_value(T val) {
+        _ct_total++;
+        _it = _data.find(val);
+        if (_it != _data.end()) {
+            _it->second++;
+            return true;
+        } else {
+            _data.emplace(std::make_pair(val, 1));
+            _ct_unique++;
+            return false;
+        }
+    }
+
+    void sort(bool descending) {
+        _sorted = std::vector<count_pair>(_data.begin(), _data.end());
+        if (descending) {
+            std::sort(_sorted.begin(), _sorted.end(), sort_descending());
+        } else {
+            std::sort(_sorted.begin(), _sorted.end(), sort_ascending());
+        }
+    }
+
+    bool empty() {
+        return _data.empty();
     }
 };
+
+template <class T>
+std::string container_to_string(std::set<T> &in_cont, const char *delim) {
+    std::ostringstream stream;
+    std::copy(in_cont.begin(), in_cont.end(), std::ostream_iterator<std::string>(stream, delim));
+    std::string result = stream.str();
+    result.pop_back();
+    return result;
+}
+
 
 enum ExecuteStates {
     INIT = 0,
@@ -133,6 +193,7 @@ extern std::string INTERPRO_EXE;
 extern std::string ENTAP_DATABASE_BIN_PATH;
 extern std::string ENTAP_DATABASE_SQL_PATH;
 extern std::string GRAPHING_EXE;
+extern std::string EGG_EMAPPER_EXE;
 
 
 namespace ENTAP_EXECUTE {

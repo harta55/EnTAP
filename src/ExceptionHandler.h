@@ -78,6 +78,7 @@ enum entap_err {
     ERR_ENTAP_RUN_EGGNOG                  = 160u,
     ERR_ENTAP_DATABASE_QUERY              = 161u,
     ERR_ENTAP_PARSE_EGGNOG                = 162u,
+    ERR_ENTAP_EGGNOG_FILES                = 163u,   // Some EggNOG file missing
     ERR_ENTAP_RUN_INTERPRO                = 170u,
     ERR_ENTAP_PARSE_INTERPRO              = 171u,
     ERR_ENTAP_FILE_IO                     = 200u,

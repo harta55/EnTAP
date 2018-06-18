@@ -90,6 +90,7 @@ public:
     static const std::string EXT_FNN ;
     static const std::string EXT_DMND;
     static const std::string EXT_XML;
+    static const std::string EXT_STD;
 
 private:
     void init_log();

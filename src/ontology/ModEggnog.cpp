@@ -1,3 +1,5 @@
+#ifdef EGGNOG_MAPPER
+
 /*
  *
  * Developed by Alexander Hart
@@ -27,14 +29,13 @@
 
 
 #include <boost/archive/binary_iarchive.hpp>
-#include <iomanip>
-#include <fstream>
 #include <csv.h>
 #include "ModEggnog.h"
 #include "../ExceptionHandler.h"
 #include "../FileSystem.h"
 #include "EggnogLevels.h"
 
+std::string ModEggnog::EGG_EMAPPER_EXE = "";
 
 /**
  * ======================================================================
@@ -50,16 +51,10 @@
  * ======================================================================
  */
 std::pair<bool, std::string> ModEggnog::verify_files() {
-#ifdef EGGNOG_MAPPER
     std::string                        annotation_base_flag;
 
     annotation_base_flag = PATHS(_egg_out_dir, EGG_ANNOT_RESULTS);
     _out_hits            = annotation_base_flag  + EGG_ANNOT_APPEND;
-#else
-    // Using DIAMOND for EggNOG
-    _out_hits = get_output_dmnd_filepath();
-
-#endif
 
     FS_dprint("Overwrite was unselected, verifying output files...");
     if (_pFileSystem->file_exists(_out_hits)) {
@@ -367,7 +362,6 @@ void ModEggnog::execute() {
     if (_pFileSystem->file_exists(_out_hits)) return;   // Should never occur here
     _blastp ? blast = "blastp" : blast = "blastx";
 
-#ifdef EGGNOG_MAPPER
     std::string                        annotation_base_flag;
     std::string                        annotation_std;
     std::string                        eggnog_command;
@@ -395,41 +389,6 @@ void ModEggnog::execute() {
         throw ExceptionHandler("No input file found at: " + _inpath, ERR_ENTAP_RUN_EGGNOG);
     }
     FS_dprint("Success! EggNOG execution complete");
-#endif
-
-    FS_dprint("Running EggNOG against Diamond database...");
-
-    // Ensure both input path and EggNOG DMND database exist before continuing
-    if (!_pFileSystem->file_exists(EGG_DMND_PATH)) {
-        throw ExceptionHandler("EggNOG DIAMOND database not found at: " + EGG_DMND_PATH,
-            ERR_ENTAP_EGGNOG_FILES);
-    }
-    if (!_pFileSystem->file_exists(_inpath)) {
-        throw ExceptionHandler("Input transcriptome not found at: " + _inpath, ERR_ENTAP_EGGNOG_FILES);
-    }
-
-    // Generate paths for DIAMOND run (out_hits set previously)
-    std_out = _out_hits + FileSystem::EXT_STD;
-
-    //Run DIAMOND
-    cmd =
-        DIAMOND_EXE + " " +
-        blast +
-        " -d " + EGG_DMND_PATH +
-        " --top 3"             +
-        " --more-sensitive"    +
-        " -q "                 + _inpath   +
-        " -o "                 + _out_hits +
-        " -p "                 + std::to_string(_threads) +
-        " -f " + "6 qseqid sseqid pident length mismatch gapopen "
-                "qstart qend sstart send evalue bitscore qcovhsp stitle";
-
-    if (TC_execute_cmd(cmd, std_out) != 0) {
-        // Error in run
-        _pFileSystem->delete_file(_out_hits);
-        throw ExceptionHandler("Error in running DIAMOND against EggNOG database at: " +
-            EGG_DMND_PATH, ERR_ENTAP_RUN_EGGNOG);
-    }
 }
 
 
@@ -471,15 +430,11 @@ std::string ModEggnog::eggnog_format(std::string file) {
  */
 bool ModEggnog::is_executable() {
     std::string test_command;
-    uint8 err_code = 0;
 
-#if EGGNOG_EMAPPER
     test_command = "python " +
             EGG_EMAPPER_EXE  +
             " --version";
-    err_code = TC_execute_cmd(test_command) == 0;
-#endif
-    return err_code == 0;
+    return TC_execute_cmd(test_command) == 0;
 }
 
 ModEggnog::~ModEggnog() {
@@ -679,6 +634,7 @@ ModEggnog::ModEggnog(std::string &out, std::string &in, std::string &ont,
                      bool blastp, std::vector<uint16> &lvls,EntapDataPtrs &entap_data,
                      std::string& eggnog_sql_path)
     :AbstractOntology(out, in,ont, blastp, lvls, entap_data){
+    FS_dprint("Spawn object - EggNOG");
 
     _eggnog_db_path = eggnog_sql_path;
 
@@ -694,10 +650,4 @@ ModEggnog::ModEggnog(std::string &out, std::string &in, std::string &ont,
     _pFileSystem->create_dir(_proc_dir);
 }
 
-std::string ModEggnog::get_output_dmnd_filepath() {
-    std::string filename;
-
-    _blastp ? filename = "blastp" : filename = "blastx";
-    filename += "_" + _pUserInput->get_user_transc_basename() + "_eggnog_db" + FileSystem::EXT_OUT;
-    return PATHS(_egg_out_dir, filename);
-}
+#endif

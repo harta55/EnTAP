@@ -1,3 +1,5 @@
+#ifdef EGGNOG_MAPPER
+
 /*
  *
  * Developed by Alexander Hart
@@ -31,6 +33,7 @@
 
 
 #include "AbstractOntology.h"
+#include "../common.h"
 
 class ModEggnog : public AbstractOntology{
 
@@ -71,8 +74,8 @@ private:
 
     static std::string EGG_EMAPPER_EXE;
     std::string eggnog_format(std::string);
-    std::string get_output_dmnd_filepath();
 };
 
 
 #endif //ENTAP_MODEGGNOG_H
+#endif

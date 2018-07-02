@@ -461,6 +461,7 @@ ModInterpro::ModInterpro(std::string &out, std::string &in, std::string &ont,
                          EntapDataPtrs& entap_data, vect_str_t databases)
     : AbstractOntology(out, in, ont,
                        blastp, lvls, entap_data){
+    FS_dprint("Spawn object - InterPro");
 
     _interpro_dir = PATHS(_ontology_dir, INTERPRO_DIRECTORY);
     _proc_dir     = PATHS(_interpro_dir, PROCESSED_OUT_DIR);

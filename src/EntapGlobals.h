@@ -56,10 +56,12 @@ class GraphingManager;
 class QueryData;
 struct TaxEntry;
 struct GoEntry;
+
+#ifdef USE_BOOST
 namespace boostFS = boost::filesystem;
 namespace boostPO = boost::program_options;
 namespace boostAR = boost::archive;
-
+#endif
 //**************************************************************
 
 
@@ -146,6 +148,16 @@ std::string container_to_string(std::set<T> &in_cont, const char *delim) {
     return result;
 }
 
+template <template<class,class,class...> class C, typename T, typename U, typename... Args>
+U get_map_default(const C<T,U,Args...>& m, T const& key, const U & default_val)
+{
+    typename C<T,U,Args...>::const_iterator it = m.find(key);
+    if (it == m.end()) {
+        return default_val;
+    }
+    return it->second;
+}
+
 
 enum ExecuteStates {
     INIT = 0,
@@ -201,10 +213,11 @@ namespace ENTAP_EXECUTE {
     extern const std::string GO_BIOLOGICAL_FLAG ;
     extern const std::string GO_CELLULAR_FLAG;
     extern const std::string GO_MOLECULAR_FLAG;
-    const uint16 ONTOLOGY_MIN      = 0;
-    const uint16 EGGNOG_INT_FLAG   = 0;
-    const uint16 INTERPRO_INT_FLAG = 1;
-    const uint16 ONTOLOGY_MAX      = 1;
+    const uint16 ONTOLOGY_MIN         = 0;
+    const uint16 EGGNOG_INT_FLAG      = 0;
+    const uint16 INTERPRO_INT_FLAG    = 1;
+    const uint16 EGGNOG_DMND_INT_FLAG = 2;
+    const uint16 ONTOLOGY_MAX         = 2;
 
     const uint16 FRAME_FLAG_GENEMARK = 0;
     const uint16 EXP_FLAG_RSEM       = 0;

@@ -38,7 +38,7 @@ class EggnogDatabase {
 
 public:
 
-    typedef std::unordered_map<std::string,std::set<std::string>> member_orthologs_t;
+    typedef std::map<std::string,set_str_t> member_orthologs_t;
 
     typedef enum {
         EGGNOG_SQL,         // EggNOG SQL database
@@ -80,10 +80,21 @@ private:
     const std::string TEMP_FAST_GZ = "temp_egg_fasta.gz";
 
     // SQL Data
+    const fp32        SQL_VERSION_CHANGE    = 1;            // Version in which SQL tables changed (just placeholder for now)
     const std::string SQL_MEMBER_TABLE      = "member";     // Changed to 'orthologs' in newer versions
     const std::string SQL_MEMBER_GROUP      = "groups";
     const std::string SQL_MEMBER_NAME       = "name";
     const std::string SQL_MEMBER_ORTHOINDEX = "orthoindex";
+    const std::string SQL_MEMBER_PNAME      = "pname";
+    const std::string SQL_MEMBER_GO         = "go";
+    const std::string SQL_MEMBER_KEGG       = "kegg";
+    const std::string SQL_EGGNOG_TABLE      = "eggnog";     // Newer versions use this table for annotation info
+    const std::string SQL_EGGNOG_NAME       = "eggnog.name";
+    const std::string SQL_EGGNOG_PNAME      = "seq.pname";
+    const std::string SQL_EGGNOG_SEQ_NAME   = "seq.name";
+    const std::string SQL_EGGNOG_GOS        = "gene_ontology.gos";
+    const std::string SQL_EGGNOG_KEGG       = "kegg.ko";
+    const std::string SQL_EGGNOG_BIGG       = "bigg.reaction";
     const std::string SQL_EVENT_TABLE       = "event";
     const std::string SQL_EVENT_LEVEL       = "level";
     const std::string SQL_EVENT_SIDE1       = "side1";
@@ -94,6 +105,7 @@ private:
     SQLDatabaseHelper *_pSQLDatabase;
     FileSystem        *_pFilesystem;
     std::string        _err_msg;
+    fp32               _version;
     static const std::unordered_map<std::string,std::string> EGGNOG_LEVELS;   // Mappings from tax lvl to full name
     static const std::unordered_map<std::string, vect_str_t> LEVEL_CONTENT;
     static const vect_str_t                                  TAXONOMIC_RESOLUTION;
@@ -103,9 +115,10 @@ private:
     std::string format_sql_data(std::string&);
     void get_og_query(QuerySequence::EggnogResults&);
     void get_member_ogs(QuerySequence::EggnogResults& eggnog_results);
-    void get_member_orthologs(member_orthologs_t &member_orthologs,
+    member_orthologs_t get_member_orthologs(member_orthologs_t &member_orthologs,
                               std::string &best_hit,
                               std::set<std::string> &target_lvls);
+    void get_annotations(set_str_t& orthologs, QuerySequence::EggnogResults& eggnog_results);
 
 };
 

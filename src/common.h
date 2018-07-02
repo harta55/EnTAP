@@ -32,6 +32,7 @@
 #include <vector>
 #include <string>
 #include <list>
+#include <set>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -70,6 +71,7 @@ typedef double              fp64;
 typedef std::pair<std::string,std::string> pair_str_t;
 typedef std::vector<std::string>           vect_str_t;
 typedef std::vector<uint16>                vect_uint16_t;
+typedef std::set<std::string>              set_str_t;
 //**************************************************************
 
 #endif //ENTAP_COMMON_H

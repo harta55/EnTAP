@@ -42,6 +42,7 @@
 #include "ontology/ModEggnog.h"
 #include "ontology/ModInterpro.h"
 #include "FileSystem.h"
+#include "ontology/ModEggnogDMND.h"
 
 const int16 FINAL_ANNOT_LEN = 3;
 
@@ -154,8 +155,8 @@ void Ontology::execute() {
  */
 std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
     switch (software) {
+#ifdef EGGNOG_MAPPER
         case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-            FS_dprint("Spawn object - EggNOG");
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
                     _outpath,
                     _new_input,
@@ -165,8 +166,8 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
                     _entap_data_ptrs,
                     _eggnog_db_path    // additional data
             ));
+#endif
         case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
-            FS_dprint("Spawn object - InterPro");
             return std::unique_ptr<AbstractOntology>(new ModInterpro(
                     _outpath,
                     _new_input,
@@ -176,16 +177,25 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
                     _entap_data_ptrs,
                     _interpro_databases       // Additional data
             ));
-        default:
-            FS_dprint("Spawn object - EggNOG");
-            return std::unique_ptr<AbstractOntology>(new ModEggnog(
+        case ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG:
+            return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
                     _outpath,
                     _new_input,
                     _ontology_dir,
                     _blastp,
                     _go_levels,
                     _entap_data_ptrs,
-                    _eggnog_db_path    // additional data
+                    _eggnog_db_path
+            ));
+        default:
+            return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
+                    _outpath,
+                    _new_input,
+                    _ontology_dir,
+                    _blastp,
+                    _go_levels,
+                    _entap_data_ptrs,
+                    _eggnog_db_path
             ));
     }
 }

@@ -70,9 +70,13 @@ public:
         std::string              tax_scope_lvl_max; // virNOG[6]
         std::string              tax_scope;         // virNOG NOT virNOG[6]
         std::string              tax_scope_readable;// Ascomycota
+        std::string              pname;
+        std::string              name;
+        std::string              bigg;
         std::string              ogs;
         std::string              og_key;
         std::string              sql_kegg;
+        std::string              sql_go;
         std::string              description;
         std::string              protein_domains;
         std::vector<std::string> raw_kegg;

@@ -27,6 +27,7 @@
 
 #include "EggnogDatabase.h"
 
+
 const std::unordered_map<std::string,std::string> EggnogDatabase::EGGNOG_LEVELS = {
         {"acoNOG", "Aconoidasida"},
         {"agaNOG", "Agaricales"},
@@ -237,6 +238,7 @@ EggnogDatabase::EggnogDatabase(FileSystem* filesystem) {
     _pFilesystem = filesystem;
     _pSQLDatabase = nullptr;
     _err_msg = "";
+    _version = SQL_VERSION_CHANGE;
 }
 
 EggnogDatabase::~EggnogDatabase() {
@@ -339,6 +341,7 @@ QuerySequence::EggnogResults EggnogDatabase::get_eggnog_entry(std::string &acces
     std::string           temp;
     member_orthologs_t    member_orthologs;
     std::set<std::string> level_set;
+    set_str_t             orthologs;        // Selected from member orthologs
 
     QuerySequence::EggnogResults eggnog_data = {};
 
@@ -370,18 +373,12 @@ QuerySequence::EggnogResults EggnogDatabase::get_eggnog_entry(std::string &acces
 
 
     // Get all member orthologs
-    get_member_orthologs(member_orthologs, accession, level_set);
+    member_orthologs = get_member_orthologs(member_orthologs, accession, level_set);
+    orthologs = member_orthologs["all"];        // default, can change
 
-
-
-
-
-
-
-
-
-
-
+    if (!orthologs.empty()) {
+        get_annotations(orthologs, eggnog_data);
+    }
     return eggnog_data;
 }
 
@@ -574,16 +571,16 @@ void EggnogDatabase::get_member_ogs(QuerySequence::EggnogResults& eggnog_results
     }
 }
 
-void EggnogDatabase::get_member_orthologs(EggnogDatabase::member_orthologs_t &member_orthologs,
+EggnogDatabase::member_orthologs_t EggnogDatabase::get_member_orthologs(EggnogDatabase::member_orthologs_t &member_orthologs,
                                           std::string &best_hit,
                                           std::set<std::string> &target_lvls) {
-    std::string                     taxon;  // Tax number from match
+    std::string                     query_taxon;  // Tax number from match
     std::string                     event_indexes;
     std::set<std::string>           target_members;
     char*                           sql_query;
     SQLDatabaseHelper::query_struct sql_results;
 
-    taxon = best_hit.substr(0, best_hit.find_first_of('.'));    // "34740"
+    query_taxon = best_hit.substr(0, best_hit.find_first_of('.'));    // "34740"
     target_members.insert(best_hit);                            // 34740.HMEL017225-PA
 
     sql_query = sqlite3_mprintf(
@@ -595,7 +592,7 @@ void EggnogDatabase::get_member_orthologs(EggnogDatabase::member_orthologs_t &me
     sql_results = _pSQLDatabase->query(sql_query);
     if (!sql_results.empty()) {
         event_indexes = sql_results[0][0];
-    } else return;
+    } else return member_orthologs_t();
 
     // Can specify levels as well here
     sql_query = sqlite3_mprintf(
@@ -611,25 +608,203 @@ void EggnogDatabase::get_member_orthologs(EggnogDatabase::member_orthologs_t &me
     );
     sql_results = _pSQLDatabase->query(sql_query);
 
+    std::map<std::pair<std::string,set_str_t>,
+            std::set<std::pair<std::string,set_str_t>>> ortholog_map;
+
     for (std::vector<std::string> &hit : sql_results) {
-        std::string level = hit[0];
-        std::string side1 = hit[1];
-        std::string side2 = hit[2];
+//        std::string* level = &hit[0];
+        std::string* side1 = &hit[1];
+        std::string* side2 = &hit[2];
 
-        std::unordered_map
+        // Vector of tax, id pairs
+        std::vector<pair_str_t> side1_pairs;     // '6238' , 'CBG18195']
+        std::vector<pair_str_t> side2_pairs;
 
+        // Convert string of hits to tax, id pair for side1
+        for (std::string &temp : split_string(*side1, ',')) {
+            uint16 index = (uint16)temp.find_first_of('.');
+            side1_pairs.push_back(std::make_pair(
+                    temp.substr(0, index),
+                    temp.substr(index+1)
+            ));
+        }
+        // Convert string of hits to tax, id pair for side2
+        for (std::string &temp : split_string(*side2, ',')) {
+            uint16 index = (uint16)temp.find_first_of('.');
+            side1_pairs.push_back(std::make_pair(
+                    temp.substr(0, index),
+                    temp.substr(index+1)
+            ));
+        }
 
+        // Can add check for target taxonomy here
+        vect_str_t target_taxa;
+        vect_str_t targets;
+        std::string mid;
+        std::unordered_map<std::string,set_str_t> by_sp1;
+        std::unordered_map<std::string,set_str_t> by_sp2;
+
+        for (auto &pair : side1_pairs) {
+            if ( (target_taxa.empty()) ||
+                 (std::find(target_taxa.begin(),target_taxa.end(), pair.first) != target_taxa.end()) ||
+                 (query_taxon.compare(pair.first) == 0)) {
+                mid = pair.first + "." + pair.second;
+                by_sp1[pair.first].insert(mid);// Default of empty set here
+            }
+        }
+        for (auto &pair : side2_pairs) {
+            if ( (target_taxa.empty()) ||
+                 (std::find(target_taxa.begin(),target_taxa.end(), pair.first) != target_taxa.end()) ||
+                 (query_taxon.compare(pair.first) == 0)) {
+                mid = pair.first + "." + pair.second;
+                by_sp2[pair.first].insert(mid); // Default of empty set here
+            }
+        }
+
+        // merge side1 coorthologs
+        if (!target_taxa.empty()) {
+            targets = target_taxa;
+        } else if (!by_sp2.empty()) {
+            for (std::unordered_map<std::string,set_str_t>::iterator it = by_sp2.begin();
+                    it != by_sp2.end(); it++) {
+                targets.push_back(it->first);
+            }
+        }
+        for (auto &pair : by_sp1) {
+            if (!target_members.empty() && !pair.second.empty()) {
+                std::pair<std::string,set_str_t> key1 = std::make_pair(
+                        pair.first, pair.second
+                ); // sort pair.second
+                std::pair<std::string,set_str_t> key2;
+                for (std::string &sp2 : targets) {
+                    if (by_sp2.find(sp2) == by_sp2.end()) continue;
+                    set_str_t co2 = by_sp2[sp2];
+                    key2 = std::make_pair(sp2, co2);
+                }
+                ortholog_map.at(key1).insert(key2);    // default empty set
+            }
+        }
+
+        // merge side2 coorthologs
+        if (!target_taxa.empty()) {
+            targets = target_taxa;
+        } else if (!by_sp1.empty()) {
+            for (std::unordered_map<std::string,set_str_t>::iterator it = by_sp1.begin();
+                 it != by_sp1.end(); it++) {
+                targets.push_back(it->first);
+            }
+        }
+        for (auto &pair : by_sp2) {
+            if (!target_members.empty() && !pair.second.empty()) {
+                std::pair<std::string,set_str_t> key1 = std::make_pair(
+                        pair.first, pair.second
+                ); // sort pair.second
+                std::pair<std::string,set_str_t> key2;
+                for (std::string &sp2 : targets) {
+                    if (by_sp1.find(sp2) == by_sp1.end()) continue;
+                    set_str_t co2 = by_sp1[sp2];
+                    key2 = std::make_pair(sp2, co2);
+                }
+                ortholog_map.at(key1).insert(key2);    // default empty set
+            }
+        }
     }
 
+    member_orthologs_t all_orthologs {
+            {"one2one", set_str_t()},
+            {"one2many", set_str_t()},
+            {"many2many", set_str_t()},
+            {"many2one", set_str_t()},
+            {"all", set_str_t()}
+    };
 
+    std::string otype_prefix;
+    std::string otype;
+    for (auto &pair : ortholog_map) {
+        if (pair.second.size() == 1) {
+            otype_prefix = "one2";
+        } else {
+            otype_prefix = "many2";
+        }
+        all_orthologs["all"].insert(pair.first.second.begin(), pair.first.second.end());
 
+        for (auto &pair2 : pair.second) {
+            if (pair2.second.size() == 1) {
+                otype = otype_prefix + "one";
+            } else {
+                otype = otype_prefix + "many";
+            }
+            all_orthologs[otype].insert(pair.first.second.begin(), pair.first.second.end());
+            all_orthologs[otype].insert(pair2.second.begin(), pair2.second.end());
+            all_orthologs["all"].insert(pair2.second.begin(), pair2.second.end());
+        }
+    }
+    return all_orthologs;
+}
 
+void EggnogDatabase::get_annotations(set_str_t& orthologs, QuerySequence::EggnogResults& eggnog_results) {
 
+    std::string         seq_str;
+    char*               sql_query;
+    set_str_t           all_gos;
+    set_str_t           all_kegg;
+    set_str_t           all_pnames;
+    set_str_t           all_bigg;
+    SQLDatabaseHelper::query_struct sql_results;
 
+    seq_str = container_to_string<std::string>(orthologs, ",");
 
+    // This is different depending on version on eggnog using
+    if (_version >= SQL_VERSION_CHANGE) {
+        sql_query = sqlite3_mprintf(
+                "SELECT %q, %q, %q, %q, %q FROM %q "\
+                "LEFT JOIN seq on %q = %q "\
+                "LEFT JOIN gene_ontology on %q = %q "\
+                "LEFT JOIN kegg on %q = %q "\
+                "LEFT JOIN bigg on &q = %q "\
+                "WHERE %q in %q",
+                SQL_EGGNOG_NAME,
+                SQL_EGGNOG_PNAME,
+                SQL_EGGNOG_GOS,
+                SQL_EGGNOG_KEGG,
+                SQL_EGGNOG_BIGG,
+                SQL_EGGNOG_TABLE,
+                SQL_EGGNOG_SEQ_NAME, SQL_EGGNOG_NAME,
+                SQL_EGGNOG_GOS, SQL_EGGNOG_NAME,
+                SQL_EGGNOG_KEGG, SQL_EGGNOG_NAME,
+                SQL_EGGNOG_BIGG, SQL_EGGNOG_NAME,
+                SQL_EGGNOG_NAME, seq_str
+        );
+    } else {
+        // Older versions
+        sql_query = sqlite3_mprintf(
+                "SELECT %q, %q, %q, %q FROM %q WHERE %q IN %q",
+                SQL_MEMBER_NAME,
+                SQL_MEMBER_PNAME,
+                SQL_MEMBER_GO,
+                SQL_MEMBER_KEGG,
+                SQL_MEMBER_TABLE,
+                SQL_MEMBER_NAME, seq_str
+        );
+    }
 
-
-
-
-
+    sql_results = _pSQLDatabase->query(sql_query);
+    if (!sql_results.empty()) {
+        for (vect_str_t &data : sql_results) {
+            all_pnames.insert(data[1]);
+            all_gos.insert(data[2]);
+            all_kegg.insert(data[3]);
+            if (_version >= SQL_VERSION_CHANGE) all_bigg.insert(data[4]);
+        }
+        eggnog_results.pname  = container_to_string<std::string>(all_pnames,",");
+        eggnog_results.sql_go = container_to_string<std::string>(all_gos, ",");
+        eggnog_results.sql_kegg = container_to_string<std::string>(all_kegg, ",");
+        if (_version >= SQL_VERSION_CHANGE)
+            eggnog_results.bigg = container_to_string<std::string>(all_bigg, ",");
+    } else {
+        eggnog_results.pname = "";
+        eggnog_results.sql_go = "";
+        eggnog_results.sql_kegg = "";
+        eggnog_results.bigg = "";
+    }
 }

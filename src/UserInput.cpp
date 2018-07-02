@@ -43,6 +43,7 @@
 #include "ontology/ModInterpro.h"
 #include "version.h"
 #include "database/EntapDatabase.h"
+#include "ontology/ModEggnogDMND.h"
 
 //**************************************************************
 
@@ -223,7 +224,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
                          ->default_value(std::vector<std::string>{ModInterpro::get_default()},""),DESC_INTER_DATA)
                 (UInput::INPUT_FLAG_ONTOLOGY.c_str(),
                  boostPO::value<std::vector<uint16>>()->multitoken()
-                 ->default_value(std::vector<uint16>{ENTAP_EXECUTE::EGGNOG_INT_FLAG},""),DESC_ONTOLOGY_FLAG)
+                 ->default_value(std::vector<uint16>{ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG},""),DESC_ONTOLOGY_FLAG)
                 (UInput::INPUT_FLAG_GRAPH.c_str(),DESC_GRAPHING)
                 (UInput::INPUT_FLAG_TAG.c_str(),
                  boostPO::value<std::string>()->default_value(OUTFILE_DEFAULT),DESC_OUT_FLAG)
@@ -962,7 +963,7 @@ std::pair<bool,std::string> UserInput::verify_software(uint8 &states,std::vector
                 case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
                     if (!_pFileSystem->file_exists(EGG_SQL_DB_PATH))
                         return std::make_pair(false, "Could not find EggNOG SQL database");
-                    if (!ModEggnog::is_executable())
+                    if (!ModEggnogDMND::is_executable())
                         return std::make_pair(false, "Test of EggNOG Emapper failed, "
                                 "ensure python is properly installed and the paths are correct");
                     break;

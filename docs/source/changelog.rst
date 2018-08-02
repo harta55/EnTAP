@@ -1,6 +1,10 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.8.3-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.8.4-beta
+
+EnTAP Beta v0.8.4-beta
+-----------------------
+    * Fixed some protein input issues
 
 EnTAP Beta v0.8.3-beta
 ------------------------

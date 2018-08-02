@@ -236,6 +236,8 @@ namespace entapExecute {
             pQUERY_DATA->final_statistics(final_out_dir, ontology_flags);
             _pFileSystem->directory_iterate(true, _outpath);   // Delete empty files
             SAFE_DELETE(pQUERY_DATA);
+            SAFE_DELETE(pGraphingManager);
+            SAFE_DELETE(pEntapDatabase);
         } catch (const ExceptionHandler &e) {
             exit_error(executeStates);
             throw e;

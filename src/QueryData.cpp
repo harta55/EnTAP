@@ -184,6 +184,7 @@ void QueryData::set_input_type(std::string &in) {
         }
     }
     _protein = deviations > NUCLEO_DEV;
+    if (_protein) DATA_FLAG_SET(IS_PROTEIN);
     in_file.close();
 }
 

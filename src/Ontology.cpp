@@ -72,7 +72,7 @@ const int16 FINAL_ANNOT_LEN = 3;
  * =====================================================================
  */
 Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
-    FS_dprint("Spawn object - Ontology");
+    FS_dprint("Spawn Object - Ontology");
 
     _new_input          = input;
     _pGraphingManager   = entap_data._pGraphingManager;
@@ -133,7 +133,10 @@ void Ontology::execute() {
             ptr.reset();
         }
         print_eggnog(*_QUERY_DATA->get_sequences_ptr());
-    } catch (ExceptionHandler &e) {throw e;}
+    } catch (ExceptionHandler &e) {
+        ptr.reset();
+        throw e;
+    }
 
     // TODO move printing to querydata
 }
@@ -344,8 +347,25 @@ void Ontology::init_headers() {
                         &ENTAP_EXECUTE::HEADER_INTER_GO_MOLE
                 };
                 break;
-            default:
+            case ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG:
+                add_header = {
+                        &ENTAP_EXECUTE::HEADER_SEED_ORTH,
+                        &ENTAP_EXECUTE::HEADER_SEED_EVAL,
+                        &ENTAP_EXECUTE::HEADER_SEED_SCORE,
+                        &ENTAP_EXECUTE::HEADER_PRED_GENE,
+                        &ENTAP_EXECUTE::HEADER_TAX_SCOPE,
+                        &ENTAP_EXECUTE::HEADER_EGG_OGS,
+                        &ENTAP_EXECUTE::HEADER_EGG_DESC,
+                        &ENTAP_EXECUTE::HEADER_EGG_KEGG,
+                        &ENTAP_EXECUTE::HEADER_EGG_PROTEIN,
+                        &ENTAP_EXECUTE::HEADER_EGG_GO_BIO,
+                        &ENTAP_EXECUTE::HEADER_EGG_GO_CELL,
+                        &ENTAP_EXECUTE::HEADER_EGG_GO_MOLE
+                };
                 break;
+            default:
+                throw ExceptionHandler("ERROR: Unknown INT flag used during Ontology",
+                    ERR_ENTAP_MEM_ALLOC);
         }
         out_header.insert(out_header.end(), add_header.begin(), add_header.end());
     }

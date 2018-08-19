@@ -28,7 +28,6 @@
 
 //*********************** Includes *****************************
 #include <boost/serialization/unordered_map.hpp>
-#include "common.h"
 #include "EntapExecute.h"
 //**************************************************************
 
@@ -89,8 +88,9 @@ namespace entapExecute {
         vect_uint16_t                           entap_database_types;
         EntapDatabase::DATABASE_TYPE            entap_database_type;
         EntapDataPtrs                           entap_data_ptrs;
-        EntapDatabase*                          pEntapDatabase;
-
+        EntapDatabase*                          pEntapDatabase=nullptr;
+        QueryData*                              pQUERY_DATA=nullptr;
+        GraphingManager*                        pGraphingManager=nullptr;
 
         if (user_input == nullptr || filesystem == nullptr) {
             throw ExceptionHandler("Unable to allocate memory to EnTAP Execution", ERR_ENTAP_INPUT_PARSE);
@@ -126,14 +126,14 @@ namespace entapExecute {
             verify_state(state_queue, state_flag);         // Set state transition
 
             // Initialize Query Data
-            QueryData *pQUERY_DATA = new QueryData(
+            pQUERY_DATA = new QueryData(
                     _input_path,        // User transcriptome
                     _entap_outpath,     // Transcriptome directory
                     _pUserInput,        // User input map
                     _pFileSystem);      // Filesystem object
 
             // Initialize Graphing Manager
-            GraphingManager* pGraphingManager = new GraphingManager(GRAPHING_EXE);
+            pGraphingManager = new GraphingManager(GRAPHING_EXE);
 
             // Initialize EnTAP database
             pEntapDatabase = new EntapDatabase(filesystem);
@@ -239,6 +239,9 @@ namespace entapExecute {
             delete pGraphingManager;
             delete pEntapDatabase;
         } catch (const ExceptionHandler &e) {
+            delete pQUERY_DATA;
+            delete pGraphingManager;
+            delete pEntapDatabase;
             exit_error(executeStates);
             throw e;
         }

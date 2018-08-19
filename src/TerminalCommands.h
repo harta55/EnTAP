@@ -32,6 +32,8 @@
 
 int TC_execute_cmd(std::string, std::string);
 int TC_execute_cmd(std::string);
+int TC_execute_cmd(std::string cmd, std::stringstream &err_stream,
+    std::stringstream &out_stream, std::string &out_path);
 
 
 #endif //ENTAP_TERMINALCOMMANDS_H

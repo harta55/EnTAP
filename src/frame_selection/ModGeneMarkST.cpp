@@ -17,8 +17,8 @@
  * (at your option) any later version.
  *
  * EnTAP is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILIT * but WITHOUT ANY WARRANTY; without even the implied warranty of
+Y or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
@@ -95,6 +95,9 @@ std::string ModGeneMarkST::execute() {
     std::string     line;
     std::string     temp_name;
     std::string     out_path;
+    std::stringstream err_stream;
+    std::stringstream out_stream;
+    int32           err_code;
 
     std::list<std::string> out_names {_transcriptome_filename + FileSystem::EXT_FAA,
                                       _transcriptome_filename + FileSystem::EXT_FNN};
@@ -105,14 +108,17 @@ std::string ModGeneMarkST::execute() {
     genemark_cmd     = _exe_path + " -faa -fnn " + _inpath;
     genemark_std_out = PATHS(_frame_outpath, GENEMARK_STD_OUT);
 
-    if (TC_execute_cmd(genemark_cmd, genemark_std_out) != 0 ) {
-        throw ExceptionHandler("Error in running genemark at file located at: " +
-                               _inpath, ERR_ENTAP_INIT_INDX_DATA_NOT_FOUND);
+    err_code = TC_execute_cmd(genemark_cmd, err_stream, out_stream, genemark_std_out);
+    FS_dprint("\nGeneMarkST STD OUT:\n" + out_stream.str());
+    if (err_code != 0 ) {
+        throw ExceptionHandler("Error in running GeneMarkST at file located at: " +
+                               _inpath + "\nGeneMarkST Error:\n" + err_stream.str(),
+                               ERR_ENTAP_INIT_INDX_DATA_NOT_FOUND);
     }
     FS_dprint("Success!");
 
     // Format genemarks-t output (remove blank lines)
-    FS_dprint("Formatting genemark files...");
+    FS_dprint("Formatting GeneMarkST files...");
     for (std::string path : out_names) {
         std::ifstream in_file(path);
         temp_name = path + FILE_ALT_EXT;

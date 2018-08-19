@@ -447,6 +447,7 @@ FileSystem::~FileSystem() {
 FileSystem::FileSystem(std::string &root) {
     // This routine will process entire root directory here and generate
     // hierarchy
+    FS_dprint("Spawn Object - FileSystem");
 
     _root_path     = root;
     _final_outpath = PATHS(root, ENTAP_FINAL_OUTPUT);
@@ -662,4 +663,46 @@ bool FileSystem::rename_file(std::string &in, std::string &out) {
         return false;
     }
     return false;
+}
+
+uint16 FileSystem::get_file_status(std::string &path) {
+    uint16 file_status = 0;
+
+    if (!file_exists(path)) {
+        file_status |= FILE_STATUS_PATH_ERR;
+    }
+
+    if (file_empty(path)) {
+        file_status |= FILE_STATUS_EMPTY;
+    }
+
+    if (!file_test_open(path)) {
+        file_status |= FILE_STATUS_READ_ERR;
+    }
+
+    return file_status;
+}
+
+std::string FileSystem::print_file_status(uint16 status, std::string& path) {
+    std::string err_msg;
+
+    err_msg = "\nFile Status at: " + path;
+    if (status == 0) return err_msg += "\n    No Error";
+
+    // Check if file empty
+    if ((status & FILE_STATUS_EMPTY) != 0) {
+        err_msg += "\n    Error: File empty";
+    }
+
+    // Check if file path is invalid
+    if ((status & FILE_STATUS_PATH_ERR) != 0) {
+        err_msg += "\n    Error: File could not be found";
+    }
+
+    // Check if file could not be opened
+    if ((status & FILE_STATUS_READ_ERR) != 0) {
+        err_msg += "\n    Error: File could not be opened";
+    }
+
+    return err_msg;
 }

@@ -560,11 +560,11 @@ void EggnogDatabase::get_member_ogs(QuerySequence::EggnogResults& eggnog_results
     if (eggnog_results.best_hit_query.empty()) return;
 
     char *query = sqlite3_mprintf(
-            "SELECT %q FROM %q WHERE %q=%q",
-            SQL_MEMBER_GROUP,
-            SQL_MEMBER_TABLE,
-            SQL_MEMBER_NAME,
-            eggnog_results.best_hit_query);
+            "SELECT %q FROM %q WHERE %q=%Q",
+            SQL_MEMBER_GROUP.c_str(),
+            SQL_MEMBER_TABLE.c_str(),
+            SQL_MEMBER_NAME.c_str(),
+            eggnog_results.best_hit_query.c_str());
     results = _pSQLDatabase->query(query);
     if (!results.empty()) {
         eggnog_results.member_ogs = results[0][0];
@@ -584,11 +584,11 @@ EggnogDatabase::member_orthologs_t EggnogDatabase::get_member_orthologs(EggnogDa
     target_members.insert(best_hit);                            // 34740.HMEL017225-PA
 
     sql_query = sqlite3_mprintf(
-            "SELECT %q FROM %q WHERE %q=%q",
-            SQL_MEMBER_ORTHOINDEX,
-            SQL_MEMBER_TABLE,
-            SQL_MEMBER_NAME,
-            best_hit);
+            "SELECT %q FROM %q WHERE %q=%Q",
+            SQL_MEMBER_ORTHOINDEX.c_str(),
+            SQL_MEMBER_TABLE.c_str(),
+            SQL_MEMBER_NAME.c_str(),
+            best_hit.c_str());
     sql_results = _pSQLDatabase->query(sql_query);
     if (!sql_results.empty()) {
         event_indexes = sql_results[0][0];
@@ -596,15 +596,15 @@ EggnogDatabase::member_orthologs_t EggnogDatabase::get_member_orthologs(EggnogDa
 
     // Can specify levels as well here
     sql_query = sqlite3_mprintf(
-            "SELECT %q, %q, %q FROM %q WHERE %q IN %q AND %q IN %q",
-            SQL_EVENT_LEVEL,
-            SQL_EVENT_SIDE1,
-            SQL_EVENT_SIDE2,
-            SQL_EVENT_TABLE,
-            SQL_EVENT_I,
-            event_indexes,
-            SQL_EVENT_LEVEL,
-            container_to_string<std::string>(target_lvls,",")
+            "SELECT %q, %q, %q FROM %q WHERE %q IN (%Q) AND %q IN (%Q)",
+            SQL_EVENT_LEVEL.c_str(),
+            SQL_EVENT_SIDE1.c_str(),
+            SQL_EVENT_SIDE2.c_str(),
+            SQL_EVENT_TABLE.c_str(),
+            SQL_EVENT_I.c_str(),
+            event_indexes.c_str(),
+            SQL_EVENT_LEVEL.c_str(),
+            container_to_string<std::string>(target_lvls,",").c_str()
     );
     sql_results = _pSQLDatabase->query(sql_query);
 
@@ -762,29 +762,29 @@ void EggnogDatabase::get_annotations(set_str_t& orthologs, QuerySequence::Eggnog
                 "LEFT JOIN gene_ontology on %q = %q "\
                 "LEFT JOIN kegg on %q = %q "\
                 "LEFT JOIN bigg on &q = %q "\
-                "WHERE %q in %q",
-                SQL_EGGNOG_NAME,
-                SQL_EGGNOG_PNAME,
-                SQL_EGGNOG_GOS,
-                SQL_EGGNOG_KEGG,
-                SQL_EGGNOG_BIGG,
-                SQL_EGGNOG_TABLE,
-                SQL_EGGNOG_SEQ_NAME, SQL_EGGNOG_NAME,
-                SQL_EGGNOG_GOS, SQL_EGGNOG_NAME,
-                SQL_EGGNOG_KEGG, SQL_EGGNOG_NAME,
-                SQL_EGGNOG_BIGG, SQL_EGGNOG_NAME,
-                SQL_EGGNOG_NAME, seq_str
+                "WHERE %q in %Q",
+                SQL_EGGNOG_NAME.c_str(),
+                SQL_EGGNOG_PNAME.c_str(),
+                SQL_EGGNOG_GOS.c_str(),
+                SQL_EGGNOG_KEGG.c_str(),
+                SQL_EGGNOG_BIGG.c_str(),
+                SQL_EGGNOG_TABLE.c_str(),
+                SQL_EGGNOG_SEQ_NAME.c_str(), SQL_EGGNOG_NAME.c_str(),
+                SQL_EGGNOG_GOS.c_str(), SQL_EGGNOG_NAME.c_str(),
+                SQL_EGGNOG_KEGG.c_str(), SQL_EGGNOG_NAME.c_str(),
+                SQL_EGGNOG_BIGG.c_str(), SQL_EGGNOG_NAME.c_str(),
+                SQL_EGGNOG_NAME.c_str(), seq_str
         );
     } else {
         // Older versions
         sql_query = sqlite3_mprintf(
-                "SELECT %q, %q, %q, %q FROM %q WHERE %q IN %q",
-                SQL_MEMBER_NAME,
-                SQL_MEMBER_PNAME,
-                SQL_MEMBER_GO,
-                SQL_MEMBER_KEGG,
-                SQL_MEMBER_TABLE,
-                SQL_MEMBER_NAME, seq_str
+                "SELECT %q, %q, %q, %q FROM %q WHERE %q IN %Q",
+                SQL_MEMBER_NAME.c_str(),
+                SQL_MEMBER_PNAME.c_str(),
+                SQL_MEMBER_GO.c_str(),
+                SQL_MEMBER_KEGG.c_str(),
+                SQL_MEMBER_TABLE.c_str(),
+                SQL_MEMBER_NAME.c_str(), seq_str.c_str()
         );
     }
 

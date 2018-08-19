@@ -47,7 +47,7 @@
  * =====================================================================
  */
 GraphingManager::GraphingManager(std::string path) {
-    FS_dprint("Spawn object - GraphingManager");
+    FS_dprint("Spawn Object - GraphingManager");
     _graph_path = path;
     std::string cmd = "python " + path + " -s -1 -g -1 -i /temp -t temp";
     _graphing_enabled = TC_execute_cmd(cmd) == 0;

@@ -29,16 +29,10 @@
 #include <boost/range/iterator_range_core.hpp>
 #include <csv.h>
 #include <boost/regex.hpp>
-#include <iomanip>
 #include "SimilaritySearch.h"
-#include "FileSystem.h"
-#include "ExceptionHandler.h"
-#include "GraphingManager.h"
-#include "EntapGlobals.h"
-#include "common.h"
-#include "UserInput.h"
-#include "database/EntapDatabase.h"
 //**************************************************************
+
+typedef std::map<std::string,std::map<std::string,uint32>> graph_sum_t;
 
 
 /**
@@ -66,7 +60,7 @@
  */
 SimilaritySearch::SimilaritySearch(databases_t &databases,
                                    std::string input, EntapDataPtrs& entap_data) {
-    FS_dprint("Spawn object - SimilaritySearch");
+    FS_dprint("Spawn Object - SimilaritySearch");
     std::string uninform_path;
 
     _pQUERY_DATA    = entap_data._pQueryData;
@@ -265,6 +259,9 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
                    std::string &database,int &threads, std::string &blast) {
 
     std::string        diamond_run;
+    std::stringstream  stream_err;
+    std::stringstream  stream_out;
+    int32              err_code;
 
     diamond_run =
             _diamond_exe + " "
@@ -281,11 +278,14 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
             " -f " + "6 qseqid sseqid pident length mismatch gapopen "
                      "qstart qend sstart send evalue bitscore qcovhsp stitle";
 
-    if (TC_execute_cmd(diamond_run, std_out) != 0) {
+    // Execute command
+    err_code = TC_execute_cmd(diamond_run, stream_err, stream_out, std_out);
+    FS_dprint("\nDIAMOND STD OUT:\n" + stream_out.str());
+    if (err_code != 0) {
         // Delete output file if run failed
         _pFileSystem->delete_file(output_file);
-        throw ExceptionHandler("Error in DIAMOND run with database located at: " +
-                               database, ERR_ENTAP_RUN_SIM_SEARCH_RUN);
+        throw ExceptionHandler("Error with database located at: " + database + "\n" +
+                                       stream_err.str(), ERR_ENTAP_RUN_SIM_SEARCH_RUN);
     }
 }
 

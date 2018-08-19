@@ -91,6 +91,9 @@ void ModInterpro::execute() {
     std::string std_out;
     std::string blast;
     std::string temp_dir;
+    int32       err_code;
+    std::stringstream err_stream;
+    std::stringstream out_stream;
 
     _blastp ? blast = PROTEIN_TAG : blast = NUCLEO_TAG;
     temp_dir = PATHS(_interpro_dir, INTERPRO_TEMP);
@@ -113,10 +116,14 @@ void ModInterpro::execute() {
         throw ExceptionHandler("No InterPro databases selected!",
                 ERR_ENTAP_RUN_INTERPRO);
     }
-    if (TC_execute_cmd(interpro_cmd, std_out) != 0) {
+
+    // Execute command
+    err_code = TC_execute_cmd(interpro_cmd, err_stream, out_stream, std_out);
+    FS_dprint("InterProScan STD OUT:\n" + out_stream.str());
+    if (err_code != 0) {
         _pFileSystem->delete_file(_final_outpath);
-        throw ExceptionHandler("Error executing InterProScan, consult the error file at: "+
-                std_out, ERR_ENTAP_RUN_INTERPRO);
+        throw ExceptionHandler("Error executing InterProScan\nInterProScan Error:\n"+ err_stream.str(),
+                               ERR_ENTAP_RUN_INTERPRO);
     } else {
         boostFS::remove_all(temp_dir);
     }
@@ -461,7 +468,7 @@ ModInterpro::ModInterpro(std::string &out, std::string &in, std::string &ont,
                          EntapDataPtrs& entap_data, vect_str_t databases)
     : AbstractOntology(out, in, ont,
                        blastp, lvls, entap_data){
-    FS_dprint("Spawn object - InterPro");
+    FS_dprint("Spawn Object - InterPro");
 
     _interpro_dir = PATHS(_ontology_dir, INTERPRO_DIRECTORY);
     _proc_dir     = PATHS(_interpro_dir, PROCESSED_OUT_DIR);

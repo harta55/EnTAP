@@ -37,13 +37,15 @@ public:
     ModEggnogDMND(std::string &out, std::string &in_hits, std::string &ont_out, bool blastp, std::vector<uint16> &lvls,
                   EntapDataPtrs &entap_data, std::string sql_db_path);
     virtual std::pair<bool, std::string> verify_files() override;
+    ~ModEggnogDMND();
     virtual void execute() override ;
     virtual void parse() override;
     static bool is_executable();
 
 private:
-    std::string get_output_dmnd_filepath();
+    std::string get_output_dmnd_filepath(bool final);
 
+    static constexpr int DMND_COL_NUMBER = 14;
     const std::string EGGNOG_DMND_DIR = "EggNOG_DMND/";
     std::string _out_hits;
     std::string _egg_out_dir;

@@ -634,7 +634,7 @@ ModEggnog::ModEggnog(std::string &out, std::string &in, std::string &ont,
                      bool blastp, std::vector<uint16> &lvls,EntapDataPtrs &entap_data,
                      std::string& eggnog_sql_path)
     :AbstractOntology(out, in,ont, blastp, lvls, entap_data){
-    FS_dprint("Spawn object - EggNOG");
+    FS_dprint("Spawn Object - EggNOG");
 
     _eggnog_db_path = eggnog_sql_path;
 

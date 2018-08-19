@@ -61,7 +61,7 @@
  * =====================================================================
  */
 FrameSelection::FrameSelection(std::string &input, EntapDataPtrs &entap_data) {
-    FS_dprint("Spawn object - FrameSelection");
+    FS_dprint("Spawn Object - FrameSelection");
 
     _pGraphingManager = entap_data._pGraphingManager;
     _QUERY_DATA       = entap_data._pQueryData;
@@ -102,19 +102,24 @@ std::string FrameSelection::execute(std::string input) {
 
     std::string output;
     std::pair<bool, std::string> verify_pair;
+    std::unique_ptr<AbstractFrame> ptr;
 
     _inpath = input;
     if (_overwrite) _pFileSystem->delete_dir(_frame_outpath);
     _pFileSystem->create_dir(_frame_outpath);
     try {
-        std::unique_ptr<AbstractFrame> ptr = spawn_object();
+        ptr = spawn_object();
         verify_pair = ptr->verify_files();
         if (!verify_pair.first) {
             output = ptr->execute();
         } else output = verify_pair.second;
         ptr->parse();
+        ptr.reset();
         return output;
-    } catch (const ExceptionHandler &e) {throw e;}
+    } catch (const ExceptionHandler &e) {
+        ptr.reset();
+        throw e;
+    }
 }
 
 

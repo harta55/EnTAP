@@ -981,6 +981,7 @@ std::pair<bool,std::string> UserInput::verify_software(uint8 &states,std::vector
 }
 
 UserInput::UserInput(int argc, const char** argv) {
+    FS_dprint("Spawn Object - UserInput");
 
 #ifdef USE_BOOST
     parse_arguments_boost(argc, argv);

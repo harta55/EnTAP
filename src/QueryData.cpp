@@ -484,7 +484,7 @@ QUERY_MAP_T* QueryData::get_sequences_ptr() {
 }
 
 QueryData::~QueryData() {
-    FS_dprint("Killing object - QueryData");
+    FS_dprint("Killing Object - QueryData");
     for(QUERY_MAP_T::iterator it = _pSEQUENCES->begin(); it != _pSEQUENCES->end(); it++) {
         delete it->second;
         it->second = nullptr;

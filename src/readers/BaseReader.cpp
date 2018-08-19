@@ -26,28 +26,6 @@
 
 #include "BaseReader.h"
 
-std::string BaseReader::print_err() {
-    std::string err_out;
-
-    switch (_reader_err) {
-        case ERR_READ_OK:
-            err_out = "No error";
-            break;
-
-        case ERR_READ_FILE_OPEN:
-            err_out = "Unable to open file";
-            break;
-
-        case ERR_READ_FILE_EMPTY:
-            err_out = "File empty";
-            break;
-
-        default:
-            err_out = "Unknown error code";
-            break;
-    }
-    return err_out;
-}
 
 BaseReader::BaseReader(std::string &file_path,
                        FileSystem *fileSystem,
@@ -56,3 +34,4 @@ BaseReader::BaseReader(std::string &file_path,
     _pFileSystem = fileSystem;
     _file_type = file_type;
 }
+

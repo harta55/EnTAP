@@ -52,7 +52,7 @@
  * =====================================================================
  */
 ExpressionAnalysis::ExpressionAnalysis(std::string &input,EntapDataPtrs& entap_data) {
-    FS_dprint("Spawn object - ExpressionAnalysis");
+    FS_dprint("Spawn Object - ExpressionAnalysis");
 
     _pQueryData       = entap_data._pQueryData;
     _pFileSystem      = entap_data._pFileSystem;
@@ -109,7 +109,10 @@ std::string ExpressionAnalysis::execute(std::string input) {
         verify_pair = ptr->verify_files();
         if (!verify_pair.first) ptr->execute();
         output = ptr->filter();
-    } catch (const ExceptionHandler &e) {throw e;}
+    } catch (const ExceptionHandler &e) {
+        ptr.reset();
+        throw e;
+    }
     return output;
 }
 

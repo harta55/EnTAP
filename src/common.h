@@ -68,10 +68,11 @@ typedef signed long long    int64;
 typedef float               fp32;
 typedef double              fp64;
 
-typedef std::pair<std::string,std::string> pair_str_t;
-typedef std::vector<std::string>           vect_str_t;
-typedef std::vector<uint16>                vect_uint16_t;
-typedef std::set<std::string>              set_str_t;
+typedef std::pair<std::string,std::string>    pair_str_t;
+typedef std::vector<std::string>              vect_str_t;
+typedef std::vector<std::vector<std::string>> vect_vect_str_t;
+typedef std::vector<uint16>                   vect_uint16_t;
+typedef std::set<std::string>                 set_str_t;
 //**************************************************************
 
 #endif //ENTAP_COMMON_H

@@ -43,6 +43,11 @@
 //#define USE_CURL    1
 #endif
 
+// Compile with using the Fast CSV Parser
+#ifndef USE_FAST_CSV
+#define USE_FAST_CSV  1
+#endif
+
 // Compile with ZLIB? Will use tar command otherwise (not supported yet)
 #ifndef USE_ZLIB
 //#define USE_ZLIB    1

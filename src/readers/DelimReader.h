@@ -1,4 +1,5 @@
 /*
+ *
  * Developed by Alexander Hart
  * Plant Computational Genomics Lab
  * University of Connecticut
@@ -24,23 +25,29 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef ENTAP_BASEREADER_H
-#define ENTAP_BASEREADER_H
+#if 0
+
+#ifndef ENTAP_DELIMREADER_H
+#define ENTAP_DELIMREADER_H
 
 
-#include "../FileSystem.h"
+#include "BaseReader.h"
+#include "../config.h"
 
-class BaseReader {
+class DelimReader : public BaseReader {
 
-protected:
+public:
+    DelimReader(std::string& file_path, FileSystem *filesystem, FileSystem::ENT_FILE_TYPES,
+        char delim);
+    ~DelimReader();
+    std::pair<bool, vect_vect_str_t> parse_file();
 
-    BaseReader(std::string& file_path, FileSystem* fileSystem, FileSystem::ENT_FILE_TYPES file_type);
-    virtual ~BaseReader(){};
-
-    FileSystem                *_pFileSystem;
-    std::string                _file_path;
-    FileSystem::ENT_FILE_TYPES _file_type;
+private:
+    char _delim;
+    bool _success;
 };
 
 
-#endif //ENTAP_BASEREADER_H
+#endif //ENTAP_DELIMREADER_H
+
+#endif

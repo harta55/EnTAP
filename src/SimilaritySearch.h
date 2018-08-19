@@ -29,22 +29,22 @@
 #define ENTAP_SIMILARITYSEARCH_H
 
 //*********************** Includes *****************************
-#include <iostream>
-#include <list>
-#include <unordered_map>
-#include <map>
+#include "common.h"
 #include <boost/program_options/variables_map.hpp>
 #include "QuerySequence.h"
 #include "GraphingManager.h"
 #include "QueryData.h"
+#include "database/EntapDatabase.h"
+#include "FileSystem.h"
+#include "ExceptionHandler.h"
+#include "EntapGlobals.h"
+#include "UserInput.h"
 #include "database/EntapDatabase.h"
 
 //**************************************************************
 
 
 class SimilaritySearch {
-
-    typedef std::map<std::string,std::map<std::string,uint32>> graph_sum_t;
 
 public:
 

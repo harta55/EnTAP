@@ -431,10 +431,13 @@ ModRSEM::~ModRSEM() {
 
 
 bool ModRSEM::rsem_generate_reference(std::string& reference_path_out) {
-    std::string ref_exe;    // executable path to reference generation
-    std::string ref_path;   // reference path
-    std::string rsem_arg;
-    std::string std_out;
+    std::string       ref_exe;    // executable path to reference generation
+    std::string       ref_path;   // reference path
+    std::string       rsem_arg;
+    std::string       std_out;
+    std::stringstream err_stream;
+    std::stringstream out_stream;
+    int32             err_code;
 
     ref_exe  = PATHS(_exe_path, RSEM_PREP_REF_EXE);
     ref_path = PATHS(_expression_outpath, _filename) + "_ref";
@@ -443,13 +446,26 @@ bool ModRSEM::rsem_generate_reference(std::string& reference_path_out) {
                + ref_path;
     std_out = PATHS(_expression_outpath, _filename) + STD_REF_OUT;
     reference_path_out = ref_path;
-    return TC_execute_cmd(rsem_arg.c_str(), std_out) == 0;
+
+    // Execute command
+    err_code = TC_execute_cmd(rsem_arg.c_str(), err_stream, out_stream, std_out);
+    FS_dprint("\nRSEM STD OUT:\n" + out_stream.str());
+
+    if (err_code != 0) {
+        throw ExceptionHandler("Error generating RSEM reference\nRSEM Error:\n" + err_stream.str(),
+            ERR_ENTAP_RUN_RSEM_EXPRESSION);
+    }
+
+    return err_code == 0;
 }
 
 bool ModRSEM::rsem_expression_analysis(std::string& ref_path, std::string& bam) {
     std::string expression_exe;
     std::string rsem_arg;
     std::string std_out;
+    std::stringstream err_stream;
+    std::stringstream out_stream;
+    int32             err_code;
 
     expression_exe = PATHS(_exe_path, RSEM_CALC_EXP_EXE);
     rsem_arg = expression_exe +
@@ -460,5 +476,12 @@ bool ModRSEM::rsem_expression_analysis(std::string& ref_path, std::string& bam) 
                _exp_out;
     if (!_issingle) rsem_arg += " --paired-end";
     std_out = PATHS(_expression_outpath, _filename) + STD_EXP_OUT;
-    return TC_execute_cmd(rsem_arg.c_str(), std_out) == 0;
+
+    err_code = TC_execute_cmd(rsem_arg.c_str(), err_stream, out_stream, std_out);
+    FS_dprint("\nRSEM Expression Analysis STD OUT:\n" + out_stream.str());
+    if (err_code != 0) {
+        throw ExceptionHandler("Error in running RSEM Expression Analysis\nRSEM Error:\n" + err_stream.str(),
+            ERR_ENTAP_RUN_RSEM_EXPRESSION);
+    }
+    return err_code == 0;
 }

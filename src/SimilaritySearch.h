@@ -59,6 +59,7 @@ public:
 
 private:
 
+    const uint8       UNIPROT_ATTEMPTS                           = 15;   // Number of attempts to see if database is uniprot
     const std::string _NCBI_REGEX                                = "\\[([^]]+)\\](?!.+\\[.+\\])";
     const std::string _UNIPROT_REGEX                             = "OS=(.+?)\\s\\S\\S=";
     const std::string SIM_SEARCH_DATABASE_BEST_TSV               = "best_hits.tsv";
@@ -79,6 +80,7 @@ private:
     const std::string RESULTS_DIR                                = "overall_results/";
     const std::string FIGURE_DIR                                 = "figures/";
 
+    // Graphing constants
     const uint8 GRAPH_SOFTWARE_FLAG                              = 3;
     const uint8 GRAPH_BAR_FLAG                                   = 1;
     const uint8 GRAPH_SUM_FLAG                                   = 2;
@@ -120,7 +122,9 @@ private:
             &ENTAP_EXECUTE::HEADER_DATABASE,
             &ENTAP_EXECUTE::HEADER_FRAME,
             &ENTAP_EXECUTE::HEADER_CONTAM,
-            &ENTAP_EXECUTE::HEADER_INFORM
+            &ENTAP_EXECUTE::HEADER_INFORM,
+            &ENTAP_EXECUTE::HEADER_UNI_DATA_XREF,
+            &ENTAP_EXECUTE::HEADER_UNI_COMMENTS
     };
 
     std::vector<std::string>        _database_paths;
@@ -156,8 +160,9 @@ private:
     void diamond_blast(std::string, std::string, std::string,std::string&,int&, std::string&);
     std::vector<std::string> verify_diamond_files();
     void diamond_parse(std::vector<std::string>&);
-    std::pair<bool,std::string> is_contaminant(std::string, tax_serial_map_t&,std::vector<std::string>&);
+    std::pair<bool,std::string> is_contaminant(std::string, std::vector<std::string>&);
     bool is_informative(std::string);
+    bool is_uniprot_entry(std::string& accession, UniprotEntry &entry);
     void print_header(std::ofstream&);
     std::string get_species(std::string &title);
     void calculate_best_stats (bool,std::string="");

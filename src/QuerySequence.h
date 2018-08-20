@@ -120,6 +120,7 @@ public:
         fp64                              coverage_raw;
         bool                              contaminant;
         bool                              is_informative;
+        UniprotEntry                      uniprot_info;
     };
 
     QuerySequence();

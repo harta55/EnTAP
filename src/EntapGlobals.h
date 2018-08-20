@@ -35,12 +35,12 @@
 #include <boost/program_options.hpp>
 #include "config.h"
 #include "common.h"
-#include <chrono>
-#include <ios>
 
 //******************** Defines/Macros **************************
 
+#ifdef USE_BOOST
 #define PATHS(x,y)      (boostFS::path(x) / boostFS::path(y)).string()
+#endif
 #define NCBI_UNIPROT    0       // Compiler flag for future feature
 #define DEBUG           1
 #define FASTA_FLAG      ">"
@@ -54,8 +54,6 @@ class FileSystem;
 class UserInput;
 class GraphingManager;
 class QueryData;
-struct TaxEntry;
-struct GoEntry;
 
 #ifdef USE_BOOST
 namespace boostFS = boost::filesystem;
@@ -77,8 +75,6 @@ vect_str_t  split_string(std::string, char);
 
 //**************** Global Structures/Typedefs ******************
 typedef std::unordered_map<std::string, QuerySequence*> QUERY_MAP_T;
-typedef std::unordered_map<std::string, TaxEntry> tax_serial_map_t;
-typedef std::unordered_map<std::string, GoEntry> go_serial_map_t;
 typedef std::map<std::string,std::vector<std::string>> go_format_t;
 typedef std::vector<std::string> databases_t;   // Standard database container
 
@@ -227,6 +223,8 @@ namespace ENTAP_EXECUTE {
 
 
     //------------------------Headers-------------------------//
+
+    // Sim Search Header Information
     extern const std::string HEADER_QUERY;
     extern const std::string HEADER_SUBJECT;
     extern const std::string HEADER_PERCENT;
@@ -245,6 +243,10 @@ namespace ENTAP_EXECUTE {
     extern const std::string HEADER_FRAME;
     extern const std::string HEADER_CONTAM;
     extern const std::string HEADER_INFORM;
+
+    // UniProt Mapping Header Information
+    extern const std::string HEADER_UNI_DATA_XREF;
+    extern const std::string HEADER_UNI_COMMENTS;
 
     // EggNOG Header Information
     extern const std::string HEADER_SEED_ORTH;

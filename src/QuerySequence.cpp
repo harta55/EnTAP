@@ -257,6 +257,8 @@ void QuerySequence::init_header() {
         OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_DATABASE ] = &sim_search_results->database_path;
         OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_CONTAM   ] = &sim_search_results->yes_no_contam;
         OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_INFORM   ] = &sim_search_results->yes_no_inform;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_UNI_DATA_XREF] = &sim_search_results->uniprot_info.database_x_refs;
+        OUTPUT_MAP[&ENTAP_EXECUTE::HEADER_UNI_COMMENTS]  = &sim_search_results->uniprot_info.comments;
     }
 }
 
@@ -457,7 +459,9 @@ QuerySequence::SimSearchAlignment::SimSearchAlignment(SimSearchResults d, std::s
             {&ENTAP_EXECUTE::HEADER_SPECIES         , _sim_search_results.species},
             {&ENTAP_EXECUTE::HEADER_DATABASE        , _sim_search_results.database_path},
             {&ENTAP_EXECUTE::HEADER_CONTAM          , _sim_search_results.yes_no_contam},
-            {&ENTAP_EXECUTE::HEADER_INFORM          , _sim_search_results.yes_no_inform}
+            {&ENTAP_EXECUTE::HEADER_INFORM          , _sim_search_results.yes_no_inform},
+            {&ENTAP_EXECUTE::HEADER_UNI_DATA_XREF   , _sim_search_results.uniprot_info.database_x_refs},
+            {&ENTAP_EXECUTE::HEADER_UNI_COMMENTS    , _sim_search_results.uniprot_info.comments}
     };
 }
 

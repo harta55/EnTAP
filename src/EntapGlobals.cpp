@@ -60,6 +60,10 @@ namespace ENTAP_EXECUTE {
     const std::string HEADER_CONTAM    = "Contaminant";
     const std::string HEADER_INFORM    = "Informative";
 
+    // UniProt Mapping
+    const std::string HEADER_UNI_DATA_XREF = "UniProt Database Cross References";
+    const std::string HEADER_UNI_COMMENTS  = "UniProt Additional Information";
+
     // EggNOG
     const std::string HEADER_SEED_ORTH   = "Seed Ortholog";
     const std::string HEADER_SEED_EVAL   = "Seed E-Value";

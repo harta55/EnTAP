@@ -155,7 +155,6 @@ void ModInterpro::parse() {
     std::string                           path_no_hits_fnn;
     std::string                           path_hits_faa;
     std::string                           path_hits_fnn;
-    go_serial_map_t                       GO_DATABASE;
     std::map<std::string,InterProData>    interpro_map;
     go_format_t                           go_terms_parsed;
     uint32                                count_hits=0;

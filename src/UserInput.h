@@ -156,6 +156,7 @@ private:
     const std::string KEY_GRAPH_SCRIPT         = "entap_graphing_script";
 
     FileSystem *_pFileSystem;
+    bool        _is_config;
 
 //**************************************************************
 };

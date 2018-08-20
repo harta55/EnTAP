@@ -28,7 +28,7 @@
 #ifndef ENTAP_COMMON_H
 #define ENTAP_COMMON_H
 
-//*********************** Includes ******************************
+//*********************** Common Includes ******************************
 #include <vector>
 #include <string>
 #include <list>
@@ -44,12 +44,15 @@
 #include <queue>
 #include <thread>
 #include <unordered_map>
+#include <chrono>
+#include <ios>
 //**************************************************************
 
 
 //******************* Defines/Macros ***************************
 #define LOWERCASE(x)        std::transform(x.begin(), x.end(), x.begin(), ::tolower)
 #define STR_REPLACE(x,y,z)  std::replace(x.begin(), x.end(), y, z)
+#define STR_ERASE(x,y)      x.erase(std::remove(x.begin(), x.end(), y),x.end())
 #define FIND_VECT(x,y)      std::find(y.begin(), y.end(), x) != y.end() // find x in y
 #define SAFE_DELETE(x)      if (x) delete x; x = nullptr
 //**************************************************************

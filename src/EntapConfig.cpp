@@ -50,12 +50,6 @@ namespace entapConfig {
     FileSystem               *_pFileSystem;
     UserInput                *_pUserInput;
 
-    //-----------------------FTP PATHS---------------------------//
-    const std::string UNIPROT_FTP_SWISS = "ftp://ftp.uniprot.org/pub/databases/"
-            "uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz";
-    const std::string UNIPROT_FTP_TREMBL = "ftp://ftp.uniprot.org/pub/databases/"
-            "uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz";
-
     //****************** Local Prototype Functions******************
     void init_entap_database(std::string&);
     void init_uniprot(std::vector<std::string>&, std::string);
@@ -112,6 +106,8 @@ namespace entapConfig {
             database_vect = _pUserInput->get_user_input<vect_str_t>(UInput::INPUT_FLAG_DATABASE);
             _compiled_databases = database_vect;
         }
+
+        FS_dprint("Entering configuration...");
 
         // while state != EXIT_STATE
         while (state != INIT_EXIT) {
@@ -234,8 +230,17 @@ namespace entapConfig {
         std::string indexed_path;
         std::string std_out;
         std::string index_command;
+        std::stringstream log_msg;
 
-        if (_compiled_databases.empty()) return;
+        if (_compiled_databases.empty()) {
+            FS_dprint("No databases selected, skipping");
+            return;
+        }
+
+        log_msg <<
+                ENTAP_STATS::SOFTWARE_BREAK     <<
+                "DIAMOND Database Configuration\n"<<
+                ENTAP_STATS::SOFTWARE_BREAK;
 
         for (std::string item : _compiled_databases) {
             boostFS::path path(item);
@@ -248,6 +253,7 @@ namespace entapConfig {
             // TODO change for updated databases
             if (_pFileSystem->file_exists(indexed_path + ".dmnd")) {
                 FS_dprint("File found at " + indexed_path + ".dmnd, skipping...");
+                log_msg << "DIAMOND database skipped, exists at: " << indexed_path << std::endl;
                 continue;
             }
             index_command =
@@ -261,7 +267,11 @@ namespace entapConfig {
                                        ERR_ENTAP_INIT_INDX_DATABASE);
             }
             FS_dprint("Database successfully indexed to: " + indexed_path + ".dmnd");
-        }
+            log_msg << "DIAMOND database generated to: " << indexed_path << ".dmnd" << std::endl;
+        } // END LOOP
+
+        std::string temp = log_msg.str();
+        _pFileSystem->print_stats(temp);
     }
 
 
@@ -287,8 +297,14 @@ namespace entapConfig {
         std::string err_msg;
         std::string index_cmd;
         std::string std_out;
+        std::stringstream log_msg;
 
         FS_dprint("Ensuring EggNOG-mapper databases exist...");
+        log_msg <<
+                ENTAP_STATS::SOFTWARE_BREAK     <<
+                "EggNOG Database Configuration\n"<<
+                ENTAP_STATS::SOFTWARE_BREAK;
+
 
         // Generate database to allow downloading
         EggnogDatabase eggnogDatabase = EggnogDatabase(_pFileSystem);
@@ -329,6 +345,7 @@ namespace entapConfig {
             // Already exists, skip
             FS_dprint("EggNOG SQL database already exists at: " + EGG_SQL_DB_PATH +
                 " skipping");
+            log_msg << "EggNOG SQL Database skipped, exists at: " << EGG_SQL_DB_PATH << std::endl;
         }
 
         // Check if DIAMOND EggNOG database exists
@@ -358,9 +375,13 @@ namespace entapConfig {
             FS_dprint("Success! EggNOG DIAMOND database indexed at: " + dmnd_outpath);
         } else {
             // File already exists
-            FS_dprint("EggNOG DIAMOND database already exists, skipping");
+            FS_dprint("EggNOG DIAMOND database already exists at: " + EGG_DMND_PATH);
+            log_msg << "EggNOG DIAMOND database skipped, exists at: " << EGG_DMND_PATH << std::endl;
         }
+        // Print to log/debug
         FS_dprint("Success! All EggNOG files verified");
+        std::string temp = log_msg.str();
+        _pFileSystem->print_stats(temp);
     }
 
     // TODO update databases
@@ -373,14 +394,19 @@ namespace entapConfig {
     }
 
     void init_entap_database(std::string &out_dir) {
-        bool generate_databases;    // Whether user would like to generate rather tahn download
-        vect_uint16_t databases;
-        std::string config_outpath;    // Path to check against (from config file)
-        std::string database_outpath;  // Path to print to (also acts as default path)
+        bool              generate_databases;    // Whether user would like to generate rather tahn download
+        vect_uint16_t     databases;
+        std::string       config_outpath;    // Path to check against (from config file)
+        std::string       database_outpath;  // Path to print to (also acts as default path)
+        std::stringstream log_msg;
         EntapDatabase::DATABASE_TYPE database_type;
         EntapDatabase::DATABASE_ERR database_err;
 
         FS_dprint("Initializing EnTAP database...");
+        log_msg <<
+                ENTAP_STATS::SOFTWARE_BREAK     <<
+                "EnTAP Database Configuration\n"<<
+                ENTAP_STATS::SOFTWARE_BREAK;
 
         _pEntapDatabase = new EntapDatabase(_pFileSystem);
         if (_pEntapDatabase == nullptr) {
@@ -421,6 +447,7 @@ namespace entapConfig {
             // First check if this database already exists in the config outpath or default outpath
             if (_pFileSystem->file_exists(config_outpath) || _pFileSystem->file_exists(database_outpath)) {
                 FS_dprint("File already exists at: " + config_outpath);
+                log_msg << "Database skipped, already exists at: " << config_outpath << std::endl;
                 continue; // Don't redownload
             }
 
@@ -436,10 +463,15 @@ namespace entapConfig {
             // Check if successful
             if (database_err == EntapDatabase::ERR_DATA_OK) {
                 FS_dprint("Success! Database written to: " + database_outpath);
+                log_msg << "Database written to: " + database_outpath << std::endl;
             } else {
                 throw ExceptionHandler("Error in getting database " + std::to_string(data) +
                     ". Database Error: " + _pEntapDatabase->print_error_log(database_err), ERR_ENTAP_INIT_DATA_GENERIC);
             }
         }
+
+        // END LOOP, print to log
+        std::string temp = log_msg.str();
+        _pFileSystem->print_stats(temp);
     }
 }

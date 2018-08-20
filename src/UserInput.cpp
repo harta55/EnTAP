@@ -206,7 +206,7 @@ std::string GRAPHING_EXE;
  *
  * @param argc          - Pushed from main
  * @param argv          - Pushed from main
- * @return              - Variable map of user input flags
+ * @return              - None
  * ======================================================================
  */
 void UserInput::parse_arguments_boost(int argc, const char** argv) {
@@ -332,6 +332,7 @@ bool UserInput::verify_user_input() {
     is_config     = (bool)_user_inputs.count(UInput::INPUT_FLAG_CONFIG);     // ignore 'config config'
     is_protein    = (bool)_user_inputs.count(UInput::INPUT_FLAG_RUNPROTEIN);
     is_nucleotide = (bool)_user_inputs.count(UInput::INPUT_FLAG_RUNNUCLEOTIDE);
+    _is_config = is_config;
     if (is_protein && is_nucleotide) {
         throw ExceptionHandler("Cannot specify both protein and nucleotide input flags",
                                ERR_ENTAP_INPUT_PARSE);
@@ -667,15 +668,17 @@ void UserInput::print_user_input() {
 
     std::string         output;
     std::stringstream   ss;
+    std::string         config_text;
     std::time_t         time;
     std::chrono::time_point<std::chrono::system_clock> start_time;
 
     start_time = std::chrono::system_clock::now();
     time = std::chrono::system_clock::to_time_t(start_time);
+    _is_config ? config_text = "Configuration" : config_text = "Execution";
 
     ss <<
        ENTAP_STATS::SOFTWARE_BREAK <<
-       "\nEnTAP Run Information\n" <<
+       "\nEnTAP Run Information - "<< config_text + "\n\n"      <<
        ENTAP_STATS::SOFTWARE_BREAK <<
        "Current EnTAP Version: "   << ENTAP_VERSION_STR            <<
        "\nStart time: "            << std::ctime(&time)            <<
@@ -990,7 +993,6 @@ UserInput::UserInput(int argc, const char** argv) {
 
 UserInput::~UserInput() {
     FS_dprint("Killing object - UserInput");
-
 }
 
 void UserInput::set_pFileSystem(FileSystem *_pFileSystem) {

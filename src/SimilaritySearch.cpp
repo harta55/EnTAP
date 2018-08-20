@@ -335,19 +335,21 @@ std::vector<std::string> SimilaritySearch::verify_diamond_files() {
 void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
     FS_dprint("Beginning to filter individual diamond_files...");
 
-    tax_serial_map_t                                taxonomic_database;
     std::list<std::map<std::string,QuerySequence>>  database_maps;
     std::pair<bool,std::string>                     contam_info;
     std::string                                     species;
     TaxEntry                                        taxEntry;
     QuerySequence::SimSearchResults                 simSearchResults;
+    bool                                            is_uniprot;
+    uint32                                          uniprot_attempts=0;
 
     // ------------------ Read from DIAMOND output ---------------------- //
     std::string qseqid;
     std::string sseqid, stitle, database_name,pident, bitscore,
             length, mismatch, gapopen, qstart, qend, sstart, send;
-    fp64 evalue;
-    fp64 coverage;
+    fp64  evalue;
+    fp64  coverage;
+
     // ----------------------------------------------------------------- //
 
     // Get the taxonomic info (lineage) of the target species
@@ -355,8 +357,11 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
     _input_lineage = taxEntry.lineage;
 
     for (std::string &data : _sim_search_paths) {
+        // Loop through each database
         FS_dprint("Diamond file located at " + data + " being filtered");
         std::stringstream out_stream;
+        is_uniprot = false;
+        uniprot_attempts = 0;
 
         // Confirm we have legit path / not empty
         if (!_pFileSystem->file_exists(data) || _pFileSystem->file_empty(data)) {
@@ -373,20 +378,33 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
                            qstart, qend, sstart, send, evalue, bitscore, coverage,stitle)) {
             simSearchResults = {};
 
-            // get species from database alignment (using regex)
-            species = get_species(stitle);
-            // get taxonomic information with species
-            taxEntry = _pEntapDatabase->get_tax_entry(species);
-            // get contaminant information
-            contam_info = is_contaminant(taxEntry.lineage, taxonomic_database,contams);
-
             // Get pointer to sequence in overall map
             QuerySequence *query = _pQUERY_DATA->get_sequence(qseqid);
-
             if (query == nullptr) {
                 throw ExceptionHandler("Unable to find sequence in transcriptome: " + qseqid + " from file: " + data,
                                        ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
             }
+
+            // get species from database alignment (using boost regex for now)
+            species = get_species(stitle);
+            // get taxonomic information with species
+            taxEntry = _pEntapDatabase->get_tax_entry(species);
+            // get contaminant information
+            contam_info = is_contaminant(taxEntry.lineage,contams);
+
+            // Check if this is a UniProt match and pull back info if so
+            if (is_uniprot) {
+                // Get uniprot info
+                is_uniprot_entry(sseqid, simSearchResults.uniprot_info);
+            } else {
+                if (uniprot_attempts > UNIPROT_ATTEMPTS) {
+                    is_uniprot = false;
+                } else {
+                    is_uniprot = is_uniprot_entry(sseqid, simSearchResults.uniprot_info);
+                    if (!is_uniprot) uniprot_attempts++;
+                }
+            }
+
 
             // Compile sim search data
             simSearchResults.database_path = data;
@@ -804,7 +822,7 @@ void SimilaritySearch::calculate_best_stats (bool is_final, std::string database
     // ************************************ //
 }
 
-std::pair<bool,std::string> SimilaritySearch::is_contaminant(std::string lineage, tax_serial_map_t &database,
+std::pair<bool,std::string> SimilaritySearch::is_contaminant(std::string lineage,
                     std::vector<std::string> &contams) {
     // species and tax database both lowercase
     if (contams.empty()) return std::pair<bool,std::string>(false,"");
@@ -871,5 +889,16 @@ std::string SimilaritySearch::get_transcriptome_shortname() {
     transc_name = transc_name.stem();
     if (transc_name.has_stem()) transc_name = transc_name.stem(); //.fasta.faa
     return transc_name.string();
+}
+
+bool SimilaritySearch::is_uniprot_entry(std::string &sseqid, UniprotEntry &entry) {
+    std::string accession;
+
+    // sseqid - sp|Q9FJZ9|PER72_ARATH
+    if (_pEntapDatabase == nullptr || sseqid.empty()) return false;
+
+    accession = sseqid.substr(sseqid.rfind('|',sseqid.length())+1);     // Q9FJZ9
+    entry = _pEntapDatabase->get_uniprot_entry(accession);
+    return !entry.is_empty();
 }
 

@@ -636,6 +636,7 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
         case FILE_GZ:
             terminal_cmd =
                 "gunzip -c " + in_path + " > " + out_dir; //outdir will be outpath in this case
+            break;
         default:
             return false;
     }

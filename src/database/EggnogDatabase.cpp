@@ -234,11 +234,14 @@ const vect_str_t EggnogDatabase::TAXONOMIC_RESOLUTION = {"apiNOG", "virNOG", "ne
                                          "NOG"};
 
 
-EggnogDatabase::EggnogDatabase(FileSystem* filesystem) {
+EggnogDatabase::EggnogDatabase(FileSystem* filesystem, EntapDatabase* entap_data) {
     _pFilesystem = filesystem;
     _pSQLDatabase = nullptr;
+    _pEntapDatabase = entap_data;
     _err_msg = "";
-    _version = SQL_VERSION_CHANGE;
+    _VERSION_MAJOR = 0;
+    _VERSION_MINOR = 0;
+    _VERSION_REV   = 0;
 }
 
 EggnogDatabase::~EggnogDatabase() {
@@ -329,27 +332,26 @@ EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::open_sql(std::string& sql_path) {
         return ERR_EGG_SQL_OPEN;
     }
 
+    set_database_version();
     return ERR_EGG_OK;
 }
 
 std::string EggnogDatabase::print_err() {
+    std::string ret = "Database Error Code: " + _err_code;
+
     return _err_msg;
 }
 
-QuerySequence::EggnogResults EggnogDatabase::get_eggnog_entry(std::string &accession) {
+void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults& eggnog_data) {
     std::set<std::string> unique_groups;    // Unique member orthologous groups
     std::string           temp;
     member_orthologs_t    member_orthologs;
     std::set<std::string> level_set;
     set_str_t             orthologs;        // Selected from member orthologs
 
-    QuerySequence::EggnogResults eggnog_data = {};
-
-    eggnog_data.best_hit_query = accession;     // 34740.HMEL017225-PA
-
     // Get member orthologous groups (0A01R@biNOG,0V8CP@meNOG) from best hit query
     get_member_ogs(eggnog_data);
-    if (eggnog_data.member_ogs.empty()) return eggnog_data;
+    if (eggnog_data.member_ogs.empty()) return;
 
 
     // Get unique tax groups (split "0V8CP@meNOG" to meNOG) and max level
@@ -367,19 +369,20 @@ QuerySequence::EggnogResults EggnogDatabase::get_eggnog_entry(std::string &acces
                       std::inserter(level_set,level_set.end()));
             }
             level_set.insert(level);
-            eggnog_data.tax_scope_lvl_max = level + std::to_string(level_set.size());
+            eggnog_data.tax_scope_lvl_max = level + "[" + std::to_string(level_set.size()) + "]";
+            // Get tax scope readable
+            get_tax_scope(eggnog_data);
+            break;
         }
     }
 
-
     // Get all member orthologs
-    member_orthologs = get_member_orthologs(member_orthologs, accession, level_set);
+    member_orthologs = get_member_orthologs(member_orthologs, eggnog_data.seed_ortholog, level_set);
     orthologs = member_orthologs["all"];        // default, can change
 
     if (!orthologs.empty()) {
         get_annotations(orthologs, eggnog_data);
     }
-    return eggnog_data;
 }
 
 
@@ -400,19 +403,18 @@ QuerySequence::EggnogResults EggnogDatabase::get_eggnog_entry(std::string &acces
  * @return              - None
  * ======================================================================
  */
-void EggnogDatabase::get_tax_scope(std::string &raw_scope,
-                              QuerySequence::EggnogResults &eggnogResults) {
+void EggnogDatabase::get_tax_scope(QuerySequence::EggnogResults &eggnogResults) {
     // Lookup/Assign Tax Scope
 
-    if (!raw_scope.empty()) {
-        uint16 p = (uint16) (raw_scope.find("NOG"));
+    if (!eggnogResults.tax_scope_lvl_max.empty()) {
+        uint16 p = (uint16) (eggnogResults.tax_scope_lvl_max.find("NOG"));
         if (p != std::string::npos) {
-            eggnogResults.tax_scope = raw_scope.substr(0,p+3);
+            eggnogResults.tax_scope = eggnogResults.tax_scope_lvl_max.substr(0,p+3);
             eggnogResults.tax_scope_readable = EGGNOG_LEVELS.at(eggnogResults.tax_scope);
             return;
         }
     }
-    eggnogResults.tax_scope  = raw_scope;
+    eggnogResults.tax_scope  = eggnogResults.tax_scope_lvl_max;
     eggnogResults.tax_scope_readable = "";
 }
 
@@ -451,7 +453,7 @@ void EggnogDatabase::get_sql_data(QuerySequence::EggnogResults &eggnogResults, S
             sql_protein = results[0][2];
             if (!sql_desc.empty() && sql_desc.find("[]") != 0) eggnogResults.description = sql_desc;
             if (!sql_kegg.empty() && sql_kegg.find("[]") != 0) {
-                eggnogResults.sql_kegg = format_sql_data(sql_kegg);
+                eggnogResults.kegg = format_sql_data(sql_kegg);
             }
             if (!sql_protein.empty() && sql_protein.find("{}") != 0){
                 eggnogResults.protein_domains = format_sql_data(sql_protein);
@@ -556,15 +558,29 @@ std::string EggnogDatabase::format_sql_data(std::string &input) {
 
 void EggnogDatabase::get_member_ogs(QuerySequence::EggnogResults& eggnog_results) {
     std::vector<std::vector<std::string>>results;
+    char *query;
 
-    if (eggnog_results.best_hit_query.empty()) return;
+    if (eggnog_results.seed_ortholog.empty()) return;
 
-    char *query = sqlite3_mprintf(
-            "SELECT %q FROM %q WHERE %q=%Q",
-            SQL_MEMBER_GROUP.c_str(),
-            SQL_MEMBER_TABLE.c_str(),
-            SQL_MEMBER_NAME.c_str(),
-            eggnog_results.best_hit_query.c_str());
+    if (_sql_version == EGGNOG_VERSION_4_5_1) {
+        // emapper.db-4.5.1
+        query = sqlite3_mprintf(
+                "SELECT %q FROM %q WHERE %q=%Q",
+                SQL_MEMBER_GROUP.c_str(),
+                SQL_EGGNOG_TABLE.c_str(),
+                SQL_MEMBER_NAME.c_str(),
+                eggnog_results.seed_ortholog.c_str()
+        );
+    } else {
+        // Older versions
+        query = sqlite3_mprintf(
+                "SELECT %q FROM %q WHERE %q=%Q",
+                SQL_MEMBER_GROUP.c_str(),
+                _SQL_MEMBER_TABLE.c_str(),
+                SQL_MEMBER_NAME.c_str(),
+                eggnog_results.seed_ortholog.c_str());
+    }
+
     results = _pSQLDatabase->query(query);
     if (!results.empty()) {
         eggnog_results.member_ogs = results[0][0];
@@ -581,12 +597,12 @@ EggnogDatabase::member_orthologs_t EggnogDatabase::get_member_orthologs(EggnogDa
     SQLDatabaseHelper::query_struct sql_results;
 
     query_taxon = best_hit.substr(0, best_hit.find_first_of('.'));    // "34740"
-    target_members.insert(best_hit);                            // 34740.HMEL017225-PA
+    target_members.insert(best_hit);                                  // 34740.HMEL017225-PA
 
     sql_query = sqlite3_mprintf(
             "SELECT %q FROM %q WHERE %q=%Q",
             SQL_MEMBER_ORTHOINDEX.c_str(),
-            SQL_MEMBER_TABLE.c_str(),
+            _SQL_MEMBER_TABLE.c_str(),
             SQL_MEMBER_NAME.c_str(),
             best_hit.c_str());
     sql_results = _pSQLDatabase->query(sql_query);
@@ -594,17 +610,18 @@ EggnogDatabase::member_orthologs_t EggnogDatabase::get_member_orthologs(EggnogDa
         event_indexes = sql_results[0][0];
     } else return member_orthologs_t();
 
+    if (event_indexes.empty()) return member_orthologs_t();
     // Can specify levels as well here
     sql_query = sqlite3_mprintf(
-            "SELECT %q, %q, %q FROM %q WHERE %q IN (%Q) AND %q IN (%Q)",
+            "SELECT %q, %q, %q FROM %q WHERE %q IN %s AND %q IN %s",
             SQL_EVENT_LEVEL.c_str(),
             SQL_EVENT_SIDE1.c_str(),
             SQL_EVENT_SIDE2.c_str(),
             SQL_EVENT_TABLE.c_str(),
             SQL_EVENT_I.c_str(),
-            event_indexes.c_str(),
+            _pSQLDatabase->format_string(event_indexes,',').c_str(),
             SQL_EVENT_LEVEL.c_str(),
-            container_to_string<std::string>(target_lvls,",").c_str()
+            _pSQLDatabase->format_container(target_lvls).c_str()
     );
     sql_results = _pSQLDatabase->query(sql_query);
 
@@ -644,6 +661,9 @@ EggnogDatabase::member_orthologs_t EggnogDatabase::get_member_orthologs(EggnogDa
         std::unordered_map<std::string,set_str_t> by_sp1;
         std::unordered_map<std::string,set_str_t> by_sp2;
 
+        std::map<std::pair<std::string,set_str_t>,
+                std::set<std::pair<std::string,set_str_t>>>::iterator iter;
+
         for (auto &pair : side1_pairs) {
             if ( (target_taxa.empty()) ||
                  (std::find(target_taxa.begin(),target_taxa.end(), pair.first) != target_taxa.end()) ||
@@ -681,7 +701,13 @@ EggnogDatabase::member_orthologs_t EggnogDatabase::get_member_orthologs(EggnogDa
                     set_str_t co2 = by_sp2[sp2];
                     key2 = std::make_pair(sp2, co2);
                 }
-                ortholog_map.at(key1).insert(key2);    // default empty set
+                iter = ortholog_map.find(key1);
+                if (iter != ortholog_map.end()) {
+                    iter->second.insert(key2);       // default empty set
+                } else {
+                    ortholog_map.emplace(key1, std::set<std::pair<std::string,set_str_t>>());
+                    ortholog_map.at(key1).insert(key2);
+                }
             }
         }
 
@@ -705,7 +731,13 @@ EggnogDatabase::member_orthologs_t EggnogDatabase::get_member_orthologs(EggnogDa
                     set_str_t co2 = by_sp1[sp2];
                     key2 = std::make_pair(sp2, co2);
                 }
-                ortholog_map.at(key1).insert(key2);    // default empty set
+                iter = ortholog_map.find(key1);
+                if (iter != ortholog_map.end()) {
+                    iter->second.insert(key2);       // default empty set
+                } else {
+                    ortholog_map.emplace(key1, std::set<std::pair<std::string,set_str_t>>());
+                    ortholog_map.at(key1).insert(key2);
+                }
             }
         }
     }
@@ -744,25 +776,23 @@ EggnogDatabase::member_orthologs_t EggnogDatabase::get_member_orthologs(EggnogDa
 
 void EggnogDatabase::get_annotations(set_str_t& orthologs, QuerySequence::EggnogResults& eggnog_results) {
 
-    std::string         seq_str;
     char*               sql_query;
     set_str_t           all_gos;
     set_str_t           all_kegg;
     set_str_t           all_pnames;
     set_str_t           all_bigg;
+    std::string         delim_list;
     SQLDatabaseHelper::query_struct sql_results;
 
-    seq_str = container_to_string<std::string>(orthologs, ",");
-
     // This is different depending on version on eggnog using
-    if (_version >= SQL_VERSION_CHANGE) {
+    if (_sql_version == EGGNOG_VERSION_4_5_1) {
         sql_query = sqlite3_mprintf(
                 "SELECT %q, %q, %q, %q, %q FROM %q "\
                 "LEFT JOIN seq on %q = %q "\
                 "LEFT JOIN gene_ontology on %q = %q "\
                 "LEFT JOIN kegg on %q = %q "\
-                "LEFT JOIN bigg on &q = %q "\
-                "WHERE %q in %Q",
+                "LEFT JOIN bigg on %q = %q "\
+                "WHERE %q in %s",
                 SQL_EGGNOG_NAME.c_str(),
                 SQL_EGGNOG_PNAME.c_str(),
                 SQL_EGGNOG_GOS.c_str(),
@@ -770,41 +800,142 @@ void EggnogDatabase::get_annotations(set_str_t& orthologs, QuerySequence::Eggnog
                 SQL_EGGNOG_BIGG.c_str(),
                 SQL_EGGNOG_TABLE.c_str(),
                 SQL_EGGNOG_SEQ_NAME.c_str(), SQL_EGGNOG_NAME.c_str(),
-                SQL_EGGNOG_GOS.c_str(), SQL_EGGNOG_NAME.c_str(),
-                SQL_EGGNOG_KEGG.c_str(), SQL_EGGNOG_NAME.c_str(),
-                SQL_EGGNOG_BIGG.c_str(), SQL_EGGNOG_NAME.c_str(),
-                SQL_EGGNOG_NAME.c_str(), seq_str
+                SQL_EGGNOG_GO_NAME.c_str(), SQL_EGGNOG_NAME.c_str(),
+                SQL_EGGNOG_KEGG_NAME.c_str(), SQL_EGGNOG_NAME.c_str(),
+                SQL_EGGNOG_BIGG_NAME.c_str(), SQL_EGGNOG_NAME.c_str(),
+                SQL_EGGNOG_NAME.c_str(), _pSQLDatabase->format_container(orthologs).c_str()
         );
     } else {
         // Older versions
         sql_query = sqlite3_mprintf(
-                "SELECT %q, %q, %q, %q FROM %q WHERE %q IN %Q",
+                "SELECT %q, %q, %q, %q FROM %q WHERE %q IN %s",
                 SQL_MEMBER_NAME.c_str(),
                 SQL_MEMBER_PNAME.c_str(),
                 SQL_MEMBER_GO.c_str(),
                 SQL_MEMBER_KEGG.c_str(),
-                SQL_MEMBER_TABLE.c_str(),
-                SQL_MEMBER_NAME.c_str(), seq_str.c_str()
+                _SQL_MEMBER_TABLE.c_str(),
+                SQL_MEMBER_NAME.c_str(), _pSQLDatabase->format_container(orthologs).c_str()
         );
     }
 
     sql_results = _pSQLDatabase->query(sql_query);
     if (!sql_results.empty()) {
         for (vect_str_t &data : sql_results) {
-            all_pnames.insert(data[1]);
-            all_gos.insert(data[2]);
-            all_kegg.insert(data[3]);
-            if (_version >= SQL_VERSION_CHANGE) all_bigg.insert(data[4]);
+            update_dataset(all_pnames, EGGNOG_DATA_PNAME, data[1]);
+            update_dataset(all_gos, EGGNOG_DATA_GO, data[2]);
+            update_dataset(all_kegg, EGGNOG_DATA_KEGG, data[3]);
+            if (_sql_version == EGGNOG_VERSION_4_5_1)
+                update_dataset(all_bigg, EGGNOG_DATA_BIGG, data[4]);
         }
         eggnog_results.pname  = container_to_string<std::string>(all_pnames,",");
-        eggnog_results.sql_go = container_to_string<std::string>(all_gos, ",");
-        eggnog_results.sql_kegg = container_to_string<std::string>(all_kegg, ",");
-        if (_version >= SQL_VERSION_CHANGE)
+        delim_list = container_to_string<std::string>(all_gos, ",");
+        eggnog_results.parsed_go = _pEntapDatabase->format_go_delim(delim_list,',');
+        eggnog_results.kegg = container_to_string<std::string>(all_kegg, ",");
+        if (_sql_version == EGGNOG_VERSION_4_5_1)
             eggnog_results.bigg = container_to_string<std::string>(all_bigg, ",");
     } else {
         eggnog_results.pname = "";
-        eggnog_results.sql_go = "";
-        eggnog_results.sql_kegg = "";
+        eggnog_results.parsed_go = go_format_t();
+        eggnog_results.kegg = "";
         eggnog_results.bigg = "";
+    }
+}
+
+void EggnogDatabase::set_error(std::string &msg, ERR_EGGNOG_DB code) {
+    _err_msg = msg;
+    _err_code = code;
+}
+
+void EggnogDatabase::set_database_version() {
+    char *query;
+    std::string version_str;
+    uint8 indexl;
+    uint8 indexr;
+
+    FS_dprint("Getting EggNOG database SQL version...");
+
+    if (_pSQLDatabase == nullptr) {
+        FS_dprint("Could not find EggNOG version, NULL");
+        _sql_version = EGGNOG_VERSION_UNKONWN;
+        return;
+    }
+
+    query = sqlite3_mprintf(
+            "SELECT version FROM version"
+    );
+
+    try {
+        FS_dprint("Executing sql cmd: " + std::string(query));
+        version_str = _pSQLDatabase->query(query)[0][0];
+        if (version_str.empty())
+            throw std::runtime_error("NULL version from query");
+
+        indexl = (uint8) version_str.find('.');
+        indexr = (uint8) version_str.rfind('.');
+
+        _VERSION_MAJOR = (uint16) std::stoi(version_str.substr(0,indexl));
+        _VERSION_MINOR = (uint16) std::stoi(version_str.substr(indexl+1, (uint32) (indexr - indexl - 1)));
+        _VERSION_REV   = (uint16) std::stoi(version_str.substr(indexr+1));
+
+        if (_VERSION_MAJOR == 4 && _VERSION_MINOR == 5 && _VERSION_REV == 1) {
+            _sql_version = EGGNOG_VERSION_4_5_1;
+            FS_dprint("SQL Version set to 4.5.1");
+        } else if (_VERSION_MAJOR <= 4 ){
+            FS_dprint("ERROR: SQL Version less than 4, setting to 'earlier'");
+            _sql_version = EGGNOG_VERSION_EARLIER;
+        }
+        FS_dprint("Success!");
+
+    } catch (...) {
+        FS_dprint("ERROR: couldn't get SQL version.Setting to earlier version by default");
+        _sql_version = EGGNOG_VERSION_EARLIER;
+    }
+
+    if (_sql_version == EGGNOG_VERSION_4_5_1) {
+        _SQL_MEMBER_TABLE = SQL_MEMBER_TABLE_1;
+    } else {
+        _SQL_MEMBER_TABLE = SQL_MEMBER_TABLE;
+    }
+}
+
+void EggnogDatabase::update_dataset(set_str_t &set, EGGNOG_DATA_TYPES datatype, std::string data) {
+    if (data.empty()) return;
+
+    uint16 index_start;
+    uint16 index_end;
+    std::string term;
+
+    switch (datatype) {
+        case EGGNOG_DATA_GO:
+            // F|GO:0000166|IEA,F|GO:0001882|IEA,F|GO:0001883|IEA
+            while (data.find("GO:") != std::string::npos) {
+                index_start = (uint16) data.find("GO:");
+                index_end = (uint16) data.find("|", index_start);
+                term = data.substr(index_start,data.find("|", index_start) - index_start);
+                set.insert(term);
+                data.erase(0,index_end);
+            }
+            break;
+
+        case EGGNOG_DATA_KEGG:
+            set.insert(data);
+            break;
+
+        case EGGNOG_DATA_BIGG:
+        {
+            std::istringstream iss(data);
+            while(std::getline(iss, term, ',')) {
+                set.insert(term);
+            }
+            break;
+        }
+
+
+        case EGGNOG_DATA_PNAME:
+            set.insert(data);
+            break;
+
+        default:
+            return;
     }
 }

@@ -51,7 +51,10 @@ public:
         SUCCESS_FRAME_SEL  = (1 << 1),
         SUCCESS_ONTOLOGY   = (1 << 2),
         SUCCESS_SIM_SEARCH = (1 << 3),
-        IS_PROTEIN         = (1 << 4)
+        IS_PROTEIN         = (1 << 4),
+
+        DATA_FLAGS_MAX     = (1 << 31)
+
 
     }DATA_FLAGS;
 
@@ -97,7 +100,6 @@ private:
 
     QUERY_MAP_T  *_pSEQUENCES;
     bool         _trim;
-    bool         _protein;
     uint32       _total_sequences;          // Original sequence number
     uint32       _data_flags;
     uint64       _start_nuc_len;            // Starting total len

@@ -83,21 +83,24 @@ enum entap_err {
     ERR_ENTAP_PARSE_INTERPRO              = 171u,
     ERR_ENTAP_PARSE_EGGNOG_DMND           = 180u,
     ERR_ENTAP_FILE_IO                     = 200u,
-    ERR_ENTAP_MEM_ALLOC                   = 201u
+    ERR_ENTAP_MEM_ALLOC                   = 201u,
+    ERR_ENTAP_MAX                         = 201u
 };
 
 
 class ExceptionHandler: public std::exception{
 
-    public:
-        ExceptionHandler(const std::string&, int);
-        const char* what();
-        int getErr_code() const;
-        void print_msg(FileSystem*);
+public:
+    ExceptionHandler(const std::string&, int);
+    const char* what();
+    int getErr_code() const;
+    void print_msg(FileSystem*);
 
-    private:
-        int err_code;
-        std::string message;
-    };
+private:
+    int err_code;
+    std::string message;
+
+    static const std::string ERR_ENTAP_STR [ERR_ENTAP_MAX];
+};
 
 #endif //ENTAP_EXCEPTIONHANDLER_H

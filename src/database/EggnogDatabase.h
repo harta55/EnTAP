@@ -61,13 +61,27 @@ public:
 
     } ERR_EGGNOG_DB;
 
-    EggnogDatabase(FileSystem* filesystem);
+    typedef enum {
+        EGGNOG_VERSION_UNKONWN=0,
+        EGGNOG_VERSION_EARLIER,
+        EGGNOG_VERSION_4_5_1,
+        EGGNOG_VERSION_MAX
+    } EGGNOG_SQL_VERSION;
+
+    typedef enum {
+        EGGNOG_DATA_GO=0,
+        EGGNOG_DATA_KEGG,
+        EGGNOG_DATA_BIGG,
+        EGGNOG_DATA_PNAME
+    } EGGNOG_DATA_TYPES;
+
+    EggnogDatabase(FileSystem* filesystem, EntapDatabase* entap_data);
     ~EggnogDatabase();
 
     ERR_EGGNOG_DB download(EGGNOG_DB_TYPES type, std::string out_path);
     ERR_EGGNOG_DB open_sql(std::string& sql_path);
     std::string print_err();
-    QuerySequence::EggnogResults get_eggnog_entry(std::string &accession);
+    void get_eggnog_entry(QuerySequence::EggnogResults& eg);
 
 
 private:
@@ -79,22 +93,71 @@ private:
     const std::string TEMP_DMND_GZ = "temp_egg_dmnd.gz";
     const std::string TEMP_FAST_GZ = "temp_egg_fasta.gz";
 
-    // SQL Data
-    const fp32        SQL_VERSION_CHANGE    = 1;            // Version in which SQL tables changed (just placeholder for now)
+    // SQL Data Constants (from EggNOG SQL Database)
+
+    /*      emapper.db-4.5.1
+     * bigg
+     *      name            VARCHAR(32)
+     *      reaction        VARCHAR(32)
+     * eggnog
+     *      name            VARCHAR(32)
+     *      group           TEXT
+     * event
+     *      i               INTEGER
+     *      level           VARCHAR(16)
+     *      og              VARCHAR(16)
+     *      side1           TEXT
+     *      side2           TEXT
+     * gene_ontology
+     *      name            VARCHAR(32)
+     *      gos             TEXT
+     * kegg
+     *      name            VARCHAR(32)
+     *      ko              VARCHAR(32)
+     * og
+     *      og              VARCHAR(16)
+     *      level           VARCHAR(16)
+     *      nm              INTEGER
+     *      description     TEXT
+     *      COG_categories  VARCHAR(8)
+     *      GO_freq         TEXT
+     *      KEGG_freq       TEXT
+     *      SMART_freq      TEXT
+     *      proteins        TEXT
+     * orthologs
+     *      name            VARCHAR(32)
+     *      orthoindex      TEXT
+     * seq
+     *      name            VARCHAR(32)
+     *      pname           VARCHAR(32)
+     * version
+     *      version         VARCHAR(16)
+     *
+     *
+     */
+    const std::string SQL_MEMBER_TABLE_1    = "orthologs";
+    const std::string SQL_EGGNOG_TABLE      = "eggnog";     // Used for annotation info
+    const std::string SQL_EGGNOG_KEGG       = "kegg.ko";
+    const std::string SQL_EGGNOG_KEGG_NAME  = "kegg.name";
+    const std::string SQL_EGGNOG_BIGG       = "bigg.reaction";
+    const std::string SQL_EGGNOG_BIGG_NAME  = "bigg.name";
+    const std::string SQL_EGGNOG_PNAME      = "seq.pname";
+    const std::string SQL_EGGNOG_SEQ_NAME   = "seq.name";
+    const std::string SQL_EGGNOG_GOS        = "gene_ontology.gos";
+    const std::string SQL_EGGNOG_GO_NAME    = "gene_ontology.name";
+
+    // emapper.db-earlier
     const std::string SQL_MEMBER_TABLE      = "member";     // Changed to 'orthologs' in newer versions
+
+    // Both databases
     const std::string SQL_MEMBER_GROUP      = "groups";
     const std::string SQL_MEMBER_NAME       = "name";
     const std::string SQL_MEMBER_ORTHOINDEX = "orthoindex";
     const std::string SQL_MEMBER_PNAME      = "pname";
     const std::string SQL_MEMBER_GO         = "go";
     const std::string SQL_MEMBER_KEGG       = "kegg";
-    const std::string SQL_EGGNOG_TABLE      = "eggnog";     // Newer versions use this table for annotation info
     const std::string SQL_EGGNOG_NAME       = "eggnog.name";
-    const std::string SQL_EGGNOG_PNAME      = "seq.pname";
-    const std::string SQL_EGGNOG_SEQ_NAME   = "seq.name";
-    const std::string SQL_EGGNOG_GOS        = "gene_ontology.gos";
-    const std::string SQL_EGGNOG_KEGG       = "kegg.ko";
-    const std::string SQL_EGGNOG_BIGG       = "bigg.reaction";
+
     const std::string SQL_EVENT_TABLE       = "event";
     const std::string SQL_EVENT_LEVEL       = "level";
     const std::string SQL_EVENT_SIDE1       = "side1";
@@ -104,13 +167,21 @@ private:
     typename std::unordered_map<std::string, vect_str_t>::const_iterator _it_vect_str;
     SQLDatabaseHelper *_pSQLDatabase;
     FileSystem        *_pFilesystem;
+    EntapDatabase     *_pEntapDatabase;
     std::string        _err_msg;
-    fp32               _version;
+    ERR_EGGNOG_DB      _err_code;
+    std::string        _SQL_MEMBER_TABLE;
+    EGGNOG_SQL_VERSION _sql_version;
+    uint16              _VERSION_MAJOR;
+    uint16              _VERSION_MINOR;
+    uint16              _VERSION_REV;
+
+
     static const std::unordered_map<std::string,std::string> EGGNOG_LEVELS;   // Mappings from tax lvl to full name
     static const std::unordered_map<std::string, vect_str_t> LEVEL_CONTENT;
     static const vect_str_t                                  TAXONOMIC_RESOLUTION;
 
-    void get_tax_scope(std::string&, QuerySequence::EggnogResults&);
+    void get_tax_scope(QuerySequence::EggnogResults&);
     void get_sql_data(QuerySequence::EggnogResults&, SQLDatabaseHelper&);
     std::string format_sql_data(std::string&);
     void get_og_query(QuerySequence::EggnogResults&);
@@ -119,7 +190,9 @@ private:
                               std::string &best_hit,
                               std::set<std::string> &target_lvls);
     void get_annotations(set_str_t& orthologs, QuerySequence::EggnogResults& eggnog_results);
-
+    void set_error(std::string &msg, ERR_EGGNOG_DB code);
+    void set_database_version();
+    void update_dataset(set_str_t &set, EGGNOG_DATA_TYPES datatype, std::string data);
 };
 
 

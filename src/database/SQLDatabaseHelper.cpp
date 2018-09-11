@@ -55,6 +55,7 @@ bool SQLDatabaseHelper::open(std::string file) {
         sqlite3_exec(_database,"PRAGMA synchronous = OFF", NULL, NULL, NULL);
         sqlite3_exec(_database,"PRAGMA count_changes = false", NULL, NULL, NULL);
         sqlite3_exec(_database,"PRAGMA journal_mode = OFF", NULL, NULL, NULL);
+        FS_dprint("Success!");
     }
     return err_code == SQLITE_OK;
 }
@@ -116,6 +117,7 @@ bool SQLDatabaseHelper::create(std::string file) {
 std::vector<std::vector<std::string>> SQLDatabaseHelper::query(char *query) {
     sqlite3_stmt *stmt;
     query_struct output;
+    char* txt;
     if (sqlite3_prepare_v2(_database,query,-1,&stmt,0) == SQLITE_OK) {
         int col_num = sqlite3_column_count(stmt);
         int stat = 0;
@@ -124,7 +126,16 @@ std::vector<std::vector<std::string>> SQLDatabaseHelper::query(char *query) {
             if (stat == SQLITE_ROW) {
                 std::vector<std::string> vals;
                 for (int i = 0; i < col_num; i++) {
-                    vals.push_back(std::string((char*)sqlite3_column_text(stmt,i)));
+                    try {
+                        txt = (char*)sqlite3_column_text(stmt, i);
+                        if (txt != nullptr) {
+                            vals.push_back(std::string(txt));
+                        } else {
+                            vals.push_back("");
+                        }
+                    } catch (const std::exception &e) {
+                        FS_dprint("SQL Error: " + std::string(e.what()));
+                    }
                 }
                 output.push_back(vals);
             } else {
@@ -133,7 +144,8 @@ std::vector<std::vector<std::string>> SQLDatabaseHelper::query(char *query) {
         }
         sqlite3_finalize(stmt);
     } else {
-        throw ExceptionHandler("Error querying database",ERR_ENTAP_DATABASE_QUERY);
+        throw ExceptionHandler("Error querying database: " + std::string(sqlite3_errmsg(_database)),
+                               ERR_ENTAP_DATABASE_QUERY);
     }
     return output;
 }
@@ -165,4 +177,32 @@ bool SQLDatabaseHelper::execute_cmd(char* cmd) {
 //        FS_dprint("Success!");
         return true;
     }
+}
+
+std::string SQLDatabaseHelper::format_container(std::set<std::string> &in_cont) {
+    std::string ret = "(";
+
+    if (in_cont.empty()) return "";
+    for (const std::string &val : in_cont) {
+        ret += "'" + val + "',";
+    }
+    ret.erase(ret.find_last_of(','));
+    ret += ")";
+    return ret;
+}
+
+std::string SQLDatabaseHelper::format_string(std::string &str, char delim) {
+    std::string ret = "(";
+
+    // Remove newline if exists
+    if (str.empty()) return "";
+    str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+    std::istringstream iss(str);
+    std::string val;
+    while(std::getline(iss, val, delim)) {
+        ret += "'" + val + "',";
+    }
+    ret.erase(ret.find_last_of(','));
+    ret += ")";
+    return ret;
 }

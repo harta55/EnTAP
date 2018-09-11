@@ -135,10 +135,10 @@ namespace entapConfig {
                 }
             handle_state();
             } catch (ExceptionHandler &e) {
+                SAFE_DELETE(_pEntapDatabase);
                 throw ExceptionHandler(e.what(), e.getErr_code());
             }
         }
-
         SAFE_DELETE(_pEntapDatabase);
         FS_dprint("Configuration complete!");
     }
@@ -307,7 +307,7 @@ namespace entapConfig {
 
 
         // Generate database to allow downloading
-        EggnogDatabase eggnogDatabase = EggnogDatabase(_pFileSystem);
+        EggnogDatabase eggnogDatabase = EggnogDatabase(_pFileSystem, _pEntapDatabase);
 
 #if EGGNOG_MAPPER
         std::string eggnog_cmd;
@@ -466,7 +466,7 @@ namespace entapConfig {
                 log_msg << "Database written to: " + database_outpath << std::endl;
             } else {
                 throw ExceptionHandler("Error in getting database " + std::to_string(data) +
-                    ". Database Error: " + _pEntapDatabase->print_error_log(database_err), ERR_ENTAP_INIT_DATA_GENERIC);
+                    ". Database Error: " + _pEntapDatabase->print_error_log(), ERR_ENTAP_INIT_DATA_GENERIC);
             }
         }
 

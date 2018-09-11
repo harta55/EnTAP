@@ -95,12 +95,8 @@ void QuerySequence::setFrame(const std::string &frame) {
     QuerySequence::_frame = frame;
 }
 
-void QuerySequence::setSeq_length(unsigned long seq_length) {
-    QuerySequence::_seq_length = seq_length;
-}
-
 void QuerySequence::set_eggnog_results(const EggnogResults &eggnogResults) {
-    this->_eggnog_results = eggnogResults;
+    memcpy(&this->_eggnog_results, &eggnogResults, sizeof(eggnogResults));
     this->QUERY_FLAG_SET(QUERY_EGGNOG_HIT);
     this->QUERY_FLAG_SET(QUERY_FAMILY_ASSIGNED);
 }
@@ -228,7 +224,7 @@ void QuerySequence::init_header() {
             {&ENTAP_EXECUTE::HEADER_TAX_SCOPE       , &_eggnog_results.tax_scope_readable},
             {&ENTAP_EXECUTE::HEADER_EGG_OGS         , &_eggnog_results.ogs},
             {&ENTAP_EXECUTE::HEADER_EGG_DESC        , &_eggnog_results.description},
-            {&ENTAP_EXECUTE::HEADER_EGG_KEGG        , &_eggnog_results.sql_kegg} ,
+            {&ENTAP_EXECUTE::HEADER_EGG_KEGG        , &_eggnog_results.kegg} ,
             {&ENTAP_EXECUTE::HEADER_EGG_PROTEIN     , &_eggnog_results.protein_domains},
             {&ENTAP_EXECUTE::HEADER_INTER_EVAL      , &_interpro_results.e_value},
             {&ENTAP_EXECUTE::HEADER_INTER_INTERPRO  , &_interpro_results.interpro_desc_id},
@@ -317,7 +313,17 @@ bool QuerySequence::hit_database(ExecuteStates state, uint16 software, std::stri
     }
 }
 
-void QuerySequence::update_best_hit(ExecuteStates state, uint16 software, std::string &database) {
+void QuerySequence::update_best_hit(ExecuteStates state, uint16 software, std::string &database, QueryAlignment* new_alignment) {
+    // Did we not hit against the database yet?
+    if (!hit_database(state, software, database)) {
+        // No, create new vector for that database and add as best hit for database
+        std::vector<QueryAlignment*> vect = {new_alignment};
+        _total_alignment_data.index_data(state,software)->emplace(database, std::make_pair(new_alignment, vect));
+    } else {
+        // Yes, add alignment to list then update
+        _total_alignment_data.index_data(state,software)->at(database).second.push_back(new_alignment);
+    }
+
     // Always will have hit this database
     align_database_hits_t *database_data =
             &_total_alignment_data.index_data(state,software)->at(database);
@@ -546,4 +552,27 @@ QuerySequence::QueryAlignment *QuerySequence::AlignmentData::index_best_align(Ex
 void
 QuerySequence::AlignmentData::set_best_align(ExecuteStates state, uint16 software, QuerySequence::QueryAlignment *alignment) {
     _alignment_best.at(state * ENTAP_EXECUTE::SOFTWARE_MAX + software) = alignment;
+}
+
+//**********************************************************************
+//**********************************************************************
+//                 EggnogDmndAlignment Struct
+//**********************************************************************
+//**********************************************************************
+
+QuerySequence::EggnogDmndAlignment::EggnogDmndAlignment(QuerySequence::EggnogResults eggnogResults,
+                                                        QuerySequence *parent) {
+
+}
+
+QuerySequence::EggnogDmndAlignment::~EggnogDmndAlignment() {
+
+}
+
+QuerySequence::EggnogResults *QuerySequence::EggnogDmndAlignment::get_results() {
+    return nullptr;
+}
+
+bool QuerySequence::EggnogDmndAlignment::operator>(const QuerySequence::QueryAlignment &) {
+    return false;
 }

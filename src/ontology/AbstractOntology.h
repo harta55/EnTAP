@@ -93,6 +93,7 @@ protected:
 
     bool               _blastp;
     int                _threads;
+    uint16             _software_flag;
     std::string        _outpath;
     std::string        _inpath;
     std::string        _ontology_dir;

@@ -137,6 +137,7 @@ struct Compair {
 
 template <class T>
 std::string container_to_string(std::set<T> &in_cont, const char *delim) {
+    if (in_cont.empty()) return "";
     std::ostringstream stream;
     std::copy(in_cont.begin(), in_cont.end(), std::ostream_iterator<std::string>(stream, delim));
     std::string result = stream.str();

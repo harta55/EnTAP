@@ -96,7 +96,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     _pFileSystem->delete_file(out_new_path);
 
     set_input_type(input_file);
-    _protein ? transcript_type = PROTEIN_FLAG : transcript_type = NUCLEO_FLAG;
+    DATA_FLAG_GET(IS_PROTEIN) ? transcript_type = PROTEIN_FLAG : transcript_type = NUCLEO_FLAG;
 
     std::ifstream in_file(input_file);
     std::ofstream out_file(out_new_path,std::ios::out | std::ios::app);
@@ -110,7 +110,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
                     out_file << line << std::endl;
                     sequence += line + "\n";
                 }
-                QuerySequence *query_seq = new QuerySequence(_protein,sequence, seq_id);
+                QuerySequence *query_seq = new QuerySequence(DATA_FLAG_GET(IS_PROTEIN),sequence, seq_id);
                 if (is_complete) query_seq->setFrame(COMPLETE_FLAG);
                 if (_pSEQUENCES->find(seq_id) != _pSEQUENCES->end()) {
                     throw ExceptionHandler("Duplicate headers in your input transcriptome: " + seq_id,
@@ -140,7 +140,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     out_file.close();
     avg_len = total_len / count_seqs;
     _total_sequences = count_seqs;
-    _protein  ? _start_prot_len = total_len : _start_nuc_len = total_len;
+    DATA_FLAG_GET(IS_PROTEIN)  ? _start_prot_len = total_len : _start_nuc_len = total_len;
     // first - n50, second - n90
     n_vals = calculate_N_vals(sequence_lengths, total_len);
 
@@ -183,8 +183,9 @@ void QueryData::set_input_type(std::string &in) {
             }
         }
     }
-    _protein = deviations > NUCLEO_DEV;
-    if (_protein) DATA_FLAG_SET(IS_PROTEIN);
+    if (deviations > NUCLEO_DEV) {
+        DATA_FLAG_SET(IS_PROTEIN);
+    }
     in_file.close();
 }
 

@@ -397,9 +397,8 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
                 // Get uniprot info
                 is_uniprot_entry(sseqid, simSearchResults.uniprot_info);
             } else {
-                if (uniprot_attempts > UNIPROT_ATTEMPTS) {
-                    is_uniprot = false;
-                } else {
+                if (uniprot_attempts <= UNIPROT_ATTEMPTS) {
+                    // First UniProt match assumes the rest are UniProt as well
                     is_uniprot = is_uniprot_entry(sseqid, simSearchResults.uniprot_info);
                     if (!is_uniprot) uniprot_attempts++;
                 }
@@ -434,7 +433,7 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
             simSearchResults.is_informative ? simSearchResults.yes_no_inform = "Yes" :
                     simSearchResults.yes_no_inform  = "No";
 
-            query->add_alignment<QuerySequence::SimSearchResults>(
+            query->add_alignment(
                     SIMILARITY_SEARCH,
                     _software_flag,
                     simSearchResults,
@@ -444,7 +443,6 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
 
         FS_dprint("File parsed, calculating statistics and writing output...");
         calculate_best_stats(false,data);
-
         FS_dprint("Success!");
     }
     FS_dprint("Calculating overall Similarity Searching statistics...");

@@ -30,6 +30,7 @@
 
 
 #include "AbstractOntology.h"
+#include "../config.h"
 
 class ModEggnogDMND : public AbstractOntology {
 
@@ -44,8 +45,10 @@ public:
 
 private:
     std::string get_output_dmnd_filepath(bool final);
+    void calculate_stats();
 
     static constexpr int DMND_COL_NUMBER = 14;
+    const uint32      STATUS_UPDATE_HITS = 5000;
     const std::string EGGNOG_DMND_DIR = "EggNOG_DMND/";
     std::string _out_hits;
     std::string _egg_out_dir;

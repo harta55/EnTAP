@@ -27,7 +27,23 @@
 #include <csv.h>
 #include "EntapDatabase.h"
 
-
+/**
+ * ======================================================================
+ * Function EntapDatabase::EntapDatabase(FileSystem* filesystem)
+ *
+ * Description          - EnTAP Database constructor
+ *                      - Controls all database related operations
+ *                              - Downloading
+ *                              - Indexing/Serializing
+ *                              - Accession
+ *                              - Creation
+ *
+ * Notes                - None
+ *
+ * @param filesystem    - Pointer to filesystem handler
+ * @return              - None
+ * ======================================================================
+ */
 EntapDatabase::EntapDatabase(FileSystem* filesystem) {
     // Initialize
     _pFilesystem     = filesystem;
@@ -35,8 +51,25 @@ EntapDatabase::EntapDatabase(FileSystem* filesystem) {
     _pSerializedDatabase = nullptr;
     _pDatabaseHelper     = nullptr;
     _use_serial          = true;
+    _err_msg             = "";
+    _err_code            = ERR_DATA_OK;
 }
 
+
+/**
+ * ======================================================================
+ * Function bool EntapDatabase::set_database(DATABASE_TYPE type,
+ *                                           std::string path)
+ *
+ * Description          - Initializes the chosen database (SQL/Serial)
+ *
+ * Notes                - None
+ *
+ * @param type          - Type of database to initialize
+ * @param path          - Path to database
+ * @return              - True/False is successful or not
+ * ======================================================================
+ */
 bool EntapDatabase::set_database(DATABASE_TYPE type, std::string path) {
 
     switch (type) {
@@ -47,7 +80,8 @@ bool EntapDatabase::set_database(DATABASE_TYPE type, std::string path) {
         case ENTAP_SQL:
             _use_serial = false;
             if (!_pFilesystem->file_exists(ENTAP_DATABASE_SQL_PATH)) {
-                FS_dprint("Database not found at: " + ENTAP_DATABASE_BIN_PATH);
+                _err_msg = "Database not found at: " + ENTAP_DATABASE_BIN_PATH;
+                FS_dprint(_err_msg);
                 return false;
             }
             if (_pDatabaseHelper != nullptr) return true;   // already generated
@@ -58,6 +92,22 @@ bool EntapDatabase::set_database(DATABASE_TYPE type, std::string path) {
     }
 }
 
+
+/**
+ * ======================================================================
+ * Function EntapDatabase::DATABASE_ERR EntapDatabase::download_database(
+ *                                           EntapDatabase::DATABASE_TYPE type,
+ *                                           std::string &path)
+ *
+ * Description          - Downloades the selected database from TreeGenes FTP
+ *
+ * Notes                - None
+ *
+ * @param type          - Type of database to download
+ * @param path          - Path to output database
+ * @return              - DATABASE_ERR type
+ * ======================================================================
+ */
 EntapDatabase::DATABASE_ERR EntapDatabase::download_database(EntapDatabase::DATABASE_TYPE type, std::string &path) {
     DATABASE_ERR err;
 
@@ -74,10 +124,29 @@ EntapDatabase::DATABASE_ERR EntapDatabase::download_database(EntapDatabase::DATA
     _pFilesystem->delete_dir(_temp_directory);
     _pFilesystem->create_dir(_temp_directory);
     if (err != ERR_DATA_OK) _pFilesystem->delete_file(path);
+    _err_code = err;
     return err;
 }
 
-EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(EntapDatabase::DATABASE_TYPE type, std::string &path) {
+
+/**
+ * ======================================================================
+ * Function EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(
+                            EntapDatabase::DATABASE_TYPE type,
+                            std::string &path)
+ *
+ * Description          - Generates the EnTAP database (sql/serial) from online sources
+ *
+ * Notes                - None
+ *
+ * @param type          - Type of database to download
+ * @param path          - Path to output database
+ * @return              - DATABASE_ERR type
+ * ======================================================================
+ */
+EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(
+                            EntapDatabase::DATABASE_TYPE type,
+                            std::string &path) {
     DATABASE_ERR err;
 
     err = generate_entap_database(type, path);
@@ -85,6 +154,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(EntapDatabase::DATA
     _pFilesystem->delete_dir(_temp_directory);
     _pFilesystem->create_dir(_temp_directory);
     if (err != ERR_DATA_OK) _pFilesystem->delete_file(path);
+    _err_code = err;
     return err;
 }
 
@@ -102,6 +172,8 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
                 return ERR_DATA_SQL_DUPLICATE;
             } else if (_pFilesystem->file_exists(outpath)) {
                 // Out file should NOT exist yet
+                _err_msg = "EnTAP SQL Database already exists at: " + outpath;
+                FS_dprint(_err_msg);
                 return ERR_DATA_FILE_EXISTS;
             }
 
@@ -122,7 +194,8 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
                 return ERR_DATA_SERIAL_DUPLICATE;
             } else if (_pFilesystem->file_exists(outpath)) {
                 // Out file should NOT exist yet
-                FS_dprint("Serialized database already found!!");
+                _err_msg = "Serialized EnTAP database already exists at: " + outpath;
+                FS_dprint(_err_msg);
                 return ERR_DATA_FILE_EXISTS;
             }
 
@@ -133,7 +206,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
 
         default:
             FS_dprint("ERROR: Unknown database type");
-            return ERR_DATA_MEM_ALLOC;
+            return ERR_DATA_UNHANDLED_TYPE;
     }
 
     // ---------------------- Add Database Entries ---------------------- //
@@ -169,6 +242,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
             err_code = serialize_database_save(SERIALIZE_DEFAULT, outpath);
             if (err_code != ERR_DATA_OK) {
                 FS_dprint("Unable to serialize database!");
+                return err_code;
             }
             break;
 
@@ -180,11 +254,11 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
 }
 
 EntapDatabase::~EntapDatabase() {
+    FS_dprint("Killing Object - EntapDatabase");
     if (_pDatabaseHelper != nullptr) {
         _pDatabaseHelper->close();
         delete(_pDatabaseHelper);
     }
-
     SAFE_DELETE(_pSerializedDatabase);
 }
 
@@ -217,8 +291,8 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DAT
     if (type == ENTAP_SQL) {
         // If SQL, we want to create taxonomy table in database
         if (!create_sql_table(ENTAP_TAXONOMY)) {
-            FS_dprint("Error generating SQL taxonomy table");
-            return ERR_DATA_SQL_CREATE_TABLE;
+            FS_dprint("ERROR: generating SQL taxonomy table");
+            return ERR_DATA_SQL_TAX_CREATE_TABLE;
         }
     }
 
@@ -242,88 +316,95 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DAT
 
 
     FS_dprint("Parsing NCBI Names file at: " + ncbi_names_path);
-    // parse through names of taxonomy ID's and add to map
-    std::ifstream infile(ncbi_names_path);
-    while (std::getline(infile, line)) {
-        if (line == "") continue;
-        total_entries++;
-        // Split line by tabs, lazy..fix :(
-        split_line = split_string(line, NCBI_TAX_DUMP_DELIM);
+    try {
+        // parse through names of taxonomy ID's and add to map
+        std::ifstream infile(ncbi_names_path);
+        while (std::getline(infile, line)) {
+            if (line == "") continue;
+            total_entries++;
+            // Split line by tabs, lazy..fix :(
+            split_line = split_string(line, NCBI_TAX_DUMP_DELIM);
 
-        tax_id = split_line[NCBI_TAX_DUMP_COL_ID];
-        tax_name   = split_line[NCBI_TAX_DUMP_COL_NAME];
+            tax_id = split_line[NCBI_TAX_DUMP_COL_ID];
+            tax_name   = split_line[NCBI_TAX_DUMP_COL_NAME];
 
-        // Check if map already has this entry, if not - generate
-        if (taxonomy_nodes.find(tax_id) == taxonomy_nodes.end()) {
-            taxonomy_nodes.emplace(tax_id, TaxonomyNode(tax_id));
-        }
-
-        std::unordered_map<std::string, TaxonomyNode>::iterator it = taxonomy_nodes.find(tax_id);
-
-        // We'll want to use scientific names when displaying lineage
-        if (split_line[NCBI_TAX_DUMP_COL_NAME_CLASS].compare(NCBI_TAX_DUMP_SCIENTIFIC) ==0) {
-            it->second.sci_name = tax_name;
-        }
-        it->second.names.push_back(tax_name);
-    }
-    infile.close();
-    FS_dprint("Success! Parsing nodes file at: " + ncbi_nodes_path);
-
-    // parse through nodes file
-    std::ifstream infile_node(ncbi_nodes_path);
-    while (std::getline(infile_node, line)) {
-        if (line == "") continue;
-
-        // split line by tabs
-        split_line = split_string(line, NCBI_TAX_DUMP_DELIM);
-
-        tax_id = split_line[NCBI_TAX_DUMP_COL_ID];
-
-        // Ensure node has name associated with it
-        std::unordered_map<std::string, TaxonomyNode>::iterator it = taxonomy_nodes.find(tax_id);
-
-        // Node with no names, skip we don't want this
-        if (it == taxonomy_nodes.end()) continue;
-
-        // Set parent node NCBI ID
-        it->second.parent_id = split_line[NCBI_TAX_DUMP_COL_PARENT];
-    }
-    infile_node.close();
-    FS_dprint("Success! Compiling final NCBI results...");
-
-    // parse through entire map and generate NCBI taxonomy entries
-    TaxEntry taxEntry;
-    for (auto &pair : taxonomy_nodes) {
-        // want a separate entry for each name (doing this for now, may change)
-        for (std::string name : pair.second.names) {
-            LOWERCASE(name);
-            current_entries++;
-            taxEntry = {};
-            taxEntry.lineage = entap_tax_get_lineage(pair.second, taxonomy_nodes);
-            LOWERCASE(taxEntry.lineage);
-            taxEntry.tax_id  = pair.second.ncbi_id;
-            taxEntry.tax_name= name;
-
-            // Add to SQL database or other...
-            if (type == ENTAP_SQL) {
-                if (!sql_add_tax_entry(taxEntry)) {
-                    // unable to add entry
-                    FS_dprint("Unable to add tax entry: " + name);
-                    return ERR_DATA_SQL_CREATE_ENTRY;
-                }
-            } else {
-                // Add to database that will be serialized
-                _pSerializedDatabase->taxonomic_data[name] = taxEntry;
+            // Check if map already has this entry, if not - generate
+            if (taxonomy_nodes.find(tax_id) == taxonomy_nodes.end()) {
+                taxonomy_nodes.emplace(tax_id, TaxonomyNode(tax_id));
             }
+
+            std::unordered_map<std::string, TaxonomyNode>::iterator it = taxonomy_nodes.find(tax_id);
+
+            // We'll want to use scientific names when displaying lineage
+            if (split_line[NCBI_TAX_DUMP_COL_NAME_CLASS].compare(NCBI_TAX_DUMP_SCIENTIFIC) ==0) {
+                it->second.sci_name = tax_name;
+            }
+            it->second.names.push_back(tax_name);
         }
-        // ********************* logging **************************** //
-        percent_complete = (uint16) round((fp32)current_entries / total_entries * 100);
-        if (percent_complete % STATUS_UPDATES == 0 && percent_complete != percent_prev) {
-            FS_dprint("Percent complete: "+ std::to_string(percent_complete) + "%");
-            percent_prev = percent_complete;
+        infile.close();
+        FS_dprint("Success! Parsing nodes file at: " + ncbi_nodes_path);
+
+        // parse through nodes file
+        std::ifstream infile_node(ncbi_nodes_path);
+        while (std::getline(infile_node, line)) {
+            if (line == "") continue;
+
+            // split line by tabs
+            split_line = split_string(line, NCBI_TAX_DUMP_DELIM);
+
+            tax_id = split_line[NCBI_TAX_DUMP_COL_ID];
+
+            // Ensure node has name associated with it
+            std::unordered_map<std::string, TaxonomyNode>::iterator it = taxonomy_nodes.find(tax_id);
+
+            // Node with no names, skip we don't want this
+            if (it == taxonomy_nodes.end()) continue;
+
+            // Set parent node NCBI ID
+            it->second.parent_id = split_line[NCBI_TAX_DUMP_COL_PARENT];
         }
-        // ********************************************************** //
+        infile_node.close();
+        FS_dprint("Success! Compiling final NCBI results...");
+
+        // parse through entire map and generate NCBI taxonomy entries
+        TaxEntry taxEntry;
+        for (auto &pair : taxonomy_nodes) {
+            // want a separate entry for each name (doing this for now, may change)
+            for (std::string name : pair.second.names) {
+                LOWERCASE(name);
+                current_entries++;
+                taxEntry = {};
+                taxEntry.lineage = entap_tax_get_lineage(pair.second, taxonomy_nodes);
+                LOWERCASE(taxEntry.lineage);
+                taxEntry.tax_id  = pair.second.ncbi_id;
+                taxEntry.tax_name= name;
+
+                // Add to SQL database or other...
+                if (type == ENTAP_SQL) {
+                    if (!sql_add_tax_entry(taxEntry)) {
+                        // unable to add entry
+                        FS_dprint("Unable to add tax entry: " + name);
+                        return ERR_DATA_SQL_CREATE_ENTRY;
+                    }
+                } else {
+                    // Add to database that will be serialized
+                    _pSerializedDatabase->taxonomic_data[name] = taxEntry;
+                }
+            }
+            // ********************* logging **************************** //
+            percent_complete = (uint16) round((fp32)current_entries / total_entries * 100);
+            if (percent_complete % STATUS_UPDATES == 0 && percent_complete != percent_prev) {
+                FS_dprint("Percent complete: "+ std::to_string(percent_complete) + "%");
+                percent_prev = percent_complete;
+            }
+            // ********************************************************** //
+        }
+    } catch (const std::exception &e) {
+        _err_msg = e.what();
+        FS_dprint("ERROR: Taxonomy parsing: " + _err_msg);
+        return ERR_DATA_TAXONOMY_PARSE;
     }
+
     FS_dprint("Success! NCBI data complete");
     return ERR_DATA_OK;
 }
@@ -360,8 +441,9 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
     go_graph_path   = PATHS(go_database_dir, GO_GRAPH_FILE);
 
     if (!_pFilesystem->file_exists(go_term_path) || !_pFilesystem->file_exists(go_graph_path)) {
-        FS_dprint("Necessary Gene Ontology files do not exist at:\n" + go_term_path +
-                "\n" + go_graph_path);
+        _err_msg = "Necessary Gene Ontology files do not exist at:\n" + go_term_path +
+                   "\n" + go_graph_path;
+        FS_dprint(_err_msg);
         return ERR_DATA_GO_DOWNLOAD;
     }
 
@@ -369,49 +451,55 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
     if (type == ENTAP_SQL) {
         if (!create_sql_table(ENTAP_GENE_ONTOLOGY)) {
             // error creating table
-            FS_dprint("Unable to create Gene Ontology SQL table");
-            return ERR_DATA_SQL_CREATE_TABLE;
+            return ERR_DATA_SQL_GO_CREATE_TABLE;
         }
     }
 
-    // Parse through graph file
-    io::CSVReader<6, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(go_graph_path);
-    std::string index,root,branch, temp, distance, temp2;
-    std::map<std::string,std::string> distance_map;
-    while (in.read_row(index,root,branch, temp, distance, temp2)) {
-        if (root.compare(GO_BIOLOGICAL_LVL) == 0     ||
-            root.compare(GO_MOLECULAR_LVL) == 0  ||
-            root.compare(GO_CELLULAR_LVL) ==0) {
-            if (distance_map.find(branch) == distance_map.end()) {
-                distance_map.emplace(branch,distance);
+    try {
+        // Parse through graph file
+        io::CSVReader<6, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(go_graph_path);
+        std::string index,root,branch, temp, distance, temp2;
+        std::map<std::string,std::string> distance_map;
+        while (in.read_row(index,root,branch, temp, distance, temp2)) {
+            if (root.compare(GO_BIOLOGICAL_LVL) == 0     ||
+                root.compare(GO_MOLECULAR_LVL) == 0  ||
+                root.compare(GO_CELLULAR_LVL) ==0) {
+                if (distance_map.find(branch) == distance_map.end()) {
+                    distance_map.emplace(branch,distance);
+                } else {
+                    if (distance.empty()) continue;
+                    fp32 cur   = std::stoi(distance_map[branch]);
+                    fp32 query = std::stoi(distance);
+                    if (query > cur) distance_map[branch] = distance;
+                }
+            }
+        }
+        GoEntry goEntry;
+        std::string num,term,cat,go,ex,ex1,ex2;
+        io::CSVReader<7, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in2(go_term_path);
+        while (in2.read_row(num,term,cat,go,ex,ex1,ex2)) {
+            goEntry = {};
+            goEntry.category = cat;
+            goEntry.level = distance_map[num];
+            goEntry.term = term;
+            goEntry.go_id = go;
+
+            // Add to SQL database OR to overall map
+            if (type == ENTAP_SQL) {
+                if (!sql_add_go_entry(goEntry)) {
+                    FS_dprint("Unable to add GO entry: " + goEntry.go_id);
+                    return ERR_DATA_GO_ENTRY;
+                }
             } else {
-                if (distance.empty()) continue;
-                fp32 cur   = std::stoi(distance_map[branch]);
-                fp32 query = std::stoi(distance);
-                if (query > cur) distance_map[branch] = distance;
+                _pSerializedDatabase->gene_ontology_data[go] = goEntry;
             }
         }
+    } catch (const std::exception &e) {
+        _err_msg = e.what();
+        FS_dprint(_err_msg);
+        return ERR_DATA_GO_PARSE;
     }
-    GoEntry goEntry;
-    std::string num,term,cat,go,ex,ex1,ex2;
-    io::CSVReader<7, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in2(go_term_path);
-    while (in2.read_row(num,term,cat,go,ex,ex1,ex2)) {
-        goEntry = {};
-        goEntry.category = cat;
-        goEntry.level = distance_map[num];
-        goEntry.term = term;
-        goEntry.go_id = go;
 
-        // Add to SQL database OR to overall map
-        if (type == ENTAP_SQL) {
-            if (!sql_add_go_entry(goEntry)) {
-                FS_dprint("Unable to add GO entry: " + goEntry.go_id);
-                return ERR_DATA_GO_ENTRY;
-            }
-        } else {
-            _pSerializedDatabase->gene_ontology_data[go] = goEntry;
-        }
-    }
     FS_dprint("Success! Gene Ontology data complete");
     _pFilesystem->delete_file(go_graph_path);
     _pFilesystem->delete_file(go_term_path);
@@ -447,14 +535,13 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
     }
     _pFilesystem->delete_file(uniprot_flat_gz); // Ensure gz file is deleted
 
-
-    FS_dprint("UniProt file successfully downloaded/decompressed. Parsing...");
+    FS_dprint("UniProt file downloaded/decompressed, verifying...");
     // Ensure file is valid (should be)
     file_status = _pFilesystem->get_file_status(uniprot_flat);
     if (file_status != 0) {
         // File invalid
-        FS_dprint(_pFilesystem->print_file_status(file_status, uniprot_flat));
         _err_msg = _pFilesystem->print_file_status(file_status, uniprot_flat);
+        FS_dprint(_err_msg);
         return ERR_DATA_UNIPROT_FILE;
     }
 
@@ -462,11 +549,10 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
     if (type == ENTAP_SQL) {
         if (!create_sql_table(ENTAP_UNIPROT)) {
             // error creating table
-            FS_dprint("Unable to create UniProt SQL table");
-            return ERR_DATA_SQL_CREATE_TABLE;
+            return ERR_DATA_SQL_UNIPROT_CREATE_TABLE;
         }
     }
-
+    FS_dprint("UniProt file successfully downloaded/decompressed. Parsing...");
     // File valid, continue to parse
     try {
         UniprotEntry uniprotEntry;
@@ -678,7 +764,7 @@ bool EntapDatabase::create_sql_table(DATABASE_TYPE type) {
         FS_dprint("Success!");
     } else {
         std::string temp = sql_cmd;
-        FS_dprint("Error Unable to create table with command: \n" + temp);
+        FS_dprint("ERROR: Unable to create table with command: \n" + temp);
     }
     return success;
 }
@@ -745,7 +831,7 @@ GoEntry EntapDatabase::get_go_entry(std::string &go_id) {
         // Using serialized database
         go_serial_map_t::iterator it = _pSerializedDatabase->gene_ontology_data.find(go_id);
         if (it == _pSerializedDatabase->gene_ontology_data.end()) {
-            FS_dprint("Unable to find GO ID: " + go_id);
+//            FS_dprint("Unable to find GO ID: " + go_id);
             return GoEntry();
         } else return it->second;
 
@@ -925,7 +1011,8 @@ EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_read(SERIALIZATION
     FS_dprint("Reading serialized database from: " + in_path);
 
     if (!_pFilesystem->file_exists(in_path)) {
-        FS_dprint("File does not exist!!");
+        _err_msg = "Serialized EnTAP database does not exist at: " + in_path;
+        FS_dprint(_err_msg);
         return ERR_DATA_SERIALIZE_READ;
     }
 
@@ -958,33 +1045,29 @@ EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_read(SERIALIZATION
         }
 
     } catch (const std::exception &e) {
-        FS_dprint("Error in reading serialized database. " + std::string(e.what()));
+        _err_msg = std::string(e.what());
+        FS_dprint("Unable to read Serialized EnTAP database: " + _err_msg);
         return ERR_DATA_SERIALIZE_READ;
     }
-
     return ERR_DATA_OK;
 }
 
-std::string EntapDatabase::print_error_log(EntapDatabase::DATABASE_ERR err_code) {
-    switch (err_code) {
-        case ERR_DATA_SQL_CREATE_DATABASE:
-            return "Unable to generate the EnTAP SQL database.";
-        case ERR_DATA_SERIALIZE_SAVE:
-            return "Unable to generate the serialized EnTAP database";
-        case ERR_DATA_GO_ENTRY:
-            return "Error in parsing Gene Ontology data.";
-        case ERR_DATA_SERIAL_FTP:
-            return "Error in downloading Serialized database from FTP site.";
-        case ERR_DATA_SERIAL_DECOMPRESS:
-            return "Error in decompressing compressed database from FTP site.";
-        case ERR_DATA_SQL_FTP:
-            return "Error in downloading SQL database from FTP site";
-        case ERR_DATA_SQL_DECOMPRESS:
-            return "Error in decompressing SQL database from FTP site";
-        default:
-            return "Unrecognized database error code. Update coming soon!";
-            break;
+std::string EntapDatabase::print_error_log(void) {
+    std::string ret = "";
+
+    if (_err_code != ERR_DATA_OK) {
+        ret = ENTAP_DATABASE_ERR_STR[_err_code];
     }
+
+    if (!_err_msg.empty()) {
+        ret += ":\n" + _err_msg;
+    }
+    return ret;
+}
+
+void EntapDatabase::set_err_msg(std::string msg) {
+    FS_dprint(msg);
+    _err_msg = msg;
 }
 
 
@@ -993,3 +1076,25 @@ EntapDatabase::TaxonomyNode::TaxonomyNode(std::string id) {
     sci_name = "";
     ncbi_id = id;
 }
+
+go_format_t EntapDatabase::format_go_delim(std::string terms, char delim) {
+    go_format_t output;
+    std::string temp;
+    std::vector<std::vector<std::string>>results;
+
+    if (terms.empty()) return output;
+    std::istringstream ss(terms);
+    while (std::getline(ss,temp,delim)) {
+        GoEntry term_info = get_go_entry(temp);
+        if (!term_info.is_empty()) {
+            output[term_info.category].push_back(temp + "-" + term_info.term +
+                                                 "(L=" + term_info.level + ")");
+        }
+    }
+    return output;
+}
+
+// ************************************************************** //
+// ********************** Entry Structures ********************** //
+// ************************************************************** //
+

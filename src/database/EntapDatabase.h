@@ -47,6 +47,8 @@ struct  GoEntry {
     std::string level;
     std::string category;
     std::string term;
+
+#ifdef USE_BOOST
     friend class boost::serialization::access;
     template <typename Archive>
     void serialize(Archive & ar, const uint32 v) {
@@ -55,6 +57,7 @@ struct  GoEntry {
         ar&category;
         ar&term;
     }
+#endif
 
     GoEntry() {
         go_id = "";
@@ -72,6 +75,8 @@ struct TaxEntry {
     std::string tax_id;
     std::string lineage;
     std::string tax_name;
+
+#ifdef USE_BOOST
     friend class boost::serialization::access;
     template<typename Archive>
     void serialize(Archive & ar, const uint32 v) {
@@ -79,6 +84,7 @@ struct TaxEntry {
         ar&lineage;
         ar&tax_name;
     }
+#endif
     bool is_empty() {
         return this->tax_id.empty() && this->lineage.empty();
     }
@@ -93,7 +99,7 @@ struct UniprotEntry {
     std::string database_x_refs;        // DR   OrthoDB; VOG090000I8; -.
     std::string comments;               // CC   -!- FUNCTION: Transcription activation. {ECO:0000305}.
     std::string uniprot_id;             // ID   001R_FRG3G              Reviewed;         256 AA.
-
+#ifdef USE_BOOST
     friend class boost::serialization::access;
     template<typename Archive>
     void serialize(Archive & ar, const uint32 v) {
@@ -101,6 +107,7 @@ struct UniprotEntry {
         ar&database_x_refs;
         ar&comments;
     }
+#endif
 
     UniprotEntry() {
         database_x_refs = "";
@@ -151,31 +158,36 @@ public:
         ERR_DATA_READ,
         ERR_DATA_SQL_DUPLICATE,
         ERR_DATA_SQL_CREATE_DATABASE,
-        ERR_DATA_SQL_CREATE_TABLE,
+        ERR_DATA_SQL_TAX_CREATE_TABLE,      // 5
         ERR_DATA_SQL_CREATE_ENTRY,
         ERR_DATA_SQL_OPEN,
         ERR_DATA_FILE_EXISTS,
         ERR_DATA_TAX_CREATED,
-        ERR_DATA_TAX_DOWNLOAD,
+        ERR_DATA_TAX_DOWNLOAD,              // 10
         ERR_DATA_FILE_DECOMPRESS,
         ERR_DATA_GO_DOWNLOAD,
         ERR_DATA_GO_DECOMPRESS,
         ERR_DATA_GO_ENTRY,
-        ERR_DATA_SERIAL_FTP,
+        ERR_DATA_SERIAL_FTP,                // 15
         ERR_DATA_SERIAL_DECOMPRESS,
         ERR_DATA_SQL_FTP,
         ERR_DATA_SQL_DECOMPRESS,
         ERR_DATA_FILE_MOVE,
-        ERR_DATA_SERIALIZE_SAVE,
+        ERR_DATA_SERIALIZE_SAVE,            // 20
         ERR_DATA_SERIALIZE_READ,
         ERR_DATA_SERIAL_DUPLICATE,
         ERR_DATA_UNIPROT_DOWNLOAD,
         ERR_DATA_UNIPROT_DECOMPRESS,
-        ERR_DATA_UNIPROT_ENTRY,
+        ERR_DATA_UNIPROT_ENTRY,             // 25
         ERR_DATA_UNIPROT_PARSE,
         ERR_DATA_UNIPROT_FILE,
+        ERR_DATA_SQL_GO_CREATE_TABLE,
+        ERR_DATA_SQL_UNIPROT_CREATE_TABLE,
+        ERR_DATA_GO_PARSE,                  // 30
+        ERR_DATA_TAXONOMY_PARSE,
 
         ERR_DATA_MEM_ALLOC,
+        ERR_DATA_UNHANDLED_TYPE,
         ERR_DATA_MAX=100
 
     } DATABASE_ERR;
@@ -189,9 +201,9 @@ public:
 
     struct EntapDatabaseStruct {
         tax_serial_map_t taxonomic_data;
-        go_serial_map_t  gene_ontology_data;
+        go_serial_map_t  gene_ontology_data;    // Accession - "GO:453232143"
         uniprot_serial_map_t uniprot_data;
-
+#ifdef USE_BOOST
         friend class boost::serialization::access;
         template<typename Archive>
         void serialize(Archive & ar, const uint32 v) {
@@ -199,6 +211,7 @@ public:
             ar&gene_ontology_data;
             ar&uniprot_data;
         }
+#endif
     };
 
     // Node for NCBI taxonomy
@@ -216,7 +229,8 @@ public:
     bool set_database(DATABASE_TYPE, std::string);
     DATABASE_ERR download_database(DATABASE_TYPE, std::string&);
     DATABASE_ERR generate_database(DATABASE_TYPE, std::string&);
-    std::string print_error_log(DATABASE_ERR err_code);
+    std::string print_error_log(void);
+    go_format_t format_go_delim(std::string terms, char delim);
 
     // Database accession routines
     TaxEntry get_tax_entry(std::string& species);
@@ -245,6 +259,7 @@ private:
     bool sql_add_go_entry(GoEntry&);
     bool create_sql_table(DATABASE_TYPE);
     bool add_uniprot_entry(DATABASE_TYPE type, UniprotEntry &entry);
+    void set_err_msg(std::string msg);
 
     DATABASE_ERR serialize_database_save(SERIALIZATION_TYPE, std::string&);
     DATABASE_ERR serialize_database_read(SERIALIZATION_TYPE, std::string&);
@@ -254,9 +269,12 @@ private:
             "http://archive.geneontology.org/latest-full/go_monthly-termdb-tables.tar.gz";
     const std::string FTP_NCBI_TAX_DUMP_TARGZ =
             "ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz";
-    const std::string FTP_ENTAP_DATABASE_SQL    = "https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.db.gz";
-    const std::string FTP_ENTAP_DATABASE_SERIAL = "https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.bin.gz";
-    const std::string FTP_UNIPROT_FLAT_FILE     = "ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.dat.gz";
+    const std::string FTP_ENTAP_DATABASE_SQL    =
+            "https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.db.gz";
+    const std::string FTP_ENTAP_DATABASE_SERIAL =
+            "https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.bin.gz";
+    const std::string FTP_UNIPROT_FLAT_FILE     =
+            "ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.dat.gz";
 
     // NCBI Taxonomy filenames
     const std::string NCBI_TAX_ROOT          = "root[Subtree]"; // Unused
@@ -267,26 +285,26 @@ private:
     const char        NCBI_TAX_DUMP_DELIM    = '\t';
 
     // NCBI Taxonomy dump columns
-    const uint8 NCBI_TAX_DUMP_COL_NAME_CLASS = 6; // Name type (scientific, authority...)
-    const uint8 NCBI_TAX_DUMP_COL_ID         = 0;
-    const uint8 NCBI_TAX_DUMP_COL_NAME       = 2; // Actual name
-    const uint8 NCBI_TAX_DUMP_COL_PARENT     = 2; // Parent node in database
+    const uint8 NCBI_TAX_DUMP_COL_NAME_CLASS   = 6; // Name type (scientific, authority...)
+    const uint8 NCBI_TAX_DUMP_COL_ID           = 0;
+    const uint8 NCBI_TAX_DUMP_COL_NAME         = 2; // Actual name
+    const uint8 NCBI_TAX_DUMP_COL_PARENT       = 2; // Parent node in database
     const std::string NCBI_TAX_DUMP_SCIENTIFIC = "scientific name";
 
     // SQL Database Namings / Column numbers
-    const std::string SQL_TABLE_NCBI_TAX_TITLE = "TAXONOMY";
-    const std::string SQL_COL_NCBI_TAX_TAXID   = "TAXID";
-    const std::string SQL_COL_NCBI_TAX_LINEAGE = "LINEAGE";
-    const std::string SQL_COL_NCBI_TAX_NAME    = "TAXNAME"; // ex: homo sapiens
-    const std::string SQL_TABLE_GO_TITLE       = "GENEONTOLOGY";
-    const std::string SQL_TABLE_GO_COL_ID      = "GOID";
-    const std::string SQL_TABLE_GO_COL_DESC    = "DESCRIPTION";
-    const std::string SQL_TABLE_GO_COL_CATEGORY= "CATEGORY";
-    const std::string SQL_TABLE_GO_COL_LEVEL   = "LEVEL";
-    const std::string SQL_TABLE_UNIPROT_TITLE  = "UNIPROT";
-    const std::string SQL_TABLE_UNIPROT_COL_COMM= "COMMENTS";
-    const std::string SQL_TABLE_UNIPROT_COL_XREF= "DATAXREFS";
-    const std::string SQL_TABLE_UNIPROT_COL_ID  = "UNIPROTID";
+    const std::string SQL_TABLE_NCBI_TAX_TITLE   = "TAXONOMY";
+    const std::string SQL_COL_NCBI_TAX_TAXID     = "TAXID";
+    const std::string SQL_COL_NCBI_TAX_LINEAGE   = "LINEAGE";
+    const std::string SQL_COL_NCBI_TAX_NAME      = "TAXNAME"; // ex: homo sapiens
+    const std::string SQL_TABLE_GO_TITLE         = "GENEONTOLOGY";
+    const std::string SQL_TABLE_GO_COL_ID        = "GOID";
+    const std::string SQL_TABLE_GO_COL_DESC      = "DESCRIPTION";
+    const std::string SQL_TABLE_GO_COL_CATEGORY  = "CATEGORY";
+    const std::string SQL_TABLE_GO_COL_LEVEL     = "LEVEL";
+    const std::string SQL_TABLE_UNIPROT_TITLE    = "UNIPROT";
+    const std::string SQL_TABLE_UNIPROT_COL_COMM = "COMMENTS";
+    const std::string SQL_TABLE_UNIPROT_COL_XREF = "DATAXREFS";
+    const std::string SQL_TABLE_UNIPROT_COL_ID   = "UNIPROTID";
 
     // Gene Ontology constants
     const std::string GO_BIOLOGICAL_LVL = "6679";
@@ -323,6 +341,7 @@ private:
     go_serial_map_t      _sql_go_helper;    // Using to increase speeds for now, change later
     bool                 _use_serial;
     std::string          _err_msg;
+    DATABASE_ERR         _err_code;
 
     const std::string ENTAP_DATABASE_TYPES_STR[ENTAP_MAX_TYPES] {
             "EnTAP Serialized Database",
@@ -330,6 +349,22 @@ private:
             "EnTAP NCBI Taxonomy Database",
             "EnTAP Gene Ontology Database",
             "EnTAP UniProt Swiss-Prot Database"
+    };
+
+    const std::string ENTAP_DATABASE_ERR_STR[ERR_DATA_MAX] {
+        "No error :)"  ,                            // ERR_DATA_OK
+        "Unable to write to database file",         // ERR_DATA_WRITE (unused)
+        "Unable to read from database file",        // ERR_DATA_READ (unused)
+        "EnTAP SQL database already exists",        // ERR_SQL_DUPLICATE
+        "Unable to create EnTAP SQL database",      // ERR_SQL_CREATE_DATABASE
+        "Unable to create Taxonomy SQL Table",      // ERR_DATA_SQL_TAX_CREATE_TABLE
+        "Unable to add entry to SQL table",         // ERR_DATA_SQL_CREATE_ENTRY
+        "Unable to open EnTAP SQL Database",        // ERR_DATA_SQL_OPEN
+        "File already exists",                      // ERR_DATA_FILE_EXISTS
+        "Unable to create Taxonomy database",       // ERR_DATA_TAX_CREATED (unused)
+        "Unable to download Taxonomy information",  // ERR_DATA_TAX_DOWNLOAD
+        "Unable to decompress file"                 // ERR_DATA_FILE_DECOMPRESS
+
     };
 };
 

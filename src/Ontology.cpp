@@ -295,7 +295,7 @@ void Ontology::init_headers() {
 
     std::vector<const std::string*>     out_header;
     std::vector<const std::string*>     add_header;
-    // Add default sim search headers
+    // Add default sim search headers (pulled from SimilaritySearch.c, separate in case we want something else)
     out_header = {
             &ENTAP_EXECUTE::HEADER_QUERY,
             &ENTAP_EXECUTE::HEADER_SUBJECT,

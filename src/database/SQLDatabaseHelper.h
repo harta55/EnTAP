@@ -47,6 +47,10 @@ public:
     void close();
     query_struct query(char* query);
 
+    // change to template
+    std::string format_container(std::set<std::string> &in_cont);
+    std::string format_string(std::string& str, char delim);
+
 private:
     sqlite3 *_database;
 };

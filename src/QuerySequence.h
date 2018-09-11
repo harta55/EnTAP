@@ -61,11 +61,11 @@ public:
     } QUERY_FLAGS;
 
     struct EggnogResults {
-        std::string              best_hit_query; // 34740.HMEL017225-PA
         std::string              member_ogs;     // 0A01R@biNOG,0V8CP@meNOG
-        std::string              seed_ortholog;
+        std::string              seed_ortholog;  // 34740.HMEL017225-PA
         std::string              seed_evalue;
         std::string              seed_score;
+        std::string              seed_coverage;
         std::string              predicted_gene;
         std::string              tax_scope_lvl_max; // virNOG[6]
         std::string              tax_scope;         // virNOG NOT virNOG[6]
@@ -73,14 +73,11 @@ public:
         std::string              pname;
         std::string              name;
         std::string              bigg;
+        std::string              kegg;
         std::string              ogs;
         std::string              og_key;
-        std::string              sql_kegg;
-        std::string              sql_go;
         std::string              description;
         std::string              protein_domains;
-        std::vector<std::string> raw_kegg;
-        std::vector<std::string> raw_go;
         go_format_t              parsed_go;
     };
 
@@ -130,7 +127,6 @@ public:
     std::string print_tsv(const std::vector<const std::string*>&);
     std::string print_tsv(std::vector<const std::string*>& , short);
     void init_header();
-    void setSeq_length(unsigned long seq_length);
     void setFrame(const std::string &frame);
     unsigned long getSeq_length() const;
     const std::string &getFrame() const;
@@ -161,8 +157,9 @@ public:
         }
     }
 
+    /*
     template<class U>
-    void add_alignment(ExecuteStates state, uint16 software, U results, std::string& database, std::string& lineage) {
+    void add_alignment(ExecuteStates state, uint16 software, U results, std::string& database, std::string lineage) {
         // Create new alignment object
         // Update vector containing all alignments
         QueryAlignment *new_alignment;
@@ -173,10 +170,29 @@ public:
                 new_alignment = new SimSearchAlignment(cast_results, lineage, this);
                 break;
             }
+
             case EXPRESSION_FILTERING:
             case FRAME_SELECTION:
             case FILTER:
-            case GENE_ONTOLOGY:
+                return;
+
+            case GENE_ONTOLOGY: {
+                switch (software) {
+
+                    case ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG:
+                        QUERY_FLAG_SET(QUERY_EGGNOG_HIT);
+                        QUERY_FLAG_SET(QUERY_FAMILY_ASSIGNED);
+                        EggnogResults cast_results = static_cast<EggnogResults>(results);
+                        new_alignment = new EggnogDmndAlignment(cast_results,this);
+                        break;
+
+                    default:
+                        return;
+
+
+                }
+                break;
+            }
             case EXIT:
             case EXECUTION_MAX:
             default:
@@ -196,8 +212,23 @@ public:
         // Update list and best hits
         update_best_hit(state, software, database);
     }
+     */
 
-    void update_best_hit(ExecuteStates state, uint16 software, std::string &database);
+
+    void add_alignment(ExecuteStates state, uint16 software, EggnogResults results, std::string& database) {
+        QUERY_FLAG_SET(QUERY_EGGNOG_HIT);
+        QUERY_FLAG_SET(QUERY_FAMILY_ASSIGNED);
+        update_best_hit(state, software, database, new EggnogDmndAlignment(results,this));
+    }
+
+
+    void add_alignment(ExecuteStates state, uint16 software, SimSearchResults results, std::string& database,std::string lineage) {
+        QUERY_FLAG_SET(QUERY_BLAST_HIT);
+        QueryAlignment *new_alignment = new SimSearchAlignment(results, lineage, this);
+        update_best_hit(state, software, database, new_alignment);
+    }
+
+    void update_best_hit(ExecuteStates state, uint16 software, std::string &database, QueryAlignment* new_alignment);
 public:
 
     //**********************************************************************
@@ -240,6 +271,18 @@ public:
         static constexpr uint8 COV_DIF       = 5;
         static constexpr uint8 INFORM_ADD    = 3;
         static constexpr fp32 INFORM_FACTOR  = 1.2;
+    };
+
+    class EggnogDmndAlignment : public QueryAlignment {
+
+    public:
+        EggnogDmndAlignment(EggnogResults eggnogResults, QuerySequence* parent);
+        virtual ~EggnogDmndAlignment();
+        EggnogResults* get_results();
+        bool operator>(const QueryAlignment&);
+
+    private:
+        QuerySequence::EggnogResults _eggnog_results;
     };
 
 

@@ -45,3 +45,6 @@ FAQs
 #. Eggnog-mapper is failing when running DIAMOND.
 
         * Eggnog-mapper leverages DIAMOND to search against the EggNOG databases. In order to do this, it uses a global call to DIAMOND. This may not work if you do not have it installed globally. Additionally, the DIAMOND EggNOG database may not be compatible with your local DIAMOND version. If so, you'll have to re-index the fasta version of this database (found from the EggNOG FTP) with your version of DIAMOND. 
+
+#. Eggnog-mapper is failing during parsing of the data due to "too_many_columns"
+         * This is due to an incompatibility between EnTAP and the version of Eggnog-mapper you are using. Please use the version provided in the EnTAP repository (0.7.4.1-beta). Additionally, replace the eggnog.db file you are using with the database at the following address: http://eggnogdb.embl.de/download/emapperdb-4.5.0/eggnog.db.gz. This incompability will be resolved shortly (if not already)

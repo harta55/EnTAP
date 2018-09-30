@@ -27,12 +27,10 @@
 
 #include <boost/filesystem.hpp>
 #include <csv.h>
-#include <fstream>
 #include <boost/archive/binary_iarchive.hpp>
 #include "Ontology.h"
 #include "EntapConfig.h"
 #include <boost/serialization/map.hpp>
-#include <iomanip>
 #include "ExceptionHandler.h"
 #include "EntapExecute.h"
 #include "SimilaritySearch.h"
@@ -121,7 +119,7 @@ Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
 void Ontology::execute() {
 
     std::pair<bool,std::string> verify_pair;
-    std::unique_ptr<AbstractOntology> ptr;
+    std::unique_ptr<EntapModule> ptr;
 
     init_headers();
     try {
@@ -137,8 +135,6 @@ void Ontology::execute() {
         ptr.reset();
         throw e;
     }
-
-    // TODO move printing to querydata
 }
 
 
@@ -156,7 +152,7 @@ void Ontology::execute() {
  *
  * =====================================================================
  */
-std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
+std::unique_ptr<EntapModule> Ontology::spawn_object(uint16 &software) {
     switch (software) {
 #ifdef EGGNOG_MAPPER
         case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
@@ -171,32 +167,23 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
             ));
 #endif
         case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
-            return std::unique_ptr<AbstractOntology>(new ModInterpro(
-                    _outpath,
+            return std::unique_ptr<EntapModule>(new ModInterpro(
                     _new_input,
                     _ontology_dir,
-                    _blastp,
-                    _go_levels,
                     _entap_data_ptrs,
                     _interpro_databases       // Additional data
             ));
         case ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG:
-            return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
-                    _outpath,
-                    _new_input,
+            return std::unique_ptr<EntapModule>(new ModEggnogDMND(
                     _ontology_dir,
-                    _blastp,
-                    _go_levels,
+                    _new_input,
                     _entap_data_ptrs,
                     _eggnog_db_path
             ));
         default:
-            return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
-                    _outpath,
-                    _new_input,
+            return std::unique_ptr<EntapModule>(new ModEggnogDMND(
                     _ontology_dir,
-                    _blastp,
-                    _go_levels,
+                    _new_input,
                     _entap_data_ptrs,
                     _eggnog_db_path
             ));
@@ -266,6 +253,8 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
             }
         }
     }
+
+    // Cleanup
     for(auto& pair : file_map) {
         for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
             pair.second[i]->close();

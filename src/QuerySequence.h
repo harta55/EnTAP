@@ -56,7 +56,10 @@ public:
         QUERY_INTERPRO          = (1 << 8),
         QUERY_IS_PROTEIN        = (1 << 9),
         QUERY_BLASTED           = (1 << 10),
-        QUERY_CONTAMINANT       = (1 << 11)
+        QUERY_CONTAMINANT       = (1 << 11),
+        QUERY_FAMILY_ONE_KEGG   = (1 << 12),
+        QUERY_FAMILY_ONE_GO     = (1 << 13),
+        QUERY_MAX               = (1 << 31)
 
     } QUERY_FLAGS;
 
@@ -78,6 +81,7 @@ public:
         std::string              og_key;
         std::string              description;
         std::string              protein_domains;
+        fp64                     seed_eval_raw;
         go_format_t              parsed_go;
     };
 
@@ -137,9 +141,10 @@ public:
     const std::string &get_sequence() const;
     void set_fpkm(float _fpkm);
     bool is_kept();
-    bool QUERY_FLAG_GET(QUERY_FLAGS);
-    void QUERY_FLAG_SET(QUERY_FLAGS);
-    void QUERY_FLAG_CLEAR(QUERY_FLAGS);
+    bool QUERY_FLAG_GET(QUERY_FLAGS flag);
+    void QUERY_FLAG_SET(QUERY_FLAGS flag);
+    void QUERY_FLAG_CLEAR(QUERY_FLAGS flag);
+    void QUERY_FLAG_CHANGE(QUERY_FLAGS flag, bool val);
     bool isContaminant();
     bool hit_database(ExecuteStates state, uint16 software, std::string database);
     void set_eggnog_results(const EggnogResults&);
@@ -156,64 +161,6 @@ public:
             return static_cast<T*>(_total_alignment_data.index_data(state,software)->at(database).first);
         }
     }
-
-    /*
-    template<class U>
-    void add_alignment(ExecuteStates state, uint16 software, U results, std::string& database, std::string lineage) {
-        // Create new alignment object
-        // Update vector containing all alignments
-        QueryAlignment *new_alignment;
-        switch (state) {
-            case SIMILARITY_SEARCH: {
-                QUERY_FLAG_SET(QUERY_BLAST_HIT);
-                SimSearchResults cast_results = static_cast<SimSearchResults>(results);
-                new_alignment = new SimSearchAlignment(cast_results, lineage, this);
-                break;
-            }
-
-            case EXPRESSION_FILTERING:
-            case FRAME_SELECTION:
-            case FILTER:
-                return;
-
-            case GENE_ONTOLOGY: {
-                switch (software) {
-
-                    case ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG:
-                        QUERY_FLAG_SET(QUERY_EGGNOG_HIT);
-                        QUERY_FLAG_SET(QUERY_FAMILY_ASSIGNED);
-                        EggnogResults cast_results = static_cast<EggnogResults>(results);
-                        new_alignment = new EggnogDmndAlignment(cast_results,this);
-                        break;
-
-                    default:
-                        return;
-
-
-                }
-                break;
-            }
-            case EXIT:
-            case EXECUTION_MAX:
-            default:
-                return;
-        }
-
-        // Did we not hit against the database yet?
-        if (!hit_database(state, software, database)) {
-            // No, create new vector for that database and add as best hit for database
-            std::vector<QueryAlignment*> vect = {new_alignment};
-            _total_alignment_data.index_data(state,software)->emplace(database, std::make_pair(new_alignment, vect));
-        } else {
-            // Yes, add alignment to list then update
-            _total_alignment_data.index_data(state,software)->at(database).second.push_back(new_alignment);
-        }
-
-        // Update list and best hits
-        update_best_hit(state, software, database);
-    }
-     */
-
 
     void add_alignment(ExecuteStates state, uint16 software, EggnogResults results, std::string& database) {
         QUERY_FLAG_SET(QUERY_EGGNOG_HIT);
@@ -300,7 +247,7 @@ public:
 
 private:
     fp32                              _fpkm;
-    uint16                            _query_flags;
+    uint32                            _query_flags;
     std::string                       _seq_id;
     unsigned long                     _seq_length;
     std::string                       _sequence_p;

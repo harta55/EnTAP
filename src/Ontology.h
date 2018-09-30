@@ -28,8 +28,7 @@
 #ifndef ENTAP_ONTOLOGY_H
 #define ENTAP_ONTOLOGY_H
 
-#include <iostream>
-#include <map>
+#include "common.h"
 #include <boost/program_options/variables_map.hpp>
 #include "EntapConfig.h"
 #include "EntapGlobals.h"
@@ -38,11 +37,7 @@
 #include "GraphingManager.h"
 #include "ontology/AbstractOntology.h"
 #include "QueryData.h"
-
-class QuerySequence;
-class AbstractOntology;
-class QueryData;
-
+#include "EntapModule.h"
 
 class Ontology {
 
@@ -83,7 +78,7 @@ private:
 
     void print_eggnog(QUERY_MAP_T&);
     void init_headers();
-    std::unique_ptr<AbstractOntology> spawn_object(uint16&);
+    std::unique_ptr<EntapModule> spawn_object(uint16&);
 };
 
 

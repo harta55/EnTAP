@@ -287,6 +287,14 @@ void QuerySequence::QUERY_FLAG_CLEAR(QUERY_FLAGS flag) {
     _query_flags &= ~flag;
 }
 
+void QuerySequence::QUERY_FLAG_CHANGE(QuerySequence::QUERY_FLAGS flag, bool val) {
+    if (val) {
+        QUERY_FLAG_SET(flag);
+    } else {
+        QUERY_FLAG_CLEAR(flag);
+    }
+}
+
 
 QuerySequence::~QuerySequence() {
     // Clear alignment data
@@ -353,17 +361,24 @@ void QuerySequence::update_query_flags(ExecuteStates state, uint16 software) {
         case SIMILARITY_SEARCH: {
             SimSearchAlignment *best_align = get_best_hit_alignment<SimSearchAlignment>(state, software, "");
             SimSearchResults *results = best_align->get_results();
-            if (results->is_informative) {
-                QUERY_FLAG_SET(QUERY_INFORMATIVE);
-            } else {
-                QUERY_FLAG_CLEAR(QUERY_INFORMATIVE);
-            }
-            if (results->contaminant) {
-                QUERY_FLAG_SET(QUERY_CONTAMINANT);
-            } else {
-                QUERY_FLAG_CLEAR(QUERY_CONTAMINANT);
-            }
+            QUERY_FLAG_CHANGE(QUERY_INFORMATIVE, results->is_informative);
+            QUERY_FLAG_CHANGE(QUERY_CONTAMINANT, results->contaminant);
             break;
+        }
+
+        case GENE_ONTOLOGY: {
+            EggnogResults *results=nullptr;
+            switch (software) {
+                case ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG: {
+                    EggnogDmndAlignment *best_align = get_best_hit_alignment<EggnogDmndAlignment>(state, software,"");
+                    results = best_align->get_results();
+                    break;
+                }
+                default:
+                    return;
+            }
+            QUERY_FLAG_CHANGE(QUERY_FAMILY_ONE_GO, !results->parsed_go.empty());
+            QUERY_FLAG_CHANGE(QUERY_FAMILY_ONE_KEGG, !results->kegg.empty());
         }
         default:
             break;
@@ -383,6 +398,7 @@ std::string QuerySequence::get_header_data(const std::string *header) {
     init_header();
     return *OUTPUT_MAP[header];
 }
+
 
 //**********************************************************************
 //**********************************************************************
@@ -478,7 +494,7 @@ QuerySequence::SimSearchResults* QuerySequence::SimSearchAlignment::get_results(
 bool QuerySequence::SimSearchAlignment::operator>(const QueryAlignment &alignment) {
 
     // Don't need to check typeid
-    const SimSearchAlignment alignment_cast = static_cast<const SimSearchAlignment&>(alignment);
+    const SimSearchAlignment alignment_cast = dynamic_cast<const SimSearchAlignment&>(alignment);
 
     fp64 eval1 = this->_sim_search_results.e_val_raw;
     fp64 eval2 = alignment_cast._sim_search_results.e_val_raw;
@@ -565,14 +581,15 @@ QuerySequence::EggnogDmndAlignment::EggnogDmndAlignment(QuerySequence::EggnogRes
 
 }
 
-QuerySequence::EggnogDmndAlignment::~EggnogDmndAlignment() {
+QuerySequence::EggnogDmndAlignment::~EggnogDmndAlignment() { }
 
-}
 
 QuerySequence::EggnogResults *QuerySequence::EggnogDmndAlignment::get_results() {
-    return nullptr;
+    return &this->_eggnog_results;
 }
 
-bool QuerySequence::EggnogDmndAlignment::operator>(const QuerySequence::QueryAlignment &) {
-    return false;
+bool QuerySequence::EggnogDmndAlignment::operator>(const QuerySequence::QueryAlignment & alignment) {
+    const EggnogDmndAlignment alignment_cast = dynamic_cast<const EggnogDmndAlignment&>(alignment);
+
+    return this->_eggnog_results.seed_eval_raw < alignment_cast._eggnog_results.seed_eval_raw;
 }

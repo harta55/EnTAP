@@ -127,6 +127,10 @@ namespace UInput {
     const std::string INPUT_FLAG_DATABASE_TYPE = "data-type";
 }
 
+namespace ENTAP_STATS {
+    const std::string SOFTWARE_BREAK = "------------------------------------------------------\n";
+}
+
 std::string generate_command(std::unordered_map<std::string,std::string> &map,std::string exe_path) {
     std::stringstream ss;
     std::string       out;
@@ -164,4 +168,9 @@ vect_str_t split_string(std::string sequences, char delim) {
         split_vals.push_back(val);
     }
     return split_vals;
+}
+
+void ENTAP_STATS::ES_format_stat_stream(std::stringstream &stream, std::string title) {
+    stream<<std::fixed<<std::setprecision(2);
+    stream << ENTAP_STATS::SOFTWARE_BREAK << title << '\n' << ENTAP_STATS::SOFTWARE_BREAK;
 }

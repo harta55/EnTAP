@@ -101,7 +101,7 @@ void ModInterpro::execute() {
     std_out      = PATHS(_interpro_dir, INTERPRO_STD_OUT);
     interpro_cmd =
             INTERPRO_EXE    +
-            " -i "          + _inpath +
+            " -i "          + _in_hits +
             " -b "          + _final_basepath +
             FLAG_SEQTYPE    + " " + blast     +
             FLAG_TEMP       + " " + temp_dir  +
@@ -197,7 +197,7 @@ void ModInterpro::parse() {
                 pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_INTERPRO);
                 interpro_output = it->second.interID + "(" + it->second.interDesc + ")";
                 protein_output  = it->second.databaseID + "(" + it->second.databaseDesc + ")";
-                go_terms_parsed = parse_go_list(it->second.go_terms,_pEntapDatabase,',');
+                go_terms_parsed = EM_parse_go_list(it->second.go_terms,_pEntapDatabase,',');
                 std::stringstream ss;
                 ss << std::scientific << it->second.eval;
                 e_str = ss.str();
@@ -462,26 +462,10 @@ std::string ModInterpro::get_default() {
     return INTERPRO_DEFAULT;
 }
 
-ModInterpro::ModInterpro(std::string &out, std::string &in, std::string &ont,
-                         bool blastp, std::vector<uint16> &lvls,
+ModInterpro::ModInterpro(std::string &ont, std::string &in,
                          EntapDataPtrs& entap_data, vect_str_t databases)
-    : AbstractOntology(out, in, ont,
-                       blastp, lvls, entap_data){
+    : AbstractOntology(ont, in, entap_data, INTERPRO_DIRECTORY){
     FS_dprint("Spawn Object - InterPro");
 
-    _interpro_dir = PATHS(_ontology_dir, INTERPRO_DIRECTORY);
-    _proc_dir     = PATHS(_interpro_dir, PROCESSED_OUT_DIR);
-    _figure_dir   = PATHS(_interpro_dir, FIGURE_DIR);
     _databases    = databases;
-
-    try {
-        _pFileSystem->delete_dir(_proc_dir);
-        _pFileSystem->delete_dir(_figure_dir);
-
-        _pFileSystem->create_dir(_interpro_dir);
-        _pFileSystem->create_dir(_proc_dir);
-        _pFileSystem->create_dir(_figure_dir);
-    } catch (...) {
-        throw ExceptionHandler("Unable to remove or create directories", ERR_ENTAP_FILE_IO);
-    }
 }

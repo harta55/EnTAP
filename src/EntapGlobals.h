@@ -313,7 +313,11 @@ namespace UInput {
 }
 
 namespace ENTAP_STATS {
-    const std::string SOFTWARE_BREAK = "------------------------------------------------------\n";
+    extern const std::string SOFTWARE_BREAK;
+
+    void ES_format_stat_stream(std::stringstream &stream, std::string title);
+
+
 }
 
 #endif //ENTAPGLOBALS_H

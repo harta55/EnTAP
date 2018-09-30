@@ -43,7 +43,7 @@
 //#define USE_CURL    1
 #endif
 
-// Compile with using the Fast CSV Parser
+// Compile with using the Fast CSV Parser (required now)
 #ifndef USE_FAST_CSV
 #define USE_FAST_CSV  1
 #endif

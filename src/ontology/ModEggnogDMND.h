@@ -35,7 +35,7 @@
 class ModEggnogDMND : public AbstractOntology {
 
 public:
-    ModEggnogDMND(std::string &out, std::string &in_hits, std::string &ont_out, bool blastp, std::vector<uint16> &lvls,
+    ModEggnogDMND(std::string &ont_out, std::string &in_hits,
                   EntapDataPtrs &entap_data, std::string sql_db_path);
     virtual std::pair<bool, std::string> verify_files() override;
     ~ModEggnogDMND();
@@ -45,16 +45,21 @@ public:
 
 private:
     std::string get_output_dmnd_filepath(bool final);
-    void calculate_stats();
+    void calculate_stats(std::stringstream &stream);
 
     static constexpr int DMND_COL_NUMBER = 14;
     const uint32      STATUS_UPDATE_HITS = 5000;
     const std::string EGGNOG_DMND_DIR = "EggNOG_DMND/";
+    const std::string GRAPH_EGG_TAX_BAR_TITLE = "Top_10_Tax_Levels";
+    const std::string GRAPH_EGG_TAX_BAR_PNG   = "eggnog_tax_scope.png";
+    const std::string GRAPH_EGG_TAX_BAR_TXT   = "eggnog_tax_scope.txt";
+    const std::string EGG_ANNOT_RESULTS       = "annotation_results";
+    const std::string EGG_ANNOT_STD           = "annotation_std";
+    const std::string EGG_ANNOT_APPEND        = ".emapper.annotations";
+    static constexpr uint8 COUNT_TOP_TAX_SCOPE = 10;
+
     std::string _out_hits;
-    std::string _egg_out_dir;
     std::string _eggnog_db_path;
-
-
 };
 
 

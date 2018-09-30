@@ -51,6 +51,7 @@
 
 //******************* Defines/Macros ***************************
 #define LOWERCASE(x)        std::transform(x.begin(), x.end(), x.begin(), ::tolower)
+#define STR_COUNT(x,y)      std::count(x.begin(), x.end(), y)
 #define STR_REPLACE(x,y,z)  std::replace(x.begin(), x.end(), y, z)
 #define STR_ERASE(x,y)      x.erase(std::remove(x.begin(), x.end(), y),x.end())
 #define FIND_VECT(x,y)      std::find(y.begin(), y.end(), x) != y.end() // find x in y

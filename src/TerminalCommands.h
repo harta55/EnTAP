@@ -30,10 +30,16 @@
 
 #include "common.h"
 
-int TC_execute_cmd(std::string, std::string);
-int TC_execute_cmd(std::string);
-int TC_execute_cmd(std::string cmd, std::stringstream &err_stream,
-    std::stringstream &out_stream, std::string &out_path);
+typedef struct {
+    std::string command;
+    std::stringstream out_stream;
+    std::stringstream err_stream;
+    bool print_files;
+    std::string base_std_path;
+
+} TerminalData;
+
+int TC_execute_cmd(TerminalData &terminalData);
 
 
 #endif //ENTAP_TERMINALCOMMANDS_H

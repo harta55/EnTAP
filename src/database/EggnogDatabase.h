@@ -190,7 +190,7 @@ private:
                               std::string &best_hit,
                               std::set<std::string> &target_lvls);
     void get_annotations(set_str_t& orthologs, QuerySequence::EggnogResults& eggnog_results);
-    void set_error(std::string &msg, ERR_EGGNOG_DB code);
+    void set_error(std::string msg, ERR_EGGNOG_DB code);
     void set_database_version();
     void update_dataset(set_str_t &set, EGGNOG_DATA_TYPES datatype, std::string data);
 };

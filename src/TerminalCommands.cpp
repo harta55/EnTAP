@@ -25,100 +25,11 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <ios>
 #include <pstream.h>
 #include "TerminalCommands.h"
 #include "common.h"
 #include "FileSystem.h"
 
-/**
- * ======================================================================
- * Function int execute_cmd(std::string cmd, std::string out_path)
- *
- * Description          - Terminal stream based on pstreams implementation
- *                      - Executes commands and prints .err and .out from stream
- *
- * Notes                - None
- *
- * @param cmd           - Command for child process
- * @param out_path      - Path to std out/err files to be printed
- *
- * @return              - int error code
- *
- * =====================================================================
- */
-int TC_execute_cmd(std::string cmd, std::string out_path) {
-    std::ofstream out_file(out_path+".out", std::ios::out | std::ios::app);
-    std::ofstream err_file(out_path+".err", std::ios::out | std::ios::app);
-    FS_dprint("Executing command: \n" + cmd +
-                      "\nStd Out: " + out_path + ".out" +
-                      "\nStd Err: " + out_path + ".err");
-    const redi::pstreams::pmode mode = redi::pstreams::pstdout|redi::pstreams::pstderr;
-    redi::ipstream child(cmd, mode);
-    char buf[1024];
-    std::streamsize n;
-    bool finished[2] = { false, false };
-    while (!finished[0] || !finished[1]) {
-        if (!finished[0]) {
-            while ((n = child.err().readsome(buf, sizeof(buf))) > 0)
-                err_file.write(buf, n);
-            if (child.eof()) {
-                finished[0] = true;
-                if (!finished[1])
-                    child.clear();
-            }
-        }
-        if (!finished[1]) {
-            while ((n = child.out().readsome(buf, sizeof(buf))) > 0)
-                out_file.write(buf, n).flush();
-            if (child.eof()) {
-                finished[1] = true;
-                if (!finished[0])
-                    child.clear();
-            }
-        }
-    }
-    child.close();
-    out_file.close();
-    err_file.close();
-    if (child.rdbuf()->exited())
-        return child.rdbuf()->status();
-    return 1;
-}
-// todo, may want to handle differently
-// TODO change to sending map of flags as command
-int TC_execute_cmd(std::string cmd) {
-    FS_dprint("Executing command: \n" + cmd);
-    const redi::pstreams::pmode mode = redi::pstreams::pstdout|redi::pstreams::pstderr;
-    redi::ipstream child(cmd, mode);
-    char buf[1024];
-    std::streamsize n;
-    bool finished[2] = { false, false };
-    while (!finished[0] || !finished[1]) {
-        if (!finished[0]) {
-            while ((n = child.err().readsome(buf, sizeof(buf))) > 0)
-                continue;
-            if (child.eof()) {
-                finished[0] = true;
-                if (!finished[1])
-                    child.clear();
-            }
-        }
-        if (!finished[1]) {
-            while ((n = child.out().readsome(buf, sizeof(buf))) > 0)
-                continue;
-            if (child.eof()) {
-                finished[1] = true;
-                if (!finished[0])
-                    child.clear();
-            }
-        }
-    }
-    child.close();
-    if (child.rdbuf()->exited())
-        return child.rdbuf()->status();
-    return 1;
-}
 
 /**
  * ======================================================================
@@ -136,26 +47,19 @@ int TC_execute_cmd(std::string cmd) {
  *
  * =====================================================================
  */
-int TC_execute_cmd(std::string cmd, std::stringstream &err_stream,
-                   std::stringstream &out_stream, std::string &out_path) {
-    std::string std_outpath;
+int TC_execute_cmd(TerminalData &terminalData) {
 
-    std_outpath = out_path + FileSystem::EXT_OUT;
+    FS_dprint("Executing command: \n" + terminalData.command);
 
-    FS_dprint("Executing command: \n" + cmd +
-              "\nStd Out: " + std_outpath +
-              "\nStd Out: Printing to stream"
-              "\nStd Err: Printing to stream");
-    std::ofstream out_file(std_outpath, std::ios::out | std::ios::app);
     const redi::pstreams::pmode mode = redi::pstreams::pstdout|redi::pstreams::pstderr;
-    redi::ipstream child(cmd, mode);
+    redi::ipstream child(terminalData.command, mode);
     char buf[1024];
     std::streamsize n;
     bool finished[2] = { false, false };
     while (!finished[0] || !finished[1]) {
         if (!finished[0]) {
             while ((n = child.err().readsome(buf, sizeof(buf))) > 0)
-                err_stream.write(buf, n);
+                terminalData.err_stream.write(buf, n);
             if (child.eof()) {
                 finished[0] = true;
                 if (!finished[1])
@@ -164,8 +68,7 @@ int TC_execute_cmd(std::string cmd, std::stringstream &err_stream,
         }
         if (!finished[1]) {
             while ((n = child.out().readsome(buf, sizeof(buf))) > 0) {
-                out_file.write(buf, n).flush();
-                out_stream.write(buf, n).flush();
+                terminalData.out_stream.write(buf, n).flush();
             }
             if (child.eof()) {
                 finished[1] = true;
@@ -174,8 +77,25 @@ int TC_execute_cmd(std::string cmd, std::stringstream &err_stream,
             }
         }
     }
-    out_file.close();
     child.close();
+    // Print error to debug file
+    FS_dprint("\nStd Err:\n" + terminalData.err_stream.str());
+
+    if (terminalData.print_files) {
+        std::string out_path = terminalData.base_std_path + FileSystem::EXT_OUT;
+        std::string err_path = terminalData.base_std_path + FileSystem::EXT_ERR;
+
+        std::ofstream out_file(out_path, std::ios::out | std::ios::app);
+        std::ofstream err_file(err_path, std::ios::out | std::ios::app);
+        FS_dprint("\nPrinting to files:\nStd Out: " + out_path + "\nStd Err: " + err_path);
+
+        out_file << terminalData.out_stream.rdbuf();
+        err_file << terminalData.err_stream.rdbuf();
+
+        out_file.close();
+        err_file.close();
+    }
+
     if (child.rdbuf()->exited())
         return child.rdbuf()->status();
     return 1;

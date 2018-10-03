@@ -35,6 +35,7 @@
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/time_clock.hpp>
 #include "config.h"
+#include "TerminalCommands.h"
 #include <ctime>
 #include <cstring>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -565,6 +566,11 @@ std::string FileSystem::get_temp_outdir() {
 }
 
 bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) {
+    TerminalData terminalData;
+
+    terminalData.print_files = false;
+    terminalData.base_std_path = "";
+
 
     FS_dprint("Downloading FTP file at: " + ftp_path);
 
@@ -602,17 +608,24 @@ bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) 
     std::string terminal_cmd =
         "wget -O " + out_path + " " + ftp_path;
 
-    if (TC_execute_cmd(terminal_cmd) == 0) {
+    terminalData.command = terminal_cmd;
+
+    if (TC_execute_cmd(terminalData) == 0) {
         FS_dprint("Success, file saved to: " + out_path);
         return true;
     } else {
-        FS_dprint("Error. Did not complete");
+        set_error("Unable to get file\n" + terminalData.err_stream.str());
         return false;
     }
 #endif
 }
 
 bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES type) {
+    TerminalData terminalData;
+
+    terminalData.print_files = false;
+    terminalData.base_std_path = "";
+
     FS_dprint("Decompressing file at: " + in_path);
     if (!file_exists(in_path)) {
         FS_dprint("File does not exist!");
@@ -640,11 +653,14 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
         default:
             return false;
     }
-    if (TC_execute_cmd(terminal_cmd) == 0) {
+
+    terminalData.command = terminal_cmd;
+
+    if (TC_execute_cmd(terminalData) == 0) {
         FS_dprint("Success! Exported to: " + out_dir);
         return true;
     } else {
-        FS_dprint("Error! Unable to decompress file");
+        set_error("Unable to decompress file\n" + terminalData.err_stream.str());
         return false;
     }
 #endif
@@ -706,4 +722,13 @@ std::string FileSystem::print_file_status(uint16 status, std::string& path) {
     }
 
     return err_msg;
+}
+
+void FileSystem::set_error(std::string err_msg) {
+    FS_dprint(err_msg);
+    _err_msg = err_msg;
+}
+
+std::string FileSystem::get_error(void) {
+    return "\nFilesystem Error: " + _err_msg;
 }

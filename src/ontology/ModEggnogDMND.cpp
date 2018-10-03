@@ -27,6 +27,7 @@
 
 #include "ModEggnogDMND.h"
 #include "../database/EggnogDatabase.h"
+#include "../TerminalCommands.h"
 
 ModEggnogDMND::ModEggnogDMND(std::string &ont_out, std::string &in_hits,
                              EntapDataPtrs &entap_data, std::string sql_db_path)
@@ -59,8 +60,7 @@ void ModEggnogDMND::execute() {
     std::string                        std_out;
     std::string                        cmd;
     std::string                        blast;
-    std::stringstream                  err_stream;
-    std::stringstream                  out_stream;
+    TerminalData                       terminalData;
 
     FS_dprint("Running EggNOG against Diamond database...");
 
@@ -90,12 +90,16 @@ void ModEggnogDMND::execute() {
             " -f " + "6 qseqid sseqid pident length mismatch gapopen "
                     "qstart qend sstart send evalue bitscore qcovhsp stitle";
 
-    if (TC_execute_cmd(cmd, err_stream, out_stream, std_out) != 0) {
+    terminalData.command        = cmd;
+    terminalData.print_files    = true;
+    terminalData.base_std_path  = std_out;
+
+    if (TC_execute_cmd(terminalData) != 0) {
         // Error in run
         _pFileSystem->delete_file(_out_hits);
-        FS_dprint("DIAMOND STD OUT:\n" + out_stream.str());
+        FS_dprint("DIAMOND STD OUT:\n" + terminalData.out_stream.str());
         throw ExceptionHandler("Error in running DIAMOND against EggNOG database at: " +
-                               EGG_DMND_PATH + "\nDIAMOND Error:\n" + err_stream.str(), ERR_ENTAP_RUN_EGGNOG);
+                               EGG_DMND_PATH + "\nDIAMOND Error:\n" + terminalData.err_stream.str(), ERR_ENTAP_RUN_EGGNOG);
     }
 }
 

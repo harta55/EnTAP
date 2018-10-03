@@ -258,14 +258,16 @@ EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::download(EggnogDatabase::EGGNOG_DB
             FS_dprint("Downloading EggNOG SQL database...");
             temp_path = PATHS(_pFilesystem->get_temp_outdir(), TEMP_SQL_GZ);
             if (!_pFilesystem->download_ftp_file(FTP_EGGNOG_SQL, temp_path)) {
-                FS_dprint("Unable to download from FTP address at: " + FTP_EGGNOG_SQL);
+                set_error("Unable to download from FTP address at: " + FTP_EGGNOG_SQL +
+                          _pFilesystem->get_error(), ERR_EGG_SQL_FTP);
                 return ERR_EGG_SQL_FTP;
             }
 
             FS_dprint("Success! Decompressing...");
 
             if (!_pFilesystem->decompress_file(temp_path, out_path, FileSystem::FILE_GZ)) {
-                FS_dprint("Unable to decompress file at: " + temp_path);
+                set_error("Unable to decompress file at: " + temp_path + _pFilesystem->get_error(),
+                          ERR_EGG_SQL_DECOMP);
                 return ERR_EGG_SQL_DECOMP;
             }
             FS_dprint("Success! EggNOG SQL database sent to: " + out_path);
@@ -275,14 +277,17 @@ EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::download(EggnogDatabase::EGGNOG_DB
             FS_dprint("Downloading EggNOG DIAMOND database...");
             temp_path = PATHS(_pFilesystem->get_temp_outdir(), TEMP_DMND_GZ);
             if (!_pFilesystem->download_ftp_file(FTP_EGGNOG_DMND, temp_path)) {
-                FS_dprint("Unable to download from FTP address at: " + FTP_EGGNOG_DMND);
+                set_error("Unable to download from FTP address at: " + FTP_EGGNOG_DMND + _pFilesystem->get_error(),
+                        ERR_EGG_DMND_FTP);
+                _pFilesystem->delete_file(temp_path);
                 return ERR_EGG_DMND_FTP;
             }
 
             FS_dprint("Success! Decompressing...");
 
             if (!_pFilesystem->decompress_file(temp_path, out_path, FileSystem::FILE_GZ)) {
-                FS_dprint("Unable to decompress file at: " + temp_path);
+                set_error("Unable to decompress file at: " + temp_path +_pFilesystem->get_error(),
+                        ERR_EGG_DMND_DECOMP);
                 _pFilesystem->delete_file(out_path);
                 return ERR_EGG_DMND_DECOMP;
             }
@@ -293,14 +298,17 @@ EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::download(EggnogDatabase::EGGNOG_DB
             FS_dprint("Downloading EggNOG DIAMOND database...");
             temp_path = PATHS(_pFilesystem->get_temp_outdir(), TEMP_FAST_GZ);
             if (!_pFilesystem->download_ftp_file(FTP_EGGNOG_FASTA, temp_path)) {
-                FS_dprint("Unable to download from FTP address at: " + FTP_EGGNOG_FASTA);
+                set_error("Unable to download from FTP address at: " + FTP_EGGNOG_FASTA + _pFilesystem->get_error(),
+                        ERR_EGG_FASTA_FTP);
+                _pFilesystem->delete_file(temp_path);
                 return ERR_EGG_FASTA_FTP;
             }
 
             FS_dprint("Success! Decompressing...");
 
             if (!_pFilesystem->decompress_file(temp_path, out_path, FileSystem::FILE_GZ)) {
-                FS_dprint("Unable to decompress file at: " + temp_path);
+                set_error("Unable to decompress file at: " + temp_path + _pFilesystem->get_error(),
+                        ERR_EGG_FASTA_DECOMP);
                 _pFilesystem->delete_file(out_path);
                 return ERR_EGG_FASTA_DECOMP;
             }
@@ -337,9 +345,7 @@ EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::open_sql(std::string& sql_path) {
 }
 
 std::string EggnogDatabase::print_err() {
-    std::string ret = "Database Error Code: " + _err_code;
-
-    return _err_msg;
+    return "\nEggnogDatabase Error: " + _err_msg;
 }
 
 void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults& eggnog_data) {
@@ -841,7 +847,8 @@ void EggnogDatabase::get_annotations(set_str_t& orthologs, QuerySequence::Eggnog
     }
 }
 
-void EggnogDatabase::set_error(std::string &msg, ERR_EGGNOG_DB code) {
+void EggnogDatabase::set_error(std::string msg, ERR_EGGNOG_DB code) {
+    FS_dprint(msg);
     _err_msg = msg;
     _err_code = code;
 }

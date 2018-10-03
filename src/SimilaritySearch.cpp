@@ -30,6 +30,7 @@
 #include <csv.h>
 #include <boost/regex.hpp>
 #include "SimilaritySearch.h"
+#include "TerminalCommands.h"
 //**************************************************************
 
 typedef std::map<std::string,std::map<std::string,uint32>> graph_sum_t;
@@ -259,9 +260,8 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
                    std::string &database,int &threads, std::string &blast) {
 
     std::string        diamond_run;
-    std::stringstream  stream_err;
-    std::stringstream  stream_out;
     int32              err_code;
+    TerminalData       terminalData;
 
     diamond_run =
             _diamond_exe + " "
@@ -278,14 +278,19 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
             " -f " + "6 qseqid sseqid pident length mismatch gapopen "
                      "qstart qend sstart send evalue bitscore qcovhsp stitle";
 
-    // Execute command
-    err_code = TC_execute_cmd(diamond_run, stream_err, stream_out, std_out);
-    FS_dprint("\nDIAMOND STD OUT:\n" + stream_out.str());
+
+    terminalData.command       = diamond_run;
+    terminalData.base_std_path = std_out;
+    terminalData.print_files   = true;
+
+
+    err_code = TC_execute_cmd(terminalData);
+
     if (err_code != 0) {
         // Delete output file if run failed
         _pFileSystem->delete_file(output_file);
-        throw ExceptionHandler("Error with database located at: " + database + "\n" +
-                                       stream_err.str(), ERR_ENTAP_RUN_SIM_SEARCH_RUN);
+        throw ExceptionHandler("Error with database located at: " + database + "\nDIAMOND Error: " +
+                                       terminalData.err_stream.str(), ERR_ENTAP_RUN_SIM_SEARCH_RUN);
     }
 }
 
@@ -872,9 +877,14 @@ void SimilaritySearch::print_header(std::ofstream &file_stream) {
 
 bool SimilaritySearch::is_executable() {
     std::string test_command;
+    TerminalData terminalData;
 
     test_command = DIAMOND_EXE + " --version";
-    return TC_execute_cmd(test_command) == 0;
+
+    terminalData.command = test_command;
+    terminalData.print_files = false;
+
+    return TC_execute_cmd(terminalData) == 0;
 }
 
 // Returns database "shortname" from database full path

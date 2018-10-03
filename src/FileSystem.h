@@ -88,6 +88,7 @@ public:
     bool rename_file(std::string& in, std::string& out);
     uint16 get_file_status(std::string &path);
     std::string print_file_status(uint16 status,std::string& path);
+    std::string get_error(void);
 
     bool download_ftp_file(std::string,std::string&);
     bool decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES);
@@ -105,6 +106,7 @@ public:
 
 private:
     void init_log();
+    void set_error(std::string err_msg);
 
     const std::string LOG_FILENAME   = "log_file";
     const std::string LOG_EXTENSION  = ".txt";
@@ -114,6 +116,7 @@ private:
     std::string _root_path;     // Root EnTAP output directory
     std::string _final_outpath; // Path to final files after entap has finished
     std::string _temp_outpath;  // Temp directory for EnTAP usage
+    std::string _err_msg;
 };
 
 

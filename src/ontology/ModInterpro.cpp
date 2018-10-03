@@ -34,6 +34,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 #include "../FileSystem.h"
+#include "../TerminalCommands.h"
 //**************************************************************
 
 using boost::property_tree::ptree;
@@ -92,8 +93,7 @@ void ModInterpro::execute() {
     std::string blast;
     std::string temp_dir;
     int32       err_code;
-    std::stringstream err_stream;
-    std::stringstream out_stream;
+    TerminalData      terminalData;
 
     _blastp ? blast = PROTEIN_TAG : blast = NUCLEO_TAG;
     temp_dir = PATHS(_interpro_dir, INTERPRO_TEMP);
@@ -118,11 +118,15 @@ void ModInterpro::execute() {
     }
 
     // Execute command
-    err_code = TC_execute_cmd(interpro_cmd, err_stream, out_stream, std_out);
-    FS_dprint("InterProScan STD OUT:\n" + out_stream.str());
+    terminalData.command       = interpro_cmd;
+    terminalData.print_files   = true;
+    terminalData.base_std_path = std_out;
+
+
+    err_code = TC_execute_cmd(terminalData);
     if (err_code != 0) {
         _pFileSystem->delete_file(_final_outpath);
-        throw ExceptionHandler("Error executing InterProScan\nInterProScan Error:\n"+ err_stream.str(),
+        throw ExceptionHandler("Error executing InterProScan\nInterProScan Error:\n"+ terminalData.err_stream.str(),
                                ERR_ENTAP_RUN_INTERPRO);
     } else {
         boostFS::remove_all(temp_dir);

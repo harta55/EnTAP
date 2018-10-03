@@ -32,6 +32,7 @@ Y or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #include "ModGeneMarkST.h"
 #include "../ExceptionHandler.h"
 #include "../FileSystem.h"
+#include "../TerminalCommands.h"
 //**************************************************************
 
 
@@ -95,9 +96,8 @@ std::string ModGeneMarkST::execute() {
     std::string     line;
     std::string     temp_name;
     std::string     out_path;
-    std::stringstream err_stream;
-    std::stringstream out_stream;
     int32           err_code;
+    TerminalData    terminalData;
 
     std::list<std::string> out_names {_transcriptome_filename + FileSystem::EXT_FAA,
                                       _transcriptome_filename + FileSystem::EXT_FNN};
@@ -108,11 +108,15 @@ std::string ModGeneMarkST::execute() {
     genemark_cmd     = _exe_path + " -faa -fnn " + _inpath;
     genemark_std_out = PATHS(_frame_outpath, GENEMARK_STD_OUT);
 
-    err_code = TC_execute_cmd(genemark_cmd, err_stream, out_stream, genemark_std_out);
-    FS_dprint("\nGeneMarkST STD OUT:\n" + out_stream.str());
+    terminalData.command        = genemark_cmd;
+    terminalData.print_files    = true;
+    terminalData.base_std_path  = genemark_std_out;
+
+
+    err_code = TC_execute_cmd(terminalData);
     if (err_code != 0 ) {
         throw ExceptionHandler("Error in running GeneMarkST at file located at: " +
-                               _inpath + "\nGeneMarkST Error:\n" + err_stream.str(),
+                               _inpath + "\nGeneMarkST Error:\n" + terminalData.err_stream.str(),
                                ERR_ENTAP_INIT_INDX_DATA_NOT_FOUND);
     }
     FS_dprint("Success!");

@@ -33,18 +33,19 @@
 #include "../GraphingManager.h"
 #include "../QuerySequence.h"
 #include "../QueryData.h"
-#include "../database/EntapDatabase.h"
 #include "../EntapGlobals.h"
 #include "../EntapModule.h"
 
-class QuerySequence;
-class QueryData;
 class AbstractOntology : public EntapModule {
 public:
     AbstractOntology(std::string &in_hits,
                      std::string &ont_out,
                      EntapDataPtrs &entap_data,
-                     std::string mod_name);
+                     std::string mod_name, std::string &exe);
+    ~AbstractOntology() = default;
+    virtual std::pair<bool, std::string> verify_files()=0;
+    virtual void execute() = 0;
+    virtual void parse() = 0;
 
 protected:
     const uint8 GRAPH_ONTOLOGY_FLAG = 4;

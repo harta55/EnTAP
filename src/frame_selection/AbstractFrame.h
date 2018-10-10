@@ -32,6 +32,7 @@
 //*********************** Includes *****************************
 #include "../QuerySequence.h"
 #include "../QueryData.h"
+#include "../EntapModule.h"
 //**************************************************************
 
 /**
@@ -49,7 +50,7 @@
  * @return              - None
  * ======================================================================
  */
-class AbstractFrame {
+class AbstractFrame : public EntapModule {
 
 public:
 
@@ -77,45 +78,15 @@ public:
  * @return              - None
  * ======================================================================
  */
-    AbstractFrame(std::string &exe, std::string &in,
-                  std::string &frame,
-                  EntapDataPtrs &entap_data){
-        _exe_path        = exe;
-        _inpath          = in;
-        _frame_outpath   = frame;
-        _pGraphingManager = entap_data._pGraphingManager;
-        _pQUERY_DATA      = entap_data._pQueryData;
-        _pUserInput       = entap_data._pUserInput;
-        _pFileSystem      = entap_data._pFileSystem;
-
-        _processed_path = PATHS(frame, PROCESSED_DIR);
-        _figure_path    = PATHS(frame, FIGURE_DIR);
-        _pFileSystem->delete_dir(_processed_path);
-        _pFileSystem->delete_dir(_figure_path);
-        _pFileSystem->create_dir(_processed_path);
-        _pFileSystem->create_dir(_figure_path);
-    }
+    AbstractFrame(std::string &execution_stage_path, std::string &in_hits,
+                  EntapDataPtrs &entap_data, std::string module_name, std::string &exe);
 
     virtual ~AbstractFrame() = default;
     virtual std::pair<bool, std::string> verify_files()=0;
-    virtual std::string execute() = 0;
+    virtual void execute() = 0;
     virtual void parse() = 0;
+    virtual std::string get_final_faa() = 0;
 
-
-protected:
-    std::string     _exe_path;
-    std::string     _outpath;
-    std::string     _inpath;
-    std::string     _processed_path;
-    std::string     _figure_path;
-    std::string     _frame_outpath;
-    GraphingManager *_pGraphingManager;
-    QueryData       *_pQUERY_DATA;
-    FileSystem      *_pFileSystem;
-    UserInput       *_pUserInput;
-
-    const std::string PROCESSED_DIR                 = "processed/";
-    const std::string FIGURE_DIR                    = "figures/";
 };
 
 

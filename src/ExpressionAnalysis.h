@@ -30,15 +30,14 @@
 
 #include "QuerySequence.h"
 #include "GraphingManager.h"
-#include "expression/AbstractExpression.h"
 #include "QueryData.h"
 #include "ExceptionHandler.h"
 #include "EntapConfig.h"
 #include "EntapGlobals.h"
-#include "EntapExecute.h"
 #include "common.h"
-#include "expression/ModRSEM.h"
 #include "FileSystem.h"
+#include "expression/AbstractExpression.h"
+#include "expression/ModRSEM.h"
 
 class AbstractExpression;
 

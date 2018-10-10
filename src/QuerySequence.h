@@ -30,9 +30,10 @@
 #define ENTAP_QUERYSEQUENCE_H
 
 #include "common.h"
-#include "Ontology.h"
 #include "database/SQLDatabaseHelper.h"
 #include "EntapExecute.h"
+#include "database/EntapDatabase.h"
+
 class QuerySequence {
 public:
 

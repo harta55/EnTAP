@@ -31,34 +31,34 @@
 
 //*********************** Includes *****************************
 #include "AbstractExpression.h"
-#include "../QueryData.h"
 #include <csv.h>
-#include <iomanip>
 #include "../ExceptionHandler.h"
 #include "../GraphingManager.h"
 #include "../FileSystem.h"
+#include "../QuerySequence.h"
 #include "../common.h"
 
 //**************************************************************
 
-class ModRSEM : public AbstractExpression{
+class ModRSEM : public AbstractExpression {
 
 public:
-    ModRSEM(std::string &exe,
-            std::string &in,
-            std::string &exp,
-            std::string &align,
-            EntapDataPtrs &entapdata) :
-    AbstractExpression(exe, in, exp, align, entapdata){}
+    ModRSEM(std::string &execution_stage_path, std::string &in_hits,
+            EntapDataPtrs &entap_data, std::string &exe,
+            std::string &align);
 
-    ~ModRSEM();
+    ~ModRSEM() ;
 
     virtual std::pair<bool, std::string> verify_files() override ;
     virtual void execute() override ;
-    virtual std::string filter() override ;
+    virtual void parse() override;
     virtual void set_data(int, float, bool) override    ;
 
+    virtual std::string get_final_fasta() override ;
+
 private:
+
+    const std::string RSEM_NAME             = "RSEM";
 
     const std::string RSEM_SAM_VALID        = "rsem-sam-validator";
     const std::string RSEM_PREP_REF_EXE     = "rsem-prepare-reference";
@@ -90,7 +90,9 @@ private:
     bool        _issingle;
 
     bool rsem_validate_file(std::string);
-    bool rsem_conv_to_bam(std::string);
+#if 0
+    bool rsem_conv_to_bam(std::string); // Currently unused
+#endif
     bool rsem_generate_reference(std::string&);
     bool rsem_expression_analysis(std::string&, std::string&);
 };

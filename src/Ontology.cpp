@@ -171,6 +171,7 @@ std::unique_ptr<EntapModule> Ontology::spawn_object(uint16 &software) {
                     _new_input,
                     _ontology_dir,
                     _entap_data_ptrs,
+                    INTERPRO_EXE,
                     _interpro_databases       // Additional data
             ));
         case ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG:
@@ -178,6 +179,7 @@ std::unique_ptr<EntapModule> Ontology::spawn_object(uint16 &software) {
                     _ontology_dir,
                     _new_input,
                     _entap_data_ptrs,
+                    DIAMOND_EXE,
                     _eggnog_db_path
             ));
         default:
@@ -185,6 +187,7 @@ std::unique_ptr<EntapModule> Ontology::spawn_object(uint16 &software) {
                     _ontology_dir,
                     _new_input,
                     _entap_data_ptrs,
+                    DIAMOND_EXE,
                     _eggnog_db_path
             ));
     }

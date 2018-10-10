@@ -42,18 +42,20 @@ struct frame_seq {
 typedef std::map<std::string,ModGeneMarkST::frame_seq> frame_map_t;
 
 public:
-    ModGeneMarkST(std::string &exe,
-                  std::string &in,
-                  std::string &frame,
-                  EntapDataPtrs&);
+    ModGeneMarkST(std::string &execution_stage_path, std::string &in_hits,
+                  EntapDataPtrs &entap_data, std::string &exe);
 
     ~ModGeneMarkST();
 
     virtual std::pair<bool, std::string> verify_files() override ;
-    virtual std::string execute() override ;
+    virtual void execute() override ;
     virtual void parse() override ;
 
+    virtual std::string get_final_faa() override ;
+
 private:
+
+    const std::string GENEMARK_NAME                 = "GeneMarkS-T";
 
     const std::string GRAPH_TITLE_FRAME_RESULTS     = "Frame_Selection_ORFs";
     const std::string GRAPH_FILE_FRAME_RESUTS       = "frame_results_pie.png";

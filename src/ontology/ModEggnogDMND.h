@@ -36,7 +36,7 @@ class ModEggnogDMND : public AbstractOntology {
 
 public:
     ModEggnogDMND(std::string &ont_out, std::string &in_hits,
-                  EntapDataPtrs &entap_data, std::string sql_db_path);
+                  EntapDataPtrs &entap_data, std::string &exe, std::string sql_db_path);
     virtual std::pair<bool, std::string> verify_files() override;
     ~ModEggnogDMND();
     virtual void execute() override ;

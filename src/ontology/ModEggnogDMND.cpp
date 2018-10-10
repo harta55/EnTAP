@@ -30,8 +30,8 @@
 #include "../TerminalCommands.h"
 
 ModEggnogDMND::ModEggnogDMND(std::string &ont_out, std::string &in_hits,
-                             EntapDataPtrs &entap_data, std::string sql_db_path)
-        : AbstractOntology(ont_out, in_hits, entap_data, EGGNOG_DMND_DIR) {
+                             EntapDataPtrs &entap_data, std::string &exe, std::string sql_db_path)
+        : AbstractOntology(ont_out, in_hits, entap_data, EGGNOG_DMND_DIR, exe) {
     FS_dprint("Spawn Object - ModEggnogDMND");
 
     _eggnog_db_path = sql_db_path;

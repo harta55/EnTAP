@@ -25,12 +25,10 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "AbstractFrame.h"
 
-#include "AbstractOntology.h"
+AbstractFrame::AbstractFrame(std::string &execution_stage_path, std::string &in_hits,
+                             EntapDataPtrs &entap_data, std::string module_name, std::string &exe)
+: EntapModule(execution_stage_path, in_hits, entap_data, module_name, exe) {
 
-AbstractOntology::AbstractOntology(std::string &in_hits, std::string &ont_out, EntapDataPtrs &entap_data,
-                                   std::string mod_name, std::string &exe)
-: EntapModule(ont_out, in_hits, entap_data, mod_name, exe) {
-
-    _go_levels          = _pUserInput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_GO_LEVELS);
 }

@@ -48,7 +48,7 @@ class ModInterpro : public AbstractOntology{
 public:
     ~ModInterpro();
     ModInterpro(std::string &ont, std::string &in,
-                EntapDataPtrs& entap_data, vect_str_t );
+                EntapDataPtrs& entap_data, std::string &exe, vect_str_t );
 
     virtual std::pair<bool, std::string> verify_files() override ;
     virtual void execute() override ;

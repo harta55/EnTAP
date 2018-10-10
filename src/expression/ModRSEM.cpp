@@ -50,9 +50,9 @@
  */
 std::pair<bool, std::string> ModRSEM::verify_files() {
 
-    _filename = _inpath;
+    _filename = _in_hits;
     _pFileSystem->get_filename_no_extensions(_filename);
-    _exp_out  = PATHS(_expression_outpath, _filename);
+    _exp_out  = PATHS(_mod_out_dir, _filename);
     _rsem_out = _exp_out + RSEM_OUT_FILE;
     if (_pFileSystem->file_exists(_rsem_out)) {
         FS_dprint("File found at " + _rsem_out +  "\nmoving to filter transcriptome");
@@ -136,7 +136,7 @@ void ModRSEM::execute() {
  *
  * =====================================================================
  */
-std::string ModRSEM::filter() {
+void ModRSEM::parse() {
     FS_dprint("Beginning to filter transcriptome...");
 
     uint32              count_removed=0;
@@ -178,7 +178,7 @@ std::string ModRSEM::filter() {
     GraphingData        graphingStruct;
     QUERY_MAP_T         *MAP;
 
-    MAP = _pQueryData->get_sequences_ptr();
+    MAP = _pQUERY_DATA->get_sequences_ptr();
 
     if (!_pFileSystem->file_exists(_rsem_out)) {
         throw ExceptionHandler("File does not exist at: " + _rsem_out,
@@ -186,8 +186,8 @@ std::string ModRSEM::filter() {
     }
 
     // Setup figure files, directories already created
-    fig_txt_box_path = PATHS(_figure_path, GRAPH_TXT_BOX_PLOT);
-    fig_png_box_path = PATHS(_figure_path, GRAPH_PNG_BOX_PLOT);
+    fig_txt_box_path = PATHS(_figure_dir, GRAPH_TXT_BOX_PLOT);
+    fig_png_box_path = PATHS(_figure_dir, GRAPH_PNG_BOX_PLOT);
 
     // Open figure text file
     std::ofstream file_fig_box(fig_txt_box_path, std::ios::out | std::ios::app);
@@ -197,8 +197,8 @@ std::string ModRSEM::filter() {
     original_filename = _filename;
     removed_filename  = original_filename + RSEM_OUT_REMOVED;
     kept_filename     = original_filename + RSEM_OUT_KEPT;
-    out_kept    = PATHS(_processed_path, kept_filename);
-    out_removed = PATHS(_processed_path, removed_filename);
+    out_kept    = PATHS(_proc_dir, kept_filename);
+    out_removed = PATHS(_proc_dir, removed_filename);
     std::ofstream out_file(out_kept, std::ios::out | std::ios::app);
     std::ofstream removed_file(out_removed, std::ios::out | std::ios::app);
 
@@ -208,7 +208,7 @@ std::string ModRSEM::filter() {
     in.next_line();
     while (in.read_row(geneid, transid, in_len, e_leng, e_count, tpm, fpkm_val)) {
         count_total++;
-        _pQueryData->trim_sequence_header(geneid,geneid);
+        _pQUERY_DATA->trim_sequence_header(geneid,geneid);
         QUERY_MAP_T::iterator it = MAP->find(geneid);
         if (it == MAP->end()) {
             throw ExceptionHandler("Unable to find sequence: " + geneid,
@@ -268,7 +268,7 @@ std::string ModRSEM::filter() {
     if (count_kept > 0) {
         rejected_percent = ((fp32)count_removed / count_kept) * 100;
         avg_kept = (fp32) total_kept_len / count_kept;
-        kept_n = _pQueryData->calculate_N_vals(all_kept_lengths, total_kept_len);
+        kept_n = _pQUERY_DATA->calculate_N_vals(all_kept_lengths, total_kept_len);
         out_msg <<
                 ENTAP_STATS::SOFTWARE_BREAK                                     <<
                 "Expression Filtering: New Reference Transcriptome Statistics\n"<<
@@ -288,7 +288,7 @@ std::string ModRSEM::filter() {
     if (count_removed > 0) {
         avg_removed = (fp32) total_removed_len / count_removed;
         std::pair<uint64, uint64> removed_n =
-                _pQueryData->calculate_N_vals(all_lost_lengths,total_removed_len);
+                _pQUERY_DATA->calculate_N_vals(all_lost_lengths,total_removed_len);
         out_msg <<
                 "\nRemoved Sequences (no frame):"       <<
                 "\nTotal sequences: "                     << count_removed    <<
@@ -326,7 +326,7 @@ std::string ModRSEM::filter() {
     FS_dprint("Success!");
     //--------------------------------------------------------//
 
-    return out_kept;
+    _final_fasta = out_kept;
 }
 
 
@@ -358,7 +358,7 @@ bool ModRSEM::rsem_validate_file(std::string filename) {
 
     terminalData.command        = rsem_arg;
     terminalData.print_files    = true;
-    terminalData.base_std_path  = PATHS(_expression_outpath, filename) + STD_VALID_OUT;
+    terminalData.base_std_path  = PATHS(_mod_out_dir, filename) + STD_VALID_OUT;
 
 
     if (TC_execute_cmd(terminalData)!=0) {
@@ -396,10 +396,10 @@ bool ModRSEM::rsem_conv_to_bam(std::string file_name) {
     std::string rsem_arg;
     std::string std_out;
 
-    bam_out  = PATHS(_expression_outpath, file_name);
+    bam_out  = PATHS(_mod_out_dir, file_name);
     rsem_arg = PATHS(_exe_path, RSEM_CONV_SAM) +
                " -p " + std::to_string(_threads) + " " + _alignpath + " " + bam_out;
-    std_out  = _expression_outpath + file_name + STD_CONVERT_SAM;
+    std_out  = _mod_out_dir + file_name + STD_CONVERT_SAM;
     if (TC_execute_cmd(rsem_arg.c_str(), std_out)!=0)return false;
     if (!_pFileSystem->file_no_lines(std_out+FileSystem::EXT_ERR)) return false;
     _alignpath = bam_out + FileSystem::EXT_BAM;
@@ -428,14 +428,6 @@ void ModRSEM::set_data(int thread, float fpkm, bool single) {
     _threads = thread;
     _fpkm = fpkm;
     _issingle = single;
-
-    _processed_path = PATHS(_expression_outpath, RSEM_PROCESSED_DIR);
-    _figure_path = PATHS(_expression_outpath, RSEM_FIGURE_DIR);
-
-    _pFileSystem->delete_dir(_processed_path);
-    _pFileSystem->create_dir(_processed_path);
-    _pFileSystem->delete_dir(_figure_path);
-    _pFileSystem->create_dir(_figure_path);
 }
 
 ModRSEM::~ModRSEM() {
@@ -451,13 +443,13 @@ bool ModRSEM::rsem_generate_reference(std::string& reference_path_out) {
     TerminalData      terminalData;
 
     ref_exe  = PATHS(_exe_path, RSEM_PREP_REF_EXE);
-    ref_path = PATHS(_expression_outpath, _filename) + "_ref";
+    ref_path = PATHS(_mod_out_dir, _filename) + "_ref";
     rsem_arg = ref_exe + " "
-               + _inpath + " "
+               + _in_hits + " "
                + ref_path;
 
     terminalData.command       = rsem_arg;
-    terminalData.base_std_path = PATHS(_expression_outpath, _filename) + STD_REF_OUT;
+    terminalData.base_std_path = PATHS(_mod_out_dir, _filename) + STD_REF_OUT;
     terminalData.print_files   = true;
 
     reference_path_out = ref_path;
@@ -490,7 +482,7 @@ bool ModRSEM::rsem_expression_analysis(std::string& ref_path, std::string& bam) 
 
     terminalData.command        = rsem_arg;
     terminalData.print_files    = true;
-    terminalData.base_std_path  = PATHS(_expression_outpath, _filename) + STD_EXP_OUT;
+    terminalData.base_std_path  = PATHS(_mod_out_dir, _filename) + STD_EXP_OUT;
 
 
     err_code = TC_execute_cmd(terminalData);
@@ -500,4 +492,15 @@ bool ModRSEM::rsem_expression_analysis(std::string& ref_path, std::string& bam) 
                 terminalData.err_stream.str(), ERR_ENTAP_RUN_RSEM_EXPRESSION);
     }
     return err_code == 0;
+}
+
+ModRSEM::ModRSEM(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
+                 std::string &exe, std::string &align) :
+AbstractExpression(execution_stage_path, in_hits, entap_data, RSEM_NAME, exe, align){
+    FS_dprint("Spawn Object - ModRSEM");
+
+}
+
+std::string ModRSEM::get_final_fasta() {
+    return this->_final_fasta;
 }

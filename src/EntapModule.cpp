@@ -28,10 +28,11 @@
 #include "EntapModule.h"
 
 EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
-                         std::string module_name) {
+                         std::string module_name, std::string &exe_path) {
 
-    _outpath = execution_stage_path;
-    _in_hits = in_hits;
+    _outpath  = execution_stage_path;
+    _in_hits  = in_hits;
+    _exe_path = exe_path;
 
     _pGraphingManager = entap_data._pGraphingManager;
     _pQUERY_DATA      = entap_data._pQueryData;
@@ -45,8 +46,8 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
 
     // INIT directories
     _mod_out_dir = PATHS(_ontology_dir, module_name);
-    _figure_dir = PATHS(_mod_out_dir, FIGURE_DIR);
-    _proc_dir   = PATHS(_mod_out_dir, PROCESSED_OUT_DIR);
+    _figure_dir  = PATHS(_mod_out_dir, FIGURE_DIR);
+    _proc_dir    = PATHS(_mod_out_dir, PROCESSED_OUT_DIR);
 
     _pFileSystem->delete_dir(_figure_dir);
     _pFileSystem->delete_dir(_proc_dir);

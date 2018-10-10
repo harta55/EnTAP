@@ -37,6 +37,7 @@
 #include "SimilaritySearch.h"
 #include "FileSystem.h"
 #include "UserInput.h"
+#include "Ontology.h"
 #include "common.h"
 
 //**************************************************************

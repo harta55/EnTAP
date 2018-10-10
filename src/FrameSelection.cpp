@@ -76,7 +76,7 @@ FrameSelection::FrameSelection(std::string &input, EntapDataPtrs &entap_data) {
     _overwrite       = _pUserInput->has_input(UInput::INPUT_FLAG_OVERWRITE);
     _software_flag   = ENTAP_EXECUTE::FRAME_FLAG_GENEMARK;
 
-    _frame_outpath   = PATHS(_outpath, FRAME_SELECTION_OUT_DIR);
+    _mod_out_dir   = PATHS(_outpath, FRAME_SELECTION_OUT_DIR);
 }
 
 
@@ -104,14 +104,16 @@ std::string FrameSelection::execute(std::string input) {
     std::pair<bool, std::string> verify_pair;
     std::unique_ptr<AbstractFrame> ptr;
 
+
     _inpath = input;
-    if (_overwrite) _pFileSystem->delete_dir(_frame_outpath);
-    _pFileSystem->create_dir(_frame_outpath);
+    if (_overwrite) _pFileSystem->delete_dir(_mod_out_dir);
+    _pFileSystem->create_dir(_mod_out_dir);
     try {
         ptr = spawn_object();
         verify_pair = ptr->verify_files();
         if (!verify_pair.first) {
-            output = ptr->execute();
+            ptr->execute();
+            output = ptr->get_final_faa();
         } else output = verify_pair.second;
         ptr->parse();
         ptr.reset();
@@ -144,15 +146,15 @@ std::unique_ptr<AbstractFrame> FrameSelection::spawn_object() {
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
                     _exe_path,
                     _inpath,
-                    _frame_outpath,
-                    _entap_data_ptrs
+                    _entap_data_ptrs,
+                    GENEMARK_EXE
             ));
         default:
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
                     _exe_path,
                     _inpath,
-                    _frame_outpath,
-                    _entap_data_ptrs
+                    _entap_data_ptrs,
+                    GENEMARK_EXE
             ));
     }
 }

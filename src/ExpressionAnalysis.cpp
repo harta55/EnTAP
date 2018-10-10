@@ -108,7 +108,8 @@ std::string ExpressionAnalysis::execute(std::string input) {
         ptr->set_data(_threads, _fpkm, _issingle);  // Will remove later
         verify_pair = ptr->verify_files();
         if (!verify_pair.first) ptr->execute();
-        output = ptr->filter();
+        ptr->parse();
+        output = ptr->get_final_fasta();
     } catch (const ExceptionHandler &e) {
         ptr.reset();
         throw e;
@@ -135,20 +136,19 @@ std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
     switch (_software_flag) {
         case ENTAP_EXECUTE::EXP_FLAG_RSEM:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
-                    _exepath,
-                    _inpath,
                     _rsem_dir,
-                    _alignpath,
-                    _entap_data
-
+                    _inpath,
+                    _entap_data,
+                    _exepath,
+                    _alignpath
             ));
         default:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
-                    _exepath,
-                    _inpath,
                     _rsem_dir,
-                    _alignpath,
-                    _entap_data
+                    _inpath,
+                    _entap_data,
+                    _exepath,
+                    _alignpath
             ));
     }
 }

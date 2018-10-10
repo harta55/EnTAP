@@ -46,12 +46,11 @@ public:
     std::string execute(std::string);
     FrameSelection(std::string&, EntapDataPtrs&);
 
-
 private:
 
     const std::string FRAME_SELECTION_OUT_DIR       = "frame_selection/";
 
-    std::string      _frame_outpath;
+    std::string      _mod_out_dir;
     std::string      _exe_path;
     std::string      _inpath;
     std::string      _outpath;

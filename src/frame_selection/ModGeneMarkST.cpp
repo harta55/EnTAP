@@ -27,7 +27,6 @@ Y or FITNESS FOR A PARTICULAR PURPOSE.  See the
 
 
 //*********************** Includes *****************************
-#include <iomanip>
 #include "../common.h"
 #include "ModGeneMarkST.h"
 #include "../ExceptionHandler.h"
@@ -56,9 +55,9 @@ std::pair<bool, std::string> ModGeneMarkST::verify_files() {
 
     FS_dprint("Beginning to verify GeneMark module files...");
 
-    _final_out_path = PATHS(_frame_outpath, _transcriptome_filename) + FileSystem::EXT_FAA;
+    _final_out_path = PATHS(_mod_out_dir, _transcriptome_filename) + FileSystem::EXT_FAA;
     lst_file   = _transcriptome_filename + ".lst";
-    _final_lst_path = PATHS(_frame_outpath, lst_file);
+    _final_lst_path = PATHS(_mod_out_dir, lst_file);
     if (_pFileSystem->file_exists(_final_out_path) && _pFileSystem->file_exists(_final_lst_path)) {
         FS_dprint("File found at: " + _final_out_path + "\n"
                 "continuing EnTAP with this file and skipping frame selection");
@@ -85,7 +84,7 @@ std::pair<bool, std::string> ModGeneMarkST::verify_files() {
  *
  * =====================================================================
  */
-std::string ModGeneMarkST::execute() {
+void ModGeneMarkST::execute() {
     // Outfiles: file/path.faa, file/path.fnn
     // assumes working directory as output right now
     std::string     lst_file;
@@ -102,11 +101,11 @@ std::string ModGeneMarkST::execute() {
     std::list<std::string> out_names {_transcriptome_filename + FileSystem::EXT_FAA,
                                       _transcriptome_filename + FileSystem::EXT_FNN};
     lst_file     = _transcriptome_filename + ".lst";
-    out_gmst_log = PATHS(_frame_outpath, GENEMARK_LOG_FILE);
-    out_hmm_file = PATHS(_frame_outpath, GENEMARK_HMM_FILE);
+    out_gmst_log = PATHS(_mod_out_dir, GENEMARK_LOG_FILE);
+    out_hmm_file = PATHS(_mod_out_dir, GENEMARK_HMM_FILE);
 
-    genemark_cmd     = _exe_path + " -faa -fnn " + _inpath;
-    genemark_std_out = PATHS(_frame_outpath, GENEMARK_STD_OUT);
+    genemark_cmd     = _exe_path + " -faa -fnn " + _in_hits;
+    genemark_std_out = PATHS(_mod_out_dir, GENEMARK_STD_OUT);
 
     terminalData.command        = genemark_cmd;
     terminalData.print_files    = true;
@@ -116,7 +115,7 @@ std::string ModGeneMarkST::execute() {
     err_code = TC_execute_cmd(terminalData);
     if (err_code != 0 ) {
         throw ExceptionHandler("Error in running GeneMarkST at file located at: " +
-                               _inpath + "\nGeneMarkST Error:\n" + terminalData.err_stream.str(),
+                               _in_hits + "\nGeneMarkST Error:\n" + terminalData.err_stream.str(),
                                ERR_ENTAP_INIT_INDX_DATA_NOT_FOUND);
     }
     FS_dprint("Success!");
@@ -126,7 +125,7 @@ std::string ModGeneMarkST::execute() {
     for (std::string path : out_names) {
         std::ifstream in_file(path);
         temp_name = path + FILE_ALT_EXT;
-        out_path  = PATHS(_frame_outpath, path);
+        out_path  = PATHS(_mod_out_dir, path);
         std::ofstream out_file(path + FILE_ALT_EXT);
         while (getline(in_file,line)){
             if (!line.empty()) {
@@ -147,7 +146,6 @@ std::string ModGeneMarkST::execute() {
         rename(GENEMARK_HMM_FILE.c_str(),out_hmm_file.c_str());
     }
     FS_dprint("Success!");
-    return _final_out_path;
 }
 
 
@@ -201,14 +199,14 @@ void ModGeneMarkST::parse() {
     }
 
     // Set up outpaths, directories are created by super
-    out_removed_path    = PATHS(_processed_path, FRAME_SELECTION_LOST);
-    out_internal_path   = PATHS(_processed_path, FRAME_SELECTION_INTERNAL);
-    out_complete_path   = PATHS(_processed_path, FRAME_SELECTION_COMPLTE);
-    out_partial_path    = PATHS(_processed_path, FRAME_SELECTION_PARTIAL);
-    figure_removed_path = PATHS(_figure_path, GRAPH_TEXT_REF_COMPAR);
-    figure_removed_png  = PATHS(_figure_path, GRAPH_FILE_REF_COMPAR);
-    figure_results_path = PATHS(_figure_path, GRAPH_TEXT_FRAME_RESUTS);
-    figure_results_png  = PATHS(_figure_path, GRAPH_FILE_FRAME_RESUTS);
+    out_removed_path    = PATHS(_proc_dir, FRAME_SELECTION_LOST);
+    out_internal_path   = PATHS(_proc_dir, FRAME_SELECTION_INTERNAL);
+    out_complete_path   = PATHS(_proc_dir, FRAME_SELECTION_COMPLTE);
+    out_partial_path    = PATHS(_proc_dir, FRAME_SELECTION_PARTIAL);
+    figure_removed_path = PATHS(_figure_dir, GRAPH_TEXT_REF_COMPAR);
+    figure_removed_png  = PATHS(_figure_dir, GRAPH_FILE_REF_COMPAR);
+    figure_results_path = PATHS(_figure_dir, GRAPH_TEXT_FRAME_RESUTS);
+    figure_results_png  = PATHS(_figure_dir, GRAPH_FILE_FRAME_RESUTS);
 
     // all nucleotide lengths
     uint32 min_removed=100000;
@@ -533,10 +531,12 @@ ModGeneMarkST::~ModGeneMarkST() {
     FS_dprint("Killing object - ModGeneMarkST");
 }
 
-ModGeneMarkST::ModGeneMarkST(std::string &exe, std::string &in, std::string &frame, EntapDataPtrs &entap_data) :
-    AbstractFrame(exe,
-                 in,
-                 frame,
-                 entap_data) {
-    _transcriptome_filename = _pFileSystem->get_filename(_inpath);
+ModGeneMarkST::ModGeneMarkST(std::string &execution_stage_path, std::string &in_hits,
+                             EntapDataPtrs &entap_data, std::string &exe) :
+    AbstractFrame(execution_stage_path, in_hits, entap_data, GENEMARK_NAME, exe) {
+    _transcriptome_filename = _pFileSystem->get_filename(in_hits);
+}
+
+std::string ModGeneMarkST::get_final_faa() {
+    return _final_out_path;
 }

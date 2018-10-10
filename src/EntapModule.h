@@ -38,7 +38,7 @@ class EntapModule {
 public:
 
     EntapModule(std::string &execution_stage_path, std::string &in_hits,
-                EntapDataPtrs &entap_data, std::string module_name);
+                EntapDataPtrs &entap_data, std::string module_name, std::string &exe);
 
     virtual ~EntapModule() = default;
     virtual std::pair<bool, std::string> verify_files()=0;
@@ -78,6 +78,7 @@ protected:
     std::string        _proc_dir;
     std::string        _figure_dir;
     std::string        _mod_out_dir;
+    std::string        _exe_path;
     std::vector<uint16> _go_levels;
     GraphingManager    *_pGraphingManager;
     QueryData          *_pQUERY_DATA;

@@ -467,8 +467,8 @@ std::string ModInterpro::get_default() {
 }
 
 ModInterpro::ModInterpro(std::string &ont, std::string &in,
-                         EntapDataPtrs& entap_data, vect_str_t databases)
-    : AbstractOntology(ont, in, entap_data, INTERPRO_DIRECTORY){
+                         EntapDataPtrs& entap_data, std::string &exe, vect_str_t databases)
+    : AbstractOntology(ont, in, entap_data, INTERPRO_DIRECTORY, exe){
     FS_dprint("Spawn Object - InterPro");
 
     _databases    = databases;

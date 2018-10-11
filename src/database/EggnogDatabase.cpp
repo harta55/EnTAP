@@ -345,7 +345,7 @@ EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::open_sql(std::string& sql_path) {
 }
 
 std::string EggnogDatabase::print_err() {
-    return "\nEggnogDatabase Error: " + _err_msg;
+    return "\nEggNOG Database Error: " + _err_msg;
 }
 
 void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults& eggnog_data) {

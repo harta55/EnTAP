@@ -30,20 +30,17 @@
 #include <boost/program_options/options_description.hpp>
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <chrono>
-#include <thread>
 #include "UserInput.h"
-#include "EntapGlobals.h"
 #include "ExceptionHandler.h"
 #include "GraphingManager.h"
 #include "SimilaritySearch.h"
 #include "common.h"
-#include "FileSystem.h"
 #include "ontology/ModEggnog.h"
 #include "ontology/ModInterpro.h"
 #include "version.h"
 #include "database/EntapDatabase.h"
 #include "ontology/ModEggnogDMND.h"
+#include "config.h"
 
 //**************************************************************
 
@@ -309,7 +306,10 @@ bool UserInput::verify_user_input() {
     std::string              species;
     std::string              input_tran_path;
     std::vector<uint16>      ont_flags;
+    EntapDatabase           *pEntapDatabase = nullptr;
 
+
+    // If graphing flag, check if it is allowed then EXIT
     if (_user_inputs.count(UInput::INPUT_FLAG_GRAPH)) {
         if (!_pFileSystem->file_exists(GRAPHING_EXE)) {
             std::cout<<"Graphing is NOT enabled on this system! Graphing script could not "
@@ -332,24 +332,32 @@ bool UserInput::verify_user_input() {
     is_config     = (bool)_user_inputs.count(UInput::INPUT_FLAG_CONFIG);     // ignore 'config config'
     is_protein    = (bool)_user_inputs.count(UInput::INPUT_FLAG_RUNPROTEIN);
     is_nucleotide = (bool)_user_inputs.count(UInput::INPUT_FLAG_RUNNUCLEOTIDE);
+
     _is_config = is_config;
+
     if (is_protein && is_nucleotide) {
         throw ExceptionHandler("Cannot specify both protein and nucleotide input flags",
                                ERR_ENTAP_INPUT_PARSE);
     }
     is_run = is_protein || is_nucleotide;
+
+    // Check config and run flags
     if (!is_config && !is_run) {
         throw(ExceptionHandler("Either config option or run option are required",
                                ERR_ENTAP_INPUT_PARSE));
-    }
-    if (is_config && is_run) {
+    } else if (is_config && is_run) {
         throw(ExceptionHandler("Cannot specify both config and run flags",
                                ERR_ENTAP_INPUT_PARSE));
     }
 
-    if (_user_inputs.count(UInput::INPUT_FLAG_NOCHECK)) return is_config;
+    // If user wants to skip this check, EXIT
+    if (_user_inputs.count(UInput::INPUT_FLAG_NOCHECK)) {
+        FS_dprint("User is skipping input verification!! :(");
+        return is_config;
+    }
 
     try {
+
         verify_databases(is_run);
         print_user_input();
 
@@ -358,14 +366,14 @@ bool UserInput::verify_user_input() {
 
             // Verify EnTAP database can be generated
             FS_dprint("Verifying EnTAP database...");
-            EntapDatabase *pEntapDatabase = new EntapDatabase(_pFileSystem);
+            pEntapDatabase = new EntapDatabase(_pFileSystem);
             // Find database type that will be used by the rest (use 0 index no matter what)
             vect_uint16_t entap_database_types =
                     get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_DATABASE_TYPE);
             EntapDatabase::DATABASE_TYPE type =
                     static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
             if (!pEntapDatabase->set_database(type, "")) {
-                throw ExceptionHandler("Unable to generate EnTAP database from paths given",
+                throw ExceptionHandler("Unable to open EnTAP database from paths given" + pEntapDatabase->print_error_log(),
                                        ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
             }
             FS_dprint("Success!");
@@ -467,18 +475,21 @@ bool UserInput::verify_user_input() {
             }
 
             // Verify paths from state
-            if (_user_inputs[UInput::INPUT_FLAG_STATE].as<std::string>().compare(DEFAULT_STATE)==0) {
+            if (_user_inputs[UInput::INPUT_FLAG_STATE].as<std::string>() == DEFAULT_STATE) {
                 std::string state = _user_inputs[UInput::INPUT_FLAG_STATE].as<std::string>();
                 // only handling default now
                 verify_state(state, is_protein, ont_flags);
             }
-            delete pEntapDatabase;
         } else {
             // Must be config
             ;
         }
 
-    }catch (const ExceptionHandler &e) {throw e;}
+    }catch (const ExceptionHandler &e) {
+        delete pEntapDatabase;
+        throw e;
+    }
+    delete pEntapDatabase;
     return is_config;
 }
 
@@ -576,7 +587,7 @@ std::unordered_map<std::string,std::string> UserInput::parse_config(pair_str_t &
         std::istringstream in_line(line);
         if (std::getline(in_line,key,'=')) {
             if (!check_key(key)) {
-                throw ExceptionHandler("Incorrect format in config file",
+                throw ExceptionHandler("Incorrect format in config file at line: " + in_line.str(),
                                        ERR_ENTAP_CONFIG_PARSE);
             }
             if (std::getline(in_line,val)) {
@@ -610,8 +621,8 @@ void UserInput::generate_config(std::string &path) {
                 KEY_DIAMOND_EXE               <<"=\n"<<
                 KEY_RSEM_EXE                  <<"=\n"<<
                 KEY_GENEMARK_EXE              <<"=\n"<<
-                KEY_EGGNOG_SQL_DB                 <<"=\n"<<
-                KEY_EGGNOG_DMND                 <<"=\n"<<
+                KEY_EGGNOG_SQL_DB             <<"=\n"<<
+                KEY_EGGNOG_DMND               <<"=\n"<<
                 KEY_INTERPRO_EXE              <<"=\n"<<
                 KEY_ENTAP_DATABASE_SQL        <<"=\n"<<
                 KEY_ENTAP_DATABASE_BIN        <<"=\n"<<
@@ -695,6 +706,7 @@ void UserInput::print_user_input() {
        "\nEnTAP Graphing Script: "             << GRAPHING_EXE      <<
        "\n\nUser Inputs:\n";
 
+    // Print all user inputs (fairly raw right now)
     for (const auto& it : _user_inputs) {
         std::string key = it.first.c_str();
         ss << "\n" << key << ": ";
@@ -963,16 +975,26 @@ std::pair<bool,std::string> UserInput::verify_software(uint8 &states,std::vector
     if (states & GENE_ONTOLOGY) {
         for (uint16 flag : ontology) {
             switch (flag) {
+#ifdef EGGNOG_MAPPER
                 case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
                     if (!_pFileSystem->file_exists(EGG_SQL_DB_PATH))
-                        return std::make_pair(false, "Could not find EggNOG SQL database");
-                    if (!ModEggnogDMND::is_executable())
+                        return std::make_pair(false, "Could not find EggNOG SQL database at: " + EGG_SQL_DB_PATH);
+                    if (!ModEggnog::is_executable())
                         return std::make_pair(false, "Test of EggNOG Emapper failed, "
                                 "ensure python is properly installed and the paths are correct");
                     break;
+#endif
                 case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
                     // TODO
                     break;
+
+                case ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG:
+                    if (!_pFileSystem->file_exists(EGG_SQL_DB_PATH))
+                        return std::make_pair(false, "Could not find EggNOG SQL database at: " + EGG_SQL_DB_PATH);
+                    else if (!_pFileSystem->file_exists(EGG_DMND_PATH))
+                        return std::make_pair(false, "Could not find EggNOG Diamond Database at: " + EGG_DMND_PATH);
+                    else if (!ModEggnogDMND::is_executable())
+                        return std::make_pair(false, "Test run of DIAMOND for EggNOG analysis has failed");
                 default:
                     break;
             }

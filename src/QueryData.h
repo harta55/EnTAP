@@ -31,7 +31,6 @@
 
 
 #include "QuerySequence.h"
-#include "EntapExecute.h"
 
 struct FrameStats {
     uint32 removed;
@@ -66,7 +65,6 @@ public:
 
     void flag_transcripts(ExecuteStates);
     std::pair<uint16, uint16> calculate_N_vals(std::vector<uint16>&,uint64);
-    std::pair<uint16, uint16> calculate_N_vals(ExecuteStates, bool);
     std::string trim_sequence_header(std::string&, std::string);
     void final_statistics(std::string&, std::vector<uint16>&);
     void set_frame_stats(const FrameStats &_frame_stats);
@@ -86,7 +84,8 @@ private:
     const std::string   NUCLEO_FLAG  = "Nucleotide";
     const std::string   PROTEIN_FLAG = "Protein";
     const std::string   COMPLETE_FLAG= "Complete";
-    const std::map<char,uint8> NUCLEO_MAP{
+    // these characters are considered nucleotide
+    const std::map<char,uint8> NUCLEO_MAP {
             {'A', 1},
             {'G', 1},
             {'C', 1},

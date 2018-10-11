@@ -33,7 +33,6 @@
 #include "ModEggnog.h"
 #include "../ExceptionHandler.h"
 #include "../FileSystem.h"
-#include "EggnogLevels.h"
 
 std::string ModEggnog::EGG_EMAPPER_EXE = "";
 

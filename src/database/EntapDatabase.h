@@ -185,6 +185,7 @@ public:
         ERR_DATA_SQL_UNIPROT_CREATE_TABLE,
         ERR_DATA_GO_PARSE,                  // 30
         ERR_DATA_TAXONOMY_PARSE,
+        ERR_DATA_SET,
 
         ERR_DATA_MEM_ALLOC,
         ERR_DATA_UNHANDLED_TYPE,
@@ -237,12 +238,6 @@ public:
     GoEntry get_go_entry(std::string& go_id);
     UniprotEntry get_uniprot_entry(std::string& accession);
 
-    // Database accession routine (just making template)
-//    template<class T>
-//    T get_database_entry(std::string &accession) {
-//        return T();
-//    }
-
 
 private:
 
@@ -259,7 +254,7 @@ private:
     bool sql_add_go_entry(GoEntry&);
     bool create_sql_table(DATABASE_TYPE);
     bool add_uniprot_entry(DATABASE_TYPE type, UniprotEntry &entry);
-    void set_err_msg(std::string msg);
+    void set_err_msg(std::string msg, DATABASE_ERR code);
 
     DATABASE_ERR serialize_database_save(SERIALIZATION_TYPE, std::string&);
     DATABASE_ERR serialize_database_read(SERIALIZATION_TYPE, std::string&);
@@ -349,22 +344,6 @@ private:
             "EnTAP NCBI Taxonomy Database",
             "EnTAP Gene Ontology Database",
             "EnTAP UniProt Swiss-Prot Database"
-    };
-
-    const std::string ENTAP_DATABASE_ERR_STR[ERR_DATA_MAX] {
-        "No error :)"  ,                            // ERR_DATA_OK
-        "Unable to write to database file",         // ERR_DATA_WRITE (unused)
-        "Unable to read from database file",        // ERR_DATA_READ (unused)
-        "EnTAP SQL database already exists",        // ERR_SQL_DUPLICATE
-        "Unable to create EnTAP SQL database",      // ERR_SQL_CREATE_DATABASE
-        "Unable to create Taxonomy SQL Table",      // ERR_DATA_SQL_TAX_CREATE_TABLE
-        "Unable to add entry to SQL table",         // ERR_DATA_SQL_CREATE_ENTRY
-        "Unable to open EnTAP SQL Database",        // ERR_DATA_SQL_OPEN
-        "File already exists",                      // ERR_DATA_FILE_EXISTS
-        "Unable to create Taxonomy database",       // ERR_DATA_TAX_CREATED (unused)
-        "Unable to download Taxonomy information",  // ERR_DATA_TAX_DOWNLOAD
-        "Unable to decompress file"                 // ERR_DATA_FILE_DECOMPRESS
-
     };
 };
 

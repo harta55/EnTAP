@@ -80,8 +80,7 @@ bool EntapDatabase::set_database(DATABASE_TYPE type, std::string path) {
         case ENTAP_SQL:
             _use_serial = false;
             if (!_pFilesystem->file_exists(ENTAP_DATABASE_SQL_PATH)) {
-                _err_msg = "Database not found at: " + ENTAP_DATABASE_BIN_PATH;
-                FS_dprint(_err_msg);
+                set_err_msg("Database not found at: "+ ENTAP_DATABASE_SQL_PATH, ERR_DATA_SET);
                 return false;
             }
             if (_pDatabaseHelper != nullptr) return true;   // already generated
@@ -153,7 +152,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(
 
     _pFilesystem->delete_dir(_temp_directory);
     _pFilesystem->create_dir(_temp_directory);
-    if (err != ERR_DATA_OK) _pFilesystem->delete_file(path);
+    if (err != (ERR_DATA_OK)) _pFilesystem->delete_file(path);
     _err_code = err;
     return err;
 }
@@ -161,8 +160,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE type, std::string &outpath) {
     DATABASE_ERR err_code;
 
-    FS_dprint("Database type: " + ENTAP_DATABASE_TYPES_STR[type] +
-                ", Outpath: " + outpath);
+    FS_dprint("Database type: " + ENTAP_DATABASE_TYPES_STR[type] + ", Outpath: " + outpath);
     switch (type) {
 
         case ENTAP_SQL:
@@ -172,15 +170,15 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
                 return ERR_DATA_SQL_DUPLICATE;
             } else if (_pFilesystem->file_exists(outpath)) {
                 // Out file should NOT exist yet
-                _err_msg = "EnTAP SQL Database already exists at: " + outpath;
-                FS_dprint(_err_msg);
-                return ERR_DATA_FILE_EXISTS;
+                set_err_msg("EnTAP SQL Database already exists at: " + outpath, ERR_DATA_FILE_EXISTS);
+                return ERR_DATA_OK;
             }
 
             // Create sql database (will create if doesn't exist)
             _pDatabaseHelper = new SQLDatabaseHelper();
             if (!_pDatabaseHelper->create(outpath)) {
                 // Return error if can't create
+                set_err_msg("Unable to create the EnTAP SQL database", ERR_DATA_SQL_CREATE_DATABASE);
                 return ERR_DATA_SQL_CREATE_DATABASE;
             }
             FS_dprint("Success!");
@@ -190,13 +188,12 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
             FS_dprint("Generating EnTAP Serialized Database...");
             if (_pSerializedDatabase != nullptr) {
                 // Database should not already have been created
-                FS_dprint("Serialized database already set!!");
+                set_err_msg("Serialized database already set!", ERR_DATA_SERIAL_DUPLICATE);
                 return ERR_DATA_SERIAL_DUPLICATE;
             } else if (_pFilesystem->file_exists(outpath)) {
                 // Out file should NOT exist yet
-                _err_msg = "Serialized EnTAP database already exists at: " + outpath;
-                FS_dprint(_err_msg);
-                return ERR_DATA_FILE_EXISTS;
+                set_err_msg("Serialized EnTAP database already exists at: " + outpath, ERR_DATA_FILE_EXISTS);
+                return ERR_DATA_OK;
             }
 
             // Create serialized database
@@ -205,7 +202,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
             break;
 
         default:
-            FS_dprint("ERROR: Unknown database type");
+            set_err_msg("ERROR: Unknown database type", ERR_DATA_UNHANDLED_TYPE);
             return ERR_DATA_UNHANDLED_TYPE;
     }
 
@@ -259,7 +256,7 @@ EntapDatabase::~EntapDatabase() {
         _pDatabaseHelper->close();
         delete(_pDatabaseHelper);
     }
-    SAFE_DELETE(_pSerializedDatabase);
+    delete _pSerializedDatabase;
 }
 
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DATABASE_TYPE type,
@@ -291,7 +288,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DAT
     if (type == ENTAP_SQL) {
         // If SQL, we want to create taxonomy table in database
         if (!create_sql_table(ENTAP_TAXONOMY)) {
-            FS_dprint("ERROR: generating SQL taxonomy table");
+            set_err_msg("Error generating SQL Taxonomy table", ERR_DATA_SQL_TAX_CREATE_TABLE);
             return ERR_DATA_SQL_TAX_CREATE_TABLE;
         }
     }
@@ -300,10 +297,12 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DAT
 
     // download files from NCBI tax
     if (!_pFilesystem->download_ftp_file(FTP_NCBI_TAX_DUMP_TARGZ, temp_outpath)) {
+        set_err_msg("Unable to download NCBI Taxonomy FTP files" + _pFilesystem->get_error(), ERR_DATA_TAX_DOWNLOAD);
         return ERR_DATA_TAX_DOWNLOAD;
     }
     // decompress TAR.GZ file
     if (!_pFilesystem->decompress_file(temp_outpath, _temp_directory, FileSystem::FILE_TAR_GZ)) {
+        set_err_msg("Unable to decompress NCBI Taxonomy data" + _pFilesystem->get_error(), ERR_DATA_FILE_DECOMPRESS);
         return ERR_DATA_FILE_DECOMPRESS;
     }
     // remove tar file
@@ -383,7 +382,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DAT
                 if (type == ENTAP_SQL) {
                     if (!sql_add_tax_entry(taxEntry)) {
                         // unable to add entry
-                        FS_dprint("Unable to add tax entry: " + name);
+                        set_err_msg("Unable to add Taxonomy entry " + name, ERR_DATA_SQL_CREATE_ENTRY);
                         return ERR_DATA_SQL_CREATE_ENTRY;
                     }
                 } else {
@@ -400,8 +399,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DAT
             // ********************************************************** //
         }
     } catch (const std::exception &e) {
-        _err_msg = e.what();
-        FS_dprint("ERROR: Taxonomy parsing: " + _err_msg);
+        set_err_msg("Unable to parse taxonomy data: " + std::string(e.what()), ERR_DATA_TAXONOMY_PARSE);
         return ERR_DATA_TAXONOMY_PARSE;
     }
 
@@ -425,12 +423,14 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
     // download Gene Ontology database file
     if (!_pFilesystem->download_ftp_file(FTP_GO_DATABASE, go_database_targz)) {
         // failed to download from ftp
+        set_err_msg("Unable to download GO data from FTP address " + FTP_GO_DATABASE, ERR_DATA_GO_DOWNLOAD);
         return ERR_DATA_GO_DOWNLOAD;
     }
 
     // decompress database file
     if (!_pFilesystem->decompress_file(go_database_targz, _temp_directory, FileSystem::FILE_TAR_GZ)) {
         // failed to decompress
+        set_err_msg("Unable to decompress GO database file " + _pFilesystem->get_error(), ERR_DATA_GO_DECOMPRESS);
         return ERR_DATA_GO_DECOMPRESS;
     }
     _pFilesystem->delete_file(go_database_targz);
@@ -441,9 +441,8 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
     go_graph_path   = PATHS(go_database_dir, GO_GRAPH_FILE);
 
     if (!_pFilesystem->file_exists(go_term_path) || !_pFilesystem->file_exists(go_graph_path)) {
-        _err_msg = "Necessary Gene Ontology files do not exist at:\n" + go_term_path +
-                   "\n" + go_graph_path;
-        FS_dprint(_err_msg);
+        set_err_msg("Necessary Gene Ontology files do not exist at:\n" + go_term_path +
+                   "\n" + go_graph_path, ERR_DATA_GO_DOWNLOAD);
         return ERR_DATA_GO_DOWNLOAD;
     }
 
@@ -487,7 +486,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
             // Add to SQL database OR to overall map
             if (type == ENTAP_SQL) {
                 if (!sql_add_go_entry(goEntry)) {
-                    FS_dprint("Unable to add GO entry: " + goEntry.go_id);
+                    set_err_msg("Unable to add GO entry: " + goEntry.go_id, ERR_DATA_GO_ENTRY);
                     return ERR_DATA_GO_ENTRY;
                 }
             } else {
@@ -495,8 +494,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
             }
         }
     } catch (const std::exception &e) {
-        _err_msg = e.what();
-        FS_dprint(_err_msg);
+        set_err_msg("Unable to parse Gene Ontology data: " + std::string(e.what()), ERR_DATA_GO_PARSE);
         return ERR_DATA_GO_PARSE;
     }
 
@@ -525,12 +523,14 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
     // download UniProt flat file
     if (!_pFilesystem->download_ftp_file(FTP_UNIPROT_FLAT_FILE, uniprot_flat_gz)) {
         // failed to download from ftp
+        set_err_msg("Unable to download UniProt data from " + FTP_UNIPROT_FLAT_FILE + _pFilesystem->get_error(), ERR_DATA_UNIPROT_DOWNLOAD);
         return ERR_DATA_UNIPROT_DOWNLOAD;
     }
 
     // decompress database file
     if (!_pFilesystem->decompress_file(uniprot_flat_gz, uniprot_flat, FileSystem::FILE_GZ)) {
         // failed to decompress
+        set_err_msg("Unable to decompress UniProt data" + _pFilesystem->get_error(), ERR_DATA_UNIPROT_DECOMPRESS);
         return ERR_DATA_UNIPROT_DECOMPRESS;
     }
     _pFilesystem->delete_file(uniprot_flat_gz); // Ensure gz file is deleted
@@ -540,8 +540,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
     file_status = _pFilesystem->get_file_status(uniprot_flat);
     if (file_status != 0) {
         // File invalid
-        _err_msg = _pFilesystem->print_file_status(file_status, uniprot_flat);
-        FS_dprint(_err_msg);
+        set_err_msg(_pFilesystem->print_file_status(file_status, uniprot_flat), ERR_DATA_UNIPROT_FILE);
         return ERR_DATA_UNIPROT_FILE;
     }
 
@@ -549,6 +548,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
     if (type == ENTAP_SQL) {
         if (!create_sql_table(ENTAP_UNIPROT)) {
             // error creating table
+            set_err_msg("Unable to create UniProt SQL Table", ERR_DATA_SQL_UNIPROT_CREATE_TABLE);
             return ERR_DATA_SQL_UNIPROT_CREATE_TABLE;
         }
     }
@@ -584,7 +584,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
                 // We've hit the next entry, add previous to the database
                 if (!add_uniprot_entry(type, uniprotEntry)) {
                     // Unable to add entry
-                    FS_dprint("ERROR: Unable to add entry:\n" + uniprotEntry.print());
+                    set_err_msg("ERROR: Unable to add entry:\n" + uniprotEntry.print(), ERR_DATA_UNIPROT_ENTRY);
                     return ERR_DATA_UNIPROT_ENTRY;
                 }
                 uniprotEntry = {};
@@ -594,7 +594,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
             }
         }
     } catch (const std::exception &e) {
-        FS_dprint("ERROR: Parsing data: " + std::string(e.what()));
+        set_err_msg("Unable to parse UniProt data: " + std::string(e.what()), ERR_DATA_UNIPROT_PARSE);
         return ERR_DATA_UNIPROT_PARSE;
     }
 
@@ -780,12 +780,16 @@ EntapDatabase::DATABASE_ERR EntapDatabase::download_entap_serial(std::string &ou
     // download file (will be compressed as gz)
     if (!_pFilesystem->download_ftp_file(FTP_ENTAP_DATABASE_SERIAL, temp_gz_path)) {
         // File download failed!
+        set_err_msg("Unable to download EnTAP Serial Database from " + FTP_ENTAP_DATABASE_SERIAL +
+            _pFilesystem->get_error(), ERR_DATA_SERIAL_FTP);
         return ERR_DATA_SERIAL_FTP;
     }
 
     // decompress file to outpath
     if (!_pFilesystem->decompress_file(temp_gz_path, out_path, FileSystem::FILE_GZ)) {
         // Decompression failed!
+        set_err_msg("Unable to decompress EnTAP Serial Database at " + temp_gz_path + _pFilesystem->get_error(),
+            ERR_DATA_SERIAL_DECOMPRESS);
         return ERR_DATA_SERIAL_DECOMPRESS;
     }
 
@@ -806,12 +810,16 @@ EntapDatabase::DATABASE_ERR EntapDatabase::download_entap_sql(std::string &path)
     // download file (will be compressed as gz)
     if (!_pFilesystem->download_ftp_file(FTP_ENTAP_DATABASE_SQL, temp_gz_path)) {
         // File download failed!
+        set_err_msg("Unable to download EnTAP Serial Database from " + FTP_ENTAP_DATABASE_SQL +
+                    _pFilesystem->get_error(), ERR_DATA_SQL_FTP);
         return ERR_DATA_SQL_FTP;
     }
 
     // decompress file to outpath
     if (!_pFilesystem->decompress_file(temp_gz_path, path, FileSystem::FILE_GZ)) {
         // Decompression failed!
+        set_err_msg("Unable to decompress EnTAP Serial Database at " + temp_gz_path + _pFilesystem->get_error(),
+                    ERR_DATA_SQL_DECOMPRESS);
         return ERR_DATA_SQL_DECOMPRESS;
     }
 
@@ -1001,7 +1009,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_save(SERIALIZATION
         }
         file.close();
     } catch (std::exception &e) {
-        FS_dprint("Error in serializing EnTAP database!");
+        set_err_msg("Unable to serialize EnTAP database", ERR_DATA_SERIALIZE_SAVE);
         return ERR_DATA_SERIALIZE_SAVE;
     }
     return ERR_DATA_OK;
@@ -1011,8 +1019,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_read(SERIALIZATION
     FS_dprint("Reading serialized database from: " + in_path);
 
     if (!_pFilesystem->file_exists(in_path)) {
-        _err_msg = "Serialized EnTAP database does not exist at: " + in_path;
-        FS_dprint(_err_msg);
+        set_err_msg("Serialized EnTAP database does not exist at: " + in_path, ERR_DATA_SERIALIZE_READ);
         return ERR_DATA_SERIALIZE_READ;
     }
 
@@ -1045,29 +1052,20 @@ EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_read(SERIALIZATION
         }
 
     } catch (const std::exception &e) {
-        _err_msg = std::string(e.what());
-        FS_dprint("Unable to read Serialized EnTAP database: " + _err_msg);
+        set_err_msg("Unable to read Serialized EnTAP database: " + std::string(e.what()), ERR_DATA_SERIALIZE_READ);
         return ERR_DATA_SERIALIZE_READ;
     }
     return ERR_DATA_OK;
 }
 
-std::string EntapDatabase::print_error_log(void) {
-    std::string ret = "";
-
-    if (_err_code != ERR_DATA_OK) {
-        ret = ENTAP_DATABASE_ERR_STR[_err_code];
-    }
-
-    if (!_err_msg.empty()) {
-        ret += ":\n" + _err_msg;
-    }
-    return ret;
+std::string EntapDatabase::print_error_log() {
+    return "\nEnTAP Database Error: " + _err_msg;
 }
 
-void EntapDatabase::set_err_msg(std::string msg) {
+void EntapDatabase::set_err_msg(std::string msg, DATABASE_ERR code) {
     FS_dprint(msg);
     _err_msg = msg;
+    _err_code = code;
 }
 
 

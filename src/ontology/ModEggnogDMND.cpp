@@ -391,12 +391,15 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
 }
 
 bool ModEggnogDMND::is_executable() {
-//    std::string test_cmd;
-//    uint8       err_code;
+    std::string test_command;
+    TerminalData terminalData;
 
-    // TODO add modeggnogdmnd execute?
+    test_command = DIAMOND_EXE + " --version";
 
-    return false;
+    terminalData.command = test_command;
+    terminalData.print_files = false;
+
+    return TC_execute_cmd(terminalData) == 0;
 }
 
 ModEggnogDMND::~ModEggnogDMND() {

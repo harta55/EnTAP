@@ -41,18 +41,6 @@
 //**************************************************************
 
 
-//*********************** Local Enum ****************************
-enum States {
-    PARSE_ARGS           = 0,
-    CONFIG_ENTAP         ,
-    CONFIG_ENTAP_SUCCESS ,
-    EXECUTE_ENTAP        ,
-    EXECUTE_ENTAP_SUCCESS
-};
-
-//**************************************************************
-
-
 //******************** Local Variables *************************
 std::chrono::time_point<std::chrono::system_clock> _start_time;
 std::chrono::time_point<std::chrono::system_clock> _end_time;
@@ -174,6 +162,8 @@ void exit_print() {
                "\nTotal runtime (minutes): "       << min_dif;
     out_msg = out_stream.str();
     _pFileSystem->print_stats(out_msg);
-    SAFE_DELETE(_pFileSystem);
-    SAFE_DELETE(_pUserInput);
+
+    // Cleanup
+    delete _pFileSystem;
+    delete _pUserInput;
 }

@@ -223,44 +223,6 @@ std::pair<uint16, uint16> QueryData::calculate_N_vals
     return std::pair<uint16, uint16> (n_50,n_90);
 }
 
-// Will be used later
-std::pair<uint16, uint16> QueryData::calculate_N_vals (ExecuteStates state, bool kept) {
-    std::vector<uint16> seq_len_vect;
-    uint64 total_len=0;     // Kept sequences only
-    uint32 total_seq=0;     // Kept sequences only
-    uint64 temp_len=0;
-    uint64 n_50=0;
-    uint64 n_90=0;
-    fp64   fifty_len;
-    fp64   ninety_len;
-
-    // Recalculate based upon what sequences are left (kept)
-    for (auto &pair : *_pSEQUENCES) {
-        if (pair.second->is_kept()) {
-            total_len += pair.second->getSeq_length();
-            total_seq++;
-            seq_len_vect.push_back((uint16)pair.second->getSeq_length());
-        }
-    }
-
-    std::sort(seq_len_vect.begin(),seq_len_vect.end());
-    fifty_len  = total_len * N_50_PERCENT;
-    ninety_len = total_len * N_90_PERCENT;
-
-    for (uint16 &val : seq_len_vect) {
-        temp_len += val;
-        if (temp_len > fifty_len && n_50 == 0) n_50 = val;
-        if (temp_len > ninety_len) {
-            n_90 = val;
-            break;
-        }
-    }
-
-    // Print new transcriptome stats
-
-    return std::pair<uint16, uint16> (n_50,n_90);
-}
-
 
 /**
  * ======================================================================
@@ -492,7 +454,7 @@ QueryData::~QueryData() {
         it->second = nullptr;
     }
     FS_dprint("QuerySequence data freed");
-    SAFE_DELETE(_pSEQUENCES);
+    delete _pSEQUENCES;
 }
 
 bool QueryData::DATA_FLAG_GET(DATA_FLAGS flag) {

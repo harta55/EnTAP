@@ -391,7 +391,7 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
     if (DATA_FLAG_GET(SUCCESS_ONTOLOGY)) {
         for (uint16 flag : ontology_flags) {
             switch (flag) {
-                case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
+                case ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG:
                     ss <<
                        "\nGene Families"        <<
                        "\n\tTotal unique sequences with family assignment: "    << count_ontology   <<

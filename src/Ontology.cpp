@@ -313,6 +313,7 @@ void Ontology::init_headers() {
     // Add additional headers for ontology software
     for (uint16 &flag : _software_flags) {
         switch (flag) {
+#ifdef EGGNOG_MAPPER
             case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
                 add_header = {
                         &ENTAP_EXECUTE::HEADER_SEED_ORTH,
@@ -329,6 +330,7 @@ void Ontology::init_headers() {
                         &ENTAP_EXECUTE::HEADER_EGG_GO_MOLE
                 };
                 break;
+#endif
             case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
                 add_header = {
                         &ENTAP_EXECUTE::HEADER_INTER_EVAL,

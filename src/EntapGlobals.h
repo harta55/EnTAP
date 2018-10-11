@@ -211,10 +211,12 @@ namespace ENTAP_EXECUTE {
     extern const std::string GO_CELLULAR_FLAG;
     extern const std::string GO_MOLECULAR_FLAG;
     const uint16 ONTOLOGY_MIN         = 0;
+#ifdef EGGNOG_MAPPER
     const uint16 EGGNOG_INT_FLAG      = 0;
+#endif
     const uint16 INTERPRO_INT_FLAG    = 1;
-    const uint16 EGGNOG_DMND_INT_FLAG = 2;
-    const uint16 ONTOLOGY_MAX         = 2;
+    const uint16 EGGNOG_DMND_INT_FLAG = 0;  // Set to 0 for EggNOG / mapper
+    const uint16 ONTOLOGY_MAX         = 1;
 
     const uint16 FRAME_FLAG_GENEMARK = 0;
     const uint16 EXP_FLAG_RSEM       = 0;

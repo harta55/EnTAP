@@ -118,8 +118,6 @@ private:
     const uint8 MAX_DATABASE_SIZE              = 5;
     const std::string DEFAULT_STATE            = "+";
     const std::string OUTFILE_DEFAULT          = PATHS(FileSystem::get_cur_dir(),"outfiles");
-    const std::string BAM_EXT                  = ".bam";
-    const std::string SAM_EXT                  = ".sam";
 
     // Enter as lowercase
     const std::vector<std::string> INFORMATIVENESS {

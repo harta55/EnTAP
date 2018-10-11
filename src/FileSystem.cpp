@@ -48,6 +48,7 @@ const std::string FileSystem::EXT_TXT  = ".txt";
 const std::string FileSystem::EXT_ERR  = ".err";
 const std::string FileSystem::EXT_OUT  = ".out";
 const std::string FileSystem::EXT_BAM  = ".bam";
+const std::string FileSystem::EXT_SAM  = ".sam";
 const std::string FileSystem::EXT_FAA  = ".faa";
 const std::string FileSystem::EXT_FNN  = ".fnn";
 const std::string FileSystem::EXT_XML  = ".xml";
@@ -725,10 +726,10 @@ std::string FileSystem::print_file_status(uint16 status, std::string& path) {
 }
 
 void FileSystem::set_error(std::string err_msg) {
-    FS_dprint(err_msg);
+//    FS_dprint(err_msg);
     _err_msg = err_msg;
 }
 
 std::string FileSystem::get_error(void) {
-    return "\nFilesystem Error: " + _err_msg;
+    return "\n" + _err_msg;
 }

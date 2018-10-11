@@ -98,6 +98,7 @@ public:
     static const std::string EXT_ERR ;
     static const std::string EXT_OUT ;
     static const std::string EXT_BAM ;
+    static const std::string EXT_SAM ;
     static const std::string EXT_FAA ;
     static const std::string EXT_FNN ;
     static const std::string EXT_DMND;

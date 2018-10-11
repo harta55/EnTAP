@@ -234,7 +234,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
                  boostPO::value<fp32>()->default_value(RSEM_FPKM_DEFAULT), DESC_FPKM)
                 (UInput::INPUT_FLAG_E_VAL.c_str(),
                  boostPO::value<fp64>()->default_value(E_VALUE),DESC_EVAL)
-                ("version,v", "Display version number")
+                ("version,v", "Display EnTAP release version")
                 (UInput::INPUT_FLAG_SINGLE_END.c_str(), DESC_SINGLE_END)
                 ("threads,t",
                  boostPO::value<int>()->default_value(1),DESC_THREADS)
@@ -410,13 +410,13 @@ bool UserInput::verify_user_input() {
                 std::string align_file = get_user_input<std::string>(UInput::INPUT_FLAG_ALIGN);
                 std::string align_ext = boostFS::path(align_file).extension().string();
                 std::transform(align_ext.begin(), align_ext.end(), align_ext.begin(), ::tolower);
-                if (align_ext.compare(SAM_EXT) != 0 && align_ext.compare(BAM_EXT) != 0) {
+                if (align_ext.compare(FileSystem::EXT_SAM) != 0 && align_ext.compare(FileSystem::EXT_BAM) != 0) {
                     throw ExceptionHandler("Alignment file must have a .bam or .sam extension",
                                            ERR_ENTAP_INPUT_PARSE);
                 }
                 if (!_pFileSystem->file_exists(align_file)) {
-                    throw ExceptionHandler("Invalid file path for BAM/SAM file, exiting...",
-                                           ERR_ENTAP_INIT_TAX_READ);
+                    throw ExceptionHandler("BAM/SAM file not found at: " + align_file + " exiting...",
+                                           ERR_ENTAP_INPUT_PARSE);
                 }
             }
 
@@ -482,7 +482,22 @@ bool UserInput::verify_user_input() {
             }
         } else {
             // Must be config
-            ;
+
+            // Check if EggNOG DIAMOND database exists, if not, check DIAMOND run
+            if (!_pFileSystem->file_exists(EGG_DMND_PATH)) {
+                if (!SimilaritySearch::is_executable()) {
+                    throw ExceptionHandler("EggNOG DIAMOND database was not found at: " + EGG_DMND_PATH +
+                                           "\nThe DIAMOND test run failed.", ERR_ENTAP_INPUT_PARSE);
+                }
+            }
+
+            // Test run DIAMOND if user input databases
+            if (has_input(UInput::INPUT_FLAG_DATABASE)) {
+                if (!SimilaritySearch::is_executable()) {
+                    throw ExceptionHandler("Databases have been selected for indexing. A test run of DIAMOND has failed!",
+                                           ERR_ENTAP_INPUT_PARSE);
+                }
+            }
         }
 
     }catch (const ExceptionHandler &e) {
@@ -519,9 +534,10 @@ void UserInput::verify_databases(bool isrun) {
     }
 
     if (other_data.size() > MAX_DATABASE_SIZE) {
-        throw ExceptionHandler("Too many databases selected, the max is " +
-            std::to_string(MAX_DATABASE_SIZE), ERR_ENTAP_INPUT_PARSE);
+        throw ExceptionHandler("Too many databases selected, the max is " + std::to_string(MAX_DATABASE_SIZE), ERR_ENTAP_INPUT_PARSE);
     }
+
+    // Check each database entered
     for (auto const& path: other_data) {
         if (!_pFileSystem->file_exists(path) || _pFileSystem->file_empty(path)) {
             throw ExceptionHandler("Database path invalid or empty: " + path, ERR_ENTAP_INPUT_PARSE);
@@ -531,12 +547,12 @@ void UserInput::verify_databases(bool isrun) {
         if (_pFileSystem->get_file_extension(path, false).compare(FileSystem::EXT_DMND) == 0) {
             // Yes, are we configuring?
             if (!isrun) {
-                throw ExceptionHandler("Cannot input DIAMOND database when configuring!", ERR_ENTAP_INPUT_PARSE);
+                throw ExceptionHandler("Cannot input DIAMOND (.dmnd) database when configuring!", ERR_ENTAP_INPUT_PARSE);
             }
         } else {
             // No, are we executing main pipeline?
             if (isrun) {
-                throw ExceptionHandler("Must input DIAMOND database when executing!", ERR_ENTAP_INPUT_PARSE);
+                throw ExceptionHandler("Must input DIAMOND (.dmnd) database when executing!", ERR_ENTAP_INPUT_PARSE);
             }
         }
 

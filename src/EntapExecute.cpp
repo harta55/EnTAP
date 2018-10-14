@@ -102,15 +102,15 @@ namespace entapExecute {
         entap_data_ptrs         = EntapDataPtrs();
 
         // Pull relevant info input by the user
-        _input_path    = _pUserInput->get_user_input<std::string>(UInput::INPUT_FLAG_TRANSCRIPTOME);
+        _input_path    = _pUserInput->get_user_input<std::string>(_pUserInput->INPUT_FLAG_TRANSCRIPTOME);
         original_input = _input_path;
-        _blastp        = _pUserInput->has_input(UInput::INPUT_FLAG_RUNPROTEIN);
-        ontology_flags = _pUserInput->get_user_input<std::vector<uint16>>(UInput::INPUT_FLAG_ONTOLOGY);
+        _blastp        = _pUserInput->has_input(_pUserInput->INPUT_FLAG_RUNPROTEIN);
+        ontology_flags = _pUserInput->get_user_input<std::vector<uint16>>(_pUserInput->INPUT_FLAG_ONTOLOGY);
         state_queue    = _pUserInput->get_state_queue();    // Will NOT be empty, default is +
-        _databases     = _pUserInput->get_user_input<databases_t>(UInput::INPUT_FLAG_DATABASE);
+        _databases     = _pUserInput->get_user_input<databases_t>(_pUserInput->INPUT_FLAG_DATABASE);
 
         // Find database type that will be used by the rest (use 0 index no matter what)
-        entap_database_types = _pUserInput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_DATABASE_TYPE);
+        entap_database_types = _pUserInput->get_user_input<vect_uint16_t>(_pUserInput->INPUT_FLAG_DATABASE_TYPE);
         entap_database_type = static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
 
         // Set/create outpaths
@@ -177,7 +177,7 @@ namespace entapExecute {
                         break;
                     case EXPRESSION_FILTERING: {
                         FS_dprint("STATE - EXPRESSION FILTERING");
-                        if (!_pUserInput->has_input(UInput::INPUT_FLAG_ALIGN)) {
+                        if (!_pUserInput->has_input(_pUserInput->INPUT_FLAG_ALIGN)) {
                             FS_dprint("No alignment file specified, skipping expression analysis");
                         } else {
                             // Proceed with frame selection
@@ -270,7 +270,7 @@ namespace entapExecute {
         out_path = PATHS(_entap_outpath, file_name);
         _pFileSystem->copy_file(input_path,out_path,true);
 
-        FS_dprint("Success!");
+        FS_dprint("Success! Copied to: " + out_path);
         return out_path;
     }
 

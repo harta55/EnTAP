@@ -37,6 +37,7 @@
 #include "ExceptionHandler.h"
 #include "EntapGlobals.h"
 #include "EntapExecute.h"
+#include "UserInput.h"
 #include "EntapConfig.h"
 //**************************************************************
 
@@ -117,7 +118,7 @@ void init_entap(int argc, const char** argv) {
     // parse user flags and turn into map
     _pUserInput = new UserInput(argc, argv);
 
-    root_outfiles = _pUserInput->get_user_input<std::string>(UInput::INPUT_FLAG_TAG);
+    root_outfiles = _pUserInput->get_user_input<std::string>(_pUserInput->INPUT_FLAG_TAG);
 
     // create filesystem and begin logging
     _pFileSystem = new FileSystem(root_outfiles);

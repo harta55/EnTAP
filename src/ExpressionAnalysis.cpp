@@ -66,13 +66,13 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,EntapDataPtrs& entap_d
     _threads       = _pUserInput->get_supported_threads();
     _exepath       = RSEM_EXE_DIR;
     _outpath       = _pFileSystem->get_root_path();
-    _trim          = _pUserInput->has_input(UInput::INPUT_FLAG_TRIM);
-    _overwrite     = _pUserInput->has_input(UInput::INPUT_FLAG_OVERWRITE);
-    _issingle      = _pUserInput->has_input(UInput::INPUT_FLAG_SINGLE_END);
-    if (_pUserInput->has_input(UInput::INPUT_FLAG_ALIGN)) { // Will be true
-        _alignpath = _pUserInput->get_user_input<std::string>(UInput::INPUT_FLAG_ALIGN);
+    _trim          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_TRIM);
+    _overwrite     = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
+    _issingle      = _pUserInput->has_input(_pUserInput->INPUT_FLAG_SINGLE_END);
+    if (_pUserInput->has_input(_pUserInput->INPUT_FLAG_ALIGN)) { // Will be true
+        _alignpath = _pUserInput->get_user_input<std::string>(_pUserInput->INPUT_FLAG_ALIGN);
     }
-    _fpkm          = _pUserInput->get_user_input<fp32>(UInput::INPUT_FLAG_FPKM);
+    _fpkm          = _pUserInput->get_user_input<fp32>(_pUserInput->INPUT_FLAG_FPKM);
     _rsem_dir      = PATHS(_outpath, RSEM_OUT_DIR);
 }
 

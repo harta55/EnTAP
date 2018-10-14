@@ -36,14 +36,10 @@
 #define MINOR_VERSION     8
 #define BUILD_VERSION     3
 
-#ifndef RELEASE_BUILD
-    #define DEBUG_BUILD
-#endif
-
 #define TO_STR2(x)             #x
 #define TO_STR(x)              TO_STR2(x)
 
-#ifdef DEBUG_BUILD
+#ifndef RELEASE_BUILD
     #define ENTAP_VERSION_STR       (TO_STR(MAJOR_VERSION) "." TO_STR(MINOR_VERSION) "." \
                                     TO_STR(BUILD_VERSION) "-DEBUG")
 #else

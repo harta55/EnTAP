@@ -189,6 +189,7 @@ std::string ENTAP_DATABASE_BIN_PATH;
 std::string ENTAP_DATABASE_SQL_PATH;
 std::string GRAPHING_EXE;
 
+//***********************************************************
 
 /**
  * ======================================================================
@@ -212,63 +213,63 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         // TODO separate out into main options and additional config file with defaults
         description.add_options()
                 ("help,h", DESC_HELP)
-                (UInput::INPUT_FLAG_CONFIG.c_str(),DESC_CONFIG)
-                (UInput::INPUT_FLAG_RUNPROTEIN.c_str(),DESC_RUN_PROTEIN)
-                (UInput::INPUT_FLAG_RUNNUCLEOTIDE.c_str(),DESC_RUN_NUCLEO)
-                (UInput::INPUT_FLAG_UNINFORM.c_str(), boostPO::value<std::string>(),DESC_UNINFORMATIVE)
-                (UInput::INPUT_FLAG_INTERPRO.c_str(),
+                (INPUT_FLAG_CONFIG.c_str(),DESC_CONFIG)
+                (INPUT_FLAG_RUNPROTEIN.c_str(),DESC_RUN_PROTEIN)
+                (INPUT_FLAG_RUNNUCLEOTIDE.c_str(),DESC_RUN_NUCLEO)
+                (INPUT_FLAG_UNINFORM.c_str(), boostPO::value<std::string>(),DESC_UNINFORMATIVE)
+                (INPUT_FLAG_INTERPRO.c_str(),
                  boostPO::value<std::vector<std::string>>()->multitoken()
                          ->default_value(std::vector<std::string>{ModInterpro::get_default()},""),DESC_INTER_DATA)
-                (UInput::INPUT_FLAG_ONTOLOGY.c_str(),
+                (INPUT_FLAG_ONTOLOGY.c_str(),
                  boostPO::value<std::vector<uint16>>()->multitoken()
                  ->default_value(std::vector<uint16>{ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG},""),DESC_ONTOLOGY_FLAG)
-                (UInput::INPUT_FLAG_GRAPH.c_str(),DESC_GRAPHING)
-                (UInput::INPUT_FLAG_TAG.c_str(),
+                (INPUT_FLAG_GRAPH.c_str(),DESC_GRAPHING)
+                (INPUT_FLAG_TAG.c_str(),
                  boostPO::value<std::string>()->default_value(OUTFILE_DEFAULT),DESC_OUT_FLAG)
                 ("database,d",
                  boostPO::value<std::vector<std::string>>()->multitoken(),DESC_DATABASE)
-                (UInput::INPUT_FLAG_GO_LEVELS.c_str(),
+                (INPUT_FLAG_GO_LEVELS.c_str(),
                  boostPO::value<std::vector<uint16>>()->multitoken()
                          ->default_value(std::vector<uint16>{0,3,4},""), DESC_ONT_LEVELS)
-                (UInput::INPUT_FLAG_FPKM.c_str(),
+                (INPUT_FLAG_FPKM.c_str(),
                  boostPO::value<fp32>()->default_value(RSEM_FPKM_DEFAULT), DESC_FPKM)
-                (UInput::INPUT_FLAG_E_VAL.c_str(),
+                (INPUT_FLAG_E_VAL.c_str(),
                  boostPO::value<fp64>()->default_value(E_VALUE),DESC_EVAL)
                 ("version,v", "Display EnTAP release version")
-                (UInput::INPUT_FLAG_SINGLE_END.c_str(), DESC_SINGLE_END)
+                (UserInput::INPUT_FLAG_SINGLE_END.c_str(), DESC_SINGLE_END)
                 ("threads,t",
                  boostPO::value<int>()->default_value(1),DESC_THREADS)
                 ("align,a", boostPO::value<std::string>(),DESC_ALIGN_FILE)
                 ("contam,c",
                  boostPO::value<std::vector<std::string>>()->multitoken(),DESC_CONTAMINANT)
-                (UInput::INPUT_FLAG_TRIM.c_str(), DESC_TRIM)
-                (UInput::INPUT_FLAG_QCOVERAGE.c_str(),
+                (INPUT_FLAG_TRIM.c_str(), DESC_TRIM)
+                (INPUT_FLAG_QCOVERAGE.c_str(),
                  boostPO::value<fp32>()->default_value(DEFAULT_QCOVERAGE), DESC_QCOVERAGE)
-                (UInput::INPUT_FLAG_EXE_PATH.c_str(), boostPO::value<std::string>(), DESC_EXE_PATHS)
-                (UInput::INPUT_FLAG_GENERATE.c_str(), DESC_DATA_GENERATE)
-                (UInput::INPUT_FLAG_DATABASE_TYPE.c_str(),
+                (INPUT_FLAG_EXE_PATH.c_str(), boostPO::value<std::string>(), DESC_EXE_PATHS)
+                (INPUT_FLAG_GENERATE.c_str(), DESC_DATA_GENERATE)
+                (INPUT_FLAG_DATABASE_TYPE.c_str(),
                  boostPO::value<std::vector<uint16>>()->multitoken()
                         ->default_value(std::vector<uint16>{EntapDatabase::ENTAP_SERIALIZED},""), DESC_DATABASE_TYPE)
-                (UInput::INPUT_FLAG_TCOVERAGE.c_str(),
+                (INPUT_FLAG_TCOVERAGE.c_str(),
                  boostPO::value<fp32>()->default_value(DEFAULT_TCOVERAGE), DESC_TCOVERAGE)
-                (UInput::INPUT_FLAG_SPECIES.c_str(), boostPO::value<std::string>(),DESC_TAXON)
-                (UInput::INPUT_FLAG_STATE.c_str(),
+                (INPUT_FLAG_SPECIES.c_str(), boostPO::value<std::string>(),DESC_TAXON)
+                (INPUT_FLAG_STATE.c_str(),
                  boostPO::value<std::string>()->default_value(DEFAULT_STATE), DESC_STATE)
                 ("input,i", boostPO::value<std::string>(), DESC_INPUT_TRAN)
-                (UInput::INPUT_FLAG_COMPLETE.c_str(), DESC_COMPLET_PROT)
-                (UInput::INPUT_FLAG_NOCHECK.c_str(), DESC_NOCHECK)
-                (UInput::INPUT_FLAG_OVERWRITE.c_str(), DESC_OVERWRITE);
+                (INPUT_FLAG_COMPLETE.c_str(), DESC_COMPLET_PROT)
+                (INPUT_FLAG_NOCHECK.c_str(), DESC_NOCHECK)
+                (INPUT_FLAG_OVERWRITE.c_str(), DESC_OVERWRITE);
         boostPO::variables_map vm;
         try {
             boostPO::store(boostPO::command_line_parser(argc,argv).options(description)
                                    .run(),vm);
             boostPO::notify(vm);
 
-            if (vm.count(UInput::INPUT_FLAG_HELP)) {
+            if (vm.count(INPUT_FLAG_HELP)) {
                 std::cout << description<<std::endl<<std::endl;
                 throw(ExceptionHandler("",ERR_ENTAP_SUCCESS));
             }
-            if (vm.count(UInput::INPUT_FLAG_VERSION)) {
+            if (vm.count(INPUT_FLAG_VERSION)) {
                 std::cout<<"EnTAP version: "<<ENTAP_VERSION_STR<<std::endl;
                 throw(ExceptionHandler("",ERR_ENTAP_SUCCESS));
             }
@@ -310,7 +311,7 @@ bool UserInput::verify_user_input() {
 
 
     // If graphing flag, check if it is allowed then EXIT
-    if (_user_inputs.count(UInput::INPUT_FLAG_GRAPH)) {
+    if (_user_inputs.count(UserInput::INPUT_FLAG_GRAPH)) {
         if (!_pFileSystem->file_exists(GRAPHING_EXE)) {
             std::cout<<"Graphing is NOT enabled on this system! Graphing script could not "
                     "be found at: "<<GRAPHING_EXE << std::endl;
@@ -329,9 +330,9 @@ bool UserInput::verify_user_input() {
 
     // ------------ Config / Run Required beyond this point ---------------- //
 
-    is_config     = (bool)_user_inputs.count(UInput::INPUT_FLAG_CONFIG);     // ignore 'config config'
-    is_protein    = (bool)_user_inputs.count(UInput::INPUT_FLAG_RUNPROTEIN);
-    is_nucleotide = (bool)_user_inputs.count(UInput::INPUT_FLAG_RUNNUCLEOTIDE);
+    is_config     = (bool)_user_inputs.count(INPUT_FLAG_CONFIG);     // ignore 'config config'
+    is_protein    = (bool)_user_inputs.count(INPUT_FLAG_RUNPROTEIN);
+    is_nucleotide = (bool)_user_inputs.count(INPUT_FLAG_RUNNUCLEOTIDE);
 
     _is_config = is_config;
 
@@ -351,7 +352,7 @@ bool UserInput::verify_user_input() {
     }
 
     // If user wants to skip this check, EXIT
-    if (_user_inputs.count(UInput::INPUT_FLAG_NOCHECK)) {
+    if (_user_inputs.count(UserInput::INPUT_FLAG_NOCHECK)) {
         FS_dprint("User is skipping input verification!! :(");
         return is_config;
     }
@@ -369,7 +370,7 @@ bool UserInput::verify_user_input() {
             pEntapDatabase = new EntapDatabase(_pFileSystem);
             // Find database type that will be used by the rest (use 0 index no matter what)
             vect_uint16_t entap_database_types =
-                    get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_DATABASE_TYPE);
+                    get_user_input<vect_uint16_t>(INPUT_FLAG_DATABASE_TYPE);
             EntapDatabase::DATABASE_TYPE type =
                     static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
             if (!pEntapDatabase->set_database(type, "")) {
@@ -379,10 +380,10 @@ bool UserInput::verify_user_input() {
             FS_dprint("Success!");
 
             // Verify input transcriptome
-            if (!has_input(UInput::INPUT_FLAG_TRANSCRIPTOME)) {
+            if (!has_input(UserInput::INPUT_FLAG_TRANSCRIPTOME)) {
                 throw(ExceptionHandler("Must enter a valid transcriptome",ERR_ENTAP_INPUT_PARSE));
             } else {
-                input_tran_path = get_user_input<std::string>(UInput::INPUT_FLAG_TRANSCRIPTOME);
+                input_tran_path = get_user_input<std::string>(INPUT_FLAG_TRANSCRIPTOME);
                 if (!_pFileSystem->file_exists(input_tran_path)) {
                     throw(ExceptionHandler("Transcriptome not found at: " + input_tran_path,
                                            ERR_ENTAP_INPUT_PARSE));
@@ -396,18 +397,18 @@ bool UserInput::verify_user_input() {
             }
 
             // Verify species for taxonomic relevance
-            if (has_input(UInput::INPUT_FLAG_SPECIES)) {
+            if (has_input(INPUT_FLAG_SPECIES)) {
                 verify_species(SPECIES, pEntapDatabase);
             }
 
             // Verify contaminant
-            if (has_input(UInput::INPUT_FLAG_CONTAM)) {
+            if (has_input(INPUT_FLAG_CONTAM)) {
                 verify_species(CONTAMINANT, pEntapDatabase);
             }
 
             // Verify path + extension for alignment file
-            if (has_input(UInput::INPUT_FLAG_ALIGN)) {
-                std::string align_file = get_user_input<std::string>(UInput::INPUT_FLAG_ALIGN);
+            if (has_input(INPUT_FLAG_ALIGN)) {
+                std::string align_file = get_user_input<std::string>(INPUT_FLAG_ALIGN);
                 std::string align_ext = boostFS::path(align_file).extension().string();
                 std::transform(align_ext.begin(), align_ext.end(), align_ext.begin(), ::tolower);
                 if (align_ext.compare(FileSystem::EXT_SAM) != 0 && align_ext.compare(FileSystem::EXT_BAM) != 0) {
@@ -421,8 +422,8 @@ bool UserInput::verify_user_input() {
             }
 
             // Verify FPKM
-            if (has_input(UInput::INPUT_FLAG_FPKM)) {
-                fp32 fpkm = _user_inputs[UInput::INPUT_FLAG_FPKM].as<fp32>();
+            if (has_input(UserInput::INPUT_FLAG_FPKM)) {
+                fp32 fpkm = _user_inputs[INPUT_FLAG_FPKM].as<fp32>();
                 if (fpkm > FPKM_MAX || fpkm < FPKM_MIN) {
                     throw ExceptionHandler("FPKM is out of range, but be between " + std::to_string(FPKM_MIN) +
                                            " and " + std::to_string(FPKM_MAX), ERR_ENTAP_INPUT_PARSE);
@@ -430,8 +431,8 @@ bool UserInput::verify_user_input() {
             }
 
             // Verify query coverage
-            if (has_input(UInput::INPUT_FLAG_QCOVERAGE)) {
-                fp32 qcoverage = _user_inputs[UInput::INPUT_FLAG_QCOVERAGE].as<fp32>();
+            if (has_input(INPUT_FLAG_QCOVERAGE)) {
+                fp32 qcoverage = _user_inputs[UserInput::INPUT_FLAG_QCOVERAGE].as<fp32>();
                 if (qcoverage > COVERAGE_MAX || qcoverage < COVERAGE_MIN) {
                     throw ExceptionHandler("Query coverage is out of range, but be between " +
                                            std::to_string(COVERAGE_MIN) +
@@ -440,8 +441,8 @@ bool UserInput::verify_user_input() {
             }
 
             // Verify target coverage
-            if (has_input(UInput::INPUT_FLAG_TCOVERAGE)) {
-                fp32 qcoverage = _user_inputs[UInput::INPUT_FLAG_TCOVERAGE].as<fp32>();
+            if (has_input(INPUT_FLAG_TCOVERAGE)) {
+                fp32 qcoverage = _user_inputs[INPUT_FLAG_TCOVERAGE].as<fp32>();
                 if (qcoverage > COVERAGE_MAX || qcoverage < COVERAGE_MIN) {
                     throw ExceptionHandler("Target coverage is out of range, but be between " +
                                            std::to_string(COVERAGE_MIN) +
@@ -451,8 +452,8 @@ bool UserInput::verify_user_input() {
 
             // Verify Ontology Flags
             is_interpro = false;
-            if (has_input(UInput::INPUT_FLAG_ONTOLOGY)) {
-                ont_flags = _user_inputs[UInput::INPUT_FLAG_ONTOLOGY].as<std::vector<uint16>>();
+            if (has_input(INPUT_FLAG_ONTOLOGY)) {
+                ont_flags = _user_inputs[INPUT_FLAG_ONTOLOGY].as<std::vector<uint16>>();
                 for (uint8 i = 0; i < ont_flags.size() ; i++) {
                     if ((ont_flags[i] > ENTAP_EXECUTE::ONTOLOGY_MAX) ||
                          ont_flags[i] < ENTAP_EXECUTE::ONTOLOGY_MIN) {
@@ -464,19 +465,19 @@ bool UserInput::verify_user_input() {
             }
 
             // Verify InterPro databases
-            if (is_interpro && !ModInterpro::valid_input(_user_inputs)) {
+            if (is_interpro && !ModInterpro::valid_input(this)) {
                 throw ExceptionHandler("InterPro selected, but invalid databases input!", ERR_ENTAP_INPUT_PARSE);
             }
 
             // Verify uninformative file list
-            if (_user_inputs.count(UInput::INPUT_FLAG_UNINFORM)) {
-                std::string uninform_path = _user_inputs[UInput::INPUT_FLAG_UNINFORM].as<std::string>();
+            if (_user_inputs.count(INPUT_FLAG_UNINFORM)) {
+                std::string uninform_path = _user_inputs[UserInput::INPUT_FLAG_UNINFORM].as<std::string>();
                 verify_uninformative(uninform_path);
             }
 
             // Verify paths from state
-            if (_user_inputs[UInput::INPUT_FLAG_STATE].as<std::string>() == DEFAULT_STATE) {
-                std::string state = _user_inputs[UInput::INPUT_FLAG_STATE].as<std::string>();
+            if (_user_inputs[INPUT_FLAG_STATE].as<std::string>() == DEFAULT_STATE) {
+                std::string state = _user_inputs[INPUT_FLAG_STATE].as<std::string>();
                 // only handling default now
                 verify_state(state, is_protein, ont_flags);
             }
@@ -492,7 +493,7 @@ bool UserInput::verify_user_input() {
             }
 
             // Test run DIAMOND if user input databases
-            if (has_input(UInput::INPUT_FLAG_DATABASE)) {
+            if (has_input(INPUT_FLAG_DATABASE)) {
                 if (!SimilaritySearch::is_executable()) {
                     throw ExceptionHandler("Databases have been selected for indexing. A test run of DIAMOND has failed!",
                                            ERR_ENTAP_INPUT_PARSE);
@@ -526,8 +527,8 @@ void UserInput::verify_databases(bool isrun) {
 
     databases_t     other_data;
 
-    if (has_input(UInput::INPUT_FLAG_DATABASE)) {
-        other_data = get_user_input<databases_t>(UInput::INPUT_FLAG_DATABASE);
+    if (has_input(INPUT_FLAG_DATABASE)) {
+        other_data = get_user_input<databases_t>(INPUT_FLAG_DATABASE);
     } else if (isrun){
         // Must specify database when executing
         throw ExceptionHandler("Must select databases when executing main pipeline", ERR_ENTAP_INPUT_PARSE);
@@ -782,7 +783,7 @@ void UserInput::verify_species(SPECIES_FLAGS flag, EntapDatabase *database) {
         raw_species = get_target_species_str();
         species.push_back(raw_species);
     } else if (flag == CONTAMINANT) {
-        species = get_user_input<std::vector<std::string>>(UInput::INPUT_FLAG_CONTAM);
+        species = get_user_input<std::vector<std::string>>(INPUT_FLAG_CONTAM);
         for (std::string &contam : species) {
             process_user_species(contam);
         }
@@ -876,8 +877,8 @@ pair_str_t UserInput::get_config_path() {
 
     pair_str_t output;      // first:config file, second:default for exe paths
 
-    if (has_input(UInput::INPUT_FLAG_EXE_PATH)) {
-        output.first = get_user_input<std::string>(UInput::INPUT_FLAG_EXE_PATH);
+    if (has_input(INPUT_FLAG_EXE_PATH)) {
+        output.first = get_user_input<std::string>(INPUT_FLAG_EXE_PATH);
         FS_dprint("User input config filepath at: " + output.first);
     } else {
         // if no config input, use default path found in cwd
@@ -1067,7 +1068,7 @@ int UserInput::get_supported_threads() {
     int          user_threads;
 
     supported_threads = std::thread::hardware_concurrency();
-    user_threads = get_user_input<int>(UInput::INPUT_FLAG_THREADS);
+    user_threads = get_user_input<int>(INPUT_FLAG_THREADS);
     // assuming positive
     if ((uint32) user_threads > supported_threads) {
         FS_dprint("Specified thread number is larger than available threads,"
@@ -1083,8 +1084,8 @@ std::queue<char> UserInput::get_state_queue() {
     std::string state_str;
     std::queue<char> out_queue;
 
-    if (has_input(UInput::INPUT_FLAG_STATE)) {
-        state_str = get_user_input<std::string>(UInput::INPUT_FLAG_STATE);
+    if (has_input(INPUT_FLAG_STATE)) {
+        state_str = get_user_input<std::string>(UserInput::INPUT_FLAG_STATE);
         for (char c : state_str) {
             out_queue.push(c);
         }
@@ -1095,8 +1096,8 @@ std::queue<char> UserInput::get_state_queue() {
 std::string UserInput::get_target_species_str() {
     std::string input_species;
 
-    if (has_input(UInput::INPUT_FLAG_SPECIES)) {
-        input_species = get_user_input<std::string>(UInput::INPUT_FLAG_SPECIES);
+    if (has_input(INPUT_FLAG_SPECIES)) {
+        input_species = get_user_input<std::string>(UserInput::INPUT_FLAG_SPECIES);
         process_user_species(input_species);
         return input_species;
     } else return "";
@@ -1105,8 +1106,8 @@ std::string UserInput::get_target_species_str() {
 vect_str_t UserInput::get_contaminants() {
     vect_str_t output_contams;
 
-    if (has_input(UInput::INPUT_FLAG_CONTAM)) {
-        output_contams = get_user_input<vect_str_t>(UInput::INPUT_FLAG_CONTAM);
+    if (has_input(INPUT_FLAG_CONTAM)) {
+        output_contams = get_user_input<vect_str_t>(UserInput::INPUT_FLAG_CONTAM);
         for (std::string &contam : output_contams) {
             if (contam.empty()) continue;
             process_user_species(contam);
@@ -1119,8 +1120,8 @@ vect_str_t UserInput::get_uninformative_vect() {
     vect_str_t output_uninform;
     std::string uninform_path;
 
-    if (has_input(UInput::INPUT_FLAG_UNINFORM)) {
-        uninform_path = get_user_input<std::string>(UInput::INPUT_FLAG_UNINFORM);
+    if (has_input(INPUT_FLAG_UNINFORM)) {
+        uninform_path = get_user_input<std::string>(UserInput::INPUT_FLAG_UNINFORM);
     } else {
         return INFORMATIVENESS;
     }
@@ -1141,7 +1142,7 @@ vect_str_t UserInput::get_uninformative_vect() {
 std::string UserInput::get_user_transc_basename() {
     std::string user_transcriptome;
 
-    user_transcriptome = get_user_input<std::string>(UInput::INPUT_FLAG_TRANSCRIPTOME);
+    user_transcriptome = get_user_input<std::string>(INPUT_FLAG_TRANSCRIPTOME);
     _pFileSystem->get_filename_no_extensions(user_transcriptome);
     return user_transcriptome;
 }

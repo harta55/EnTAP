@@ -31,6 +31,7 @@
 
 
 #include "QuerySequence.h"
+#include "common.h"
 
 struct FrameStats {
     uint32 removed;

@@ -41,7 +41,7 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     _pEntapDatabase   = entap_data._pEntapDatbase;
 
     _threads         = _pUserInput->get_supported_threads();
-    _blastp          = _pUserInput->has_input(UInput::INPUT_FLAG_RUNPROTEIN);
+    _blastp          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_RUNPROTEIN);
 
 
     // INIT directories

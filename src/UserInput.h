@@ -86,6 +86,40 @@ public:
     vect_str_t get_uninformative_vect();
     std::string get_user_transc_basename();
 
+    const std::string INPUT_FLAG_TAG           = "out-dir";
+    const std::string INPUT_FLAG_CONFIG        = "config";
+    const std::string INPUT_FLAG_ALIGN         = "align";
+    const std::string INPUT_FLAG_RUNPROTEIN    = "runP";
+    const std::string INPUT_FLAG_RUNNUCLEOTIDE = "runN";
+    const std::string INPUT_FLAG_OVERWRITE     = "overwrite";
+    const std::string INPUT_FLAG_NCBI_1        = "ncbi";
+    const std::string INPUT_FLAG_NCBI_2        = "N";
+    const std::string INPUT_FLAG_UNIPROT       = "uniprot";
+    const std::string INPUT_FLAG_INTERPRO      = "protein";
+    const std::string INPUT_FLAG_ONTOLOGY      = "ontology";
+    const std::string INPUT_FLAG_SPECIES       = "taxon";
+    const std::string INPUT_FLAG_QCOVERAGE     = "qcoverage";
+    const std::string INPUT_FLAG_TCOVERAGE     = "tcoverage";
+    const std::string INPUT_FLAG_COMPLETE      = "complete";
+    const std::string INPUT_FLAG_GO_LEVELS     = "level";
+    const std::string INPUT_FLAG_EXE_PATH      = "paths";
+    const std::string INPUT_FLAG_FPKM          = "fpkm";
+    const std::string INPUT_FLAG_CONTAM        = "contam";
+    const std::string INPUT_FLAG_E_VAL         = "e";
+    const std::string INPUT_FLAG_HELP          = "help";
+    const std::string INPUT_FLAG_VERSION       = "version";
+    const std::string INPUT_FLAG_TRANSCRIPTOME = "input";
+    const std::string INPUT_FLAG_DATABASE      = "database";
+    const std::string INPUT_FLAG_GRAPH         = "graph";
+    const std::string INPUT_FLAG_TRIM          = "trim";
+    const std::string INPUT_FLAG_STATE         = "state";
+    const std::string INPUT_FLAG_SINGLE_END    = "single-end";
+    const std::string INPUT_FLAG_THREADS       = "threads";
+    const std::string INPUT_FLAG_UNINFORM      = "uninformative";
+    const std::string INPUT_FLAG_NOCHECK       = "no-check";
+    const std::string INPUT_FLAG_GENERATE      = "data-generate";
+    const std::string INPUT_FLAG_DATABASE_TYPE = "data-type";
+
 private:
     enum SPECIES_FLAGS {
         SPECIES,

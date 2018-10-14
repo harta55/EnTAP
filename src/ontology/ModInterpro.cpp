@@ -447,11 +447,11 @@ bool ModInterpro::is_executable() {
     return true;
 }
 
-bool ModInterpro::valid_input(boostPO::variables_map &vm) {
+bool ModInterpro::valid_input(UserInput* userInput) {
     std::vector<std::string> databases;
 
-    if (!vm.count(UInput::INPUT_FLAG_INTERPRO)) return false;
-    databases = vm[UInput::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
+    if (!userInput->has_input(userInput->INPUT_FLAG_INTERPRO)) return false;
+    databases = userInput->get_user_input<std::vector<std::string>>(userInput->INPUT_FLAG_INTERPRO);
 
     for (std::string &data : databases) {
         LOWERCASE(data);

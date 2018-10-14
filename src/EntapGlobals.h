@@ -41,8 +41,6 @@
 #ifdef USE_BOOST
 #define PATHS(x,y)      (boostFS::path(x) / boostFS::path(y)).string()
 #endif
-#define NCBI_UNIPROT    0       // Compiler flag for future feature
-#define DEBUG           1
 #define FASTA_FLAG      ">"
 
 //**************************************************************
@@ -275,43 +273,6 @@ namespace ENTAP_EXECUTE {
     extern const std::string HEADER_INTER_DATA_TYPE;
     extern const std::string HEADER_INTER_DATA_TERM;
     extern const std::string HEADER_INTER_EVAL;
-}
-
-namespace UInput {
-    //------------------USER INPUTS-----------------------//
-    extern const std::string INPUT_FLAG_TAG;
-    extern const std::string INPUT_FLAG_CONFIG       ;
-    extern const std::string INPUT_FLAG_ALIGN        ;
-    extern const std::string INPUT_FLAG_RUNPROTEIN   ;
-    extern const std::string INPUT_FLAG_RUNNUCLEOTIDE;
-    extern const std::string INPUT_FLAG_OVERWRITE    ;
-    extern const std::string INPUT_FLAG_NCBI_1       ;
-    extern const std::string INPUT_FLAG_NCBI_2       ;
-    extern const std::string INPUT_FLAG_UNIPROT      ;
-    extern const std::string INPUT_FLAG_INTERPRO     ;
-    extern const std::string INPUT_FLAG_ONTOLOGY     ;
-    extern const std::string INPUT_FLAG_SPECIES      ;
-    extern const std::string INPUT_FLAG_QCOVERAGE    ;
-    extern const std::string INPUT_FLAG_TCOVERAGE    ;
-    extern const std::string INPUT_FLAG_COMPLETE     ;
-    extern const std::string INPUT_FLAG_GO_LEVELS    ;
-    extern const std::string INPUT_FLAG_EXE_PATH     ;
-    extern const std::string INPUT_FLAG_FPKM         ;
-    extern const std::string INPUT_FLAG_CONTAM       ;
-    extern const std::string INPUT_FLAG_E_VAL        ;
-    extern const std::string INPUT_FLAG_HELP         ;
-    extern const std::string INPUT_FLAG_VERSION      ;
-    extern const std::string INPUT_FLAG_TRANSCRIPTOME;
-    extern const std::string INPUT_FLAG_DATABASE     ;
-    extern const std::string INPUT_FLAG_GRAPH;
-    extern const std::string INPUT_FLAG_TRIM;
-    extern const std::string INPUT_FLAG_STATE;
-    extern const std::string INPUT_FLAG_SINGLE_END;
-    extern const std::string INPUT_FLAG_THREADS;
-    extern const std::string INPUT_FLAG_UNINFORM;
-    extern const std::string INPUT_FLAG_NOCHECK;
-    extern const std::string INPUT_FLAG_GENERATE;
-    extern const std::string INPUT_FLAG_DATABASE_TYPE;
 }
 
 namespace ENTAP_STATS {

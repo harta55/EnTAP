@@ -25,10 +25,10 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <iomanip>
 #include "QueryData.h"
 #include "ExceptionHandler.h"
 #include "FileSystem.h"
+#include "UserInput.h"
 
 
 /**
@@ -84,8 +84,8 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     _pUserInput  = userinput;
     _pFileSystem = filesystem;
 
-    _trim          = _pUserInput->has_input(UInput::INPUT_FLAG_TRIM);
-    is_complete    = _pUserInput->has_input(UInput::INPUT_FLAG_COMPLETE);
+    _trim          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_TRIM);
+    is_complete    = _pUserInput->has_input(_pUserInput->INPUT_FLAG_COMPLETE);
 
     if (!_pFileSystem->file_exists(input_file)) {
         throw ExceptionHandler("Input transcriptome not found at: " + input_file,ERR_ENTAP_INPUT_PARSE);

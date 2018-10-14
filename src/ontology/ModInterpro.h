@@ -31,6 +31,7 @@
 
 
 #include "AbstractOntology.h"
+#include "../UserInput.h"
 
 class ModInterpro : public AbstractOntology{
 
@@ -55,7 +56,7 @@ public:
     virtual void parse() override ;
 
     static bool is_executable();
-    static bool valid_input(boostPO::variables_map&);
+    static bool valid_input(UserInput* userinput);
     static std::string get_default();
 
 

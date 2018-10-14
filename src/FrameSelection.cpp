@@ -73,7 +73,7 @@ FrameSelection::FrameSelection(std::string &input, EntapDataPtrs &entap_data) {
     _entap_data_ptrs = entap_data;
 
     _outpath         = _pFileSystem->get_root_path();
-    _overwrite       = _pUserInput->has_input(UInput::INPUT_FLAG_OVERWRITE);
+    _overwrite       = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
     _software_flag   = ENTAP_EXECUTE::FRAME_FLAG_GENEMARK;
 
     _mod_out_dir   = PATHS(_outpath, FRAME_SELECTION_OUT_DIR);

@@ -83,14 +83,14 @@ Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
 
     _threads            = _pUserInput->get_supported_threads();
     _outpath            = _pFileSystem->get_root_path();
-    _is_overwrite       = _pUserInput->has_input(UInput::INPUT_FLAG_OVERWRITE);
-    _software_flags     = _pUserInput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_ONTOLOGY);
-    _go_levels          = _pUserInput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_GO_LEVELS);
-    _blastp             = _pUserInput->has_input(UInput::INPUT_FLAG_RUNPROTEIN);
+    _is_overwrite       = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
+    _software_flags     = _pUserInput->get_user_input<vect_uint16_t>(_pUserInput->INPUT_FLAG_ONTOLOGY);
+    _go_levels          = _pUserInput->get_user_input<vect_uint16_t>(_pUserInput->INPUT_FLAG_GO_LEVELS);
+    _blastp             = _pUserInput->has_input(_pUserInput->INPUT_FLAG_RUNPROTEIN);
     _ontology_dir       = PATHS(_outpath, ONTOLOGY_OUT_PATH);
     _final_outpath_dir  = _pFileSystem->get_final_outdir();
     _eggnog_db_path     = EGG_SQL_DB_PATH;
-    _interpro_databases = _pUserInput->get_user_input<vect_str_t>(UInput::INPUT_FLAG_INTERPRO);
+    _interpro_databases = _pUserInput->get_user_input<vect_str_t>(_pUserInput->INPUT_FLAG_INTERPRO);
 
     if (_is_overwrite) _pFileSystem->delete_dir(_ontology_dir);
     _pFileSystem->create_dir(_ontology_dir);

@@ -75,10 +75,10 @@ SimilaritySearch::SimilaritySearch(databases_t &databases,
 
     // Species already checked for validity in Init
     _input_species    = _pUserInput->get_target_species_str();
-    _qcoverage        = _pUserInput->get_user_input<fp32>(UInput::INPUT_FLAG_QCOVERAGE);
-    _tcoverage        = _pUserInput->get_user_input<fp32>(UInput::INPUT_FLAG_TCOVERAGE);
-    _overwrite        = _pUserInput->has_input(UInput::INPUT_FLAG_OVERWRITE);
-    _e_val            = _pUserInput->get_user_input<fp64>(UInput::INPUT_FLAG_E_VAL);
+    _qcoverage        = _pUserInput->get_user_input<fp32>(_pUserInput->INPUT_FLAG_QCOVERAGE);
+    _tcoverage        = _pUserInput->get_user_input<fp32>(_pUserInput->INPUT_FLAG_TCOVERAGE);
+    _overwrite        = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
+    _e_val            = _pUserInput->get_user_input<fp64>(_pUserInput->INPUT_FLAG_E_VAL);
     _threads          = _pUserInput->get_supported_threads();
     _uninformative_vect= _pUserInput->get_uninformative_vect();
     _outpath          = _pFileSystem->get_root_path();

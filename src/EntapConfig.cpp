@@ -103,8 +103,8 @@ namespace entapConfig {
 
         threads = _pUserInput->get_supported_threads();
 
-        if (_pUserInput->has_input(UInput::INPUT_FLAG_DATABASE)) {
-            database_vect = _pUserInput->get_user_input<vect_str_t>(UInput::INPUT_FLAG_DATABASE);
+        if (_pUserInput->has_input(_pUserInput->INPUT_FLAG_DATABASE)) {
+            database_vect = _pUserInput->get_user_input<vect_str_t>(_pUserInput->INPUT_FLAG_DATABASE);
             _compiled_databases = database_vect;
         }
 
@@ -155,11 +155,11 @@ namespace entapConfig {
             return;
         }
         std::string ftp_address;
-        std::string uniprot_bin = exe + "/" + UInput::BIN_PATH + "uniprot_";
-        std::string uniprot_data = exe + UInput::UNIPROT_BASE_PATH;
+        std::string uniprot_bin = exe + "/" + UserInput::BIN_PATH + "uniprot_";
+        std::string uniprot_data = exe + UserInput::UNIPROT_BASE_PATH;
 
         for (auto &flag : flags) {
-            if (flag == UInput::INPUT_UNIPROT_NULL) return;
+            if (flag == UserInput::INPUT_UNIPROT_NULL) return;
             std::string diamond_path = uniprot_bin + flag + ".dmnd";
             std::string database_path = uniprot_data + flag + ".fasta";
             if (file_exists(database_path)) {
@@ -185,9 +185,9 @@ namespace entapConfig {
             return;
         }
         std::string ftp_address;
-        std::string ncbi_data = exe + UInput::NCBI_BASE_PATH;
+        std::string ncbi_data = exe + UserInput::NCBI_BASE_PATH;
         for (auto &flag : flags) {
-            if (flag == UInput::INPUT_UNIPROT_NULL) return;
+            if (flag == UserInput::INPUT_UNIPROT_NULL) return;
             std::string database_path = ncbi_data + flag + ".fasta";
             if (file_exists(database_path)) {
                 print_debug("Database at: " + database_path + " found, updating...");
@@ -426,10 +426,10 @@ namespace entapConfig {
         }
 
         // If user would like to generate databases rather than download them from ftp(default)
-        generate_databases = _pUserInput->has_input(UInput::INPUT_FLAG_GENERATE);
+        generate_databases = _pUserInput->has_input(_pUserInput->INPUT_FLAG_GENERATE);
 
         // Check which databases they want (will always have this input, default = 0)
-        databases = _pUserInput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_DATABASE_TYPE);
+        databases = _pUserInput->get_user_input<vect_uint16_t>(_pUserInput->INPUT_FLAG_DATABASE_TYPE);
 
         // Download or generate databases
         FS_dprint("Beginning to download/generate databases...");

@@ -107,7 +107,6 @@ void FileSystem::close_file(std::ofstream &ofstream) {
  */
 void FS_dprint(const std::string &msg) {
 
-#if DEBUG
     std::chrono::time_point<std::chrono::system_clock> current;
     std::time_t time;
 
@@ -118,7 +117,6 @@ void FS_dprint(const std::string &msg) {
 
     debug_file << out_time.substr(0,out_time.length()-1) << ": " + msg << std::endl;
     debug_file.close();
-#endif
 }
 
 

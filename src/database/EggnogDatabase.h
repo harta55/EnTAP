@@ -85,7 +85,8 @@ public:
 
 
 private:
-    const std::string FTP_EGGNOG_SQL  = "http://eggnogdb.embl.de/download/latest/eggnog-mapper-data/eggnog.db.gz";
+    const std::string FTP_EGGNOG_SQL  = "http://eggnogdb.embl.de/download/emapperdb-4.5.0/eggnog.db.gz";
+//    const std::string FTP_EGGNOG_SQL  = "http://eggnogdb.embl.de/download/latest/eggnog-mapper-data/eggnog.db.gz";
     const std::string FTP_EGGNOG_DMND = "http://eggnogdb.embl.de/download/latest/eggnog-mapper-data/eggnog_proteins.dmnd.gz";
     const std::string FTP_EGGNOG_FASTA= "http://eggnogdb.embl.de/download/latest/eggnog-mapper-data/eggnog4.clustered_proteins.fa.gz";
 

@@ -1,6 +1,22 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.8.3-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.9.0-beta
+
+EnTAP Beta v0.9.0-beta
+------------------------
+
+    * Overhauled the configuration/execution process by removing EggNOG-mapper and replacing it with an internal EnTAP method. This will make both stages much clearer as to what is going on.
+    * Added UniProt mapping to the EnTAP database. This will pull any additional mapping information from UniProt Swiss-Prot alignments
+    * The EnTAP database MUST be re-configured from this point
+    * Resolved any incompatibility with DIAMOND and EggNOG databases as well as versioning problems
+    * Standardized EnTAP log entries and added additional statistics
+    * - -ontology flag will now use EnTAP's method of EggNOG accession (0) or InterProScan (1)
+    * Bug fixes
+
+EnTAP Beta v0.8.4-beta
+------------------------
+
+    * Fixed an issue when inputting already translated sequences
 
 EnTAP Beta v0.8.3-beta
 ------------------------

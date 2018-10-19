@@ -172,13 +172,19 @@ In both cases, the following databases will be downloaded:
 * NCBI Taxonomic Database (indexed for EnTAP)
 * Gene Ontology Database (indexed for EnTAP)
 * EggNOG DIAMOND Database
+    * Downloaded through EggNOG-mapper script download_eggnog_data.py
+    * This will be written to the directory containing the script
+    * Can be downloaded separately at http://eggnogdb.embl.de/download/eggnog_4.5/eggnog-mapper-data/eggnog_proteins.dmnd.gz
 * EggNOG SQL Database
+    * Downloaded through EggNOG-mapper script download_eggnog_data.py
+    * This will be written to the directory containing the script
+    * Can be downloaded separately at http://eggnogdb.embl.de/download/emapperdb-4.5.0/eggnog.db.gz
 
 .. note:: This is the only stage that requires connection to the Internet.
 
 If you experience any trouble in downloading the databases indexed for EnTAP (taxonomy and gene ontology), you can use the databases contained in the repo download, databases.tar.gz. Just be sure to set the configuration file to these database paths (as these are the binaries)!
 
-EnTAP will always check the databases specified in the configuration file first. Otherwise, EnTAP will check a different location for the databases during Configuration. This location will be either the path specified by - -out-dir or, if not selected, the current working directory. The final databases will also be sent there! As a result, the **- -out-dir flag is recommended for Configuration.**
+EnTAP will always check the databases specified in the configuration file first. Otherwise, EnTAP will check a different location for the databases during Configuration. This location will be either the path specified by - -out-dir or, if not selected, the current working directory. The final databases will also be sent there! As a result, the **- -out-dir flag is recommended for Configuration.** Please note, the EggNOG databases will always be downloaded to the directory your "eggnog_download_exe" resides.
 
 Flags:
 ^^^^^^^^^^^^^^^^^^^^^

@@ -27,9 +27,6 @@
 
 
 //*********************** Includes *****************************
-#include <boost/program_options/options_description.hpp>
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem/operations.hpp>
 #include "UserInput.h"
 #include "ExceptionHandler.h"
 #include "GraphingManager.h"
@@ -179,6 +176,7 @@
                             " This is not advised to use! Your run may fail later on "  \
                             "if inputs are not checked"
 //**************************************************************
+// Externs
 std::string RSEM_EXE_DIR;
 std::string GENEMARK_EXE;
 std::string DIAMOND_EXE;
@@ -189,11 +187,11 @@ std::string ENTAP_DATABASE_BIN_PATH;
 std::string ENTAP_DATABASE_SQL_PATH;
 std::string GRAPHING_EXE;
 
-//***********************************************************
+//**************************************************************
 
 /**
  * ======================================================================
- * Function boostPO::variables_map parse_arguments_boost
+ * Function void parse_arguments_boost
  *                              (int            argc,
  *                               const char**   argv)
  *
@@ -207,12 +205,13 @@ std::string GRAPHING_EXE;
  * @return              - None
  * ======================================================================
  */
+#ifdef USE_BOOST
 void UserInput::parse_arguments_boost(int argc, const char** argv) {
     try {
         boostPO::options_description description("Options");
         // TODO separate out into main options and additional config file with defaults
         description.add_options()
-                ("help,h", DESC_HELP)
+                ((INPUT_FLAG_HELP + ",h").c_str(), DESC_HELP)
                 (INPUT_FLAG_CONFIG.c_str(),DESC_CONFIG)
                 (INPUT_FLAG_RUNPROTEIN.c_str(),DESC_RUN_PROTEIN)
                 (INPUT_FLAG_RUNNUCLEOTIDE.c_str(),DESC_RUN_NUCLEO)
@@ -226,7 +225,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
                 (INPUT_FLAG_GRAPH.c_str(),DESC_GRAPHING)
                 (INPUT_FLAG_TAG.c_str(),
                  boostPO::value<std::string>()->default_value(OUTFILE_DEFAULT),DESC_OUT_FLAG)
-                ("database,d",
+                ((INPUT_FLAG_DATABASE + ",d").c_str(),
                  boostPO::value<std::vector<std::string>>()->multitoken(),DESC_DATABASE)
                 (INPUT_FLAG_GO_LEVELS.c_str(),
                  boostPO::value<std::vector<uint16>>()->multitoken()
@@ -235,12 +234,12 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
                  boostPO::value<fp32>()->default_value(RSEM_FPKM_DEFAULT), DESC_FPKM)
                 (INPUT_FLAG_E_VAL.c_str(),
                  boostPO::value<fp64>()->default_value(E_VALUE),DESC_EVAL)
-                ("version,v", "Display EnTAP release version")
+                ((INPUT_FLAG_VERSION + ",v").c_str(), "Display EnTAP release version")
                 (UserInput::INPUT_FLAG_SINGLE_END.c_str(), DESC_SINGLE_END)
-                ("threads,t",
+                ((INPUT_FLAG_THREADS + ",t").c_str(),
                  boostPO::value<int>()->default_value(1),DESC_THREADS)
-                ("align,a", boostPO::value<std::string>(),DESC_ALIGN_FILE)
-                ("contam,c",
+                ((INPUT_FLAG_ALIGN + ",a").c_str(), boostPO::value<std::string>(),DESC_ALIGN_FILE)
+                ((INPUT_FLAG_CONTAM + ",c").c_str(),
                  boostPO::value<std::vector<std::string>>()->multitoken(),DESC_CONTAMINANT)
                 (INPUT_FLAG_TRIM.c_str(), DESC_TRIM)
                 (INPUT_FLAG_QCOVERAGE.c_str(),
@@ -255,7 +254,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
                 (INPUT_FLAG_SPECIES.c_str(), boostPO::value<std::string>(),DESC_TAXON)
                 (INPUT_FLAG_STATE.c_str(),
                  boostPO::value<std::string>()->default_value(DEFAULT_STATE), DESC_STATE)
-                ("input,i", boostPO::value<std::string>(), DESC_INPUT_TRAN)
+                ((INPUT_FLAG_TRANSCRIPTOME + ",i").c_str(), boostPO::value<std::string>(), DESC_INPUT_TRAN)
                 (INPUT_FLAG_COMPLETE.c_str(), DESC_COMPLET_PROT)
                 (INPUT_FLAG_NOCHECK.c_str(), DESC_NOCHECK)
                 (INPUT_FLAG_OVERWRITE.c_str(), DESC_OVERWRITE);
@@ -282,7 +281,123 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         throw ExceptionHandler(e.what(),ERR_ENTAP_INPUT_PARSE);
     }
 }
+#else // Use TCLAP for program argument parsing
+/**
+ * ======================================================================
+ * Function void parse_arguments_tclap
+ *                              (int            argc,
+ *                               const char**   argv)
+ *
+ * Description          - Utilizes TCLAP libraries to parse user input
+ *                        arguments
+ *
+ * Notes                - None
+ *
+ * @param argc          - Pushed from main
+ * @param argv          - Pushed from main
+ * @return              - None
+ * ======================================================================
+ */
 
+ void UserInput::parse_arguments_tclap(int argc, const char ** argv) {
+    try {
+        TCLAP::CmdLine cmd("EnTAP, Alexander Hart and Jill Wegrzyn\nCopyright 2017-2018", ' ', ENTAP_VERSION_STR);
+
+        // Switch Args
+        TCLAP::SwitchArg argConfig("",INPUT_FLAG_CONFIG, DESC_CONFIG, cmd, false);
+        TCLAP::SwitchArg argProtein("", INPUT_FLAG_RUNPROTEIN, DESC_RUN_PROTEIN, cmd, false);   // can xor these
+        TCLAP::SwitchArg argNucleo("", INPUT_FLAG_RUNNUCLEOTIDE, DESC_RUN_NUCLEO, cmd, false);
+        TCLAP::SwitchArg argGraph("", INPUT_FLAG_GRAPH, DESC_GRAPHING, cmd, false);
+        TCLAP::SwitchArg argTrim("", INPUT_FLAG_TRIM, DESC_TRIM, cmd, false);
+        TCLAP::SwitchArg argGenerate("", INPUT_FLAG_GENERATE, DESC_DATA_GENERATE, cmd, false);
+        TCLAP::SwitchArg argComplete("", INPUT_FLAG_COMPLETE, DESC_COMPLET_PROT, cmd, false);
+        TCLAP::SwitchArg argNoCheck("", INPUT_FLAG_NOCHECK, DESC_NOCHECK, cmd, false);
+        TCLAP::SwitchArg argOverwrite("", INPUT_FLAG_OVERWRITE, DESC_OVERWRITE, cmd, false);
+
+        // Value Args
+        TCLAP::ValueArg<std::string> argUninform("", INPUT_FLAG_UNINFORM, DESC_UNINFORMATIVE, false, "", "string", cmd);
+        TCLAP::ValueArg<std::string> argTag("", INPUT_FLAG_TAG, DESC_OUT_FLAG, false, OUTFILE_DEFAULT, "string", cmd);
+        TCLAP::ValueArg<fp32> argFPKM("", INPUT_FLAG_FPKM, DESC_FPKM, false, RSEM_FPKM_DEFAULT, "decimal", cmd);
+        TCLAP::ValueArg<fp64> argEval("", INPUT_FLAG_E_VAL, DESC_EVAL, false, E_VALUE, "decimal", cmd);
+        TCLAP::ValueArg<uint32> argThreads("t", INPUT_FLAG_THREADS, DESC_THREADS, false, DEFAULT_THREADS, "integer", cmd);
+        TCLAP::ValueArg<std::string> argAlign("a", INPUT_FLAG_ALIGN, DESC_ALIGN_FILE, false, "","string",cmd);
+        TCLAP::ValueArg<fp32> argQueryCov("", INPUT_FLAG_QCOVERAGE, DESC_QCOVERAGE, false, DEFAULT_QCOVERAGE, "decimal", cmd);
+        TCLAP::ValueArg<std::string> argExePath("", INPUT_FLAG_EXE_PATH, DESC_EXE_PATHS, false, "", "string", cmd);
+        TCLAP::ValueArg<fp32> argTCoverage("", INPUT_FLAG_TCOVERAGE, DESC_TCOVERAGE, false, DEFAULT_TCOVERAGE, "decimal", cmd);
+        TCLAP::ValueArg<std::string> argSpecies("", INPUT_FLAG_SPECIES, DESC_TAXON, false, "", "string", cmd);
+        TCLAP::ValueArg<std::string> argState("", INPUT_FLAG_STATE, DESC_STATE, false, DEFAULT_STATE, "string", cmd);
+        TCLAP::ValueArg<std::string> argTranscript("i", INPUT_FLAG_TRANSCRIPTOME, DESC_INPUT_TRAN, false, "", "string", cmd);
+
+        // Multi Args
+        TCLAP::MultiArg<std::string> argInterpro("", INPUT_FLAG_INTERPRO, DESC_INTER_DATA, false, "string list",cmd);
+        TCLAP::MultiArg<uint16> argOntology("", INPUT_FLAG_ONTOLOGY, DESC_ONTOLOGY_FLAG, false, "integer list", cmd);
+        TCLAP::MultiArg<std::string> argDatabase("d", INPUT_FLAG_DATABASE, DESC_DATABASE, false, "string list", cmd);
+        TCLAP::MultiArg<uint16> argGOLevels("", INPUT_FLAG_GO_LEVELS, DESC_ONT_LEVELS, false, "integer list", cmd);
+        TCLAP::MultiArg<std::string> argContam("c", INPUT_FLAG_CONTAM, DESC_CONTAMINANT, false, "string list", cmd  );
+        TCLAP::MultiArg<uint16> argDataType("", INPUT_FLAG_DATABASE_TYPE, DESC_DATABASE_TYPE, false, "integer list", cmd);
+
+        cmd.parse( argc, argv );
+
+        /* Add everything to the map that will be used throughout execution */
+
+        // Add SwitchArgs
+        _user_inputs.emplace(INPUT_FLAG_CONFIG, argConfig.isSet());
+        _user_inputs.emplace(INPUT_FLAG_RUNPROTEIN, argProtein.isSet());
+        _user_inputs.emplace(INPUT_FLAG_RUNNUCLEOTIDE, argNucleo.isSet());
+        _user_inputs.emplace(INPUT_FLAG_GRAPH, argGraph.isSet());
+        _user_inputs.emplace(INPUT_FLAG_TRIM, argTrim.isSet());
+        _user_inputs.emplace(INPUT_FLAG_GENERATE, argGenerate.isSet());
+        _user_inputs.emplace(INPUT_FLAG_COMPLETE, argComplete.isSet());
+        _user_inputs.emplace(INPUT_FLAG_NOCHECK, argNoCheck.isSet());
+        _user_inputs.emplace(INPUT_FLAG_OVERWRITE, argOverwrite.isSet());
+
+        // Add ValueArgs
+        _user_inputs.emplace(INPUT_FLAG_UNINFORM, argUninform.getValue());
+        _user_inputs.emplace(INPUT_FLAG_TAG, argTag.getValue());
+        _user_inputs.emplace(INPUT_FLAG_FPKM, argFPKM.getValue());
+        _user_inputs.emplace(INPUT_FLAG_E_VAL, argEval.getValue());
+        _user_inputs.emplace(INPUT_FLAG_THREADS, argThreads.getValue());
+        _user_inputs.emplace(INPUT_FLAG_ALIGN, argAlign.getValue());
+        _user_inputs.emplace(INPUT_FLAG_QCOVERAGE, argQueryCov.getValue());
+        _user_inputs.emplace(INPUT_FLAG_EXE_PATH, argExePath.getValue());
+        _user_inputs.emplace(INPUT_FLAG_TCOVERAGE, argTCoverage.getValue());
+        _user_inputs.emplace(INPUT_FLAG_SPECIES, argSpecies.getValue());
+        _user_inputs.emplace(INPUT_FLAG_STATE, argState.getValue());
+        _user_inputs.emplace(INPUT_FLAG_TRANSCRIPTOME, argTranscript.getValue());
+
+        // Add MultiArgs (defaults) Couldnt find a way to do defaults in constructor??!
+        if (argInterpro.isSet()) {
+            _user_inputs.emplace(INPUT_FLAG_INTERPRO, argInterpro.getValue());
+        } else {
+            _user_inputs.emplace(INPUT_FLAG_INTERPRO, vect_str_t{ModInterpro::get_default()});
+        }
+        if (argOntology.isSet()) {
+            _user_inputs.emplace(INPUT_FLAG_ONTOLOGY, argOntology.getValue());
+        } else {
+            _user_inputs.emplace(INPUT_FLAG_ONTOLOGY, std::vector<uint16>{ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG},"");
+        }
+        if (argGOLevels.isSet()) {
+            _user_inputs.emplace(INPUT_FLAG_GO_LEVELS, argGOLevels.getValue());
+        } else {
+            _user_inputs.emplace(INPUT_FLAG_GO_LEVELS, std::vector<uint16>{0,3,4},"");
+        }
+        if (argDataType.isSet()) {
+            _user_inputs.emplace(INPUT_FLAG_DATABASE_TYPE, argDataType.getValue());
+        } else {
+            _user_inputs.emplace(INPUT_FLAG_DATABASE_TYPE, std::vector<uint16>{EntapDatabase::ENTAP_SERIALIZED});
+        }
+        _user_inputs.emplace(INPUT_FLAG_DATABASE, argDatabase.getValue());
+        _user_inputs.emplace(INPUT_FLAG_CONTAM, argContam.getValue());
+
+    } catch (TCLAP::ArgException &e) {
+        throw ExceptionHandler(e.what(), ERR_ENTAP_INPUT_PARSE);
+    }
+ }
+
+
+
+
+#endif //USE_BOOST
 
 /**
  * ======================================================================
@@ -311,7 +426,7 @@ bool UserInput::verify_user_input() {
 
 
     // If graphing flag, check if it is allowed then EXIT
-    if (_user_inputs.count(UserInput::INPUT_FLAG_GRAPH)) {
+    if (has_input(UserInput::INPUT_FLAG_GRAPH)) {
         if (!_pFileSystem->file_exists(GRAPHING_EXE)) {
             std::cout<<"Graphing is NOT enabled on this system! Graphing script could not "
                     "be found at: "<<GRAPHING_EXE << std::endl;
@@ -330,9 +445,9 @@ bool UserInput::verify_user_input() {
 
     // ------------ Config / Run Required beyond this point ---------------- //
 
-    is_config     = (bool)_user_inputs.count(INPUT_FLAG_CONFIG);     // ignore 'config config'
-    is_protein    = (bool)_user_inputs.count(INPUT_FLAG_RUNPROTEIN);
-    is_nucleotide = (bool)_user_inputs.count(INPUT_FLAG_RUNNUCLEOTIDE);
+    is_config     = has_input(INPUT_FLAG_CONFIG);     // ignore 'config config'
+    is_protein    = has_input(INPUT_FLAG_RUNPROTEIN);
+    is_nucleotide = has_input(INPUT_FLAG_RUNNUCLEOTIDE);
 
     _is_config = is_config;
 
@@ -352,7 +467,7 @@ bool UserInput::verify_user_input() {
     }
 
     // If user wants to skip this check, EXIT
-    if (_user_inputs.count(UserInput::INPUT_FLAG_NOCHECK)) {
+    if (has_input(UserInput::INPUT_FLAG_NOCHECK)) {
         FS_dprint("User is skipping input verification!! :(");
         return is_config;
     }
@@ -377,6 +492,13 @@ bool UserInput::verify_user_input() {
                 throw ExceptionHandler("Unable to open EnTAP database from paths given" + pEntapDatabase->print_error_log(),
                                        ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
             }
+            // Verify database type
+            if (!pEntapDatabase->is_valid_version()) {
+                throw ExceptionHandler("EnTAP database version invalid with this version of software\nYou have: " +
+                        pEntapDatabase->get_current_version() + "\nYou need: " +
+                        pEntapDatabase->get_required_version(), ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
+            }
+
             FS_dprint("Success!");
 
             // Verify input transcriptome
@@ -409,9 +531,9 @@ bool UserInput::verify_user_input() {
             // Verify path + extension for alignment file
             if (has_input(INPUT_FLAG_ALIGN)) {
                 std::string align_file = get_user_input<std::string>(INPUT_FLAG_ALIGN);
-                std::string align_ext = boostFS::path(align_file).extension().string();
+                std::string align_ext = _pFileSystem->get_file_extension(align_file, false);
                 std::transform(align_ext.begin(), align_ext.end(), align_ext.begin(), ::tolower);
-                if (align_ext.compare(FileSystem::EXT_SAM) != 0 && align_ext.compare(FileSystem::EXT_BAM) != 0) {
+                if (align_ext != FileSystem::EXT_SAM && align_ext != FileSystem::EXT_BAM) {
                     throw ExceptionHandler("Alignment file must have a .bam or .sam extension",
                                            ERR_ENTAP_INPUT_PARSE);
                 }
@@ -423,7 +545,7 @@ bool UserInput::verify_user_input() {
 
             // Verify FPKM
             if (has_input(UserInput::INPUT_FLAG_FPKM)) {
-                fp32 fpkm = _user_inputs[INPUT_FLAG_FPKM].as<fp32>();
+                fp32 fpkm = get_user_input<fp32>(INPUT_FLAG_FPKM);
                 if (fpkm > FPKM_MAX || fpkm < FPKM_MIN) {
                     throw ExceptionHandler("FPKM is out of range, but be between " + std::to_string(FPKM_MIN) +
                                            " and " + std::to_string(FPKM_MAX), ERR_ENTAP_INPUT_PARSE);
@@ -432,7 +554,7 @@ bool UserInput::verify_user_input() {
 
             // Verify query coverage
             if (has_input(INPUT_FLAG_QCOVERAGE)) {
-                fp32 qcoverage = _user_inputs[UserInput::INPUT_FLAG_QCOVERAGE].as<fp32>();
+                fp32 qcoverage = get_user_input<fp32>(UserInput::INPUT_FLAG_QCOVERAGE);
                 if (qcoverage > COVERAGE_MAX || qcoverage < COVERAGE_MIN) {
                     throw ExceptionHandler("Query coverage is out of range, but be between " +
                                            std::to_string(COVERAGE_MIN) +
@@ -442,7 +564,7 @@ bool UserInput::verify_user_input() {
 
             // Verify target coverage
             if (has_input(INPUT_FLAG_TCOVERAGE)) {
-                fp32 qcoverage = _user_inputs[INPUT_FLAG_TCOVERAGE].as<fp32>();
+                fp32 qcoverage = get_user_input<fp32>(INPUT_FLAG_TCOVERAGE);
                 if (qcoverage > COVERAGE_MAX || qcoverage < COVERAGE_MIN) {
                     throw ExceptionHandler("Target coverage is out of range, but be between " +
                                            std::to_string(COVERAGE_MIN) +
@@ -453,7 +575,7 @@ bool UserInput::verify_user_input() {
             // Verify Ontology Flags
             is_interpro = false;
             if (has_input(INPUT_FLAG_ONTOLOGY)) {
-                ont_flags = _user_inputs[INPUT_FLAG_ONTOLOGY].as<std::vector<uint16>>();
+                ont_flags = get_user_input<std::vector<uint16>>(INPUT_FLAG_ONTOLOGY);
                 for (uint8 i = 0; i < ont_flags.size() ; i++) {
                     if ((ont_flags[i] > ENTAP_EXECUTE::ONTOLOGY_MAX) ||
                          ont_flags[i] < ENTAP_EXECUTE::ONTOLOGY_MIN) {
@@ -470,14 +592,14 @@ bool UserInput::verify_user_input() {
             }
 
             // Verify uninformative file list
-            if (_user_inputs.count(INPUT_FLAG_UNINFORM)) {
-                std::string uninform_path = _user_inputs[UserInput::INPUT_FLAG_UNINFORM].as<std::string>();
+            if (has_input(INPUT_FLAG_UNINFORM)) {
+                std::string uninform_path = get_user_input<std::string>(UserInput::INPUT_FLAG_UNINFORM);
                 verify_uninformative(uninform_path);
             }
 
             // Verify paths from state
-            if (_user_inputs[INPUT_FLAG_STATE].as<std::string>() == DEFAULT_STATE) {
-                std::string state = _user_inputs[INPUT_FLAG_STATE].as<std::string>();
+            if (get_user_input<std::string>(INPUT_FLAG_STATE) == DEFAULT_STATE) {
+                std::string state = DEFAULT_STATE;
                 // only handling default now
                 verify_state(state, is_protein, ont_flags);
             }
@@ -724,10 +846,15 @@ void UserInput::print_user_input() {
        "\n\nUser Inputs:\n";
 
     // Print all user inputs (fairly raw right now)
+
     for (const auto& it : _user_inputs) {
         std::string key = it.first.c_str();
         ss << "\n" << key << ": ";
+#ifdef USE_BOOST
         auto& value = it.second.value();
+#else
+        auto& value = it.second;
+#endif
         if (auto v = boost::any_cast<std::string>(&value)) {
             ss << *v;
         } else if (auto v = boost::any_cast<std::vector<std::string>>(&value)) {
@@ -818,7 +945,6 @@ void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map
 
     std::stringstream                  ss;
     std::string                        out_msg;
-    boostFS::path                      exe_path(exe);
     std::pair<std::string,std::string> outpair;
     std::string temp_rsem              = map[KEY_RSEM_EXE];
     std::string temp_diamond           = map[KEY_DIAMOND_EXE];
@@ -831,19 +957,19 @@ void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map
     std::string temp_graphing          = map[KEY_GRAPH_SCRIPT];
 
     // Included software paths
-    if (temp_rsem.empty())    temp_rsem           = PATHS(exe_path,Defaults::RSEM_DEFAULT_EXE);
-    if (temp_diamond.empty()) temp_diamond        = PATHS(exe_path,Defaults::DIAMOND_DEFAULT_EXE);
-    if (temp_genemark.empty())temp_genemark       = PATHS(exe_path,Defaults::GENEMARK_DEFAULT_EXE);
+    if (temp_rsem.empty())    temp_rsem           = PATHS(exe,Defaults::RSEM_DEFAULT_EXE);
+    if (temp_diamond.empty()) temp_diamond        = PATHS(exe,Defaults::DIAMOND_DEFAULT_EXE);
+    if (temp_genemark.empty())temp_genemark       = PATHS(exe,Defaults::GENEMARK_DEFAULT_EXE);
     if (temp_interpro.empty())   temp_interpro    = Defaults::INTERPRO_DEF_EXE;
 
     // EggNOG paths
-    if (temp_eggnog_sql_db.empty())  temp_eggnog_sql_db   = PATHS(exe_path,Defaults::EGG_SQL_DB_DEFAULT);
-    if (temp_eggnog_dmnd_db.empty())  temp_eggnog_dmnd_db   = PATHS(exe_path,Defaults::EGG_DMND_DEFAULT);
+    if (temp_eggnog_sql_db.empty())  temp_eggnog_sql_db   = PATHS(exe,Defaults::EGG_SQL_DB_DEFAULT);
+    if (temp_eggnog_dmnd_db.empty())  temp_eggnog_dmnd_db   = PATHS(exe,Defaults::EGG_DMND_DEFAULT);
 
     // EnTAP paths
-    if (temp_entap_sql_db.empty()) temp_entap_sql_db = PATHS(exe_path, Defaults::ENTAP_DATABASE_SQL_DEFAULT);
-    if (temp_entap_bin_db.empty()) temp_entap_bin_db = PATHS(exe_path, Defaults::ENTAP_DATABASE_BIN_DEFAULT);
-    if (temp_graphing.empty()) temp_graphing = PATHS(exe_path, Defaults::GRAPH_SCRIPT_DEF);
+    if (temp_entap_sql_db.empty()) temp_entap_sql_db = PATHS(exe, Defaults::ENTAP_DATABASE_SQL_DEFAULT);
+    if (temp_entap_bin_db.empty()) temp_entap_bin_db = PATHS(exe, Defaults::ENTAP_DATABASE_BIN_DEFAULT);
+    if (temp_graphing.empty()) temp_graphing = PATHS(exe, Defaults::GRAPH_SCRIPT_DEF);
 
     DIAMOND_EXE      = temp_diamond;
     GENEMARK_EXE     = temp_genemark;
@@ -1027,6 +1153,8 @@ UserInput::UserInput(int argc, const char** argv) {
 
 #ifdef USE_BOOST
     parse_arguments_boost(argc, argv);
+#else
+    parse_arguments_tclap(argc, argv);
 #endif
 }
 

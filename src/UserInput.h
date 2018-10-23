@@ -30,8 +30,17 @@
 
 //*********************** Includes *****************************
 #include "EntapGlobals.h"
-#include <boost/program_options/variables_map.hpp>
 #include "FileSystem.h"
+#include "config.h"
+
+#ifdef USE_BOOST
+#include <boost/program_options/options_description.hpp>
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
+#include <boost/program_options/variables_map.hpp>
+#else
+#include <tclap/CmdLine.h>
+#endif
 
 //**************************************************************
 
@@ -63,17 +72,6 @@ public:
     UserInput(int argc, const char** argv);
     ~UserInput();
 
-    template<class T>
-    T get_user_input(const std::string &key) {
-#ifdef USE_BOOST
-        if (_user_inputs.count(key)) {
-            return _user_inputs[key].as<T>();
-        } else {
-            return T();
-        }
-#endif
-    }
-
     bool has_input(const std::string&);
     pair_str_t get_config_path();
     void set_pFileSystem(FileSystem *_pFileSystem);
@@ -85,6 +83,23 @@ public:
     vect_str_t get_contaminants();
     vect_str_t get_uninformative_vect();
     std::string get_user_transc_basename();
+
+    template<class T>
+    T get_user_input(const std::string &key) {
+#ifdef USE_BOOST
+        if (_user_inputs.count(key)) {
+            return _user_inputs[key].as<T>();
+        } else {
+            return T();
+        }
+#else // Use TCLAP
+        if (has_input(key)) {
+            return boost::any_cast<T>(_user_inputs[key]);
+        } else {
+            return T();
+        }
+#endif
+    }
 
     const std::string INPUT_FLAG_TAG           = "out-dir";
     const std::string INPUT_FLAG_CONFIG        = "config";
@@ -126,7 +141,11 @@ private:
         CONTAMINANT
     };
 
+#ifdef USE_BOOST
     void parse_arguments_boost(int, const char**);
+#else
+    void parse_arguments_tclap(int, const char **);
+#endif
     void print_user_input();
     bool check_key(std::string&);
     void generate_config(std::string&);
@@ -139,13 +158,18 @@ private:
     std::pair<bool,std::string> verify_software(uint8&, std::vector<uint16>&);
     std::string get_executable_dir();
 
+#ifdef USE_BOOST
     boostPO::variables_map _user_inputs;
+#else
+    std::map<std::string, boost::any> _user_inputs;     // Header only library for any map
+#endif
 
     const fp32 DEFAULT_QCOVERAGE               = 50.0;
     const fp32 DEFAULT_TCOVERAGE               = 50.0;
     const fp32 COVERAGE_MIN                    = 0.0;
     const fp32 COVERAGE_MAX                    = 100.0;
     const fp64 E_VALUE                         = 1e-5;
+    const uint32 DEFAULT_THREADS               = 1;
     const fp32 RSEM_FPKM_DEFAULT               = 0.5;
     const fp32 FPKM_MIN                        = 0.0;
     const fp32 FPKM_MAX                        = 100.0;

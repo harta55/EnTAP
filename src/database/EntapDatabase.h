@@ -31,6 +31,8 @@
 #include "../EntapGlobals.h"
 #include "../EntapConfig.h"
 #include "SQLDatabaseHelper.h"
+
+#ifdef USE_BOOST    // Include boost serialization headers
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/unordered_map.hpp>
 #include <boost/archive/binary_iarchive.hpp>
@@ -39,6 +41,16 @@
 #include <boost/serialization/unordered_set.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+
+#else              // Include cereal serialization libraries
+#include <cereal/archives/binary.hpp>
+#include <cereal/cereal.hpp>
+#include <cereal/types/map.hpp>
+#include <cereal/types/string.hpp>
+
+
+#endif
+
 #include "../FileSystem.h"
 
 
@@ -56,6 +68,14 @@ struct  GoEntry {
         ar&level;
         ar&category;
         ar&term;
+    }
+#else
+    // Use CEREAL for serialization (ha..puns)
+    template<class Archive>
+    void serialize(Archive & archive)
+    {
+        archive(
+                go_id, level, category, term);
     }
 #endif
 
@@ -84,7 +104,15 @@ struct TaxEntry {
         ar&lineage;
         ar&tax_name;
     }
+#else
+    // Use CEREAL for serialization
+    template<class Archive>
+    void serialize(Archive & archive) {
+        archive(
+                tax_id, lineage, tax_name);
+    }
 #endif
+
     bool is_empty() {
         return this->tax_id.empty() && this->lineage.empty();
     }
@@ -106,6 +134,14 @@ struct UniprotEntry {
         ar&uniprot_id;
         ar&database_x_refs;
         ar&comments;
+    }
+#else
+    // Use CEREAL for serialization
+    template<class Archive>
+    void serialize(Archive & archive)
+    {
+        archive(
+                database_x_refs, comments, uniprot_id);
     }
 #endif
 
@@ -196,7 +232,8 @@ public:
     typedef enum {
 
         BOOST_TEXT_ARCHIVE=0,
-        BOOST_BIN_ARCHIVE
+        BOOST_BIN_ARCHIVE,
+        CEREAL_BIN_ARCHIVE
 
     } SERIALIZATION_TYPE;
 
@@ -204,6 +241,14 @@ public:
         tax_serial_map_t taxonomic_data;
         go_serial_map_t  gene_ontology_data;    // Accession - "GO:453232143"
         uniprot_serial_map_t uniprot_data;
+        uint8 MAJOR_VERSION;
+        uint8 MINOR_VERSION;
+
+        EntapDatabaseStruct () {
+            MAJOR_VERSION = 0;
+            MINOR_VERSION = 0;
+        };
+
 #ifdef USE_BOOST
         friend class boost::serialization::access;
         template<typename Archive>
@@ -211,7 +256,19 @@ public:
             ar&taxonomic_data;
             ar&gene_ontology_data;
             ar&uniprot_data;
+            ar&MAJOR_VERSION;
+            ar&MINOR_VERSION;
         }
+#else
+        // Use CEREAL for serialization
+        template<class Archive>
+        void serialize(Archive & archive)
+        {
+            archive(
+                    taxonomic_data, gene_ontology_data, uniprot_data,
+                    MAJOR_VERSION, MINOR_VERSION);
+        }
+
 #endif
     };
 
@@ -237,6 +294,11 @@ public:
     TaxEntry get_tax_entry(std::string& species);
     GoEntry get_go_entry(std::string& go_id);
     UniprotEntry get_uniprot_entry(std::string& accession);
+
+    // Database versioning
+    bool is_valid_version();
+    std::string get_current_version();
+    std::string get_required_version();
 
 
 private:
@@ -325,7 +387,9 @@ private:
     const std::string UNIPROT_DAT_TAG_NEXT_ENTRY     = "//";
 
     // EnTAP database consts
-    const SERIALIZATION_TYPE SERIALIZE_DEFAULT    = BOOST_TEXT_ARCHIVE;
+    const SERIALIZATION_TYPE SERIALIZE_DEFAULT    = CEREAL_BIN_ARCHIVE;
+    const uint8              SERIALIZE_MAJOR      = 1;
+    const uint8              SERIALIZE_MINOR      = 0;
 
     const uint8 STATUS_UPDATES = 5;     // Percentage of updates when downloading/configuring
 

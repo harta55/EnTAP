@@ -28,11 +28,16 @@
 
 //*********************** Includes *****************************
 #include "common.h"
-#include <boost/filesystem/operations.hpp>
 #include <chrono>
+#include "config.h"
+
+#ifdef USE_BOOST
+#include <boost/filesystem/operations.hpp>
 #include <boost/date_time/time_clock.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#endif
+
 #include "EntapConfig.h"
 #include "ExceptionHandler.h"
 #include "EntapGlobals.h"

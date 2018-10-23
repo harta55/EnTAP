@@ -30,7 +30,7 @@
 
 // Compile with boost libraries? Currently this MUST be selected
 #ifndef USE_BOOST
-#define USE_BOOST   1
+//#define USE_BOOST   1
 #endif
 
 // Use EggNOG mapper (not supported, leaving for now)

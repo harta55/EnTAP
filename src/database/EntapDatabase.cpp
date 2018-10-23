@@ -236,6 +236,8 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
 
         case ENTAP_SERIALIZED:
             FS_dprint("All entries added to database, serializing...");
+            _pSerializedDatabase->MAJOR_VERSION = SERIALIZE_MAJOR;
+            _pSerializedDatabase->MINOR_VERSION = SERIALIZE_MINOR;
             err_code = serialize_database_save(SERIALIZE_DEFAULT, outpath);
             if (err_code != ERR_DATA_OK) {
                 FS_dprint("Unable to serialize database!");
@@ -990,8 +992,11 @@ EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_save(SERIALIZATION
     }
 
     try {
+        FS_dprint("Serializing type: " + std::to_string(type));
         std::ofstream file(out_path);
         switch (type) {
+
+#ifdef USE_BOOST
             case BOOST_TEXT_ARCHIVE: {
                 boostAR::text_oarchive oa(file);
                 oa << *_pSerializedDatabase;
@@ -1003,20 +1008,33 @@ EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_save(SERIALIZATION
                 oa_bin << *_pSerializedDatabase;
                 break;
             }
+#else // Use CEREAL for serilization
+
+            case CEREAL_BIN_ARCHIVE: {
+                std::stringstream ss;
+                cereal::BinaryOutputArchive oarchive(ss); // Create an output archive
+                oarchive(*_pSerializedDatabase); // Write the data to the archive
+
+                // Write string stream to file
+                file << ss.str();
+                break;
+            }   // archive out of scope, flush
+#endif
 
             default:
                 return ERR_DATA_SERIALIZE_SAVE;
         }
         file.close();
     } catch (std::exception &e) {
-        set_err_msg("Unable to serialize EnTAP database", ERR_DATA_SERIALIZE_SAVE);
+        set_err_msg("Unable to serialize EnTAP database\n" + std::string(e.what()),
+                    ERR_DATA_SERIALIZE_SAVE);
         return ERR_DATA_SERIALIZE_SAVE;
     }
     return ERR_DATA_OK;
 }
 
 EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_read(SERIALIZATION_TYPE type, std::string &in_path) {
-    FS_dprint("Reading serialized database from: " + in_path);
+    FS_dprint("Reading serialized database from: " + in_path + "\n Of type: " + std::to_string(type));
 
     if (!_pFilesystem->file_exists(in_path)) {
         set_err_msg("Serialized EnTAP database does not exist at: " + in_path, ERR_DATA_SERIALIZE_READ);
@@ -1029,6 +1047,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_read(SERIALIZATION
 
     try {
         switch (type) {
+#ifdef USE_BOOST
             case BOOST_TEXT_ARCHIVE:
             {
                 std::ifstream ifs(in_path);
@@ -1046,6 +1065,17 @@ EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_read(SERIALIZATION
                 ifs.close();
                 break;
             }
+#else
+            case CEREAL_BIN_ARCHIVE: {
+                std::stringstream ss;
+                std::ifstream in_file(in_path);
+                ss << in_file.rdbuf();
+                in_file.close();
+                cereal::BinaryInputArchive iarchive(ss); // Create an input archive
+                iarchive(*_pSerializedDatabase); // Read the data from the archive
+                break;
+            }
+#endif
 
             default:
                 return ERR_DATA_SERIALIZE_READ;
@@ -1054,6 +1084,9 @@ EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_read(SERIALIZATION
     } catch (const std::exception &e) {
         set_err_msg("Unable to read Serialized EnTAP database: " + std::string(e.what()), ERR_DATA_SERIALIZE_READ);
         return ERR_DATA_SERIALIZE_READ;
+    }
+    if (!is_valid_version()) {
+        FS_dprint("WARNING: invalid database version!!! Returning valid");
     }
     return ERR_DATA_OK;
 }
@@ -1092,7 +1125,25 @@ go_format_t EntapDatabase::format_go_delim(std::string terms, char delim) {
     return output;
 }
 
-// ************************************************************** //
-// ********************** Entry Structures ********************** //
-// ************************************************************** //
+bool EntapDatabase::is_valid_version() {
+    if (_use_serial) {
+        return (_pSerializedDatabase->MAJOR_VERSION == SERIALIZE_MAJOR ||
+            _pSerializedDatabase->MINOR_VERSION == SERIALIZE_MINOR);
+    } else {
+        return true;    // TODO add sql versioning
+    }
+}
+
+std::string EntapDatabase::get_current_version() {
+    if (_use_serial) {
+        return std::to_string(_pSerializedDatabase->MAJOR_VERSION) + "." +
+              std::to_string(_pSerializedDatabase->MINOR_VERSION);
+    } else {
+        return "1.0";
+    }
+}
+
+std::string EntapDatabase::get_required_version() {
+    return std::to_string(SERIALIZE_MAJOR) + "." + std::to_string(SERIALIZE_MINOR);
+}
 

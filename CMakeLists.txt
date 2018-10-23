@@ -75,17 +75,19 @@ set(SOURCE_FILES
     src/database/SQLDatabaseHelper.cpp src/database/SQLDatabaseHelper.h
     src/database/sqlite3.c src/database/sqlite3.h
     src/frame_selection/ModGeneMarkST.cpp src/frame_selection/ModGeneMarkST.h
-    src/frame_selection/AbstractFrame.h
-    src/expression/AbstractExpression.h
+    src/frame_selection/AbstractFrame.h src/frame_selection/AbstractFrame.cpp
+    src/expression/AbstractExpression.h src/expression/AbstractExpression.cpp
     src/expression/ModRSEM.cpp src/expression/ModRSEM.h
-    src/ontology/AbstractOntology.h
+    src/ontology/AbstractOntology.h src/ontology/AbstractOntology.cpp
     src/ontology/ModEggnog.cpp src/ontology/ModEggnog.h
-    src/ontology/AbstractOntology.cpp
     src/ontology/ModInterpro.cpp src/ontology/ModInterpro.h
     src/QueryData.cpp src/QueryData.h src/common.h src/config.h
     src/FileSystem.cpp src/FileSystem.h src/version.h
     src/database/EntapDatabase.cpp src/database/EntapDatabase.h
-    src/TerminalCommands.cpp src/TerminalCommands.h)
+    src/TerminalCommands.cpp src/TerminalCommands.h
+    src/ontology/ModEggnogDMND.cpp src/ontology/ModEggnogDMND.h
+    src/database/EggnogDatabase.cpp src/database/EggnogDatabase.h
+    src/EntapModule.cpp src/EntapModule.h)
 
 include_directories(libs/pstream)
 include_directories(libs/fast-cpp-csv-parser) # May need to compile with thread control

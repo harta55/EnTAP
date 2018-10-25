@@ -30,16 +30,20 @@
 #define ENTAPGLOBALS_H
 
 //*********************** Includes *****************************
+
+#include "config.h"
+#include "common.h"
+#ifdef USE_BOOST
 #include <boost/serialization/access.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
-#include "config.h"
-#include "common.h"
-
+#endif
 //******************** Defines/Macros **************************
 
 #ifdef USE_BOOST
 #define PATHS(x,y)      (boostFS::path(x) / boostFS::path(y)).string()
+#else
+#define PATHS(x,y)      (x + "/" + y)
 #endif
 #define FASTA_FLAG      ">"
 

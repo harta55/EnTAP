@@ -26,7 +26,6 @@
 */
 
 //*********************** Includes *****************************
-#include <boost/range/iterator_range_core.hpp>
 #include <csv.h>
 #include <boost/regex.hpp>
 #include "SimilaritySearch.h"

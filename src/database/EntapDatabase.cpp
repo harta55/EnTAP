@@ -1139,7 +1139,7 @@ std::string EntapDatabase::get_current_version() {
         return std::to_string(_pSerializedDatabase->MAJOR_VERSION) + "." +
               std::to_string(_pSerializedDatabase->MINOR_VERSION);
     } else {
-        return "1.0";
+        return get_required_version();
     }
 }
 

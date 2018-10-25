@@ -301,7 +301,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
 
  void UserInput::parse_arguments_tclap(int argc, const char ** argv) {
     try {
-        TCLAP::CmdLine cmd("EnTAP, Alexander Hart and Jill Wegrzyn\nCopyright 2017-2018", ' ', ENTAP_VERSION_STR);
+        TCLAP::CmdLine cmd("EnTAP\nAlexander Hart and Dr. Jill Wegrzyn\nUniversity of Connecticut\nCopyright 2017-2018", ' ', ENTAP_VERSION_STR);
 
         // Switch Args
         TCLAP::SwitchArg argConfig("",INPUT_FLAG_CONFIG, DESC_CONFIG, cmd, false);
@@ -341,29 +341,29 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         /* Add everything to the map that will be used throughout execution */
 
         // Add SwitchArgs
-        _user_inputs.emplace(INPUT_FLAG_CONFIG, argConfig.isSet());
-        _user_inputs.emplace(INPUT_FLAG_RUNPROTEIN, argProtein.isSet());
-        _user_inputs.emplace(INPUT_FLAG_RUNNUCLEOTIDE, argNucleo.isSet());
-        _user_inputs.emplace(INPUT_FLAG_GRAPH, argGraph.isSet());
-        _user_inputs.emplace(INPUT_FLAG_TRIM, argTrim.isSet());
-        _user_inputs.emplace(INPUT_FLAG_GENERATE, argGenerate.isSet());
-        _user_inputs.emplace(INPUT_FLAG_COMPLETE, argComplete.isSet());
-        _user_inputs.emplace(INPUT_FLAG_NOCHECK, argNoCheck.isSet());
-        _user_inputs.emplace(INPUT_FLAG_OVERWRITE, argOverwrite.isSet());
+        if (argConfig.isSet()) _user_inputs.emplace(INPUT_FLAG_CONFIG, true);
+        if (argProtein.isSet())_user_inputs.emplace(INPUT_FLAG_RUNPROTEIN, true);
+        if (argNucleo.isSet()) _user_inputs.emplace(INPUT_FLAG_RUNNUCLEOTIDE, true);
+        if (argGraph.isSet()) _user_inputs.emplace(INPUT_FLAG_GRAPH, true);
+        if (argTrim.isSet()) _user_inputs.emplace(INPUT_FLAG_TRIM, true);
+        if (argGenerate.isSet()) _user_inputs.emplace(INPUT_FLAG_GENERATE, true);
+        if (argComplete.isSet()) _user_inputs.emplace(INPUT_FLAG_COMPLETE, true);
+        if (argNoCheck.isSet()) _user_inputs.emplace(INPUT_FLAG_NOCHECK, true);
+        if (argOverwrite.isSet()) _user_inputs.emplace(INPUT_FLAG_OVERWRITE, true);
 
         // Add ValueArgs
-        _user_inputs.emplace(INPUT_FLAG_UNINFORM, argUninform.getValue());
+        if (argUninform.isSet()_user_inputs.emplace(INPUT_FLAG_UNINFORM, argUninform.getValue());
         _user_inputs.emplace(INPUT_FLAG_TAG, argTag.getValue());
         _user_inputs.emplace(INPUT_FLAG_FPKM, argFPKM.getValue());
         _user_inputs.emplace(INPUT_FLAG_E_VAL, argEval.getValue());
         _user_inputs.emplace(INPUT_FLAG_THREADS, argThreads.getValue());
-        _user_inputs.emplace(INPUT_FLAG_ALIGN, argAlign.getValue());
+        if (argAlign.isSet()) _user_inputs.emplace(INPUT_FLAG_ALIGN, argAlign.getValue());
         _user_inputs.emplace(INPUT_FLAG_QCOVERAGE, argQueryCov.getValue());
-        _user_inputs.emplace(INPUT_FLAG_EXE_PATH, argExePath.getValue());
+        if (argExePath.isSet()) _user_inputs.emplace(INPUT_FLAG_EXE_PATH, argExePath.getValue());
         _user_inputs.emplace(INPUT_FLAG_TCOVERAGE, argTCoverage.getValue());
-        _user_inputs.emplace(INPUT_FLAG_SPECIES, argSpecies.getValue());
+        if (argSpecies.isSet()) _user_inputs.emplace(INPUT_FLAG_SPECIES, argSpecies.getValue());
         _user_inputs.emplace(INPUT_FLAG_STATE, argState.getValue());
-        _user_inputs.emplace(INPUT_FLAG_TRANSCRIPTOME, argTranscript.getValue());
+        if (argTranscript.isSet())_user_inputs.emplace(INPUT_FLAG_TRANSCRIPTOME, argTranscript.getValue());
 
         // Add MultiArgs (defaults) Couldnt find a way to do defaults in constructor??!
         if (argInterpro.isSet()) {
@@ -1169,6 +1169,8 @@ void UserInput::set_pFileSystem(FileSystem *_pFileSystem) {
 bool UserInput::has_input(const std::string &key) {
 #ifdef USE_BOOST
     return (bool)_user_inputs.count(key);
+#else
+    return _user_inputs.find(key) != _user_inputs.end();
 #endif
 }
 

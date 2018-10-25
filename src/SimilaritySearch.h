@@ -30,7 +30,6 @@
 
 //*********************** Includes *****************************
 #include "common.h"
-#include <boost/program_options/variables_map.hpp>
 #include "QuerySequence.h"
 #include "GraphingManager.h"
 #include "QueryData.h"

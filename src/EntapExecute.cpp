@@ -233,7 +233,7 @@ namespace entapExecute {
 
             // *************************** Exit Stuff ********************** //
             pQUERY_DATA->final_statistics(final_out_dir, ontology_flags);
-            _pFileSystem->directory_iterate(true, _outpath);   // Delete empty files
+            _pFileSystem->directory_iterate(FileSystem::FILE_ITER_DELETE_EMPTY, _outpath);   // Delete empty files
             delete pQUERY_DATA;
             delete pGraphingManager;
             delete pEntapDatabase;

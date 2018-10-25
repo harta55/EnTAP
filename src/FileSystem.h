@@ -61,6 +61,14 @@ public:
 
     } ENT_FILE_STATUS;
 
+    typedef enum {
+
+        FILE_ITER_DELETE=0,
+        FILE_ITER_DELETE_EMPTY,
+        FILE_ITER_PRINT
+
+    } ENT_FILE_ITER;
+
     FileSystem(std::string&);
     ~FileSystem();
     //void open_out(std::string &, std::ofstream &);
@@ -73,7 +81,7 @@ public:
     bool file_no_lines(std::string);
     bool delete_file(std::string);
     bool copy_file(std::string, std::string, bool);
-    bool directory_iterate(bool, std::string&);
+    bool directory_iterate(ENT_FILE_ITER, std::string&);
     bool check_fasta(std::string&);
     bool create_dir(std::string&);
     void delete_dir(std::string&);

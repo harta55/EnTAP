@@ -39,9 +39,8 @@
 #include <ctime>
 #include <cstring>
 #include <boost/date_time/posix_time/posix_time.hpp>
-
-#ifdef USE_CURL
-#include "curl/curl.h"
+#ifndef USE_BOOST
+#include <dirent.h> // POSIX directory iterator
 #endif
 
 const std::string FileSystem::EXT_TXT  = ".txt";
@@ -224,7 +223,7 @@ bool FileSystem::delete_file(std::string path) {
     FS_dprint("Deleting file: " + path);
     return boostFS::remove(path);
 #else
-    return remove(path) == 0;
+    return remove(path.c_str()) == 0;
 #endif
 }
 
@@ -233,7 +232,7 @@ bool FileSystem::delete_file(std::string path) {
  * ======================================================================
  * Function bool FS_directory_iterate(bool del, std::string &path)
  *
- * Description          - Boost recursive iteration through directory
+ * Description          - WARNING recursive iteration
  *
  * Notes                - None
  *
@@ -243,14 +242,15 @@ bool FileSystem::delete_file(std::string path) {
  * @return              - True/false if successful
  * ======================================================================
  */
-bool FileSystem::directory_iterate(bool del, std::string &path) {
-    FS_dprint("Iterating through directory: " + path);
+bool FileSystem::directory_iterate(ENT_FILE_ITER iter, std::string &path) {
+//    FS_dprint("Iterating through directory: " + path);
+#ifdef USE_BOOST
     if (!file_exists(path)) return false;
     try {
         for (boostFS::recursive_directory_iterator it(path), end; it != end; ++it) {
             if (!boostFS::is_directory(it->path())) {
                 // Is file
-                if (file_empty(it->path().string()) && del) {
+                if (file_empty(it->path().string()) && iter == FILE_ITER_DELETE_EMPTY) {
                     delete_file(it->path().string());
                     FS_dprint("Deleted: " + it->path().string());
                 }
@@ -259,7 +259,43 @@ bool FileSystem::directory_iterate(bool del, std::string &path) {
     } catch (...) {
         return false;
     }
-    FS_dprint("Success!");
+#else   // POSIX
+    struct dirent *entry;
+    DIR *dp;
+    std::string file_path;
+    try {
+
+        dp = opendir(path.c_str());
+        if (dp == NULL) {
+            FS_dprint("opendir: Path could not be read: " + path);
+            return -1;
+        }
+
+        while ((entry = readdir(dp)) != NULL) {
+            if (entry->d_name[0] == '.') continue;
+            file_path = PATHS(path, std::string(entry->d_name));
+            if (entry->d_type == DT_DIR) {
+                // Directory, WARNING recursive
+                directory_iterate(FILE_ITER_DELETE, file_path);     // Recursively call
+            } else {
+                // This is a file decide what we want to do
+                switch (iter) {
+                    case FILE_ITER_DELETE:
+                        delete_file(file_path);
+                        break;
+                    case FILE_ITER_DELETE_EMPTY:
+                        if (file_empty(file_path)) delete_file(file_path);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        closedir(dp);
+        remove(path.c_str());
+        return true;
+    } catch (...) {return false};
+#endif
     return true;
 }
 
@@ -344,6 +380,8 @@ bool FileSystem::check_fasta(std::string& path) {
 bool FileSystem::create_dir(std::string& path) {
 #ifdef USE_BOOST
     return boostFS::create_directories(path);
+#else
+    return mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != -1;
 #endif
 }
 
@@ -364,6 +402,8 @@ bool FileSystem::create_dir(std::string& path) {
 void FileSystem::delete_dir(std::string& path) {
 #ifdef USE_BOOST
     boostFS::remove_all(path);
+#else   // POSIX
+    directory_iterate(FILE_ITER_DELETE, path);
 #endif
 }
 
@@ -435,6 +475,10 @@ std::string FileSystem::get_cur_dir() {
 
 #ifdef USE_BOOST
     return boostFS::current_path().string();
+#else // POSIX
+    char cwd[PATH_MAX];
+    getcwd(cwd, sizeof(cwd));
+    return std::string(cwd);
 #endif
 
 }
@@ -514,6 +558,7 @@ const std::string &FileSystem::get_root_path() const {
     return _root_path;
 }
 
+// Stipped without '.'
 std::string FileSystem::get_file_extension(const std::string &path, bool stripped) {
 #ifdef USE_BOOST
     boostFS::path bpath(path);
@@ -521,6 +566,16 @@ std::string FileSystem::get_file_extension(const std::string &path, bool strippe
         return bpath.extension().string().substr(1);
     } else {
         return bpath.extension().string();
+    }
+#else
+    if (path.find_last_of('.') != std::string::npos) {
+        if (stripped) {
+            return path.substr(path.find_last_of('.') + 1);
+        } else {
+            return path.substr(path.find_last_of('.'));
+        }
+    } else {
+        return "";
     }
 #endif
 }
@@ -536,6 +591,18 @@ bool FileSystem::copy_file(std::string inpath, std::string outpath, bool overwri
     } catch (...) {
         return false;
     }
+    return true;
+#else
+    if (file_exists(outpath) && !overwrite) {
+        return false;
+    } else if (file_exists(outpath)) {
+        delete_file(outpath);
+    }
+    std::ifstream  in(inpath, std::ios::binary);
+    std::ofstream  out(outpath,   std::ios::binary);
+    out << in.rdbuf();
+    in.close();
+    out.close();
     return true;
 #endif
 }
@@ -673,9 +740,11 @@ bool FileSystem::rename_file(std::string &in, std::string &out) {
         boostFS::rename(in, out);
         FS_dprint("Success!");
         return true;
+#else
+        rename(in.c_str(), out.c_str());
 #endif
     } catch (...) {
-        FS_dprint("Move failed!");
+        FS_dprint("rename failed!");
         return false;
     }
     return false;
@@ -728,6 +797,6 @@ void FileSystem::set_error(std::string err_msg) {
     _err_msg = err_msg;
 }
 
-std::string FileSystem::get_error(void) {
+std::string FileSystem::get_error() {
     return "\n" + _err_msg;
 }

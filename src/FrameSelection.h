@@ -30,7 +30,6 @@
 #define ENTAP_FRAMESELECTION_H
 
 //*********************** Includes *****************************
-#include <boost/program_options/variables_map.hpp>
 #include "QuerySequence.h"
 #include "GraphingManager.h"
 #include "frame_selection/AbstractFrame.h"

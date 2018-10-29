@@ -139,7 +139,7 @@
                             "    1. SQLITE Database\n"                                  \
                             "Either or both can be selected with an additional flag. "  \
                             "The serialized database will be faster although requires " \
-                            "more memory usage. THe SQLITE database may be slightly "   \
+                            "more memory usage. The SQLITE database may be slightly "   \
                             "slower and does not require the Boost libraries if you "   \
                             "are experiencing any incompatibility there."
 #define DESC_TAXON          "Specify the type of species/taxon you are analyzing and"   \
@@ -319,7 +319,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         TCLAP::ValueArg<std::string> argTag("", INPUT_FLAG_TAG, DESC_OUT_FLAG, false, OUTFILE_DEFAULT, "string", cmd);
         TCLAP::ValueArg<fp32> argFPKM("", INPUT_FLAG_FPKM, DESC_FPKM, false, RSEM_FPKM_DEFAULT, "decimal", cmd);
         TCLAP::ValueArg<fp64> argEval("", INPUT_FLAG_E_VAL, DESC_EVAL, false, E_VALUE, "decimal", cmd);
-        TCLAP::ValueArg<uint32> argThreads("t", INPUT_FLAG_THREADS, DESC_THREADS, false, DEFAULT_THREADS, "integer", cmd);
+        TCLAP::ValueArg<int> argThreads("t", INPUT_FLAG_THREADS, DESC_THREADS, false, DEFAULT_THREADS, "integer", cmd);
         TCLAP::ValueArg<std::string> argAlign("a", INPUT_FLAG_ALIGN, DESC_ALIGN_FILE, false, "","string",cmd);
         TCLAP::ValueArg<fp32> argQueryCov("", INPUT_FLAG_QCOVERAGE, DESC_QCOVERAGE, false, DEFAULT_QCOVERAGE, "decimal", cmd);
         TCLAP::ValueArg<std::string> argExePath("", INPUT_FLAG_EXE_PATH, DESC_EXE_PATHS, false, "", "string", cmd);
@@ -352,7 +352,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         if (argOverwrite.isSet()) _user_inputs.emplace(INPUT_FLAG_OVERWRITE, true);
 
         // Add ValueArgs
-        if (argUninform.isSet()_user_inputs.emplace(INPUT_FLAG_UNINFORM, argUninform.getValue());
+        if (argUninform.isSet())_user_inputs.emplace(INPUT_FLAG_UNINFORM, argUninform.getValue());
         _user_inputs.emplace(INPUT_FLAG_TAG, argTag.getValue());
         _user_inputs.emplace(INPUT_FLAG_FPKM, argFPKM.getValue());
         _user_inputs.emplace(INPUT_FLAG_E_VAL, argEval.getValue());
@@ -374,12 +374,12 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         if (argOntology.isSet()) {
             _user_inputs.emplace(INPUT_FLAG_ONTOLOGY, argOntology.getValue());
         } else {
-            _user_inputs.emplace(INPUT_FLAG_ONTOLOGY, std::vector<uint16>{ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG},"");
+            _user_inputs.emplace(INPUT_FLAG_ONTOLOGY, std::vector<uint16>{ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG});
         }
         if (argGOLevels.isSet()) {
             _user_inputs.emplace(INPUT_FLAG_GO_LEVELS, argGOLevels.getValue());
         } else {
-            _user_inputs.emplace(INPUT_FLAG_GO_LEVELS, std::vector<uint16>{0,3,4},"");
+            _user_inputs.emplace(INPUT_FLAG_GO_LEVELS, std::vector<uint16>{0,3,4});
         }
         if (argDataType.isSet()) {
             _user_inputs.emplace(INPUT_FLAG_DATABASE_TYPE, argDataType.getValue());
@@ -627,6 +627,7 @@ bool UserInput::verify_user_input() {
         delete pEntapDatabase;
         throw e;
     }
+    FS_dprint("Success! Input verified");
     delete pEntapDatabase;
     return is_config;
 }
@@ -1273,8 +1274,7 @@ std::string UserInput::get_user_transc_basename() {
     std::string user_transcriptome;
 
     user_transcriptome = get_user_input<std::string>(INPUT_FLAG_TRANSCRIPTOME);
-    _pFileSystem->get_filename_no_extensions(user_transcriptome);
-    return user_transcriptome;
+    return _pFileSystem->get_filename(user_transcriptome, false);
 }
 
 
@@ -1297,8 +1297,7 @@ std::string UserInput::get_executable_dir() {
     if (len != -1) {
         buff[len] = '\0';
         std::string path = std::string(buff);
-        boost::filesystem::path p(path);
-        return p.remove_filename().string();
+        return path.substr(0,path.find_last_of('/'));
     }
     FS_dprint("EnTAP execution path was NOT found!");
     return "";

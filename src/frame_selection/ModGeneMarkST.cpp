@@ -534,7 +534,7 @@ ModGeneMarkST::~ModGeneMarkST() {
 ModGeneMarkST::ModGeneMarkST(std::string &execution_stage_path, std::string &in_hits,
                              EntapDataPtrs &entap_data, std::string &exe) :
     AbstractFrame(execution_stage_path, in_hits, entap_data, GENEMARK_NAME, exe) {
-    _transcriptome_filename = _pFileSystem->get_filename(in_hits);
+    _transcriptome_filename = _pFileSystem->get_filename(in_hits, true);
 }
 
 std::string ModGeneMarkST::get_final_faa() {

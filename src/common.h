@@ -40,12 +40,15 @@
 #include <map>
 #include <iomanip>
 #include <ctime>
+#include <cstring>
+#include <cmath>
 #include <exception>
 #include <queue>
 #include <thread>
 #include <unordered_map>
 #include <chrono>
 #include <ios>
+#include <iterator>
 //**************************************************************
 
 

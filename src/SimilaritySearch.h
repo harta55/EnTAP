@@ -59,7 +59,7 @@ public:
 private:
 
     const uint8       UNIPROT_ATTEMPTS                           = 15;   // Number of attempts to see if database is uniprot
-    const std::string _NCBI_REGEX                                = "\\[([^]]+)\\](?!.+\\[.+\\])";
+    const std::string _NCBI_REGEX                                = "\\[(.+)\\](?!.+\\[.+\\])";
     const std::string _UNIPROT_REGEX                             = "OS=(.+?)\\s\\S\\S=";
     const std::string SIM_SEARCH_DATABASE_BEST_TSV               = "best_hits.tsv";
     const std::string SIM_SEARCH_DATABASE_BEST_TSV_NO_CONTAM     = "best_hits_no_contam.tsv";

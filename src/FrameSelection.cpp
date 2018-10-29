@@ -27,15 +27,10 @@
 
 
 //*********************** Includes *****************************
-#include <boost/filesystem/operations.hpp>
-#include <fstream>
-#include <boost/regex.hpp>
-#include <iomanip>
 #include "FrameSelection.h"
 #include "ExceptionHandler.h"
 #include "EntapGlobals.h"
 #include "frame_selection/ModGeneMarkST.h"
-#include "QueryData.h"
 #include "FileSystem.h"
 //**************************************************************
 

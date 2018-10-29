@@ -72,6 +72,7 @@ std::string generate_command(std::unordered_map<std::string,std::string>&,
 std::string float_to_string(fp64);
 std::string float_to_sci(fp64, int);
 vect_str_t  split_string(std::string, char);
+std::string get_cur_time();
 //**************************************************************
 
 

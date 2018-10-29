@@ -134,6 +134,16 @@ vect_str_t split_string(std::string sequences, char delim) {
     return split_vals;
 }
 
+std::string get_cur_time() {
+    std::chrono::time_point<std::chrono::system_clock> current;
+    std::time_t time;
+
+    current = std::chrono::system_clock::now();
+    time = std::chrono::system_clock::to_time_t(current);
+    std::string out_time(std::ctime(&time));
+    return out_time.substr(0,out_time.length()-1);
+}
+
 void ENTAP_STATS::ES_format_stat_stream(std::stringstream &stream, std::string title) {
     stream<<std::fixed<<std::setprecision(2);
     stream << ENTAP_STATS::SOFTWARE_BREAK << title << '\n' << ENTAP_STATS::SOFTWARE_BREAK;

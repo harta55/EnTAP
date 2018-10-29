@@ -87,8 +87,7 @@ public:
     void delete_dir(std::string&);
     const std::string &get_root_path() const;
     std::string get_file_extension(const std::string&, bool);
-    void get_filename_no_extensions(std::string &);
-    std::string get_filename(std::string);
+    std::string get_filename(std::string&, bool);
     static std::string get_cur_dir();
     std::vector<std::string> list_to_vect(char, std::string&);
     std::string get_final_outdir();

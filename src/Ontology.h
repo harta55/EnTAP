@@ -29,7 +29,6 @@
 #define ENTAP_ONTOLOGY_H
 
 #include "common.h"
-#include <boost/program_options/variables_map.hpp>
 #include "EntapConfig.h"
 #include "EntapGlobals.h"
 #include "QuerySequence.h"

@@ -129,7 +129,7 @@ void ModInterpro::execute() {
         throw ExceptionHandler("Error executing InterProScan\nInterProScan Error:\n"+ terminalData.err_stream.str(),
                                ERR_ENTAP_RUN_INTERPRO);
     } else {
-        boostFS::remove_all(temp_dir);
+        _pFileSystem->delete_dir(temp_dir);
     }
 }
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(EnTAP VERSION 0.8.2 LANGUAGES CXX C)
+project(EnTAP VERSION 0.8.4 LANGUAGES CXX C)
 include(CheckCXXCompilerFlag)
 include(GNUInstallDirs)
 
@@ -19,30 +19,6 @@ else()
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support.")
 endif()
 
-# ------------------ Boost ------------------------
-if(BUILD_STATIC)
-    set(Boost_USE_STATIC_LIBS ON)
-else()
-    add_definitions( -DBOOST_ALL_DYN_LINK )
-endif()
-
-# Change these paths to the specific boost directory if you're having trouble linking
-#set(Boost_INCLUDE_DIR /path/to/boost_1_50_0)
-#set(Boost_LIBRARY_DIR /path/to/boost_1_50_0/stage/lib)
-#set(Boost_NO_SYSTEM_PATHS ON)
-
-find_package(Boost 1.50.0 COMPONENTS program_options system filesystem iostreams serialization regex date_time REQUIRED)
-if(Boost_FOUND)
-    add_library(boost INTERFACE IMPORTED)
-    set_property(TARGET boost PROPERTY
-       INTERFACE_INCLUDE_DIRECTORIES ${Boost_INCLUDE_DIRS})
-    set_property(TARGET boost PROPERTY
-       INTERFACE_LINK_LIBRARIES ${Boost_LIBRARIES})
-else()
-    message(FATAL_ERROR "Boost Libraries are required to run EnTAP.")
-endif()
-# -------------------------------------------------
-
 find_package(PythonInterp)
 if (PYTHONINTERP_FOUND)
     message("Python detected! Version: ${PYTHON_VERSION_STRING}")
@@ -59,41 +35,43 @@ else()
 endif()
 
 set(SOURCE_FILES
-    src/main.cpp
-    src/ExceptionHandler.cpp src/ExceptionHandler.h
-    src/EntapGlobals.h src/EntapGlobals.cpp
-    src/EntapConfig.cpp src/EntapConfig.h
-    src/EntapExecute.cpp src/EntapExecute.h
-    src/QuerySequence.cpp src/QuerySequence.h
-    src/FrameSelection.cpp src/FrameSelection.h
-    src/ExpressionAnalysis.cpp src/ExpressionAnalysis.h
-    src/SimilaritySearch.cpp src/SimilaritySearch.h
-    src/Ontology.cpp src/Ontology.h
-    src/GraphingManager.cpp src/GraphingManager.h
-    src/UserInput.cpp src/UserInput.h
-    src/ontology/EggnogLevels.h
-    src/database/SQLDatabaseHelper.cpp src/database/SQLDatabaseHelper.h
-    src/database/sqlite3.c src/database/sqlite3.h
-    src/frame_selection/ModGeneMarkST.cpp src/frame_selection/ModGeneMarkST.h
-    src/frame_selection/AbstractFrame.h src/frame_selection/AbstractFrame.cpp
-    src/expression/AbstractExpression.h src/expression/AbstractExpression.cpp
-    src/expression/ModRSEM.cpp src/expression/ModRSEM.h
-    src/ontology/AbstractOntology.h src/ontology/AbstractOntology.cpp
-    src/ontology/ModEggnog.cpp src/ontology/ModEggnog.h
-    src/ontology/ModInterpro.cpp src/ontology/ModInterpro.h
-    src/QueryData.cpp src/QueryData.h src/common.h src/config.h
-    src/FileSystem.cpp src/FileSystem.h src/version.h
-    src/database/EntapDatabase.cpp src/database/EntapDatabase.h
-    src/TerminalCommands.cpp src/TerminalCommands.h
-    src/ontology/ModEggnogDMND.cpp src/ontology/ModEggnogDMND.h
-    src/database/EggnogDatabase.cpp src/database/EggnogDatabase.h
-    src/EntapModule.cpp src/EntapModule.h)
+        src/main.cpp
+        src/ExceptionHandler.cpp src/ExceptionHandler.h
+        src/EntapGlobals.h src/EntapGlobals.cpp
+        src/EntapConfig.cpp src/EntapConfig.h
+        src/EntapExecute.cpp src/EntapExecute.h
+        src/QuerySequence.cpp src/QuerySequence.h
+        src/FrameSelection.cpp src/FrameSelection.h
+        src/ExpressionAnalysis.cpp src/ExpressionAnalysis.h
+        src/SimilaritySearch.cpp src/SimilaritySearch.h
+        src/Ontology.cpp src/Ontology.h
+        src/GraphingManager.cpp src/GraphingManager.h
+        src/UserInput.cpp src/UserInput.h
+        src/database/SQLDatabaseHelper.cpp src/database/SQLDatabaseHelper.h
+        src/database/sqlite3.c src/database/sqlite3.h
+        src/frame_selection/ModGeneMarkST.cpp src/frame_selection/ModGeneMarkST.h
+        src/frame_selection/AbstractFrame.h src/frame_selection/AbstractFrame.cpp
+        src/expression/AbstractExpression.h src/expression/AbstractExpression.cpp
+        src/expression/ModRSEM.cpp src/expression/ModRSEM.h
+        src/ontology/AbstractOntology.h src/ontology/AbstractOntology.cpp
+        src/ontology/ModEggnog.cpp src/ontology/ModEggnog.h
+        src/ontology/ModInterpro.cpp src/ontology/ModInterpro.h
+        src/QueryData.cpp src/QueryData.h src/common.h src/config.h
+        src/FileSystem.cpp src/FileSystem.h src/version.h
+        src/database/EntapDatabase.cpp src/database/EntapDatabase.h
+        src/TerminalCommands.cpp src/TerminalCommands.h
+        src/ontology/ModEggnogDMND.h src/ontology/ModEggnogDMND.cpp
+        src/database/EggnogDatabase.cpp src/database/EggnogDatabase.h
+        src/EntapModule.cpp src/EntapModule.h )
 
+# Include libraries
 include_directories(libs/pstream)
 include_directories(libs/fast-cpp-csv-parser) # May need to compile with thread control
+include_directories(libs/cereal-master/include)
+include_directories(libs/tclap-1.2.2/include)
+include_directories(libs/boost/include)
 
-include_directories(${Boost_INCLUDE_DIRS})
 add_executable(EnTAP ${SOURCE_FILES})
 
-target_link_libraries(EnTAP dl pthread boost)
+target_link_libraries(EnTAP dl pthread)
 install(TARGETS EnTAP DESTINATION bin)

@@ -91,7 +91,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
         throw ExceptionHandler("Input transcriptome not found at: " + input_file,ERR_ENTAP_INPUT_PARSE);
     }
 
-    out_name     = _pFileSystem->get_filename(input_file);
+    out_name     = _pFileSystem->get_filename(input_file, true);
     out_new_path = PATHS(out_path,out_name);
     _pFileSystem->delete_file(out_new_path);
 

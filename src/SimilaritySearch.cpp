@@ -27,9 +27,14 @@
 
 //*********************** Includes *****************************
 #include <csv.h>
-#include <boost/regex.hpp>
+#include "config.h"
 #include "SimilaritySearch.h"
 #include "TerminalCommands.h"
+#ifdef USE_BOOST
+#include <boost/regex.hpp>
+#else   // C++ libs
+#include <regex>
+#endif
 //**************************************************************
 
 typedef std::map<std::string,std::map<std::string,uint32>> graph_sum_t;
@@ -841,21 +846,38 @@ std::string SimilaritySearch::get_species(std::string &title) {
     // TODO use regex(database specific)
 
     std::string species;
+
+
+#ifdef USE_BOOST
     boost::smatch match;
 
     boost::regex ncbi_exp(_NCBI_REGEX);
     boost::regex uniprot_exp(_UNIPROT_REGEX);
 
-    species = "";
     if (boost::regex_search(title,match,uniprot_exp)) {
         species = std::string(match[1].first, match[1].second);
     } else {
         if (boost::regex_search(title, match, ncbi_exp))
             species = std::string(match[1].first, match[1].second);
     }
+#else   // Use std c++ libs
+    std::smatch match;
+
+    // Check if UniProt match
+    if (std::regex_search(title, match, std::regex(_UNIPROT_REGEX)) && match.size() > 1) {
+        species = std::string(match[1].first, match[1].second);
+    } else {
+        // Not a UniProt match, check NCBI standard
+        if (std::regex_search(title, match, std::regex(_NCBI_REGEX)) && match.size() > 1) {
+            species = std::string(match[1].first, match[1].second);
+        }
+    }
+#endif
+
     // Double bracket fix
     if (species[0] == '[') species = species.substr(1);
     if (species[species.length()-1] == ']') species = species.substr(0,species.length()-1);
+
     return species;
 }
 
@@ -887,15 +909,13 @@ bool SimilaritySearch::is_executable() {
 }
 
 // Returns database "shortname" from database full path
+// This is just the filename, without any extension or path
 std::string SimilaritySearch::get_database_shortname(std::string &path) {
-    return boostFS::path(path).filename().stem().string();
+    return _pFileSystem->get_filename(path, false);
 }
 
 std::string SimilaritySearch::get_transcriptome_shortname() {
-    boostFS::path transc_name(_input_path);
-    transc_name = transc_name.stem();
-    if (transc_name.has_stem()) transc_name = transc_name.stem(); //.fasta.faa
-    return transc_name.string();
+    return _pFileSystem->get_filename(_input_path, false);
 }
 
 bool SimilaritySearch::is_uniprot_entry(std::string &sseqid, UniprotEntry &entry) {

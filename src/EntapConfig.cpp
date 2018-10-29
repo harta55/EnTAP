@@ -88,6 +88,8 @@ namespace entapConfig {
         std::vector<std::string>           uniprot_vect;
         std::vector<std::string>           database_vect;
 
+        FS_dprint("Entering EnTAP Config");
+
         _pUserInput = input;
         _pFileSystem = filesystem;
 
@@ -245,7 +247,7 @@ namespace entapConfig {
         for (std::string item : _compiled_databases) {
             TerminalData terminalData = TerminalData();
 
-            _pFileSystem->get_filename_no_extensions(item);
+            item = _pFileSystem->get_filename(item, false);
             indexed_path = PATHS(_bin_dir,item);
             std_out      = indexed_path + "_index";
 
@@ -337,7 +339,7 @@ namespace entapConfig {
         dmnd_outpath  = PATHS(_bin_dir, Defaults::EGG_DMND_FILENAME);
 
         // Check if SQL database already exists
-        if (!_pFileSystem->file_exists(EGG_SQL_DB_PATH) || !_pFileSystem->file_exists(sql_outpath)) {
+        if (!_pFileSystem->file_exists(EGG_SQL_DB_PATH) && !_pFileSystem->file_exists(sql_outpath)) {
             // No, path does not. Download it
             if (eggnogDatabase.download(EggnogDatabase::EGGNOG_SQL, sql_outpath) != EggnogDatabase::ERR_EGG_OK) {
                 // Error in download
@@ -356,7 +358,7 @@ namespace entapConfig {
         }
 
         // Check if DIAMOND EggNOG database exists
-        if (!_pFileSystem->file_exists(EGG_DMND_PATH) || !_pFileSystem->file_exists(dmnd_outpath)) {
+        if (!_pFileSystem->file_exists(EGG_DMND_PATH) && !_pFileSystem->file_exists(dmnd_outpath)) {
             // Does not exist, need to generate from FASTA
             if (eggnogDatabase.download(EggnogDatabase::EGGNOG_FASTA, fasta_outpath) != EggnogDatabase::ERR_EGG_OK) {
                 // Error in download
@@ -404,11 +406,11 @@ namespace entapConfig {
         return 0;
     }
 
-    void handle_state(void) {
+    void handle_state() {
         state = static_cast<InitStates>(state+1);
     }
 
-    void init_entap_database(void) {
+    void init_entap_database() {
         bool              generate_databases;    // Whether user would like to generate rather tahn download
         vect_uint16_t     databases;
         std::string       config_outpath;    // Path to check against (from config file)

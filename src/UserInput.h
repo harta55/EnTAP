@@ -40,6 +40,7 @@
 #include <boost/program_options/variables_map.hpp>
 #else
 #include <tclap/CmdLine.h>
+#include <boost/any.hpp>          // Include any boost library with tclap
 #endif
 
 //**************************************************************

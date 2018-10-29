@@ -25,16 +25,8 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <boost/filesystem.hpp>
-#include <csv.h>
-#include <boost/archive/binary_iarchive.hpp>
 #include "Ontology.h"
-#include "EntapConfig.h"
-#include <boost/serialization/map.hpp>
 #include "ExceptionHandler.h"
-#include "EntapExecute.h"
-#include "SimilaritySearch.h"
-#include "database/SQLDatabaseHelper.h"
 #include "EntapGlobals.h"
 #include "ontology/AbstractOntology.h"
 #include "ontology/ModEggnog.h"

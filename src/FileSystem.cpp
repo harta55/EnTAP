@@ -28,19 +28,17 @@
 #include "FileSystem.h"
 #include "ExceptionHandler.h"
 #include "EntapGlobals.h"
-#include <iomanip>
-#include <iostream>
 #include <sys/stat.h>
-#include <chrono>
-#include <boost/date_time/posix_time/ptime.hpp>
-#include <boost/date_time/time_clock.hpp>
 #include "config.h"
 #include "TerminalCommands.h"
-#include <ctime>
-#include <cstring>
+
+#ifdef USE_BOOST
+#include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/date_time/time_clock.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#ifndef USE_BOOST
+#else
 #include <dirent.h> // POSIX directory iterator
+#include <zconf.h>
 #endif
 
 const std::string FileSystem::EXT_TXT  = ".txt";
@@ -95,7 +93,7 @@ void FileSystem::close_file(std::ofstream &ofstream) {
  * Function void print_debug(std::string    msg)
  *
  * Description          - Handles printing to EnTAP debug file
- *                      - Adds timestamp to each entry
+ *                      - Adds bo to each entry
  *
  * Notes                - None
  *
@@ -105,16 +103,9 @@ void FileSystem::close_file(std::ofstream &ofstream) {
  * =====================================================================
  */
 void FS_dprint(const std::string &msg) {
-
-    std::chrono::time_point<std::chrono::system_clock> current;
-    std::time_t time;
-
-    current = std::chrono::system_clock::now();
-    time = std::chrono::system_clock::to_time_t(current);
-    std::string out_time(std::ctime(&time));
     std::ofstream debug_file(DEBUG_FILE_PATH, std::ios::out | std::ios::app);
 
-    debug_file << out_time.substr(0,out_time.length()-1) << ": " + msg << std::endl;
+    debug_file << get_cur_time() << ": " + msg << std::endl;
     debug_file.close();
 }
 
@@ -160,6 +151,7 @@ bool FileSystem::file_exists(std::string path) {
 #else
     struct stat buff;
     return (stat(path.c_str(), &buff) == 0);
+//    return ( access( path.c_str(), F_OK ) != -1 );
 #endif
 }
 
@@ -259,6 +251,7 @@ bool FileSystem::directory_iterate(ENT_FILE_ITER iter, std::string &path) {
     } catch (...) {
         return false;
     }
+    return true;
 #else   // POSIX
     struct dirent *entry;
     DIR *dp;
@@ -268,7 +261,7 @@ bool FileSystem::directory_iterate(ENT_FILE_ITER iter, std::string &path) {
         dp = opendir(path.c_str());
         if (dp == NULL) {
             FS_dprint("opendir: Path could not be read: " + path);
-            return -1;
+            return false;
         }
 
         while ((entry = readdir(dp)) != NULL) {
@@ -276,7 +269,7 @@ bool FileSystem::directory_iterate(ENT_FILE_ITER iter, std::string &path) {
             file_path = PATHS(path, std::string(entry->d_name));
             if (entry->d_type == DT_DIR) {
                 // Directory, WARNING recursive
-                directory_iterate(FILE_ITER_DELETE, file_path);     // Recursively call
+                directory_iterate(FILE_ITER_DELETE, file_path);     // Recursive call
             } else {
                 // This is a file decide what we want to do
                 switch (iter) {
@@ -294,9 +287,8 @@ bool FileSystem::directory_iterate(ENT_FILE_ITER iter, std::string &path) {
         closedir(dp);
         remove(path.c_str());
         return true;
-    } catch (...) {return false};
+    } catch (...) {return false;};
 #endif
-    return true;
 }
 
 
@@ -518,11 +510,6 @@ FileSystem::FileSystem(std::string &root) {
  * ======================================================================
  */
 void FileSystem::init_log() {
-#ifndef USE_BOOST
-    std::chrono::time_point<std::chrono::system_clock> now;
-    std::time_t                                        now_time;
-    std::tm                                            now_tm;
-#endif
     std::stringstream                                  ss;
     std::string                                        log_file_name;
     std::string                                        debug_file_name;
@@ -539,11 +526,16 @@ void FileSystem::init_log() {
        local.time_of_day().minutes()   << "m" <<
        local.time_of_day().seconds()   << "s";
 #else
+    std::chrono::time_point<std::chrono::system_clock> now;
+    std::time_t                                        now_time;
+    std::tm                                            now_tm;
     now      = std::chrono::system_clock::now();
     now_time = std::chrono::system_clock::to_time_t(now);
     now_tm   = *std::localtime(&now_time);
-    ss << std::put_time(&now_tm, "_%Y.%m.%d-%Hh.%Mm.%Ss");
+    ss << std::put_time(&now_tm, "_%YY%mM%dD-%Hh%Mm%Ss");
 #endif
+
+
     time_date       = ss.str();
     log_file_name   = LOG_FILENAME   + time_date + LOG_EXTENSION;
     debug_file_name = DEBUG_FILENAME + time_date + LOG_EXTENSION;
@@ -607,18 +599,38 @@ bool FileSystem::copy_file(std::string inpath, std::string outpath, bool overwri
 #endif
 }
 
-void FileSystem::get_filename_no_extensions(std::string &file_name) {
+std::string FileSystem::get_filename(std::string &path, bool with_extension) {
+    if (path.empty()) return "";
 #ifdef USE_BOOST
-    boostFS::path path(file_name);
-    while (path.has_extension()) path = path.stem();
-    file_name = path.string();
-#endif
-}
+    if(with_extension) {
+        boostFS::path boost_path(path);
+        return boost_path.filename().string();
+    } else {
+        std::string file_name;
+        boostFS::path path(file_name);
+        while (path.has_extension()) path = path.stem();
+        file_name = path.string();
+        return file_name;
+    }
+#else
+    unsigned long dir_pos = path.find_last_of('/');
+    unsigned long ext_pos = path.find_last_of('.');
 
-std::string FileSystem::get_filename(std::string path) {
-#ifdef USE_BOOST
-    boostFS::path boost_path(path);
-    return boost_path.filename().string();
+    if (dir_pos == std::string::npos && ext_pos == std::string::npos) return path;
+    if (ext_pos == std::string::npos) return path.substr(dir_pos + 1);
+    if (dir_pos == std::string::npos && with_extension) return path;
+
+    // Filename with first extension (removes trailing extensions)
+    if (with_extension) {
+        return path.substr(dir_pos + 1, ext_pos - dir_pos - 1);
+    } else {
+        // Just get stem
+        if (dir_pos == std::string::npos) {
+            return path.substr(0, path.find('.'));
+        } else {
+            return path.substr(dir_pos+1, path.find('.', dir_pos) - dir_pos - 1);
+        }
+    }
 #endif
 }
 

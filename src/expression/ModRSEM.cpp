@@ -50,8 +50,7 @@
  */
 std::pair<bool, std::string> ModRSEM::verify_files() {
 
-    _filename = _in_hits;
-    _pFileSystem->get_filename_no_extensions(_filename);
+    _filename = _pFileSystem->get_filename(_in_hits, false);
     _exp_out  = PATHS(_mod_out_dir, _filename);
     _rsem_out = _exp_out + RSEM_OUT_FILE;
     if (_pFileSystem->file_exists(_rsem_out)) {

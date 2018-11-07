@@ -63,6 +63,10 @@ namespace ENTAP_EXECUTE {
     // UniProt Mapping
     const std::string HEADER_UNI_DATA_XREF = "UniProt Database Cross References";
     const std::string HEADER_UNI_COMMENTS  = "UniProt Additional Information";
+    const std::string HEADER_UNI_KEGG      = "UniProt KEGG Terms";
+    const std::string HEADER_UNI_GO_BIO    = "UniProt GO Biological";
+    const std::string HEADER_UNI_GO_CELL   = "UniProt GO Cellular";
+    const std::string HEADER_UNI_GO_MOLE   = "UniProt GO Molecular";
 
     // EggNOG
     const std::string HEADER_SEED_ORTH   = "Seed Ortholog";

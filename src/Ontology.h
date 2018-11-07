@@ -38,6 +38,8 @@
 #include "QueryData.h"
 #include "EntapModule.h"
 
+class AbstractOntology;
+
 class Ontology {
 
 public:
@@ -77,7 +79,7 @@ private:
 
     void print_eggnog(QUERY_MAP_T&);
     void init_headers();
-    std::unique_ptr<EntapModule> spawn_object(uint16&);
+    std::unique_ptr<AbstractOntology> spawn_object(uint16&);
 };
 
 

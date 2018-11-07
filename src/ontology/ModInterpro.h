@@ -65,7 +65,6 @@ private:
     std::string PROTEIN_TAG                 = "p";
     std::string INTERPRO_TEMP               = "temp/";
     std::string INTERPRO_OUTPUT             = "interpro_results";
-    std::string INTERPRO_DIRECTORY          = "InterProScan";
     std::string INTERPRO_STD_OUT            = "interproscan_std";
     std::string OUT_HITS_FAA                = "interpro_hits.faa";
     std::string OUT_HITS_FNN                = "interpro_hits.fnn";

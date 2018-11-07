@@ -47,6 +47,7 @@
 #include <cereal/cereal.hpp>
 #include <cereal/types/map.hpp>
 #include <cereal/types/string.hpp>
+#include <cereal/types/vector.hpp>
 
 
 #endif
@@ -127,6 +128,8 @@ struct UniprotEntry {
     std::string database_x_refs;        // DR   OrthoDB; VOG090000I8; -.
     std::string comments;               // CC   -!- FUNCTION: Transcription activation. {ECO:0000305}.
     std::string uniprot_id;             // ID   001R_FRG3G              Reviewed;         256 AA.
+    go_format_t go_terms;
+    std::string kegg_terms;
 #ifdef USE_BOOST
     friend class boost::serialization::access;
     template<typename Archive>
@@ -134,6 +137,8 @@ struct UniprotEntry {
         ar&uniprot_id;
         ar&database_x_refs;
         ar&comments;
+        ar&go_terms;
+        ar&kegg_terms;
     }
 #else
     // Use CEREAL for serialization
@@ -141,7 +146,7 @@ struct UniprotEntry {
     void serialize(Archive & archive)
     {
         archive(
-                database_x_refs, comments, uniprot_id);
+                database_x_refs, comments, uniprot_id, go_terms, kegg_terms);
     }
 #endif
 
@@ -149,6 +154,8 @@ struct UniprotEntry {
         database_x_refs = "";
         comments = "";
         uniprot_id = "";
+        kegg_terms = "";
+        go_terms = {};
     }
 
     std::string print(void) {
@@ -157,7 +164,8 @@ struct UniprotEntry {
         out <<
             "UniProt ID: " << uniprot_id <<
             "XRefs: "      << database_x_refs <<
-            "Comments: "   << comments;
+            "Comments: "   << comments        <<
+            "Kegg Terms: " << kegg_terms;
         return out.str();
     }
 
@@ -381,6 +389,13 @@ private:
     const std::string UNIPROT_DAT_TAG_ID             = "ID";
     // DR   SwissPalm; Q6GZX4; -.
     const std::string UNIPROT_DAT_TAG_DATABASE_X_REF = "DR";
+    // Tag used to separate database names
+    const char UNIPROT_DAT_TAG_DATABASE_DELIM    = ';';
+    // Tag used for the Gene Ontology database
+    const std::string UNIPROT_DAT_TAG_DATABASE_GO = "GO";
+    // Tag used for the KEGG database
+    const std::string UNIPROT_DAT_TAG_DATABASE_KEGG = "KEGG";
+
     // CC   -!- FUNCTION: Transcription activation. {ECO:0000305}.
     const std::string UNIPROT_DAT_TAG_COMMENT        = "CC";
     // Entries are split by this (this is on the last line of file)

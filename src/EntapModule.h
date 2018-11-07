@@ -74,7 +74,6 @@ protected:
     uint16             _software_flag;
     std::string        _outpath;
     std::string        _in_hits;
-    std::string        _ontology_dir;
     std::string        _proc_dir;
     std::string        _figure_dir;
     std::string        _mod_out_dir;

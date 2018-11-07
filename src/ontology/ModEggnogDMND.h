@@ -49,7 +49,6 @@ private:
 
     static constexpr int DMND_COL_NUMBER = 14;
     const uint32      STATUS_UPDATE_HITS = 5000;
-    const std::string EGGNOG_DMND_DIR = "EggNOG_DMND/";
     const std::string GRAPH_EGG_TAX_BAR_TITLE = "Top_10_Tax_Levels";
     const std::string GRAPH_EGG_TAX_BAR_PNG   = "eggnog_tax_scope.png";
     const std::string GRAPH_EGG_TAX_BAR_TXT   = "eggnog_tax_scope.txt";

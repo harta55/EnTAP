@@ -409,7 +409,12 @@ void SimilaritySearch::diamond_parse(std::vector<std::string>& contams) {
                 if (uniprot_attempts <= UNIPROT_ATTEMPTS) {
                     // First UniProt match assumes the rest are UniProt as well
                     is_uniprot = is_uniprot_entry(sseqid, simSearchResults.uniprot_info);
-                    if (!is_uniprot) uniprot_attempts++;
+                    if (!is_uniprot) {
+                        uniprot_attempts++;
+                    } else {
+                        FS_dprint("Database at " + data + "\nDetermined to be UniProt");
+                        _pQUERY_DATA->DATA_FLAG_SET(QueryData::UNIPROT_MATCH);
+                    }
                 }
             }
 

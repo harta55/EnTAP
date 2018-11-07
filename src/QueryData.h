@@ -52,6 +52,7 @@ public:
         SUCCESS_ONTOLOGY   = (1 << 2),
         SUCCESS_SIM_SEARCH = (1 << 3),
         IS_PROTEIN         = (1 << 4),
+        UNIPROT_MATCH      = (1 << 5),
 
         DATA_FLAGS_MAX     = (1 << 31)
 

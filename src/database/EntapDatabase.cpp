@@ -220,7 +220,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
         return err_code;
     }
 
-    // Generate UniProt entries
+    // Generate UniProt entries (this references GO database, must be done after)
     err_code = generate_entap_uniprot(type, outpath);
     if (err_code != ERR_DATA_OK) {
         return err_code;
@@ -513,7 +513,12 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
     std::string uniprot_flat;       // Decompressed path (this is parsed)
     std::string line;
     std::string dat_tag;
+    std::string database;
+    std::string go_list;            // Will be turned into go_format when indexed (comma delim)
+    std::string kegg_list;
     uint16      file_status;
+    uint16      index_go;
+    uint16      index_term;
     std::string data;
     bool        same_entry = false;
 
@@ -568,7 +573,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
             }
 
             // Check if this is sequence ID
-            if (dat_tag.compare(UNIPROT_DAT_TAG_ID) == 0) {
+            if (dat_tag == UNIPROT_DAT_TAG_ID) {
                 if (same_entry) {
                     FS_dprint("ERROR: Same entry is true");
                     return ERR_DATA_UNIPROT_PARSE;
@@ -576,14 +581,34 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
                 same_entry = true;
                 uniprotEntry.uniprot_id = line.substr(UNIPROT_DAT_TAG_DATA_POS,
                                                       line.find_first_of(' ',UNIPROT_DAT_TAG_DATA_POS)-UNIPROT_DAT_TAG_DATA_POS);
-            } else if (dat_tag.compare(UNIPROT_DAT_TAG_DATABASE_X_REF) == 0) {
+            } else if (dat_tag == UNIPROT_DAT_TAG_DATABASE_X_REF) {
                 // ID matches the database cross reference ID
-                uniprotEntry.database_x_refs += "|" + data;
-            } else if (dat_tag.compare(UNIPROT_DAT_TAG_COMMENT) == 0) {
-                // ID matches the comments (sometimes useful info)
+
+                // Check which database we have
+                database = data.substr(0, data.find(UNIPROT_DAT_TAG_DATABASE_DELIM));
+                if (database == UNIPROT_DAT_TAG_DATABASE_GO) {
+                    index_go = (uint16) data.find("GO:");
+                    index_term = (uint16) data.find(';', index_go);
+                    go_list += data.substr(index_go, index_term - index_go) + ',';
+
+                } else if (database == UNIPROT_DAT_TAG_DATABASE_KEGG) {
+                    index_go = (uint16) data.find("KEGG:");
+                    index_term = (uint16) data.find(';', index_go);
+                    kegg_list += data.substr(index_go, index_term - index_go) + ',';
+                } else {
+                    // Neither GO nor KEGG, add to x refs
+                    uniprotEntry.database_x_refs += "|" + data;
+                }
+
+            } else if (dat_tag == UNIPROT_DAT_TAG_COMMENT) {
+                // ID matches the comments (sometimes useful info? maybe)
                 uniprotEntry.comments += "|" + data;
-            } else if (dat_tag.compare(UNIPROT_DAT_TAG_NEXT_ENTRY) == 0){
+            } else if (dat_tag == UNIPROT_DAT_TAG_NEXT_ENTRY){
                 // We've hit the next entry, add previous to the database
+                if (go_list.length() > 0) go_list.pop_back();   // remove trailing ','
+                uniprotEntry.go_terms = format_go_delim(go_list, ',');
+                uniprotEntry.kegg_terms = kegg_list;
+
                 if (!add_uniprot_entry(type, uniprotEntry)) {
                     // Unable to add entry
                     set_err_msg("ERROR: Unable to add entry:\n" + uniprotEntry.print(), ERR_DATA_UNIPROT_ENTRY);
@@ -591,6 +616,9 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
                 }
                 uniprotEntry = {};
                 same_entry = false;
+                go_list = "";
+                kegg_list = "";
+
             } else {
                 // Unhandled information from UniProt mapping, discard
             }
@@ -1108,6 +1136,7 @@ EntapDatabase::TaxonomyNode::TaxonomyNode(std::string id) {
     ncbi_id = id;
 }
 
+// terms = "GO:4321431,GO:807890"
 go_format_t EntapDatabase::format_go_delim(std::string terms, char delim) {
     go_format_t output;
     std::string temp;

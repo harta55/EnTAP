@@ -43,9 +43,8 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     _threads         = _pUserInput->get_supported_threads();
     _blastp          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_RUNPROTEIN);
 
-
     // INIT directories
-    _mod_out_dir = PATHS(_ontology_dir, module_name);
+    _mod_out_dir = PATHS(_outpath, module_name);
     _figure_dir  = PATHS(_mod_out_dir, FIGURE_DIR);
     _proc_dir    = PATHS(_mod_out_dir, PROCESSED_OUT_DIR);
 

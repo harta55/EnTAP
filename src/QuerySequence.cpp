@@ -154,40 +154,54 @@ std::string QuerySequence::print_tsv(std::vector<const std::string*>& headers, s
 
     for (const std::string *header : headers) {
 
+        // Determine which go term data we want to use
         if ((*header == ENTAP_EXECUTE::HEADER_EGG_GO_BIO) ||
             (*header == ENTAP_EXECUTE::HEADER_EGG_GO_CELL)||
             (*header == ENTAP_EXECUTE::HEADER_EGG_GO_MOLE)) {
             go_terms = _eggnog_results.parsed_go;
-        } else go_terms = _interpro_results.parsed_go;
-
-        if ((*header == ENTAP_EXECUTE::HEADER_EGG_GO_BIO) ||
-            (*header == ENTAP_EXECUTE::HEADER_INTER_GO_BIO)) {
-            if (go_terms.empty()) {
-                stream <<'\t';continue;
-            }
-            for (std::string val : go_terms[ENTAP_EXECUTE::GO_BIOLOGICAL_FLAG]) {
-                if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
-                    stream<<val<<",";
-                }
-            }
-            stream<<'\t';
-        } else if ((*header == ENTAP_EXECUTE::HEADER_EGG_GO_CELL) ||
-                   (*header == ENTAP_EXECUTE::HEADER_INTER_GO_CELL)) {
-            if (go_terms.empty()) {
-                stream <<'\t';continue;
-            }
-            for (std::string val : go_terms[ENTAP_EXECUTE::GO_CELLULAR_FLAG])  {
-                if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
-                    stream<<val<<",";
-                }
-            }
-            stream<<'\t';
-        } else if ((*header == ENTAP_EXECUTE::HEADER_EGG_GO_MOLE) ||
+        } else if ((*header == ENTAP_EXECUTE::HEADER_INTER_GO_BIO) ||
+                   (*header == ENTAP_EXECUTE::HEADER_INTER_GO_CELL)||
                    (*header == ENTAP_EXECUTE::HEADER_INTER_GO_MOLE)) {
+            go_terms = _interpro_results.parsed_go;
+        } else if ((*header == ENTAP_EXECUTE::HEADER_UNI_GO_MOLE) ||
+                   (*header == ENTAP_EXECUTE::HEADER_UNI_GO_CELL) ||
+                   (*header == ENTAP_EXECUTE::HEADER_UNI_GO_BIO)){
+            go_terms =  get_best_hit_alignment<SimSearchAlignment>(SIMILARITY_SEARCH,
+                    ENTAP_EXECUTE::SIM_SEARCH_FLAG_DIAMOND, "")->get_results()->uniprot_info.go_terms;
+        }   // cleanup!!
+
+
+        if ((*header == ENTAP_EXECUTE::HEADER_EGG_GO_BIO)   ||
+            (*header == ENTAP_EXECUTE::HEADER_INTER_GO_BIO) ||
+            (*header == ENTAP_EXECUTE::HEADER_UNI_GO_BIO)) {
             if (go_terms.empty()) {
                 stream <<'\t';continue;
             }
-            for (std::string val : go_terms[ENTAP_EXECUTE::GO_MOLECULAR_FLAG]) {
+            for (std::string &val : go_terms[ENTAP_EXECUTE::GO_BIOLOGICAL_FLAG]) {
+                if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
+                    stream<<val<<",";
+                }
+            }
+            stream<<'\t';
+        } else if ((*header == ENTAP_EXECUTE::HEADER_EGG_GO_CELL)   ||
+                   (*header == ENTAP_EXECUTE::HEADER_INTER_GO_CELL) ||
+                   (*header == ENTAP_EXECUTE::HEADER_UNI_GO_CELL)) {
+            if (go_terms.empty()) {
+                stream <<'\t';continue;
+            }
+            for (std::string &val : go_terms[ENTAP_EXECUTE::GO_CELLULAR_FLAG])  {
+                if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
+                    stream<<val<<",";
+                }
+            }
+            stream<<'\t';
+        } else if ((*header == ENTAP_EXECUTE::HEADER_EGG_GO_MOLE)   ||
+                   (*header == ENTAP_EXECUTE::HEADER_INTER_GO_MOLE) ||
+                   (*header == ENTAP_EXECUTE::HEADER_UNI_GO_MOLE)) {
+            if (go_terms.empty()) {
+                stream <<'\t';continue;
+            }
+            for (std::string &val : go_terms[ENTAP_EXECUTE::GO_MOLECULAR_FLAG]) {
                 if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
                     stream<<val<<",";
                 }
@@ -201,7 +215,6 @@ std::string QuerySequence::print_tsv(std::vector<const std::string*>& headers, s
             }
         }
     }
-    // free memory in case it gets set later (unlikely)
     return stream.str();
 }
 
@@ -459,7 +472,6 @@ QuerySequence::SimSearchAlignment::SimSearchAlignment(SimSearchResults d, std::s
     _sim_search_results = d;
     set_tax_score(lineage);
     _parent = parent;
-
 
     ALIGN_OUTPUT_MAP = {
             {&ENTAP_EXECUTE::HEADER_QUERY           , _sim_search_results.qseqid},

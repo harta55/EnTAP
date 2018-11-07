@@ -144,7 +144,7 @@ void Ontology::execute() {
  *
  * =====================================================================
  */
-std::unique_ptr<EntapModule> Ontology::spawn_object(uint16 &software) {
+std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
     switch (software) {
 #ifdef EGGNOG_MAPPER
         case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
@@ -159,15 +159,15 @@ std::unique_ptr<EntapModule> Ontology::spawn_object(uint16 &software) {
             ));
 #endif
         case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
-            return std::unique_ptr<EntapModule>(new ModInterpro(
-                    _new_input,
+            return std::unique_ptr<AbstractOntology>(new ModInterpro(
                     _ontology_dir,
+                    _new_input,
                     _entap_data_ptrs,
                     INTERPRO_EXE,
                     _interpro_databases       // Additional data
             ));
         case ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG:
-            return std::unique_ptr<EntapModule>(new ModEggnogDMND(
+            return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
                     _ontology_dir,
                     _new_input,
                     _entap_data_ptrs,
@@ -175,7 +175,7 @@ std::unique_ptr<EntapModule> Ontology::spawn_object(uint16 &software) {
                     _eggnog_db_path
             ));
         default:
-            return std::unique_ptr<EntapModule>(new ModEggnogDMND(
+            return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
                     _ontology_dir,
                     _new_input,
                     _entap_data_ptrs,
@@ -212,6 +212,7 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
     std::string out_contam;
     std::string out_no_contam;
 
+    // Create output files for go levels (contaminants, no contam, all) and write headers
     for (uint16 lvl : _go_levels) {
         file_name      = FINAL_ANNOT_FILE + std::to_string(lvl) + ANNOT_FILE_EXT;
         file_contam    = FINAL_ANNOT_FILE + std::to_string(lvl) + FINAL_ANNOT_FILE_CONTAM + ANNOT_FILE_EXT;
@@ -226,6 +227,8 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
                 new std::ofstream(out_contam, std::ios::out | std::ios::app);
         file_map[lvl][FINAL_NO_CONTAM_IND] =
                 new std::ofstream(out_no_contam, std::ios::out | std::ios::app);
+
+        // Write headers
         for (const std::string *header : _HEADERS) {
             *file_map[lvl][FINAL_ALL_IND] << *header << '\t';
             *file_map[lvl][FINAL_CONTAM_IND] << *header << '\t';
@@ -235,6 +238,8 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
         *file_map[lvl][FINAL_CONTAM_IND] << std::endl;
         *file_map[lvl][FINAL_NO_CONTAM_IND] << std::endl;
     }
+
+    // Write to all files
     for (auto &pair : SEQUENCES) {
         for (uint16 lvl : _go_levels) {
             for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
@@ -298,10 +303,21 @@ void Ontology::init_headers() {
             &ENTAP_EXECUTE::HEADER_DATABASE,
             &ENTAP_EXECUTE::HEADER_FRAME,
             &ENTAP_EXECUTE::HEADER_CONTAM,
-            &ENTAP_EXECUTE::HEADER_INFORM,
-            &ENTAP_EXECUTE::HEADER_UNI_DATA_XREF,
-            &ENTAP_EXECUTE::HEADER_UNI_COMMENTS
+            &ENTAP_EXECUTE::HEADER_INFORM
     };
+
+    // Add additional headers if UniProt mapping has been used
+    if (_QUERY_DATA->DATA_FLAG_GET(QueryData::UNIPROT_MATCH)) {
+        add_header = {
+                &ENTAP_EXECUTE::HEADER_UNI_GO_BIO,
+                &ENTAP_EXECUTE::HEADER_UNI_GO_CELL,
+                &ENTAP_EXECUTE::HEADER_UNI_GO_MOLE,
+                &ENTAP_EXECUTE::HEADER_UNI_DATA_XREF,
+                &ENTAP_EXECUTE::HEADER_UNI_COMMENTS
+        };
+        out_header.insert(out_header.end(), add_header.begin(), add_header.end());
+    }
+
     // Add additional headers for ontology software
     for (uint16 &flag : _software_flags) {
         switch (flag) {
@@ -357,5 +373,6 @@ void Ontology::init_headers() {
         }
         out_header.insert(out_header.end(), add_header.begin(), add_header.end());
     }
+
     _HEADERS = out_header;
 }

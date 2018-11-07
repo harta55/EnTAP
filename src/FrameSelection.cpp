@@ -139,17 +139,17 @@ std::unique_ptr<AbstractFrame> FrameSelection::spawn_object() {
     switch (_software_flag) {
         case ENTAP_EXECUTE::FRAME_FLAG_GENEMARK:
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
-                    _exe_path,
+                    _mod_out_dir,
                     _inpath,
                     _entap_data_ptrs,
-                    GENEMARK_EXE
+                    _exe_path
             ));
         default:
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
-                    _exe_path,
+                    _mod_out_dir,
                     _inpath,
                     _entap_data_ptrs,
-                    GENEMARK_EXE
+                    _exe_path
             ));
     }
 }

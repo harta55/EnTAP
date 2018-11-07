@@ -265,7 +265,7 @@ void ModRSEM::parse() {
 
 
     if (count_kept > 0) {
-        rejected_percent = ((fp32)count_removed / count_kept) * 100;
+        rejected_percent = ((fp32)count_removed / count_total) * 100;
         avg_kept = (fp32) total_kept_len / count_kept;
         kept_n = _pQUERY_DATA->calculate_N_vals(all_kept_lengths, total_kept_len);
         out_msg <<
@@ -495,7 +495,7 @@ bool ModRSEM::rsem_expression_analysis(std::string& ref_path, std::string& bam) 
 
 ModRSEM::ModRSEM(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
                  std::string &exe, std::string &align) :
-AbstractExpression(execution_stage_path, in_hits, entap_data, RSEM_NAME, exe, align){
+AbstractExpression(execution_stage_path, in_hits, entap_data, "RSEM", exe, align){
     FS_dprint("Spawn Object - ModRSEM");
 
 }

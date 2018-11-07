@@ -253,6 +253,10 @@ namespace ENTAP_EXECUTE {
     // UniProt Mapping Header Information
     extern const std::string HEADER_UNI_DATA_XREF;
     extern const std::string HEADER_UNI_COMMENTS;
+    extern const std::string HEADER_UNI_GO_BIO;
+    extern const std::string HEADER_UNI_GO_CELL;
+    extern const std::string HEADER_UNI_GO_MOLE;
+    extern const std::string HEADER_UNI_KEGG;
 
     // EggNOG Header Information
     extern const std::string HEADER_SEED_ORTH;

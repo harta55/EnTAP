@@ -57,9 +57,7 @@ public:
     virtual std::string get_final_fasta() override ;
 
 private:
-
-    const std::string RSEM_NAME             = "RSEM";
-
+    
     const std::string RSEM_SAM_VALID        = "rsem-sam-validator";
     const std::string RSEM_PREP_REF_EXE     = "rsem-prepare-reference";
     const std::string RSEM_CALC_EXP_EXE     = "rsem-calculate-expression";

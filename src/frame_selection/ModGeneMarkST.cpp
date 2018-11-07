@@ -53,14 +53,14 @@ Y or FITNESS FOR A PARTICULAR PURPOSE.  See the
 std::pair<bool, std::string> ModGeneMarkST::verify_files() {
     std::string lst_file;
 
-    FS_dprint("Beginning to verify GeneMark module files...");
+    FS_dprint("Beginning to verify GeneMarkS-T module files...");
 
     _final_out_path = PATHS(_mod_out_dir, _transcriptome_filename) + FileSystem::EXT_FAA;
     lst_file   = _transcriptome_filename + ".lst";
     _final_lst_path = PATHS(_mod_out_dir, lst_file);
     if (_pFileSystem->file_exists(_final_out_path) && _pFileSystem->file_exists(_final_lst_path)) {
-        FS_dprint("File found at: " + _final_out_path + "\n"
-                "continuing EnTAP with this file and skipping frame selection");
+        FS_dprint("Files found at: " + _final_out_path + "\nand: " + _final_lst_path +
+                "\ncontinuing EnTAP with these files and skipping frame selection");
         return std::make_pair(true, _final_out_path);
     }
     FS_dprint("File not found at " + _final_out_path + " so continuing frame selection");
@@ -533,7 +533,7 @@ ModGeneMarkST::~ModGeneMarkST() {
 
 ModGeneMarkST::ModGeneMarkST(std::string &execution_stage_path, std::string &in_hits,
                              EntapDataPtrs &entap_data, std::string &exe) :
-    AbstractFrame(execution_stage_path, in_hits, entap_data, GENEMARK_NAME, exe) {
+    AbstractFrame(execution_stage_path, in_hits, entap_data, "GeneMarkS-T", exe) {
     _transcriptome_filename = _pFileSystem->get_filename(in_hits, true);
 }
 

@@ -55,8 +55,6 @@ public:
 
 private:
 
-    const std::string GENEMARK_NAME                 = "GeneMarkS-T";
-
     const std::string GRAPH_TITLE_FRAME_RESULTS     = "Frame_Selection_ORFs";
     const std::string GRAPH_FILE_FRAME_RESUTS       = "frame_results_pie.png";
     const std::string GRAPH_TEXT_FRAME_RESUTS       = "frame_results_pie.txt";

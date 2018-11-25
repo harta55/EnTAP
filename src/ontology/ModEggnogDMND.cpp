@@ -97,9 +97,9 @@ void ModEggnogDMND::execute() {
     if (TC_execute_cmd(terminalData) != 0) {
         // Error in run
         _pFileSystem->delete_file(_out_hits);
-        FS_dprint("DIAMOND STD OUT:\n" + terminalData.out_stream.str());
+        FS_dprint("DIAMOND STD OUT:\n" + terminalData.out_stream);
         throw ExceptionHandler("Error in running DIAMOND against EggNOG database at: " +
-                               EGG_DMND_PATH + "\nDIAMOND Error:\n" + terminalData.err_stream.str(), ERR_ENTAP_RUN_EGGNOG);
+                               EGG_DMND_PATH + "\nDIAMOND Error:\n" + terminalData.err_stream, ERR_ENTAP_RUN_EGGNOG);
     }
 }
 

@@ -294,7 +294,7 @@ void SimilaritySearch::diamond_blast(std::string input_file, std::string output_
         // Delete output file if run failed
         _pFileSystem->delete_file(output_file);
         throw ExceptionHandler("Error with database located at: " + database + "\nDIAMOND Error: " +
-                                       terminalData.err_stream.str(), ERR_ENTAP_RUN_SIM_SEARCH_RUN);
+                                       terminalData.err_stream, ERR_ENTAP_RUN_SIM_SEARCH_RUN);
     }
 }
 

@@ -30,14 +30,14 @@
 
 #include "common.h"
 
-typedef struct {
+struct TerminalData{
     std::string command;
-    std::stringstream out_stream;
-    std::stringstream err_stream;
+    std::string out_stream;
+    std::string err_stream;
     bool print_files;
     std::string base_std_path;
 
-} TerminalData;
+};
 
 int TC_execute_cmd(TerminalData &terminalData);
 

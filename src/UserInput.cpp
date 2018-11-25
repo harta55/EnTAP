@@ -338,6 +338,13 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
 
         cmd.parse( argc, argv );
 
+        // if no inputs, print usage and exit
+        if (argc == 1) {
+            TCLAP::StdOutput out;
+            out.usage(cmd);
+            throw ExceptionHandler("",0);
+        }
+
         /* Add everything to the map that will be used throughout execution */
 
         // Add SwitchArgs

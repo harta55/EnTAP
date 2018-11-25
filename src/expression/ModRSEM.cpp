@@ -363,7 +363,7 @@ bool ModRSEM::rsem_validate_file(std::string filename) {
     if (TC_execute_cmd(terminalData)!=0) {
 
         throw ExceptionHandler("Error in validating SAM file\nRSEM Error:\n" +
-                               terminalData.err_stream.str(), ERR_ENTAP_RUN_RSEM_EXPRESSION);
+                               terminalData.err_stream, ERR_ENTAP_RUN_RSEM_EXPRESSION);
 
         return false;
     }
@@ -458,7 +458,7 @@ bool ModRSEM::rsem_generate_reference(std::string& reference_path_out) {
 
     if (err_code != 0) {
         throw ExceptionHandler("Error generating RSEM reference\nRSEM Error:\n" +
-                               terminalData.err_stream.str(), ERR_ENTAP_RUN_RSEM_EXPRESSION);
+                               terminalData.err_stream, ERR_ENTAP_RUN_RSEM_EXPRESSION);
     }
 
     return err_code == 0;
@@ -488,7 +488,7 @@ bool ModRSEM::rsem_expression_analysis(std::string& ref_path, std::string& bam) 
 
     if (err_code != 0) {
         throw ExceptionHandler("Error in running RSEM Expression Analysis\nRSEM Error:\n" +
-                terminalData.err_stream.str(), ERR_ENTAP_RUN_RSEM_EXPRESSION);
+                terminalData.err_stream, ERR_ENTAP_RUN_RSEM_EXPRESSION);
     }
     return err_code == 0;
 }

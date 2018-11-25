@@ -51,6 +51,9 @@ int TC_execute_cmd(TerminalData &terminalData) {
 
     FS_dprint("Executing command: \n" + terminalData.command);
 
+    std::stringstream err_stream;
+    std::stringstream out_stream;
+
     const redi::pstreams::pmode mode = redi::pstreams::pstdout|redi::pstreams::pstderr;
     redi::ipstream child(terminalData.command, mode);
     char buf[1024];
@@ -59,7 +62,7 @@ int TC_execute_cmd(TerminalData &terminalData) {
     while (!finished[0] || !finished[1]) {
         if (!finished[0]) {
             while ((n = child.err().readsome(buf, sizeof(buf))) > 0)
-                terminalData.err_stream.write(buf, n);
+                err_stream.write(buf, n);
             if (child.eof()) {
                 finished[0] = true;
                 if (!finished[1])
@@ -68,7 +71,7 @@ int TC_execute_cmd(TerminalData &terminalData) {
         }
         if (!finished[1]) {
             while ((n = child.out().readsome(buf, sizeof(buf))) > 0) {
-                terminalData.out_stream.write(buf, n).flush();
+                out_stream.write(buf, n).flush();
             }
             if (child.eof()) {
                 finished[1] = true;
@@ -78,8 +81,12 @@ int TC_execute_cmd(TerminalData &terminalData) {
         }
     }
     child.close();
+
+    terminalData.err_stream = err_stream.str();
+    terminalData.out_stream = out_stream.str();
+
     // Print error to debug file
-    FS_dprint("\nStd Err:\n" + terminalData.err_stream.str());
+    FS_dprint("\nStd Err:\n" + terminalData.err_stream);
 
     if (terminalData.print_files) {
         std::string out_path = terminalData.base_std_path + FileSystem::EXT_OUT;
@@ -89,8 +96,8 @@ int TC_execute_cmd(TerminalData &terminalData) {
         std::ofstream err_file(err_path, std::ios::out | std::ios::app);
         FS_dprint("\nPrinting to files:\nStd Out: " + out_path + "\nStd Err: " + err_path);
 
-        out_file << terminalData.out_stream.rdbuf();
-        err_file << terminalData.err_stream.rdbuf();
+        out_file << terminalData.out_stream;
+        err_file << terminalData.err_stream;
 
         out_file.close();
         err_file.close();

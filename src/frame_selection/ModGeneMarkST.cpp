@@ -115,7 +115,7 @@ void ModGeneMarkST::execute() {
     err_code = TC_execute_cmd(terminalData);
     if (err_code != 0 ) {
         throw ExceptionHandler("Error in running GeneMarkST at file located at: " +
-                               _in_hits + "\nGeneMarkST Error:\n" + terminalData.err_stream.str(),
+                               _in_hits + "\nGeneMarkST Error:\n" + terminalData.err_stream,
                                ERR_ENTAP_INIT_INDX_DATA_NOT_FOUND);
     }
     FS_dprint("Success!");

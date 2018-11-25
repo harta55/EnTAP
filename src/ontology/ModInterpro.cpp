@@ -31,13 +31,16 @@
 #include <iomanip>
 #include "ModInterpro.h"
 #include "../ExceptionHandler.h"
+
+// Used for XML parsing
+#if 0
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+using boost::property_tree::ptree;
+#endif
 #include "../FileSystem.h"
 #include "../TerminalCommands.h"
 //**************************************************************
-
-using boost::property_tree::ptree;
 
 const std::vector<std::string> ModInterpro::INTERPRO_DATABASES ({
             "tigrfam",
@@ -126,7 +129,7 @@ void ModInterpro::execute() {
     err_code = TC_execute_cmd(terminalData);
     if (err_code != 0) {
         _pFileSystem->delete_file(_final_outpath);
-        throw ExceptionHandler("Error executing InterProScan\nInterProScan Error:\n"+ terminalData.err_stream.str(),
+        throw ExceptionHandler("Error executing InterProScan\nInterProScan Error:\n"+ terminalData.err_stream,
                                ERR_ENTAP_RUN_INTERPRO);
     } else {
         _pFileSystem->delete_dir(temp_dir);
@@ -240,6 +243,8 @@ void ModInterpro::parse() {
 }
 
 
+#if 0
+
 /**
 * ======================================================================
 * Function std::map<std::string,ModInterpro::InterProData> ModInterpro::parse_xml(void)
@@ -320,6 +325,7 @@ std::map<std::string,ModInterpro::InterProData> ModInterpro::parse_xml(void) {
     return interpro_map;
 }
 
+#endif
 
 /**
 * ======================================================================

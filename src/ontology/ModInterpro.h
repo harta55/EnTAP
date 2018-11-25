@@ -99,7 +99,9 @@ private:
     std::string              _final_outpath;
     std::string              _final_basepath;
 
+#if 0
     std::map<std::string,InterProData> parse_xml(void);
+#endif
     std::map<std::string,InterProData> parse_tsv(void);
     std::string format_interpro(void);
 };

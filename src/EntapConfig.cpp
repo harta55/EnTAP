@@ -273,7 +273,7 @@ namespace entapConfig {
             terminalData.print_files   = true;
 
             if (TC_execute_cmd(terminalData) != 0) {
-                throw ExceptionHandler("Error indexing database at: " + item + "\nDIAMOND Error: " + terminalData.err_stream.str(),
+                throw ExceptionHandler("Error indexing database at: " + item + "\nDIAMOND Error: " + terminalData.err_stream,
                                        ERR_ENTAP_INIT_INDX_DATABASE);
             }
             FS_dprint("Database successfully indexed to: " + indexed_path + FileSystem::EXT_DMND);
@@ -384,7 +384,7 @@ namespace entapConfig {
 
             if (TC_execute_cmd(terminalData) != 0) {
                 throw ExceptionHandler("Error indexing database at: " + dmnd_outpath + "\nError:" +
-                                       terminalData.err_stream.str(), ERR_ENTAP_INIT_EGGNOG);
+                                       terminalData.err_stream, ERR_ENTAP_INIT_EGGNOG);
             }
             FS_dprint("Success! EggNOG DIAMOND database indexed at: " + dmnd_outpath);
         } else {

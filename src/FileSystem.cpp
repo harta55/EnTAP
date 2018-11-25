@@ -526,6 +526,9 @@ void FileSystem::init_log() {
        local.time_of_day().minutes()   << "m" <<
        local.time_of_day().seconds()   << "s";
 #else
+
+    // Will not work on older GCC compilers with a known bug in put_time
+    /*
     std::chrono::time_point<std::chrono::system_clock> now;
     std::time_t                                        now_time;
     std::tm                                            now_tm;
@@ -533,6 +536,17 @@ void FileSystem::init_log() {
     now_time = std::chrono::system_clock::to_time_t(now);
     now_tm   = *std::localtime(&now_time);
     ss << std::put_time(&now_tm, "_%YY%mM%dD-%Hh%Mm%Ss");
+     */
+
+    time_t theTime = time(nullptr);
+    struct tm *aTime = localtime(&theTime);
+
+    ss << "_" << aTime->tm_year+1900 << "Y"
+              << aTime->tm_mon+1  << "M"
+              << aTime->tm_mday << "D-"
+              << aTime->tm_hour << "h"
+              << aTime->tm_min  << "m"
+              << aTime->tm_sec  << "s";
 #endif
 
 
@@ -692,7 +706,7 @@ bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) 
         FS_dprint("Success, file saved to: " + out_path);
         return true;
     } else {
-        set_error("Unable to get file\n" + terminalData.err_stream.str());
+        set_error("Unable to get file\n" + terminalData.err_stream);
         return false;
     }
 #endif
@@ -738,7 +752,7 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
         FS_dprint("Success! Exported to: " + out_dir);
         return true;
     } else {
-        set_error("Unable to decompress file\n" + terminalData.err_stream.str());
+        set_error("Unable to decompress file\n" + terminalData.err_stream);
         return false;
     }
 #endif

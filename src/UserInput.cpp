@@ -495,15 +495,15 @@ bool UserInput::verify_user_input() {
                     get_user_input<vect_uint16_t>(INPUT_FLAG_DATABASE_TYPE);
             EntapDatabase::DATABASE_TYPE type =
                     static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
-            if (!pEntapDatabase->set_database(type, "")) {
+            if (!pEntapDatabase->set_database(type)) {
                 throw ExceptionHandler("Unable to open EnTAP database from paths given" + pEntapDatabase->print_error_log(),
                                        ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
             }
             // Verify database type
             if (!pEntapDatabase->is_valid_version()) {
                 throw ExceptionHandler("EnTAP database version invalid with this version of software\nYou have: " +
-                        pEntapDatabase->get_current_version() + "\nYou need: " +
-                        pEntapDatabase->get_required_version(), ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
+                                               pEntapDatabase->get_current_version_str() + "\nYou need: " +
+                                               pEntapDatabase->get_required_version_str(), ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
             }
 
             FS_dprint("Success!");

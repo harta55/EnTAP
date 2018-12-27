@@ -189,7 +189,8 @@ public:
         ENTAP_SQL,          // SQL database (uniprot mapping, tax data)
         ENTAP_TAXONOMY,     // NCBI tax database
         ENTAP_GENE_ONTOLOGY,// GO database
-        ENTAP_UNIPROT,  // UniProt mapping database
+        ENTAP_UNIPROT,      // UniProt mapping database
+        ENTAP_VERSION,      // Version table used in SQL database only
 
         ENTAP_MAX_TYPES=5
 
@@ -230,6 +231,7 @@ public:
         ERR_DATA_GO_PARSE,                  // 30
         ERR_DATA_TAXONOMY_PARSE,
         ERR_DATA_SET,
+        ERR_DATA_INCOMPATIBLE_VER,
 
         ERR_DATA_MEM_ALLOC,
         ERR_DATA_UNHANDLED_TYPE,
@@ -290,12 +292,12 @@ public:
         TaxonomyNode(std::string id);
     };
 
-    EntapDatabase(FileSystem*);
+    explicit EntapDatabase(FileSystem*);
     ~EntapDatabase();
-    bool set_database(DATABASE_TYPE, std::string);
+    bool set_database(DATABASE_TYPE type);
     DATABASE_ERR download_database(DATABASE_TYPE, std::string&);
     DATABASE_ERR generate_database(DATABASE_TYPE, std::string&);
-    std::string print_error_log(void);
+    std::string print_error_log();
     go_format_t format_go_delim(std::string terms, char delim);
 
     // Database accession routines
@@ -305,8 +307,8 @@ public:
 
     // Database versioning
     bool is_valid_version();
-    std::string get_current_version();
-    std::string get_required_version();
+    std::string get_current_version_str();
+    std::string get_required_version_str();
 
 
 private:
@@ -315,9 +317,9 @@ private:
     DATABASE_ERR download_entap_sql(std::string&);
     DATABASE_ERR download_entap_serial(std::string&);
     DATABASE_ERR generate_entap_database(DATABASE_TYPE type, std::string& path);
-    DATABASE_ERR generate_entap_tax(DATABASE_TYPE, std::string);
-    DATABASE_ERR generate_entap_go(DATABASE_TYPE, std::string);
-    DATABASE_ERR generate_entap_uniprot(DATABASE_TYPE, std::string);
+    DATABASE_ERR generate_entap_tax(DATABASE_TYPE);
+    DATABASE_ERR generate_entap_go(DATABASE_TYPE);
+    DATABASE_ERR generate_entap_uniprot(DATABASE_TYPE);
     std::string  entap_tax_get_lineage(TaxonomyNode &,
                                        std::unordered_map<std::string, TaxonomyNode>&);
     bool sql_add_tax_entry(TaxEntry&);
@@ -325,6 +327,7 @@ private:
     bool create_sql_table(DATABASE_TYPE);
     bool add_uniprot_entry(DATABASE_TYPE type, UniprotEntry &entry);
     void set_err_msg(std::string msg, DATABASE_ERR code);
+    bool set_database_versions(DATABASE_TYPE type);
 
     DATABASE_ERR serialize_database_save(SERIALIZATION_TYPE, std::string&);
     DATABASE_ERR serialize_database_read(SERIALIZATION_TYPE, std::string&);
@@ -370,6 +373,8 @@ private:
     const std::string SQL_TABLE_UNIPROT_COL_COMM = "COMMENTS";
     const std::string SQL_TABLE_UNIPROT_COL_XREF = "DATAXREFS";
     const std::string SQL_TABLE_UNIPROT_COL_ID   = "UNIPROTID";
+    const std::string SQL_TABLE_VERSION_TITLE    = "VERSION";
+    const std::string SQL_TABLE_VERSION_COL_VER  = "VERSION";
 
     // Gene Ontology constants
     const std::string GO_BIOLOGICAL_LVL = "6679";
@@ -405,6 +410,8 @@ private:
     const SERIALIZATION_TYPE SERIALIZE_DEFAULT    = CEREAL_BIN_ARCHIVE;
     const uint8              SERIALIZE_MAJOR      = 1;
     const uint8              SERIALIZE_MINOR      = 0;
+    const uint8              SQL_MAJOR            = 1;
+    const uint8              SQL_MINOR            = 0;
 
     const uint8 STATUS_UPDATES = 5;     // Percentage of updates when downloading/configuring
 

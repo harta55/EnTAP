@@ -353,7 +353,7 @@ bool ModRSEM::rsem_validate_file(std::string filename) {
     TerminalData terminalData;
 
     rsem_arg = PATHS(_exe_path, RSEM_SAM_VALID) + " " + _alignpath;
-    out_path =
+    out_path = PATHS(_mod_out_dir, filename) + STD_VALID_OUT;
 
     terminalData.command        = rsem_arg;
     terminalData.print_files    = true;
@@ -361,11 +361,8 @@ bool ModRSEM::rsem_validate_file(std::string filename) {
 
 
     if (TC_execute_cmd(terminalData)!=0) {
-
         throw ExceptionHandler("Error in validating SAM file\nRSEM Error:\n" +
                                terminalData.err_stream, ERR_ENTAP_RUN_RSEM_EXPRESSION);
-
-        return false;
     }
     FS_dprint("RSEM validate executed successfully");
     // RSEM does not always return error code if file is invalid, only seen in .err

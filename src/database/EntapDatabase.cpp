@@ -50,7 +50,7 @@ EntapDatabase::EntapDatabase(FileSystem* filesystem) {
     _temp_directory  = filesystem->get_temp_outdir();    // created previously
     _pSerializedDatabase = nullptr;
     _pDatabaseHelper     = nullptr;
-    _use_serial          = true;
+    _use_serial          = true;                         // default
     _err_msg             = "";
     _err_code            = ERR_DATA_OK;
 }
@@ -58,8 +58,7 @@ EntapDatabase::EntapDatabase(FileSystem* filesystem) {
 
 /**
  * ======================================================================
- * Function bool EntapDatabase::set_database(DATABASE_TYPE type,
- *                                           std::string path)
+ * Function bool EntapDatabase::set_database(DATABASE_TYPE type)
  *
  * Description          - Initializes the chosen database (SQL/Serial)
  *
@@ -70,7 +69,7 @@ EntapDatabase::EntapDatabase(FileSystem* filesystem) {
  * @return              - True/False is successful or not
  * ======================================================================
  */
-bool EntapDatabase::set_database(DATABASE_TYPE type, std::string path) {
+bool EntapDatabase::set_database(DATABASE_TYPE type) {
 
     switch (type) {
         case ENTAP_SERIALIZED:
@@ -165,6 +164,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
 
         case ENTAP_SQL:
             FS_dprint("Generating EnTAP SQL Database...");
+            _use_serial = false;
             if (_pDatabaseHelper != nullptr) {
                 // SQL should not already have been created
                 return ERR_DATA_SQL_DUPLICATE;
@@ -186,6 +186,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
 
         case ENTAP_SERIALIZED:
             FS_dprint("Generating EnTAP Serialized Database...");
+            _use_serial = true;
             if (_pSerializedDatabase != nullptr) {
                 // Database should not already have been created
                 set_err_msg("Serialized database already set!", ERR_DATA_SERIAL_DUPLICATE);
@@ -209,35 +210,34 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
     // ---------------------- Add Database Entries ---------------------- //
     FS_dprint("Adding entries to database...");
     // Generate tax entries, don't need a path - using SQL member
-    err_code = generate_entap_tax(type, outpath);
+    err_code = generate_entap_tax(type);
     if (err_code != ERR_DATA_OK) {
         return err_code;
     }
 
     // Generate go entries
-    err_code = generate_entap_go(type, outpath);
+    err_code = generate_entap_go(type);
     if (err_code != ERR_DATA_OK) {
         return err_code;
     }
 
     // Generate UniProt entries (this references GO database, must be done after)
-    err_code = generate_entap_uniprot(type, outpath);
+    err_code = generate_entap_uniprot(type);
     if (err_code != ERR_DATA_OK) {
         return err_code;
     }
     // ------------------------------------------------------------------ //
 
-    // Final stages
+    // Write database to file if necessary and set version number
     FS_dprint("All entries have been added, finalizing...");
 
+    set_database_versions(type);
     switch (type) {
         case ENTAP_SQL:
             break;
 
         case ENTAP_SERIALIZED:
             FS_dprint("All entries added to database, serializing...");
-            _pSerializedDatabase->MAJOR_VERSION = SERIALIZE_MAJOR;
-            _pSerializedDatabase->MINOR_VERSION = SERIALIZE_MINOR;
             err_code = serialize_database_save(SERIALIZE_DEFAULT, outpath);
             if (err_code != ERR_DATA_OK) {
                 FS_dprint("Unable to serialize database!");
@@ -261,8 +261,7 @@ EntapDatabase::~EntapDatabase() {
     delete _pSerializedDatabase;
 }
 
-EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DATABASE_TYPE type,
-                                                              std::string outpath) {
+EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DATABASE_TYPE type) {
     std::string temp_outpath;   // Path to unzipped files
     std::string sql_cmd;
     std::stringstream ss_temp;  // just for now
@@ -409,8 +408,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DAT
     return ERR_DATA_OK;
 }
 
-EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATABASE_TYPE type,
-                                                             std::string outpath) {
+EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATABASE_TYPE type) {
     FS_dprint("Generating EnTAP Gene Ontology entries...");
 
     std::string go_db_path;
@@ -507,7 +505,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
 }
 
 
-EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase::DATABASE_TYPE type, std::string outpath) {
+EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase::DATABASE_TYPE type) {
 
     std::string uniprot_flat_gz;
     std::string uniprot_flat;       // Decompressed path (this is parsed)
@@ -785,7 +783,19 @@ bool EntapDatabase::create_sql_table(DATABASE_TYPE type) {
             );
             break;
 
+        case ENTAP_VERSION:
+            FS_dprint("Creating version table...");
+            sql_cmd = sqlite3_mprintf(
+                    "CREATE TABLE %Q ("                     \
+                    "ID   INTEGER PRIMARY KEY    NOT NULL," \
+                    "%Q   TEXT                   NOT NULL);",
+                    SQL_TABLE_VERSION_TITLE.c_str(),
+                    SQL_TABLE_VERSION_COL_VER.c_str()
+                    );
+            break;
+
         default:
+            FS_dprint("ERROR: Unhandled SQL table creation");
             return false;
     }
 
@@ -858,7 +868,6 @@ EntapDatabase::DATABASE_ERR EntapDatabase::download_entap_sql(std::string &path)
 
     return ERR_DATA_OK;
 }
-
 
 GoEntry EntapDatabase::get_go_entry(std::string &go_id) {
     GoEntry goEntry;
@@ -1114,7 +1123,12 @@ EntapDatabase::DATABASE_ERR EntapDatabase::serialize_database_read(SERIALIZATION
         return ERR_DATA_SERIALIZE_READ;
     }
     if (!is_valid_version()) {
-        FS_dprint("WARNING: invalid database version!!! Returning valid");
+        set_err_msg("EnTAP database version is not compatible with this version of EnTAP.\n" \
+                    "Current Version: " + get_current_version_str() + "\nRequired version: " +
+                            get_required_version_str(),
+                    ERR_DATA_INCOMPATIBLE_VER);
+        FS_dprint("WARNING: invalid database version!!!");
+        return ERR_DATA_INCOMPATIBLE_VER;
     }
     return ERR_DATA_OK;
 }
@@ -1155,24 +1169,106 @@ go_format_t EntapDatabase::format_go_delim(std::string terms, char delim) {
 }
 
 bool EntapDatabase::is_valid_version() {
+    return (get_current_version_str() == get_required_version_str());
+}
+
+std::string EntapDatabase::get_current_version_str() {
+    std::string version_str;
+
     if (_use_serial) {
-        return (_pSerializedDatabase->MAJOR_VERSION == SERIALIZE_MAJOR ||
-            _pSerializedDatabase->MINOR_VERSION == SERIALIZE_MINOR);
+        // Using serialized database
+        if (_pSerializedDatabase != nullptr) {
+            version_str = std::to_string(_pSerializedDatabase->MAJOR_VERSION) + "." +
+                          std::to_string(_pSerializedDatabase->MINOR_VERSION);
+        } else {
+            version_str = "";
+        }
+
     } else {
-        return true;    // TODO add sql versioning
+        // Using SQL database
+        char* query;
+
+        if (_pDatabaseHelper != nullptr) {
+            query = sqlite3_mprintf(
+                    "SELECT %Q FROM %Q",
+                    SQL_TABLE_VERSION_TITLE.c_str(),
+                    SQL_TABLE_VERSION_COL_VER.c_str()
+            );
+
+            try {
+                FS_dprint("Executing sql cmd: " + std::string(query));
+                version_str = _pDatabaseHelper->query(query)[0][0];
+                FS_dprint("Success! Returned version: " + version_str);
+
+            } catch (...) {
+                FS_dprint("ERROR: couldn't get SQL version");
+                version_str = "";
+            }
+
+        } else {
+            version_str = "";
+        }
+    }
+
+    return version_str;
+}
+
+std::string EntapDatabase::get_required_version_str() {
+    if (_use_serial) {
+        return std::to_string(SERIALIZE_MAJOR) + "." + std::to_string(SERIALIZE_MINOR);
+    } else {
+        return std::to_string(SQL_MAJOR) + "." + std::to_string(SQL_MINOR);
     }
 }
 
-std::string EntapDatabase::get_current_version() {
-    if (_use_serial) {
-        return std::to_string(_pSerializedDatabase->MAJOR_VERSION) + "." +
-              std::to_string(_pSerializedDatabase->MINOR_VERSION);
-    } else {
-        return get_required_version();
-    }
-}
+bool EntapDatabase::set_database_versions(EntapDatabase::DATABASE_TYPE type) {
+    bool ret;
 
-std::string EntapDatabase::get_required_version() {
-    return std::to_string(SERIALIZE_MAJOR) + "." + std::to_string(SERIALIZE_MINOR);
+    switch (type) {
+
+        case ENTAP_SERIALIZED:
+            if (_pSerializedDatabase != nullptr) {
+                _pSerializedDatabase->MAJOR_VERSION = SERIALIZE_MAJOR;
+                _pSerializedDatabase->MINOR_VERSION = SERIALIZE_MINOR;
+                ret = true;
+            } else {
+                ret = false;
+            }
+            break;
+
+        case ENTAP_SQL:
+            if (_pDatabaseHelper != nullptr) {
+                char *query;
+                std::string version_str;
+
+                // Can we create the table to store the versioning data
+                if (create_sql_table(ENTAP_VERSION)) {
+                    // YES, create entry into table
+
+                    version_str = get_required_version_str();
+                    query = sqlite3_mprintf(
+                            "INSERT INTO %Q (%Q) VALUES (%Q);",
+                            SQL_TABLE_VERSION_TITLE.c_str(),
+                            SQL_TABLE_VERSION_COL_VER.c_str(),
+                            version_str.c_str()
+                    );
+
+                    FS_dprint("Executing SQL cmd: " + std::string(query));
+                    ret = _pDatabaseHelper->execute_cmd(query);
+
+                } else {
+                    // NO, return
+                    ret = false;
+                }
+            } else {
+                ret = false;
+            }
+            break;
+
+        default:
+            FS_dprint("ERROR: Unhandled set_database_versions type");
+            ret = false;
+    }
+    return ret;
 }
 

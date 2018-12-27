@@ -136,7 +136,7 @@ namespace entapExecute {
 
             // Initialize EnTAP database
             pEntapDatabase = new EntapDatabase(filesystem);
-            if (!pEntapDatabase->set_database(entap_database_type, "")) {
+            if (!pEntapDatabase->set_database(entap_database_type)) {
                 throw ExceptionHandler("Unable to initialize EnTAP database\n" +
                                        pEntapDatabase->print_error_log(), ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
             }

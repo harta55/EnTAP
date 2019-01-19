@@ -147,7 +147,7 @@ private:
     const std::string SQL_EGGNOG_GOS        = "gene_ontology.gos";
     const std::string SQL_EGGNOG_GO_NAME    = "gene_ontology.name";
 
-    // emapper.db-earlier
+    // emapper.db-earlier (currently being used)
     const std::string SQL_MEMBER_TABLE      = "member";     // Changed to 'orthologs' in newer versions
 
     // Both databases

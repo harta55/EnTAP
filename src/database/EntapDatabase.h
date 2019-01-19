@@ -388,23 +388,6 @@ private:
     // UniProt mapping constants
     const std::string UNIPROT_DAT_FILE_GZ            = "uniprot_sprot.dat.gz";
     const std::string UNIPROT_DAT_FILE               = "uniprot_sprot.dat";
-    const uint8       UNIPROT_DAT_TAG_LEN            = 2;   // Length of tags
-    const uint8       UNIPROT_DAT_TAG_DATA_POS       = 5;   // Position data starts
-    // ID   001R_FRG3G              Reviewed;         256 AA.
-    const std::string UNIPROT_DAT_TAG_ID             = "ID";
-    // DR   SwissPalm; Q6GZX4; -.
-    const std::string UNIPROT_DAT_TAG_DATABASE_X_REF = "DR";
-    // Tag used to separate database names
-    const char UNIPROT_DAT_TAG_DATABASE_DELIM    = ';';
-    // Tag used for the Gene Ontology database
-    const std::string UNIPROT_DAT_TAG_DATABASE_GO = "GO";
-    // Tag used for the KEGG database
-    const std::string UNIPROT_DAT_TAG_DATABASE_KEGG = "KEGG";
-
-    // CC   -!- FUNCTION: Transcription activation. {ECO:0000305}.
-    const std::string UNIPROT_DAT_TAG_COMMENT        = "CC";
-    // Entries are split by this (this is on the last line of file)
-    const std::string UNIPROT_DAT_TAG_NEXT_ENTRY     = "//";
 
     // EnTAP database consts
     const SERIALIZATION_TYPE SERIALIZE_DEFAULT    = CEREAL_BIN_ARCHIVE;

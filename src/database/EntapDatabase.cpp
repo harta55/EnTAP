@@ -520,6 +520,24 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
     std::string data;
     bool        same_entry = false;
 
+    const uint8       UNIPROT_DAT_TAG_LEN            = 2;   // Length of tags
+    const uint8       UNIPROT_DAT_TAG_DATA_POS       = 5;   // Position data starts
+    // ID   001R_FRG3G              Reviewed;         256 AA.
+    const std::string UNIPROT_DAT_TAG_ID             = "ID";
+    // DR   SwissPalm; Q6GZX4; -.
+    const std::string UNIPROT_DAT_TAG_DATABASE_X_REF = "DR";
+    // Tag used to separate database names
+    const char UNIPROT_DAT_TAG_DATABASE_DELIM    = ';';
+    // Tag used for the Gene Ontology database
+    const std::string UNIPROT_DAT_TAG_DATABASE_GO = "GO";
+    // Tag used for the KEGG database
+    const std::string UNIPROT_DAT_TAG_DATABASE_KEGG = "KEGG";
+
+    // CC   -!- FUNCTION: Transcription activation. {ECO:0000305}.
+    const std::string UNIPROT_DAT_TAG_COMMENT        = "CC";
+    // Entries are split by this (this is on the last line of file)
+    const std::string UNIPROT_DAT_TAG_NEXT_ENTRY     = "//";
+
     // Set output path for FTP file
     uniprot_flat_gz = PATHS(_temp_directory, UNIPROT_DAT_FILE_GZ);
     uniprot_flat    = PATHS(_temp_directory, UNIPROT_DAT_FILE);
@@ -590,7 +608,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
                     go_list += data.substr(index_go, index_term - index_go) + ',';
 
                 } else if (database == UNIPROT_DAT_TAG_DATABASE_KEGG) {
-                    index_go = (uint16) data.find("KEGG:");
+                    index_go = (uint16) data.find("vg:");
                     index_term = (uint16) data.find(';', index_go);
                     kegg_list += data.substr(index_go, index_term - index_go) + ',';
                 } else {

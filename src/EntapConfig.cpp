@@ -53,13 +53,12 @@ namespace entapConfig {
     UserInput                *_pUserInput;
 
     //****************** Local Prototype Functions******************
-    void init_entap_database(void);
+    void init_entap_database();
     void init_uniprot(std::vector<std::string>&, std::string);
     void init_ncbi(std::vector<std::string>&, std::string);
     void init_diamond_index(std::string, int);
-    int update_database(std::string);
     void init_eggnog(int);
-    void handle_state(void);
+    void handle_state();
 
 
     /**
@@ -346,6 +345,10 @@ namespace entapConfig {
                 err_msg = "Unable to download EggNOG sql database from FTP to: " +
                         sql_outpath + "\nError: " + eggnogDatabase.print_err();
                 throw ExceptionHandler(err_msg,ERR_ENTAP_INIT_EGGNOG);
+            } else {
+                // Downloaded successfully
+                FS_dprint("Success! EggNOG SQL database downloaded to: " + sql_outpath);
+                log_msg << "EggNOG SQL database written to: " + sql_outpath << std::endl;
             }
         } else {
             // Already exists, skip
@@ -369,6 +372,7 @@ namespace entapConfig {
 
             // Now, index for DIAMOND
             FS_dprint("Success! EggNOG FASTA downloaded, indexing for DIAMOND...");
+            log_msg << "EggNOG FASTA database written to: " + fasta_outpath << std::endl;
 
             index_cmd =
                     DIAMOND_EXE + " makedb --in " + fasta_outpath +
@@ -387,6 +391,8 @@ namespace entapConfig {
                                        terminalData.err_stream, ERR_ENTAP_INIT_EGGNOG);
             }
             FS_dprint("Success! EggNOG DIAMOND database indexed at: " + dmnd_outpath);
+            log_msg << "DIAMOND EggNOG database written to: " + dmnd_outpath << std::endl;
+
         } else {
             // File already exists
             std::string path;
@@ -399,11 +405,6 @@ namespace entapConfig {
         FS_dprint("Success! All EggNOG files verified");
         std::string temp = log_msg.str();
         _pFileSystem->print_stats(temp);
-    }
-
-    // TODO update databases
-    int update_database(std::string file_path) {
-        return 0;
     }
 
     void handle_state() {

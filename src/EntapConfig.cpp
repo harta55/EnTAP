@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,6 +30,7 @@
 #include "EntapConfig.h"
 #include "database/EggnogDatabase.h"
 #include "TerminalCommands.h"
+#include "FileSystem.h"
 //**************************************************************
 
 namespace entapConfig {
@@ -238,10 +239,7 @@ namespace entapConfig {
             return;
         }
 
-        log_msg <<
-                ENTAP_STATS::SOFTWARE_BREAK     <<
-                "DIAMOND Database Configuration\n"<<
-                ENTAP_STATS::SOFTWARE_BREAK;
+        _pFileSystem->format_stat_stream(log_msg, "DIAMOND Database Configuration");
 
         for (std::string item : _compiled_databases) {
             TerminalData terminalData = TerminalData();
@@ -310,7 +308,7 @@ namespace entapConfig {
 
         FS_dprint("Ensuring EggNOG databases exist...");
 
-        ENTAP_STATS::ES_format_stat_stream(log_msg, "EggNOG Database Configuration");
+        _pFileSystem->format_stat_stream(log_msg, "EggNOG Database Configuration");
 
         // Generate database to allow downloading
         EggnogDatabase eggnogDatabase = EggnogDatabase(_pFileSystem, _pEntapDatabase);
@@ -421,7 +419,7 @@ namespace entapConfig {
         EntapDatabase::DATABASE_ERR database_err;
 
         FS_dprint("Initializing EnTAP database...");
-        ENTAP_STATS::ES_format_stat_stream(log_msg, "EnTAP Database Configuration");
+        _pFileSystem->format_stat_stream(log_msg, "EnTAP Database Configuration");
 
         _pEntapDatabase = new EntapDatabase(_pFileSystem);
         if (_pEntapDatabase == nullptr) {

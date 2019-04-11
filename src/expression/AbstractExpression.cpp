@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -33,4 +33,5 @@ AbstractExpression::AbstractExpression(std::string &execution_stage_path, std::s
 EntapModule(execution_stage_path, in_hits, entap_data, module_name, exe) {
 
     _alignpath = align;
+    _execution_state = EXPRESSION_FILTERING;
 }

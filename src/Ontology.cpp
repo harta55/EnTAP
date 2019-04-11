@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -33,6 +33,7 @@
 #include "ontology/ModInterpro.h"
 #include "FileSystem.h"
 #include "ontology/ModEggnogDMND.h"
+#include "similarity_search/ModDiamond.h"
 
 const int16 FINAL_ANNOT_LEN = 3;
 
@@ -110,15 +111,15 @@ Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
  */
 void Ontology::execute() {
 
-    std::pair<bool,std::string> verify_pair;
+    EntapModule::ModVerifyData verify_data;
     std::unique_ptr<EntapModule> ptr;
 
     init_headers();
     try {
         for (uint16 software : _software_flags) {
             ptr = spawn_object(software);
-            verify_pair = ptr->verify_files();
-            if (!verify_pair.first) ptr->execute();
+            verify_data = ptr->verify_files();
+            if (!verify_data.files_exist) ptr->execute();
             ptr->parse();
             ptr.reset();
         }
@@ -158,7 +159,7 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
                     _eggnog_db_path    // additional data
             ));
 #endif
-        case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
+        case ONT_INTERPRO_SCAN:
             return std::unique_ptr<AbstractOntology>(new ModInterpro(
                     _ontology_dir,
                     _new_input,
@@ -166,7 +167,7 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
                     INTERPRO_EXE,
                     _interpro_databases       // Additional data
             ));
-        case ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG:
+        case ONT_EGGNOG_DMND:
             return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
                     _ontology_dir,
                     _new_input,
@@ -229,10 +230,10 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
                 new std::ofstream(out_no_contam, std::ios::out | std::ios::app);
 
         // Write headers
-        for (const std::string *header : _HEADERS) {
-            *file_map[lvl][FINAL_ALL_IND] << *header << '\t';
-            *file_map[lvl][FINAL_CONTAM_IND] << *header << '\t';
-            *file_map[lvl][FINAL_NO_CONTAM_IND] << *header << '\t';
+        for (ENTAP_HEADERS header : _HEADERS) {
+            *file_map[lvl][FINAL_ALL_IND] << ENTAP_HEADER_INFO[header].title << '\t';
+            *file_map[lvl][FINAL_CONTAM_IND] << ENTAP_HEADER_INFO[header].title<< '\t';
+            *file_map[lvl][FINAL_NO_CONTAM_IND] << ENTAP_HEADER_INFO[header].title << '\t';
         }
         *file_map[lvl][FINAL_ALL_IND] << std::endl;
         *file_map[lvl][FINAL_CONTAM_IND] << std::endl;
@@ -244,11 +245,11 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
         for (uint16 lvl : _go_levels) {
             for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
                 if (i == FINAL_ALL_IND) {
-                    *file_map[lvl][i] << pair.second->print_tsv(_HEADERS, lvl) << std::endl;
+                    *file_map[lvl][i] << pair.second->print_delim(_HEADERS, '\t', lvl) << std::endl;
                 } else if (i == FINAL_CONTAM_IND && pair.second->isContaminant()) {
-                    *file_map[lvl][i]<< pair.second->print_tsv(_HEADERS,lvl)<<std::endl;
+                    *file_map[lvl][i]<< pair.second->print_delim(_HEADERS, '\t', lvl)<<std::endl;
                 } else if (i == FINAL_NO_CONTAM_IND && !pair.second->isContaminant()) {
-                    *file_map[lvl][i]<< pair.second->print_tsv(_HEADERS,lvl)<<std::endl;
+                    *file_map[lvl][i]<< pair.second->print_delim(_HEADERS, '\t', lvl)<<std::endl;
                 }
             }
         }
@@ -282,41 +283,10 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
  */
 void Ontology::init_headers() {
 
-    std::vector<const std::string*>     out_header;
-    std::vector<const std::string*>     add_header;
+    std::vector<ENTAP_HEADERS>     out_header;
+    std::vector<ENTAP_HEADERS>     add_header;
     // Add default sim search headers (pulled from SimilaritySearch.c, separate in case we want something else)
-    out_header = {
-            &ENTAP_EXECUTE::HEADER_QUERY,
-            &ENTAP_EXECUTE::HEADER_SUBJECT,
-            &ENTAP_EXECUTE::HEADER_PERCENT,
-            &ENTAP_EXECUTE::HEADER_ALIGN_LEN,
-            &ENTAP_EXECUTE::HEADER_MISMATCH,
-            &ENTAP_EXECUTE::HEADER_GAP_OPEN,
-            &ENTAP_EXECUTE::HEADER_QUERY_S,
-            &ENTAP_EXECUTE::HEADER_QUERY_E,
-            &ENTAP_EXECUTE::HEADER_SUBJ_S,
-            &ENTAP_EXECUTE::HEADER_SUBJ_E,
-            &ENTAP_EXECUTE::HEADER_E_VAL,
-            &ENTAP_EXECUTE::HEADER_COVERAGE,
-            &ENTAP_EXECUTE::HEADER_TITLE,
-            &ENTAP_EXECUTE::HEADER_SPECIES,
-            &ENTAP_EXECUTE::HEADER_DATABASE,
-            &ENTAP_EXECUTE::HEADER_FRAME,
-            &ENTAP_EXECUTE::HEADER_CONTAM,
-            &ENTAP_EXECUTE::HEADER_INFORM
-    };
-
-    // Add additional headers if UniProt mapping has been used
-    if (_QUERY_DATA->DATA_FLAG_GET(QueryData::UNIPROT_MATCH)) {
-        add_header = {
-                &ENTAP_EXECUTE::HEADER_UNI_GO_BIO,
-                &ENTAP_EXECUTE::HEADER_UNI_GO_CELL,
-                &ENTAP_EXECUTE::HEADER_UNI_GO_MOLE,
-                &ENTAP_EXECUTE::HEADER_UNI_DATA_XREF,
-                &ENTAP_EXECUTE::HEADER_UNI_COMMENTS
-        };
-        out_header.insert(out_header.end(), add_header.begin(), add_header.end());
-    }
+    out_header = ModDiamond::DEFAULT_HEADERS;
 
     // Add additional headers for ontology software
     for (uint16 &flag : _software_flags) {
@@ -339,32 +309,14 @@ void Ontology::init_headers() {
                 };
                 break;
 #endif
-            case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
+            case ONT_INTERPRO_SCAN:
                 add_header = {
-                        &ENTAP_EXECUTE::HEADER_INTER_EVAL,
-                        &ENTAP_EXECUTE::HEADER_INTER_INTERPRO,
-                        &ENTAP_EXECUTE::HEADER_INTER_DATA_TYPE,
-                        &ENTAP_EXECUTE::HEADER_INTER_DATA_TERM,
-                        &ENTAP_EXECUTE::HEADER_INTER_PATHWAY,
-                        &ENTAP_EXECUTE::HEADER_INTER_GO_BIO,
-                        &ENTAP_EXECUTE::HEADER_INTER_GO_CELL,
-                        &ENTAP_EXECUTE::HEADER_INTER_GO_MOLE
+                        ModInterpro::DEFAULT_HEADERS
                 };
                 break;
-            case ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG:
+            case ONT_EGGNOG_DMND:
                 add_header = {
-                        &ENTAP_EXECUTE::HEADER_SEED_ORTH,
-                        &ENTAP_EXECUTE::HEADER_SEED_EVAL,
-                        &ENTAP_EXECUTE::HEADER_SEED_SCORE,
-                        &ENTAP_EXECUTE::HEADER_PRED_GENE,
-                        &ENTAP_EXECUTE::HEADER_TAX_SCOPE,
-                        &ENTAP_EXECUTE::HEADER_EGG_OGS,
-                        &ENTAP_EXECUTE::HEADER_EGG_DESC,
-                        &ENTAP_EXECUTE::HEADER_EGG_KEGG,
-                        &ENTAP_EXECUTE::HEADER_EGG_PROTEIN,
-                        &ENTAP_EXECUTE::HEADER_EGG_GO_BIO,
-                        &ENTAP_EXECUTE::HEADER_EGG_GO_CELL,
-                        &ENTAP_EXECUTE::HEADER_EGG_GO_MOLE
+                        ModEggnogDMND::DEFAULT_HEADERS
                 };
                 break;
             default:

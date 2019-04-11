@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -41,6 +41,17 @@ using boost::property_tree::ptree;
 #include "../FileSystem.h"
 #include "../TerminalCommands.h"
 //**************************************************************
+
+const std::vector<ENTAP_HEADERS> ModInterpro::DEFAULT_HEADERS = {
+        ENTAP_HEADER_ONT_INTER_GO_BIO,
+        ENTAP_HEADER_ONT_INTER_GO_CELL,
+        ENTAP_HEADER_ONT_INTER_GO_MOLE,
+        ENTAP_HEADER_ONT_INTER_PATHWAYS,
+        ENTAP_HEADER_ONT_INTER_INTERPRO,
+        ENTAP_HEADER_ONT_INTER_DATA_TYPE,
+        ENTAP_HEADER_ONT_INTER_DATA_TERM,
+        ENTAP_HEADER_ONT_INTER_EVAL
+};
 
 const std::vector<std::string> ModInterpro::INTERPRO_DATABASES ({
             "tigrfam",
@@ -78,15 +89,16 @@ const std::string ModInterpro::INTERPRO_DEFAULT = "pfam";
  *
  * =====================================================================
  */
-std::pair<bool, std::string> ModInterpro::verify_files() {
-
+EntapModule::ModVerifyData ModInterpro::verify_files() {
+    ModVerifyData modVerifyData;
     std::string filename;
 
     filename        = INTERPRO_OUTPUT;
     _final_basepath = PATHS(_interpro_dir, filename);
     filename += INTERPRO_EXT_TSV;
     _final_outpath = PATHS(_interpro_dir, filename);
-    return std::make_pair(_pFileSystem->file_exists(_final_outpath), "");
+    modVerifyData.files_exist = _pFileSystem->file_exists(_final_outpath);
+    return modVerifyData;
 }
 
 void ModInterpro::execute() {
@@ -155,9 +167,6 @@ void ModInterpro::parse() {
 
     std::stringstream                     stats_stream;
     std::string                           stats_out;
-    std::string                           e_str;
-    std::string                           interpro_output;
-    std::string                           protein_output;
     std::string                           path_no_hits_faa;
     std::string                           path_no_hits_fnn;
     std::string                           path_hits_faa;
@@ -196,20 +205,26 @@ void ModInterpro::parse() {
     }
 
     // TODO stats
+    QuerySequence::InterProResults interProResults;
     try {
         for (auto &pair : *_pQUERY_DATA->get_sequences_ptr()) {
             std::map<std::string, InterProData>::iterator it = interpro_map.find(pair.first);
             if (it != interpro_map.end()) {
                 count_hits++;
-                pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_INTERPRO);
-                interpro_output = it->second.interID + "(" + it->second.interDesc + ")";
-                protein_output  = it->second.databaseID + "(" + it->second.databaseDesc + ")";
+
                 go_terms_parsed = EM_parse_go_list(it->second.go_terms,_pEntapDatabase,',');
-                std::stringstream ss;
-                ss << std::scientific << it->second.eval;
-                e_str = ss.str();
-                pair.second->set_interpro_results(e_str, protein_output, it->second.databasetype,
-                                                  interpro_output, it->second.pathways, go_terms_parsed);
+
+                // Compile data TODO change...
+                interProResults.e_value = float_to_sci(it->second.eval,2);
+                interProResults.database_desc_id = it->second.databaseID + "(" + it->second.databaseDesc + ")";
+                interProResults.database_type    = it->second.databasetype;
+                interProResults.parsed_go        = go_terms_parsed;
+                interProResults.interpro_desc_id = it->second.interID + "(" + it->second.interDesc + ")";
+                interProResults.pathways         = it->second.pathways;
+                interProResults.e_value_raw = it->second.eval;
+
+                pair.second->add_alignment(_execution_state, _software_flag, interProResults, _database_flag);
+
                 if (!pair.second->get_sequence_n().empty()) file_hits_fnn << pair.second->get_sequence_n() << std::endl;
                 if (!pair.second->get_sequence_p().empty()) file_hits_faa << pair.second->get_sequence_p() << std::endl;
             } else {
@@ -229,10 +244,8 @@ void ModInterpro::parse() {
     file_hits_fnn.close();
 
     FS_dprint("Success! Calculating statistics...");
-    stats_stream <<
-                 ENTAP_STATS::SOFTWARE_BREAK << " Ontology - InterProScan\n" <<
-                 ENTAP_STATS::SOFTWARE_BREAK <<
-                 "InterProScan statistics coming soon!";
+    _pFileSystem->format_stat_stream(stats_stream, "Ontology - InterProScan");
+    stats_stream << "InterProScan statistics coming soon!";
 
     if (count_hits == 0) {
         stats_stream << "\nWarning: No InterProScan results found!";
@@ -332,7 +345,7 @@ std::map<std::string,ModInterpro::InterProData> ModInterpro::parse_xml(void) {
 * Function std::map<std::string,ModInterpro::InterProData> ModInterpro::parse_tsv(void)
 *
 * Description          - Parses nucleotide data from interpro and returns
-*                        parsed data map
+*                        parsed data map of BEST HITS according to E_value
 *
 * Notes                - None
 *
@@ -450,6 +463,7 @@ ModInterpro::~ModInterpro() {
 }
 
 bool ModInterpro::is_executable() {
+    // TODO add execute command for interpro
     return true;
 }
 
@@ -478,4 +492,5 @@ ModInterpro::ModInterpro(std::string &ont, std::string &in,
     FS_dprint("Spawn Object - InterPro");
 
     _databases    = databases;
+    _software_flag = ONT_INTERPRO_SCAN;
 }

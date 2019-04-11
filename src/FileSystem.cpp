@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -52,6 +52,7 @@ const std::string FileSystem::EXT_XML  = ".xml";
 const std::string FileSystem::EXT_DMND = ".dmnd";
 const std::string FileSystem::EXT_STD  = "_std";
 
+const char FileSystem::DELIM_TSV= '\t';
 
 // Removed for older compilers, may bring back
 #if 0
@@ -825,4 +826,20 @@ void FileSystem::set_error(std::string err_msg) {
 
 std::string FileSystem::get_error() {
     return "\n" + _err_msg;
+}
+
+bool FileSystem::print_headers(std::ofstream& file_stream, std::vector<ENTAP_HEADERS> &headers, char delim) {
+    for (ENTAP_HEADERS &header: headers) {
+        if (ENTAP_HEADER_INFO[header].print_header) {
+            file_stream << ENTAP_HEADER_INFO[header].title << delim;
+        }
+    }
+    file_stream << std::endl;
+    return true;
+}
+
+void FileSystem::format_stat_stream(std::stringstream &stream, std::string title) {
+    stream<<std::fixed<<std::setprecision(2);
+    stream << SOFTWARE_BREAK << title << '\n' << SOFTWARE_BREAK;
+
 }

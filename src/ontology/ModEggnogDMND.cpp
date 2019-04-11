@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -29,18 +29,34 @@
 #include "../database/EggnogDatabase.h"
 #include "../TerminalCommands.h"
 
+const std::vector<ENTAP_HEADERS> ModEggnogDMND::DEFAULT_HEADERS = {
+    ENTAP_HEADER_ONT_EGG_SEED_ORTHO,
+    ENTAP_HEADER_ONT_EGG_SEED_EVAL,
+    ENTAP_HEADER_ONT_EGG_SEED_SCORE,
+    ENTAP_HEADER_ONT_EGG_PRED_GENE,
+    ENTAP_HEADER_ONT_EGG_TAX_SCOPE,
+    ENTAP_HEADER_ONT_EGG_OGS,
+    ENTAP_HEADER_ONT_EGG_DESC,
+    ENTAP_HEADER_ONT_EGG_KEGG,
+    ENTAP_HEADER_ONT_EGG_GO_BIO,
+    ENTAP_HEADER_ONT_EGG_GO_CELL,
+    ENTAP_HEADER_ONT_EGG_GO_MOLE,
+    ENTAP_HEADER_ONT_EGG_PROTEIN
+};
+
 ModEggnogDMND::ModEggnogDMND(std::string &ont_out, std::string &in_hits,
                              EntapDataPtrs &entap_data, std::string &exe, std::string sql_db_path)
         : AbstractOntology(in_hits, ont_out, entap_data, "EggNOG_DMND", exe) {
     FS_dprint("Spawn Object - ModEggnogDMND");
 
     _eggnog_db_path = sql_db_path;
-    _software_flag = ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG;
+    _software_flag = ONT_EGGNOG_DMND;
 
 }
 
-std::pair<bool, std::string> ModEggnogDMND::verify_files() {
-    bool file_exists = false;
+EntapModule::ModVerifyData ModEggnogDMND::verify_files() {
+    ModVerifyData modVerifyData;
+    modVerifyData.files_exist = false;
     uint16 file_status = 0;
 
     FS_dprint("Overwrite was unselected, verifying output files...");
@@ -50,10 +66,12 @@ std::pair<bool, std::string> ModEggnogDMND::verify_files() {
     if (file_status != 0) {
         FS_dprint(_pFileSystem->print_file_status(file_status,_out_hits));
         FS_dprint("Errors in opening file, continuing with execution...");
+        modVerifyData.files_exist = false;
     } else {
-        file_exists = true;
+        modVerifyData.files_exist = true;
     }
-    return std::make_pair(file_exists, _out_hits);
+    modVerifyData.output_paths = vect_str_t{_out_hits};
+    return modVerifyData;
 }
 
 void ModEggnogDMND::execute() {
@@ -119,7 +137,7 @@ void ModEggnogDMND::parse() {
 
     // File valid, continue
     FS_dprint("Beginning to parse EggNOG results...");
-    ENTAP_STATS::ES_format_stat_stream(stats_stream, "Gene Family - Gene Ontology and Pathway - EggNOG");
+    _pFileSystem->format_stat_stream(stats_stream, "Gene Family - Gene Ontology and Pathway - EggNOG");
 
 #ifdef USE_FAST_CSV
     // ------------------ Read from DIAMOND output ---------------------- //
@@ -390,11 +408,11 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     FS_dprint("Success! EggNOG results parsed");
 }
 
-bool ModEggnogDMND::is_executable() {
+bool ModEggnogDMND::is_executable(std::string &exe) {
     std::string test_command;
     TerminalData terminalData;
 
-    test_command = DIAMOND_EXE + " --version";
+    test_command = exe + " --version";
 
     terminalData.command = test_command;
     terminalData.print_files = false;
@@ -404,7 +422,6 @@ bool ModEggnogDMND::is_executable() {
 
 ModEggnogDMND::~ModEggnogDMND() {
     FS_dprint("Killing Object - ModEggnogDMND");
-
 }
 
 

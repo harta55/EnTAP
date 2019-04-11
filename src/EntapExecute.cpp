@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -131,6 +131,7 @@ namespace entapExecute {
                     _pUserInput,        // User input map
                     _pFileSystem);      // Filesystem object
 
+
             // Initialize Graphing Manager
             pGraphingManager = new GraphingManager(GRAPHING_EXE);
 
@@ -146,6 +147,7 @@ namespace entapExecute {
             entap_data_ptrs._pUserInput    = user_input;
             entap_data_ptrs._pGraphingManager = pGraphingManager;
             entap_data_ptrs._pQueryData    = pQUERY_DATA;
+
             if (entap_data_ptrs.is_null()) {
                 throw ExceptionHandler("Unable to allocate memory", ERR_ENTAP_MEM_ALLOC);
             }
@@ -201,18 +203,15 @@ namespace entapExecute {
                         _input_path = filter_transcriptome(_input_path);  // Just copies final transcriptome
                         break;
                     case SIMILARITY_SEARCH: {
-                        FS_dprint("STATE - SIM SEARCH RUN");
+                        FS_dprint("STATE - SIMILARITY SEARCH");
                         // Spawn sim search object
                         std::unique_ptr<SimilaritySearch> sim_search(new SimilaritySearch(
                                 _databases,
                                 _input_path,
                                 entap_data_ptrs
                         ));
-
-                        sim_search->execute(_input_path, _blastp);
+                        sim_search->execute();
                         pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_SIM_SEARCH);
-                        FS_dprint("STATE - SIM SEARCH PARSE");
-                        sim_search->parse_files(_input_path);
                         break;
                     }
                     case GENE_ONTOLOGY: {

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -62,7 +62,7 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,EntapDataPtrs& entap_d
 
     _entap_data = entap_data;
 
-    _software_flag = ENTAP_EXECUTE::EXP_FLAG_RSEM;
+    _software_flag = EXP_RSEM;
     _threads       = _pUserInput->get_supported_threads();
     _exepath       = RSEM_EXE_DIR;
     _outpath       = _pFileSystem->get_root_path();
@@ -96,7 +96,7 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,EntapDataPtrs& entap_d
  */
 std::string ExpressionAnalysis::execute(std::string input) {
     std::string                         output;
-    std::pair<bool, std::string>        verify_pair;
+    EntapModule::ModVerifyData          verify_data;
     std::unique_ptr<AbstractExpression> ptr;
 
     _inpath = input;
@@ -106,8 +106,8 @@ std::string ExpressionAnalysis::execute(std::string input) {
     try {
         ptr = spawn_object();
         ptr->set_data(_threads, _fpkm, _issingle);  // Will remove later
-        verify_pair = ptr->verify_files();
-        if (!verify_pair.first) ptr->execute();
+        verify_data = ptr->verify_files();
+        if (!verify_data.files_exist) ptr->execute();
         ptr->parse();
         output = ptr->get_final_fasta();
     } catch (const ExceptionHandler &e) {
@@ -134,7 +134,7 @@ std::string ExpressionAnalysis::execute(std::string input) {
  */
 std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
     switch (_software_flag) {
-        case ENTAP_EXECUTE::EXP_FLAG_RSEM:
+        case EXP_RSEM:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
                     _rsem_dir,
                     _inpath,

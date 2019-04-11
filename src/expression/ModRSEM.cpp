@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -48,18 +48,20 @@
  *
  * =====================================================================
  */
-std::pair<bool, std::string> ModRSEM::verify_files() {
+EntapModule::ModVerifyData ModRSEM::verify_files() {
+    ModVerifyData modVerifyData;
 
     _filename = _pFileSystem->get_filename(_in_hits, false);
     _exp_out  = PATHS(_mod_out_dir, _filename);
     _rsem_out = _exp_out + RSEM_OUT_FILE;
     if (_pFileSystem->file_exists(_rsem_out)) {
         FS_dprint("File found at " + _rsem_out +  "\nmoving to filter transcriptome");
-        return std::make_pair(true, "");
+        modVerifyData.files_exist = true;
+    } else {
+        FS_dprint("File not found at " + _rsem_out +  " Continuing RSEM run.");
+        modVerifyData.files_exist = false;
     }
-    FS_dprint("File not found at " + _rsem_out +  " Continuing RSEM run.");
-
-    return std::make_pair(false, "");
+    return modVerifyData;
 }
 
 
@@ -255,11 +257,8 @@ void ModRSEM::parse() {
 
     //-----------------------STATISTICS-----------------------//
     FS_dprint("Beginning to calculate statistics...");
-    out_msg<<std::fixed<<std::setprecision(2);
+    _pFileSystem->format_stat_stream(out_msg, "Expression Filtering (RSEM) with FPKM Cutoff " + float_to_string(_fpkm));
     out_msg <<
-            ENTAP_STATS::SOFTWARE_BREAK     <<
-            "Expression Filtering (RSEM) with FPKM Cutoff " << _fpkm << "\n" <<
-            ENTAP_STATS::SOFTWARE_BREAK     <<
             "Total sequences kept: "        << count_kept     <<
             "\nTotal sequences removed: "   << count_removed  <<std::endl;
 
@@ -268,10 +267,8 @@ void ModRSEM::parse() {
         rejected_percent = ((fp32)count_removed / count_total) * 100;
         avg_kept = (fp32) total_kept_len / count_kept;
         kept_n = _pQUERY_DATA->calculate_N_vals(all_kept_lengths, total_kept_len);
+        _pFileSystem->format_stat_stream(out_msg, "Expression Filtering: New Reference Transcriptome Statistics");
         out_msg <<
-                ENTAP_STATS::SOFTWARE_BREAK                                     <<
-                "Expression Filtering: New Reference Transcriptome Statistics\n"<<
-                ENTAP_STATS::SOFTWARE_BREAK                                     <<
                 "\nTotal sequenes: "                    << count_kept     <<
                 "\nTotal length of transcriptome (bp)"  << total_kept_len <<
                 "\nAverage length (bp): "               << avg_kept       <<

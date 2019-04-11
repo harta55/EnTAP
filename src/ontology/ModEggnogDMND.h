@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -37,11 +37,13 @@ class ModEggnogDMND : public AbstractOntology {
 public:
     ModEggnogDMND(std::string &ont_out, std::string &in_hits,
                   EntapDataPtrs &entap_data, std::string &exe, std::string sql_db_path);
-    virtual std::pair<bool, std::string> verify_files() override;
+    virtual ModVerifyData verify_files() override;
     ~ModEggnogDMND();
     virtual void execute() override ;
     virtual void parse() override;
-    static bool is_executable();
+    static bool is_executable(std::string &exe);
+
+    static const std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
 private:
     std::string get_output_dmnd_filepath(bool final);

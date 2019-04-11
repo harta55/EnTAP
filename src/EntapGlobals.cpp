@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,70 +30,66 @@
 #include "EntapGlobals.h"
 //**************************************************************
 
+// This table should match EntapGlobals.h ENTAP_HEADERS enum
+EntapHeader ENTAP_HEADER_INFO[] = {
+        {"Unused",              false},                         // 0
+        {"Query Sequence",      true},
+        {"Frame",               true},
+        {"FPKM",                true},
 
-namespace ENTAP_EXECUTE {
-    //------------------------Ontology-------------------------//
-    const std::string GO_BIOLOGICAL_FLAG = "biological_process";
-    const std::string GO_CELLULAR_FLAG   = "cellular_component";
-    const std::string GO_MOLECULAR_FLAG  = "molecular_function";
+        /* Similarity Search - General */
+        {"Subject Sequence",    true},
+        {"Percent Identical",   true},                          // 5
+        {"Alignment Length",    true},
+        {"Mismatches",          true},
+        {"Gap Openings",        true},
+        {"Query Start",         true},
+        {"Query End",           true},                          // 10
+        {"Subject Start",       true},
+        {"Subject End",         true},
+        {"E Value",             true},
+        {"Coverage",            true},
+        {"Description",         true},                          // 15
+        {"Species",             true},
+        {"Origin Database",     true},
+        {"Contaminant",         true},
+        {"Informative",         true},
+
+        /* Similarity Search - UniProt */
+        {"UniProt Database Cross Reference",        true},      // 20
+        {"UniProt Additional Information",          true},
+        {"UniProt KEGG Terms",                      true},
+        {"UniProt GO Biological",                   true},
+        {"UniProt GO Cellular",                     true},
+        {"UniProt GO Molecular",                    true},
+
+        /* Ontology - EggNOG */
+        {"Seed Ortholog",                           true},
+        {"Seed E-Value",                            true},
+        {"Seed Score",                              true},
+        {"Predicted Gene",                          true},
+        {"Tax Scope",                               true},
+        {"OGs",                                     true},
+        {"EggNOG Description",                      true},
+        {"KEGG Terms",                              true},
+        {"GO Biological",                           true},
+        {"GO Cellular",                             true},
+        {"GO Molecular" ,                           true},
+        {"Protein Domains",                         true},
+
+        /* Ontology - InterProScan */
+        {"IPScan GO Biological",                    true},
+        {"IPScan GO Cellular",                      true},
+        {"IPScan GO Molecular",                     true},
+        {"Pathways",                                true},
+        {"InterPro",                                true},
+        {"Protein Database",                        true},
+        {"Protein Description",                     true},
+        {"E-Value",                                 true},
 
 
-    //------------------------Headers-------------------------//
-
-    // Similarity Search
-    const std::string HEADER_QUERY     = "Query Seq";
-    const std::string HEADER_SUBJECT   = "Subject Seq";
-    const std::string HEADER_PERCENT   = "Percent Identical";
-    const std::string HEADER_ALIGN_LEN = "Alignment Length";
-    const std::string HEADER_MISMATCH  = "Mismatches";
-    const std::string HEADER_GAP_OPEN  = "Gap Openings";
-    const std::string HEADER_QUERY_S   = "Query Start";
-    const std::string HEADER_QUERY_E   = "Query End";
-    const std::string HEADER_SUBJ_S    = "Subject Start";
-    const std::string HEADER_SUBJ_E    = "Subject End";
-    const std::string HEADER_E_VAL     = "E Value";
-    const std::string HEADER_COVERAGE  = "Coverage";
-    const std::string HEADER_TITLE     = "Description";
-    const std::string HEADER_SPECIES   = "Species";
-    const std::string HEADER_DATABASE  = "Origin Database";
-    const std::string HEADER_FRAME     = "Frame";
-    const std::string HEADER_CONTAM    = "Contaminant";
-    const std::string HEADER_INFORM    = "Informative";
-
-    // UniProt Mapping
-    const std::string HEADER_UNI_DATA_XREF = "UniProt Database Cross References";
-    const std::string HEADER_UNI_COMMENTS  = "UniProt Additional Information";
-    const std::string HEADER_UNI_KEGG      = "UniProt KEGG Terms";
-    const std::string HEADER_UNI_GO_BIO    = "UniProt GO Biological";
-    const std::string HEADER_UNI_GO_CELL   = "UniProt GO Cellular";
-    const std::string HEADER_UNI_GO_MOLE   = "UniProt GO Molecular";
-
-    // EggNOG
-    const std::string HEADER_SEED_ORTH   = "Seed Ortholog";
-    const std::string HEADER_SEED_EVAL   = "Seed E-Value";
-    const std::string HEADER_SEED_SCORE  = "Seed Score";
-    const std::string HEADER_PRED_GENE   = "Predicted Gene";
-    const std::string HEADER_TAX_SCOPE   = "Tax Scope";
-    const std::string HEADER_EGG_OGS     = "OGs";
-    const std::string HEADER_EGG_KEGG    = "KEGG Terms";
-    const std::string HEADER_EGG_GO_BIO  = "GO Biological";
-    const std::string HEADER_EGG_GO_CELL = "GO Cellular";
-    const std::string HEADER_EGG_GO_MOLE = "GO Molecular";
-    const std::string HEADER_EGG_DESC    = "Eggnog Description";
-    const std::string HEADER_EGG_LEVEL   = "Full Tax Scope";
-    const std::string HEADER_EGG_PROTEIN = "Protein Domains";
-
-    // InterProScan
-    const std::string HEADER_INTER_GO_BIO    = "IPScan GO Biological";
-    const std::string HEADER_INTER_GO_CELL   = "IPScan GO Cellular";
-    const std::string HEADER_INTER_GO_MOLE   = "IPScan GO Molecular";
-    const std::string HEADER_INTER_PATHWAY   = "Pathways";
-    const std::string HEADER_INTER_INTERPRO  = "InterPro";
-    const std::string HEADER_INTER_DATA_TYPE = "Protein Database";
-    const std::string HEADER_INTER_DATA_TERM = "Protein Description";
-    const std::string HEADER_INTER_EVAL      = "E Value";
-}
-
+        {"Unused",                                  false}
+};
 
 namespace ENTAP_STATS {
     const std::string SOFTWARE_BREAK = "------------------------------------------------------\n";
@@ -146,9 +142,4 @@ std::string get_cur_time() {
     time = std::chrono::system_clock::to_time_t(current);
     std::string out_time(std::ctime(&time));
     return out_time.substr(0,out_time.length()-1);
-}
-
-void ENTAP_STATS::ES_format_stat_stream(std::stringstream &stream, std::string title) {
-    stream<<std::fixed<<std::setprecision(2);
-    stream << ENTAP_STATS::SOFTWARE_BREAK << title << '\n' << ENTAP_STATS::SOFTWARE_BREAK;
 }

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -38,6 +38,7 @@
 #include "database/EntapDatabase.h"
 #include "ontology/ModEggnogDMND.h"
 #include "config.h"
+#include "similarity_search/ModDiamond.h"
 
 //**************************************************************
 
@@ -301,7 +302,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
 
  void UserInput::parse_arguments_tclap(int argc, const char ** argv) {
     try {
-        TCLAP::CmdLine cmd("EnTAP\nAlexander Hart and Dr. Jill Wegrzyn\nUniversity of Connecticut\nCopyright 2017-2018", ' ', ENTAP_VERSION_STR);
+        TCLAP::CmdLine cmd("EnTAP\nAlexander Hart and Dr. Jill Wegrzyn\nUniversity of Connecticut\nCopyright 2017-2019", ' ', ENTAP_VERSION_STR);
 
         // Switch Args
         TCLAP::SwitchArg argConfig("",INPUT_FLAG_CONFIG, DESC_CONFIG, cmd, false);
@@ -381,7 +382,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         if (argOntology.isSet()) {
             _user_inputs.emplace(INPUT_FLAG_ONTOLOGY, argOntology.getValue());
         } else {
-            _user_inputs.emplace(INPUT_FLAG_ONTOLOGY, std::vector<uint16>{ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG});
+            _user_inputs.emplace(INPUT_FLAG_ONTOLOGY, std::vector<uint16>{ONT_EGGNOG_DMND});
         }
         if (argGOLevels.isSet()) {
             _user_inputs.emplace(INPUT_FLAG_GO_LEVELS, argGOLevels.getValue());
@@ -584,12 +585,12 @@ bool UserInput::verify_user_input() {
             if (has_input(INPUT_FLAG_ONTOLOGY)) {
                 ont_flags = get_user_input<std::vector<uint16>>(INPUT_FLAG_ONTOLOGY);
                 for (uint8 i = 0; i < ont_flags.size() ; i++) {
-                    if ((ont_flags[i] > ENTAP_EXECUTE::ONTOLOGY_MAX) ||
-                         ont_flags[i] < ENTAP_EXECUTE::ONTOLOGY_MIN) {
+                    if ((ont_flags[i] > ONT_SOFTWARE_COUNT) ||
+                         ont_flags[i] < 0) {
                         throw ExceptionHandler("Invalid ontology flags being used",
                                                ERR_ENTAP_INPUT_PARSE);
                     }
-                    if (ont_flags[i] == ENTAP_EXECUTE::INTERPRO_INT_FLAG && !is_interpro) is_interpro = true;
+                    if (ont_flags[i] == ONT_INTERPRO_SCAN && !is_interpro) is_interpro = true;
                 }
             }
 
@@ -615,7 +616,7 @@ bool UserInput::verify_user_input() {
 
             // Check if EggNOG DIAMOND database exists, if not, check DIAMOND run
             if (!_pFileSystem->file_exists(EGG_DMND_PATH)) {
-                if (!SimilaritySearch::is_executable()) {
+                if (!ModDiamond::is_executable(DIAMOND_EXE)) {
                     throw ExceptionHandler("EggNOG DIAMOND database was not found at: " + EGG_DMND_PATH +
                                            "\nThe DIAMOND test run failed.", ERR_ENTAP_INPUT_PARSE);
                 }
@@ -623,7 +624,7 @@ bool UserInput::verify_user_input() {
 
             // Test run DIAMOND if user input databases
             if (has_input(INPUT_FLAG_DATABASE)) {
-                if (!SimilaritySearch::is_executable()) {
+                if (!ModDiamond::is_executable(DIAMOND_EXE)) {
                     throw ExceptionHandler("Databases have been selected for indexing. A test run of DIAMOND has failed!",
                                            ERR_ENTAP_INPUT_PARSE);
                 }
@@ -834,10 +835,9 @@ void UserInput::print_user_input() {
     time = std::chrono::system_clock::to_time_t(start_time);
     _is_config ? config_text = "Configuration" : config_text = "Execution";
 
+    _pFileSystem->format_stat_stream(ss, "EnTAP Run Information - " + config_text);
+
     ss <<
-       ENTAP_STATS::SOFTWARE_BREAK <<
-       "\nEnTAP Run Information - "<< config_text + "\n\n"      <<
-       ENTAP_STATS::SOFTWARE_BREAK <<
        "Current EnTAP Version: "   << ENTAP_VERSION_STR            <<
        "\nStart time: "            << std::ctime(&time)            <<
        "\nWorking directory has been set to: "  << _pFileSystem->get_root_path()<<
@@ -1118,7 +1118,7 @@ std::pair<bool,std::string> UserInput::verify_software(uint8 &states,std::vector
     FS_dprint("Verifying software...");
 
     if (states & SIMILARITY_SEARCH) {
-        if (!SimilaritySearch::is_executable()) {
+        if (!ModDiamond::is_executable(DIAMOND_EXE)) {
             return std::make_pair(false, "Could not execute a test run of DIAMOND, be sure"
                     " it's properly installed and the path is correct");
         }
@@ -1135,16 +1135,16 @@ std::pair<bool,std::string> UserInput::verify_software(uint8 &states,std::vector
                                 "ensure python is properly installed and the paths are correct");
                     break;
 #endif
-                case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
+                case ONT_INTERPRO_SCAN:
                     // TODO
                     break;
 
-                case ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG:
+                case ONT_EGGNOG_DMND:
                     if (!_pFileSystem->file_exists(EGG_SQL_DB_PATH))
                         return std::make_pair(false, "Could not find EggNOG SQL database at: " + EGG_SQL_DB_PATH);
                     else if (!_pFileSystem->file_exists(EGG_DMND_PATH))
                         return std::make_pair(false, "Could not find EggNOG Diamond Database at: " + EGG_DMND_PATH);
-                    else if (!ModEggnogDMND::is_executable())
+                    else if (!ModEggnogDMND::is_executable(DIAMOND_EXE))
                         return std::make_pair(false, "Test run of DIAMOND for EggNOG analysis has failed");
                 default:
                     break;

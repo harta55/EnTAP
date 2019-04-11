@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -50,8 +50,11 @@ Y or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *
  * =====================================================================
  */
-std::pair<bool, std::string> ModGeneMarkST::verify_files() {
+EntapModule::ModVerifyData ModGeneMarkST::verify_files() {
+    ModVerifyData modVerifyData;
     std::string lst_file;
+
+    modVerifyData.files_exist = false;
 
     FS_dprint("Beginning to verify GeneMarkS-T module files...");
 
@@ -61,10 +64,11 @@ std::pair<bool, std::string> ModGeneMarkST::verify_files() {
     if (_pFileSystem->file_exists(_final_out_path) && _pFileSystem->file_exists(_final_lst_path)) {
         FS_dprint("Files found at: " + _final_out_path + "\nand: " + _final_lst_path +
                 "\ncontinuing EnTAP with these files and skipping frame selection");
-        return std::make_pair(true, _final_out_path);
+        modVerifyData.files_exist = true;
     }
     FS_dprint("File not found at " + _final_out_path + " so continuing frame selection");
-    return std::make_pair(false, "");
+    modVerifyData.output_paths = vect_str_t{_final_out_path};
+    return modVerifyData;
 }
 
 
@@ -318,11 +322,8 @@ void ModGeneMarkST::parse() {
         // Calculate and print stats
         FS_dprint("Beginning to calculate statistics...");
         avg_selected = (fp32)total_kept_len / count_selected;
-        stat_output<<std::fixed<<std::setprecision(2);
+        _pFileSystem->format_stat_stream(stat_output, "Frame Selected Transcripts (GeneMarkS-T)");
         stat_output <<
-                    ENTAP_STATS::SOFTWARE_BREAK             <<
-                    "Frame Selected Transcripts (GenemarkS-T)\n"        <<
-                    ENTAP_STATS::SOFTWARE_BREAK             <<
                     "Total sequences frame selected: "      << count_selected          <<
                     "\n\tTranslated protein sequences: "    << _final_out_path              <<
                     "\nTotal sequences removed (no frame): "<< count_removed           <<
@@ -336,10 +337,7 @@ void ModGeneMarkST::parse() {
                     "\nTotal of "                           <<
                     count_map[FRAME_SELECTION_INTERNAL_FLAG]<<" internal genes:\n\t" << out_internal_path<<"\n\n";
 
-        stat_output <<
-                    ENTAP_STATS::SOFTWARE_BREAK                                <<
-                    "Frame Selection: New Reference Transcriptome Statistics\n"<<
-                    ENTAP_STATS::SOFTWARE_BREAK;
+        _pFileSystem->format_stat_stream(stat_output, "Frame Selection: New Reference Transcriptome Statistics");
 
         kept_n = _pQUERY_DATA->calculate_N_vals(all_kept_lengths,total_kept_len);
         stat_output <<

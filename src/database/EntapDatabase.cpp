@@ -6,7 +6,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -608,7 +608,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
                     go_list += data.substr(index_go, index_term - index_go) + ',';
 
                 } else if (database == UNIPROT_DAT_TAG_DATABASE_KEGG) {
-                    index_go = (uint16) data.find("vg:");
+                    index_go = (uint16) (data.find(':') + 1);
                     index_term = (uint16) data.find(';', index_go);
                     kegg_list += data.substr(index_go, index_term - index_go) + ',';
                 } else {
@@ -640,7 +640,8 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
             }
         }
     } catch (const std::exception &e) {
-        set_err_msg("Unable to parse UniProt data: " + std::string(e.what()), ERR_DATA_UNIPROT_PARSE);
+        set_err_msg("Unable to parse UniProt data: " + std::string(e.what()) + "\nLine: " + line,
+                    ERR_DATA_UNIPROT_PARSE);
         return ERR_DATA_UNIPROT_PARSE;
     }
 

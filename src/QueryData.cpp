@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -144,10 +144,8 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     // first - n50, second - n90
     n_vals = calculate_N_vals(sequence_lengths, total_len);
 
-    out_msg <<std::fixed<<std::setprecision(2);
-    out_msg << ENTAP_STATS::SOFTWARE_BREAK
-            << "Transcriptome Statistics\n"
-            << ENTAP_STATS::SOFTWARE_BREAK<<
+    _pFileSystem->format_stat_stream(out_msg, "Transcriptome Statistics");
+    out_msg <<
             transcript_type << " sequences found"          <<
             "\nTotal sequences: "                          << count_seqs    <<
             "\nTotal length of transcriptome(bp): "        << total_len     <<
@@ -364,10 +362,8 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
     file_annotated_nucl.close();
     file_annotated_prot.close();
 
+    _pFileSystem->format_stat_stream(ss, "Final Annotation Statistics");
     ss <<
-       ENTAP_STATS::SOFTWARE_BREAK          <<
-       "Final Annotation Statistics\n"      <<
-       ENTAP_STATS::SOFTWARE_BREAK          <<
        "Total Sequences: "                  << count_total_sequences;
 
     if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
@@ -391,7 +387,7 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
     if (DATA_FLAG_GET(SUCCESS_ONTOLOGY)) {
         for (uint16 flag : ontology_flags) {
             switch (flag) {
-                case ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG:
+                case ONT_EGGNOG_DMND:
                     ss <<
                        "\nGene Families"        <<
                        "\n\tTotal unique sequences with family assignment: "    << count_ontology   <<
@@ -399,7 +395,7 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
                        "\n\tTotal unique sequences with at least one GO term: " << count_one_go     <<
                        "\n\tTotal unique sequences with at least one pathway (KEGG) assignment: "   << count_one_kegg;
                     break;
-                case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
+                case ONT_INTERPRO_SCAN:
                     ss <<
                        "\nFinal InterPro stats coming soon!";
                     break;

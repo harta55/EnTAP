@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -43,7 +43,7 @@ public:
                      EntapDataPtrs &entap_data,
                      std::string mod_name, std::string &exe);
     ~AbstractOntology() = default;
-    virtual std::pair<bool, std::string> verify_files()=0;
+    virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
 

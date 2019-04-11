@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -69,7 +69,7 @@ FrameSelection::FrameSelection(std::string &input, EntapDataPtrs &entap_data) {
 
     _outpath         = _pFileSystem->get_root_path();
     _overwrite       = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
-    _software_flag   = ENTAP_EXECUTE::FRAME_FLAG_GENEMARK;
+    _software_flag   = FRAME_GENEMARK_ST;
 
     _mod_out_dir   = PATHS(_outpath, FRAME_SELECTION_OUT_DIR);
 }
@@ -96,7 +96,7 @@ FrameSelection::FrameSelection(std::string &input, EntapDataPtrs &entap_data) {
 std::string FrameSelection::execute(std::string input) {
 
     std::string output;
-    std::pair<bool, std::string> verify_pair;
+    EntapModule::ModVerifyData verify_data;
     std::unique_ptr<AbstractFrame> ptr;
 
 
@@ -105,11 +105,11 @@ std::string FrameSelection::execute(std::string input) {
     _pFileSystem->create_dir(_mod_out_dir);
     try {
         ptr = spawn_object();
-        verify_pair = ptr->verify_files();
-        if (!verify_pair.first) {
+        verify_data = ptr->verify_files();
+        if (!verify_data.files_exist) {
             ptr->execute();
             output = ptr->get_final_faa();
-        } else output = verify_pair.second;
+        } else output = verify_data.output_paths[0];
         ptr->parse();
         ptr.reset();
         return output;
@@ -137,7 +137,7 @@ std::unique_ptr<AbstractFrame> FrameSelection::spawn_object() {
     // Handle any special conditions for each software
 
     switch (_software_flag) {
-        case ENTAP_EXECUTE::FRAME_FLAG_GENEMARK:
+        case FRAME_GENEMARK_ST:
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
                     _mod_out_dir,
                     _inpath,

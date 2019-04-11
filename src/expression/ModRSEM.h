@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -49,7 +49,7 @@ public:
 
     ~ModRSEM() ;
 
-    virtual std::pair<bool, std::string> verify_files() override ;
+    virtual ModVerifyData verify_files() override ;
     virtual void execute() override ;
     virtual void parse() override;
     virtual void set_data(int, float, bool) override    ;

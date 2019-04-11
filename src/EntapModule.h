@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -37,23 +37,25 @@ class EntapModule {
 
 public:
 
+    struct ModVerifyData {
+        bool        files_exist;
+        vect_str_t  output_paths;
+    };
+
+
     EntapModule(std::string &execution_stage_path, std::string &in_hits,
                 EntapDataPtrs &entap_data, std::string module_name, std::string &exe);
 
     virtual ~EntapModule() = default;
-    virtual std::pair<bool, std::string> verify_files()=0;
+    virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
 
-
 protected:
+
     const std::string PROCESSED_OUT_DIR     = "processed/";
     const std::string FIGURE_DIR            = "figures/";
-
-    const std::string GO_MOLECULAR_FLAG     = "molecular_function";
-    const std::string GO_BIOLOGICAL_FLAG    = "biological_process";
-    const std::string GO_CELLULAR_FLAG      = "cellular_component";
-    const std::string GO_OVERALL_FLAG       = "overall";
+    const std::string OVERALL_RESULTS_DIR   = "overall_results";
 
     const std::string OUT_UNANNOTATED_NUCL  = "unannotated_sequences.fnn";
     const std::string OUT_UNANNOTATED_PROT  = "unannotated_sequences.faa";
@@ -67,17 +69,25 @@ protected:
     const std::string GRAPH_GO_BAR_MOLE_TITLE = "Top_10_GO_Molecular_Terms";
     const std::string GRAPH_GO_BAR_ALL_TITLE  = "Top_10_GO_Terms";
 
-    static constexpr uint8 COUNT_TOP_GO        = 10;
+    const std::string YES_FLAG                = "Yes";
+    const std::string NO_FLAG                 = "No";
+
+    const uint8 COUNT_TOP_GO                  = 10;
+    const uint8 COUNT_TOP_SPECIES             = 10;
 
     bool               _blastp;
+    bool               _overwrite;
     int                _threads;
     uint16             _software_flag;
     std::string        _outpath;
     std::string        _in_hits;
-    std::string        _proc_dir;
+    std::string        _proc_dir;                   // "processed" directory, or data analyzed
     std::string        _figure_dir;
     std::string        _mod_out_dir;
+    std::string        _overall_results_dir;
     std::string        _exe_path;
+    std::string        _transcript_shortname;       // filename of transcriptome file for file name purposes
+    ExecuteStates      _execution_state;
     std::vector<uint16> _go_levels;
     GraphingManager    *_pGraphingManager;
     QueryData          *_pQUERY_DATA;
@@ -86,6 +96,7 @@ protected:
     EntapDatabase      *_pEntapDatabase;
 
     go_format_t EM_parse_go_list(std::string list, EntapDatabase* database,char delim);
+    void EM_set_uniprot_headers(bool set);
 };
 
 

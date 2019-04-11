@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -32,6 +32,7 @@
 //*********************** Includes *****************************
 #include "common.h"
 #include "TerminalCommands.h"
+#include "EntapGlobals.h"
 //**************************************************************
 
 
@@ -48,14 +49,17 @@ public:
         FILE_GZ,
         FILE_ZIP,
         FILE_DELIMINATED,
-        FILE_FASTA
+        FILE_FASTA,
+
+        FILE_MAX
 
     } ENT_FILE_TYPES;
 
     typedef enum {
-        FILE_STATUS_EMPTY      = (1 << 0),
-        FILE_STATUS_READ_ERR   = (1 << 1),
-        FILE_STATUS_PATH_ERR   = (1 << 2),
+        FILE_STATUS_UNUSED     = (1 << 0),
+        FILE_STATUS_EMPTY      = (1 << 1),      // File is empty
+        FILE_STATUS_READ_ERR   = (1 << 2),      // Error reading file
+        FILE_STATUS_PATH_ERR   = (1 << 3),      // FIle does not exist
 
         FILE_STATUS_MAX        = (1 << 15)
 
@@ -68,6 +72,15 @@ public:
         FILE_ITER_PRINT
 
     } ENT_FILE_ITER;
+
+    struct CreateFileCmd {
+
+        std::stringstream *stringstream;
+        std::string        file_path;
+        std::vector<ENTAP_HEADERS> headers;
+        ENT_FILE_TYPES     type;
+        char               delim;
+    };
 
     FileSystem(std::string&);
     ~FileSystem();
@@ -100,6 +113,9 @@ public:
     bool download_ftp_file(std::string,std::string&);
     bool decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES);
 
+    bool print_headers(std::ofstream &file_stream, std::vector<ENTAP_HEADERS> &headers, char delim);
+    void format_stat_stream(std::stringstream &stream, std::string title);
+
 //**************************************************************
     static const std::string EXT_TXT ;
     static const std::string EXT_ERR ;
@@ -112,6 +128,8 @@ public:
     static const std::string EXT_XML;
     static const std::string EXT_STD;
 
+    static const char        DELIM_TSV;
+
 private:
     void init_log();
     void set_error(std::string err_msg);
@@ -121,6 +139,8 @@ private:
     const std::string DEBUG_FILENAME = "debug";
     const std::string ENTAP_FINAL_OUTPUT    = "final_results/";
     const std::string TEMP_DIRECTORY        = "temp/";
+    const std::string SOFTWARE_BREAK = "------------------------------------------------------\n";
+
     std::string _root_path;     // Root EnTAP output directory
     std::string _final_outpath; // Path to final files after entap has finished
     std::string _temp_outpath;  // Temp directory for EnTAP usage

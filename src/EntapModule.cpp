@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,7 +30,7 @@
 EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
                          std::string module_name, std::string &exe_path) {
 
-    _outpath  = execution_stage_path;
+    _outpath  = execution_stage_path;       // Should already be created
     _in_hits  = in_hits;
     _exe_path = exe_path;
 
@@ -42,15 +42,23 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
 
     _threads         = _pUserInput->get_supported_threads();
     _blastp          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_RUNPROTEIN);
+    _overwrite       = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
+    _transcript_shortname = _pFileSystem->get_filename(_in_hits, false);
 
     // INIT directories
     _mod_out_dir = PATHS(_outpath, module_name);
     _figure_dir  = PATHS(_mod_out_dir, FIGURE_DIR);
     _proc_dir    = PATHS(_mod_out_dir, PROCESSED_OUT_DIR);
+    _overall_results_dir = PATHS(_mod_out_dir, OVERALL_RESULTS_DIR);    // generated at app level
 
-    _pFileSystem->delete_dir(_figure_dir);
-    _pFileSystem->delete_dir(_proc_dir);
-
+    // If overwriting data, remove entire execution stage directory
+    if (_overwrite) {
+        _pFileSystem->delete_dir(_mod_out_dir);
+    } else {
+        _pFileSystem->delete_dir(_figure_dir);
+        _pFileSystem->delete_dir(_proc_dir);
+    }
+    // Recreate module + figure + processed directories
     _pFileSystem->create_dir(_mod_out_dir);
     _pFileSystem->create_dir(_figure_dir);
     _pFileSystem->create_dir(_proc_dir);
@@ -72,4 +80,13 @@ go_format_t EntapModule::EM_parse_go_list(std::string list, EntapDatabase* datab
                                              "(L=" + term_info.level + ")");
     }
     return output;
+}
+
+void EntapModule::EM_set_uniprot_headers(bool set) {
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_DATA_XREF].print_header = set;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_COMMENTS].print_header = set;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_KEGG].print_header = set;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_BIO].print_header = set;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_CELL].print_header = set;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_MOLE].print_header = set;
 }

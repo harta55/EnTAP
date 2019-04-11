@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -43,7 +43,7 @@
 #ifdef USE_BOOST
 #define PATHS(x,y)      (boostFS::path(x) / boostFS::path(y)).string()
 #else
-#define PATHS(x,y)      (x + "/" + y)
+#define PATHS(x,y)      ((x) + "/" + (y))
 #endif
 #define FASTA_FLAG      ">"
 
@@ -170,6 +170,98 @@ enum ExecuteStates {
     EXECUTION_MAX
 };
 
+enum ONTOLOGY_SOFTWARE {
+    ONT_EGGNOG_DMND,
+    ONT_INTERPRO_SCAN,
+#ifdef EGGNOG_MAPPER
+    EGGNOG_INT_FLAG,
+#endif
+    ONT_SOFTWARE_COUNT
+};
+
+enum SIMILARITY_SOFTWARE {
+    SIM_DIAMOND,
+    SIM_SOFTWARE_COUNT
+};
+
+enum EXPRESSION_SOFTWARE {
+    EXP_RSEM,
+    EXP_COUNT
+};
+
+enum FRAME_SELECTION_SOFTWARE {
+    FRAME_GENEMARK_ST,
+    FRAME_SOFTWARE_COUNT
+};
+
+enum ENTAP_HEADERS {
+    ENTAP_HEADER_UNUSED = 0,                // 0
+    ENTAP_HEADER_QUERY,
+
+    /* Frame Selection */
+    ENTAP_HEADER_FRAME,
+
+    /* Expression Filtering */
+    ENTAP_HEADER_EXP_FPKM,
+
+    /* Similarity Search - General */
+    ENTAP_HEADER_SIM_SUBJECT,
+    ENTAP_HEADER_SIM_PERCENT,       // Percent Identical to subject
+    ENTAP_HEADER_SIM_ALIGN_LEN,
+    ENTAP_HEADER_SIM_MISMATCH,
+    ENTAP_HEADER_SIM_GAP_OPEN,
+    ENTAP_HEADER_SIM_QUERY_S,
+    ENTAP_HEADER_SIM_QUERY_E,               // 10
+    ENTAP_HEADER_SIM_SUBJ_S,
+    ENTAP_HEADER_SIM_SUBJ_E,
+    ENTAP_HEADER_SIM_E_VAL,
+    ENTAP_HEADER_SIM_COVERAGE,
+    ENTAP_HEADER_SIM_TITLE,
+    ENTAP_HEADER_SIM_SPECIES,
+    ENTAP_HEADER_SIM_DATABASE,
+    ENTAP_HEADER_SIM_CONTAM,
+    ENTAP_HEADER_SIM_INFORM,
+
+    /* Similarity Search - UniProt*/
+    ENTAP_HEADER_SIM_UNI_DATA_XREF,         // 20
+    ENTAP_HEADER_SIM_UNI_COMMENTS,
+    ENTAP_HEADER_SIM_UNI_KEGG,
+    ENTAP_HEADER_SIM_UNI_GO_BIO,
+    ENTAP_HEADER_SIM_UNI_GO_CELL,
+    ENTAP_HEADER_SIM_UNI_GO_MOLE,
+
+    /* Ontology - EggNOG*/
+    ENTAP_HEADER_ONT_EGG_SEED_ORTHO,
+    ENTAP_HEADER_ONT_EGG_SEED_EVAL,
+    ENTAP_HEADER_ONT_EGG_SEED_SCORE,
+    ENTAP_HEADER_ONT_EGG_PRED_GENE,
+    ENTAP_HEADER_ONT_EGG_TAX_SCOPE,         // 30
+    ENTAP_HEADER_ONT_EGG_OGS,
+    ENTAP_HEADER_ONT_EGG_DESC,
+    ENTAP_HEADER_ONT_EGG_KEGG,
+    ENTAP_HEADER_ONT_EGG_GO_BIO,
+    ENTAP_HEADER_ONT_EGG_GO_CELL,
+    ENTAP_HEADER_ONT_EGG_GO_MOLE,
+    ENTAP_HEADER_ONT_EGG_PROTEIN,
+
+    /* Ontology - InterProScan */
+    ENTAP_HEADER_ONT_INTER_GO_BIO,
+    ENTAP_HEADER_ONT_INTER_GO_CELL,
+    ENTAP_HEADER_ONT_INTER_GO_MOLE,
+    ENTAP_HEADER_ONT_INTER_PATHWAYS,
+    ENTAP_HEADER_ONT_INTER_INTERPRO,
+    ENTAP_HEADER_ONT_INTER_DATA_TYPE,
+    ENTAP_HEADER_ONT_INTER_DATA_TERM,
+    ENTAP_HEADER_ONT_INTER_EVAL,
+
+    ENTAP_HEADER_COUNT
+};
+
+struct EntapHeader {
+    const std::string title;
+    bool print_header;
+};
+
 struct EntapDataPtrs {
     EntapDatabase* _pEntapDatbase;
     FileSystem*    _pFileSystem;
@@ -192,6 +284,8 @@ struct EntapDataPtrs {
     }
 };
 
+
+
 //*********************** Externs *****************************
 
 extern std::string DEBUG_FILE_PATH;
@@ -207,89 +301,13 @@ extern std::string ENTAP_DATABASE_SQL_PATH;
 extern std::string GRAPHING_EXE;
 extern std::string EGG_EMAPPER_EXE;
 
+extern EntapHeader ENTAP_HEADER_INFO[];
 
-namespace ENTAP_EXECUTE {
-    //------------------------Ontology-------------------------//
-    extern const std::string GO_BIOLOGICAL_FLAG ;
-    extern const std::string GO_CELLULAR_FLAG;
-    extern const std::string GO_MOLECULAR_FLAG;
-    const uint16 ONTOLOGY_MIN         = 0;
-#ifdef EGGNOG_MAPPER
-    const uint16 EGGNOG_INT_FLAG      = 0;
-#endif
-    const uint16 INTERPRO_INT_FLAG    = 1;
-    const uint16 EGGNOG_DMND_INT_FLAG = 0;  // Set to 0 for EggNOG / mapper
-    const uint16 ONTOLOGY_MAX         = 1;
+// ************************************************************
 
-    const uint16 FRAME_FLAG_GENEMARK = 0;
-    const uint16 EXP_FLAG_RSEM       = 0;
-    const uint16 SIM_SEARCH_FLAG_DIAMOND = 0;
-
-    const uint16 SOFTWARE_MAX = 2;
-
-
-    //------------------------Headers-------------------------//
-
-    // Sim Search Header Information
-    extern const std::string HEADER_QUERY;
-    extern const std::string HEADER_SUBJECT;
-    extern const std::string HEADER_PERCENT;
-    extern const std::string HEADER_ALIGN_LEN;
-    extern const std::string HEADER_MISMATCH;
-    extern const std::string HEADER_GAP_OPEN;
-    extern const std::string HEADER_QUERY_S;
-    extern const std::string HEADER_QUERY_E;
-    extern const std::string HEADER_SUBJ_S;
-    extern const std::string HEADER_SUBJ_E;
-    extern const std::string HEADER_E_VAL;
-    extern const std::string HEADER_COVERAGE;
-    extern const std::string HEADER_TITLE;
-    extern const std::string HEADER_SPECIES;
-    extern const std::string HEADER_DATABASE;
-    extern const std::string HEADER_FRAME;
-    extern const std::string HEADER_CONTAM;
-    extern const std::string HEADER_INFORM;
-
-    // UniProt Mapping Header Information
-    extern const std::string HEADER_UNI_DATA_XREF;
-    extern const std::string HEADER_UNI_COMMENTS;
-    extern const std::string HEADER_UNI_GO_BIO;
-    extern const std::string HEADER_UNI_GO_CELL;
-    extern const std::string HEADER_UNI_GO_MOLE;
-    extern const std::string HEADER_UNI_KEGG;
-
-    // EggNOG Header Information
-    extern const std::string HEADER_SEED_ORTH;
-    extern const std::string HEADER_SEED_EVAL;
-    extern const std::string HEADER_SEED_SCORE;
-    extern const std::string HEADER_PRED_GENE;
-    extern const std::string HEADER_TAX_SCOPE;
-    extern const std::string HEADER_EGG_OGS;
-    extern const std::string HEADER_EGG_KEGG;
-    extern const std::string HEADER_EGG_GO_BIO ;
-    extern const std::string HEADER_EGG_GO_CELL;
-    extern const std::string HEADER_EGG_GO_MOLE;
-    extern const std::string HEADER_EGG_DESC;
-    extern const std::string HEADER_EGG_LEVEL;
-    extern const std::string HEADER_EGG_PROTEIN;
-
-    // Interpro Header Information
-    extern const std::string HEADER_INTER_GO_BIO;
-    extern const std::string HEADER_INTER_GO_CELL;
-    extern const std::string HEADER_INTER_GO_MOLE;
-    extern const std::string HEADER_INTER_PATHWAY;
-    extern const std::string HEADER_INTER_INTERPRO;
-    extern const std::string HEADER_INTER_DATA_TYPE;
-    extern const std::string HEADER_INTER_DATA_TERM;
-    extern const std::string HEADER_INTER_EVAL;
-}
-
-namespace ENTAP_STATS {
-    extern const std::string SOFTWARE_BREAK;
-
-    void ES_format_stat_stream(std::stringstream &stream, std::string title);
-
-
-}
+static const std::string GO_MOLECULAR_FLAG     = "molecular_function";
+static const std::string GO_BIOLOGICAL_FLAG    = "biological_process";
+static const std::string GO_CELLULAR_FLAG      = "cellular_component";
+static const std::string GO_OVERALL_FLAG       = "overall";
 
 #endif //ENTAPGLOBALS_H

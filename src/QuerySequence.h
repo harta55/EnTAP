@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -40,8 +40,7 @@ public:
     class QueryAlignment;
     struct AlignmentData;
 
-    // Avoid cluttering global with the following defs
-    typedef std::pair<QueryAlignment*,std::vector<QueryAlignment*>> align_database_hits_t;
+    typedef std::vector<QueryAlignment*> align_database_hits_t;
     typedef std::unordered_map<std::string,align_database_hits_t> ALIGNMENT_DATA_T;
 
     typedef enum {
@@ -60,6 +59,7 @@ public:
         QUERY_CONTAMINANT       = (1 << 11),
         QUERY_FAMILY_ONE_KEGG   = (1 << 12),
         QUERY_FAMILY_ONE_GO     = (1 << 13),
+
         QUERY_MAX               = (1 << 31)
 
     } QUERY_FLAGS;
@@ -72,7 +72,7 @@ public:
         std::string              seed_coverage;
         std::string              predicted_gene;
         std::string              tax_scope_lvl_max; // virNOG[6]
-        std::string              tax_scope;         // virNOG NOT virNOG[6]
+        std::string              tax_scope;         // virNOG
         std::string              tax_scope_readable;// Ascomycota
         std::string              pname;
         std::string              name;
@@ -92,9 +92,9 @@ public:
         std::string             database_type;
         std::string             interpro_desc_id;
         std::string             pathways;
+        fp64                    e_value_raw;
         go_format_t             parsed_go;
     };
-
 
     struct SimSearchResults {
         std::string                       length;
@@ -125,13 +125,141 @@ public:
         UniprotEntry                      uniprot_info;
     };
 
+
+    //**********************************************************************
+    //**********************************************************************
+    //                 QueryAlignment Nested Class
+    //**********************************************************************
+    //**********************************************************************
+
+    class QueryAlignment {
+
+    public:
+        QueryAlignment();
+        std::string print_delim(std::vector<ENTAP_HEADERS> &, uint8 lvl, char delim);
+        bool operator<(const QueryAlignment&query) {return !(*this > query);};
+        void set_compare_overall_alignment(bool val);
+        virtual ~QueryAlignment() = default;;
+        virtual bool operator>(const QueryAlignment&)=0;
+        void get_all_header_data(std::string[]);
+        void get_header_data(ENTAP_HEADERS header, std::string &val, uint8 lvl);
+
+    protected:
+        virtual bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list)=0;
+
+        std::unordered_map<ENTAP_HEADERS , std::string*> ALIGN_OUTPUT_MAP;
+        bool _compare_overall_alignment; // May want to compare separate parameters for overall alignment across databases
+        QuerySequence* _parent;
+    };
+
+    //**********************************************************************
+    //**********************************************************************
+    //                 SimSearchAlignment Nested Class
+    //**********************************************************************
+    //**********************************************************************
+
+    class SimSearchAlignment : public QueryAlignment{
+
+    public:
+        SimSearchAlignment(SimSearchResults, std::string&, QuerySequence*);
+        ~SimSearchAlignment() override = default;
+        SimSearchResults* get_results();
+        bool operator>(const QueryAlignment&) override;
+
+    private:
+        void set_tax_score(std::string&);
+
+        QuerySequence::SimSearchResults    _sim_search_results;
+
+    protected:
+        bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list) override;
+
+        static constexpr uint8 E_VAL_DIF     = 8;
+        static constexpr uint8 COV_DIF       = 5;
+        static constexpr uint8 INFORM_ADD    = 3;
+        static constexpr fp32 INFORM_FACTOR  = 1.2;
+    };
+
+    //**********************************************************************
+    //**********************************************************************
+    //                 EggnogDmndAlignment Nested Class
+    //**********************************************************************
+    //**********************************************************************
+
+    class EggnogDmndAlignment : public QueryAlignment {
+
+    public:
+        EggnogDmndAlignment(EggnogResults eggnogResults, QuerySequence* parent);
+        ~EggnogDmndAlignment() override = default;
+        EggnogResults* get_results();
+        bool operator>(const QueryAlignment&) override;
+
+    private:
+        QuerySequence::EggnogResults _eggnog_results;
+
+    protected:
+        bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list) override;
+
+    };
+
+    //**********************************************************************
+    //**********************************************************************
+    //                 InterproAlignment Nested Class
+    //**********************************************************************
+    //**********************************************************************
+
+    class InterproAlignment : public QueryAlignment {
+
+    public:
+        InterproAlignment(InterProResults results, QuerySequence *parent);
+        ~InterproAlignment() override = default;
+        InterProResults* get_results();
+        bool operator>(const QueryAlignment&) override;
+
+
+    private:
+        QuerySequence::InterProResults _interpro_results;
+
+    protected:
+        bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list) override;
+
+    };
+
+    struct AlignmentData {
+        ALIGNMENT_DATA_T sim_search_data[SIM_SOFTWARE_COUNT];
+        ALIGNMENT_DATA_T ontology_data[ONT_SOFTWARE_COUNT];
+        QuerySequence* querySequence;
+
+        QueryAlignment* overall_alignment[EXECUTION_MAX][ONT_SOFTWARE_COUNT]{};
+
+        struct sort_descending_database {
+            bool operator () (QueryAlignment* first, QueryAlignment* second) {
+                first->set_compare_overall_alignment(false);
+                second->set_compare_overall_alignment(false);
+                return first > second;
+            }
+        };
+
+        AlignmentData(QuerySequence* sequence);
+        ~AlignmentData();
+
+        void set_best_alignment(ExecuteStates state, uint16 software, QueryAlignment *);
+        void update_best_hit(ExecuteStates state, uint16 software, std::string &database, QueryAlignment* new_alignment);
+        bool hit_database(ExecuteStates state, uint16 software, std::string &database);
+        align_database_hits_t* get_database_ptr(ExecuteStates, uint16, std::string&);
+        QueryAlignment* get_best_align_ptr(ExecuteStates, uint16 software, std::string database);
+        ALIGNMENT_DATA_T* get_software_ptr(ExecuteStates state, uint16 software);
+
+    };
+
+
+
+    /* Public Functions */
     QuerySequence();
     QuerySequence(bool, std::string, std::string);
     ~QuerySequence();
     void setSequence(std::string&);
-    std::string print_tsv(const std::vector<const std::string*>&);
-    std::string print_tsv(std::vector<const std::string*>& , short);
-    void init_header();
+    std::string print_delim(std::vector<ENTAP_HEADERS> &, short lvl ,char delim);
     void setFrame(const std::string &frame);
     unsigned long getSeq_length() const;
     const std::string &getFrame() const;
@@ -147,104 +275,26 @@ public:
     void QUERY_FLAG_CLEAR(QUERY_FLAGS flag);
     void QUERY_FLAG_CHANGE(QUERY_FLAGS flag, bool val);
     bool isContaminant();
-    bool hit_database(ExecuteStates state, uint16 software, std::string database);
+#ifdef EGGNOG_MAPPER
     void set_eggnog_results(const EggnogResults&);
-    void set_interpro_results(std::string&,std::string&,std::string&,std::string&,
-                              std::string&,go_format_t&);
-    QuerySequence::align_database_hits_t* get_database_hits(std::string&,ExecuteStates, uint16 );
-    std::string get_header_data(const std::string*);
+#endif
+    // Alignemnt accession routines
+    void add_alignment(ExecuteStates state, uint16 software, EggnogResults &results, std::string& database);
+    void add_alignment(ExecuteStates state, uint16 software, SimSearchResults &results, std::string& database,std::string lineage);
+    void add_alignment(ExecuteStates state, uint16 software, InterProResults &results, std::string& database);
+    QuerySequence::align_database_hits_t* get_database_hits(std::string& database,ExecuteStates state, uint16 software);
 
+    std::string format_go_info(std::vector<std::string> &go_list, uint8 lvl);
+
+    // Returns recast alignment pointer
     template<class T>
     T *get_best_hit_alignment(ExecuteStates state, uint16 software, std::string database) {
-        if (database.empty()) {
-            return static_cast<T*>(_total_alignment_data.index_best_align(state,software));
-        } else {
-            return static_cast<T*>(_total_alignment_data.index_data(state,software)->at(database).first);
-        }
+        return static_cast<T*>(_alignment_data->get_best_align_ptr(state, software, database));
     }
 
-    void add_alignment(ExecuteStates state, uint16 software, EggnogResults results, std::string& database) {
-        QUERY_FLAG_SET(QUERY_EGGNOG_HIT);
-        QUERY_FLAG_SET(QUERY_FAMILY_ASSIGNED);
-        update_best_hit(state, software, database, new EggnogDmndAlignment(results,this));
-    }
+    // Checks whether an alignment was found against specific atabase
+    bool hit_database(ExecuteStates state, uint16 software, std::string database);
 
-
-    void add_alignment(ExecuteStates state, uint16 software, SimSearchResults results, std::string& database,std::string lineage) {
-        QUERY_FLAG_SET(QUERY_BLAST_HIT);
-        QueryAlignment *new_alignment = new SimSearchAlignment(results, lineage, this);
-        update_best_hit(state, software, database, new_alignment);
-    }
-
-    void update_best_hit(ExecuteStates state, uint16 software, std::string &database, QueryAlignment* new_alignment);
-public:
-
-    //**********************************************************************
-    //**********************************************************************
-    //                 QueryAlignment Nested Class
-    //**********************************************************************
-    //**********************************************************************
-
-    class QueryAlignment {
-
-    public:
-        QueryAlignment();
-        std::string print_tsv(const std::vector<const std::string*>&);
-        bool operator<(const QueryAlignment&query) {return !(*this > query);};
-        void set_compare_overall_alignment(bool val);
-        virtual ~QueryAlignment(){};
-        virtual bool operator>(const QueryAlignment&)=0;
-
-    protected:
-        std::map<const std::string*, std::string> ALIGN_OUTPUT_MAP;
-        bool _compare_overall_alignment; // May want to compare separate parameters for overall alignment
-        QuerySequence* _parent;
-    };
-
-    class SimSearchAlignment : public QueryAlignment{
-
-    public:
-        SimSearchAlignment(SimSearchResults, std::string&, QuerySequence*);
-        virtual ~SimSearchAlignment();
-        SimSearchResults* get_results();
-        bool operator>(const QueryAlignment&);
-
-    private:
-        void set_tax_score(std::string&);
-
-        QuerySequence::SimSearchResults    _sim_search_results;
-
-    protected:
-        static constexpr uint8 E_VAL_DIF     = 8;
-        static constexpr uint8 COV_DIF       = 5;
-        static constexpr uint8 INFORM_ADD    = 3;
-        static constexpr fp32 INFORM_FACTOR  = 1.2;
-    };
-
-    class EggnogDmndAlignment : public QueryAlignment {
-
-    public:
-        EggnogDmndAlignment(EggnogResults eggnogResults, QuerySequence* parent);
-        virtual ~EggnogDmndAlignment();
-        EggnogResults* get_results();
-        bool operator>(const QueryAlignment&);
-
-    private:
-        QuerySequence::EggnogResults _eggnog_results;
-    };
-
-
-    struct AlignmentData {
-        std::vector<ALIGNMENT_DATA_T>     _alignment_data;  // contains all alignment data
-        std::vector<QueryAlignment*>      _alignment_best;  // only overall best hits
-
-        AlignmentData();
-        ~AlignmentData();
-
-        ALIGNMENT_DATA_T* index_data(ExecuteStates state, uint16 software);
-        QueryAlignment* index_best_align(ExecuteStates state, uint16 software);
-        void set_best_align(ExecuteStates state, uint16 software, QueryAlignment*);
-    };
 
 private:
     fp32                              _fpkm;
@@ -257,11 +307,15 @@ private:
     EggnogResults                     _eggnog_results;
     InterProResults                   _interpro_results;
     std::map<const std::string*, std::string*> OUTPUT_MAP;
-    AlignmentData                     _total_alignment_data;
+    AlignmentData                     *_alignment_data;  // contains all alignment data
+    std::string                       _header_info[ENTAP_HEADER_COUNT];
 
+    /* Private Functions */
     void init_sequence();
     unsigned long calc_seq_length(std::string &,bool);
     void update_query_flags(ExecuteStates state, uint16 software);
+    void get_header_data(std::string& data, ENTAP_HEADERS header, uint8 lvl);
+    void set_header_data();
 };
 
 

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -33,4 +33,5 @@ AbstractOntology::AbstractOntology(std::string &in_hits, std::string &ont_out, E
 : EntapModule(ont_out, in_hits, entap_data, mod_name, exe) {
 
     _go_levels          = _pUserInput->get_user_input<vect_uint16_t>(_pUserInput->INPUT_FLAG_GO_LEVELS);
+    _execution_state    = GENE_ONTOLOGY;
 }

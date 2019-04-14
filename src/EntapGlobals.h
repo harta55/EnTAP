@@ -284,6 +284,16 @@ struct EntapDataPtrs {
     }
 };
 
+namespace std {
+    template<>
+    struct hash<ENTAP_HEADERS> {
+        std::size_t operator()(const ENTAP_HEADERS &x) const {
+            using type = typename std::underlying_type<ENTAP_HEADERS>::type;
+            return std::hash<type>()(static_cast<type>(x));
+        }
+    };
+}
+
 
 
 //*********************** Externs *****************************

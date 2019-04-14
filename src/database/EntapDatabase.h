@@ -192,7 +192,7 @@ public:
         ENTAP_UNIPROT,      // UniProt mapping database
         ENTAP_VERSION,      // Version table used in SQL database only
 
-        ENTAP_MAX_TYPES=5
+        ENTAP_MAX_TYPES
 
     } DATABASE_TYPE;
 
@@ -232,6 +232,7 @@ public:
         ERR_DATA_TAXONOMY_PARSE,
         ERR_DATA_SET,
         ERR_DATA_INCOMPATIBLE_VER,
+        ERR_DATA_GET_VERSION,
 
         ERR_DATA_MEM_ALLOC,
         ERR_DATA_UNHANDLED_TYPE,
@@ -407,7 +408,7 @@ private:
     std::string          _err_msg;
     DATABASE_ERR         _err_code;
 
-    const std::string ENTAP_DATABASE_TYPES_STR[ENTAP_MAX_TYPES] {
+    const std::string ENTAP_DATABASE_TYPES_STR[ENTAP_MAX_TYPES-1] {
             "EnTAP Serialized Database",
             "EnTAP SQL Database",
             "EnTAP NCBI Taxonomy Database",

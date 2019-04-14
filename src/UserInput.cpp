@@ -176,6 +176,10 @@
 #define DESC_NOCHECK        "Use this flag if you don't want your input to EnTAP verifed."\
                             " This is not advised to use! Your run may fail later on "  \
                             "if inputs are not checked"
+#define DESC_OUTPUT_FORMAT  "Specify the output format for the processed alignments."   \
+                            "Multiple flags can be specified."                          \
+                            "    1. TSV Format (default)\n"                             \
+                            "    2. CSV Format\n"
 //**************************************************************
 // Externs
 std::string RSEM_EXE_DIR;
@@ -258,6 +262,9 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
                 ((INPUT_FLAG_TRANSCRIPTOME + ",i").c_str(), boostPO::value<std::string>(), DESC_INPUT_TRAN)
                 (INPUT_FLAG_COMPLETE.c_str(), DESC_COMPLET_PROT)
                 (INPUT_FLAG_NOCHECK.c_str(), DESC_NOCHECK)
+                (INPUT_FLAG_OUTPUT_FORMAT.c_str(),
+                 boostPO::value<std::vector<uint16>>()->multitoken()
+                        ->default_value(std::vector<uint16>{FileSystem::ENT_FILE_DELIM_TSV, FileSystem::ENT_FILE_FASTA_FAA, FileSystem::ENT_FILE_FASTA_FNN},""),DESC_OUTPUT_FORMAT)
                 (INPUT_FLAG_OVERWRITE.c_str(), DESC_OVERWRITE);
         boostPO::variables_map vm;
         try {
@@ -336,6 +343,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         TCLAP::MultiArg<uint16> argGOLevels("", INPUT_FLAG_GO_LEVELS, DESC_ONT_LEVELS, false, "integer list", cmd);
         TCLAP::MultiArg<std::string> argContam("c", INPUT_FLAG_CONTAM, DESC_CONTAMINANT, false, "string list", cmd  );
         TCLAP::MultiArg<uint16> argDataType("", INPUT_FLAG_DATABASE_TYPE, DESC_DATABASE_TYPE, false, "integer list", cmd);
+        TCLAP::MultiArg<uint16> argOutputFormat("", INPUT_FLAG_OUTPUT_FORMAT, DESC_OUTPUT_FORMAT, false, "integer list", cmd);
 
         cmd.parse( argc, argv );
 
@@ -394,6 +402,13 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         } else {
             _user_inputs.emplace(INPUT_FLAG_DATABASE_TYPE, std::vector<uint16>{EntapDatabase::ENTAP_SERIALIZED});
         }
+
+        if (argOutputFormat.isSet()) {
+            _user_inputs.emplace(INPUT_FLAG_OUTPUT_FORMAT, argOutputFormat.getValue());
+        } else {
+            _user_inputs.emplace(INPUT_FLAG_OUTPUT_FORMAT, vect_uint16_t{FileSystem::ENT_FILE_DELIM_TSV, FileSystem::ENT_FILE_FASTA_FNN, FileSystem::ENT_FILE_FASTA_FAA});
+        }
+
         _user_inputs.emplace(INPUT_FLAG_DATABASE, argDatabase.getValue());
         _user_inputs.emplace(INPUT_FLAG_CONTAM, argContam.getValue());
 
@@ -484,6 +499,17 @@ bool UserInput::verify_user_input() {
 
         verify_databases(is_run);
         print_user_input();
+
+        // Handle generic flags
+        if (has_input(UserInput::INPUT_FLAG_OUTPUT_FORMAT)) {
+            vect_uint16_t output_formats = get_user_input<vect_uint16_t>(UserInput::INPUT_FLAG_OUTPUT_FORMAT);
+            for (uint16 flag : output_formats) {
+                if (flag <= FileSystem::ENT_FILE_UNUSED || flag >= FileSystem::ENT_FILE_OUTPUT_FORMAT_MAX) {
+                    throw ExceptionHandler("Invalid flag for Output Format (" + std::to_string(flag) + ")",
+                                           ERR_ENTAP_INPUT_PARSE);
+                }
+            }
+        }
 
         // Handle EnTAP execution commands
         if (is_run) {

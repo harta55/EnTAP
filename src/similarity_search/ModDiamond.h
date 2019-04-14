@@ -52,19 +52,11 @@ public:
 
 private:
     static constexpr int DMND_COL_NUMBER = 14;
-    const std::string SIM_SEARCH_DATABASE_BEST_TSV               = "best_hits.tsv";
-    const std::string SIM_SEARCH_DATABASE_BEST_TSV_NO_CONTAM     = "best_hits_no_contam.tsv";
-    const std::string SIM_SEARCH_DATABASE_BEST_FA_NUCL           = "best_hits.fnn";
-    const std::string SIM_SEARCH_DATABASE_BEST_FA_PROT           = "best_hits.faa";
-    const std::string SIM_SEARCH_DATABASE_BEST_FA_NUCL_NO_CONTAM = "best_hits_no_contam.fnn";
-    const std::string SIM_SEARCH_DATABASE_BEST_FA_PROT_NO_CONTAM = "best_hits_no_contam.faa";
-
-    const std::string SIM_SEARCH_DATABASE_CONTAM_TSV             = "best_hits_contam.tsv";
-    const std::string SIM_SEARCH_DATABASE_CONTAM_FA_NUCL         = "best_hits_contam.fnn";
-    const std::string SIM_SEARCH_DATABASE_CONTAM_FA_PROT         = "best_hits_contam.faa";
-    const std::string SIM_SEARCH_DATABASE_NO_HITS_NUCL           = "no_hits.fnn";
-    const std::string SIM_SEARCH_DATABASE_NO_HITS_PROT           = "no_hits.faa";
-    const std::string SIM_SEARCH_DATABASE_UNSELECTED             = "unselected.tsv";
+    const std::string SIM_SEARCH_DATABASE_BEST_HITS              = "best_hits";
+    const std::string SIM_SEARCH_DATABASE_BEST_HITS_CONTAM       = "best_hits_contam";
+    const std::string SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM    = "best_hits_no_contam";
+    const std::string SIM_SEARCH_DATABASE_NO_HITS                = "no_hits";
+    const std::string SIM_SEARCH_DATABASE_UNSELECTED             = "unselected";
 
     // Graphing constants
     const uint8 GRAPH_SOFTWARE_FLAG                              = 3;

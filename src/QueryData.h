@@ -33,6 +33,8 @@
 #include "QuerySequence.h"
 #include "common.h"
 
+class QuerySequence;
+
 struct FrameStats {
     uint32 removed;
     uint32 selected;
@@ -55,8 +57,6 @@ public:
         UNIPROT_MATCH      = (1 << 5),
 
         DATA_FLAGS_MAX     = (1 << 31)
-
-
     }DATA_FLAGS;
 
 
@@ -70,6 +70,13 @@ public:
     std::string trim_sequence_header(std::string&, std::string);
     void final_statistics(std::string&, std::vector<uint16>&);
     void set_frame_stats(const FrameStats &_frame_stats);
+    bool start_alignment_files(std::string &base_path, std::vector<ENTAP_HEADERS> &headers, uint8 lvl,
+                                std::vector<FileSystem::ENT_FILE_TYPES> *types);
+    bool end_alignment_files(std::string &base_path);
+    bool add_alignment_data(std::string &base_path, std::vector<ENTAP_HEADERS> &headers,
+                            QuerySequence *querySequence, uint8 lvl);
+    // TODO create generic printing of alingment data for QueryAlignment
+
     bool DATA_FLAG_GET(DATA_FLAGS);
     void DATA_FLAG_SET(DATA_FLAGS);
     void DATA_FLAG_CLEAR(DATA_FLAGS);
@@ -109,6 +116,8 @@ private:
     uint32       _pipeline_flags;           // Success flags
     FileSystem  *_pFileSystem;
     UserInput   *_pUserInput;
+    std::unordered_map<std::string, std::vector<std::ofstream*>> _alignment_files;
+    std::vector<FileSystem::ENT_FILE_TYPES> _alignment_file_types;
 
 };
 

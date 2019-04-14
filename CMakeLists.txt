@@ -67,7 +67,7 @@ set(SOURCE_FILES
 # Include libraries
 include_directories(libs/pstream)
 include_directories(libs/fast-cpp-csv-parser) # May need to compile with thread control
-include_directories(libs/cereal-master/include)
+include_directories(libs/cereal-1.2.2/include)
 include_directories(libs/tclap-1.2.2/include)
 include_directories(libs/boost/include)
 

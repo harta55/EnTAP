@@ -265,7 +265,7 @@ EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::download(EggnogDatabase::EGGNOG_DB
 
             FS_dprint("Success! Decompressing...");
 
-            if (!_pFilesystem->decompress_file(temp_path, out_path, FileSystem::FILE_GZ)) {
+            if (!_pFilesystem->decompress_file(temp_path, out_path, FileSystem::ENT_FILE_GZ)) {
                 set_error("Unable to decompress file at: " + temp_path + _pFilesystem->get_error(),
                           ERR_EGG_SQL_DECOMP);
                 return ERR_EGG_SQL_DECOMP;
@@ -285,7 +285,7 @@ EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::download(EggnogDatabase::EGGNOG_DB
 
             FS_dprint("Success! Decompressing...");
 
-            if (!_pFilesystem->decompress_file(temp_path, out_path, FileSystem::FILE_GZ)) {
+            if (!_pFilesystem->decompress_file(temp_path, out_path, FileSystem::ENT_FILE_GZ)) {
                 set_error("Unable to decompress file at: " + temp_path +_pFilesystem->get_error(),
                         ERR_EGG_DMND_DECOMP);
                 _pFilesystem->delete_file(out_path);
@@ -306,7 +306,7 @@ EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::download(EggnogDatabase::EGGNOG_DB
 
             FS_dprint("Success! Decompressing...");
 
-            if (!_pFilesystem->decompress_file(temp_path, out_path, FileSystem::FILE_GZ)) {
+            if (!_pFilesystem->decompress_file(temp_path, out_path, FileSystem::ENT_FILE_GZ)) {
                 set_error("Unable to decompress file at: " + temp_path + _pFilesystem->get_error(),
                         ERR_EGG_FASTA_DECOMP);
                 _pFilesystem->delete_file(out_path);

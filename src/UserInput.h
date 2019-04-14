@@ -135,6 +135,7 @@ public:
     const std::string INPUT_FLAG_NOCHECK       = "no-check";
     const std::string INPUT_FLAG_GENERATE      = "data-generate";
     const std::string INPUT_FLAG_DATABASE_TYPE = "data-type";
+    const std::string INPUT_FLAG_OUTPUT_FORMAT = "output-format";
 
 private:
     enum SPECIES_FLAGS {
@@ -176,7 +177,7 @@ private:
     const fp32 FPKM_MAX                        = 100.0;
     const uint8 MAX_DATABASE_SIZE              = 5;
     const std::string DEFAULT_STATE            = "+";
-    const std::string OUTFILE_DEFAULT          = PATHS(FileSystem::get_cur_dir(),"outfiles");
+    const std::string OUTFILE_DEFAULT          = PATHS(FileSystem::get_cur_dir(),"entap_outfiles");
 
     // Enter as lowercase
     const std::vector<std::string> INFORMATIVENESS {
@@ -194,18 +195,20 @@ private:
 
     //-------------------Config File----------------------//
     const std::string CONFIG_FILE              = "entap_config.txt";
-    const std::string KEY_UNIPROT_SWISS        = "uniprot_swiss_path";
-    const std::string KEY_UNIPROT_UR90         = "uniprot_ur90_path";
-    const std::string KEY_UNIPROT_UR100        = "uniprot_ur100_path";
-    const std::string KEY_UNIPROT_TREMBL       = "uniprot_trembl_path";
-    const std::string KEY_NCBI_NR              = "ncbi_nr_path";
-    const std::string KEY_NCBI_REFSEQ_COMPLETE = "ncbi_refseq_complete_path";
-    const std::string KEY_NCBI_REFSEQ_SEPARATE = "ncbi_refseq_separate_path";
+//    const std::string KEY_UNIPROT_SWISS        = "uniprot_swiss_path";
+//    const std::string KEY_UNIPROT_UR90         = "uniprot_ur90_path";
+//    const std::string KEY_UNIPROT_UR100        = "uniprot_ur100_path";
+//    const std::string KEY_UNIPROT_TREMBL       = "uniprot_trembl_path";
+//    const std::string KEY_NCBI_NR              = "ncbi_nr_path";
+//    const std::string KEY_NCBI_REFSEQ_COMPLETE = "ncbi_refseq_complete_path";
+//    const std::string KEY_NCBI_REFSEQ_SEPARATE = "ncbi_refseq_separate_path";
     const std::string KEY_DIAMOND_EXE          = "diamond_exe_path";
     const std::string KEY_RSEM_EXE             = "rsem_exe_path";
     const std::string KEY_GENEMARK_EXE         = "genemarkst_exe_path";
+#ifdef EGGNOG_MAPPER
     const std::string KEY_EGGNOG_EXE           = "eggnog_exe_path";
     const std::string KEY_EGGNOG_DOWN          = "eggnog_download_exe";
+#endif
     const std::string KEY_INTERPRO_EXE         = "interpro_exe_path";
     const std::string KEY_EGGNOG_SQL_DB        = "eggnog_sql_database";
     const std::string KEY_EGGNOG_DMND          = "eggnog_dmnd_database";

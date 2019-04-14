@@ -45,13 +45,19 @@ class FileSystem {
 public:
 
     typedef enum {
-        FILE_TAR_GZ,
-        FILE_GZ,
-        FILE_ZIP,
-        FILE_DELIMINATED,
-        FILE_FASTA,
+        ENT_FILE_UNUSED=0,
+        ENT_FILE_DELIM_TSV,
+        ENT_FILE_DELIM_CSV,
+        ENT_FILE_FASTA_FAA,
+        ENT_FILE_FASTA_FNN,
+        ENT_FILE_OUTPUT_FORMAT_MAX,
 
-        FILE_MAX
+        ENT_FILE_XML,
+        ENT_FILE_TAR_GZ,
+        ENT_FILE_GZ,
+        ENT_FILE_ZIP,
+
+        ENT_FILE_MAX
 
     } ENT_FILE_TYPES;
 
@@ -73,14 +79,6 @@ public:
 
     } ENT_FILE_ITER;
 
-    struct CreateFileCmd {
-
-        std::stringstream *stringstream;
-        std::string        file_path;
-        std::vector<ENTAP_HEADERS> headers;
-        ENT_FILE_TYPES     type;
-        char               delim;
-    };
 
     FileSystem(std::string&);
     ~FileSystem();
@@ -108,12 +106,14 @@ public:
     bool rename_file(std::string& in, std::string& out);
     uint16 get_file_status(std::string &path);
     std::string print_file_status(uint16 status,std::string& path);
-    std::string get_error(void);
+    std::string get_error();
+    std::string get_extension(ENT_FILE_TYPES type);
 
     bool download_ftp_file(std::string,std::string&);
     bool decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES);
 
     bool print_headers(std::ofstream &file_stream, std::vector<ENTAP_HEADERS> &headers, char delim);
+    bool initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HEADERS> &headers, ENT_FILE_TYPES type);
     void format_stat_stream(std::stringstream &stream, std::string title);
 
 //**************************************************************
@@ -127,8 +127,11 @@ public:
     static const std::string EXT_DMND;
     static const std::string EXT_XML;
     static const std::string EXT_STD;
+    static const std::string EXT_TSV;
+    static const std::string EXT_CSV;
 
     static const char        DELIM_TSV;
+    static const char        DELIM_CSV;
 
 private:
     void init_log();

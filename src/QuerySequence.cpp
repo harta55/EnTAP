@@ -420,9 +420,17 @@ QuerySequence::align_database_hits_t* QuerySequence::AlignmentData::get_database
 
     switch (state) {
         case SIMILARITY_SEARCH:
-            return &this->sim_search_data[software].at(database);
+            if (this->sim_search_data[software].find(database) != (this->sim_search_data[software].end())) {
+                return &this->sim_search_data[software].at(database);
+            } else {
+                return nullptr;
+            }
         case GENE_ONTOLOGY:
-            return &this->ontology_data[software].at(database);
+            if (this->ontology_data[software].find(database) != (this->ontology_data[software].end())) {
+                return &this->ontology_data[software].at(database);
+            } else {
+                return nullptr;
+            }
         default:
             return nullptr;
     }
@@ -448,7 +456,7 @@ QuerySequence::QueryAlignment* QuerySequence::AlignmentData::get_best_align_ptr(
 }
 
 void
-QuerySequence::AlignmentData::set_best_alignment(ExecuteStates state, uint16 software, QuerySequence::QueryAlignment *alignment) {
+QuerySequence::AlignmentData::set_best_alignment(ExecuteStates state, uint16 software, QueryAlignment *alignment) {
     overall_alignment[state][software] = alignment;
 }
 
@@ -683,7 +691,7 @@ QuerySequence::EggnogResults *QuerySequence::EggnogDmndAlignment::get_results() 
     return &this->_eggnog_results;
 }
 
-bool QuerySequence::EggnogDmndAlignment::operator>(const QuerySequence::QueryAlignment & alignment) {
+bool QuerySequence::EggnogDmndAlignment::operator>(const QueryAlignment & alignment) {
     const EggnogDmndAlignment alignment_cast = dynamic_cast<const EggnogDmndAlignment&>(alignment);
 
     return this->_eggnog_results.seed_eval_raw < alignment_cast._eggnog_results.seed_eval_raw;

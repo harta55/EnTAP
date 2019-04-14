@@ -87,6 +87,11 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     _trim          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_TRIM);
     is_complete    = _pUserInput->has_input(_pUserInput->INPUT_FLAG_COMPLETE);
 
+    for (uint16 val : _pUserInput->get_user_input<std::vector<uint16>>(_pUserInput->INPUT_FLAG_OUTPUT_FORMAT)) {
+        _alignment_file_types.push_back(static_cast<FileSystem::ENT_FILE_TYPES>(val));
+    }
+
+
     if (!_pFileSystem->file_exists(input_file)) {
         throw ExceptionHandler("Input transcriptome not found at: " + input_file,ERR_ENTAP_INPUT_PARSE);
     }
@@ -476,4 +481,73 @@ QuerySequence *QueryData::get_sequence(std::string &query_id) {
     }
 }
 
+bool QueryData::start_alignment_files(std::string &base_path, std::vector<ENTAP_HEADERS> &headers, uint8 lvl,
+                                        std::vector<FileSystem::ENT_FILE_TYPES> *types) {
+    bool ret;
+    std::string ext;
 
+    // add this path to map if it does not exist, otherwise skip
+    if (_alignment_files.find(base_path) == _alignment_files.end()) {
+        _alignment_files.emplace(base_path, std::vector<std::ofstream*>(_alignment_file_types.size()));
+
+        // Generate files for each data type
+        for (FileSystem::ENT_FILE_TYPES type : _alignment_file_types) {
+            _alignment_files.at(base_path)[type] =
+                    new std::ofstream(base_path + "_lvl" + std::to_string(lvl) +
+                                      _pFileSystem->get_extension(type),
+                                      std::ios::out | std::ios::app);
+            // Initialize headers or any other generic stuff
+            _pFileSystem->initialize_file(_alignment_files.at(base_path)[type], headers, type);
+        }
+        ret = true;
+    } else {
+        // File base path already exists!
+        ret = false;
+    }
+    return ret;
+}
+
+bool QueryData::end_alignment_files(std::string &base_path) {
+    // Cleanup/close files
+
+    for (std::ofstream* file_ptr : _alignment_files.at(base_path)) {
+        // some are unused such as 0
+        if (file_ptr != nullptr) {
+            file_ptr->close();
+            delete file_ptr;
+        }
+    }
+    _alignment_files.erase(base_path);
+    return true;
+}
+
+bool QueryData::add_alignment_data(std::string &base_path, std::vector<ENTAP_HEADERS> &headers, QuerySequence *querySequence, uint8 lvl) {
+    bool ret = false;
+
+    // Cycle through output file types from user
+    for (FileSystem::ENT_FILE_TYPES type : _alignment_file_types) {
+        switch (type) {
+
+            case FileSystem::ENT_FILE_DELIM_TSV:
+                *_alignment_files.at(base_path)[type] << querySequence->print_delim(headers, lvl, FileSystem::DELIM_TSV) << std::endl;
+                break;
+
+            case FileSystem::ENT_FILE_DELIM_CSV:
+                *_alignment_files.at(base_path)[type] << querySequence->print_delim(headers, lvl, FileSystem::DELIM_CSV) << std::endl;
+                break;
+
+            case FileSystem::ENT_FILE_FASTA_FAA:
+                *_alignment_files.at(base_path)[type] << querySequence->get_sequence_p() << std::endl;
+                break;
+
+            case FileSystem::ENT_FILE_FASTA_FNN:
+                *_alignment_files.at(base_path)[type] << querySequence->get_sequence_n() << std::endl;
+                break;
+
+            default:
+                FS_dprint("ERROR unhandled file type (add_alignment_data): " + std::to_string(type));
+                break;
+        }
+    }
+    return ret;
+}

@@ -302,7 +302,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DAT
         return ERR_DATA_TAX_DOWNLOAD;
     }
     // decompress TAR.GZ file
-    if (!_pFilesystem->decompress_file(temp_outpath, _temp_directory, FileSystem::FILE_TAR_GZ)) {
+    if (!_pFilesystem->decompress_file(temp_outpath, _temp_directory, FileSystem::ENT_FILE_TAR_GZ)) {
         set_err_msg("Unable to decompress NCBI Taxonomy data" + _pFilesystem->get_error(), ERR_DATA_FILE_DECOMPRESS);
         return ERR_DATA_FILE_DECOMPRESS;
     }
@@ -428,7 +428,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
     }
 
     // decompress database file
-    if (!_pFilesystem->decompress_file(go_database_targz, _temp_directory, FileSystem::FILE_TAR_GZ)) {
+    if (!_pFilesystem->decompress_file(go_database_targz, _temp_directory, FileSystem::ENT_FILE_TAR_GZ)) {
         // failed to decompress
         set_err_msg("Unable to decompress GO database file " + _pFilesystem->get_error(), ERR_DATA_GO_DECOMPRESS);
         return ERR_DATA_GO_DECOMPRESS;
@@ -551,7 +551,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
     }
 
     // decompress database file
-    if (!_pFilesystem->decompress_file(uniprot_flat_gz, uniprot_flat, FileSystem::FILE_GZ)) {
+    if (!_pFilesystem->decompress_file(uniprot_flat_gz, uniprot_flat, FileSystem::ENT_FILE_GZ)) {
         // failed to decompress
         set_err_msg("Unable to decompress UniProt data" + _pFilesystem->get_error(), ERR_DATA_UNIPROT_DECOMPRESS);
         return ERR_DATA_UNIPROT_DECOMPRESS;
@@ -845,7 +845,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::download_entap_serial(std::string &ou
     }
 
     // decompress file to outpath
-    if (!_pFilesystem->decompress_file(temp_gz_path, out_path, FileSystem::FILE_GZ)) {
+    if (!_pFilesystem->decompress_file(temp_gz_path, out_path, FileSystem::ENT_FILE_GZ)) {
         // Decompression failed!
         set_err_msg("Unable to decompress EnTAP Serial Database at " + temp_gz_path + _pFilesystem->get_error(),
             ERR_DATA_SERIAL_DECOMPRESS);
@@ -875,7 +875,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::download_entap_sql(std::string &path)
     }
 
     // decompress file to outpath
-    if (!_pFilesystem->decompress_file(temp_gz_path, path, FileSystem::FILE_GZ)) {
+    if (!_pFilesystem->decompress_file(temp_gz_path, path, FileSystem::ENT_FILE_GZ)) {
         // Decompression failed!
         set_err_msg("Unable to decompress EnTAP Serial Database at " + temp_gz_path + _pFilesystem->get_error(),
                     ERR_DATA_SQL_DECOMPRESS);
@@ -980,7 +980,7 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
                 );
                 results = _pDatabaseHelper->query(query);
                 if (results.empty()) {
-                    index = temp_species.find_last_of(" ");
+                    index = temp_species.find_last_of(' ');
                     if (index == std::string::npos) return TaxEntry(); // couldn't find
                     temp_species = temp_species.substr(0, index);
                 } else break; // Found species
@@ -1010,7 +1010,7 @@ UniprotEntry EntapDatabase::get_uniprot_entry(std::string& accession) {
             uniprot_serial_map_t::iterator it =
                     _pSerializedDatabase->uniprot_data.find(accession);
             if (it == _pSerializedDatabase->uniprot_data.end()) {
-                FS_dprint("Unable to find Uniprot Entry: " + accession);
+                // FS_dprint("Unable to find Uniprot Entry: " + accession);
                 return UniprotEntry();
             } else return it->second;
         } else {
@@ -1220,7 +1220,7 @@ std::string EntapDatabase::get_current_version_str() {
                 FS_dprint("Success! Returned version: " + version_str);
 
             } catch (...) {
-                FS_dprint("ERROR: couldn't get SQL version");
+                set_err_msg("ERROR: couldn't get SQL version of EnTAP Database", ERR_DATA_GET_VERSION);
                 version_str = "";
             }
 
@@ -1228,7 +1228,6 @@ std::string EntapDatabase::get_current_version_str() {
             version_str = "";
         }
     }
-
     return version_str;
 }
 

@@ -51,8 +51,11 @@ const std::string FileSystem::EXT_FNN  = ".fnn";
 const std::string FileSystem::EXT_XML  = ".xml";
 const std::string FileSystem::EXT_DMND = ".dmnd";
 const std::string FileSystem::EXT_STD  = "_std";
+const std::string FileSystem::EXT_TSV  = ".tsv";
+const std::string FileSystem::EXT_CSV  = ".csv";
 
-const char FileSystem::DELIM_TSV= '\t';
+const char FileSystem::DELIM_TSV = '\t';
+const char FileSystem::DELIM_CSV = ',';
 
 // Removed for older compilers, may bring back
 #if 0
@@ -216,6 +219,7 @@ bool FileSystem::delete_file(std::string path) {
     FS_dprint("Deleting file: " + path);
     return boostFS::remove(path);
 #else
+    FS_dprint("Deleting file at: " + path);
     return remove(path.c_str()) == 0;
 #endif
 }
@@ -482,7 +486,7 @@ FileSystem::~FileSystem() {
 }
 
 FileSystem::FileSystem(std::string &root) {
-    // This routine will process entire root directory here and generate
+    // This routine will eventuall process entire root directory here and generate
     // hierarchy
     FS_dprint("Spawn Object - FileSystem");
 
@@ -734,12 +738,12 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
     std::string terminal_cmd;
 
     switch (type) {
-        case FILE_TAR_GZ:
+        case ENT_FILE_TAR_GZ:
             terminal_cmd =
                 "tar -xzf " + in_path + " -C " + out_dir;
             break;
 
-        case FILE_GZ:
+        case ENT_FILE_GZ:
             terminal_cmd =
                 "gunzip -c " + in_path + " > " + out_dir; //outdir will be outpath in this case
             break;
@@ -842,4 +846,67 @@ void FileSystem::format_stat_stream(std::stringstream &stream, std::string title
     stream<<std::fixed<<std::setprecision(2);
     stream << SOFTWARE_BREAK << title << '\n' << SOFTWARE_BREAK;
 
+}
+
+std::string FileSystem::get_extension(FileSystem::ENT_FILE_TYPES type) {
+    switch (type) {
+
+        case ENT_FILE_DELIM_TSV:
+            return EXT_TSV;
+
+        case ENT_FILE_DELIM_CSV:
+            return EXT_CSV;
+
+        case ENT_FILE_XML:
+            return EXT_XML;
+
+        case ENT_FILE_FASTA_FNN:
+            return EXT_FNN;
+
+        case ENT_FILE_FASTA_FAA:
+            return EXT_FAA;
+
+        default:
+            FS_dprint("ERROR unhandled extension type: " + std::to_string(type));
+            return "";
+    }
+}
+
+bool FileSystem::initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HEADERS> &headers,
+                                 FileSystem::ENT_FILE_TYPES type) {
+    bool ret;
+
+    switch (type) {
+        case ENT_FILE_DELIM_TSV:
+            for (ENTAP_HEADERS &header: headers) {
+                if (ENTAP_HEADER_INFO[header].print_header) {
+                    *file_stream << ENTAP_HEADER_INFO[header].title << DELIM_TSV;
+                }
+            }
+            *file_stream << std::endl;
+            ret = true;
+            break;
+
+        case ENT_FILE_DELIM_CSV:
+            for (ENTAP_HEADERS &header: headers) {
+                if (ENTAP_HEADER_INFO[header].print_header) {
+                    *file_stream << ENTAP_HEADER_INFO[header].title << DELIM_CSV;
+                }
+            }
+            *file_stream << std::endl;
+            ret = true;
+            break;
+
+        // Fasta files do not need initialization
+        case ENT_FILE_FASTA_FAA:
+        case ENT_FILE_FASTA_FNN:
+            ret = true;
+            break;
+
+        default:
+            FS_dprint("ERROR unhanded file type (initalize file): " + std::to_string(type));
+            ret = false;
+            break;
+    }
+    return ret;
 }

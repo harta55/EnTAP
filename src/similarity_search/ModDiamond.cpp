@@ -283,7 +283,7 @@ void ModDiamond::parse() {
                         _pQUERY_DATA->DATA_FLAG_SET(QueryData::UNIPROT_MATCH);
                         EM_set_uniprot_headers(true);
                     }
-                }
+                } // Else, database is NOT UniProt after # of attempts
             }
 
             // Compile sim search data
@@ -314,12 +314,8 @@ void ModDiamond::parse() {
             simSearchResults.is_informative ? simSearchResults.yes_no_inform = YES_FLAG :
                     simSearchResults.yes_no_inform  = NO_FLAG;
 
-            query->add_alignment(
-                    _execution_state,
-                    _software_flag,
-                    simSearchResults,
-                    output_path,
-                    _input_lineage);
+            query->add_alignment(_execution_state, _software_flag,
+                    simSearchResults, output_path, _input_lineage);
         } // END WHILE LOOP
 
         // Finished parsing and adding to alignment data, being to calc stats
@@ -375,52 +371,28 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     _pFileSystem->create_dir(base_path);
     _pFileSystem->create_dir(figure_base);
 
-    // Open contam best hit tsv file
-    std::string out_best_contams_tsv = PATHS(base_path ,SIM_SEARCH_DATABASE_CONTAM_TSV);
-    std::ofstream file_best_contam_tsv(out_best_contams_tsv,std::ios::out | std::ios::app);
+    // Open contam best hit tsv file and print headers
+    std::string out_best_contams_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_CONTAM);
+    _pQUERY_DATA->start_alignment_files(out_best_contams_filepath, DEFAULT_HEADERS, 0, nullptr);
 
-    // Open contam fasta protein file
-    std::string out_best_contams_fa_prot = PATHS(base_path ,SIM_SEARCH_DATABASE_CONTAM_FA_PROT);
-    std::ofstream file_best_contam_fa_prot(out_best_contams_fa_prot,std::ios::out | std::ios::app);
+    // Open best hits files
+    std::string out_best_hits_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS);
+    _pQUERY_DATA->start_alignment_files(out_best_hits_filepath, DEFAULT_HEADERS, 0, nullptr);
 
-    // Open contam fasta nucleotide file
-    temp_file_path           = PATHS(base_path ,SIM_SEARCH_DATABASE_CONTAM_FA_NUCL);
-    std::ofstream file_best_contam_fa_nucl(temp_file_path,std::ios::out | std::ios::app);
-
-    // Open best hits file (tsv)
-    std::string out_best_hits_tsv         = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_TSV);
-    std::ofstream file_best_hits_tsv(out_best_hits_tsv,std::ios::out | std::ios::app);
-
-    // Open best hits file (fasta nucleotide)
-    std::string out_best_hits_fa_nucl = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_FA_NUCL);
-    std::ofstream file_best_hits_fa_nucl(out_best_hits_fa_nucl,std::ios::out | std::ios::app);
-
-    // Open best hits file (fasta protein)
-    std::string out_best_hits_fa_prot    = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_FA_PROT);
-    std::ofstream file_best_hits_fa_prot(out_best_hits_fa_prot,std::ios::out | std::ios::app);
-
-    // Open best hits file with no contaminants (tsv)
-    temp_file_path           = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_TSV_NO_CONTAM);
-    std::ofstream file_best_hits_tsv_no_contam(temp_file_path,std::ios::out | std::ios::app);
-
-    // Open best hits file with no contaminants (fasta nucleotide)
-    temp_file_path           = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_FA_NUCL_NO_CONTAM);
-    std::ofstream file_best_hits_fa_nucl_no_contam(temp_file_path,std::ios::out | std::ios::app);
-
-    // Open best hits file with no contaminants (fasta protein)
-    temp_file_path           = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_FA_PROT_NO_CONTAM);
-    std::ofstream file_best_hits_fa_prot_no_contam(temp_file_path,std::ios::out | std::ios::app);
+    // Open best hits files with no contaminants
+    std::string out_best_hits_no_contams = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM);
+    _pQUERY_DATA->start_alignment_files(out_best_hits_no_contams, DEFAULT_HEADERS, 0, nullptr);
 
     // Open unselected hits, so every hit that was not the best hit (tsv)
-    std::string out_unselected_tsv  = PATHS(base_path, SIM_SEARCH_DATABASE_UNSELECTED);
+    std::string out_unselected_tsv  = PATHS(base_path, SIM_SEARCH_DATABASE_UNSELECTED + FileSystem::EXT_TSV);
     std::ofstream file_unselected_hits(out_unselected_tsv, std::ios::out | std::ios::app);
 
     // Open no hits file (fasta nucleotide)
-    std::string out_no_hits_fa_nucl = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS_NUCL);
+    std::string out_no_hits_fa_nucl = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS + FileSystem::EXT_FNN);
     std::ofstream file_no_hits_nucl(out_no_hits_fa_nucl, std::ios::out | std::ios::app);
 
     // Open no hits file (fasta protein)
-    std::string out_no_hits_fa_prot  = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS_PROT);
+    std::string out_no_hits_fa_prot  = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS + FileSystem::EXT_FAA);
     std::ofstream file_no_hits_prot(out_no_hits_fa_prot, std::ios::out | std::ios::app);
 
     // ------------------- Setup graphing files ------------------------- //
@@ -439,9 +411,6 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     // ------------------------------------------------------------------ //
 
     // Print headers to relevant tsv files
-    _pFileSystem->print_headers(file_best_contam_tsv, DEFAULT_HEADERS, FileSystem::DELIM_TSV);
-    _pFileSystem->print_headers(file_best_hits_tsv, DEFAULT_HEADERS, FileSystem::DELIM_TSV);
-    _pFileSystem->print_headers(file_best_hits_tsv_no_contam, DEFAULT_HEADERS, FileSystem::DELIM_TSV);
     _pFileSystem->print_headers(file_unselected_hits, DEFAULT_HEADERS, FileSystem::DELIM_TSV);
 
 
@@ -498,10 +467,9 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                     }
                 }
                 count_filtered++;   // increment best hit
+
                 // Write to best hits files
-                file_best_hits_fa_nucl << pair.second->get_sequence_n()<<std::endl;
-                file_best_hits_fa_prot << pair.second->get_sequence_p()<<std::endl;
-                file_best_hits_tsv << best_hit->print_delim(DEFAULT_HEADERS, 0, FileSystem::DELIM_TSV) << std::endl;
+                _pQUERY_DATA->add_alignment_data(out_best_hits_filepath, DEFAULT_HEADERS, pair.second, 0);
 
                 frame = pair.second->getFrame();     // Used for graphing
                 species = sim_search_data->species;
@@ -510,17 +478,14 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                 if (sim_search_data->contaminant) {
                     // Species is considered a contaminant
                     count_contam++;
-                    file_best_contam_fa_nucl << pair.second->get_sequence_n()<<std::endl;
-                    file_best_contam_fa_prot << pair.second->get_sequence_p()<<std::endl;
-                    file_best_contam_tsv << best_hit->print_delim(DEFAULT_HEADERS, 0, FileSystem::DELIM_TSV) << std::endl;
+                    _pQUERY_DATA->add_alignment_data(out_best_contams_filepath, DEFAULT_HEADERS, pair.second, 0);
+
                     contam = sim_search_data->contam_type;
                     contam_counter.add_value(contam);
                     contam_species_counter.add_value(species);
                 } else {
                     // Species is NOT a contaminant, print to files
-                    file_best_hits_fa_nucl_no_contam << pair.second->get_sequence_n()<<std::endl;
-                    file_best_hits_fa_prot_no_contam << pair.second->get_sequence_p()<<std::endl;
-                    file_best_hits_tsv_no_contam << best_hit->print_delim(DEFAULT_HEADERS, 0, FileSystem::DELIM_TSV) << std::endl;
+                    _pQUERY_DATA->add_alignment_data(out_best_hits_no_contams, DEFAULT_HEADERS, pair.second, 0);
                 }
 
                 // Count species type
@@ -545,15 +510,10 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     } catch (const std::exception &e){throw ExceptionHandler(e.what(), ERR_ENTAP_RUN_SIM_SEARCH_FILTER);}
 
     try {
-        _pFileSystem->close_file(file_best_hits_tsv);
-        _pFileSystem->close_file(file_best_hits_tsv_no_contam);
-        _pFileSystem->close_file(file_best_hits_fa_nucl);
-        _pFileSystem->close_file(file_best_hits_fa_prot);
-        _pFileSystem->close_file(file_best_hits_fa_nucl_no_contam);
-        _pFileSystem->close_file(file_best_hits_fa_prot_no_contam);
-        _pFileSystem->close_file(file_best_contam_tsv);
-        _pFileSystem->close_file(file_best_contam_fa_prot);
-        _pFileSystem->close_file(file_best_contam_fa_nucl);
+        _pQUERY_DATA->end_alignment_files(out_best_contams_filepath);
+        _pQUERY_DATA->end_alignment_files(out_best_hits_filepath);
+        _pQUERY_DATA->end_alignment_files(out_best_hits_no_contams);
+
         _pFileSystem->close_file(file_no_hits_nucl);
         _pFileSystem->close_file(file_no_hits_prot);
         _pFileSystem->close_file(file_unselected_hits);
@@ -596,8 +556,8 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
 
     ss <<
        "\n\tTotal unique transcripts with an alignment: " << count_filtered <<
-       "\n\t\tReference transcriptome sequences with an alignment (FASTA):\n\t\t\t" << out_best_hits_fa_prot <<
-       "\n\t\tSearch results (TSV):\n\t\t\t" << out_best_hits_tsv <<
+       "\n\t\tReference transcriptome sequences with an alignment (FASTA):\n\t\t\t" << out_best_hits_filepath <<
+       "\n\t\tSearch results (TSV):\n\t\t\t" << out_best_hits_filepath <<
        "\n\tTotal unique transcripts without an alignment: " << count_no_hit <<
        "\n\t\tReference transcriptome sequences without an alignment (FASTA):\n\t\t\t" << out_no_hits_fa_prot;
     // Have frame information
@@ -633,8 +593,8 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
        "\n\tTotal unique contaminants: " << count_contam <<
        "(" << contam_percent << "%): " <<
        "\n\t\tTranscriptome reference sequences labeled as a contaminant (FASTA):\n\t\t\t"
-       << out_best_contams_fa_prot <<
-       "\n\t\tTranscriptome reference sequences labeled as a contaminant (TSV):\n\t\t\t" << out_best_contams_tsv;
+       << out_best_contams_filepath <<
+       "\n\t\tTranscriptome reference sequences labeled as a contaminant (TSV):\n\t\t\t" << out_best_contams_filepath;
 
 
     // ********** Contaminant Calculations ************** //

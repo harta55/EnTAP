@@ -67,6 +67,7 @@ SimilaritySearch::SimilaritySearch(vect_str_t &database_paths, std::string &inpu
     // Set sim search paths/directories
     _outpath = _pFileSystem->get_root_path();
     _sim_search_dir  = PATHS(_outpath, SIM_SEARCH_DIR);
+    _overwrite = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
 
     if (_overwrite) {
         _pFileSystem->delete_dir(_sim_search_dir);

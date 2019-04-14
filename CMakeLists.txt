@@ -62,14 +62,16 @@ set(SOURCE_FILES
         src/TerminalCommands.cpp src/TerminalCommands.h
         src/ontology/ModEggnogDMND.h src/ontology/ModEggnogDMND.cpp
         src/database/EggnogDatabase.cpp src/database/EggnogDatabase.h
-        src/EntapModule.cpp src/EntapModule.h src/similarity_search/AbstractSimilaritySearch.cpp src/similarity_search/AbstractSimilaritySearch.h src/similarity_search/ModDiamond.cpp src/similarity_search/ModDiamond.h)
+        src/EntapModule.cpp src/EntapModule.h
+        src/similarity_search/AbstractSimilaritySearch.cpp src/similarity_search/AbstractSimilaritySearch.h
+        src/similarity_search/ModDiamond.cpp src/similarity_search/ModDiamond.h)
 
 # Include libraries
 include_directories(libs/pstream)
 include_directories(libs/fast-cpp-csv-parser) # May need to compile with thread control
 include_directories(libs/cereal-1.2.2/include)
 include_directories(libs/tclap-1.2.2/include)
-include_directories(libs/boost/include)
+include_directories(libs/boost-1.68.0/include)
 
 add_executable(EnTAP ${SOURCE_FILES})
 

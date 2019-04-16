@@ -87,7 +87,7 @@ EntapModule::ModVerifyData ModDiamond::verify_files() {
         database_name = get_database_shortname(data_path);
 
         // set output file name (hits will be printed to this for diamond)
-        file_name = get_output_path(data_path);
+        file_name = get_database_output_path(data_path);
 
         // set full path output for this database
         out_path = PATHS(_mod_out_dir, file_name);
@@ -138,7 +138,7 @@ void ModDiamond::execute() {
     FS_dprint("Executing DIAMOND for necessary files....");
 
     for (std::string &database_path : _database_paths) {
-        output_path = get_output_path(database_path);
+        output_path = get_database_output_path(database_path);
 
         file_status = _pFileSystem->get_file_status(output_path);
         if (file_status != 0) {

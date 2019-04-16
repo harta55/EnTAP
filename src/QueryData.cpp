@@ -87,10 +87,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     _trim          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_TRIM);
     is_complete    = _pUserInput->has_input(_pUserInput->INPUT_FLAG_COMPLETE);
 
-    for (uint16 val : _pUserInput->get_user_input<std::vector<uint16>>(_pUserInput->INPUT_FLAG_OUTPUT_FORMAT)) {
-        _alignment_file_types.push_back(static_cast<FileSystem::ENT_FILE_TYPES>(val));
-    }
-
+    _alignment_file_types = _pUserInput->get_user_output_types();
 
     if (!_pFileSystem->file_exists(input_file)) {
         throw ExceptionHandler("Input transcriptome not found at: " + input_file,ERR_ENTAP_INPUT_PARSE);

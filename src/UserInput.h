@@ -84,6 +84,7 @@ public:
     vect_str_t get_contaminants();
     vect_str_t get_uninformative_vect();
     std::string get_user_transc_basename();
+    std::vector<FileSystem::ENT_FILE_TYPES> get_user_output_types();
 
     template<class T>
     T get_user_input(const std::string &key) {

@@ -171,7 +171,7 @@
                             "    -unidentified\n"                                       \
                             "    -uncultured\n"                                         \
                             "    -uninformative\n"                                      \
-                            "Without the extra spaces and hyphen. EnTAP will take the " \
+                            "Ensure each word is on a separate line in the file. EnTAP will take the " \
                             "each line as a new uninformative word!"
 #define DESC_NOCHECK        "Use this flag if you don't want your input to EnTAP verifed."\
                             " This is not advised to use! Your run may fail later on "  \
@@ -179,7 +179,9 @@
 #define DESC_OUTPUT_FORMAT  "Specify the output format for the processed alignments."   \
                             "Multiple flags can be specified."                          \
                             "    1. TSV Format (default)\n"                             \
-                            "    2. CSV Format\n"
+                            "    2. CSV Format\n"                                       \
+                            "    3. FASTA Amino Acid (default)\n"                       \
+                            "    4. FASTA Nucleotide (default)"
 //**************************************************************
 // Externs
 std::string RSEM_EXE_DIR;
@@ -821,30 +823,27 @@ void UserInput::generate_config(std::string &path) {
  */
 bool UserInput::check_key(std::string& key) {
     LOWERCASE(key);
-    if (key.compare(KEY_DIAMOND_EXE)==0)      return true;
-    if (key.compare(KEY_GENEMARK_EXE)==0)     return true;
-    if (key.compare(KEY_EGGNOG_SQL_DB)==0)        return true;
-    if (key.compare(KEY_EGGNOG_DMND)==0)        return true;
-    if (key.compare(KEY_INTERPRO_EXE)==0)     return true;
-    if (key.compare(KEY_ENTAP_DATABASE_BIN)==0) return true;
-    if (key.compare(KEY_ENTAP_DATABASE_SQL)==0) return true;
-    if (key.compare(KEY_GRAPH_SCRIPT)==0)     return true;
-    return key.compare(KEY_RSEM_EXE) == 0;
+    if (key == KEY_DIAMOND_EXE)      return true;
+    if (key == KEY_GENEMARK_EXE)     return true;
+    if (key == KEY_EGGNOG_SQL_DB)        return true;
+    if (key == KEY_EGGNOG_DMND)        return true;
+    if (key == KEY_INTERPRO_EXE)     return true;
+    if (key == KEY_ENTAP_DATABASE_BIN) return true;
+    if (key == KEY_ENTAP_DATABASE_SQL) return true;
+    if (key == KEY_GRAPH_SCRIPT)     return true;
+    return key == KEY_RSEM_EXE;
 }
 
 
 /**
  * ======================================================================
- * Function void print_user_input(boostPO::variables_map        &map)
+ * Function void print_user_input()
  *
  * Description          - Handles printing of user selected flags to
  *                        EnTAP statistics/log file
  *
  * Notes                - Called from main
  *
- * @param map           - Boost parsed map of user inputs
- * @param exe           - EnTAP exe/main directory
- * @param out           - Working directory
  * @return              - None
  *
  * =====================================================================
@@ -1334,5 +1333,14 @@ std::string UserInput::get_executable_dir() {
     }
     FS_dprint("EnTAP execution path was NOT found!");
     return "";
+}
+
+std::vector<FileSystem::ENT_FILE_TYPES> UserInput::get_user_output_types() {
+    std::vector<FileSystem::ENT_FILE_TYPES> ret;
+
+    for (uint16 val :get_user_input<std::vector<uint16>>(INPUT_FLAG_OUTPUT_FORMAT)) {
+        ret.push_back(static_cast<FileSystem::ENT_FILE_TYPES>(val));
+    }
+    return ret;
 }
 

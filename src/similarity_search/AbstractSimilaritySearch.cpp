@@ -64,9 +64,10 @@ std::string AbstractSimilaritySearch::get_database_shortname(std::string &full_p
     return _pFileSystem->get_filename(full_path, false);
 }
 
-std::string AbstractSimilaritySearch::get_output_path(std::string &database_name) {
+std::string AbstractSimilaritySearch::get_database_output_path(std::string &database_name) {
 
-    return _blast_type + "_" + _transcript_shortname + "_" + get_database_shortname(database_name) + FileSystem::EXT_OUT;
+    return PATHS(_blast_type + "_" + _transcript_shortname + "_" + get_database_shortname(database_name) + FileSystem::EXT_OUT,
+            _mod_out_dir);
 }
 
 std::pair<bool,std::string> AbstractSimilaritySearch::is_contaminant(std::string lineage, vect_str_t &contams) {
@@ -90,7 +91,7 @@ bool AbstractSimilaritySearch::is_informative(std::string title, vect_str_t &uni
 }
 
 std::string AbstractSimilaritySearch::get_species(std::string &title) {
-    // TODO use regex(database specific)
+    // TODO fix issue
 
     std::string species;
 

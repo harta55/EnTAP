@@ -66,8 +66,7 @@ std::string AbstractSimilaritySearch::get_database_shortname(std::string &full_p
 
 std::string AbstractSimilaritySearch::get_database_output_path(std::string &database_name) {
 
-    return PATHS(_blast_type + "_" + _transcript_shortname + "_" + get_database_shortname(database_name) + FileSystem::EXT_OUT,
-            _mod_out_dir);
+    return PATHS(_mod_out_dir,_blast_type + "_" + _transcript_shortname + "_" + get_database_shortname(database_name) + FileSystem::EXT_OUT);
 }
 
 std::pair<bool,std::string> AbstractSimilaritySearch::is_contaminant(std::string lineage, vect_str_t &contams) {
@@ -93,7 +92,7 @@ bool AbstractSimilaritySearch::is_informative(std::string title, vect_str_t &uni
 std::string AbstractSimilaritySearch::get_species(std::string &title) {
     // TODO fix issue
 
-    std::string species;
+    std::string species="";
 
 
 #ifdef USE_BOOST
@@ -109,6 +108,8 @@ std::string AbstractSimilaritySearch::get_species(std::string &title) {
             species = std::string(match[1].first, match[1].second);
     }
 #else   // Use std c++ libs
+        // GCC 4.8.x does NOT fully support std regex and have bugs, full...bugless.. starts at 5.x
+#if 0
     std::smatch match;
 
     // Check if UniProt match
@@ -120,6 +121,28 @@ std::string AbstractSimilaritySearch::get_species(std::string &title) {
             species = std::string(match[1].first, match[1].second);
         }
     }
+#endif
+
+    uint64 ind1, ind2;
+    ind1 = title.find("OS=");
+
+    // if UniProt type format for species EX: OS=Homo sapiens
+    if (ind1 != std::string::npos) {
+        // Yes,
+        ind2 = title.find('=', ind1 + 3);
+        if (ind2 != std::string::npos) {
+            species = title.substr(ind1 + 3, ind2 - ind1 - 6);
+        }
+
+    } else {
+        // No, possibly NCBI format. EX: [homo sapiens]
+        ind1 = title.find_last_of('[');
+        ind2 = title.find_last_of(']');
+        if (ind1 != std::string::npos && ind2 != std::string::npos) {
+            species = title.substr(ind1 + 1, (ind2 - ind1 - 1));
+        }
+    }
+
 #endif
 
     // Double bracket fix

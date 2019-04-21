@@ -74,7 +74,6 @@ EntapModule::ModVerifyData ModDiamond::verify_files() {
     // Transcriptome + database paths already verified
     ModVerifyData verify_data;
     std::string   database_name;        // Shortened name to be used for file naming
-    std::string   file_name;            // File name that will be used for each database
     std::string   out_path;             // Full output path for each database alignment
     std::string   std_out;
     uint16 file_status = 0;
@@ -86,12 +85,9 @@ EntapModule::ModVerifyData ModDiamond::verify_files() {
 
         database_name = get_database_shortname(data_path);
 
-        // set output file name (hits will be printed to this for diamond)
-        file_name = get_database_output_path(data_path);
-
         // set full path output for this database
-        out_path = PATHS(_mod_out_dir, file_name);
-        std_out  = PATHS(_mod_out_dir, file_name) + FileSystem::EXT_STD;
+        out_path = get_database_output_path(data_path);
+        std_out  = out_path + FileSystem::EXT_STD;
 
         // add mapping of output file to shortened database name
         _path_to_database[out_path] = database_name;
@@ -108,7 +104,6 @@ EntapModule::ModVerifyData ModDiamond::verify_files() {
             // File found + is 'legit', can skip execution for it
             FS_dprint("File for database " + database_name + " exists, skipping...\n" + out_path);
         }
-
         verify_data.output_paths.push_back(out_path);
         _output_paths.push_back(out_path);
     }
@@ -155,6 +150,7 @@ void ModDiamond::execute() {
             simSearchCmd.tcoverage     = _tcoverage;
             simSearchCmd.qcoverage     = _qcoverage;
             simSearchCmd.exe_path      = _exe_path;
+            simSearchCmd.blastp        = _blastp;
 
             try {
                 run_blast(&simSearchCmd, true);
@@ -191,6 +187,8 @@ bool ModDiamond::run_blast(AbstractSimilaritySearch::SimSearchCmd *cmd, bool use
     diamond_cmd += " -q " + cmd->query_path;
     diamond_cmd += " -o " + cmd->output_path;
     diamond_cmd += " -p " + std::to_string(cmd->threads);
+    diamond_cmd += " -f ";
+    diamond_cmd += "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp stitle";
 
     terminalData.command        = diamond_cmd;
     terminalData.base_std_path  = cmd->std_out_path;

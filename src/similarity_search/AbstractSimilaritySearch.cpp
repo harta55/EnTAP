@@ -130,7 +130,7 @@ std::string AbstractSimilaritySearch::get_species(std::string &title) {
     if (ind1 != std::string::npos) {
         // Yes,
         ind2 = title.find('=', ind1 + 3);
-        if (ind2 != std::string::npos) {
+        if (ind2 != std::string::npos && (ind2 - ind1) > 6) {
             species = title.substr(ind1 + 3, ind2 - ind1 - 6);
         }
 

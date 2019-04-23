@@ -133,6 +133,8 @@ public:
     static const char        DELIM_TSV;
     static const char        DELIM_CSV;
 
+    static const char        FASTA_FLAG;
+
 private:
     void init_log();
     void set_error(std::string err_msg);

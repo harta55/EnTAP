@@ -106,7 +106,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     while (true) {
         std::getline(in_file, line);
         if (line.empty() && !in_file.eof()) continue;
-        if (line.find(FASTA_FLAG) == 0 || in_file.eof()) {
+        if (line.find(FileSystem::FASTA_FLAG) == 0 || in_file.eof()) {
             if (!seq_id.empty()) {
                 if (in_file.eof()) {
                     out_file << line << std::endl;
@@ -485,7 +485,7 @@ bool QueryData::start_alignment_files(std::string &base_path, std::vector<ENTAP_
 
     // add this path to map if it does not exist, otherwise skip
     if (_alignment_files.find(base_path) == _alignment_files.end()) {
-        _alignment_files.emplace(base_path, std::vector<std::ofstream*>(_alignment_file_types.size()));
+        _alignment_files.emplace(base_path, std::vector<std::ofstream*>(FileSystem::ENT_FILE_OUTPUT_FORMAT_MAX));
 
         // Generate files for each data type
         for (FileSystem::ENT_FILE_TYPES type : _alignment_file_types) {

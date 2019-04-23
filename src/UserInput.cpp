@@ -490,6 +490,7 @@ bool UserInput::verify_user_input() {
         throw(ExceptionHandler("Cannot specify both config and run flags",
                                ERR_ENTAP_INPUT_PARSE));
     }
+    print_user_input();
 
     // If user wants to skip this check, EXIT
     if (has_input(UserInput::INPUT_FLAG_NOCHECK)) {
@@ -500,7 +501,6 @@ bool UserInput::verify_user_input() {
     try {
 
         verify_databases(is_run);
-        print_user_input();
 
         // Handle generic flags
         if (has_input(UserInput::INPUT_FLAG_OUTPUT_FORMAT)) {

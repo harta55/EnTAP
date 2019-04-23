@@ -56,6 +56,7 @@ const std::string FileSystem::EXT_CSV  = ".csv";
 
 const char FileSystem::DELIM_TSV = '\t';
 const char FileSystem::DELIM_CSV = ',';
+const char FileSystem::FASTA_FLAG = '>';
 
 // Removed for older compilers, may bring back
 #if 0

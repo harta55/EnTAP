@@ -69,7 +69,7 @@ EntapHeader ENTAP_HEADER_INFO[] = {
         {"Seed Score",                              true},
         {"Predicted Gene",                          true},
         {"Tax Scope",                               true},
-        {"OGs",                                     true},
+        {"Member OGs",                              true},
         {"EggNOG Description",                      true},
         {"KEGG Terms",                              true},
         {"GO Biological",                           true},

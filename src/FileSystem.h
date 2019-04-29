@@ -52,7 +52,7 @@ public:
         ENT_FILE_FASTA_FNN,
         ENT_FILE_OUTPUT_FORMAT_MAX,
 
-        ENT_FILE_XML,
+        ENT_FILE_XML,                   // Not yet supported for output format
         ENT_FILE_TAR_GZ,
         ENT_FILE_GZ,
         ENT_FILE_ZIP,

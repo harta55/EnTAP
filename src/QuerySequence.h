@@ -78,9 +78,8 @@ public:
         std::string              name;
         std::string              bigg;
         std::string              kegg;
-        std::string              ogs;
         std::string              og_key;
-        std::string              description;
+        std::string              description;       //
         std::string              protein_domains;
         fp64                     seed_eval_raw;
         go_format_t              parsed_go;

@@ -222,6 +222,7 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
         out_contam = PATHS(_final_outpath_dir, file_contam);
         out_no_contam = PATHS(_final_outpath_dir, file_no_contam);
 
+        // TODO allow user control of file types for final output
         file_map[lvl][FINAL_ALL_IND] =
                 new std::ofstream(outpath, std::ios::out | std::ios::app);
         file_map[lvl][FINAL_CONTAM_IND] =
@@ -230,14 +231,9 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
                 new std::ofstream(out_no_contam, std::ios::out | std::ios::app);
 
         // Write headers
-        for (ENTAP_HEADERS header : _HEADERS) {
-            *file_map[lvl][FINAL_ALL_IND] << ENTAP_HEADER_INFO[header].title << '\t';
-            *file_map[lvl][FINAL_CONTAM_IND] << ENTAP_HEADER_INFO[header].title<< '\t';
-            *file_map[lvl][FINAL_NO_CONTAM_IND] << ENTAP_HEADER_INFO[header].title << '\t';
-        }
-        *file_map[lvl][FINAL_ALL_IND] << std::endl;
-        *file_map[lvl][FINAL_CONTAM_IND] << std::endl;
-        *file_map[lvl][FINAL_NO_CONTAM_IND] << std::endl;
+        _pFileSystem->initialize_file(file_map[lvl][FINAL_ALL_IND], _HEADERS, FileSystem::ENT_FILE_DELIM_TSV);
+        _pFileSystem->initialize_file(file_map[lvl][FINAL_CONTAM_IND], _HEADERS, FileSystem::ENT_FILE_DELIM_TSV);
+        _pFileSystem->initialize_file(file_map[lvl][FINAL_NO_CONTAM_IND], _HEADERS, FileSystem::ENT_FILE_DELIM_TSV);
     }
 
     // Write to all files
@@ -245,11 +241,11 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
         for (uint16 lvl : _go_levels) {
             for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
                 if (i == FINAL_ALL_IND) {
-                    *file_map[lvl][i] << pair.second->print_delim(_HEADERS, '\t', lvl) << std::endl;
+                    *file_map[lvl][i] << pair.second->print_delim(_HEADERS, lvl, FileSystem::DELIM_TSV) << std::endl;
                 } else if (i == FINAL_CONTAM_IND && pair.second->isContaminant()) {
-                    *file_map[lvl][i]<< pair.second->print_delim(_HEADERS, '\t', lvl)<<std::endl;
+                    *file_map[lvl][i]<< pair.second->print_delim(_HEADERS, lvl, FileSystem::DELIM_TSV)<<std::endl;
                 } else if (i == FINAL_NO_CONTAM_IND && !pair.second->isContaminant()) {
-                    *file_map[lvl][i]<< pair.second->print_delim(_HEADERS, '\t', lvl)<<std::endl;
+                    *file_map[lvl][i]<< pair.second->print_delim(_HEADERS, lvl, FileSystem::DELIM_TSV)<<std::endl;
                 }
             }
         }

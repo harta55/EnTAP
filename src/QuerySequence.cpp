@@ -676,7 +676,7 @@ QuerySequence::EggnogDmndAlignment::EggnogDmndAlignment(QuerySequence::EggnogRes
             {ENTAP_HEADER_ONT_EGG_SEED_SCORE, &_eggnog_results.seed_score},
             {ENTAP_HEADER_ONT_EGG_PRED_GENE,  &_eggnog_results.predicted_gene},
             {ENTAP_HEADER_ONT_EGG_TAX_SCOPE,  &_eggnog_results.tax_scope},
-            {ENTAP_HEADER_ONT_EGG_OGS,        &_eggnog_results.ogs},
+            {ENTAP_HEADER_ONT_EGG_MEMBER_OGS,&_eggnog_results.member_ogs},
             {ENTAP_HEADER_ONT_EGG_DESC,       &_eggnog_results.description},
             {ENTAP_HEADER_ONT_EGG_KEGG,       &_eggnog_results.kegg},
             {ENTAP_HEADER_ONT_EGG_PROTEIN,    &_eggnog_results.protein_domains},

@@ -239,9 +239,11 @@ EggnogDatabase::EggnogDatabase(FileSystem* filesystem, EntapDatabase* entap_data
     _pSQLDatabase = nullptr;
     _pEntapDatabase = entap_data;
     _err_msg = "";
+    _err_code = ERR_EGG_OK;
     _VERSION_MAJOR = 0;
     _VERSION_MINOR = 0;
     _VERSION_REV   = 0;
+    _sql_version = EGGNOG_VERSION_UNKONWN;
 }
 
 EggnogDatabase::~EggnogDatabase() {
@@ -348,7 +350,7 @@ std::string EggnogDatabase::print_err() {
     return "\nEggNOG Database Error: " + _err_msg;
 }
 
-void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults& eggnog_data) {
+void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults *eggnog_data) {
     std::set<std::string> unique_groups;    // Unique member orthologous groups
     std::string           temp;
     member_orthologs_t    member_orthologs;
@@ -357,11 +359,11 @@ void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults& eggnog_data)
 
     // Get member orthologous groups (0A01R@biNOG,0V8CP@meNOG) from best hit query
     get_member_ogs(eggnog_data);
-    if (eggnog_data.member_ogs.empty()) return;
+    if (eggnog_data->member_ogs.empty()) return;
 
 
     // Get unique tax groups (split "0V8CP@meNOG" to meNOG) and max level
-    std::istringstream iss(eggnog_data.member_ogs);
+    std::istringstream iss(eggnog_data->member_ogs);
     while(std::getline(iss, temp, ',')) {
         unique_groups.insert(temp.substr(temp.find("@")+1));    // add meNOG
     }
@@ -375,7 +377,7 @@ void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults& eggnog_data)
                       std::inserter(level_set,level_set.end()));
             }
             level_set.insert(level);
-            eggnog_data.tax_scope_lvl_max = level + "[" + std::to_string(level_set.size()) + "]";
+            eggnog_data->tax_scope_lvl_max = level + "[" + std::to_string(level_set.size()) + "]";
             // Get tax scope readable
             get_tax_scope(eggnog_data);
             break;
@@ -383,7 +385,7 @@ void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults& eggnog_data)
     }
 
     // Get all member orthologs
-    member_orthologs = get_member_orthologs(member_orthologs, eggnog_data.seed_ortholog, level_set);
+    member_orthologs = get_member_orthologs(member_orthologs, eggnog_data->seed_ortholog, level_set);
     orthologs = member_orthologs["all"];        // default, can change
 
     if (!orthologs.empty()) {
@@ -409,19 +411,19 @@ void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults& eggnog_data)
  * @return              - None
  * ======================================================================
  */
-void EggnogDatabase::get_tax_scope(QuerySequence::EggnogResults &eggnogResults) {
+void EggnogDatabase::get_tax_scope(QuerySequence::EggnogResults *eggnogResults) {
     // Lookup/Assign Tax Scope
 
-    if (!eggnogResults.tax_scope_lvl_max.empty()) {
-        uint16 p = (uint16) (eggnogResults.tax_scope_lvl_max.find("NOG"));
+    if (!eggnogResults->tax_scope_lvl_max.empty()) {
+        uint16 p = (uint16) (eggnogResults->tax_scope_lvl_max.find("NOG"));
         if (p != std::string::npos) {
-            eggnogResults.tax_scope = eggnogResults.tax_scope_lvl_max.substr(0,p+3);
-            eggnogResults.tax_scope_readable = EGGNOG_LEVELS.at(eggnogResults.tax_scope);
+            eggnogResults->tax_scope = eggnogResults->tax_scope_lvl_max.substr(0,p+3);
+            eggnogResults->tax_scope_readable = EGGNOG_LEVELS.at(eggnogResults->tax_scope);
             return;
         }
     }
-    eggnogResults.tax_scope  = eggnogResults.tax_scope_lvl_max;
-    eggnogResults.tax_scope_readable = "";
+    eggnogResults->tax_scope  = eggnogResults->tax_scope_lvl_max;
+    eggnogResults->tax_scope_readable = "";
 }
 
 
@@ -489,8 +491,8 @@ void EggnogDatabase::get_sql_data(QuerySequence::EggnogResults &eggnogResults, S
 void EggnogDatabase::get_og_query(QuerySequence::EggnogResults &eggnogResults) {
     // Find OG query was assigned to
     std::string temp;
-    if (!eggnogResults.ogs.empty()) {
-        std::istringstream ss(eggnogResults.ogs);
+    if (!eggnogResults.member_ogs.empty()) {
+        std::istringstream ss(eggnogResults.member_ogs);
         std::unordered_map<std::string,std::string> og_map; // Not fully used right now
         while (std::getline(ss,temp,',')) {
             uint16 p = (uint16) temp.find("@");
@@ -562,11 +564,11 @@ std::string EggnogDatabase::format_sql_data(std::string &input) {
     return output;
 }
 
-void EggnogDatabase::get_member_ogs(QuerySequence::EggnogResults& eggnog_results) {
+void EggnogDatabase::get_member_ogs(QuerySequence::EggnogResults *eggnog_results) {
     std::vector<std::vector<std::string>>results;
     char *query;
 
-    if (eggnog_results.seed_ortholog.empty()) return;
+    if (eggnog_results->seed_ortholog.empty()) return;
 
     if (_sql_version == EGGNOG_VERSION_4_5_1) {
         // emapper.db-4.5.1
@@ -575,7 +577,7 @@ void EggnogDatabase::get_member_ogs(QuerySequence::EggnogResults& eggnog_results
                 SQL_MEMBER_GROUP.c_str(),
                 SQL_EGGNOG_TABLE.c_str(),
                 SQL_MEMBER_NAME.c_str(),
-                eggnog_results.seed_ortholog.c_str()
+                eggnog_results->seed_ortholog.c_str()
         );
     } else {
         // Older versions
@@ -584,12 +586,12 @@ void EggnogDatabase::get_member_ogs(QuerySequence::EggnogResults& eggnog_results
                 SQL_MEMBER_GROUP.c_str(),
                 _SQL_MEMBER_TABLE.c_str(),
                 SQL_MEMBER_NAME.c_str(),
-                eggnog_results.seed_ortholog.c_str());
+                eggnog_results->seed_ortholog.c_str());
     }
 
     results = _pSQLDatabase->query(query);
     if (!results.empty()) {
-        eggnog_results.member_ogs = results[0][0];
+        eggnog_results->member_ogs = results[0][0];
     }
 }
 
@@ -780,12 +782,13 @@ EggnogDatabase::member_orthologs_t EggnogDatabase::get_member_orthologs(EggnogDa
     return all_orthologs;
 }
 
-void EggnogDatabase::get_annotations(set_str_t& orthologs, QuerySequence::EggnogResults& eggnog_results) {
+void EggnogDatabase::get_annotations(set_str_t& orthologs, QuerySequence::EggnogResults* eggnog_results) {
 
     char*               sql_query;
     set_str_t           all_gos;
     set_str_t           all_kegg;
     set_str_t           all_pnames;
+    Compair<std::string>             pname_counter;
     set_str_t           all_bigg;
     std::string         delim_list;
     SQLDatabaseHelper::query_struct sql_results;
@@ -828,22 +831,30 @@ void EggnogDatabase::get_annotations(set_str_t& orthologs, QuerySequence::Eggnog
     if (!sql_results.empty()) {
         for (vect_str_t &data : sql_results) {
             update_dataset(all_pnames, EGGNOG_DATA_PNAME, data[1]);
+            pname_counter.add_value(data[1]);
             update_dataset(all_gos, EGGNOG_DATA_GO, data[2]);
             update_dataset(all_kegg, EGGNOG_DATA_KEGG, data[3]);
             if (_sql_version == EGGNOG_VERSION_4_5_1)
                 update_dataset(all_bigg, EGGNOG_DATA_BIGG, data[4]);
         }
-        eggnog_results.pname  = container_to_string<std::string>(all_pnames,",");
+        eggnog_results->pname  = container_to_string<std::string>(all_pnames,",");
+        if (!pname_counter.empty()) {
+            pname_counter.sort(true);
+            if (pname_counter._sorted[0].second >= 2) {
+                eggnog_results->predicted_gene = pname_counter._sorted[0].first;
+            }
+        }
+
         delim_list = container_to_string<std::string>(all_gos, ",");
-        eggnog_results.parsed_go = _pEntapDatabase->format_go_delim(delim_list,',');
-        eggnog_results.kegg = container_to_string<std::string>(all_kegg, ",");
+        eggnog_results->parsed_go = _pEntapDatabase->format_go_delim(delim_list,',');
+        eggnog_results->kegg = container_to_string<std::string>(all_kegg, ",");
         if (_sql_version == EGGNOG_VERSION_4_5_1)
-            eggnog_results.bigg = container_to_string<std::string>(all_bigg, ",");
+            eggnog_results->bigg = container_to_string<std::string>(all_bigg, ",");
     } else {
-        eggnog_results.pname = "";
-        eggnog_results.parsed_go = go_format_t();
-        eggnog_results.kegg = "";
-        eggnog_results.bigg = "";
+        eggnog_results->pname = "";
+        eggnog_results->parsed_go = go_format_t();
+        eggnog_results->kegg = "";
+        eggnog_results->bigg = "";
     }
 }
 

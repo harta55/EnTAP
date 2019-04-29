@@ -81,7 +81,7 @@ public:
     ERR_EGGNOG_DB download(EGGNOG_DB_TYPES type, std::string out_path);
     ERR_EGGNOG_DB open_sql(std::string& sql_path);
     std::string print_err();
-    void get_eggnog_entry(QuerySequence::EggnogResults& eg);
+    void get_eggnog_entry(QuerySequence::EggnogResults *eg);
 
 
 private:
@@ -182,15 +182,15 @@ private:
     static const std::unordered_map<std::string, vect_str_t> LEVEL_CONTENT;
     static const vect_str_t                                  TAXONOMIC_RESOLUTION;
 
-    void get_tax_scope(QuerySequence::EggnogResults&);
+    void get_tax_scope(QuerySequence::EggnogResults*);
     void get_sql_data(QuerySequence::EggnogResults&, SQLDatabaseHelper&);
     std::string format_sql_data(std::string&);
     void get_og_query(QuerySequence::EggnogResults&);
-    void get_member_ogs(QuerySequence::EggnogResults& eggnog_results);
+    void get_member_ogs(QuerySequence::EggnogResults* eggnog_results);
     member_orthologs_t get_member_orthologs(member_orthologs_t &member_orthologs,
                               std::string &best_hit,
                               std::set<std::string> &target_lvls);
-    void get_annotations(set_str_t& orthologs, QuerySequence::EggnogResults& eggnog_results);
+    void get_annotations(set_str_t& orthologs, QuerySequence::EggnogResults* eggnog_results);
     void set_error(std::string msg, ERR_EGGNOG_DB code);
     void set_database_version();
     void update_dataset(set_str_t &set, EGGNOG_DATA_TYPES datatype, std::string data);

@@ -182,8 +182,9 @@ namespace entapExecute {
                         FS_dprint("STATE - EXPRESSION FILTERING");
                         if (!_pUserInput->has_input(_pUserInput->INPUT_FLAG_ALIGN)) {
                             FS_dprint("No alignment file specified, skipping expression analysis");
+                            ENTAP_HEADER_INFO[EXP_RSEM].print_header = false;
                         } else {
-                            // Proceed with frame selection
+                            // Proceed with expression analysis
                             std::unique_ptr<ExpressionAnalysis> expression(new ExpressionAnalysis(
                                 original_input, entap_data_ptrs
                             ));
@@ -233,7 +234,7 @@ namespace entapExecute {
 
             // *************************** Exit Stuff ********************** //
             pQUERY_DATA->final_statistics(final_out_dir, ontology_flags);
-            _pFileSystem->directory_iterate(FileSystem::FILE_ITER_DELETE_EMPTY, _outpath);   // Delete empty files
+           // _pFileSystem->directory_iterate(FileSystem::FILE_ITER_DELETE_EMPTY, _outpath);   // Delete empty files
             delete pQUERY_DATA;
             delete pGraphingManager;
             delete pEntapDatabase;

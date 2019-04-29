@@ -35,8 +35,8 @@ const std::vector<ENTAP_HEADERS> ModEggnogDMND::DEFAULT_HEADERS = {
     ENTAP_HEADER_ONT_EGG_SEED_SCORE,
     ENTAP_HEADER_ONT_EGG_PRED_GENE,
     ENTAP_HEADER_ONT_EGG_TAX_SCOPE,
-    ENTAP_HEADER_ONT_EGG_OGS,
-    ENTAP_HEADER_ONT_EGG_DESC,
+    ENTAP_HEADER_ONT_EGG_MEMBER_OGS,
+//    ENTAP_HEADER_ONT_EGG_DESC,
     ENTAP_HEADER_ONT_EGG_KEGG,
     ENTAP_HEADER_ONT_EGG_GO_BIO,
     ENTAP_HEADER_ONT_EGG_GO_CELL,
@@ -125,6 +125,8 @@ void ModEggnogDMND::parse() {
     uint16         file_status=0;
     uint64         sequence_ct=0;   // dprintf sequence count
     std::stringstream stats_stream;
+    EggnogDatabase    *eggnogDatabase;
+
 
     FS_dprint("Parsing EggNOG DMND file located at: " + _out_hits);
 
@@ -135,6 +137,14 @@ void ModEggnogDMND::parse() {
                                ERR_ENTAP_PARSE_EGGNOG_DMND);
     }
 
+
+    // Generate EggNOG database
+    eggnogDatabase = new EggnogDatabase(_pFileSystem, _pEntapDatabase);
+    if (eggnogDatabase->open_sql(EGG_SQL_DB_PATH) != EggnogDatabase::ERR_EGG_OK) {
+        throw ExceptionHandler("Unable to open EggNOG SQL Database", ERR_ENTAP_PARSE_EGGNOG_DMND);
+    }
+
+
     // File valid, continue
     FS_dprint("Beginning to parse EggNOG results...");
     _pFileSystem->format_stat_stream(stats_stream, "Gene Family - Gene Ontology and Pathway - EggNOG");
@@ -143,9 +153,8 @@ void ModEggnogDMND::parse() {
     // ------------------ Read from DIAMOND output ---------------------- //
     std::string qseqid;
     std::string sseqid, stitle, database_name,pident, bitscore,
-            length, mismatch, gapopen, qstart, qend, sstart, send;
+            length, mismatch, gapopen, qstart, qend, sstart, send, coverage;
     fp64 evalue;
-    fp64 coverage;
     QuerySequence::EggnogResults eggnogResults;
     QuerySequence *querySequence;
     // ----------------------------------------------------------------- //
@@ -170,10 +179,14 @@ void ModEggnogDMND::parse() {
 
             // Populate seed data from diamond
             eggnogResults = {};
-            eggnogResults.seed_evalue = evalue;
+            eggnogResults.seed_eval_raw = evalue;
+            eggnogResults.seed_evalue = float_to_sci(evalue, 2);
             eggnogResults.seed_score  = bitscore;
             eggnogResults.seed_coverage = coverage;
             eggnogResults.seed_ortholog = sseqid;
+
+            // get SQL data (WARNING, doing this for ALL hits even none best hits...)
+            eggnogDatabase->get_eggnog_entry(&eggnogResults);
             querySequence->add_alignment(GENE_ONTOLOGY, _software_flag, eggnogResults, EGG_DMND_PATH);
 
         } // End WHILE in.read_row
@@ -188,10 +201,13 @@ void ModEggnogDMND::parse() {
         }
 
     } catch (const ExceptionHandler &e) {
+        delete eggnogDatabase;
         throw e;
     } catch (const std::exception &e) {
+        delete eggnogDatabase;
         throw ExceptionHandler(e.what(), ERR_ENTAP_PARSE_EGGNOG_DMND);
     }
+    delete eggnogDatabase;
 #endif
 }
 
@@ -200,7 +216,6 @@ void ModEggnogDMND::parse() {
 void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     FS_dprint("Success! Calculating statistics and accessing database...");
 
-    EggnogDatabase                     *eggnogDatabase;
     QuerySequence::EggnogResults       *eggnog_results;
     QuerySequence::EggnogDmndAlignment *best_hit;
     Compair<std::string>                                  tax_scope_counter;
@@ -228,14 +243,6 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     std::ofstream file_hits_nucl(out_hit_nucl, std::ios::out | std::ios::app);
     std::ofstream file_hits_prot(out_hit_prot, std::ios::out | std::ios::app);
 
-
-    // Generate EggNOG database
-    eggnogDatabase = new EggnogDatabase(_pFileSystem, _pEntapDatabase);
-    if (eggnogDatabase->open_sql(EGG_SQL_DB_PATH) != EggnogDatabase::ERR_EGG_OK) {
-        throw ExceptionHandler("Unable to open EggNOG SQL Database", ERR_ENTAP_PARSE_EGGNOG_DMND);
-    }
-
-
     // Parse through all query sequences
     for (auto &pair : *_pQUERY_DATA->get_sequences_ptr()) {
         // Check if each sequence is an eggnog alignment
@@ -249,8 +256,7 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
             best_hit = pair.second->get_best_hit_alignment<QuerySequence::EggnogDmndAlignment>
                     (GENE_ONTOLOGY, _software_flag, EGG_DMND_PATH);
             eggnog_results = best_hit->get_results();
-            // get SQL data
-            eggnogDatabase->get_eggnog_entry(*eggnog_results);
+
 
             //  Analyze Gene Ontology Stats
             if (!eggnog_results->parsed_go.empty()) {
@@ -287,8 +293,7 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
         }
     } // END FOR LOOP
 
-    // Close EggNOG database, files
-    delete eggnogDatabase;
+    // Close files
     file_hits_nucl.close();
     file_hits_prot.close();
     file_no_hits_nucl.close();

@@ -75,7 +75,7 @@ public:
         EGGNOG_DATA_PNAME
     } EGGNOG_DATA_TYPES;
 
-    EggnogDatabase(FileSystem* filesystem, EntapDatabase* entap_data);
+    EggnogDatabase(FileSystem* filesystem, EntapDatabase* entap_data, QueryData* queryData);
     ~EggnogDatabase();
 
     ERR_EGGNOG_DB download(EGGNOG_DB_TYPES type, std::string out_path);
@@ -169,6 +169,7 @@ private:
     SQLDatabaseHelper *_pSQLDatabase;
     FileSystem        *_pFilesystem;
     EntapDatabase     *_pEntapDatabase;
+    QueryData         *_pQueryData;         // Used to control header information
     std::string        _err_msg;
     ERR_EGGNOG_DB      _err_code;
     std::string        _SQL_MEMBER_TABLE;
@@ -177,15 +178,14 @@ private:
     uint16              _VERSION_MINOR;
     uint16              _VERSION_REV;
 
-
     static const std::unordered_map<std::string,std::string> EGGNOG_LEVELS;   // Mappings from tax lvl to full name
     static const std::unordered_map<std::string, vect_str_t> LEVEL_CONTENT;
     static const vect_str_t                                  TAXONOMIC_RESOLUTION;
 
     void get_tax_scope(QuerySequence::EggnogResults*);
-    void get_sql_data(QuerySequence::EggnogResults&, SQLDatabaseHelper&);
+    void get_sql_data(QuerySequence::EggnogResults* eggnogResults);
     std::string format_sql_data(std::string&);
-    void get_og_query(QuerySequence::EggnogResults&);
+    void get_og_query(QuerySequence::EggnogResults* eggnogResults);
     void get_member_ogs(QuerySequence::EggnogResults* eggnog_results);
     member_orthologs_t get_member_orthologs(member_orthologs_t &member_orthologs,
                               std::string &best_hit,

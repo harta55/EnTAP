@@ -51,6 +51,7 @@ EntapHeader ENTAP_HEADER_INFO[] = {
         {"Coverage",            true},
         {"Description",         true},                          // 15
         {"Species",             true},
+        {"Taxonomic Lineage",   true},
         {"Origin Database",     true},
         {"Contaminant",         true},
         {"Informative",         true},
@@ -69,13 +70,15 @@ EntapHeader ENTAP_HEADER_INFO[] = {
         {"Seed Score",                              true},
         {"Predicted Gene",                          true},
         {"Tax Scope",                               true},
+        {"Tax Scope Max",                           true},
         {"Member OGs",                              true},
-        {"EggNOG Description",                      true},
+        {"EggNOG Description",                      false},
+        {"BIGG Reaction",                           true},
         {"KEGG Terms",                              true},
         {"GO Biological",                           true},
         {"GO Cellular",                             true},
         {"GO Molecular" ,                           true},
-        {"Protein Domains",                         true},
+        {"Protein Domains",                         false},
 
         /* Ontology - InterProScan */
         {"IPScan GO Biological",                    true},

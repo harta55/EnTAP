@@ -259,7 +259,7 @@ void ModGeneMarkST::parse() {
             if (p_it != protein_map.end()) {
                 // Kept sequence, either partial, complete, or internal
                 count_selected++;
-                pair.second->setSequence(p_it->second.sequence); // Sets isprotein flag
+                pair.second->set_sequence_p(p_it->second.sequence); // Sets isprotein flag
                 pair.second->setFrame(p_it->second.frame_type);
 
                 length = (uint16) pair.second->getSeq_length();  // Nucleotide sequence length
@@ -390,15 +390,6 @@ void ModGeneMarkST::parse() {
         _pGraphingManager->graph(graphingStruct);
         FS_dprint("Success!");
         //-----------------------------------------------------------//
-
-        FrameStats final_stats;
-        final_stats.removed   = count_removed;
-        final_stats.selected  = count_selected;
-        final_stats.partial_3 = count_map[FRAME_SELECTION_THREE_FLAG];
-        final_stats.partial_5 = count_map[FRAME_SELECTION_FIVE_FLAG];
-        final_stats.internal  = count_map[FRAME_SELECTION_INTERNAL_FLAG];
-        final_stats.complete  = count_map[FRAME_SELECTION_COMPLETE_FLAG];
-        _pQUERY_DATA->set_frame_stats(final_stats);
 
     } catch (ExceptionHandler &e) {throw e;}
     FS_dprint("Success! Parsing complete");

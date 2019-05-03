@@ -87,8 +87,6 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     _trim          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_TRIM);
     is_complete    = _pUserInput->has_input(_pUserInput->INPUT_FLAG_COMPLETE);
 
-    _alignment_file_types = _pUserInput->get_user_output_types();
-
     if (!_pFileSystem->file_exists(input_file)) {
         throw ExceptionHandler("Input transcriptome not found at: " + input_file,ERR_ENTAP_INPUT_PARSE);
     }
@@ -179,7 +177,8 @@ void QueryData::set_input_type(std::string &in) {
         line.pop_back(); // Account for newline/other
         if (line.find('>') == std::string::npos) {
             for (char &c : line) {
-                if (NUCLEO_MAP.find((char) toupper(c)) == NUCLEO_MAP.end()) deviations++;
+                if (std::find(NUCLEO_MAP.begin(), NUCLEO_MAP.end(),toupper(c)) == NUCLEO_MAP.end())
+                    deviations++;
             }
         }
     }
@@ -222,41 +221,6 @@ std::pair<uint16, uint16> QueryData::calculate_N_vals
     }
     return std::pair<uint16, uint16> (n_50,n_90);
 }
-
-
-/**
- * ======================================================================
- * Function void flag_transcripts(ExecuteStates state,
- *                              std::map<std::string, QuerySequence>& map)
- *
- * Description          - Sets boolean flags if a certain stage is skipped
- *                        in pipeline
- *                      - Used for statistics
- *
- * Notes                - Will be moved to transcriptome/project object
- *
- * @param state         - Current enum state of execution
- *
- * @return              - None
- * ======================================================================
- */
-void QueryData::flag_transcripts(ExecuteStates state) {
-    for (auto &pair : *_pSEQUENCES) {
-        switch (state) {
-            case EXPRESSION_FILTERING:
-                pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_EXPRESSION_KEPT);
-                break;
-            case FRAME_SELECTION:
-                pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_IS_PROTEIN);        // Probably already done
-                pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_FRAME_KEPT);
-                break;
-            default:
-                break;
-        }
-    }
-}
-
-
 
 /**
  * ======================================================================
@@ -421,12 +385,12 @@ std::string QueryData::trim_sequence_header(std::string &header, std::string lin
     std::string   sequence;
     int16         pos;
 
-    if (line.find(">") != std::string::npos) {
-        pos = (int16) line.find(">");
+    if (line.find('>') != std::string::npos) {
+        pos = (int16) line.find('>');
     } else pos = -1;
     if (_trim) {
-        if (line.find(" ") != std::string::npos) {
-            header = line.substr(pos+1, line.find(" ")-1);
+        if (line.find(' ') != std::string::npos) {
+            header = line.substr(pos+1, line.find(' ')-1);
         } else header = line.substr(pos+1);
         sequence = ">" + header + "\n";
     } else {
@@ -435,10 +399,6 @@ std::string QueryData::trim_sequence_header(std::string &header, std::string lin
         sequence = line + "\n";
     }
     return sequence;
-}
-
-void QueryData::set_frame_stats(const FrameStats &_frame_stats) {
-    QueryData::_frame_stats = _frame_stats;
 }
 
 QUERY_MAP_T* QueryData::get_sequences_ptr() {
@@ -479,22 +439,31 @@ QuerySequence *QueryData::get_sequence(std::string &query_id) {
 }
 
 bool QueryData::start_alignment_files(std::string &base_path, std::vector<ENTAP_HEADERS> &headers, uint8 lvl,
-                                        std::vector<FileSystem::ENT_FILE_TYPES> *types) {
+                                        std::vector<FileSystem::ENT_FILE_TYPES> &types) {
     bool ret;
-    std::string ext;
+    OutputFileData outputFileData = OutputFileData();
+    outputFileData.headers = headers;
+    outputFileData.go_level = lvl;
+    outputFileData.file_types = types;
+
+    base_path = base_path + "_lvl" + std::to_string(lvl);
 
     // add this path to map if it does not exist, otherwise skip
     if (_alignment_files.find(base_path) == _alignment_files.end()) {
-        _alignment_files.emplace(base_path, std::vector<std::ofstream*>(FileSystem::ENT_FILE_OUTPUT_FORMAT_MAX));
 
+        _alignment_files.emplace(base_path, outputFileData);
         // Generate files for each data type
-        for (FileSystem::ENT_FILE_TYPES type : _alignment_file_types) {
-            _alignment_files.at(base_path)[type] =
-                    new std::ofstream(base_path + "_lvl" + std::to_string(lvl) +
-                                      _pFileSystem->get_extension(type),
-                                      std::ios::out | std::ios::app);
-            // Initialize headers or any other generic stuff
-            _pFileSystem->initialize_file(_alignment_files.at(base_path)[type], headers, type);
+        for (FileSystem::ENT_FILE_TYPES type : types) {
+            if ((type == FileSystem::ENT_FILE_FASTA_FAA || type == FileSystem::ENT_FILE_FASTA_FNN) &&
+                    lvl != 0) {
+                // Do NOT create files for anything other than 0 for FAA or FNN
+                continue;
+            } else {
+                _alignment_files.at(base_path).file_streams[type] =
+                        new std::ofstream(base_path + _pFileSystem->get_extension(type), std::ios::out | std::ios::app);
+                // Initialize headers or any other generic stuff
+                _pFileSystem->initialize_file(_alignment_files.at(base_path).file_streams[type], headers, type);
+            }
         }
         ret = true;
     } else {
@@ -507,7 +476,7 @@ bool QueryData::start_alignment_files(std::string &base_path, std::vector<ENTAP_
 bool QueryData::end_alignment_files(std::string &base_path) {
     // Cleanup/close files
 
-    for (std::ofstream* file_ptr : _alignment_files.at(base_path)) {
+    for (std::ofstream* file_ptr : _alignment_files.at(base_path).file_streams) {
         // some are unused such as 0
         if (file_ptr != nullptr) {
             file_ptr->close();
@@ -518,27 +487,36 @@ bool QueryData::end_alignment_files(std::string &base_path) {
     return true;
 }
 
-bool QueryData::add_alignment_data(std::string &base_path, std::vector<ENTAP_HEADERS> &headers, QuerySequence *querySequence, uint8 lvl) {
+bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *querySequence) {
     bool ret = false;
 
-    // Cycle through output file types from user
-    for (FileSystem::ENT_FILE_TYPES type : _alignment_file_types) {
+    // Cycle through output file types for this path
+    for (FileSystem::ENT_FILE_TYPES type : _alignment_files.at(base_path).file_types) {
+
+        if (_alignment_files.at(base_path).file_streams[type] == nullptr) continue;
+
         switch (type) {
 
             case FileSystem::ENT_FILE_DELIM_TSV:
-                *_alignment_files.at(base_path)[type] << querySequence->print_delim(headers, lvl, FileSystem::DELIM_TSV) << std::endl;
+                *_alignment_files.at(base_path).file_streams[type] <<
+                        querySequence->print_delim(_alignment_files.at(base_path).headers,
+                                                   _alignment_files.at(base_path).go_level, FileSystem::DELIM_TSV) << std::endl;
                 break;
 
             case FileSystem::ENT_FILE_DELIM_CSV:
-                *_alignment_files.at(base_path)[type] << querySequence->print_delim(headers, lvl, FileSystem::DELIM_CSV) << std::endl;
+                *_alignment_files.at(base_path).file_streams[type] <<
+                        querySequence->print_delim(_alignment_files.at(base_path).headers,
+                                                   _alignment_files.at(base_path).go_level, FileSystem::DELIM_CSV) << std::endl;
                 break;
 
             case FileSystem::ENT_FILE_FASTA_FAA:
-                *_alignment_files.at(base_path)[type] << querySequence->get_sequence_p() << std::endl;
+                if (!querySequence->get_sequence_p().empty())
+                    *_alignment_files.at(base_path).file_streams[type] << querySequence->get_sequence_p() << std::endl;
                 break;
 
             case FileSystem::ENT_FILE_FASTA_FNN:
-                *_alignment_files.at(base_path)[type] << querySequence->get_sequence_n() << std::endl;
+                if (!querySequence->get_sequence_n().empty())
+                    *_alignment_files.at(base_path).file_streams[type] << querySequence->get_sequence_n() << std::endl;
                 break;
 
             default:
@@ -547,4 +525,57 @@ bool QueryData::add_alignment_data(std::string &base_path, std::vector<ENTAP_HEA
         }
     }
     return ret;
+}
+
+bool QueryData::is_protein_data() {
+    return DATA_FLAG_GET(IS_PROTEIN);
+}
+
+void QueryData::set_is_protein_data(bool val) {
+    DATA_FLAG_CHANGE(IS_PROTEIN, val);
+}
+
+void QueryData::set_is_success_frame_selection(bool val) {
+    DATA_FLAG_CHANGE(SUCCESS_FRAME_SEL, val);
+}
+
+void QueryData::set_is_success_expression(bool val) {
+    DATA_FLAG_CHANGE(SUCCESS_EXPRESSION, val);
+}
+
+void QueryData::set_is_success_sim_search(bool val) {
+    DATA_FLAG_CHANGE(SUCCESS_SIM_SEARCH, val);
+}
+
+void QueryData::set_is_success_ontology(bool val) {
+    DATA_FLAG_CHANGE(SUCCESS_ONTOLOGY, val);
+}
+
+void QueryData::DATA_FLAG_CHANGE(QueryData::DATA_FLAGS flag, bool val) {
+    if (val) {
+        DATA_FLAG_SET(flag);
+    } else {
+        DATA_FLAG_CLEAR(flag);
+    }
+}
+
+void QueryData::set_is_uniprot(bool val) {
+    DATA_FLAG_CHANGE(UNIPROT_MATCH, val);
+}
+
+void QueryData::header_set_uniprot(bool val) {
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_DATA_XREF].print_header = val;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_COMMENTS].print_header = val;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_KEGG].print_header = val;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_BIO].print_header = val;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_CELL].print_header = val;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_MOLE].print_header = val;
+}
+
+void QueryData::header_set(ENTAP_HEADERS header, bool val) {
+    ENTAP_HEADER_INFO[header].print_header = val;
+}
+
+void QueryData::print_final_output() {
+
 }

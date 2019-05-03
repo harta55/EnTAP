@@ -40,22 +40,17 @@ QuerySequence::QuerySequence() {
     init_sequence();
 }
 
-void QuerySequence::setSequence( std::string &seq) {
+const std::string &QuerySequence::get_sequence_p() const {
+    return _sequence_p;
+}
+
+void QuerySequence::set_sequence_p(std::string &seq) {
     QUERY_FLAG_SET(QUERY_IS_PROTEIN);
     _seq_length = calc_seq_length(seq,true);
     if (!seq.empty() && seq[seq.length()-1] == '\n') {
         seq.pop_back();
     }
-    _sequence_p = seq;
-}
-
-const std::string &QuerySequence::get_sequence_p() const {
-    return _sequence_p;
-}
-
-void QuerySequence::set_sequence_p(const std::string &_sequence_p) {
-    QuerySequence::_sequence_p = _sequence_p;
-}
+    _sequence_p = seq;}
 
 const std::string &QuerySequence::get_sequence_n() const {
     return _sequence_n;
@@ -74,6 +69,7 @@ QuerySequence::QuerySequence(bool is_protein, std::string seq, std::string seqid
         seq.pop_back();
     }
     is_protein ? _sequence_p = seq : _sequence_n = seq;
+    set_header_data();
 }
 
 unsigned long QuerySequence::calc_seq_length(std::string &seq,bool protein) {
@@ -107,7 +103,6 @@ void QuerySequence::init_sequence() {
 
     _alignment_data = new AlignmentData(this);
     _eggnog_results = EggnogResults();
-    _interpro_results = InterProResults();
 
     _frame = "";
     _sequence_p = "";
@@ -116,7 +111,6 @@ void QuerySequence::init_sequence() {
     _query_flags = 0;
     QUERY_FLAG_SET(QUERY_FRAME_KEPT);
     QUERY_FLAG_SET(QUERY_EXPRESSION_KEPT);
-
     set_header_data();
 }
 
@@ -578,6 +572,7 @@ QuerySequence::SimSearchAlignment::SimSearchAlignment(SimSearchResults d, std::s
             {ENTAP_HEADER_SIM_COVERAGE        , &_sim_search_results.coverage},
             {ENTAP_HEADER_SIM_TITLE           , &_sim_search_results.stitle},
             {ENTAP_HEADER_SIM_SPECIES         , &_sim_search_results.species},
+            {ENTAP_HEADER_SIM_TAXONOMIC_LINEAGE, &_sim_search_results.lineage},
             {ENTAP_HEADER_SIM_DATABASE        , &_sim_search_results.database_path},
             {ENTAP_HEADER_SIM_CONTAM          , &_sim_search_results.yes_no_contam},
             {ENTAP_HEADER_SIM_INFORM          , &_sim_search_results.yes_no_inform},
@@ -669,21 +664,7 @@ QuerySequence::EggnogDmndAlignment::EggnogDmndAlignment(QuerySequence::EggnogRes
                                                         QuerySequence *parent) {
     _parent = parent;
     _eggnog_results = eggnogResults;
-
-    ALIGN_OUTPUT_MAP = {
-            {ENTAP_HEADER_ONT_EGG_SEED_ORTHO, &_eggnog_results.seed_ortholog},
-            {ENTAP_HEADER_ONT_EGG_SEED_EVAL,  &_eggnog_results.seed_evalue},
-            {ENTAP_HEADER_ONT_EGG_SEED_SCORE, &_eggnog_results.seed_score},
-            {ENTAP_HEADER_ONT_EGG_PRED_GENE,  &_eggnog_results.predicted_gene},
-            {ENTAP_HEADER_ONT_EGG_TAX_SCOPE,  &_eggnog_results.tax_scope},
-            {ENTAP_HEADER_ONT_EGG_MEMBER_OGS,&_eggnog_results.member_ogs},
-            {ENTAP_HEADER_ONT_EGG_DESC,       &_eggnog_results.description},
-            {ENTAP_HEADER_ONT_EGG_KEGG,       &_eggnog_results.kegg},
-            {ENTAP_HEADER_ONT_EGG_PROTEIN,    &_eggnog_results.protein_domains},
-//            {ENTAP_HEADER_ONT_EGG_GO_BIO,     &_eggnog_results.parsed_go.at(GO_BIOLOGICAL_FLAG)},
-//            {ENTAP_HEADER_ONT_EGG_GO_CELL,    &_eggnog_results.parsed_go.at(GO_CELLULAR_FLAG)},
-//            {ENTAP_HEADER_ONT_EGG_GO_MOLE,    &_eggnog_results.parsed_go.at(GO_MOLECULAR_FLAG)}
-    };
+    refresh_headers();
 }
 
 
@@ -719,6 +700,24 @@ bool QuerySequence::EggnogDmndAlignment::is_go_header(ENTAP_HEADERS header, std:
             out_flag = false;
     }
     return out_flag;
+}
+
+void QuerySequence::EggnogDmndAlignment::refresh_headers() {
+
+    ALIGN_OUTPUT_MAP = {
+            {ENTAP_HEADER_ONT_EGG_SEED_ORTHO, &_eggnog_results.seed_ortholog},
+            {ENTAP_HEADER_ONT_EGG_SEED_EVAL,  &_eggnog_results.seed_evalue},
+            {ENTAP_HEADER_ONT_EGG_SEED_SCORE, &_eggnog_results.seed_score},
+            {ENTAP_HEADER_ONT_EGG_PRED_GENE,  &_eggnog_results.predicted_gene},
+            {ENTAP_HEADER_ONT_EGG_TAX_SCOPE_READABLE,  &_eggnog_results.tax_scope_readable},
+            {ENTAP_HEADER_ONT_EGG_TAX_SCOPE_MAX, &_eggnog_results.tax_scope_lvl_max},
+            {ENTAP_HEADER_ONT_EGG_MEMBER_OGS,&_eggnog_results.member_ogs},
+            {ENTAP_HEADER_ONT_EGG_DESC,       &_eggnog_results.description},
+            {ENTAP_HEADER_ONT_EGG_BIGG,       &_eggnog_results.bigg},
+            {ENTAP_HEADER_ONT_EGG_KEGG,       &_eggnog_results.kegg},
+            {ENTAP_HEADER_ONT_EGG_PROTEIN,    &_eggnog_results.protein_domains},
+    };
+    _parent->set_header_data();
 }
 
 //**********************************************************************

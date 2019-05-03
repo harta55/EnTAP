@@ -67,7 +67,7 @@ Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
 
     _new_input          = input;
     _pGraphingManager   = entap_data._pGraphingManager;
-    _QUERY_DATA         = entap_data._pQueryData;
+    _pQueryData         = entap_data._pQueryData;
     _pFileSystem        = entap_data._pFileSystem;
     _pUserInput         = entap_data._pUserInput;
     _pEntapDatabase     = entap_data._pEntapDatbase;
@@ -84,6 +84,7 @@ Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
     _final_outpath_dir  = _pFileSystem->get_final_outdir();
     _eggnog_db_path     = EGG_SQL_DB_PATH;
     _interpro_databases = _pUserInput->get_user_input<vect_str_t>(_pUserInput->INPUT_FLAG_INTERPRO);
+    _alignment_file_types = _pUserInput->get_user_output_types();
 
     if (_is_overwrite) _pFileSystem->delete_dir(_ontology_dir);
     _pFileSystem->create_dir(_ontology_dir);
@@ -123,7 +124,7 @@ void Ontology::execute() {
             ptr->parse();
             ptr.reset();
         }
-        print_eggnog(*_QUERY_DATA->get_sequences_ptr());
+        print_eggnog(*_pQueryData->get_sequences_ptr());
     } catch (ExceptionHandler &e) {
         ptr.reset();
         throw e;
@@ -213,51 +214,60 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
     std::string out_contam;
     std::string out_no_contam;
 
+    std::string final_annotations_base;
+    std::string final_annotations_contam_base;
+    std::string final_annotations_no_contam_base;
+
+    // TODO move to QueryData
     // Create output files for go levels (contaminants, no contam, all) and write headers
     for (uint16 lvl : _go_levels) {
-        file_name      = FINAL_ANNOT_FILE + std::to_string(lvl) + ANNOT_FILE_EXT;
-        file_contam    = FINAL_ANNOT_FILE + std::to_string(lvl) + FINAL_ANNOT_FILE_CONTAM + ANNOT_FILE_EXT;
-        file_no_contam = FINAL_ANNOT_FILE + std::to_string(lvl) + FINAL_ANNOT_FILE_NO_CONTAM + ANNOT_FILE_EXT;
-        outpath = PATHS(_final_outpath_dir, file_name);
-        out_contam = PATHS(_final_outpath_dir, file_contam);
-        out_no_contam = PATHS(_final_outpath_dir, file_no_contam);
 
-        // TODO allow user control of file types for final output
-        file_map[lvl][FINAL_ALL_IND] =
-                new std::ofstream(outpath, std::ios::out | std::ios::app);
-        file_map[lvl][FINAL_CONTAM_IND] =
-                new std::ofstream(out_contam, std::ios::out | std::ios::app);
-        file_map[lvl][FINAL_NO_CONTAM_IND] =
-                new std::ofstream(out_no_contam, std::ios::out | std::ios::app);
+        final_annotations_base             = PATHS(_final_outpath_dir, FINAL_ANNOT_FILE);
+        final_annotations_contam_base      = PATHS(_final_outpath_dir, FINAL_ANNOT_FILE_CONTAM);
+        final_annotations_no_contam_base   = PATHS(_final_outpath_dir, FINAL_ANNOT_FILE_NO_CONTAM);
 
-        // Write headers
-        _pFileSystem->initialize_file(file_map[lvl][FINAL_ALL_IND], _HEADERS, FileSystem::ENT_FILE_DELIM_TSV);
-        _pFileSystem->initialize_file(file_map[lvl][FINAL_CONTAM_IND], _HEADERS, FileSystem::ENT_FILE_DELIM_TSV);
-        _pFileSystem->initialize_file(file_map[lvl][FINAL_NO_CONTAM_IND], _HEADERS, FileSystem::ENT_FILE_DELIM_TSV);
-    }
+        _pQueryData->start_alignment_files(final_annotations_base, _HEADERS, (uint8)lvl, _alignment_file_types);
+        _pQueryData->start_alignment_files(final_annotations_contam_base, _HEADERS, (uint8)lvl, _alignment_file_types);
+        _pQueryData->start_alignment_files(final_annotations_no_contam_base, _HEADERS,(uint8) lvl, _alignment_file_types);
 
-    // Write to all files
-    for (auto &pair : SEQUENCES) {
-        for (uint16 lvl : _go_levels) {
-            for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
-                if (i == FINAL_ALL_IND) {
-                    *file_map[lvl][i] << pair.second->print_delim(_HEADERS, lvl, FileSystem::DELIM_TSV) << std::endl;
-                } else if (i == FINAL_CONTAM_IND && pair.second->isContaminant()) {
-                    *file_map[lvl][i]<< pair.second->print_delim(_HEADERS, lvl, FileSystem::DELIM_TSV)<<std::endl;
-                } else if (i == FINAL_NO_CONTAM_IND && !pair.second->isContaminant()) {
-                    *file_map[lvl][i]<< pair.second->print_delim(_HEADERS, lvl, FileSystem::DELIM_TSV)<<std::endl;
-                }
+        for (auto &pair : SEQUENCES) {
+            _pQueryData->add_alignment_data(final_annotations_base, pair.second);
+
+            if (pair.second->isContaminant()) {
+                _pQueryData->add_alignment_data(final_annotations_contam_base, pair.second);
+            } else {
+                _pQueryData->add_alignment_data(final_annotations_no_contam_base, pair.second);
             }
         }
-    }
 
-    // Cleanup
-    for(auto& pair : file_map) {
-        for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
-            pair.second[i]->close();
-            delete pair.second[i];
-        }
+        _pQueryData->end_alignment_files(final_annotations_base);
+        _pQueryData->end_alignment_files(final_annotations_contam_base);
+        _pQueryData->end_alignment_files(final_annotations_no_contam_base);
     }
+//
+//    // Write to all files
+//    for (auto &pair : SEQUENCES) {
+//        for (uint16 lvl : _go_levels) {
+//
+//            for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
+//                if (i == FINAL_ALL_IND) {
+//                    *file_map[lvl][i] << pair.second->print_delim(_HEADERS, lvl, FileSystem::DELIM_TSV) << std::endl;
+//                } else if (i == FINAL_CONTAM_IND && pair.second->isContaminant()) {
+//                    *file_map[lvl][i]<< pair.second->print_delim(_HEADERS, lvl, FileSystem::DELIM_TSV)<<std::endl;
+//                } else if (i == FINAL_NO_CONTAM_IND && !pair.second->isContaminant()) {
+//                    *file_map[lvl][i]<< pair.second->print_delim(_HEADERS, lvl, FileSystem::DELIM_TSV)<<std::endl;
+//                }
+//            }
+//        }
+//    }
+//
+//    // Cleanup
+//    for(auto& pair : file_map) {
+//        for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
+//            pair.second[i]->close();
+//            delete pair.second[i];
+//        }
+//    }
     FS_dprint("Success!");
 }
 

@@ -50,10 +50,9 @@ public:
 private:
 
     const std::string ONTOLOGY_OUT_PATH     = "ontology/";
-    const std::string FINAL_ANNOT_FILE      = "final_annotations_lvl";
-    const std::string FINAL_ANNOT_FILE_CONTAM = "_contam";
-    const std::string FINAL_ANNOT_FILE_NO_CONTAM = "_no_contam";
-    const std::string ANNOT_FILE_EXT        = ".tsv";
+    const std::string FINAL_ANNOT_FILE      = "final_annotations";
+    const std::string FINAL_ANNOT_FILE_CONTAM = "final_annotations_contam";
+    const std::string FINAL_ANNOT_FILE_NO_CONTAM = "final_annotations_no_contam";
     const uint16      FINAL_ALL_IND         = 0;
     const uint16      FINAL_CONTAM_IND      = 1;
     const uint16      FINAL_NO_CONTAM_IND   = 2;
@@ -71,11 +70,12 @@ private:
     std::string                     _final_outpath_dir;
     std::vector<ENTAP_HEADERS>      _HEADERS;
     GraphingManager                 *_pGraphingManager;
-    QueryData                       *_QUERY_DATA;
+    QueryData                       *_pQueryData;
     FileSystem                      *_pFileSystem;
     UserInput                       *_pUserInput;
     EntapDatabase                   *_pEntapDatabase;
     EntapDataPtrs                   _entap_data_ptrs;
+    std::vector<FileSystem::ENT_FILE_TYPES> _alignment_file_types;
 
     void print_eggnog(QUERY_MAP_T&);
     void init_headers();

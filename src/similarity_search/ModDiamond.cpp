@@ -51,6 +51,7 @@ std::vector<ENTAP_HEADERS> ModDiamond::DEFAULT_HEADERS = {
         ENTAP_HEADER_SIM_COVERAGE,
         ENTAP_HEADER_SIM_TITLE,
         ENTAP_HEADER_SIM_SPECIES,
+        ENTAP_HEADER_SIM_TAXONOMIC_LINEAGE,
         ENTAP_HEADER_SIM_DATABASE,
         ENTAP_HEADER_SIM_CONTAM,
         ENTAP_HEADER_SIM_INFORM,
@@ -227,7 +228,7 @@ void ModDiamond::parse() {
     FS_dprint("Beginning to filter individual DIAMOND files...");
 
     // disable UniProt headers until we know we have a hit
-    EM_set_uniprot_headers(false);
+    _pQUERY_DATA->header_set_uniprot(false);
 
     for (std::string &output_path : _output_paths) {
         FS_dprint("DIAMOND file located at " + output_path + " being parsed");
@@ -278,8 +279,8 @@ void ModDiamond::parse() {
                         uniprot_attempts++;
                     } else {
                         FS_dprint("Database file at " + output_path + "\nDetermined to be UniProt");
-                        _pQUERY_DATA->DATA_FLAG_SET(QueryData::UNIPROT_MATCH);
-                        EM_set_uniprot_headers(true);
+                        _pQUERY_DATA->set_is_uniprot(true);
+                        _pQUERY_DATA->header_set_uniprot(true);
                     }
                 } // Else, database is NOT UniProt after # of attempts
             }
@@ -371,15 +372,15 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
 
     // Open contam best hit tsv file and print headers
     std::string out_best_contams_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_CONTAM);
-    _pQUERY_DATA->start_alignment_files(out_best_contams_filepath, DEFAULT_HEADERS, 0, nullptr);
+    _pQUERY_DATA->start_alignment_files(out_best_contams_filepath, DEFAULT_HEADERS, 0, _alignment_file_types);
 
     // Open best hits files
     std::string out_best_hits_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS);
-    _pQUERY_DATA->start_alignment_files(out_best_hits_filepath, DEFAULT_HEADERS, 0, nullptr);
+    _pQUERY_DATA->start_alignment_files(out_best_hits_filepath, DEFAULT_HEADERS, 0, _alignment_file_types);
 
     // Open best hits files with no contaminants
     std::string out_best_hits_no_contams = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM);
-    _pQUERY_DATA->start_alignment_files(out_best_hits_no_contams, DEFAULT_HEADERS, 0, nullptr);
+    _pQUERY_DATA->start_alignment_files(out_best_hits_no_contams, DEFAULT_HEADERS, 0, _alignment_file_types);
 
     // Open unselected hits, so every hit that was not the best hit (tsv)
     std::string out_unselected_tsv  = PATHS(base_path, SIM_SEARCH_DATABASE_UNSELECTED + FileSystem::EXT_TSV);
@@ -467,7 +468,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                 count_filtered++;   // increment best hit
 
                 // Write to best hits files
-                _pQUERY_DATA->add_alignment_data(out_best_hits_filepath, DEFAULT_HEADERS, pair.second, 0);
+                _pQUERY_DATA->add_alignment_data(out_best_hits_filepath, pair.second);
 
                 frame = pair.second->getFrame();     // Used for graphing
                 species = sim_search_data->species;
@@ -476,14 +477,14 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                 if (sim_search_data->contaminant) {
                     // Species is considered a contaminant
                     count_contam++;
-                    _pQUERY_DATA->add_alignment_data(out_best_contams_filepath, DEFAULT_HEADERS, pair.second, 0);
+                    _pQUERY_DATA->add_alignment_data(out_best_contams_filepath, pair.second);
 
                     contam = sim_search_data->contam_type;
                     contam_counter.add_value(contam);
                     contam_species_counter.add_value(species);
                 } else {
                     // Species is NOT a contaminant, print to files
-                    _pQUERY_DATA->add_alignment_data(out_best_hits_no_contams, DEFAULT_HEADERS, pair.second, 0);
+                    _pQUERY_DATA->add_alignment_data(out_best_hits_no_contams, pair.second);
                 }
 
                 // Count species type

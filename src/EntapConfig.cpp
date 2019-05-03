@@ -311,7 +311,7 @@ namespace entapConfig {
         _pFileSystem->format_stat_stream(log_msg, "EggNOG Database Configuration");
 
         // Generate database to allow downloading
-        EggnogDatabase eggnogDatabase = EggnogDatabase(_pFileSystem, _pEntapDatabase);
+        EggnogDatabase eggnogDatabase = EggnogDatabase(_pFileSystem, _pEntapDatabase, nullptr);
 
 #if EGGNOG_MAPPER
         std::string eggnog_cmd;

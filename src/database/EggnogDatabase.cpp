@@ -234,10 +234,11 @@ const vect_str_t EggnogDatabase::TAXONOMIC_RESOLUTION = {"apiNOG", "virNOG", "ne
                                          "NOG"};
 
 
-EggnogDatabase::EggnogDatabase(FileSystem* filesystem, EntapDatabase* entap_data) {
+EggnogDatabase::EggnogDatabase(FileSystem* filesystem, EntapDatabase* entap_data, QueryData* queryData) {
     _pFilesystem = filesystem;
     _pSQLDatabase = nullptr;
     _pEntapDatabase = entap_data;
+    _pQueryData = queryData;
     _err_msg = "";
     _err_code = ERR_EGG_OK;
     _VERSION_MAJOR = 0;
@@ -361,6 +362,10 @@ void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults *eggnog_data)
     get_member_ogs(eggnog_data);
     if (eggnog_data->member_ogs.empty()) return;
 
+    // get SQL data and query info
+//    get_og_query(eggnog_data);      // populated og_key to be used as index into SQL
+//    get_sql_data(eggnog_data);
+
 
     // Get unique tax groups (split "0V8CP@meNOG" to meNOG) and max level
     std::istringstream iss(eggnog_data->member_ogs);
@@ -414,6 +419,9 @@ void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults *eggnog_data)
 void EggnogDatabase::get_tax_scope(QuerySequence::EggnogResults *eggnogResults) {
     // Lookup/Assign Tax Scope
 
+    eggnogResults->tax_scope_readable = "";
+    eggnogResults->tax_scope  = eggnogResults->tax_scope_lvl_max;
+
     if (!eggnogResults->tax_scope_lvl_max.empty()) {
         uint16 p = (uint16) (eggnogResults->tax_scope_lvl_max.find("NOG"));
         if (p != std::string::npos) {
@@ -422,8 +430,6 @@ void EggnogDatabase::get_tax_scope(QuerySequence::EggnogResults *eggnogResults) 
             return;
         }
     }
-    eggnogResults->tax_scope  = eggnogResults->tax_scope_lvl_max;
-    eggnogResults->tax_scope_readable = "";
 }
 
 
@@ -443,9 +449,9 @@ void EggnogDatabase::get_tax_scope(QuerySequence::EggnogResults *eggnogResults) 
  * @return              - None
  * ======================================================================
  */
-void EggnogDatabase::get_sql_data(QuerySequence::EggnogResults &eggnogResults, SQLDatabaseHelper &database) {
+void EggnogDatabase::get_sql_data(QuerySequence::EggnogResults *eggnogResults) {
     // Lookup description, KEGG, protein domain from SQL database
-    if (!eggnogResults.og_key.empty()) {
+    if (!eggnogResults->og_key.empty()) {
         std::vector<std::vector<std::string>>results;
         std::string sql_kegg;
         std::string sql_desc;
@@ -453,18 +459,18 @@ void EggnogDatabase::get_sql_data(QuerySequence::EggnogResults &eggnogResults, S
 
         char *query = sqlite3_mprintf(
                 "SELECT description, KEGG_freq, SMART_freq FROM og WHERE og=%Q",
-                eggnogResults.og_key.c_str());
+                eggnogResults->og_key.c_str());
         try {
-            results = database.query(query);
+            results = _pSQLDatabase->query(query);
             sql_desc = results[0][0];
             sql_kegg = results[0][1];
             sql_protein = results[0][2];
-            if (!sql_desc.empty() && sql_desc.find("[]") != 0) eggnogResults.description = sql_desc;
+            if (!sql_desc.empty() && sql_desc.find("[]") != 0) eggnogResults->description = sql_desc;
             if (!sql_kegg.empty() && sql_kegg.find("[]") != 0) {
-                eggnogResults.kegg = format_sql_data(sql_kegg);
+                eggnogResults->kegg = format_sql_data(sql_kegg);
             }
             if (!sql_protein.empty() && sql_protein.find("{}") != 0){
-                eggnogResults.protein_domains = format_sql_data(sql_protein);
+                eggnogResults->protein_domains = format_sql_data(sql_protein);
             }
         } catch (std::exception &e) {
             // Do not fatal error
@@ -488,19 +494,19 @@ void EggnogDatabase::get_sql_data(QuerySequence::EggnogResults &eggnogResults, S
  * @return              - None
  * ======================================================================
  */
-void EggnogDatabase::get_og_query(QuerySequence::EggnogResults &eggnogResults) {
+void EggnogDatabase::get_og_query(QuerySequence::EggnogResults *eggnogResults) {
     // Find OG query was assigned to
     std::string temp;
-    if (!eggnogResults.member_ogs.empty()) {
-        std::istringstream ss(eggnogResults.member_ogs);
+    if (!eggnogResults->member_ogs.empty()) {
+        std::istringstream ss(eggnogResults->member_ogs);
         std::unordered_map<std::string,std::string> og_map; // Not fully used right now
         while (std::getline(ss,temp,',')) {
             uint16 p = (uint16) temp.find("@");
             og_map[temp.substr(p+1)] = temp.substr(0,p);
         }
-        eggnogResults.og_key = "";
-        if (og_map.find(eggnogResults.tax_scope) != og_map.end()) {
-            eggnogResults.og_key = og_map[eggnogResults.tax_scope];
+        eggnogResults->og_key = "";
+        if (og_map.find(eggnogResults->tax_scope) != og_map.end()) {
+            eggnogResults->og_key = og_map[eggnogResults->tax_scope];
         }
     }
 }
@@ -898,15 +904,20 @@ void EggnogDatabase::set_database_version() {
         if (_VERSION_MAJOR == 4 && _VERSION_MINOR == 5 && _VERSION_REV == 1) {
             _sql_version = EGGNOG_VERSION_4_5_1;
             FS_dprint("SQL Version set to 4.5.1");
+
         } else if (_VERSION_MAJOR <= 4 ){
-            FS_dprint("ERROR: SQL Version less than 4, setting to 'earlier'");
+            FS_dprint("WARNING: SQL Version less than 4, setting to 'earlier'");
             _sql_version = EGGNOG_VERSION_EARLIER;
+            if (_pQueryData != nullptr)
+                _pQueryData->header_set(ENTAP_HEADER_ONT_EGG_BIGG, false);   // Not supported for older version
         }
         FS_dprint("Success!");
 
     } catch (...) {
-        FS_dprint("ERROR: couldn't get SQL version.Setting to earlier version by default");
+        FS_dprint("WARNING: couldn't get SQL version.Setting to earlier version by default");
         _sql_version = EGGNOG_VERSION_EARLIER;
+        if (_pQueryData != nullptr)
+            _pQueryData->header_set(ENTAP_HEADER_ONT_EGG_BIGG, false);       // Not supported for older version
     }
 
     if (_sql_version == EGGNOG_VERSION_4_5_1) {

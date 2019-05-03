@@ -35,15 +35,6 @@
 
 class QuerySequence;
 
-struct FrameStats {
-    uint32 removed;
-    uint32 selected;
-    uint32 partial_5;
-    uint32 partial_3;
-    uint32 internal;
-    uint32 complete;
-};
-
 class QueryData {
 
 public:
@@ -65,25 +56,47 @@ public:
 
     QUERY_MAP_T* get_sequences_ptr();
 
-    void flag_transcripts(ExecuteStates);
     std::pair<uint16, uint16> calculate_N_vals(std::vector<uint16>&,uint64);
     std::string trim_sequence_header(std::string&, std::string);
     void final_statistics(std::string&, std::vector<uint16>&);
-    void set_frame_stats(const FrameStats &_frame_stats);
-    bool start_alignment_files(std::string &base_path, std::vector<ENTAP_HEADERS> &headers, uint8 lvl,
-                                std::vector<FileSystem::ENT_FILE_TYPES> *types);
-    bool end_alignment_files(std::string &base_path);
-    bool add_alignment_data(std::string &base_path, std::vector<ENTAP_HEADERS> &headers,
-                            QuerySequence *querySequence, uint8 lvl);
-    // TODO create generic printing of alingment data for QueryAlignment
+    void print_final_output();
 
+    // Output routines
+    bool start_alignment_files(std::string &base_path, std::vector<ENTAP_HEADERS> &headers, uint8 lvl,
+                                std::vector<FileSystem::ENT_FILE_TYPES> &types);
+    bool end_alignment_files(std::string &base_path);
+    bool add_alignment_data(std::string &base_path, QuerySequence *querySequence);
+
+    QuerySequence* get_sequence(std::string&);
+
+    // DATA_FLAG routines
+    bool is_protein_data();
+    void set_is_protein_data(bool val);
+    void set_is_success_frame_selection(bool val);
+    void set_is_success_expression(bool val);
+    void set_is_success_sim_search(bool val);
+    void set_is_success_ontology(bool val);
+    void set_is_uniprot(bool val);
+
+    // Header routines
+    void header_set_uniprot(bool val);
+    void header_set(ENTAP_HEADERS header, bool val);
+
+
+private:
+
+    struct OutputFileData {
+        std::vector<FileSystem::ENT_FILE_TYPES> file_types;
+        uint8 go_level;
+        std::vector<ENTAP_HEADERS> headers;
+        std::ofstream* file_streams[FileSystem::ENT_FILE_OUTPUT_FORMAT_MAX];
+    };
+
+    void set_input_type(std::string&);
     bool DATA_FLAG_GET(DATA_FLAGS);
     void DATA_FLAG_SET(DATA_FLAGS);
     void DATA_FLAG_CLEAR(DATA_FLAGS);
-    QuerySequence* get_sequence(std::string&);
-
-private:
-    void set_input_type(std::string&);
+    void DATA_FLAG_CHANGE(DATA_FLAGS flag, bool val);
 
     const uint8         LINE_COUNT   = 20;
     const uint8         SEQ_DPRINT_CONUT = 10;
@@ -94,12 +107,8 @@ private:
     const std::string   PROTEIN_FLAG = "Protein";
     const std::string   COMPLETE_FLAG= "Complete";
     // these characters are considered nucleotide
-    const std::map<char,uint8> NUCLEO_MAP {
-            {'A', 1},
-            {'G', 1},
-            {'C', 1},
-            {'T', 1},
-            {'N', 1}
+    const std::vector<char> NUCLEO_MAP {
+            'A', 'G', 'C', 'T', 'N'
     };
     const std::string OUT_UNANNOTATED_NUCL = "final_unannotated.fnn";
     const std::string OUT_UNANNOTATED_PROT = "final_unannotated.faa";
@@ -110,15 +119,12 @@ private:
     bool         _trim;
     uint32       _total_sequences;          // Original sequence number
     uint32       _data_flags;
-    uint64       _start_nuc_len;            // Starting total len
-    uint64       _start_prot_len;           // Starting total len
-    FrameStats   _frame_stats;
+    uint64       _start_nuc_len;            // Starting total len (nucleotide)
+    uint64       _start_prot_len;           // Starting total len (protein)
     uint32       _pipeline_flags;           // Success flags
     FileSystem  *_pFileSystem;
     UserInput   *_pUserInput;
-    std::unordered_map<std::string, std::vector<std::ofstream*>> _alignment_files;
-    std::vector<FileSystem::ENT_FILE_TYPES> _alignment_file_types;
-
+    std::unordered_map<std::string, OutputFileData> _alignment_files;
 };
 
 

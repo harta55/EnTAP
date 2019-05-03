@@ -57,17 +57,15 @@ protected:
     const std::string FIGURE_DIR            = "figures/";
     const std::string OVERALL_RESULTS_DIR   = "overall_results";
 
-    const std::string OUT_UNANNOTATED_NUCL  = "unannotated_sequences.fnn";
-    const std::string OUT_UNANNOTATED_PROT  = "unannotated_sequences.faa";
-    const std::string OUT_ANNOTATED_NUCL    = "annotated_sequences.fnn";
-    const std::string OUT_ANNOTATED_PROT    = "annotated_sequences.faa";
+    const std::string FILENAME_OUT_UNANNOTATED  = "unannotated_sequences";
+    const std::string FILENAME_OUT_ANNOTATED    = "annotated_sequences";
 
     const std::string GRAPH_GO_END_TXT        = "_go_bar_graph.txt";
     const std::string GRAPH_GO_END_PNG        = "_go_bar_graph.png";
-    const std::string GRAPH_GO_BAR_BIO_TITLE  = "Top_10_GO_Biological_Terms";
-    const std::string GRAPH_GO_BAR_CELL_TITLE = "Top_10_GO_Cellular_Terms";
-    const std::string GRAPH_GO_BAR_MOLE_TITLE = "Top_10_GO_Molecular_Terms";
-    const std::string GRAPH_GO_BAR_ALL_TITLE  = "Top_10_GO_Terms";
+    const std::string GRAPH_GO_BAR_BIO_TITLE  = "Top_GO_Biological_Terms";
+    const std::string GRAPH_GO_BAR_CELL_TITLE = "Top_GO_Cellular_Terms";
+    const std::string GRAPH_GO_BAR_MOLE_TITLE = "Top_GO_Molecular_Terms";
+    const std::string GRAPH_GO_BAR_ALL_TITLE  = "Top_GO_Terms";
 
     const std::string YES_FLAG                = "Yes";
     const std::string NO_FLAG                 = "No";
@@ -94,9 +92,9 @@ protected:
     UserInput          *_pUserInput;
     FileSystem         *_pFileSystem;
     EntapDatabase      *_pEntapDatabase;
+    std::vector<FileSystem::ENT_FILE_TYPES> _alignment_file_types; // may be overriden by module
 
     go_format_t EM_parse_go_list(std::string list, EntapDatabase* database,char delim);
-    void EM_set_uniprot_headers(bool set);
 };
 
 

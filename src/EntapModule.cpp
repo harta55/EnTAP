@@ -43,6 +43,8 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     _threads         = _pUserInput->get_supported_threads();
     _blastp          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_RUNPROTEIN);
     _overwrite       = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
+    _alignment_file_types = _pUserInput->get_user_output_types();   // may be overridden at lower level
+
     _transcript_shortname = _pFileSystem->get_filename(_in_hits, false);
 
     // INIT directories
@@ -80,13 +82,4 @@ go_format_t EntapModule::EM_parse_go_list(std::string list, EntapDatabase* datab
                                              "(L=" + term_info.level + ")");
     }
     return output;
-}
-
-void EntapModule::EM_set_uniprot_headers(bool set) {
-    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_DATA_XREF].print_header = set;
-    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_COMMENTS].print_header = set;
-    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_KEGG].print_header = set;
-    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_BIO].print_header = set;
-    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_CELL].print_header = set;
-    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_MOLE].print_header = set;
 }

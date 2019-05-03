@@ -65,24 +65,24 @@ public:
     } QUERY_FLAGS;
 
     struct EggnogResults {
-        std::string              member_ogs;     // 0A01R@biNOG,0V8CP@meNOG
-        std::string              seed_ortholog;  // 34740.HMEL017225-PA
-        std::string              seed_evalue;
-        std::string              seed_score;
-        std::string              seed_coverage;
-        std::string              predicted_gene;
+        std::string              member_ogs;        // 0A01R@biNOG,0V8CP@meNOG (ortholgous groups)
+        std::string              seed_ortholog;     // 34740.HMEL017225-PA
+        std::string              seed_evalue;       // Pulled from DIAMOND run
+        std::string              seed_score;        // Pulled from DIAMOND run
+        std::string              seed_coverage;     // Pulled from DIAMOND run
+        std::string              predicted_gene;    // Most common predicted gene (pname)
         std::string              tax_scope_lvl_max; // virNOG[6]
         std::string              tax_scope;         // virNOG
         std::string              tax_scope_readable;// Ascomycota
-        std::string              pname;
+        std::string              pname;             // All predicted gene names
         std::string              name;
         std::string              bigg;
         std::string              kegg;
-        std::string              og_key;
-        std::string              description;       //
+        std::string              og_key;            // Used for indexing into older SQL database (if using)
+        std::string              description;       // Used for older version
         std::string              protein_domains;
-        fp64                     seed_eval_raw;
-        go_format_t              parsed_go;
+        fp64                     seed_eval_raw;     // Used for finding best hit
+        go_format_t              parsed_go;         // All go terms found
     };
 
     struct InterProResults {
@@ -192,6 +192,7 @@ public:
         ~EggnogDmndAlignment() override = default;
         EggnogResults* get_results();
         bool operator>(const QueryAlignment&) override;
+        void refresh_headers();
 
     private:
         QuerySequence::EggnogResults _eggnog_results;
@@ -257,13 +258,12 @@ public:
     QuerySequence();
     QuerySequence(bool, std::string, std::string);
     ~QuerySequence();
-    void setSequence(std::string&);
     std::string print_delim(std::vector<ENTAP_HEADERS> &, short lvl ,char delim);
     void setFrame(const std::string &frame);
     unsigned long getSeq_length() const;
     const std::string &getFrame() const;
     const std::string &get_sequence_p() const;
-    void set_sequence_p(const std::string &_sequence_p);
+    void set_sequence_p(std::string &seq);
     const std::string &get_sequence_n() const;
     void set_sequence_n(const std::string &_sequence_n);
     const std::string &get_sequence() const;
@@ -304,8 +304,6 @@ private:
     std::string                       _sequence_n;
     std::string                       _frame;
     EggnogResults                     _eggnog_results;
-    InterProResults                   _interpro_results;
-    std::map<const std::string*, std::string*> OUTPUT_MAP;
     AlignmentData                     *_alignment_data;  // contains all alignment data
     std::string                       _header_info[ENTAP_HEADER_COUNT];
 

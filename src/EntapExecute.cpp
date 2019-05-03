@@ -47,7 +47,7 @@ namespace entapExecute {
     //**************************************************************
 
     //******************** Local Prototype Functions ***************
-    std::string filter_transcriptome(std::string &);
+    std::string copy_final_transcriptome(std::string &);
     void verify_state(std::queue<char> &, bool &);
     bool valid_state(enum ExecuteStates);
     void exit_error(ExecuteStates);
@@ -131,7 +131,6 @@ namespace entapExecute {
                     _pUserInput,        // User input map
                     _pFileSystem);      // Filesystem object
 
-
             // Initialize Graphing Manager
             pGraphingManager = new GraphingManager(GRAPHING_EXE);
 
@@ -156,10 +155,11 @@ namespace entapExecute {
                 switch (executeStates) {
                     case FRAME_SELECTION: {
                         FS_dprint("STATE - FRAME SELECTION");
-                        if ((_blastp && pQUERY_DATA->DATA_FLAG_GET(QueryData::IS_PROTEIN))) {
+                        if (_blastp && pQUERY_DATA->is_protein_data()) {
                             FS_dprint("Protein sequences input, skipping frame selection");
                         } else if (!_blastp) {
                             FS_dprint("Blastx selected, skipping frame selection");
+                            pQUERY_DATA->header_set(ENTAP_HEADER_FRAME, false);
                         } else {
                             FS_dprint("Continuing with frame selection process...");
                             std::unique_ptr<FrameSelection> frame_selection(new FrameSelection(
@@ -168,8 +168,8 @@ namespace entapExecute {
                             _input_path = frame_selection->execute(_input_path);
 
                             // Set flags for query data
-                            pQUERY_DATA->DATA_FLAG_SET(QueryData::IS_PROTEIN);
-                            pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_FRAME_SEL);
+                            pQUERY_DATA->set_is_protein_data(true);
+                            pQUERY_DATA->set_is_success_frame_selection(true);
 
                             // Copy frame selected file to the trancriptome directory
                             std::string transc_protein_filename = _input_basename + TRANSCRIPTOME_FRAME_TAG;
@@ -182,7 +182,7 @@ namespace entapExecute {
                         FS_dprint("STATE - EXPRESSION FILTERING");
                         if (!_pUserInput->has_input(_pUserInput->INPUT_FLAG_ALIGN)) {
                             FS_dprint("No alignment file specified, skipping expression analysis");
-                            ENTAP_HEADER_INFO[EXP_RSEM].print_header = false;
+                            pQUERY_DATA->header_set(ENTAP_HEADER_EXP_FPKM, false);
                         } else {
                             // Proceed with expression analysis
                             std::unique_ptr<ExpressionAnalysis> expression(new ExpressionAnalysis(
@@ -191,7 +191,7 @@ namespace entapExecute {
                             _input_path = expression->execute(original_input);
 
                             // Set flags for query data
-                            pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_EXPRESSION);
+                            pQUERY_DATA->set_is_success_expression(true);
 
                             // Copy filtered file to entap transcriptome directory
                             std::string transc_filter_filename = _input_basename + TRANSCRIPTOME_FILTERED_TAG;
@@ -200,8 +200,8 @@ namespace entapExecute {
                         }
                     }
                         break;
-                    case FILTER:
-                        _input_path = filter_transcriptome(_input_path);  // Just copies final transcriptome
+                    case COPY_FINAL_TRANSCRIPTOME:
+                        _input_path = copy_final_transcriptome(_input_path);  // Just copies final transcriptome
                         break;
                     case SIMILARITY_SEARCH: {
                         FS_dprint("STATE - SIMILARITY SEARCH");
@@ -212,7 +212,7 @@ namespace entapExecute {
                                 entap_data_ptrs
                         ));
                         sim_search->execute();
-                        pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_SIM_SEARCH);
+                        pQUERY_DATA->set_is_success_sim_search(true);
                         break;
                     }
                     case GENE_ONTOLOGY: {
@@ -222,7 +222,7 @@ namespace entapExecute {
                                 entap_data_ptrs
                         ));
                         ontology->execute();
-                        pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_ONTOLOGY);
+                        pQUERY_DATA->set_is_success_ontology(true);
                         break;
                     }
                     default:
@@ -261,7 +261,7 @@ namespace entapExecute {
      *
      * =====================================================================
      */
-    std::string filter_transcriptome(std::string &input_path) {
+    std::string copy_final_transcriptome(std::string &input_path) {
         FS_dprint("Beginning to copy final transcriptome to be used...");
 
         std::string   file_name;
@@ -392,7 +392,7 @@ namespace entapExecute {
                    "EnTAP failed execution during the  Frame Selection stage with\n"
                            "previous stages executing correctly.\n";
                 break;
-            case FILTER:
+            case COPY_FINAL_TRANSCRIPTOME:
                 break;
             case SIMILARITY_SEARCH:
                 ss <<

@@ -64,7 +64,8 @@ set(SOURCE_FILES
         src/database/EggnogDatabase.cpp src/database/EggnogDatabase.h
         src/EntapModule.cpp src/EntapModule.h
         src/similarity_search/AbstractSimilaritySearch.cpp src/similarity_search/AbstractSimilaritySearch.h
-        src/similarity_search/ModDiamond.cpp src/similarity_search/ModDiamond.h)
+        src/similarity_search/ModDiamond.cpp src/similarity_search/ModDiamond.h
+        src/QueryAlignment.cpp src/QueryAlignment.h)
 
 # Include libraries
 include_directories(libs/pstream)

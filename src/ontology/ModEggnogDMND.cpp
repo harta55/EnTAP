@@ -28,6 +28,7 @@
 #include "ModEggnogDMND.h"
 #include "../database/EggnogDatabase.h"
 #include "../TerminalCommands.h"
+#include "../QueryAlignment.h"
 
 const std::vector<ENTAP_HEADERS> ModEggnogDMND::DEFAULT_HEADERS = {
     ENTAP_HEADER_ONT_EGG_SEED_ORTHO,
@@ -206,7 +207,7 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     FS_dprint("Success! Calculating statistics and accessing database...");
 
     QuerySequence::EggnogResults       *eggnog_results;
-    QuerySequence::EggnogDmndAlignment *best_hit;
+    EggnogDmndAlignment *best_hit;
     Compair<std::string>                                  tax_scope_counter;
     std::unordered_map<std::string,Compair<std::string>>  go_combined_map;
     GraphingData                        graphingStruct;
@@ -247,14 +248,14 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
             // Yes, hit EggNOG database
             ct_alignments++;
 
-            best_hit = pair.second->get_best_hit_alignment<QuerySequence::EggnogDmndAlignment>
+            best_hit = pair.second->get_best_hit_alignment<EggnogDmndAlignment>
                     (GENE_ONTOLOGY, _software_flag, EGG_DMND_PATH);
 
             eggnog_results = best_hit->get_results();
             eggnogDatabase->get_eggnog_entry(eggnog_results);
             best_hit->refresh_headers();
 
-            _pQUERY_DATA->add_alignment_data(out_hits_base, pair.second);
+            _pQUERY_DATA->add_alignment_data(out_hits_base, pair.second, nullptr);
 
             //  Analyze Gene Ontology Stats
             if (!eggnog_results->parsed_go.empty()) {
@@ -285,7 +286,7 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
         } else {
             // No, did not hit database
             ct_no_alignment++;
-            _pQUERY_DATA->add_alignment_data(out_no_hits_base, pair.second);
+            _pQUERY_DATA->add_alignment_data(out_no_hits_base, pair.second, nullptr);
         }
     } // END FOR LOOP
 

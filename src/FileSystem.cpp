@@ -53,6 +53,7 @@ const std::string FileSystem::EXT_DMND = ".dmnd";
 const std::string FileSystem::EXT_STD  = "_std";
 const std::string FileSystem::EXT_TSV  = ".tsv";
 const std::string FileSystem::EXT_CSV  = ".csv";
+const std::string FileSystem::EXT_LST  = ".lst";
 
 const char FileSystem::DELIM_TSV = '\t';
 const char FileSystem::DELIM_CSV = ',';
@@ -766,7 +767,10 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
 
 bool FileSystem::rename_file(std::string &in, std::string &out) {
     FS_dprint("Moving/renaming file: " + in );
-    if (!file_exists(in)) return false;
+    if (!file_exists(in)) {
+        FS_dprint("ERROR: rename failed, file does not exist");
+        return false;
+    }
     try {
 #ifdef USE_BOOST
         boostFS::rename(in, out);
@@ -776,10 +780,10 @@ bool FileSystem::rename_file(std::string &in, std::string &out) {
         rename(in.c_str(), out.c_str());
 #endif
     } catch (...) {
-        FS_dprint("rename failed!");
+        FS_dprint("ERROR: rename failed!");
         return false;
     }
-    return false;
+    return true;
 }
 
 uint16 FileSystem::get_file_status(std::string &path) {

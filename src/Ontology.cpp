@@ -35,9 +35,6 @@
 #include "ontology/ModEggnogDMND.h"
 #include "similarity_search/ModDiamond.h"
 
-const int16 FINAL_ANNOT_LEN = 3;
-
-
 /**
  * ======================================================================
  * Function Ontology::Ontology(int thread, std::string outpath, std::string input,
@@ -206,13 +203,6 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
  */
 void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
     FS_dprint("Beginning to print final results...");
-    std::map<uint16, std::ofstream*[FINAL_ANNOT_LEN]> file_map;
-    std::string file_name;
-    std::string file_contam;
-    std::string file_no_contam;
-    std::string outpath;
-    std::string out_contam;
-    std::string out_no_contam;
 
     std::string final_annotations_base;
     std::string final_annotations_contam_base;
@@ -231,12 +221,12 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
         _pQueryData->start_alignment_files(final_annotations_no_contam_base, _HEADERS,(uint8) lvl, _alignment_file_types);
 
         for (auto &pair : SEQUENCES) {
-            _pQueryData->add_alignment_data(final_annotations_base, pair.second);
+            _pQueryData->add_alignment_data(final_annotations_base, pair.second, nullptr);
 
             if (pair.second->isContaminant()) {
-                _pQueryData->add_alignment_data(final_annotations_contam_base, pair.second);
+                _pQueryData->add_alignment_data(final_annotations_contam_base, pair.second, nullptr);
             } else {
-                _pQueryData->add_alignment_data(final_annotations_no_contam_base, pair.second);
+                _pQueryData->add_alignment_data(final_annotations_no_contam_base, pair.second, nullptr);
             }
         }
 
@@ -244,30 +234,6 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
         _pQueryData->end_alignment_files(final_annotations_contam_base);
         _pQueryData->end_alignment_files(final_annotations_no_contam_base);
     }
-//
-//    // Write to all files
-//    for (auto &pair : SEQUENCES) {
-//        for (uint16 lvl : _go_levels) {
-//
-//            for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
-//                if (i == FINAL_ALL_IND) {
-//                    *file_map[lvl][i] << pair.second->print_delim(_HEADERS, lvl, FileSystem::DELIM_TSV) << std::endl;
-//                } else if (i == FINAL_CONTAM_IND && pair.second->isContaminant()) {
-//                    *file_map[lvl][i]<< pair.second->print_delim(_HEADERS, lvl, FileSystem::DELIM_TSV)<<std::endl;
-//                } else if (i == FINAL_NO_CONTAM_IND && !pair.second->isContaminant()) {
-//                    *file_map[lvl][i]<< pair.second->print_delim(_HEADERS, lvl, FileSystem::DELIM_TSV)<<std::endl;
-//                }
-//            }
-//        }
-//    }
-//
-//    // Cleanup
-//    for(auto& pair : file_map) {
-//        for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
-//            pair.second[i]->close();
-//            delete pair.second[i];
-//        }
-//    }
     FS_dprint("Success!");
 }
 

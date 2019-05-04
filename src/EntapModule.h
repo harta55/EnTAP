@@ -70,8 +70,8 @@ protected:
     const std::string YES_FLAG                = "Yes";
     const std::string NO_FLAG                 = "No";
 
-    const uint8 COUNT_TOP_GO                  = 10;
-    const uint8 COUNT_TOP_SPECIES             = 10;
+    const uint16 COUNT_TOP_GO                  = 10;
+    const uint16 COUNT_TOP_SPECIES             = 10;
 
     bool               _blastp;
     bool               _overwrite;

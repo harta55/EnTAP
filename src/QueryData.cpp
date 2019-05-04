@@ -26,6 +26,7 @@
 */
 
 #include "QueryData.h"
+#include "QueryAlignment.h"
 #include "ExceptionHandler.h"
 #include "FileSystem.h"
 #include "UserInput.h"
@@ -170,10 +171,11 @@ void QueryData::set_input_type(std::string &in) {
 
     line_count = 0;
     deviations = 0;
+    FS_dprint("Transcriptome Lines - START");
     while(std::getline(in_file,line)) {
         if (line.empty()) continue;
         if (line_count++ > LINE_COUNT) break;
-        if (line_count < SEQ_DPRINT_CONUT) FS_dprint("Transcriptome Line: \n" + line);
+        if (line_count < SEQ_DPRINT_CONUT) FS_dprint(line);
         line.pop_back(); // Account for newline/other
         if (line.find('>') == std::string::npos) {
             for (char &c : line) {
@@ -182,6 +184,7 @@ void QueryData::set_input_type(std::string &in) {
             }
         }
     }
+    FS_dprint("Transcriptome Lines - END");
     if (deviations > NUCLEO_DEV) {
         DATA_FLAG_SET(IS_PROTEIN);
     }
@@ -291,8 +294,8 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
         is_prot = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN);
         is_hit = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_BLAST_HIT);
         is_ontology = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ASSIGNED); // TODO Fix for interpro
-        is_one_go = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_ONE_GO);
-        is_one_kegg = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_ONE_KEGG);
+        is_one_go = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ONE_GO);
+        is_one_kegg = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ONE_KEGG);
 
         is_exp_kept ? count_exp_kept++ : count_exp_reject++;
         is_prot ? count_frame_kept++ : count_frame_rejected++;
@@ -487,7 +490,7 @@ bool QueryData::end_alignment_files(std::string &base_path) {
     return true;
 }
 
-bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *querySequence) {
+bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *querySequence, QueryAlignment *alignment) {
     bool ret = false;
 
     // Cycle through output file types for this path
@@ -498,15 +501,27 @@ bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *queryS
         switch (type) {
 
             case FileSystem::ENT_FILE_DELIM_TSV:
-                *_alignment_files.at(base_path).file_streams[type] <<
+                if (alignment == nullptr) {
+                    *_alignment_files.at(base_path).file_streams[type] <<
                         querySequence->print_delim(_alignment_files.at(base_path).headers,
-                                                   _alignment_files.at(base_path).go_level, FileSystem::DELIM_TSV) << std::endl;
+                        _alignment_files.at(base_path).go_level, FileSystem::DELIM_TSV) << std::endl;
+                } else {
+                    *_alignment_files.at(base_path).file_streams[type] <<
+                        alignment->print_delim(_alignment_files.at(base_path).headers,
+                        _alignment_files.at(base_path).go_level, FileSystem::DELIM_TSV) << std::endl;
+                }
                 break;
 
             case FileSystem::ENT_FILE_DELIM_CSV:
-                *_alignment_files.at(base_path).file_streams[type] <<
+                if (alignment == nullptr) {
+                    *_alignment_files.at(base_path).file_streams[type] <<
                         querySequence->print_delim(_alignment_files.at(base_path).headers,
-                                                   _alignment_files.at(base_path).go_level, FileSystem::DELIM_CSV) << std::endl;
+                        _alignment_files.at(base_path).go_level, FileSystem::DELIM_CSV) << std::endl;
+                } else {
+                    *_alignment_files.at(base_path).file_streams[type] <<
+                        alignment->print_delim(_alignment_files.at(base_path).headers,
+                        _alignment_files.at(base_path).go_level, FileSystem::DELIM_CSV) << std::endl;
+                }
                 break;
 
             case FileSystem::ENT_FILE_FASTA_FAA:

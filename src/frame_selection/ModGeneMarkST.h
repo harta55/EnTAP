@@ -80,10 +80,12 @@ private:
     const std::string FRAME_SELECTION_THREE_FLAG    = "Partial 3 Prime";
     const std::string FRAME_SELECTION_COMPLETE_FLAG = "Complete";
     const std::string FRAME_SELECTION_INTERNAL_FLAG = "Internal";
-    const std::string FILE_ALT_EXT                  = "_alt";
 
-    std::string _final_out_path;
+    std::string _final_faa_path;
+    std::string _final_fnn_path;
     std::string _final_lst_path;
+    std::string _final_gmst_log_path;
+    std::string _final_hmm_path;
     std::string _transcriptome_filename;    // Filename of input transcriptome
 
 

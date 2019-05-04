@@ -30,15 +30,13 @@
 #define ENTAP_QUERYSEQUENCE_H
 
 #include "common.h"
-#include "database/SQLDatabaseHelper.h"
 #include "EntapExecute.h"
 #include "database/EntapDatabase.h"
 
+class QueryAlignment;
+
 class QuerySequence {
 public:
-
-    class QueryAlignment;
-    struct AlignmentData;
 
     typedef std::vector<QueryAlignment*> align_database_hits_t;
     typedef std::unordered_map<std::string,align_database_hits_t> ALIGNMENT_DATA_T;
@@ -59,6 +57,8 @@ public:
         QUERY_CONTAMINANT       = (1 << 11),
         QUERY_FAMILY_ONE_KEGG   = (1 << 12),
         QUERY_FAMILY_ONE_GO     = (1 << 13),
+        QUERY_ONT_INTERPRO_GO   = (1 << 14),
+        QUERY_ONT_INTERPRO_PATHWAY = (1 << 15),
 
         QUERY_MAX               = (1 << 31)
 
@@ -125,105 +125,7 @@ public:
     };
 
 
-    //**********************************************************************
-    //**********************************************************************
-    //                 QueryAlignment Nested Class
-    //**********************************************************************
-    //**********************************************************************
 
-    class QueryAlignment {
-
-    public:
-        QueryAlignment();
-        std::string print_delim(std::vector<ENTAP_HEADERS> &, uint8 lvl, char delim);
-        bool operator<(const QueryAlignment&query) {return !(*this > query);};
-        void set_compare_overall_alignment(bool val);
-        virtual ~QueryAlignment() = default;;
-        virtual bool operator>(const QueryAlignment&)=0;
-        void get_all_header_data(std::string[]);
-        void get_header_data(ENTAP_HEADERS header, std::string &val, uint8 lvl);
-
-    protected:
-        virtual bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list)=0;
-
-        std::unordered_map<ENTAP_HEADERS , std::string*> ALIGN_OUTPUT_MAP;
-        bool _compare_overall_alignment; // May want to compare separate parameters for overall alignment across databases
-        QuerySequence* _parent;
-    };
-
-    //**********************************************************************
-    //**********************************************************************
-    //                 SimSearchAlignment Nested Class
-    //**********************************************************************
-    //**********************************************************************
-
-    class SimSearchAlignment : public QueryAlignment{
-
-    public:
-        SimSearchAlignment(SimSearchResults, std::string&, QuerySequence*);
-        ~SimSearchAlignment() override = default;
-        SimSearchResults* get_results();
-        bool operator>(const QueryAlignment&) override;
-
-    private:
-        void set_tax_score(std::string&);
-
-        QuerySequence::SimSearchResults    _sim_search_results;
-
-    protected:
-        bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list) override;
-
-        static constexpr uint8 E_VAL_DIF     = 8;
-        static constexpr uint8 COV_DIF       = 5;
-        static constexpr uint8 INFORM_ADD    = 3;
-        static constexpr fp32 INFORM_FACTOR  = 1.2;
-    };
-
-    //**********************************************************************
-    //**********************************************************************
-    //                 EggnogDmndAlignment Nested Class
-    //**********************************************************************
-    //**********************************************************************
-
-    class EggnogDmndAlignment : public QueryAlignment {
-
-    public:
-        EggnogDmndAlignment(EggnogResults eggnogResults, QuerySequence* parent);
-        ~EggnogDmndAlignment() override = default;
-        EggnogResults* get_results();
-        bool operator>(const QueryAlignment&) override;
-        void refresh_headers();
-
-    private:
-        QuerySequence::EggnogResults _eggnog_results;
-
-    protected:
-        bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list) override;
-
-    };
-
-    //**********************************************************************
-    //**********************************************************************
-    //                 InterproAlignment Nested Class
-    //**********************************************************************
-    //**********************************************************************
-
-    class InterproAlignment : public QueryAlignment {
-
-    public:
-        InterproAlignment(InterProResults results, QuerySequence *parent);
-        ~InterproAlignment() override = default;
-        InterProResults* get_results();
-        bool operator>(const QueryAlignment&) override;
-
-
-    private:
-        QuerySequence::InterProResults _interpro_results;
-
-    protected:
-        bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list) override;
-
-    };
 
     struct AlignmentData {
         ALIGNMENT_DATA_T sim_search_data[SIM_SOFTWARE_COUNT];
@@ -233,11 +135,7 @@ public:
         QueryAlignment* overall_alignment[EXECUTION_MAX][ONT_SOFTWARE_COUNT]{};
 
         struct sort_descending_database {
-            bool operator () (QueryAlignment* first, QueryAlignment* second) {
-                first->set_compare_overall_alignment(false);
-                second->set_compare_overall_alignment(false);
-                return first > second;
-            }
+            bool operator () (QueryAlignment* first, QueryAlignment* second);
         };
 
         AlignmentData(QuerySequence* sequence);
@@ -293,7 +191,9 @@ public:
 
     // Checks whether an alignment was found against specific atabase
     bool hit_database(ExecuteStates state, uint16 software, std::string database);
-
+    void update_query_flags(ExecuteStates state, uint16 software);
+    void get_header_data(std::string& data, ENTAP_HEADERS header, uint8 lvl);
+    void set_header_data();
 
 private:
     fp32                              _fpkm;
@@ -310,9 +210,7 @@ private:
     /* Private Functions */
     void init_sequence();
     unsigned long calc_seq_length(std::string &,bool);
-    void update_query_flags(ExecuteStates state, uint16 software);
-    void get_header_data(std::string& data, ENTAP_HEADERS header, uint8 lvl);
-    void set_header_data();
+
 };
 
 

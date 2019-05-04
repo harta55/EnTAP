@@ -51,13 +51,13 @@ private:
 
     static constexpr int DMND_COL_NUMBER = 14;
     const uint32      STATUS_UPDATE_HITS = 5000;
-    const std::string GRAPH_EGG_TAX_BAR_TITLE = "Top_10_Tax_Levels";
+    const std::string GRAPH_EGG_TAX_BAR_TITLE = "Top_Tax_Levels";
     const std::string GRAPH_EGG_TAX_BAR_PNG   = "eggnog_tax_scope.png";
     const std::string GRAPH_EGG_TAX_BAR_TXT   = "eggnog_tax_scope.txt";
     const std::string EGG_ANNOT_RESULTS       = "annotation_results";
     const std::string EGG_ANNOT_STD           = "annotation_std";
     const std::string EGG_ANNOT_APPEND        = ".emapper.annotations";
-    static constexpr uint8 COUNT_TOP_TAX_SCOPE = 10;
+    static constexpr uint16 COUNT_TOP_TAX_SCOPE = 10;
 
     std::string _out_hits;
     std::string _eggnog_db_path;

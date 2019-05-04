@@ -33,7 +33,9 @@
 #include "QuerySequence.h"
 #include "common.h"
 
-class QuerySequence;
+// Forward Declarations
+class QueryAlignment;
+
 
 class QueryData {
 
@@ -65,8 +67,7 @@ public:
     bool start_alignment_files(std::string &base_path, std::vector<ENTAP_HEADERS> &headers, uint8 lvl,
                                 std::vector<FileSystem::ENT_FILE_TYPES> &types);
     bool end_alignment_files(std::string &base_path);
-    bool add_alignment_data(std::string &base_path, QuerySequence *querySequence);
-
+    bool add_alignment_data(std::string &base_path, QuerySequence *querySequence, QueryAlignment *alignment);
     QuerySequence* get_sequence(std::string&);
 
     // DATA_FLAG routines
@@ -106,6 +107,7 @@ private:
     const std::string   NUCLEO_FLAG  = "Nucleotide";
     const std::string   PROTEIN_FLAG = "Protein";
     const std::string   COMPLETE_FLAG= "Complete";
+
     // these characters are considered nucleotide
     const std::vector<char> NUCLEO_MAP {
             'A', 'G', 'C', 'T', 'N'

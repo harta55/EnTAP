@@ -145,8 +145,8 @@ void ModRSEM::parse() {
     uint32              count_total=0;      // Used to warn user if high percentage is removed
     uint32              min_removed=10000;
     uint32              min_selected=10000;
-    uint32              max_removed=10000;
-    uint32              max_selected=10000;
+    uint32              max_removed=0xFFFFFFFF;
+    uint32              max_selected=0xFFFFFFFF;
     uint64              total_removed_len=0;
     uint64              total_kept_len=0;
     uint16              length;

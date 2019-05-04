@@ -28,6 +28,8 @@
 #include <csv.h>
 #include "ModDiamond.h"
 #include "../QuerySequence.h"
+#include "../QueryAlignment.h"
+
 #ifdef USE_BOOST
 #include <boost/regex.hpp>
 #else   // C++ libs
@@ -442,15 +444,15 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                 // HIT a database during sim search
 
                 QuerySequence::SimSearchResults *sim_search_data;
-                QuerySequence::SimSearchAlignment *best_hit;
+                SimSearchAlignment *best_hit;
                 // Process unselected hits for non-final analysis and set best hit pointer
                 if (is_final) {
                     best_hit =
-                            pair.second->get_best_hit_alignment<QuerySequence::SimSearchAlignment>(
+                            pair.second->get_best_hit_alignment<SimSearchAlignment>(
                                     SIMILARITY_SEARCH, SIM_DIAMOND,"");
                     sim_search_data = best_hit->get_results();
                 } else {
-                    best_hit = pair.second->get_best_hit_alignment<QuerySequence::SimSearchAlignment>(
+                    best_hit = pair.second->get_best_hit_alignment<SimSearchAlignment>(
                             SIMILARITY_SEARCH, SIM_DIAMOND,database_path);
                     QuerySequence::align_database_hits_t *alignment_data =
                             pair.second->get_database_hits(database_path,SIMILARITY_SEARCH, SIM_DIAMOND);
@@ -468,7 +470,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                 count_filtered++;   // increment best hit
 
                 // Write to best hits files
-                _pQUERY_DATA->add_alignment_data(out_best_hits_filepath, pair.second);
+                _pQUERY_DATA->add_alignment_data(out_best_hits_filepath, pair.second, best_hit);
 
                 frame = pair.second->getFrame();     // Used for graphing
                 species = sim_search_data->species;
@@ -477,14 +479,14 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                 if (sim_search_data->contaminant) {
                     // Species is considered a contaminant
                     count_contam++;
-                    _pQUERY_DATA->add_alignment_data(out_best_contams_filepath, pair.second);
+                    _pQUERY_DATA->add_alignment_data(out_best_contams_filepath, pair.second, best_hit);
 
                     contam = sim_search_data->contam_type;
                     contam_counter.add_value(contam);
                     contam_species_counter.add_value(species);
                 } else {
                     // Species is NOT a contaminant, print to files
-                    _pQUERY_DATA->add_alignment_data(out_best_hits_no_contams, pair.second);
+                    _pQUERY_DATA->add_alignment_data(out_best_hits_no_contams, pair.second, best_hit);
                 }
 
                 // Count species type

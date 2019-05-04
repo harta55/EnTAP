@@ -52,22 +52,20 @@ Y or FITNESS FOR A PARTICULAR PURPOSE.  See the
  */
 EntapModule::ModVerifyData ModGeneMarkST::verify_files() {
     ModVerifyData modVerifyData;
-    std::string lst_file;
 
     modVerifyData.files_exist = false;
 
     FS_dprint("Beginning to verify GeneMarkS-T module files...");
 
-    _final_out_path = PATHS(_mod_out_dir, _transcriptome_filename) + FileSystem::EXT_FAA;
-    lst_file   = _transcriptome_filename + ".lst";
-    _final_lst_path = PATHS(_mod_out_dir, lst_file);
-    if (_pFileSystem->file_exists(_final_out_path) && _pFileSystem->file_exists(_final_lst_path)) {
-        FS_dprint("Files found at: " + _final_out_path + "\nand: " + _final_lst_path +
-                "\ncontinuing EnTAP with these files and skipping frame selection");
+    if (_pFileSystem->file_exists(_final_faa_path) && _pFileSystem->file_exists(_final_lst_path)) {
+        FS_dprint("Files found at: " + _final_faa_path + "\nand: " + _final_lst_path +
+                "\ncontinuing EnTAP with these files and skipping Frame Selection");
         modVerifyData.files_exist = true;
+    } else {
+        FS_dprint("File not found at " + _final_faa_path + "\nor " + _final_lst_path +
+                  " so continuing with Frame Selection");
     }
-    FS_dprint("File not found at " + _final_out_path + " so continuing frame selection");
-    modVerifyData.output_paths = vect_str_t{_final_out_path};
+    modVerifyData.output_paths = vect_str_t{_final_faa_path};
     return modVerifyData;
 }
 
@@ -90,10 +88,11 @@ EntapModule::ModVerifyData ModGeneMarkST::verify_files() {
  */
 void ModGeneMarkST::execute() {
     // Outfiles: file/path.faa, file/path.fnn
-    // assumes working directory as output right now
-    std::string     lst_file;
-    std::string     out_gmst_log;
-    std::string     out_hmm_file;
+    // WARNING GeneMarkS-T assumes working directory as output right now
+    std::string     temp_lst_file;
+    std::string     temp_faa_file;
+    std::string     temp_fnn_file;
+    std::string     temp_hmm_file;
     std::string     genemark_cmd;
     std::string     genemark_std_out;
     std::string     line;
@@ -102,11 +101,11 @@ void ModGeneMarkST::execute() {
     int32           err_code;
     TerminalData    terminalData;
 
-    std::list<std::string> out_names {_transcriptome_filename + FileSystem::EXT_FAA,
-                                      _transcriptome_filename + FileSystem::EXT_FNN};
-    lst_file     = _transcriptome_filename + ".lst";
-    out_gmst_log = PATHS(_mod_out_dir, GENEMARK_LOG_FILE);
-    out_hmm_file = PATHS(_mod_out_dir, GENEMARK_HMM_FILE);
+    // Set temporary outputs (these will be moved to FINAL outpaths
+    temp_faa_file     = PATHS(_pFileSystem->get_cur_dir(), _transcriptome_filename + FileSystem::EXT_FAA);
+    temp_fnn_file     = PATHS(_pFileSystem->get_cur_dir(), _transcriptome_filename + FileSystem::EXT_FNN);
+    temp_lst_file     = PATHS(_pFileSystem->get_cur_dir(), _transcriptome_filename + FileSystem::EXT_LST);
+    temp_hmm_file     = PATHS(_pFileSystem->get_cur_dir(), GENEMARK_HMM_FILE);
 
     genemark_cmd     = _exe_path + " -faa -fnn " + _in_hits;
     genemark_std_out = PATHS(_mod_out_dir, GENEMARK_STD_OUT);
@@ -115,40 +114,71 @@ void ModGeneMarkST::execute() {
     terminalData.print_files    = true;
     terminalData.base_std_path  = genemark_std_out;
 
-
+    // WARNING!!! GeneMarkS-T output is always in the CWD
     err_code = TC_execute_cmd(terminalData);
     if (err_code != 0 ) {
         throw ExceptionHandler("Error in running GeneMarkST at file located at: " +
                                _in_hits + "\nGeneMarkST Error:\n" + terminalData.err_stream,
-                               ERR_ENTAP_INIT_INDX_DATA_NOT_FOUND);
+                               ERR_ENTAP_RUN_GENEMARK);
     }
     FS_dprint("Success!");
 
+    // Ensure files successfully printed
+    if (!_pFileSystem->file_exists(temp_faa_file)) {
+        throw ExceptionHandler("Error unable to find GeneMarkS-T file located at: " + temp_faa_file,
+                               ERR_ENTAP_RUN_GENEMARK);
+    } else if (!_pFileSystem->file_exists(temp_fnn_file)) {
+        throw ExceptionHandler("Error unable to find GeneMarkS-T file located at: " + temp_fnn_file,
+                               ERR_ENTAP_RUN_GENEMARK);
+    } else if (!_pFileSystem->file_exists(temp_lst_file)) {
+        throw ExceptionHandler("Error unable to find GeneMarkS-T file located at: " + temp_lst_file,
+                               ERR_ENTAP_RUN_GENEMARK);
+    }
+
+    FS_dprint("GeneMarkS-T files printed to:\nFAA File: " + temp_faa_file +
+                                            "\nFNN File: " + temp_fnn_file+
+                                            "\nLST File: " + temp_lst_file);
+
     // Format genemarks-t output (remove blank lines)
+    // Format FNN file
     FS_dprint("Formatting GeneMarkST files...");
-    for (std::string path : out_names) {
-        std::ifstream in_file(path);
-        temp_name = path + FILE_ALT_EXT;
-        out_path  = PATHS(_mod_out_dir, path);
-        std::ofstream out_file(path + FILE_ALT_EXT);
-        while (getline(in_file,line)){
+    try {
+        std::ifstream in_file_fnn(temp_fnn_file);
+        std::ofstream out_file_fnn(_final_fnn_path);
+        while(getline(in_file_fnn, line)) {
             if (!line.empty()) {
-                out_file << line << '\n';
+                out_file_fnn << line << '\n';
             }
         }
-        in_file.close();
-        out_file.close();
-        if (remove(path.c_str())!=0 || rename(temp_name.c_str(),out_path.c_str())!=0) {
-            throw ExceptionHandler("Error formatting/moving genemark results", ERR_ENTAP_RUN_GENEMARK_PARSE);
+        in_file_fnn.close();
+        out_file_fnn.close();
+
+        // Format FAA file
+        std::ifstream in_file_faa(temp_faa_file);
+        std::ofstream out_file_faa(_final_faa_path);
+        while(getline(in_file_faa, line)) {
+            if (!line.empty()) {
+                out_file_faa << line << '\n';
+            }
         }
+        in_file_faa.close();
+        out_file_faa.close();
+    } catch (std::exception &e) {
+        throw ExceptionHandler("Error formatting GeneMarkS-T results\n" + std::string(e.what()),
+                               ERR_ENTAP_RUN_GENEMARK_MOVE);
     }
-    if (rename(lst_file.c_str(),_final_lst_path.c_str())!=0 ||
-        rename(GENEMARK_LOG_FILE.c_str(),out_gmst_log.c_str())!=0 ) {
-        throw ExceptionHandler("Error moving genemark results", ERR_ENTAP_RUN_GENEMARK_MOVE);
+
+    // Delete temporary files (ignore errors)
+    _pFileSystem->delete_file(temp_fnn_file);
+    _pFileSystem->delete_file(temp_faa_file);
+
+    // Move other output files to module directory
+    if (!_pFileSystem->rename_file(temp_lst_file, _final_lst_path)) {
+        throw ExceptionHandler("Error moving GeneMarkS-T results", ERR_ENTAP_RUN_GENEMARK_MOVE);
     }
-    if (_pFileSystem->file_exists(GENEMARK_HMM_FILE)) {
-        rename(GENEMARK_HMM_FILE.c_str(),out_hmm_file.c_str());
-    }
+
+    // Does not always exist, not needed for final calculation so ignore errors
+    _pFileSystem->rename_file(temp_hmm_file,_final_hmm_path);
     FS_dprint("Success!");
 }
 
@@ -194,8 +224,8 @@ void ModGeneMarkST::parse() {
     GraphingData                            graphingStruct;
 
     // Ensure paths we need exist
-    if (!_pFileSystem->file_exists(_final_out_path)) {
-        throw ExceptionHandler("Final GeneMarkST output not found at: " + _final_out_path,
+    if (!_pFileSystem->file_exists(_final_faa_path)) {
+        throw ExceptionHandler("Final GeneMarkST output not found at: " + _final_faa_path,
             ERR_ENTAP_RUN_GENEMARK_PARSE);
     } else if (!_pFileSystem->file_exists(_final_lst_path)) {
         throw ExceptionHandler("Final GeneMarkST lst output not found at: " + _final_lst_path,
@@ -213,8 +243,8 @@ void ModGeneMarkST::parse() {
     figure_results_png  = PATHS(_figure_dir, GRAPH_FILE_FRAME_RESUTS);
 
     // all nucleotide lengths
-    uint32 min_removed=100000;
-    uint32 min_selected=100000;
+    uint32 min_removed=0xFFFFFFFF;
+    uint32 min_selected=0xFFFFFFFF;
     uint32 max_removed=0;
     uint32 max_selected=0;
     uint64 total_removed_len=0;
@@ -226,7 +256,7 @@ void ModGeneMarkST::parse() {
 
     try {
         // Parse protein file (.faa)
-        std::map<std::string,frame_seq> protein_map = genemark_parse_protein(_final_out_path);
+        std::map<std::string,frame_seq> protein_map = genemark_parse_protein(_final_faa_path);
         // Parse lst file to get info for each sequence (partial, internal...)
         genemark_parse_lst(_final_lst_path,protein_map);
 
@@ -325,7 +355,7 @@ void ModGeneMarkST::parse() {
         _pFileSystem->format_stat_stream(stat_output, "Frame Selected Transcripts (GeneMarkS-T)");
         stat_output <<
                     "Total sequences frame selected: "      << count_selected          <<
-                    "\n\tTranslated protein sequences: "    << _final_out_path              <<
+                    "\n\tTranslated protein sequences: "    << _final_faa_path              <<
                     "\nTotal sequences removed (no frame): "<< count_removed           <<
                     "\n\tFrame selected CDS removed: "      << out_removed_path        <<
                     "\nTotal of "                           <<
@@ -524,8 +554,16 @@ ModGeneMarkST::ModGeneMarkST(std::string &execution_stage_path, std::string &in_
                              EntapDataPtrs &entap_data, std::string &exe) :
     AbstractFrame(execution_stage_path, in_hits, entap_data, "GeneMarkS-T", exe) {
     _transcriptome_filename = _pFileSystem->get_filename(in_hits, true);
+
+    // Initialize FINAL output file paths
+    // GenemarkS-T prints to CWD, they will be moved to these paths after execution
+    _final_faa_path = PATHS(_mod_out_dir, _transcriptome_filename) + FileSystem::EXT_FAA;
+    _final_fnn_path = PATHS(_mod_out_dir, _transcriptome_filename) + FileSystem::EXT_FNN;
+    _final_lst_path = PATHS(_mod_out_dir, _transcriptome_filename + FileSystem::EXT_LST);
+    _final_gmst_log_path = PATHS(_mod_out_dir, GENEMARK_LOG_FILE);
+    _final_hmm_path = PATHS(_mod_out_dir, GENEMARK_HMM_FILE);
 }
 
 std::string ModGeneMarkST::get_final_faa() {
-    return _final_out_path;
+    return _final_faa_path;
 }

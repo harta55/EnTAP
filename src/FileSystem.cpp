@@ -643,7 +643,7 @@ std::string FileSystem::get_filename(std::string &path, bool with_extension) {
 
     // Filename with first extension (removes trailing extensions)
     if (with_extension) {
-        return path.substr(dir_pos + 1, ext_pos - dir_pos - 1);
+        return path.substr(dir_pos + 1);
     } else {
         // Just get stem
         if (dir_pos == std::string::npos) {

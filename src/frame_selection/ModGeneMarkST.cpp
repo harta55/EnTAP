@@ -93,6 +93,7 @@ void ModGeneMarkST::execute() {
     std::string     temp_faa_file;
     std::string     temp_fnn_file;
     std::string     temp_hmm_file;
+    std::string     temp_gms_log_file;
     std::string     genemark_cmd;
     std::string     genemark_std_out;
     std::string     line;
@@ -106,6 +107,7 @@ void ModGeneMarkST::execute() {
     temp_fnn_file     = PATHS(_pFileSystem->get_cur_dir(), _transcriptome_filename + FileSystem::EXT_FNN);
     temp_lst_file     = PATHS(_pFileSystem->get_cur_dir(), _transcriptome_filename + FileSystem::EXT_LST);
     temp_hmm_file     = PATHS(_pFileSystem->get_cur_dir(), GENEMARK_HMM_FILE);
+    temp_gms_log_file = PATHS(_pFileSystem->get_cur_dir(), GENEMARK_LOG_FILE);
 
     genemark_cmd     = _exe_path + " -faa -fnn " + _in_hits;
     genemark_std_out = PATHS(_mod_out_dir, GENEMARK_STD_OUT);
@@ -176,6 +178,9 @@ void ModGeneMarkST::execute() {
     if (!_pFileSystem->rename_file(temp_lst_file, _final_lst_path)) {
         throw ExceptionHandler("Error moving GeneMarkS-T results", ERR_ENTAP_RUN_GENEMARK_MOVE);
     }
+
+    // move log file, ignore errors not needed for execution
+    _pFileSystem->rename_file(temp_gms_log_file, _final_gmst_log_path);
 
     // Does not always exist, not needed for final calculation so ignore errors
     _pFileSystem->rename_file(temp_hmm_file,_final_hmm_path);

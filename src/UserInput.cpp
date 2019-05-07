@@ -899,7 +899,7 @@ void UserInput::print_user_input() {
         } else if (auto v = boost::any_cast<float>(&value)){
             ss << *v;
         } else if (auto v = boost::any_cast<double>(&value)) {
-            ss << *v;
+            ss << float_to_sci(*v,2);
         } else if (auto v = boost::any_cast<int>(&value)) {
             ss << *v;
         } else if (auto v = boost::any_cast<std::vector<short>>(&value)) {

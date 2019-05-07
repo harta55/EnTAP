@@ -30,11 +30,11 @@
 #include "config.h"
 
 #define LICENSE_YEAR_START      2017
-#define LICENSE_YEAR_END        2018
+#define LICENSE_YEAR_END        2019
 
 #define MAJOR_VERSION     0
-#define MINOR_VERSION     8
-#define BUILD_VERSION     3
+#define MINOR_VERSION     9
+#define BUILD_VERSION     0
 
 #define TO_STR2(x)             #x
 #define TO_STR(x)              TO_STR2(x)

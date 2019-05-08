@@ -86,7 +86,6 @@ namespace entapConfig {
         std::pair<std::string,std::string> exe_pair;
         std::vector<std::string>           ncbi_vect;
         std::vector<std::string>           uniprot_vect;
-        std::vector<std::string>           database_vect;
 
         FS_dprint("Entering EnTAP Config");
 
@@ -106,8 +105,7 @@ namespace entapConfig {
         threads = _pUserInput->get_supported_threads();
 
         if (_pUserInput->has_input(_pUserInput->INPUT_FLAG_DATABASE)) {
-            database_vect = _pUserInput->get_user_input<vect_str_t>(_pUserInput->INPUT_FLAG_DATABASE);
-            _compiled_databases = database_vect;
+            _compiled_databases = _pUserInput->get_user_input<vect_str_t>(_pUserInput->INPUT_FLAG_DATABASE);
         }
 
         FS_dprint("Entering configuration...");
@@ -241,12 +239,11 @@ namespace entapConfig {
 
         _pFileSystem->format_stat_stream(log_msg, "DIAMOND Database Configuration");
 
-        for (std::string item : _compiled_databases) {
+        for (std::string &fasta_path: _compiled_databases) {
             TerminalData terminalData = TerminalData();
 
-            item = _pFileSystem->get_filename(item, false);
-            indexed_path = PATHS(_bin_dir,item);
-            std_out      = indexed_path + "_index";
+            indexed_path = PATHS(_bin_dir,_pFileSystem->get_filename(fasta_path, false));
+            std_out      = indexed_path + "_std";
 
 
             // TODO change for updated databases
@@ -261,7 +258,7 @@ namespace entapConfig {
             _pFileSystem->delete_file(std_out + FileSystem::EXT_OUT);
 
             index_command =
-                    diamond_exe + " makedb --in " + item +
+                    diamond_exe + " makedb --in " + fasta_path +
                     " -d "      + indexed_path +
                     " -p "      +std::to_string(threads);
 
@@ -270,7 +267,7 @@ namespace entapConfig {
             terminalData.print_files   = true;
 
             if (TC_execute_cmd(terminalData) != 0) {
-                throw ExceptionHandler("Error indexing database at: " + item + "\nDIAMOND Error: " + terminalData.err_stream,
+                throw ExceptionHandler("Error indexing database at: " + fasta_path + "\nDIAMOND Error: " + terminalData.err_stream,
                                        ERR_ENTAP_INIT_INDX_DATABASE);
             }
             FS_dprint("Database successfully indexed to: " + indexed_path + FileSystem::EXT_DMND);

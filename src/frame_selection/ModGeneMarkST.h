@@ -71,10 +71,10 @@ private:
     const std::string GENEMARK_LOG_FILE             = "gms.log";
     const std::string GENEMARK_HMM_FILE             = "GeneMark_hmm.mod";
     const std::string GENEMARK_STD_OUT              = "genemark_run";
-    const std::string FRAME_SELECTION_PARTIAL       = "partial_genes.fasta";
-    const std::string FRAME_SELECTION_COMPLTE       = "complete_genes.fasta";
-    const std::string FRAME_SELECTION_INTERNAL      = "internal_genes.fasta";
-    const std::string FRAME_SELECTION_LOST          = "sequences_removed.fasta";
+    const std::string FRAME_SELECTION_PARTIAL       = "partial_genes";
+    const std::string FRAME_SELECTION_COMPLTE       = "complete_genes";
+    const std::string FRAME_SELECTION_INTERNAL      = "internal_genes";
+    const std::string FRAME_SELECTION_LOST          = "sequences_removed";
     const std::string FRAME_SELECTION_LOST_FLAG     = "lost";
     const std::string FRAME_SELECTION_FIVE_FLAG     = "Partial 5 Prime";
     const std::string FRAME_SELECTION_THREE_FLAG    = "Partial 3 Prime";
@@ -89,7 +89,7 @@ private:
     std::string _transcriptome_filename;    // Filename of input transcriptome
 
 
-    frame_map_t genemark_parse_protein(std::string&);
+    frame_map_t genemark_parse_fasta(std::string& path);
     void genemark_parse_lst(std::string &, std::map<std::string, frame_seq>&);
 };
 

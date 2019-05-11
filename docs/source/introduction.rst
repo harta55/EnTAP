@@ -3,6 +3,10 @@
 .. _eggnog: https://github.com/jhcepas/eggnog-mapper
 .. _diamond: https://github.com/bbuchfink/diamond
 .. _GeneMarkS-T: http://exon.gatech.edu/GeneMark/
+.. _TCLAP: http://tclap.sourceforge.net/
+.. _cereal: https://uscilab.github.io/cereal/
+
+
 
 EnTAP Introduction
 ==================
@@ -24,7 +28,7 @@ Pipeline Stages:
         1. Expression Filtering (RSEM)
         2. Frame Selection (GeneMARKS-T)
 
-    * Annotation
+    * Transcriptome Annotation: designed to assign functional information to sequences (homology, Gene Ontology, KEGG)
         3. Similarity Search: optimized search against user-selected databases (DIAMOND).  
         4. Contaminant Filtering and Best Hit Selection: selects final annotation and identifies potential contaminants
         5. Orthologous Group Assignment: independent assignment of translated protein sequences to gene families (eggNOG).  Includes protein  domains (SMART/Pfam), Gene Ontology (GO) terms, and KEGG pathway assignment.
@@ -82,3 +86,5 @@ Software contained or used within this pipeline:
 * `EggNOG`_
 * `GeneMarkS-T`_
 * `InterProScan`_
+* `TCLAP`_
+* `cereal`_

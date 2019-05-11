@@ -98,9 +98,6 @@ private:
     std::string FLAG_TEMP     = " --tempdir";
 
     std::vector<std::string> _databases;
-    std::string              _interpro_dir;
-    std::string              _proc_dir;
-    std::string              _figure_dir;
     std::string              _final_outpath;
     std::string              _final_basepath;
 

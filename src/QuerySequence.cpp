@@ -481,5 +481,5 @@ bool QuerySequence::AlignmentData::sort_descending_database::operator()(QueryAli
                                                                         QueryAlignment *second) {
         first->set_compare_overall_alignment(false);
         second->set_compare_overall_alignment(false);
-        return first > second;
+        return *first > *second;
 }

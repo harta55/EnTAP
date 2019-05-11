@@ -216,11 +216,11 @@ void ModRSEM::parse() {
                                    ERR_ENTAP_RUN_RSEM_EXPRESSION_PARSE);
         }
         QuerySequence *querySequence = it->second;
+        querySequence->set_fpkm(fpkm_val);
         length = (uint16)querySequence->getSeq_length();
         if (fpkm_val > _fpkm) {
             // Kept sequence
             out_file << querySequence->get_sequence() << std::endl;
-            querySequence->set_fpkm(fpkm_val);
             file_fig_box << GRAPH_KEPT_FLAG << '\t' << std::to_string(length) << std::endl;
             //TODO move to QueryData
             if (length < min_selected) {

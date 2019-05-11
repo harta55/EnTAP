@@ -5,9 +5,12 @@ This page contains (mostly) all of the changes that were made between each versi
 EnTAP Beta v0.9.0-beta
 ------------------------
 
-    * Overhauled the configuration/execution process by removing EggNOG-mapper and replacing it with an internal EnTAP method. This will make both stages much clearer as to what is going on.
+    * This release focused on reducing installation complexity and removing dependencies
+    * Overhauled the configuration/execution process by removing EggNOG-mapper and replacing it with an internal EnTAP method. This will make installation and both stages much clearer for the user
+    * Removed Boost Libraries from dependencies further reducing installation complexity
+    * Added printing of error messages to the standard log from any software being used by EnTAP. This will make debugging much easier
     * Added UniProt mapping to the EnTAP database. This will pull any additional mapping information from UniProt Swiss-Prot alignments
-    * The EnTAP database MUST be re-configured from this point
+    * The EnTAP database MUST be re-configured for this release
     * Resolved any incompatibility with DIAMOND and EggNOG databases as well as versioning problems
     * Standardized EnTAP log entries and added additional statistics
     * - -ontology flag will now use EnTAP's method of EggNOG accession (0) or InterProScan (1)

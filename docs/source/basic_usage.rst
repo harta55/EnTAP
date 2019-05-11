@@ -1,6 +1,6 @@
 .. _NCBI Taxonomy: https://www.ncbi.nlm.nih.gov/taxonomy
 .. _Bowtie: http://bowtie-bio.sourceforge.net/index.shtml
-.. |out_dir| replace:: /outfiles
+.. |out_dir| replace:: /entap_outfiles
 .. |libs_dir| replace:: /libs
 .. |entap_dir| replace:: /EnTAP
 .. |src_dir| replace:: /src
@@ -30,66 +30,58 @@
 Basic Usage
 ============
 
-*EnTAP* has two stages of execution, :ref:`configuration<config-label>` and :ref:`run<run-label>`. Configuration should be completed before the first run and everytime any of the source databases have been updated by the user.  This should also be run if you would like to include the latest version of the NCBI Taxonomy database and the Gene Ontology database.  All of these are updated regularly at the source and you can ensure you have the most recent version by running configuration before your annotation runs.
+*EnTAP* has two stages, :ref:`configuration<config-label>` and :ref:`execution<exe-label>`. Configuration will download and configure databases that are required for execution. It  will need to be completed before the first execution and if any of the source databases would like to be updated. Execution is the main stage of EnTAP that will annotate a transcriptome input by the user. 
 
 .. _config-label:
 
 Configuration
 -------------
-Configuration is the first stage of EnTAP that will download and configure the necessary databases for full functionality. This is run if you would like to change/update the databases that EnTAP is reading from. I'll break this up into two sections, :ref:`folder hierarchy<hierarchy-label>` and :ref:`usage<usage-label>`. The folder hierarchy section will just describe how everything is 'typically' setup with EnTAP, however these paths can be easily changed in the |config_file| (more on that later!). The usage section will go over the basic usage during the Configuration stage of EnTAP. 
+Configuration is the first stage of EnTAP that will download and configure the necessary databases for full functionality. This is run if you would like to change/update the databases that EnTAP is reading from. I'll break this up into two sections, :ref:`Config File<hierarchy-label>` and :ref:`Usage<usage-label>`. The Config File section will just describe how to ensure EnTAP is reading from the correct paths, which can be easily changed in the |config_file| (more on that later!). It will also go over the directories included in the installation. The Usage sections will go over the basic usage during the Configuration stage of EnTAP and how to setup reference databases. 
 
 
 .. _hierarchy-label:
 
-Folder Hierarchy
+Config File
 ^^^^^^^^^^^^^^^^^
 
-The EnTAP folder organization is referred to as the execution directory where all files will be made available. This is essentially the hierarchy that was downloaded from the repository. 
+From here on out, the "execution", or "EnTAP", directory will refer to the directory containing the EnTAP install (or binary file). Typically, this will just be at the root directory that was downloaded from the repository. All paths mentioned in this documentation will be relative to this directory. 
 
-The |entap_dir| directory contains:
 
-    * |entap_dir| |libs_dir| 
-    * |entap_dir| |src_dir|
-    * |entap_dir| |bin_dir| (created during configuration)
-    * |entap_dir| |data_dir| (created during configuration)
+Why is this important? EnTAP relies on several accompanying software packages and databases in order to run properly. Correct recognition of these paths is crucial and, as such, needed an entire section! The |config_file| is the answer to this pathing issue. It contains all of the necessary paths required for EnTAP to run and can be configured as seen fit. 
 
-In addition to some other files/directories.
-
-Recognition of EnTAP databases, src files, and execution accompanying pipeline software can rely on this 'default' directory hierarchy. However, any necessary files/directories can be changed from the default with the  |config_file| file (by specifying the |flag_path| flag). 
-
-.. warning:: Ensure you are pointing to the correct paths if not using the defaults!
-
-The |config_file| file mentioned above has the following defaults:
+Normally when a user is trying to execute EnTAP, they will need to specify the path to this Config file with the |flag_path| flag. It's never a bad idea to specify this. However, in an attempt to make things a bit easier for the end user, EnTAP can "assume" some default paths so --|flag_path| does not always need to be specified. If the flag is not specified and EnTAP finds an empty |config_file| file in the working directory (not execution directory here) , the following assumptions will be made:
 
     * diamond_exe_path=/EnTAP/libs/diamond-0.8.31/bin/diamond
     * rsem_exe_path=/EnTAP/libs/RSEM-1.3.0 (this is a path to the directory)
     * genemarkst_exe_path=/EnTAP/libs/gmst_linux_64/gmst.pl
-    * eggnog_exe_path=/EnTAP/libs/eggnog-mapper/emapper.py
-    * eggnog_download_exe=/EnTAP/libs/eggnog-mapper/download_eggnog_data.py
-    * eggnog_database=/EnTAP/libs/eggnog-mapper/data/eggnog.db (downloaded during Configuration)
+    * eggnog_sql_database=/EnTAP/databases/eggnog.db (downloaded during Configuration)
+    * eggnog_dmnd_database=/EnTAP/bin/eggnog_proteins.dmnd (downloaded during Configuration)
+    * interpro_exe_path=interproscan.sh
     * entap_database_bin_path=/EnTAP/bin/entap_database.bin (binary version, downloaded during Configuration)
     * entap_database_sql_path=/EnTAP/databases/entap_database.db (text version, downloaded during Configuration)
     * entap_graphing_script=/EnTAP/src/entap_graphing.py
-    * interpro_exe_path=interproscan.sh
 
 
-These can be changed to whichever path you would prefer. If something is globally installed, just put how you'd normally run the software after the '=', such as 'diamond' for DIAMOND. EnTAP will recognize these paths first and they will override defaults. 
+Keep in mind, it is always safer to use the |flag_path| flag to specify the |config_file|. EnTAP will always recognize these paths first and they will override defaults above. 
 
-This configuration file will be automatically detected if it is in the working directory, otherwise the path to it can be specified through the |flag_path| flag. The config file is mandatory! 
 
-During configuration, the EnTAP database will default to being downloaded from the following FTP address (you can also generate them locally if you are having compatibility issues)
+If something is globally installed, such as "interpro_exe_path" above, put how you'd normally run the software after the '='. As another example, running DIAMOND through a global installation may simply be "diamond". The Config File line for DIAMOND will simply read:
 
-    * |entap_bin_ftp|
-    * |entap_sql_ftp|
+    * diamond_exe_path=diamond
 
-.. note:: Be sure you set the paths before moving on (besides the databases that haven't been downloaded yet)!
+
+.. warning:: Be sure you set the paths before moving on (besides the databases that haven't been downloaded yet)! 
+
 
 .. _usage-label:
 
-Usage
-^^^^^
+Usage - Preparing Your Reference Databases
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-All source databases must be provided in FASTA format so that they can be indexed for use by DIAMOND.  This can be completed independent of EnTAP with DIAMOND (- - makedb flag) or as part of the configuration phase of EnTAP.  While any FASTA database can be used, it is recommended to use NCBI (Genbank) sourced databases such as RefSeq databases or NR.  In addition, EnTAP can easily accept EBI databases such as UniProt/SwissProt.  
+All source databases must be provided in FASTA format (protein) so that they can be indexed for use by DIAMOND.  This can be completed independent of EnTAP with DIAMOND (- - makedb flag) or as part of the Configuration phase of EnTAP. This section will focus on downloading and preparing some of the more common FASTA source databases. If you already have DIAMOND databases configured, you can skip to :ref:`Usage - Running Configuration<usage_config-label>`. Even if you have a DIAMOND database already configured, Configuration must still be ran!
+
+
+While any protein FASTA database can be used, it is recommended to use NCBI (Genbank) sourced databases such as RefSeq databases or NR.  In addition, EnTAP can easily accept EBI databases such as UniProt/SwissProt.  
 
 EnTAP can recognize the species information from these header formats ONLY (NCBI and UniProt):
 
@@ -97,7 +89,7 @@ EnTAP can recognize the species information from these header formats ONLY (NCBI
 
 * OS=homo sapiens
 
-If the individual FASTAs in a custom database you create do not adhere to one of these two formats, it will not be possible to weight taxonomic or contaminant status from them.  
+If the individual FASTAs in a custom database you create do not adhere to one of these two formats, it will not be possible to weight taxonomic or contaminant status from them. You will need to change the headers to ensure they align. 
 
 The following FTP sites contain common reference databases that EnTAP can recognize:
    * RefSeq: |ref_comp|
@@ -147,21 +139,24 @@ Decompress/Concatenate:
 
 ....
 
-It is generally recommended that a user select at least three databases with varying levels of curation.  Unless the species is very non-model (i.e. does not have close relatives in databases such as RefSeq, it is not necessary to use the full NR database which is less curated).
+It is generally recommended that a user select at least three databases with varying levels of curation.  Unless the species is very non-model (i.e. does not have close relatives in databases such as RefSeq, it is not necessary to use the full NR database which is less curated). Once your FASTA databases are ready, move on to :ref:`Running Configuration<usage_config-label>`.
 
 
-To run configuration with a sample database, the command is as follows:
+.. _usage_config-label:
+
+Usage - Running Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Once you have your protein FASTA database ready, you can begin to run the Configuration stage. As mentioned before, Configuration will only need to be run once prior to :ref:`Execution<exe-label>` unless you would like to configure/update more databases. 
+
+To run configuration with a FASTA database to output directory path/to/output (default is current working directory), the command is as follows (additional databases can be specified if necessary with the -d flag):
 
 .. code-block:: bash
 
-    EnTAP --config -d path/to/database
-
-This stage must be done at least once prior to :ref:`running<run-label>`. Once the database is configured, you need not do it again unless you updated your original database or plan on configuring several others.
+    EnTAP --config -d path/to/database.fasta -d path/to/database2.fasta --out-dir path/to/output
 
 
-.. note:: If you already have DIAMOND (.dmnd) configured databases, you can skip the configuration of that database. Although, due to other EnTAP database downloading (taxonomy and ontology), configuration must still be ran at least once without any flags.
-
-Configuration can be ran without formatting a database as follows:
+Configuration can be run without formatting a FASTA database for DIAMOND is as follows:
 
 .. code-block:: bash
 
@@ -169,19 +164,31 @@ Configuration can be ran without formatting a database as follows:
 
 In both cases, the following databases will be downloaded:
 
-* NCBI Taxonomic Database (indexed for EnTAP)
-* Gene Ontology Database (indexed for EnTAP)
-* EggNOG DIAMOND Database
-* EggNOG SQL Database
+* EnTAP Binary Database:
+    * Comprised of Gene Ontology, UniProt, and Taxonomic mappings for use during Execution
+    * Filename: entap_database.bin
+
+* EggNOG DIAMOND Reference:
+    * Reference database containing EggNOG database entries
+    * Filename: eggnog_proteins.dmnd
+
+* EggNOG SQL Database:
+    * SQL database containing EggNOG mappings
+    * Filename: eggnog.db
 
 .. note:: This is the only stage that requires connection to the Internet.
 
-If you experience any trouble in downloading the databases indexed for EnTAP (taxonomy and gene ontology), you can use the databases contained in the repo download, databases.tar.gz. Just be sure to set the configuration file to these database paths (as these are the binaries)!
+If you experience any trouble in downloading the EnTAP Binary Database from the following FTP addresses, you can use the - - data-generate flag during configuration. 
 
-EnTAP will always check the databases specified in the configuration file first. Otherwise, EnTAP will check a different location for the databases during Configuration. This location will be either the path specified by - -database-out or, if not selected, the current working directory. The final databases will also be sent there! As a result, the **- -database-out flag is recommended for Configuration.**
+    * |entap_bin_ftp|
+    * |entap_sql_ftp|
 
-Flags:
-^^^^^^^^^^^^^^^^^^^^^
+
+.. warning ::
+    DIAMOND databases must be configured and eventually executed with the same version of DIAMOND.
+
+Configuration Flags:
+^^^^^^^^^^^^^^^^^^^^^^
 
 Required Flags:
 
@@ -196,12 +203,12 @@ Optional Flags:
     * Not necessary if you already have DIAMOND configured databases (.dmnd)
 
 * (- - |flag_path|)
-    * Point to |config_file| for specifying paths
+    * Point to |config_file| to specify file paths
+    * DIAMOND is the only path necessary during Configuration
 
 * (- -  out-dir)
     * Specify an output directory for the databases to be sent to (recommended)
     * This will send the EnTAP database and DIAMOND databases to this location
-    * EggNOG database will not be sent here as it must remain in the EggNOG directory (downloaded through the Emapper script)
 
 * (- t/ - - threads)
     * Specify thread number for Configuration
@@ -217,12 +224,13 @@ Optional Flags:
         * 1. SQL Database - Slower although will be more easily compatible with every system
 
     * This can be flagged multiple times (ex: - - data-type 0 - - data-type 1)
+    * I would not use this flag unless you are experiencing issues with the EnTAP Binary Database
 
 .. test-label:
 
 Test Data
 -------------
-Before continuing on to the :ref:`run<run-label>` stage, it is advised to do a test run of EnTAP to ensure that everything is properly configured. There should be no errors in the test run. The test data resides within the |test_dir| directory of the main EnTAP directory. This will walk you through configuring a database for DIAMOND (if you haven't already done so) and executing EnTAP with and without frame selection. 
+Before continuing on to the :ref:`Execution<exe-label>` stage, it is advised to do a test run of EnTAP to ensure that everything is properly configured. There should be no errors in the test run. The test data resides within the |test_dir| directory of the main EnTAP directory. This will walk you through configuring a database for DIAMOND (if you haven't already done so) and executing EnTAP with and without frame selection. 
 
 Before we begin, make sure that the paths in the configuration file are correct. Since we are running the configuration stage, EnTAP will check to make sure you have the other databases downloaded (which should have been done prior to this). To begin the test, execute the following command to configure the test DIAMOND database:
 
@@ -233,7 +241,7 @@ Before we begin, make sure that the paths in the configuration file are correct.
 
 This should finish very shortly without any errors and you should find a uniprot_sprot_test.dmnd file within the |test_dir| directory. 
 
-Next up is verifying the main execution stage! Once again, first ensure that the configuration file has all of the correct paths. We are going to check an execution with and without frame selection. If you are not going to use frame selection, you may skip this test!
+Next up is verifying the main execution stage! Once again, first ensure that the Config File has all of the correct paths. We are going to check an execution with and without frame selection. If you are not going to use frame selection, you may skip this test!
 
 .. note:: The following tests will take longer as they will be testing the entire pipeline and running against the larger EggNOG database.
 
@@ -253,13 +261,13 @@ These should run without error and you should have several files within the crea
 
 If any failures were seen during the above executions, be sure to go through each stage of installation and configuration to be sure everything was configured correctly before continuing!
 
-.. _run-label:
+.. _exe-label:
 
-Run
+Execution
 -------------
-The run stage of *EnTAP* is the main annotation pipeline. After configuration is ran at least once, this can be ran continually without requiring configuration to be ran again (unless more databases will be configured). 
+The Execution stage of EnTAP is the main annotation pipeline. After Configuration is run at least once, this can be run continually without requiring Configuration to be ran again (unless more databases will be configured). 
 
-The following stages will be ran:
+The following stages will be run:
 
 #. :ref:`Expression Filtering<exp-label>` (optional)
 #. :ref:`Frame Selection<frame-label>` (optional)
@@ -272,7 +280,7 @@ Input Files:
 Required:
 
 * .FASTA formatted transcriptome file (either protein or nucleotide)
-* .dmnd (DIAMOND) indexed databases, which can be formatted in the :ref:`configuration<config-label>`stage. 
+* .dmnd (DIAMOND) indexed databases, which can be formatted in the :ref:`Configuration<config-label>`stage. 
 
 Optional:
 
@@ -288,14 +296,14 @@ A specific run flag (**runP/runN**) must be used:
 * runN: Indicates blastx. Frame selection will not be ran with this input
 
 
-An example run with a nucleotide transcriptome:
+An example run with a nucleotide transcriptome (transcriptome.fasta), two reference DIAMOND databases, and an alignment file (alignment.sam):
 
 .. code-block:: bash
 
-    EnTAP --runN -i path/to/transcriptome.fasta -d path/to/database.dmnd -d path/to/database2.dmnd -a path/to/alignment.sam
+    EnTAP --runP -i path/to/transcriptome.fasta -d path/to/database.dmnd -d path/to/database2.dmnd -a path/to/alignment.sam
 
 
-With the above command, the entire EnTAP pipeline will run. Both frame selection and expression filtering can be skipped if preferred by the user.  EnTAP would require protein sequences (indicated by --runP) in order to avoid frame selection.  If there is not a short read alignment file provided in SAM/BAM format, then expression filtering via RSEM will be skipped. 
+With the above command, the entire EnTAP pipeline will run. Both Frame Selection and Expression Filtering can be skipped if preferred by the user. If a protein transcriptome is input with the runP flag, or the runN flag is used, Frame Selection will be skipped.  If there is not a short read alignment file provided in SAM/BAM format, then Expression Filtering via RSEM will be skipped. 
 
 
 Flags:
@@ -366,7 +374,7 @@ Optional Flags:
     * Default: paired-end 
 
 * (- - graph)
-    * This will check whether or not your system has graphing functionality supported
+    * This will check whether or not your system has graphing functionality supported and exit
     * If Python with the Matplotlib module are installed on your system graphing should be enabled!
     * This can be specified on its own
 
@@ -438,11 +446,19 @@ Optional Flags:
 * (- - no-check)
     * EnTAP checks execution paths and inputs prior to annotating to prevent finding out your input was wrong until midway through a run. Using this flag will eliminate the check (not advised to use!)
 
+* (- - output-format)
+    * Specify multiple output file formats for each stage of the pipeline
+
+        * 1. TSV File (default)
+        * 2. CSV File
+        * 3. FASTA Protein File (default)
+        * 4. FASTA Nucleotide File (default)
+
 * (- - data-type)
-    * Specify which database you'd like to execute against
+    * Specify which database you'd like to execute against (not advised to use)
 
         * 0. Binary Database (default) - This will be much quicker and is recommended
-        * 1. SQL Database - Slower although will be more easily compatible with every system
+        * 1. SQL Database - Slower 
 
     * If you flag this multiple times during execution, EnTAP will just select the first one you input
 
@@ -481,7 +497,7 @@ An example of flagging bacteria and fungi as contaminants can be seen below:
 
 .. code-block:: bash
 
-    EnTAP --runN -i path/to/transcriptome.fasta -d path/to/database.dmnd -c fungi -c bacteria
+    EnTAP --runP -i path/to/transcriptome.fasta -d path/to/database.dmnd -c fungi -c bacteria
 
 
 **Taxonomic Favoring**
@@ -492,7 +508,7 @@ This feature can be utilized with the |flag_taxon| flag. An example command util
 
 .. code-block:: bash
 
-    EnTAP --runN -i path/to/transcriptome.fasta -d path/to/database.dmnd -c fungi -c bacteria --taxon sapiens
+    EnTAP --runP -i path/to/transcriptome.fasta -d path/to/database.dmnd -c fungi -c bacteria --taxon sapiens
 
 
 .. _over-label:
@@ -516,8 +532,8 @@ In order to pick up and skip re-running certain stages again, the files that wer
     * blastp_transcriptome_complete.protein.faa.out
 
 * Gene Family
-    * annotation_results.emapper.annotations
-    * annotation_results_no_hits.emapper.annotations
+    * blastp_transcriptome_eggnog_proteins.out (for runP)
+    * blastp_transcriptome_eggnog_proteins.out (for runN)
 
 
 Since file naming is based on your input as well, the flags below **must** remain the same:

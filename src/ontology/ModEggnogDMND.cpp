@@ -429,7 +429,7 @@ std::string ModEggnogDMND::get_output_dmnd_filepath(bool final) {
     std::string filename;
 
     _blastp ? filename = "blastp" : filename = "blastx";
-    filename += "_" + _pUserInput->get_user_transc_basename() + "_eggnog_db";
+    filename += "_" + _pUserInput->get_user_transc_basename() + "_eggnog_proteins";
     if (final) filename += FileSystem::EXT_OUT;
     return PATHS(_mod_out_dir, filename);
 }

@@ -94,9 +94,9 @@ EntapModule::ModVerifyData ModInterpro::verify_files() {
     std::string filename;
 
     filename        = INTERPRO_OUTPUT;
-    _final_basepath = PATHS(_interpro_dir, filename);
+    _final_basepath = PATHS(_mod_out_dir, filename);
     filename += INTERPRO_EXT_TSV;
-    _final_outpath = PATHS(_interpro_dir, filename);
+    _final_outpath = PATHS(_mod_out_dir, filename);
     modVerifyData.files_exist = _pFileSystem->file_exists(_final_outpath);
     return modVerifyData;
 }
@@ -111,11 +111,11 @@ void ModInterpro::execute() {
     TerminalData      terminalData;
 
     _blastp ? blast = PROTEIN_TAG : blast = NUCLEO_TAG;
-    temp_dir = PATHS(_interpro_dir, INTERPRO_TEMP);
+    temp_dir = PATHS(_mod_out_dir, INTERPRO_TEMP);
 
-    std_out      = PATHS(_interpro_dir, INTERPRO_STD_OUT);
+    std_out      = PATHS(_mod_out_dir, INTERPRO_STD_OUT);
     interpro_cmd =
-            INTERPRO_EXE    +
+            _exe_path    +
             " -i "          + _in_hits +
             " -b "          + _final_basepath +
             FLAG_SEQTYPE    + " " + blast     +
@@ -124,7 +124,6 @@ void ModInterpro::execute() {
             FLAG_IPRLOOK    +
             FLAG_PATHWAY;
 
-    FS_dprint("Executing InterProScan:\n" + interpro_cmd);
     if (!_databases.empty()) {
         for (std::string &val : _databases) interpro_cmd += " --appl " + val;
     } else {
@@ -488,7 +487,7 @@ std::string ModInterpro::get_default() {
 
 ModInterpro::ModInterpro(std::string &ont, std::string &in,
                          EntapDataPtrs& entap_data, std::string &exe, vect_str_t databases)
-    : AbstractOntology(ont, in, entap_data, "InterProScan", exe){
+    : AbstractOntology(in, ont, entap_data, "InterProScan", exe){
     FS_dprint("Spawn Object - InterPro");
 
     _databases    = databases;

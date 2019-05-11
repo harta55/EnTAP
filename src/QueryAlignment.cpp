@@ -195,7 +195,11 @@ bool SimSearchAlignment::operator>(const QueryAlignment &alignment) {
         }
         if (this->_sim_search_results.contaminant && !alignment_cast._sim_search_results.contaminant) return false;
         if (!this->_sim_search_results.contaminant && alignment_cast._sim_search_results.contaminant) return true;
-        return this->_sim_search_results.tax_score > alignment_cast._sim_search_results.tax_score;
+        if (this->_sim_search_results.tax_score == alignment_cast._sim_search_results.tax_score) {
+			return cov1 > cov2;
+		} else {
+			return this->_sim_search_results.tax_score > alignment_cast._sim_search_results.tax_score;
+		}
     }
 }
 

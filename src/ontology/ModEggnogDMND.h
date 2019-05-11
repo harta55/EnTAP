@@ -56,7 +56,6 @@ private:
     const std::string GRAPH_EGG_TAX_BAR_TXT   = "eggnog_tax_scope.txt";
     const std::string EGG_ANNOT_RESULTS       = "annotation_results";
     const std::string EGG_ANNOT_STD           = "annotation_std";
-    const std::string EGG_ANNOT_APPEND        = ".emapper.annotations";
     static constexpr uint16 COUNT_TOP_TAX_SCOPE = 10;
 
     std::string _out_hits;

@@ -1,3 +1,5 @@
+#ifdef EGGNOG_MAPPER
+
 /*
  *
  * Developed by Alexander Hart
@@ -7,7 +9,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -27,14 +29,12 @@
 
 
 #include <boost/archive/binary_iarchive.hpp>
-#include <iomanip>
-#include <fstream>
 #include <csv.h>
 #include "ModEggnog.h"
 #include "../ExceptionHandler.h"
 #include "../FileSystem.h"
-#include "EggnogLevels.h"
 
+std::string ModEggnog::EGG_EMAPPER_EXE = "";
 
 /**
  * ======================================================================
@@ -82,8 +82,6 @@ void ModEggnog::parse() {
 
     FS_dprint("Beginning to parse eggnog results...");
 
-    typedef std::map<std::string,std::map<std::string, uint32>> GO_top_map_t;
-
     std::stringstream                        ss;
     std::string                              out_msg;
     std::string                              out_no_hits_nucl;
@@ -98,22 +96,17 @@ void ModEggnog::parse() {
     std::string                              fig_txt_go_bar;
     std::string                              fig_png_go_bar;
     uint32                                   count_total_go_hits=0;
-    uint32                                   count_total_go_terms=0;
-    uint32                                   count_go_bio=0;
-    uint32                                   count_go_cell=0;
-    uint32                                   count_go_mole=0;
     uint32                                   count_no_go=0;
     uint32                                   count_no_kegg=0;
     uint32                                   count_TOTAL_hits=0;         // All ortho matches
     uint32                                   count_total_kegg_terms=0;
     uint32                                   count_total_kegg_hits=0;
     uint32                                   count_no_hits=0;            // Unannotated OGs
-    uint32                                   count_tax_scope=0;
     uint32                                   ct = 0;
     fp32                                     percent;
     SQLDatabaseHelper                        EGGNOG_DATABASE;
-    std::map<std::string, uint32>            tax_scope_ct_map;
-    GO_top_map_t                             go_combined_map;     // Just for convenience
+    Compair<std::string>                     tax_scope_counter;
+    std::unordered_map<std::string,Compair<std::string>>  go_combined_map;     // Just for convenience
     GraphingData                             graphingStruct;
 
     QuerySequence::EggnogResults            EggnogResults;
@@ -131,7 +124,7 @@ void ModEggnog::parse() {
         throw ExceptionHandler("EggNOG file not found at: " + path, ERR_ENTAP_PARSE_EGGNOG);
     }
 
-    // Format EggNOG output - remove comments (the command doesn't work correctly), make sure all columns are equal
+    // Format EggNOG output - remove comments (the EggNOG mapper command doesn't work correctly), make sure all columns are equal
     path = eggnog_format(path);
 
     // Begin to read through TSV file
@@ -170,23 +163,10 @@ void ModEggnog::parse() {
                 for (auto &pair : EggnogResults.parsed_go) {
                     // pair - first: GO category, second; vector of terms
                     for (std::string &term : pair.second) {
-                        // Cycle through all terms in each category
-                        count_total_go_terms++;
-                        if (pair.first == GO_MOLECULAR_FLAG) {
-                            count_go_mole++;
-                        } else if (pair.first == GO_CELLULAR_FLAG) {
-                            count_go_cell++;
-                        } else if (pair.first == GO_BIOLOGICAL_FLAG) {
-                            count_go_bio++;
-                        }
                         // Count the terms we've found for individual category
-                        if (go_combined_map[pair.first].count(term)) {
-                            go_combined_map[pair.first][term]++;
-                        } else go_combined_map[pair.first][term] = 1;
+                        go_combined_map[pair.first].add_value(term);
                         // Count the terms we've found overall (not category specific)
-                        if (go_combined_map[GO_OVERALL_FLAG].count(term)) {
-                            go_combined_map[GO_OVERALL_FLAG][term]++;
-                        } else go_combined_map[GO_OVERALL_FLAG][term]=1;
+                        go_combined_map[GO_OVERALL_FLAG].add_value(term);
                     }
                 }
             } else {
@@ -205,12 +185,8 @@ void ModEggnog::parse() {
 
             // Compile Taxonomic Orthogroup stats
             if (!EggnogResults.tax_scope_readable.empty()) {
-                count_tax_scope++;
-                // Count number of individual groups
-                if (tax_scope_ct_map.count(EggnogResults.tax_scope_readable)) {
-                    tax_scope_ct_map[EggnogResults.tax_scope_readable]++;
-                } else tax_scope_ct_map[EggnogResults.tax_scope_readable] = 1;
-
+                // Count number of unique taxonomic groups
+                tax_scope_counter.add_value(EggnogResults.tax_scope_readable);
             }
         } else {
             // EggNOG hit does NOT match one of our original transcripts (must be some formatting error)
@@ -264,7 +240,7 @@ void ModEggnog::parse() {
     if (count_total_go_hits > 0) {
 
         //--------------------- Top Ten Taxonomic Scopes --------------//
-        if (!tax_scope_ct_map.empty()) {
+        if (!tax_scope_counter.empty()) {
             // Setup graphing files
             std::string fig_txt_tax_bar = PATHS(_figure_dir, GRAPH_EGG_TAX_BAR_TXT);
             std::string fig_png_tax_bar = PATHS(_figure_dir, GRAPH_EGG_TAX_BAR_PNG);
@@ -273,12 +249,11 @@ void ModEggnog::parse() {
 
             ss << "\nTop 10 Taxonomic Scopes Assigned:";
             ct = 1;
-            // Sort count map
-            std::vector<count_pair> tax_scope_vect(tax_scope_ct_map.begin(),tax_scope_ct_map.end());
-            std::sort(tax_scope_vect.begin(),tax_scope_vect.end(),compair());
-            for (count_pair &pair : tax_scope_vect) {
+            // Sort taxonomy scope
+            tax_scope_counter.sort(true);
+            for (auto &pair : tax_scope_counter._sorted) {
                 if (ct > COUNT_TOP_TAX_SCOPE) break;
-                percent = ((fp32)pair.second / count_tax_scope) * 100;
+                percent = ((fp32)pair.second / tax_scope_counter._ct_total) * 100;
                 ss <<
                    "\n\t" << ct << ")" << pair.first << ": " << pair.second <<
                    "(" << percent << "%)";
@@ -298,7 +273,7 @@ void ModEggnog::parse() {
         ss<<
           "\nTotal unique sequences with at least one GO term: " << count_total_go_hits <<
           "\nTotal unique sequences without GO terms: " << count_no_go <<
-          "\nTotal GO terms assigned: " << count_total_go_terms;
+          "\nTotal GO terms assigned: " << go_combined_map[GO_OVERALL_FLAG]._ct_total;;
 
         for (uint16 lvl : _go_levels) {
             for (auto &pair : go_combined_map) {
@@ -310,13 +285,12 @@ void ModEggnog::parse() {
                 file_go_bar << "Gene Ontology Term\tCount" << std::endl;
 
                 // Sort count maps
-                std::vector<count_pair> go_vect(pair.second.begin(),pair.second.end());
-                std::sort(go_vect.begin(),go_vect.end(),compair());
+                pair.second.sort(true);
 
                 // get total count for each level...change, didn't feel like making another
                 uint32 lvl_ct = 0;   // Use for percentages, total terms for each lvl
                 ct = 0;              // Use for unique count
-                for (count_pair &pair2 : go_vect) {
+                for (auto &pair2 : pair.second._sorted) {
                     if (pair2.first.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
                         ct++;
                         lvl_ct += pair2.second;
@@ -327,7 +301,7 @@ void ModEggnog::parse() {
                 ss << "\nTop 10 "       << pair.first <<" terms assigned (lvl=" << lvl << "): ";
 
                 ct = 1;
-                for (count_pair &pair2 : go_vect) {
+                for (auto &pair2 : pair.second._sorted) {
                     if (ct > COUNT_TOP_GO) break;
                     if (pair2.first.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
                         percent = ((fp32)pair2.second / lvl_ct) * 100;
@@ -380,12 +354,16 @@ void ModEggnog::parse() {
  * ======================================================================
  */
 void ModEggnog::execute() {
-    FS_dprint("Running eggnog...");
+    std::string                        std_out;
+    std::string                        cmd;
+    std::string                        blast;
+
+    if (_pFileSystem->file_exists(_out_hits)) return;   // Should never occur here
+    _blastp ? blast = "blastp" : blast = "blastx";
 
     std::string                        annotation_base_flag;
     std::string                        annotation_std;
     std::string                        eggnog_command;
-    std::string                        hit_out;
     std::string                        no_hit_out;
 
     annotation_base_flag = PATHS(_egg_out_dir, EGG_ANNOT_RESULTS);
@@ -655,6 +633,7 @@ ModEggnog::ModEggnog(std::string &out, std::string &in, std::string &ont,
                      bool blastp, std::vector<uint16> &lvls,EntapDataPtrs &entap_data,
                      std::string& eggnog_sql_path)
     :AbstractOntology(out, in,ont, blastp, lvls, entap_data){
+    FS_dprint("Spawn Object - EggNOG");
 
     _eggnog_db_path = eggnog_sql_path;
 
@@ -669,3 +648,5 @@ ModEggnog::ModEggnog(std::string &out, std::string &in, std::string &ont,
     _pFileSystem->create_dir(_figure_dir);
     _pFileSystem->create_dir(_proc_dir);
 }
+
+#endif

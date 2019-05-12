@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -52,7 +52,7 @@
  * =====================================================================
  */
 ExpressionAnalysis::ExpressionAnalysis(std::string &input,EntapDataPtrs& entap_data) {
-    FS_dprint("Spawn object - ExpressionAnalysis");
+    FS_dprint("Spawn Object - ExpressionAnalysis");
 
     _pQueryData       = entap_data._pQueryData;
     _pFileSystem      = entap_data._pFileSystem;
@@ -62,17 +62,17 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,EntapDataPtrs& entap_d
 
     _entap_data = entap_data;
 
-    _software_flag = ENTAP_EXECUTE::EXP_FLAG_RSEM;
+    _software_flag = EXP_RSEM;
     _threads       = _pUserInput->get_supported_threads();
     _exepath       = RSEM_EXE_DIR;
     _outpath       = _pFileSystem->get_root_path();
-    _trim          = _pUserInput->has_input(UInput::INPUT_FLAG_TRIM);
-    _overwrite     = _pUserInput->has_input(UInput::INPUT_FLAG_OVERWRITE);
-    _issingle      = _pUserInput->has_input(UInput::INPUT_FLAG_SINGLE_END);
-    if (_pUserInput->has_input(UInput::INPUT_FLAG_ALIGN)) { // Will be true
-        _alignpath = _pUserInput->get_user_input<std::string>(UInput::INPUT_FLAG_ALIGN);
+    _trim          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_TRIM);
+    _overwrite     = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
+    _issingle      = _pUserInput->has_input(_pUserInput->INPUT_FLAG_SINGLE_END);
+    if (_pUserInput->has_input(_pUserInput->INPUT_FLAG_ALIGN)) { // Will be true
+        _alignpath = _pUserInput->get_user_input<std::string>(_pUserInput->INPUT_FLAG_ALIGN);
     }
-    _fpkm          = _pUserInput->get_user_input<fp32>(UInput::INPUT_FLAG_FPKM);
+    _fpkm          = _pUserInput->get_user_input<fp32>(_pUserInput->INPUT_FLAG_FPKM);
     _rsem_dir      = PATHS(_outpath, RSEM_OUT_DIR);
 }
 
@@ -96,7 +96,7 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,EntapDataPtrs& entap_d
  */
 std::string ExpressionAnalysis::execute(std::string input) {
     std::string                         output;
-    std::pair<bool, std::string>        verify_pair;
+    EntapModule::ModVerifyData          verify_data;
     std::unique_ptr<AbstractExpression> ptr;
 
     _inpath = input;
@@ -106,10 +106,14 @@ std::string ExpressionAnalysis::execute(std::string input) {
     try {
         ptr = spawn_object();
         ptr->set_data(_threads, _fpkm, _issingle);  // Will remove later
-        verify_pair = ptr->verify_files();
-        if (!verify_pair.first) ptr->execute();
-        output = ptr->filter();
-    } catch (const ExceptionHandler &e) {throw e;}
+        verify_data = ptr->verify_files();
+        if (!verify_data.files_exist) ptr->execute();
+        ptr->parse();
+        output = ptr->get_final_fasta();
+    } catch (const ExceptionHandler &e) {
+        ptr.reset();
+        throw e;
+    }
     return output;
 }
 
@@ -130,22 +134,21 @@ std::string ExpressionAnalysis::execute(std::string input) {
  */
 std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
     switch (_software_flag) {
-        case ENTAP_EXECUTE::EXP_FLAG_RSEM:
+        case EXP_RSEM:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
-                    _exepath,
-                    _inpath,
                     _rsem_dir,
-                    _alignpath,
-                    _entap_data
-
+                    _inpath,
+                    _entap_data,
+                    _exepath,
+                    _alignpath
             ));
         default:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
-                    _exepath,
-                    _inpath,
                     _rsem_dir,
-                    _alignpath,
-                    _entap_data
+                    _inpath,
+                    _entap_data,
+                    _exepath,
+                    _alignpath
             ));
     }
 }

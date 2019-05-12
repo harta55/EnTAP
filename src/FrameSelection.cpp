@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -27,15 +27,10 @@
 
 
 //*********************** Includes *****************************
-#include <boost/filesystem/operations.hpp>
-#include <fstream>
-#include <boost/regex.hpp>
-#include <iomanip>
 #include "FrameSelection.h"
 #include "ExceptionHandler.h"
 #include "EntapGlobals.h"
 #include "frame_selection/ModGeneMarkST.h"
-#include "QueryData.h"
 #include "FileSystem.h"
 //**************************************************************
 
@@ -61,7 +56,7 @@
  * =====================================================================
  */
 FrameSelection::FrameSelection(std::string &input, EntapDataPtrs &entap_data) {
-    FS_dprint("Spawn object - FrameSelection");
+    FS_dprint("Spawn Object - FrameSelection");
 
     _pGraphingManager = entap_data._pGraphingManager;
     _QUERY_DATA       = entap_data._pQueryData;
@@ -73,10 +68,10 @@ FrameSelection::FrameSelection(std::string &input, EntapDataPtrs &entap_data) {
     _entap_data_ptrs = entap_data;
 
     _outpath         = _pFileSystem->get_root_path();
-    _overwrite       = _pUserInput->has_input(UInput::INPUT_FLAG_OVERWRITE);
-    _software_flag   = ENTAP_EXECUTE::FRAME_FLAG_GENEMARK;
+    _overwrite       = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
+    _software_flag   = FRAME_GENEMARK_ST;
 
-    _frame_outpath   = PATHS(_outpath, FRAME_SELECTION_OUT_DIR);
+    _mod_out_dir   = PATHS(_outpath, FRAME_SELECTION_OUT_DIR);
 }
 
 
@@ -101,20 +96,27 @@ FrameSelection::FrameSelection(std::string &input, EntapDataPtrs &entap_data) {
 std::string FrameSelection::execute(std::string input) {
 
     std::string output;
-    std::pair<bool, std::string> verify_pair;
+    EntapModule::ModVerifyData verify_data;
+    std::unique_ptr<AbstractFrame> ptr;
+
 
     _inpath = input;
-    if (_overwrite) _pFileSystem->delete_dir(_frame_outpath);
-    _pFileSystem->create_dir(_frame_outpath);
+    if (_overwrite) _pFileSystem->delete_dir(_mod_out_dir);
+    _pFileSystem->create_dir(_mod_out_dir);
     try {
-        std::unique_ptr<AbstractFrame> ptr = spawn_object();
-        verify_pair = ptr->verify_files();
-        if (!verify_pair.first) {
-            output = ptr->execute();
-        } else output = verify_pair.second;
+        ptr = spawn_object();
+        verify_data = ptr->verify_files();
+        if (!verify_data.files_exist) {
+            ptr->execute();
+            output = ptr->get_final_faa();
+        } else output = verify_data.output_paths[0];
         ptr->parse();
+        ptr.reset();
         return output;
-    } catch (const ExceptionHandler &e) {throw e;}
+    } catch (const ExceptionHandler &e) {
+        ptr.reset();
+        throw e;
+    }
 }
 
 
@@ -135,19 +137,19 @@ std::unique_ptr<AbstractFrame> FrameSelection::spawn_object() {
     // Handle any special conditions for each software
 
     switch (_software_flag) {
-        case ENTAP_EXECUTE::FRAME_FLAG_GENEMARK:
+        case FRAME_GENEMARK_ST:
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
-                    _exe_path,
+                    _mod_out_dir,
                     _inpath,
-                    _frame_outpath,
-                    _entap_data_ptrs
+                    _entap_data_ptrs,
+                    _exe_path
             ));
         default:
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
-                    _exe_path,
+                    _mod_out_dir,
                     _inpath,
-                    _frame_outpath,
-                    _entap_data_ptrs
+                    _entap_data_ptrs,
+                    _exe_path
             ));
     }
 }

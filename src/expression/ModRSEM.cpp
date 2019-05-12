@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -28,6 +28,7 @@
 
 //*********************** Includes *****************************
 #include "ModRSEM.h"
+#include "../TerminalCommands.h"
 
 //**************************************************************
 
@@ -47,19 +48,20 @@
  *
  * =====================================================================
  */
-std::pair<bool, std::string> ModRSEM::verify_files() {
+EntapModule::ModVerifyData ModRSEM::verify_files() {
+    ModVerifyData modVerifyData;
 
-    _filename = _inpath;
-    _pFileSystem->get_filename_no_extensions(_filename);
-    _exp_out  = PATHS(_expression_outpath, _filename);
+    _filename = _pFileSystem->get_filename(_in_hits, false);
+    _exp_out  = PATHS(_mod_out_dir, _filename);
     _rsem_out = _exp_out + RSEM_OUT_FILE;
     if (_pFileSystem->file_exists(_rsem_out)) {
         FS_dprint("File found at " + _rsem_out +  "\nmoving to filter transcriptome");
-        return std::make_pair(true, "");
+        modVerifyData.files_exist = true;
+    } else {
+        FS_dprint("File not found at " + _rsem_out +  " Continuing RSEM run.");
+        modVerifyData.files_exist = false;
     }
-    FS_dprint("File not found at " + _rsem_out +  " Continuing RSEM run.");
-
-    return std::make_pair(false, "");
+    return modVerifyData;
 }
 
 
@@ -135,7 +137,7 @@ void ModRSEM::execute() {
  *
  * =====================================================================
  */
-std::string ModRSEM::filter() {
+void ModRSEM::parse() {
     FS_dprint("Beginning to filter transcriptome...");
 
     uint32              count_removed=0;
@@ -143,8 +145,8 @@ std::string ModRSEM::filter() {
     uint32              count_total=0;      // Used to warn user if high percentage is removed
     uint32              min_removed=10000;
     uint32              min_selected=10000;
-    uint32              max_removed=10000;
-    uint32              max_selected=10000;
+    uint32              max_removed=0xFFFFFFFF;
+    uint32              max_selected=0xFFFFFFFF;
     uint64              total_removed_len=0;
     uint64              total_kept_len=0;
     uint16              length;
@@ -177,7 +179,7 @@ std::string ModRSEM::filter() {
     GraphingData        graphingStruct;
     QUERY_MAP_T         *MAP;
 
-    MAP = _pQueryData->get_sequences_ptr();
+    MAP = _pQUERY_DATA->get_sequences_ptr();
 
     if (!_pFileSystem->file_exists(_rsem_out)) {
         throw ExceptionHandler("File does not exist at: " + _rsem_out,
@@ -185,8 +187,8 @@ std::string ModRSEM::filter() {
     }
 
     // Setup figure files, directories already created
-    fig_txt_box_path = PATHS(_figure_path, GRAPH_TXT_BOX_PLOT);
-    fig_png_box_path = PATHS(_figure_path, GRAPH_PNG_BOX_PLOT);
+    fig_txt_box_path = PATHS(_figure_dir, GRAPH_TXT_BOX_PLOT);
+    fig_png_box_path = PATHS(_figure_dir, GRAPH_PNG_BOX_PLOT);
 
     // Open figure text file
     std::ofstream file_fig_box(fig_txt_box_path, std::ios::out | std::ios::app);
@@ -196,8 +198,8 @@ std::string ModRSEM::filter() {
     original_filename = _filename;
     removed_filename  = original_filename + RSEM_OUT_REMOVED;
     kept_filename     = original_filename + RSEM_OUT_KEPT;
-    out_kept    = PATHS(_processed_path, kept_filename);
-    out_removed = PATHS(_processed_path, removed_filename);
+    out_kept    = PATHS(_proc_dir, kept_filename);
+    out_removed = PATHS(_proc_dir, removed_filename);
     std::ofstream out_file(out_kept, std::ios::out | std::ios::app);
     std::ofstream removed_file(out_removed, std::ios::out | std::ios::app);
 
@@ -207,18 +209,18 @@ std::string ModRSEM::filter() {
     in.next_line();
     while (in.read_row(geneid, transid, in_len, e_leng, e_count, tpm, fpkm_val)) {
         count_total++;
-        _pQueryData->trim_sequence_header(geneid,geneid);
+        _pQUERY_DATA->trim_sequence_header(geneid,geneid);
         QUERY_MAP_T::iterator it = MAP->find(geneid);
         if (it == MAP->end()) {
             throw ExceptionHandler("Unable to find sequence: " + geneid,
                                    ERR_ENTAP_RUN_RSEM_EXPRESSION_PARSE);
         }
         QuerySequence *querySequence = it->second;
+        querySequence->set_fpkm(fpkm_val);
         length = (uint16)querySequence->getSeq_length();
         if (fpkm_val > _fpkm) {
             // Kept sequence
             out_file << querySequence->get_sequence() << std::endl;
-            querySequence->set_fpkm(fpkm_val);
             file_fig_box << GRAPH_KEPT_FLAG << '\t' << std::to_string(length) << std::endl;
             //TODO move to QueryData
             if (length < min_selected) {
@@ -255,23 +257,18 @@ std::string ModRSEM::filter() {
 
     //-----------------------STATISTICS-----------------------//
     FS_dprint("Beginning to calculate statistics...");
-    out_msg<<std::fixed<<std::setprecision(2);
+    _pFileSystem->format_stat_stream(out_msg, "Expression Filtering (RSEM) with FPKM Cutoff " + float_to_string(_fpkm));
     out_msg <<
-            ENTAP_STATS::SOFTWARE_BREAK     <<
-            "Expression Filtering (RSEM) with FPKM Cutoff " << _fpkm << "\n" <<
-            ENTAP_STATS::SOFTWARE_BREAK     <<
             "Total sequences kept: "        << count_kept     <<
             "\nTotal sequences removed: "   << count_removed  <<std::endl;
 
 
     if (count_kept > 0) {
-        rejected_percent = ((fp32)count_removed / count_kept) * 100;
+        rejected_percent = ((fp32)count_removed / count_total) * 100;
         avg_kept = (fp32) total_kept_len / count_kept;
-        kept_n = _pQueryData->calculate_N_vals(all_kept_lengths, total_kept_len);
+        kept_n = _pQUERY_DATA->calculate_N_vals(all_kept_lengths, total_kept_len);
+        _pFileSystem->format_stat_stream(out_msg, "Expression Filtering: New Reference Transcriptome Statistics");
         out_msg <<
-                ENTAP_STATS::SOFTWARE_BREAK                                     <<
-                "Expression Filtering: New Reference Transcriptome Statistics\n"<<
-                ENTAP_STATS::SOFTWARE_BREAK                                     <<
                 "\nTotal sequenes: "                    << count_kept     <<
                 "\nTotal length of transcriptome (bp)"  << total_kept_len <<
                 "\nAverage length (bp): "               << avg_kept       <<
@@ -287,9 +284,9 @@ std::string ModRSEM::filter() {
     if (count_removed > 0) {
         avg_removed = (fp32) total_removed_len / count_removed;
         std::pair<uint64, uint64> removed_n =
-                _pQueryData->calculate_N_vals(all_lost_lengths,total_removed_len);
+                _pQUERY_DATA->calculate_N_vals(all_lost_lengths,total_removed_len);
         out_msg <<
-                "\nRemoved Sequences (no frame):"       <<
+                "\nRemoved Sequences (under FPKM threshold):"       <<
                 "\nTotal sequences: "                     << count_removed    <<
                 "\nAverage sequence length(bp): "         << avg_removed      <<
                 "\nn50: "                                 << removed_n.first  <<
@@ -325,7 +322,7 @@ std::string ModRSEM::filter() {
     FS_dprint("Success!");
     //--------------------------------------------------------//
 
-    return out_kept;
+    _final_fasta = out_kept;
 }
 
 
@@ -350,17 +347,26 @@ bool ModRSEM::rsem_validate_file(std::string filename) {
 
     std::string rsem_arg;
     std::string out_path;
+    TerminalData terminalData;
 
     rsem_arg = PATHS(_exe_path, RSEM_SAM_VALID) + " " + _alignpath;
-    out_path = PATHS(_expression_outpath, filename) + STD_VALID_OUT;
-    // only thrown in failure in calling rsem
-    if (TC_execute_cmd(rsem_arg.c_str(), out_path.c_str())!=0) return false;
+    out_path = PATHS(_mod_out_dir, filename) + STD_VALID_OUT;
+
+    terminalData.command        = rsem_arg;
+    terminalData.print_files    = true;
+    terminalData.base_std_path  = PATHS(_mod_out_dir, filename) + STD_VALID_OUT;
+
+
+    if (TC_execute_cmd(terminalData)!=0) {
+        throw ExceptionHandler("Error in validating SAM file\nRSEM Error:\n" +
+                               terminalData.err_stream, ERR_ENTAP_RUN_RSEM_EXPRESSION);
+    }
     FS_dprint("RSEM validate executed successfully");
     // RSEM does not always return error code if file is invalid, only seen in .err
     return (_pFileSystem->file_no_lines(out_path + FileSystem::EXT_ERR));
 }
 
-
+#if 0
 /**
  * ======================================================================
  * Function ModRSEM::rsem_conv_to_bam(std::string file_name)
@@ -383,16 +389,16 @@ bool ModRSEM::rsem_conv_to_bam(std::string file_name) {
     std::string rsem_arg;
     std::string std_out;
 
-    bam_out  = PATHS(_expression_outpath, file_name);
+    bam_out  = PATHS(_mod_out_dir, file_name);
     rsem_arg = PATHS(_exe_path, RSEM_CONV_SAM) +
                " -p " + std::to_string(_threads) + " " + _alignpath + " " + bam_out;
-    std_out  = _expression_outpath + file_name + STD_CONVERT_SAM;
+    std_out  = _mod_out_dir + file_name + STD_CONVERT_SAM;
     if (TC_execute_cmd(rsem_arg.c_str(), std_out)!=0)return false;
     if (!_pFileSystem->file_no_lines(std_out+FileSystem::EXT_ERR)) return false;
     _alignpath = bam_out + FileSystem::EXT_BAM;
     return true;
 }
-
+#endif
 
 /**
  * ======================================================================
@@ -415,14 +421,6 @@ void ModRSEM::set_data(int thread, float fpkm, bool single) {
     _threads = thread;
     _fpkm = fpkm;
     _issingle = single;
-
-    _processed_path = PATHS(_expression_outpath, RSEM_PROCESSED_DIR);
-    _figure_path = PATHS(_expression_outpath, RSEM_FIGURE_DIR);
-
-    _pFileSystem->delete_dir(_processed_path);
-    _pFileSystem->create_dir(_processed_path);
-    _pFileSystem->delete_dir(_figure_path);
-    _pFileSystem->create_dir(_figure_path);
 }
 
 ModRSEM::~ModRSEM() {
@@ -431,25 +429,40 @@ ModRSEM::~ModRSEM() {
 
 
 bool ModRSEM::rsem_generate_reference(std::string& reference_path_out) {
-    std::string ref_exe;    // executable path to reference generation
-    std::string ref_path;   // reference path
-    std::string rsem_arg;
-    std::string std_out;
+    std::string       ref_exe;    // executable path to reference generation
+    std::string       ref_path;   // reference path
+    std::string       rsem_arg;
+    int32             err_code;
+    TerminalData      terminalData;
 
     ref_exe  = PATHS(_exe_path, RSEM_PREP_REF_EXE);
-    ref_path = PATHS(_expression_outpath, _filename) + "_ref";
+    ref_path = PATHS(_mod_out_dir, _filename) + "_ref";
     rsem_arg = ref_exe + " "
-               + _inpath + " "
+               + _in_hits + " "
                + ref_path;
-    std_out = PATHS(_expression_outpath, _filename) + STD_REF_OUT;
+
+    terminalData.command       = rsem_arg;
+    terminalData.base_std_path = PATHS(_mod_out_dir, _filename) + STD_REF_OUT;
+    terminalData.print_files   = true;
+
     reference_path_out = ref_path;
-    return TC_execute_cmd(rsem_arg.c_str(), std_out) == 0;
+
+    // Execute command
+    err_code = TC_execute_cmd(terminalData);
+
+    if (err_code != 0) {
+        throw ExceptionHandler("Error generating RSEM reference\nRSEM Error:\n" +
+                               terminalData.err_stream, ERR_ENTAP_RUN_RSEM_EXPRESSION);
+    }
+
+    return err_code == 0;
 }
 
 bool ModRSEM::rsem_expression_analysis(std::string& ref_path, std::string& bam) {
     std::string expression_exe;
     std::string rsem_arg;
-    std::string std_out;
+    int32             err_code;
+    TerminalData      terminalData;
 
     expression_exe = PATHS(_exe_path, RSEM_CALC_EXP_EXE);
     rsem_arg = expression_exe +
@@ -459,6 +472,28 @@ bool ModRSEM::rsem_expression_analysis(std::string& ref_path, std::string& bam) 
                ref_path + " " +
                _exp_out;
     if (!_issingle) rsem_arg += " --paired-end";
-    std_out = PATHS(_expression_outpath, _filename) + STD_EXP_OUT;
-    return TC_execute_cmd(rsem_arg.c_str(), std_out) == 0;
+
+    terminalData.command        = rsem_arg;
+    terminalData.print_files    = true;
+    terminalData.base_std_path  = PATHS(_mod_out_dir, _filename) + STD_EXP_OUT;
+
+
+    err_code = TC_execute_cmd(terminalData);
+
+    if (err_code != 0) {
+        throw ExceptionHandler("Error in running RSEM Expression Analysis\nRSEM Error:\n" +
+                terminalData.err_stream, ERR_ENTAP_RUN_RSEM_EXPRESSION);
+    }
+    return err_code == 0;
+}
+
+ModRSEM::ModRSEM(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
+                 std::string &exe, std::string &align) :
+AbstractExpression(execution_stage_path, in_hits, entap_data, "RSEM", exe, align){
+    FS_dprint("Spawn Object - ModRSEM");
+
+}
+
+std::string ModRSEM::get_final_fasta() {
+    return this->_final_fasta;
 }

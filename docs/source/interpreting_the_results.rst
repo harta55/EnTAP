@@ -33,7 +33,7 @@ Interpreting the Results
 #. :ref:`Orthologous Groups/Ontology<ont-label>`
 #. :ref:`Protein Families<inter-label>` (optional)
 
-The two files to check out first are the :ref:`final annotations<final-label>` and :ref:`log file<log-label>`. These files are the most important and contain a summary of all the information collected at each stage, including statistical analyses. The remaining files are there for a more in depth look at each stage. 
+The two files to check out first are the :ref:`final annotations<final-label>` and :ref:`log file<log-label>`. These files contain a summary of all the information collected at each stage, including statistical analyses. The remaining files are there for a more in depth look at each stage. All files will be contained in "entap_outfiles" directory as default, or different if the - - out-dir flag was specified.
 
 .. _final-label:
 
@@ -42,9 +42,18 @@ Final Annotations
 
 The final EnTAP annotations are contained within the |final_dir| directory. These files are the summation of each stage of the pipeline and contain the combined information. So these can be considered the most important files! 
 
-All .tsv files in this section will have the following header information (from left to right)
+All .tsv files in this section may have the following header information (from left to right) separated by each portion of the pipeline. Some headers will not be shown if that part of the pipeline was skipped or the information was not found for any of the input sequences.
 
+General Header Information
     * Query sequence ID
+
+Frame Selection Header Information (optional)
+    * Open Reading Frame
+
+Expression Analysis Header Information (optional)
+    * FPKM
+
+Similarity Search Header Information)
     * Subject sequence ID
     * Percentage of identical matches
     * Alignment length
@@ -57,44 +66,56 @@ All .tsv files in this section will have the following header information (from 
     * Expect (e) value
     * Query coverage
     * Subject title
-    * Species (DIAMOND)
-    * Origin Database (DIAMOND)
-    * ORF (GeneMarkS-T)
-    * Contaminant (yes/no the hit was flagged as a contaminant)
-    * Seed ortholog (EggNOG)
-    * Seed E-Value (EggNOG)
-    * Seed Score (EggNOG)
-    * Predicted Gene (EggNOG)
-    * Taxonomic Scope (EggNOG, tax scope that was matched)
-    * OGs (EggNOG, orthologous groups assigned)
-    * Description (EggNOG)
+    * Species
+    * Taxonomic Lineage
+    * Origin Database
+    * Contaminant (yes/no if the hit was flagged as a contaminant)
+    * Informative (yes/no if he hit was flagged as informative)
+
+Similarity Search UniProt Header Information (optional if aligning against SwissProt database)
+    * UniProt Database Cross References
+    * UniProt Additional Information
+    * UniProt KEGG Terms
+    * UniProt GO Biological
+    * UniProt GO Cellular
+    * UniProt GO Molecular
+
+Ontology EggNOG Header Information
+    * Seed Ortholog
+    * Seed E-Value
+    * Seed Score
+    * Predicted Gene
+    * Taxonomic Scope
+    * OGs (orthologous groups assigned)
+    * EggNOG Description (EggNOG)
     * KEGG Terms (EggNOG)
-    * Protein Domains (EggNOG)
     * GO Biological (Gene Ontology normalized terms)
     * GO Cellular (Gene Ontology normalized terms)
     * GO Molecular (Gene Ontology normalized terms)
-    * ----- Optional Columns If Using InterProScan -----
-    * IPScan GO Biological (InterPro)
-    * IPScan GO Cellular (InterPro)
-    * IPScan GO Molecular (InterPro)
-    * Pathways (InterPro)
-    * InterPro (InterPro, database entry)
-    * Protein Database (InterPro, database assigned. Ex: pfam)
-    * Protein Description (InterPro, description of database entry)
-    * E Value (InterPro, E-value of hit against protein database)
+    * BIGG Reaction
 
-Gene ontology terms are normalized to levels based on the input flag from the user (or the default of 0,3,4). A level of 0 within the filename indicates that ALL GO terms will be printed to the annotation file. Normalization of GO terms to levels is generally done before enrichment analysis and is based upon the hierarchical setup of the Gene Ontology database. More information can be found at GO_. 
+Ontology InterProScan Header Information
+    * IPScan GO Biological 
+    * IPScan GO Cellular
+    * IPScan GO Molecular
+    * Pathways
+    * InterPro (InterPro database entry)
+    * Protein Database (database assigned. Ex: pfam)
+    * Protein Description (description of database entry)
+    * E Value (E-value of hit against protein database)
+
+Gene ontology terms are normalized to levels based on the input flag from the user (or the default of 0,3,4). A level of 0 within the filename indicates that ALL GO terms will be printed to the annotation file. FASTA files are always printed as lvl 0 0 and will not be printed otherwise. Normalization of GO terms to levels is generally done before enrichment analysis and is based upon the hierarchical setup of the Gene Ontology database. More information can be found at GO_. 
 
     * final_annotations_lvlX.tsv
 
         * As mentioned above, the 'X' represents the normalized GO terms for the annotation
         * This .tsv file will have the headers as mentioned previously as a summary of the entire pipeline
 
-    * final_annotated.faa / .fnn
+    * final_annotated)lvl0.faa / .fnn
 
         * Nucleotide and protein fasta files containing all sequences that either hit databases through similarity searching or through the ontology stage
 
-    * final_unannotated.aa / .fnn
+    * final_unannotated_lvl0.aa / .fnn
 
         * Nucleotide and protein fasta files containing all sequences that did not hit either through similarity searching nor through the ontology stage
 
@@ -414,10 +435,10 @@ The |egg_dir| directory will contain all of the relevant information for the Egg
 
 EggNOG Files: |egg_dir|
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Files within the |egg_dir| are generated by EggNOG and will contain information based on the hits returned from EggNOG against the orthologous databases. More information can be found at EggNOG_. 
+Files within the |egg_dir| are generated through DIAMOND alignment against the EggNOG orthologous database and will contain information based on the hits returned. More information can be found at EggNOG_. 
 
 
-* annotation_results.emapper.annotations
+* blastp_transcriptome_eggnog_proteins.out
 
     * EggNOG results for sequences from the final transcriptome being used (post-processing)
 

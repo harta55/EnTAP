@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -31,12 +31,27 @@
 #include <iomanip>
 #include "ModInterpro.h"
 #include "../ExceptionHandler.h"
+
+// Used for XML parsing
+#if 0
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+using boost::property_tree::ptree;
+#endif
 #include "../FileSystem.h"
+#include "../TerminalCommands.h"
 //**************************************************************
 
-using boost::property_tree::ptree;
+const std::vector<ENTAP_HEADERS> ModInterpro::DEFAULT_HEADERS = {
+        ENTAP_HEADER_ONT_INTER_GO_BIO,
+        ENTAP_HEADER_ONT_INTER_GO_CELL,
+        ENTAP_HEADER_ONT_INTER_GO_MOLE,
+        ENTAP_HEADER_ONT_INTER_PATHWAYS,
+        ENTAP_HEADER_ONT_INTER_INTERPRO,
+        ENTAP_HEADER_ONT_INTER_DATA_TYPE,
+        ENTAP_HEADER_ONT_INTER_DATA_TERM,
+        ENTAP_HEADER_ONT_INTER_EVAL
+};
 
 const std::vector<std::string> ModInterpro::INTERPRO_DATABASES ({
             "tigrfam",
@@ -74,15 +89,16 @@ const std::string ModInterpro::INTERPRO_DEFAULT = "pfam";
  *
  * =====================================================================
  */
-std::pair<bool, std::string> ModInterpro::verify_files() {
-
+EntapModule::ModVerifyData ModInterpro::verify_files() {
+    ModVerifyData modVerifyData;
     std::string filename;
 
     filename        = INTERPRO_OUTPUT;
-    _final_basepath = PATHS(_interpro_dir, filename);
+    _final_basepath = PATHS(_mod_out_dir, filename);
     filename += INTERPRO_EXT_TSV;
-    _final_outpath = PATHS(_interpro_dir, filename);
-    return std::make_pair(_pFileSystem->file_exists(_final_outpath), "");
+    _final_outpath = PATHS(_mod_out_dir, filename);
+    modVerifyData.files_exist = _pFileSystem->file_exists(_final_outpath);
+    return modVerifyData;
 }
 
 void ModInterpro::execute() {
@@ -91,14 +107,16 @@ void ModInterpro::execute() {
     std::string std_out;
     std::string blast;
     std::string temp_dir;
+    int32       err_code;
+    TerminalData      terminalData;
 
     _blastp ? blast = PROTEIN_TAG : blast = NUCLEO_TAG;
-    temp_dir = PATHS(_interpro_dir, INTERPRO_TEMP);
+    temp_dir = PATHS(_mod_out_dir, INTERPRO_TEMP);
 
-    std_out      = PATHS(_interpro_dir, INTERPRO_STD_OUT);
+    std_out      = PATHS(_mod_out_dir, INTERPRO_STD_OUT);
     interpro_cmd =
-            INTERPRO_EXE    +
-            " -i "          + _inpath +
+            _exe_path    +
+            " -i "          + _in_hits +
             " -b "          + _final_basepath +
             FLAG_SEQTYPE    + " " + blast     +
             FLAG_TEMP       + " " + temp_dir  +
@@ -106,19 +124,26 @@ void ModInterpro::execute() {
             FLAG_IPRLOOK    +
             FLAG_PATHWAY;
 
-    FS_dprint("Executing InterProScan:\n" + interpro_cmd);
     if (!_databases.empty()) {
         for (std::string &val : _databases) interpro_cmd += " --appl " + val;
     } else {
         throw ExceptionHandler("No InterPro databases selected!",
                 ERR_ENTAP_RUN_INTERPRO);
     }
-    if (TC_execute_cmd(interpro_cmd, std_out) != 0) {
+
+    // Execute command
+    terminalData.command       = interpro_cmd;
+    terminalData.print_files   = true;
+    terminalData.base_std_path = std_out;
+
+
+    err_code = TC_execute_cmd(terminalData);
+    if (err_code != 0) {
         _pFileSystem->delete_file(_final_outpath);
-        throw ExceptionHandler("Error executing InterProScan, consult the error file at: "+
-                std_out, ERR_ENTAP_RUN_INTERPRO);
+        throw ExceptionHandler("Error executing InterProScan\nInterProScan Error:\n"+ terminalData.err_stream,
+                               ERR_ENTAP_RUN_INTERPRO);
     } else {
-        boostFS::remove_all(temp_dir);
+        _pFileSystem->delete_dir(temp_dir);
     }
 }
 
@@ -141,14 +166,10 @@ void ModInterpro::parse() {
 
     std::stringstream                     stats_stream;
     std::string                           stats_out;
-    std::string                           e_str;
-    std::string                           interpro_output;
-    std::string                           protein_output;
     std::string                           path_no_hits_faa;
     std::string                           path_no_hits_fnn;
     std::string                           path_hits_faa;
     std::string                           path_hits_fnn;
-    go_serial_map_t                       GO_DATABASE;
     std::map<std::string,InterProData>    interpro_map;
     go_format_t                           go_terms_parsed;
     uint32                                count_hits=0;
@@ -183,20 +204,26 @@ void ModInterpro::parse() {
     }
 
     // TODO stats
+    QuerySequence::InterProResults interProResults;
     try {
         for (auto &pair : *_pQUERY_DATA->get_sequences_ptr()) {
             std::map<std::string, InterProData>::iterator it = interpro_map.find(pair.first);
             if (it != interpro_map.end()) {
                 count_hits++;
-                pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_INTERPRO);
-                interpro_output = it->second.interID + "(" + it->second.interDesc + ")";
-                protein_output  = it->second.databaseID + "(" + it->second.databaseDesc + ")";
-                go_terms_parsed = parse_go_list(it->second.go_terms,_pEntapDatabase,',');
-                std::stringstream ss;
-                ss << std::scientific << it->second.eval;
-                e_str = ss.str();
-                pair.second->set_interpro_results(e_str, protein_output, it->second.databasetype,
-                                                  interpro_output, it->second.pathways, go_terms_parsed);
+
+                go_terms_parsed = EM_parse_go_list(it->second.go_terms,_pEntapDatabase,',');
+
+                // Compile data TODO change...
+                interProResults.e_value = float_to_sci(it->second.eval,2);
+                interProResults.database_desc_id = it->second.databaseID + "(" + it->second.databaseDesc + ")";
+                interProResults.database_type    = it->second.databasetype;
+                interProResults.parsed_go        = go_terms_parsed;
+                interProResults.interpro_desc_id = it->second.interID + "(" + it->second.interDesc + ")";
+                interProResults.pathways         = it->second.pathways;
+                interProResults.e_value_raw = it->second.eval;
+
+                pair.second->add_alignment(_execution_state, _software_flag, interProResults, _database_flag);
+
                 if (!pair.second->get_sequence_n().empty()) file_hits_fnn << pair.second->get_sequence_n() << std::endl;
                 if (!pair.second->get_sequence_p().empty()) file_hits_faa << pair.second->get_sequence_p() << std::endl;
             } else {
@@ -216,10 +243,8 @@ void ModInterpro::parse() {
     file_hits_fnn.close();
 
     FS_dprint("Success! Calculating statistics...");
-    stats_stream <<
-                 ENTAP_STATS::SOFTWARE_BREAK << " Ontology - InterProScan\n" <<
-                 ENTAP_STATS::SOFTWARE_BREAK <<
-                 "InterProScan statistics coming soon!";
+    _pFileSystem->format_stat_stream(stats_stream, "Ontology - InterProScan");
+    stats_stream << "InterProScan statistics coming soon!";
 
     if (count_hits == 0) {
         stats_stream << "\nWarning: No InterProScan results found!";
@@ -229,6 +254,8 @@ void ModInterpro::parse() {
     FS_dprint("Success! InterProScan finished");
 }
 
+
+#if 0
 
 /**
 * ======================================================================
@@ -310,13 +337,14 @@ std::map<std::string,ModInterpro::InterProData> ModInterpro::parse_xml(void) {
     return interpro_map;
 }
 
+#endif
 
 /**
 * ======================================================================
 * Function std::map<std::string,ModInterpro::InterProData> ModInterpro::parse_tsv(void)
 *
 * Description          - Parses nucleotide data from interpro and returns
-*                        parsed data map
+*                        parsed data map of BEST HITS according to E_value
 *
 * Notes                - None
 *
@@ -434,14 +462,15 @@ ModInterpro::~ModInterpro() {
 }
 
 bool ModInterpro::is_executable() {
+    // TODO add execute command for interpro
     return true;
 }
 
-bool ModInterpro::valid_input(boostPO::variables_map &vm) {
+bool ModInterpro::valid_input(UserInput* userInput) {
     std::vector<std::string> databases;
 
-    if (!vm.count(UInput::INPUT_FLAG_INTERPRO)) return false;
-    databases = vm[UInput::INPUT_FLAG_INTERPRO].as<std::vector<std::string>>();
+    if (!userInput->has_input(userInput->INPUT_FLAG_INTERPRO)) return false;
+    databases = userInput->get_user_input<std::vector<std::string>>(userInput->INPUT_FLAG_INTERPRO);
 
     for (std::string &data : databases) {
         LOWERCASE(data);
@@ -456,25 +485,11 @@ std::string ModInterpro::get_default() {
     return INTERPRO_DEFAULT;
 }
 
-ModInterpro::ModInterpro(std::string &out, std::string &in, std::string &ont,
-                         bool blastp, std::vector<uint16> &lvls,
-                         EntapDataPtrs& entap_data, vect_str_t databases)
-    : AbstractOntology(out, in, ont,
-                       blastp, lvls, entap_data){
+ModInterpro::ModInterpro(std::string &ont, std::string &in,
+                         EntapDataPtrs& entap_data, std::string &exe, vect_str_t databases)
+    : AbstractOntology(in, ont, entap_data, "InterProScan", exe){
+    FS_dprint("Spawn Object - InterPro");
 
-    _interpro_dir = PATHS(_ontology_dir, INTERPRO_DIRECTORY);
-    _proc_dir     = PATHS(_interpro_dir, PROCESSED_OUT_DIR);
-    _figure_dir   = PATHS(_interpro_dir, FIGURE_DIR);
     _databases    = databases;
-
-    try {
-        _pFileSystem->delete_dir(_proc_dir);
-        _pFileSystem->delete_dir(_figure_dir);
-
-        _pFileSystem->create_dir(_interpro_dir);
-        _pFileSystem->create_dir(_proc_dir);
-        _pFileSystem->create_dir(_figure_dir);
-    } catch (...) {
-        throw ExceptionHandler("Unable to remove or create directories", ERR_ENTAP_FILE_IO);
-    }
+    _software_flag = ONT_INTERPRO_SCAN;
 }

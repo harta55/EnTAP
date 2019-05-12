@@ -1,3 +1,5 @@
+#ifdef EGGNOG_MAPPER
+
 /*
  *
  * Developed by Alexander Hart
@@ -7,7 +9,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -31,6 +33,7 @@
 
 
 #include "AbstractOntology.h"
+#include "../common.h"
 
 class ModEggnog : public AbstractOntology{
 
@@ -69,8 +72,10 @@ private:
     std::string _eggnog_db_path;
     std::string _out_hits;
 
+    static std::string EGG_EMAPPER_EXE;
     std::string eggnog_format(std::string);
 };
 
 
 #endif //ENTAP_MODEGGNOG_H
+#endif

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -31,6 +31,8 @@
 
 
 #include "AbstractOntology.h"
+#include "../UserInput.h"
+#include "../QuerySequence.h"
 
 class ModInterpro : public AbstractOntology{
 
@@ -47,17 +49,18 @@ class ModInterpro : public AbstractOntology{
 
 public:
     ~ModInterpro();
-    ModInterpro(std::string &out, std::string &in,
-                std::string &ont, bool blastp,
-                std::vector<uint16>& lvls, EntapDataPtrs& entap_data, vect_str_t );
+    ModInterpro(std::string &ont, std::string &in,
+                EntapDataPtrs& entap_data, std::string &exe, vect_str_t );
 
-    virtual std::pair<bool, std::string> verify_files() override ;
+    virtual ModVerifyData verify_files() override ;
     virtual void execute() override ;
     virtual void parse() override ;
-
     static bool is_executable();
-    static bool valid_input(boostPO::variables_map&);
+
+    static bool valid_input(UserInput* userinput);
     static std::string get_default();
+
+    static const std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
 
 private:
@@ -65,7 +68,6 @@ private:
     std::string PROTEIN_TAG                 = "p";
     std::string INTERPRO_TEMP               = "temp/";
     std::string INTERPRO_OUTPUT             = "interpro_results";
-    std::string INTERPRO_DIRECTORY          = "InterProScan";
     std::string INTERPRO_STD_OUT            = "interproscan_std";
     std::string OUT_HITS_FAA                = "interpro_hits.faa";
     std::string OUT_HITS_FNN                = "interpro_hits.fnn";
@@ -73,6 +75,8 @@ private:
     std::string OUT_NO_HITS_FNN             = "interpro_no_hits.fnn";
     std::string INTERPRO_EXT_XML            = ".xml";
     std::string INTERPRO_EXT_TSV            = ".tsv";
+
+    std::string _database_flag              = "interpro";   // TODO add full alignment support
 
     // Valid databases
     static const std::vector<std::string> INTERPRO_DATABASES;
@@ -94,13 +98,12 @@ private:
     std::string FLAG_TEMP     = " --tempdir";
 
     std::vector<std::string> _databases;
-    std::string              _interpro_dir;
-    std::string              _proc_dir;
-    std::string              _figure_dir;
     std::string              _final_outpath;
     std::string              _final_basepath;
 
+#if 0
     std::map<std::string,InterProData> parse_xml(void);
+#endif
     std::map<std::string,InterProData> parse_tsv(void);
     std::string format_interpro(void);
 };

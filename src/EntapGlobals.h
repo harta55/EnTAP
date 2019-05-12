@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,20 +30,21 @@
 #define ENTAPGLOBALS_H
 
 //*********************** Includes *****************************
+
+#include "config.h"
+#include "common.h"
+#ifdef USE_BOOST
 #include <boost/serialization/access.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
-#include "config.h"
-#include "common.h"
-#include <chrono>
-#include <ios>
-
+#endif
 //******************** Defines/Macros **************************
 
+#ifdef USE_BOOST
 #define PATHS(x,y)      (boostFS::path(x) / boostFS::path(y)).string()
-#define NCBI_UNIPROT    0       // Compiler flag for future feature
-#define DEBUG           1
-#define FASTA_FLAG      ">"
+#else
+#define PATHS(x,y)      ((x) + "/" + (y))
+#endif
 
 //**************************************************************
 
@@ -54,12 +55,12 @@ class FileSystem;
 class UserInput;
 class GraphingManager;
 class QueryData;
-struct TaxEntry;
-struct GoEntry;
+
+#ifdef USE_BOOST
 namespace boostFS = boost::filesystem;
 namespace boostPO = boost::program_options;
 namespace boostAR = boost::archive;
-
+#endif
 //**************************************************************
 
 
@@ -70,31 +71,197 @@ std::string generate_command(std::unordered_map<std::string,std::string>&,
 std::string float_to_string(fp64);
 std::string float_to_sci(fp64, int);
 vect_str_t  split_string(std::string, char);
+std::string get_cur_time();
 //**************************************************************
 
 
 //**************** Global Structures/Typedefs ******************
 typedef std::unordered_map<std::string, QuerySequence*> QUERY_MAP_T;
-typedef std::unordered_map<std::string, TaxEntry> tax_serial_map_t;
-typedef std::unordered_map<std::string, GoEntry> go_serial_map_t;
 typedef std::map<std::string,std::vector<std::string>> go_format_t;
 typedef std::vector<std::string> databases_t;   // Standard database container
 
-typedef std::pair<std::string,int> count_pair;
-struct compair {
-    bool operator ()(count_pair const& one, count_pair const& two) const {
-        return one.second > two.second;
+
+template <typename T>
+struct Compair {
+
+    typedef std::pair<T,uint32> count_pair;
+    std::unordered_map<T, uint32> _data;
+    typename std::unordered_map<T, uint32>::iterator _it;
+    std::vector<count_pair> _sorted;
+    uint32 _ct_unique;
+    uint32 _ct_total;
+
+    struct sort_descending{
+        bool operator ()(count_pair const& one, count_pair const& two) const {
+            return one.second > two.second;
+        }
+    };
+
+    struct sort_ascending {
+        bool operator ()(count_pair const& one, count_pair const& two) const {
+            return one.second < two.second;
+        }
+    };
+
+    Compair() {
+        _data = {};
+        _sorted = {};
+        _ct_unique = 0;
+        _ct_total = 0;
+    }
+
+    bool add_value(T val) {
+        _ct_total++;
+        _it = _data.find(val);
+        if (_it != _data.end()) {
+            _it->second++;
+            return true;
+        } else {
+            _data.emplace(std::make_pair(val, 1));
+            _ct_unique++;
+            return false;
+        }
+    }
+
+    void sort(bool descending) {
+        _sorted = std::vector<count_pair>(_data.begin(), _data.end());
+        if (descending) {
+            std::sort(_sorted.begin(), _sorted.end(), sort_descending());
+        } else {
+            std::sort(_sorted.begin(), _sorted.end(), sort_ascending());
+        }
+    }
+
+    bool empty() {
+        return _data.empty();
     }
 };
+
+template <class T>
+std::string container_to_string(std::set<T> &in_cont, const char *delim) {
+    if (in_cont.empty()) return "";
+    std::ostringstream stream;
+    std::copy(in_cont.begin(), in_cont.end(), std::ostream_iterator<std::string>(stream, delim));
+    std::string result = stream.str();
+    result.pop_back();
+    return result;
+}
+
+template <template<class,class,class...> class C, typename T, typename U, typename... Args>
+U get_map_default(const C<T,U,Args...>& m, T const& key, const U & default_val)
+{
+    typename C<T,U,Args...>::const_iterator it = m.find(key);
+    if (it == m.end()) {
+        return default_val;
+    }
+    return it->second;
+}
+
 
 enum ExecuteStates {
     INIT = 0,
     EXPRESSION_FILTERING,
     FRAME_SELECTION,
-    FILTER,
+    COPY_FINAL_TRANSCRIPTOME,
     SIMILARITY_SEARCH,
     GENE_ONTOLOGY,
-    EXIT
+    EXIT,
+    EXECUTION_MAX
+};
+
+enum ONTOLOGY_SOFTWARE {
+    ONT_EGGNOG_DMND,
+    ONT_INTERPRO_SCAN,
+#ifdef EGGNOG_MAPPER
+    EGGNOG_INT_FLAG,
+#endif
+    ONT_SOFTWARE_COUNT
+};
+
+enum SIMILARITY_SOFTWARE {
+    SIM_DIAMOND,
+    SIM_SOFTWARE_COUNT
+};
+
+enum EXPRESSION_SOFTWARE {
+    EXP_RSEM,
+    EXP_COUNT
+};
+
+enum FRAME_SELECTION_SOFTWARE {
+    FRAME_GENEMARK_ST,
+    FRAME_SOFTWARE_COUNT
+};
+
+enum ENTAP_HEADERS {
+    ENTAP_HEADER_UNUSED = 0,                // 0
+    ENTAP_HEADER_QUERY,
+
+    /* Frame Selection */
+    ENTAP_HEADER_FRAME,
+
+    /* Expression Filtering */
+    ENTAP_HEADER_EXP_FPKM,
+
+    /* Similarity Search - General */
+    ENTAP_HEADER_SIM_SUBJECT,
+    ENTAP_HEADER_SIM_PERCENT,       // Percent Identical to subject
+    ENTAP_HEADER_SIM_ALIGN_LEN,
+    ENTAP_HEADER_SIM_MISMATCH,
+    ENTAP_HEADER_SIM_GAP_OPEN,
+    ENTAP_HEADER_SIM_QUERY_S,
+    ENTAP_HEADER_SIM_QUERY_E,               // 10
+    ENTAP_HEADER_SIM_SUBJ_S,
+    ENTAP_HEADER_SIM_SUBJ_E,
+    ENTAP_HEADER_SIM_E_VAL,
+    ENTAP_HEADER_SIM_COVERAGE,
+    ENTAP_HEADER_SIM_TITLE,
+    ENTAP_HEADER_SIM_SPECIES,
+    ENTAP_HEADER_SIM_TAXONOMIC_LINEAGE,
+    ENTAP_HEADER_SIM_DATABASE,
+    ENTAP_HEADER_SIM_CONTAM,
+    ENTAP_HEADER_SIM_INFORM,
+
+    /* Similarity Search - UniProt*/
+    ENTAP_HEADER_SIM_UNI_DATA_XREF,         // 20
+    ENTAP_HEADER_SIM_UNI_COMMENTS,
+    ENTAP_HEADER_SIM_UNI_KEGG,
+    ENTAP_HEADER_SIM_UNI_GO_BIO,
+    ENTAP_HEADER_SIM_UNI_GO_CELL,
+    ENTAP_HEADER_SIM_UNI_GO_MOLE,
+
+    /* Ontology - EggNOG*/
+    ENTAP_HEADER_ONT_EGG_SEED_ORTHO,
+    ENTAP_HEADER_ONT_EGG_SEED_EVAL,
+    ENTAP_HEADER_ONT_EGG_SEED_SCORE,
+    ENTAP_HEADER_ONT_EGG_PRED_GENE,
+    ENTAP_HEADER_ONT_EGG_TAX_SCOPE_READABLE,         // 30
+    ENTAP_HEADER_ONT_EGG_TAX_SCOPE_MAX,
+    ENTAP_HEADER_ONT_EGG_MEMBER_OGS,
+    ENTAP_HEADER_ONT_EGG_DESC,
+    ENTAP_HEADER_ONT_EGG_BIGG,
+    ENTAP_HEADER_ONT_EGG_KEGG,
+    ENTAP_HEADER_ONT_EGG_GO_BIO,
+    ENTAP_HEADER_ONT_EGG_GO_CELL,
+    ENTAP_HEADER_ONT_EGG_GO_MOLE,
+    ENTAP_HEADER_ONT_EGG_PROTEIN,
+
+    /* Ontology - InterProScan */
+    ENTAP_HEADER_ONT_INTER_GO_BIO,
+    ENTAP_HEADER_ONT_INTER_GO_CELL,
+    ENTAP_HEADER_ONT_INTER_GO_MOLE,
+    ENTAP_HEADER_ONT_INTER_PATHWAYS,
+    ENTAP_HEADER_ONT_INTER_INTERPRO,
+    ENTAP_HEADER_ONT_INTER_DATA_TYPE,
+    ENTAP_HEADER_ONT_INTER_DATA_TERM,
+    ENTAP_HEADER_ONT_INTER_EVAL,
+
+    ENTAP_HEADER_COUNT
+};
+
+struct EntapHeader {
+    const std::string title;
+    bool print_header;
 };
 
 struct EntapDataPtrs {
@@ -119,6 +286,18 @@ struct EntapDataPtrs {
     }
 };
 
+namespace std {
+    template<>
+    struct hash<ENTAP_HEADERS> {
+        std::size_t operator()(const ENTAP_HEADERS &x) const {
+            using type = typename std::underlying_type<ENTAP_HEADERS>::type;
+            return std::hash<type>()(static_cast<type>(x));
+        }
+    };
+}
+
+
+
 //*********************** Externs *****************************
 
 extern std::string DEBUG_FILE_PATH;
@@ -126,114 +305,21 @@ extern std::string LOG_FILE_PATH;
 extern std::string RSEM_EXE_DIR;
 extern std::string GENEMARK_EXE;
 extern std::string DIAMOND_EXE;
-extern std::string EGG_EMAPPER_EXE;
 extern std::string EGG_SQL_DB_PATH;
-extern std::string EGG_DOWNLOAD_EXE;
+extern std::string EGG_DMND_PATH;
 extern std::string INTERPRO_EXE;
 extern std::string ENTAP_DATABASE_BIN_PATH;
 extern std::string ENTAP_DATABASE_SQL_PATH;
 extern std::string GRAPHING_EXE;
+extern std::string EGG_EMAPPER_EXE;
 
+extern EntapHeader ENTAP_HEADER_INFO[];
 
-namespace ENTAP_EXECUTE {
-    //------------------------Ontology-------------------------//
-    extern const std::string GO_BIOLOGICAL_FLAG ;
-    extern const std::string GO_CELLULAR_FLAG;
-    extern const std::string GO_MOLECULAR_FLAG;
-    const uint16 ONTOLOGY_MIN      = 0;
-    const uint16 EGGNOG_INT_FLAG   = 0;
-    const uint16 INTERPRO_INT_FLAG = 1;
-    const uint16 ONTOLOGY_MAX      = 1;
+// ************************************************************
 
-    const uint16 FRAME_FLAG_GENEMARK = 0;
-    const uint16 EXP_FLAG_RSEM       = 0;
-    const uint16 SIM_SEARCH_FLAG_DIAMOND = 0;
-
-    //------------------------Headers-------------------------//
-    extern const std::string HEADER_QUERY;
-    extern const std::string HEADER_SUBJECT;
-    extern const std::string HEADER_PERCENT;
-    extern const std::string HEADER_ALIGN_LEN;
-    extern const std::string HEADER_MISMATCH;
-    extern const std::string HEADER_GAP_OPEN;
-    extern const std::string HEADER_QUERY_S;
-    extern const std::string HEADER_QUERY_E;
-    extern const std::string HEADER_SUBJ_S;
-    extern const std::string HEADER_SUBJ_E;
-    extern const std::string HEADER_E_VAL;
-    extern const std::string HEADER_COVERAGE;
-    extern const std::string HEADER_TITLE;
-    extern const std::string HEADER_SPECIES;
-    extern const std::string HEADER_DATABASE;
-    extern const std::string HEADER_FRAME;
-    extern const std::string HEADER_CONTAM;
-    extern const std::string HEADER_INFORM;
-
-    // EggNOG Header Information
-    extern const std::string HEADER_SEED_ORTH;
-    extern const std::string HEADER_SEED_EVAL;
-    extern const std::string HEADER_SEED_SCORE;
-    extern const std::string HEADER_PRED_GENE;
-    extern const std::string HEADER_TAX_SCOPE;
-    extern const std::string HEADER_EGG_OGS;
-    extern const std::string HEADER_EGG_KEGG;
-    extern const std::string HEADER_EGG_GO_BIO ;
-    extern const std::string HEADER_EGG_GO_CELL;
-    extern const std::string HEADER_EGG_GO_MOLE;
-    extern const std::string HEADER_EGG_DESC;
-    extern const std::string HEADER_EGG_LEVEL;
-    extern const std::string HEADER_EGG_PROTEIN;
-
-    // Interpro Header Information
-    extern const std::string HEADER_INTER_GO_BIO;
-    extern const std::string HEADER_INTER_GO_CELL;
-    extern const std::string HEADER_INTER_GO_MOLE;
-    extern const std::string HEADER_INTER_PATHWAY;
-    extern const std::string HEADER_INTER_INTERPRO;
-    extern const std::string HEADER_INTER_DATA_TYPE;
-    extern const std::string HEADER_INTER_DATA_TERM;
-    extern const std::string HEADER_INTER_EVAL;
-}
-
-namespace UInput {
-    //------------------USER INPUTS-----------------------//
-    extern const std::string INPUT_FLAG_TAG;
-    extern const std::string INPUT_FLAG_CONFIG       ;
-    extern const std::string INPUT_FLAG_ALIGN        ;
-    extern const std::string INPUT_FLAG_RUNPROTEIN   ;
-    extern const std::string INPUT_FLAG_RUNNUCLEOTIDE;
-    extern const std::string INPUT_FLAG_OVERWRITE    ;
-    extern const std::string INPUT_FLAG_NCBI_1       ;
-    extern const std::string INPUT_FLAG_NCBI_2       ;
-    extern const std::string INPUT_FLAG_UNIPROT      ;
-    extern const std::string INPUT_FLAG_INTERPRO     ;
-    extern const std::string INPUT_FLAG_ONTOLOGY     ;
-    extern const std::string INPUT_FLAG_SPECIES      ;
-    extern const std::string INPUT_FLAG_QCOVERAGE    ;
-    extern const std::string INPUT_FLAG_TCOVERAGE    ;
-    extern const std::string INPUT_FLAG_COMPLETE     ;
-    extern const std::string INPUT_FLAG_GO_LEVELS    ;
-    extern const std::string INPUT_FLAG_EXE_PATH     ;
-    extern const std::string INPUT_FLAG_FPKM         ;
-    extern const std::string INPUT_FLAG_CONTAM       ;
-    extern const std::string INPUT_FLAG_E_VAL        ;
-    extern const std::string INPUT_FLAG_HELP         ;
-    extern const std::string INPUT_FLAG_VERSION      ;
-    extern const std::string INPUT_FLAG_TRANSCRIPTOME;
-    extern const std::string INPUT_FLAG_DATABASE     ;
-    extern const std::string INPUT_FLAG_GRAPH;
-    extern const std::string INPUT_FLAG_TRIM;
-    extern const std::string INPUT_FLAG_STATE;
-    extern const std::string INPUT_FLAG_SINGLE_END;
-    extern const std::string INPUT_FLAG_THREADS;
-    extern const std::string INPUT_FLAG_UNINFORM;
-    extern const std::string INPUT_FLAG_NOCHECK;
-    extern const std::string INPUT_FLAG_GENERATE;
-    extern const std::string INPUT_FLAG_DATABASE_TYPE;
-}
-
-namespace ENTAP_STATS {
-    const std::string SOFTWARE_BREAK = "------------------------------------------------------\n";
-}
+static const std::string GO_MOLECULAR_FLAG     = "molecular_function";
+static const std::string GO_BIOLOGICAL_FLAG    = "biological_process";
+static const std::string GO_CELLULAR_FLAG      = "cellular_component";
+static const std::string GO_OVERALL_FLAG       = "overall";
 
 #endif //ENTAPGLOBALS_H

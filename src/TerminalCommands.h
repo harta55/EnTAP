@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,8 +30,16 @@
 
 #include "common.h"
 
-int TC_execute_cmd(std::string, std::string);
-int TC_execute_cmd(std::string);
+struct TerminalData{
+    std::string command;
+    std::string out_stream;
+    std::string err_stream;
+    bool print_files;
+    std::string base_std_path;
+
+};
+
+int TC_execute_cmd(TerminalData &terminalData);
 
 
 #endif //ENTAP_TERMINALCOMMANDS_H

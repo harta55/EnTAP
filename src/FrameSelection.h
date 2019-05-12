@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,7 +30,6 @@
 #define ENTAP_FRAMESELECTION_H
 
 //*********************** Includes *****************************
-#include <boost/program_options/variables_map.hpp>
 #include "QuerySequence.h"
 #include "GraphingManager.h"
 #include "frame_selection/AbstractFrame.h"
@@ -46,12 +45,11 @@ public:
     std::string execute(std::string);
     FrameSelection(std::string&, EntapDataPtrs&);
 
-
 private:
 
     const std::string FRAME_SELECTION_OUT_DIR       = "frame_selection/";
 
-    std::string      _frame_outpath;
+    std::string      _mod_out_dir;
     std::string      _exe_path;
     std::string      _inpath;
     std::string      _outpath;

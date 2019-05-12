@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -36,9 +36,9 @@
 
 class SQLDatabaseHelper {
 
-typedef std::vector<std::vector<std::string>> query_struct;
-
 public:
+    typedef std::vector<std::vector<std::string>> query_struct;
+
     SQLDatabaseHelper();
     ~SQLDatabaseHelper();
     bool open(std::string file);
@@ -46,6 +46,10 @@ public:
     bool execute_cmd(char*);
     void close();
     query_struct query(char* query);
+
+    // change to template
+    std::string format_container(std::set<std::string> &in_cont);
+    std::string format_string(std::string& str, char delim);
 
 private:
     sqlite3 *_database;

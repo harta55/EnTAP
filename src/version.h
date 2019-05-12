@@ -6,7 +6,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,20 +30,17 @@
 #include "config.h"
 
 #define LICENSE_YEAR_START      2017
-#define LICENSE_YEAR_END        2018
+#define LICENSE_YEAR_END        2019
 
+// When changing Version ensure the EnTAP Database version/FTP is up-to-date (EntapDatabase.h)
 #define MAJOR_VERSION     0
-#define MINOR_VERSION     8
-#define BUILD_VERSION     4
-
-#ifndef RELEASE_BUILD
-    #define DEBUG_BUILD
-#endif
+#define MINOR_VERSION     9
+#define BUILD_VERSION     0
 
 #define TO_STR2(x)             #x
 #define TO_STR(x)              TO_STR2(x)
 
-#ifdef DEBUG_BUILD
+#ifndef RELEASE_BUILD
     #define ENTAP_VERSION_STR       (TO_STR(MAJOR_VERSION) "." TO_STR(MINOR_VERSION) "." \
                                     TO_STR(BUILD_VERSION) "-DEBUG")
 #else

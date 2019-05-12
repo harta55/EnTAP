@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -78,24 +78,29 @@ enum entap_err {
     ERR_ENTAP_RUN_EGGNOG                  = 160u,
     ERR_ENTAP_DATABASE_QUERY              = 161u,
     ERR_ENTAP_PARSE_EGGNOG                = 162u,
+    ERR_ENTAP_EGGNOG_FILES                = 163u,   // Some EggNOG file missing
     ERR_ENTAP_RUN_INTERPRO                = 170u,
     ERR_ENTAP_PARSE_INTERPRO              = 171u,
+    ERR_ENTAP_PARSE_EGGNOG_DMND           = 180u,
     ERR_ENTAP_FILE_IO                     = 200u,
-    ERR_ENTAP_MEM_ALLOC                   = 201u
+    ERR_ENTAP_MEM_ALLOC                   = 201u,
+    ERR_ENTAP_MAX                         = 201u
 };
 
 
 class ExceptionHandler: public std::exception{
 
-    public:
-        ExceptionHandler(const std::string&, int);
-        const char* what();
-        int getErr_code() const;
-        void print_msg(FileSystem*);
+public:
+    ExceptionHandler(const std::string&, int);
+    const char* what();
+    int getErr_code() const;
+    void print_msg(FileSystem*);
 
-    private:
-        int err_code;
-        std::string message;
-    };
+private:
+    int err_code;
+    std::string message;
+
+    static const std::string ERR_ENTAP_STR [ERR_ENTAP_MAX];
+};
 
 #endif //ENTAP_EXCEPTIONHANDLER_H

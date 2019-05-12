@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,9 +30,9 @@
 #define ENTAP_ABSTRACTEXPRESSION_H
 
 //*********************** Includes *****************************
-#include <string>
+#include "../common.h"
+#include "../EntapModule.h"
 #include "../GraphingManager.h"
-#include "../QuerySequence.h"
 
 //**************************************************************
 
@@ -52,7 +52,7 @@
  * @return              - None
  * ======================================================================
  */
-class AbstractExpression {
+class AbstractExpression : public EntapModule {
 
 public:
 
@@ -84,41 +84,22 @@ public:
  * @return              - None
  * ======================================================================
  */
-    AbstractExpression(std::string &exe,
-                       std::string &in,
-                       std::string &exp,
-                       std::string &align,
-                       EntapDataPtrs &entap_data){
-
-        _expression_outpath = exp;
-        _alignpath          = align;
-        _exe_path           = exe;
-        _inpath             = in;
-        _pGraphingManager   = entap_data._pGraphingManager;
-        _pQueryData         = entap_data._pQueryData;
-        _pFileSystem        = entap_data._pFileSystem;
-    }
+    AbstractExpression(std::string &execution_stage_path, std::string &in_hits,
+                       EntapDataPtrs &entap_data, std::string module_name, std::string &exe,
+                       std::string &align);
 
     virtual ~AbstractExpression() = default;
-    virtual std::pair<bool, std::string> verify_files()=0;
+    virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
-    virtual std::string filter() = 0;
+    virtual void parse() = 0;
     virtual void set_data(int, fp32, bool)=0;
+
+    virtual std::string get_final_fasta()=0;
 
 
 protected:
-    const std::string RSEM_PROCESSED_DIR    = "processed/";
-    const std::string RSEM_FIGURE_DIR       = "/figures";
-
     std::string     _alignpath;
-    std::string     _exe_path;
-    std::string     _inpath;
-    std::string     _processed_path;
-    std::string     _figure_path;
-    std::string     _expression_outpath;
-    GraphingManager *_pGraphingManager;
-    QueryData       *_pQueryData;
-    FileSystem      *_pFileSystem;
+    std::string     _final_fasta;
 };
 
 #endif //ENTAP_ABSTRACTEXPRESSION_H

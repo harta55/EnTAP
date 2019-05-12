@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -31,16 +31,11 @@
 
 
 #include "QuerySequence.h"
-#include "EntapExecute.h"
+#include "common.h"
 
-struct FrameStats {
-    uint32 removed;
-    uint32 selected;
-    uint32 partial_5;
-    uint32 partial_3;
-    uint32 internal;
-    uint32 complete;
-};
+// Forward Declarations
+class QueryAlignment;
+
 
 class QueryData {
 
@@ -51,8 +46,10 @@ public:
         SUCCESS_FRAME_SEL  = (1 << 1),
         SUCCESS_ONTOLOGY   = (1 << 2),
         SUCCESS_SIM_SEARCH = (1 << 3),
-        IS_PROTEIN         = (1 << 4)
+        IS_PROTEIN         = (1 << 4),
+        UNIPROT_MATCH      = (1 << 5),
 
+        DATA_FLAGS_MAX     = (1 << 31)
     }DATA_FLAGS;
 
 
@@ -61,19 +58,46 @@ public:
 
     QUERY_MAP_T* get_sequences_ptr();
 
-    void flag_transcripts(ExecuteStates);
     std::pair<uint16, uint16> calculate_N_vals(std::vector<uint16>&,uint64);
-    std::pair<uint16, uint16> calculate_N_vals(ExecuteStates, bool);
     std::string trim_sequence_header(std::string&, std::string);
     void final_statistics(std::string&, std::vector<uint16>&);
-    void set_frame_stats(const FrameStats &_frame_stats);
+    void print_final_output();
+
+    // Output routines
+    bool start_alignment_files(std::string &base_path, std::vector<ENTAP_HEADERS> &headers, uint8 lvl,
+                                std::vector<FileSystem::ENT_FILE_TYPES> &types);
+    bool end_alignment_files(std::string &base_path);
+    bool add_alignment_data(std::string &base_path, QuerySequence *querySequence, QueryAlignment *alignment);
+    QuerySequence* get_sequence(std::string&);
+
+    // DATA_FLAG routines
+    bool is_protein_data();
+    void set_is_protein_data(bool val);
+    void set_is_success_frame_selection(bool val);
+    void set_is_success_expression(bool val);
+    void set_is_success_sim_search(bool val);
+    void set_is_success_ontology(bool val);
+    void set_is_uniprot(bool val);
+
+    // Header routines
+    void header_set_uniprot(bool val);
+    void header_set(ENTAP_HEADERS header, bool val);
+
+
+private:
+
+    struct OutputFileData {
+        std::vector<FileSystem::ENT_FILE_TYPES> file_types;
+        uint8 go_level;
+        std::vector<ENTAP_HEADERS> headers;
+        std::ofstream* file_streams[FileSystem::ENT_FILE_OUTPUT_FORMAT_MAX];
+    };
+
+    void set_input_type(std::string&);
     bool DATA_FLAG_GET(DATA_FLAGS);
     void DATA_FLAG_SET(DATA_FLAGS);
     void DATA_FLAG_CLEAR(DATA_FLAGS);
-    QuerySequence* get_sequence(std::string&);
-
-private:
-    void set_input_type(std::string&);
+    void DATA_FLAG_CHANGE(DATA_FLAGS flag, bool val);
 
     const uint8         LINE_COUNT   = 20;
     const uint8         SEQ_DPRINT_CONUT = 10;
@@ -83,12 +107,10 @@ private:
     const std::string   NUCLEO_FLAG  = "Nucleotide";
     const std::string   PROTEIN_FLAG = "Protein";
     const std::string   COMPLETE_FLAG= "Complete";
-    const std::map<char,uint8> NUCLEO_MAP{
-            {'A', 1},
-            {'G', 1},
-            {'C', 1},
-            {'T', 1},
-            {'N', 1}
+
+    // these characters are considered nucleotide
+    const std::vector<char> NUCLEO_MAP {
+            'A', 'G', 'C', 'T', 'N'
     };
     const std::string OUT_UNANNOTATED_NUCL = "final_unannotated.fnn";
     const std::string OUT_UNANNOTATED_PROT = "final_unannotated.faa";
@@ -97,16 +119,14 @@ private:
 
     QUERY_MAP_T  *_pSEQUENCES;
     bool         _trim;
-    bool         _protein;
     uint32       _total_sequences;          // Original sequence number
     uint32       _data_flags;
-    uint64       _start_nuc_len;            // Starting total len
-    uint64       _start_prot_len;           // Starting total len
-    FrameStats   _frame_stats;
+    uint64       _start_nuc_len;            // Starting total len (nucleotide)
+    uint64       _start_prot_len;           // Starting total len (protein)
     uint32       _pipeline_flags;           // Success flags
     FileSystem  *_pFileSystem;
     UserInput   *_pUserInput;
-
+    std::unordered_map<std::string, OutputFileData> _alignment_files;
 };
 
 

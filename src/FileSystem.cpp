@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -28,30 +28,36 @@
 #include "FileSystem.h"
 #include "ExceptionHandler.h"
 #include "EntapGlobals.h"
-#include <iomanip>
-#include <iostream>
 #include <sys/stat.h>
-#include <chrono>
+#include "config.h"
+#include "TerminalCommands.h"
+
+#ifdef USE_BOOST
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/time_clock.hpp>
-#include "config.h"
-#include <ctime>
-#include <cstring>
 #include <boost/date_time/posix_time/posix_time.hpp>
-
-#ifdef USE_CURL
-#include "curl/curl.h"
+#else
+#include <dirent.h> // POSIX directory iterator
+#include <zconf.h>
 #endif
 
-const std::string FileSystem::EXT_TXT = ".txt";
-const std::string FileSystem::EXT_ERR = ".err";
-const std::string FileSystem::EXT_OUT = ".out";
-const std::string FileSystem::EXT_BAM = ".bam";
-const std::string FileSystem::EXT_FAA = ".faa";
-const std::string FileSystem::EXT_FNN = ".fnn";
-const std::string FileSystem::EXT_XML = ".xml";
-const std::string FileSystem::EXT_DMND= ".dmnd";
+const std::string FileSystem::EXT_TXT  = ".txt";
+const std::string FileSystem::EXT_ERR  = ".err";
+const std::string FileSystem::EXT_OUT  = ".out";
+const std::string FileSystem::EXT_BAM  = ".bam";
+const std::string FileSystem::EXT_SAM  = ".sam";
+const std::string FileSystem::EXT_FAA  = ".faa";
+const std::string FileSystem::EXT_FNN  = ".fnn";
+const std::string FileSystem::EXT_XML  = ".xml";
+const std::string FileSystem::EXT_DMND = ".dmnd";
+const std::string FileSystem::EXT_STD  = "_std";
+const std::string FileSystem::EXT_TSV  = ".tsv";
+const std::string FileSystem::EXT_CSV  = ".csv";
+const std::string FileSystem::EXT_LST  = ".lst";
 
+const char FileSystem::DELIM_TSV = '\t';
+const char FileSystem::DELIM_CSV = ',';
+const char FileSystem::FASTA_FLAG = '>';
 
 // Removed for older compilers, may bring back
 #if 0
@@ -93,7 +99,7 @@ void FileSystem::close_file(std::ofstream &ofstream) {
  * Function void print_debug(std::string    msg)
  *
  * Description          - Handles printing to EnTAP debug file
- *                      - Adds timestamp to each entry
+ *                      - Adds bo to each entry
  *
  * Notes                - None
  *
@@ -103,19 +109,10 @@ void FileSystem::close_file(std::ofstream &ofstream) {
  * =====================================================================
  */
 void FS_dprint(const std::string &msg) {
-
-#if DEBUG
-    std::chrono::time_point<std::chrono::system_clock> current;
-    std::time_t time;
-
-    current = std::chrono::system_clock::now();
-    time = std::chrono::system_clock::to_time_t(current);
-    std::string out_time(std::ctime(&time));
     std::ofstream debug_file(DEBUG_FILE_PATH, std::ios::out | std::ios::app);
 
-    debug_file << out_time.substr(0,out_time.length()-1) << ": " + msg << std::endl;
+    debug_file << get_cur_time() << ": " + msg << std::endl;
     debug_file.close();
-#endif
 }
 
 
@@ -160,6 +157,7 @@ bool FileSystem::file_exists(std::string path) {
 #else
     struct stat buff;
     return (stat(path.c_str(), &buff) == 0);
+//    return ( access( path.c_str(), F_OK ) != -1 );
 #endif
 }
 
@@ -223,7 +221,8 @@ bool FileSystem::delete_file(std::string path) {
     FS_dprint("Deleting file: " + path);
     return boostFS::remove(path);
 #else
-    return remove(path) == 0;
+    FS_dprint("Deleting file at: " + path);
+    return remove(path.c_str()) == 0;
 #endif
 }
 
@@ -232,7 +231,7 @@ bool FileSystem::delete_file(std::string path) {
  * ======================================================================
  * Function bool FS_directory_iterate(bool del, std::string &path)
  *
- * Description          - Boost recursive iteration through directory
+ * Description          - WARNING recursive iteration
  *
  * Notes                - None
  *
@@ -242,14 +241,15 @@ bool FileSystem::delete_file(std::string path) {
  * @return              - True/false if successful
  * ======================================================================
  */
-bool FileSystem::directory_iterate(bool del, std::string &path) {
-    FS_dprint("Iterating through directory: " + path);
+bool FileSystem::directory_iterate(ENT_FILE_ITER iter, std::string &path) {
+//    FS_dprint("Iterating through directory: " + path);
+#ifdef USE_BOOST
     if (!file_exists(path)) return false;
     try {
         for (boostFS::recursive_directory_iterator it(path), end; it != end; ++it) {
             if (!boostFS::is_directory(it->path())) {
                 // Is file
-                if (file_empty(it->path().string()) && del) {
+                if (file_empty(it->path().string()) && iter == FILE_ITER_DELETE_EMPTY) {
                     delete_file(it->path().string());
                     FS_dprint("Deleted: " + it->path().string());
                 }
@@ -258,8 +258,44 @@ bool FileSystem::directory_iterate(bool del, std::string &path) {
     } catch (...) {
         return false;
     }
-    FS_dprint("Success!");
     return true;
+#else   // POSIX
+    struct dirent *entry;
+    DIR *dp;
+    std::string file_path;
+    try {
+
+        dp = opendir(path.c_str());
+        if (dp == NULL) {
+            FS_dprint("opendir: Path could not be read: " + path);
+            return false;
+        }
+
+        while ((entry = readdir(dp)) != NULL) {
+            if (entry->d_name[0] == '.') continue;
+            file_path = PATHS(path, std::string(entry->d_name));
+            if (entry->d_type == DT_DIR) {
+                // Directory, WARNING recursive
+                directory_iterate(FILE_ITER_DELETE, file_path);     // Recursive call
+            } else {
+                // This is a file decide what we want to do
+                switch (iter) {
+                    case FILE_ITER_DELETE:
+                        delete_file(file_path);
+                        break;
+                    case FILE_ITER_DELETE_EMPTY:
+                        if (file_empty(file_path)) delete_file(file_path);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        closedir(dp);
+        remove(path.c_str());
+        return true;
+    } catch (...) {return false;};
+#endif
 }
 
 
@@ -343,6 +379,8 @@ bool FileSystem::check_fasta(std::string& path) {
 bool FileSystem::create_dir(std::string& path) {
 #ifdef USE_BOOST
     return boostFS::create_directories(path);
+#else
+    return mkdir(path.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) != -1;
 #endif
 }
 
@@ -363,6 +401,8 @@ bool FileSystem::create_dir(std::string& path) {
 void FileSystem::delete_dir(std::string& path) {
 #ifdef USE_BOOST
     boostFS::remove_all(path);
+#else   // POSIX
+    directory_iterate(FILE_ITER_DELETE, path);
 #endif
 }
 
@@ -434,18 +474,23 @@ std::string FileSystem::get_cur_dir() {
 
 #ifdef USE_BOOST
     return boostFS::current_path().string();
+#else // POSIX
+    char cwd[PATH_MAX];
+    getcwd(cwd, sizeof(cwd));
+    return std::string(cwd);
 #endif
 
 }
 
 FileSystem::~FileSystem() {
-    FS_dprint("Killing Object - FileSystem");
+    FS_dprint("Killing object - FileSystem");
     delete_dir(_temp_outpath);
 }
 
 FileSystem::FileSystem(std::string &root) {
-    // This routine will process entire root directory here and generate
+    // This routine will eventuall process entire root directory here and generate
     // hierarchy
+    FS_dprint("Spawn Object - FileSystem");
 
     _root_path     = root;
     _final_outpath = PATHS(root, ENTAP_FINAL_OUTPUT);
@@ -472,11 +517,6 @@ FileSystem::FileSystem(std::string &root) {
  * ======================================================================
  */
 void FileSystem::init_log() {
-#ifndef USE_BOOST
-    std::chrono::time_point<std::chrono::system_clock> now;
-    std::time_t                                        now_time;
-    std::tm                                            now_tm;
-#endif
     std::stringstream                                  ss;
     std::string                                        log_file_name;
     std::string                                        debug_file_name;
@@ -493,11 +533,30 @@ void FileSystem::init_log() {
        local.time_of_day().minutes()   << "m" <<
        local.time_of_day().seconds()   << "s";
 #else
+
+    // Will not work on older GCC compilers with a known bug in put_time
+    /*
+    std::chrono::time_point<std::chrono::system_clock> now;
+    std::time_t                                        now_time;
+    std::tm                                            now_tm;
     now      = std::chrono::system_clock::now();
     now_time = std::chrono::system_clock::to_time_t(now);
     now_tm   = *std::localtime(&now_time);
-    ss << std::put_time(&now_tm, "_%Y.%m.%d-%Hh.%Mm.%Ss");
+    ss << std::put_time(&now_tm, "_%YY%mM%dD-%Hh%Mm%Ss");
+     */
+
+    time_t theTime = time(nullptr);
+    struct tm *aTime = localtime(&theTime);
+
+    ss << "_" << aTime->tm_year+1900 << "Y"
+              << aTime->tm_mon+1  << "M"
+              << aTime->tm_mday << "D-"
+              << aTime->tm_hour << "h"
+              << aTime->tm_min  << "m"
+              << aTime->tm_sec  << "s";
 #endif
+
+
     time_date       = ss.str();
     log_file_name   = LOG_FILENAME   + time_date + LOG_EXTENSION;
     debug_file_name = DEBUG_FILENAME + time_date + LOG_EXTENSION;
@@ -512,6 +571,7 @@ const std::string &FileSystem::get_root_path() const {
     return _root_path;
 }
 
+// Stipped without '.'
 std::string FileSystem::get_file_extension(const std::string &path, bool stripped) {
 #ifdef USE_BOOST
     boostFS::path bpath(path);
@@ -519,6 +579,16 @@ std::string FileSystem::get_file_extension(const std::string &path, bool strippe
         return bpath.extension().string().substr(1);
     } else {
         return bpath.extension().string();
+    }
+#else
+    if (path.find_last_of('.') != std::string::npos) {
+        if (stripped) {
+            return path.substr(path.find_last_of('.') + 1);
+        } else {
+            return path.substr(path.find_last_of('.'));
+        }
+    } else {
+        return "";
     }
 #endif
 }
@@ -535,21 +605,53 @@ bool FileSystem::copy_file(std::string inpath, std::string outpath, bool overwri
         return false;
     }
     return true;
+#else
+    if (file_exists(outpath) && !overwrite) {
+        return false;
+    } else if (file_exists(outpath)) {
+        delete_file(outpath);
+    }
+    std::ifstream  in(inpath, std::ios::binary);
+    std::ofstream  out(outpath,   std::ios::binary);
+    out << in.rdbuf();
+    in.close();
+    out.close();
+    return true;
 #endif
 }
 
-void FileSystem::get_filename_no_extensions(std::string &file_name) {
+std::string FileSystem::get_filename(std::string &path, bool with_extension) {
+    if (path.empty()) return "";
 #ifdef USE_BOOST
-    boostFS::path path(file_name);
-    while (path.has_extension()) path = path.stem();
-    file_name = path.string();
-#endif
-}
+    if(with_extension) {
+        boostFS::path boost_path(path);
+        return boost_path.filename().string();
+    } else {
+        std::string file_name;
+        boostFS::path path(file_name);
+        while (path.has_extension()) path = path.stem();
+        file_name = path.string();
+        return file_name;
+    }
+#else
+    unsigned long dir_pos = path.find_last_of('/');
+    unsigned long ext_pos = path.find_last_of('.');
 
-std::string FileSystem::get_filename(std::string path) {
-#ifdef USE_BOOST
-    boostFS::path boost_path(path);
-    return boost_path.filename().string();
+    if (dir_pos == std::string::npos && ext_pos == std::string::npos) return path;
+    if (ext_pos == std::string::npos) return path.substr(dir_pos + 1);
+    if (dir_pos == std::string::npos && with_extension) return path;
+
+    // Filename with first extension (removes trailing extensions)
+    if (with_extension) {
+        return path.substr(dir_pos + 1);
+    } else {
+        // Just get stem
+        if (dir_pos == std::string::npos) {
+            return path.substr(0, path.find('.'));
+        } else {
+            return path.substr(dir_pos+1, path.find('.', dir_pos) - dir_pos - 1);
+        }
+    }
 #endif
 }
 
@@ -563,6 +665,11 @@ std::string FileSystem::get_temp_outdir() {
 }
 
 bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) {
+    TerminalData terminalData;
+
+    terminalData.print_files = false;
+    terminalData.base_std_path = "";
+
 
     FS_dprint("Downloading FTP file at: " + ftp_path);
 
@@ -600,17 +707,24 @@ bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) 
     std::string terminal_cmd =
         "wget -O " + out_path + " " + ftp_path;
 
-    if (TC_execute_cmd(terminal_cmd) == 0) {
+    terminalData.command = terminal_cmd;
+
+    if (TC_execute_cmd(terminalData) == 0) {
         FS_dprint("Success, file saved to: " + out_path);
         return true;
     } else {
-        FS_dprint("Error. Did not complete");
+        set_error("Unable to get file\n" + terminalData.err_stream);
         return false;
     }
 #endif
 }
 
 bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES type) {
+    TerminalData terminalData;
+
+    terminalData.print_files = false;
+    terminalData.base_std_path = "";
+
     FS_dprint("Decompressing file at: " + in_path);
     if (!file_exists(in_path)) {
         FS_dprint("File does not exist!");
@@ -618,6 +732,7 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
     }
 #ifdef USE_ZLIB
     FS_dprint("Using ZLIB...");
+    FS_dprint("ZLIP NOT SUPPORTED");
     return false;
 #else
     // Not compiled with ZLIB usage, use terminal command
@@ -625,22 +740,26 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
     std::string terminal_cmd;
 
     switch (type) {
-        case FILE_TAR_GZ:
+        case ENT_FILE_TAR_GZ:
             terminal_cmd =
                 "tar -xzf " + in_path + " -C " + out_dir;
             break;
 
-        case FILE_GZ:
+        case ENT_FILE_GZ:
             terminal_cmd =
                 "gunzip -c " + in_path + " > " + out_dir; //outdir will be outpath in this case
+            break;
         default:
             return false;
     }
-    if (TC_execute_cmd(terminal_cmd) == 0) {
+
+    terminalData.command = terminal_cmd;
+
+    if (TC_execute_cmd(terminalData) == 0) {
         FS_dprint("Success! Exported to: " + out_dir);
         return true;
     } else {
-        FS_dprint("Error! Unable to decompress file");
+        set_error("Unable to decompress file\n" + terminalData.err_stream);
         return false;
     }
 #endif
@@ -648,16 +767,151 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
 
 bool FileSystem::rename_file(std::string &in, std::string &out) {
     FS_dprint("Moving/renaming file: " + in );
-    if (!file_exists(in)) return false;
+    if (!file_exists(in)) {
+        FS_dprint("ERROR: rename failed, file does not exist");
+        return false;
+    }
     try {
 #ifdef USE_BOOST
         boostFS::rename(in, out);
         FS_dprint("Success!");
         return true;
+#else
+        rename(in.c_str(), out.c_str());
 #endif
     } catch (...) {
-        FS_dprint("Move failed!");
+        FS_dprint("ERROR: rename failed!");
         return false;
     }
-    return false;
+    return true;
+}
+
+uint16 FileSystem::get_file_status(std::string &path) {
+    uint16 file_status = 0;
+
+    if (!file_exists(path)) {
+        file_status |= FILE_STATUS_PATH_ERR;
+    }
+
+    if (file_empty(path)) {
+        file_status |= FILE_STATUS_EMPTY;
+    }
+
+    if (!file_test_open(path)) {
+        file_status |= FILE_STATUS_READ_ERR;
+    }
+
+    return file_status;
+}
+
+std::string FileSystem::print_file_status(uint16 status, std::string& path) {
+    std::string err_msg;
+
+    err_msg = "\nFile Status at: " + path;
+    if (status == 0) return err_msg += "\n    No Error";
+
+    // Check if file empty
+    if ((status & FILE_STATUS_EMPTY) != 0) {
+        err_msg += "\n    Error: File empty";
+    }
+
+    // Check if file path is invalid
+    if ((status & FILE_STATUS_PATH_ERR) != 0) {
+        err_msg += "\n    Error: File could not be found";
+    }
+
+    // Check if file could not be opened
+    if ((status & FILE_STATUS_READ_ERR) != 0) {
+        err_msg += "\n    Error: File could not be opened";
+    }
+
+    return err_msg;
+}
+
+void FileSystem::set_error(std::string err_msg) {
+//    FS_dprint(err_msg);
+    _err_msg = err_msg;
+}
+
+std::string FileSystem::get_error() {
+    return "\n" + _err_msg;
+}
+
+bool FileSystem::print_headers(std::ofstream& file_stream, std::vector<ENTAP_HEADERS> &headers, char delim) {
+    for (ENTAP_HEADERS &header: headers) {
+        if (ENTAP_HEADER_INFO[header].print_header) {
+            file_stream << ENTAP_HEADER_INFO[header].title << delim;
+        }
+    }
+    file_stream << std::endl;
+    return true;
+}
+
+void FileSystem::format_stat_stream(std::stringstream &stream, std::string title) {
+    stream<<std::fixed<<std::setprecision(2);
+    stream << SOFTWARE_BREAK << title << '\n' << SOFTWARE_BREAK;
+
+}
+
+std::string FileSystem::get_extension(FileSystem::ENT_FILE_TYPES type) {
+    switch (type) {
+
+        case ENT_FILE_DELIM_TSV:
+            return EXT_TSV;
+
+        case ENT_FILE_DELIM_CSV:
+            return EXT_CSV;
+
+        case ENT_FILE_XML:
+            return EXT_XML;
+
+        case ENT_FILE_FASTA_FNN:
+            return EXT_FNN;
+
+        case ENT_FILE_FASTA_FAA:
+            return EXT_FAA;
+
+        default:
+            FS_dprint("ERROR unhandled extension type: " + std::to_string(type));
+            return "";
+    }
+}
+
+bool FileSystem::initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HEADERS> &headers,
+                                 FileSystem::ENT_FILE_TYPES type) {
+    bool ret;
+
+    switch (type) {
+        case ENT_FILE_DELIM_TSV:
+            for (ENTAP_HEADERS &header: headers) {
+                if (ENTAP_HEADER_INFO[header].print_header) {
+                    *file_stream << ENTAP_HEADER_INFO[header].title << DELIM_TSV;
+                }
+            }
+            *file_stream << std::endl;
+            ret = true;
+            break;
+
+        case ENT_FILE_DELIM_CSV:
+            for (ENTAP_HEADERS &header: headers) {
+                if (ENTAP_HEADER_INFO[header].print_header) {
+                    *file_stream << ENTAP_HEADER_INFO[header].title << DELIM_CSV;
+                }
+            }
+            *file_stream << std::endl;
+            ret = true;
+            break;
+
+        // Fasta files do not need initialization
+        case ENT_FILE_FASTA_FAA:
+        case ENT_FILE_FASTA_FNN:
+            ret = true;
+            break;
+
+        default:
+            FS_dprint("ERROR unhanded file type (initalize file): " + std::to_string(type));
+            ret = false;
+            break;
+    }
+    return ret;
 }

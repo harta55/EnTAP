@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -32,6 +32,7 @@
 //*********************** Includes *****************************
 #include "common.h"
 #include "TerminalCommands.h"
+#include "EntapGlobals.h"
 //**************************************************************
 
 
@@ -44,11 +45,40 @@ class FileSystem {
 public:
 
     typedef enum {
-        FILE_TAR_GZ,
-        FILE_GZ,
-        FILE_ZIP
+        ENT_FILE_UNUSED=0,
+        ENT_FILE_DELIM_TSV,
+        ENT_FILE_DELIM_CSV,
+        ENT_FILE_FASTA_FAA,
+        ENT_FILE_FASTA_FNN,
+        ENT_FILE_OUTPUT_FORMAT_MAX,
+
+        ENT_FILE_XML,                   // Not yet supported for output format
+        ENT_FILE_TAR_GZ,
+        ENT_FILE_GZ,
+        ENT_FILE_ZIP,
+
+        ENT_FILE_MAX
 
     } ENT_FILE_TYPES;
+
+    typedef enum {
+        FILE_STATUS_UNUSED     = (1 << 0),
+        FILE_STATUS_EMPTY      = (1 << 1),      // File is empty
+        FILE_STATUS_READ_ERR   = (1 << 2),      // Error reading file
+        FILE_STATUS_PATH_ERR   = (1 << 3),      // FIle does not exist
+
+        FILE_STATUS_MAX        = (1 << 15)
+
+    } ENT_FILE_STATUS;
+
+    typedef enum {
+
+        FILE_ITER_DELETE=0,
+        FILE_ITER_DELETE_EMPTY,
+        FILE_ITER_PRINT
+
+    } ENT_FILE_ITER;
+
 
     FileSystem(std::string&);
     ~FileSystem();
@@ -62,44 +92,65 @@ public:
     bool file_no_lines(std::string);
     bool delete_file(std::string);
     bool copy_file(std::string, std::string, bool);
-    bool directory_iterate(bool, std::string&);
+    bool directory_iterate(ENT_FILE_ITER, std::string&);
     bool check_fasta(std::string&);
     bool create_dir(std::string&);
     void delete_dir(std::string&);
     const std::string &get_root_path() const;
     std::string get_file_extension(const std::string&, bool);
-    void get_filename_no_extensions(std::string &);
-    std::string get_filename(std::string);
+    std::string get_filename(std::string&, bool);
     static std::string get_cur_dir();
     std::vector<std::string> list_to_vect(char, std::string&);
     std::string get_final_outdir();
     std::string get_temp_outdir();
     bool rename_file(std::string& in, std::string& out);
+    uint16 get_file_status(std::string &path);
+    std::string print_file_status(uint16 status,std::string& path);
+    std::string get_error();
+    std::string get_extension(ENT_FILE_TYPES type);
 
     bool download_ftp_file(std::string,std::string&);
     bool decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES);
+
+    bool print_headers(std::ofstream &file_stream, std::vector<ENTAP_HEADERS> &headers, char delim);
+    bool initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HEADERS> &headers, ENT_FILE_TYPES type);
+    void format_stat_stream(std::stringstream &stream, std::string title);
 
 //**************************************************************
     static const std::string EXT_TXT ;
     static const std::string EXT_ERR ;
     static const std::string EXT_OUT ;
     static const std::string EXT_BAM ;
+    static const std::string EXT_SAM ;
     static const std::string EXT_FAA ;
     static const std::string EXT_FNN ;
     static const std::string EXT_DMND;
     static const std::string EXT_XML;
+    static const std::string EXT_STD;
+    static const std::string EXT_TSV;
+    static const std::string EXT_CSV;
+    static const std::string EXT_LST;
+
+    static const char        DELIM_TSV;
+    static const char        DELIM_CSV;
+
+    static const char        FASTA_FLAG;
 
 private:
     void init_log();
+    void set_error(std::string err_msg);
 
     const std::string LOG_FILENAME   = "log_file";
     const std::string LOG_EXTENSION  = ".txt";
     const std::string DEBUG_FILENAME = "debug";
     const std::string ENTAP_FINAL_OUTPUT    = "final_results/";
     const std::string TEMP_DIRECTORY        = "temp/";
+    const std::string SOFTWARE_BREAK = "------------------------------------------------------\n";
+
     std::string _root_path;     // Root EnTAP output directory
     std::string _final_outpath; // Path to final files after entap has finished
     std::string _temp_outpath;  // Temp directory for EnTAP usage
+    std::string _err_msg;
 };
 
 

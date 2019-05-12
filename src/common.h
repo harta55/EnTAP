@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -28,10 +28,11 @@
 #ifndef ENTAP_COMMON_H
 #define ENTAP_COMMON_H
 
-//*********************** Includes ******************************
+//*********************** Common Includes ******************************
 #include <vector>
 #include <string>
 #include <list>
+#include <set>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -39,16 +40,23 @@
 #include <map>
 #include <iomanip>
 #include <ctime>
+#include <cstring>
+#include <cmath>
 #include <exception>
 #include <queue>
 #include <thread>
 #include <unordered_map>
+#include <chrono>
+#include <ios>
+#include <iterator>
 //**************************************************************
 
 
 //******************* Defines/Macros ***************************
 #define LOWERCASE(x)        std::transform(x.begin(), x.end(), x.begin(), ::tolower)
+#define STR_COUNT(x,y)      std::count(x.begin(), x.end(), y)
 #define STR_REPLACE(x,y,z)  std::replace(x.begin(), x.end(), y, z)
+#define STR_ERASE(x,y)      x.erase(std::remove(x.begin(), x.end(), y),x.end())
 #define FIND_VECT(x,y)      std::find(y.begin(), y.end(), x) != y.end() // find x in y
 #define SAFE_DELETE(x)      if (x) delete x; x = nullptr
 //**************************************************************
@@ -67,9 +75,11 @@ typedef signed long long    int64;
 typedef float               fp32;
 typedef double              fp64;
 
-typedef std::pair<std::string,std::string> pair_str_t;
-typedef std::vector<std::string>           vect_str_t;
-typedef std::vector<uint16>                vect_uint16_t;
+typedef std::pair<std::string,std::string>    pair_str_t;
+typedef std::vector<std::string>              vect_str_t;
+typedef std::vector<std::vector<std::string>> vect_vect_str_t;
+typedef std::vector<uint16>                   vect_uint16_t;
+typedef std::set<std::string>                 set_str_t;
 //**************************************************************
 
 #endif //ENTAP_COMMON_H

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -25,18 +25,18 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <ios>
 #include <pstream.h>
 #include "TerminalCommands.h"
 #include "common.h"
 #include "FileSystem.h"
 
+
 /**
  * ======================================================================
- * Function int execute_cmd(std::string cmd, std::string out_path)
+ * Function int execute_cmd(std::string cmd, std::stringstream err_stream, std::stringstream out_stream)
  *
  * Description          - Terminal stream based on pstreams implementation
- *                      - Executes commands and prints .err and .out from stream
+ *                      - Executes commands and prints to err/out stream
  *
  * Notes                - None
  *
@@ -47,21 +47,22 @@
  *
  * =====================================================================
  */
-int TC_execute_cmd(std::string cmd, std::string out_path) {
-    std::ofstream out_file(out_path+".out", std::ios::out | std::ios::app);
-    std::ofstream err_file(out_path+".err", std::ios::out | std::ios::app);
-    FS_dprint("Executing command: \n" + cmd +
-                      "\nStd Out: " + out_path + ".out" +
-                      "\nStd Err: " + out_path + ".err");
+int TC_execute_cmd(TerminalData &terminalData) {
+
+    FS_dprint("Executing command: \n" + terminalData.command);
+
+    std::stringstream err_stream;
+    std::stringstream out_stream;
+
     const redi::pstreams::pmode mode = redi::pstreams::pstdout|redi::pstreams::pstderr;
-    redi::ipstream child(cmd, mode);
+    redi::ipstream child(terminalData.command, mode);
     char buf[1024];
     std::streamsize n;
     bool finished[2] = { false, false };
     while (!finished[0] || !finished[1]) {
         if (!finished[0]) {
             while ((n = child.err().readsome(buf, sizeof(buf))) > 0)
-                err_file.write(buf, n);
+                err_stream.write(buf, n);
             if (child.eof()) {
                 finished[0] = true;
                 if (!finished[1])
@@ -69,8 +70,9 @@ int TC_execute_cmd(std::string cmd, std::string out_path) {
             }
         }
         if (!finished[1]) {
-            while ((n = child.out().readsome(buf, sizeof(buf))) > 0)
-                out_file.write(buf, n).flush();
+            while ((n = child.out().readsome(buf, sizeof(buf))) > 0) {
+                out_stream.write(buf, n).flush();
+            }
             if (child.eof()) {
                 finished[1] = true;
                 if (!finished[0])
@@ -79,42 +81,28 @@ int TC_execute_cmd(std::string cmd, std::string out_path) {
         }
     }
     child.close();
-    out_file.close();
-    err_file.close();
-    if (child.rdbuf()->exited())
-        return child.rdbuf()->status();
-    return 1;
-}
-// todo, may want to handle differently
-// TODO change to sending map of flags as command
-int TC_execute_cmd(std::string cmd) {
-    FS_dprint("Executing command: \n" + cmd);
-    const redi::pstreams::pmode mode = redi::pstreams::pstdout|redi::pstreams::pstderr;
-    redi::ipstream child(cmd, mode);
-    char buf[1024];
-    std::streamsize n;
-    bool finished[2] = { false, false };
-    while (!finished[0] || !finished[1]) {
-        if (!finished[0]) {
-            while ((n = child.err().readsome(buf, sizeof(buf))) > 0)
-                continue;
-            if (child.eof()) {
-                finished[0] = true;
-                if (!finished[1])
-                    child.clear();
-            }
-        }
-        if (!finished[1]) {
-            while ((n = child.out().readsome(buf, sizeof(buf))) > 0)
-                continue;
-            if (child.eof()) {
-                finished[1] = true;
-                if (!finished[0])
-                    child.clear();
-            }
-        }
+
+    terminalData.err_stream = err_stream.str();
+    terminalData.out_stream = out_stream.str();
+
+    // Print error to debug file
+    FS_dprint("\nStd Err:\n" + terminalData.err_stream);
+
+    if (terminalData.print_files) {
+        std::string out_path = terminalData.base_std_path + FileSystem::EXT_OUT;
+        std::string err_path = terminalData.base_std_path + FileSystem::EXT_ERR;
+
+        std::ofstream out_file(out_path, std::ios::out | std::ios::app);
+        std::ofstream err_file(err_path, std::ios::out | std::ios::app);
+        FS_dprint("\nPrinting to files:\nStd Out: " + out_path + "\nStd Err: " + err_path);
+
+        out_file << terminalData.out_stream;
+        err_file << terminalData.err_stream;
+
+        out_file.close();
+        err_file.close();
     }
-    child.close();
+
     if (child.rdbuf()->exited())
         return child.rdbuf()->status();
     return 1;

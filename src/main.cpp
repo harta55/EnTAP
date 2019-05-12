@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -28,28 +28,22 @@
 
 //*********************** Includes *****************************
 #include "common.h"
-#include <boost/filesystem/operations.hpp>
 #include <chrono>
+#include "config.h"
+
+#ifdef USE_BOOST
+#include <boost/filesystem/operations.hpp>
 #include <boost/date_time/time_clock.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#endif
+
 #include "EntapConfig.h"
 #include "ExceptionHandler.h"
 #include "EntapGlobals.h"
 #include "EntapExecute.h"
+#include "UserInput.h"
 #include "EntapConfig.h"
-//**************************************************************
-
-
-//*********************** Local Enum ****************************
-enum States {
-    PARSE_ARGS           = 0,
-    CONFIG_ENTAP         ,
-    CONFIG_ENTAP_SUCCESS ,
-    EXECUTE_ENTAP        ,
-    EXECUTE_ENTAP_SUCCESS
-};
-
 //**************************************************************
 
 
@@ -129,7 +123,7 @@ void init_entap(int argc, const char** argv) {
     // parse user flags and turn into map
     _pUserInput = new UserInput(argc, argv);
 
-    root_outfiles = _pUserInput->get_user_input<std::string>(UInput::INPUT_FLAG_TAG);
+    root_outfiles = _pUserInput->get_user_input<std::string>(_pUserInput->INPUT_FLAG_TAG);
 
     // create filesystem and begin logging
     _pFileSystem = new FileSystem(root_outfiles);
@@ -174,6 +168,8 @@ void exit_print() {
                "\nTotal runtime (minutes): "       << min_dif;
     out_msg = out_stream.str();
     _pFileSystem->print_stats(out_msg);
-    SAFE_DELETE(_pFileSystem);
-    SAFE_DELETE(_pUserInput);
+
+    // Cleanup
+    delete _pFileSystem;
+    delete _pUserInput;
 }

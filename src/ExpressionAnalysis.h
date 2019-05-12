@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,15 +30,14 @@
 
 #include "QuerySequence.h"
 #include "GraphingManager.h"
-#include "expression/AbstractExpression.h"
 #include "QueryData.h"
 #include "ExceptionHandler.h"
 #include "EntapConfig.h"
 #include "EntapGlobals.h"
-#include "EntapExecute.h"
 #include "common.h"
-#include "expression/ModRSEM.h"
 #include "FileSystem.h"
+#include "expression/AbstractExpression.h"
+#include "expression/ModRSEM.h"
 
 class AbstractExpression;
 

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -25,10 +25,11 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <iomanip>
 #include "QueryData.h"
+#include "QueryAlignment.h"
 #include "ExceptionHandler.h"
 #include "FileSystem.h"
+#include "UserInput.h"
 
 
 /**
@@ -84,19 +85,19 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     _pUserInput  = userinput;
     _pFileSystem = filesystem;
 
-    _trim          = _pUserInput->has_input(UInput::INPUT_FLAG_TRIM);
-    is_complete    = _pUserInput->has_input(UInput::INPUT_FLAG_COMPLETE);
+    _trim          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_TRIM);
+    is_complete    = _pUserInput->has_input(_pUserInput->INPUT_FLAG_COMPLETE);
 
     if (!_pFileSystem->file_exists(input_file)) {
         throw ExceptionHandler("Input transcriptome not found at: " + input_file,ERR_ENTAP_INPUT_PARSE);
     }
 
-    out_name     = _pFileSystem->get_filename(input_file);
+    out_name     = _pFileSystem->get_filename(input_file, true);
     out_new_path = PATHS(out_path,out_name);
     _pFileSystem->delete_file(out_new_path);
 
     set_input_type(input_file);
-    _protein ? transcript_type = PROTEIN_FLAG : transcript_type = NUCLEO_FLAG;
+    DATA_FLAG_GET(IS_PROTEIN) ? transcript_type = PROTEIN_FLAG : transcript_type = NUCLEO_FLAG;
 
     std::ifstream in_file(input_file);
     std::ofstream out_file(out_new_path,std::ios::out | std::ios::app);
@@ -104,13 +105,13 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     while (true) {
         std::getline(in_file, line);
         if (line.empty() && !in_file.eof()) continue;
-        if (line.find(FASTA_FLAG) == 0 || in_file.eof()) {
+        if (line.find(FileSystem::FASTA_FLAG) == 0 || in_file.eof()) {
             if (!seq_id.empty()) {
                 if (in_file.eof()) {
                     out_file << line << std::endl;
                     sequence += line + "\n";
                 }
-                QuerySequence *query_seq = new QuerySequence(_protein,sequence, seq_id);
+                QuerySequence *query_seq = new QuerySequence(DATA_FLAG_GET(IS_PROTEIN),sequence, seq_id);
                 if (is_complete) query_seq->setFrame(COMPLETE_FLAG);
                 if (_pSEQUENCES->find(seq_id) != _pSEQUENCES->end()) {
                     throw ExceptionHandler("Duplicate headers in your input transcriptome: " + seq_id,
@@ -140,14 +141,12 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     out_file.close();
     avg_len = total_len / count_seqs;
     _total_sequences = count_seqs;
-    _protein  ? _start_prot_len = total_len : _start_nuc_len = total_len;
+    DATA_FLAG_GET(IS_PROTEIN)  ? _start_prot_len = total_len : _start_nuc_len = total_len;
     // first - n50, second - n90
     n_vals = calculate_N_vals(sequence_lengths, total_len);
 
-    out_msg <<std::fixed<<std::setprecision(2);
-    out_msg << ENTAP_STATS::SOFTWARE_BREAK
-            << "Transcriptome Statistics\n"
-            << ENTAP_STATS::SOFTWARE_BREAK<<
+    _pFileSystem->format_stat_stream(out_msg, "Transcriptome Statistics");
+    out_msg <<
             transcript_type << " sequences found"          <<
             "\nTotal sequences: "                          << count_seqs    <<
             "\nTotal length of transcriptome(bp): "        << total_len     <<
@@ -172,19 +171,23 @@ void QueryData::set_input_type(std::string &in) {
 
     line_count = 0;
     deviations = 0;
+    FS_dprint("Transcriptome Lines - START");
     while(std::getline(in_file,line)) {
         if (line.empty()) continue;
         if (line_count++ > LINE_COUNT) break;
-        if (line_count < SEQ_DPRINT_CONUT) FS_dprint("Transcriptome Line: \n" + line);
+        if (line_count < SEQ_DPRINT_CONUT) FS_dprint(line);
         line.pop_back(); // Account for newline/other
         if (line.find('>') == std::string::npos) {
             for (char &c : line) {
-                if (NUCLEO_MAP.find((char) toupper(c)) == NUCLEO_MAP.end()) deviations++;
+                if (std::find(NUCLEO_MAP.begin(), NUCLEO_MAP.end(),toupper(c)) == NUCLEO_MAP.end())
+                    deviations++;
             }
         }
     }
-    _protein = deviations > NUCLEO_DEV;
-    if (_protein) DATA_FLAG_SET(IS_PROTEIN);
+    FS_dprint("Transcriptome Lines - END");
+    if (deviations > NUCLEO_DEV) {
+        DATA_FLAG_SET(IS_PROTEIN);
+    }
     in_file.close();
 }
 
@@ -221,79 +224,6 @@ std::pair<uint16, uint16> QueryData::calculate_N_vals
     }
     return std::pair<uint16, uint16> (n_50,n_90);
 }
-
-// Will be used later
-std::pair<uint16, uint16> QueryData::calculate_N_vals (ExecuteStates state, bool kept) {
-    std::vector<uint16> seq_len_vect;
-    uint64 total_len=0;     // Kept sequences only
-    uint32 total_seq=0;     // Kept sequences only
-    uint64 temp_len=0;
-    uint64 n_50=0;
-    uint64 n_90=0;
-    fp64   fifty_len;
-    fp64   ninety_len;
-
-    // Recalculate based upon what sequences are left (kept)
-    for (auto &pair : *_pSEQUENCES) {
-        if (pair.second->is_kept()) {
-            total_len += pair.second->getSeq_length();
-            total_seq++;
-            seq_len_vect.push_back((uint16)pair.second->getSeq_length());
-        }
-    }
-
-    std::sort(seq_len_vect.begin(),seq_len_vect.end());
-    fifty_len  = total_len * N_50_PERCENT;
-    ninety_len = total_len * N_90_PERCENT;
-
-    for (uint16 &val : seq_len_vect) {
-        temp_len += val;
-        if (temp_len > fifty_len && n_50 == 0) n_50 = val;
-        if (temp_len > ninety_len) {
-            n_90 = val;
-            break;
-        }
-    }
-
-    // Print new transcriptome stats
-
-    return std::pair<uint16, uint16> (n_50,n_90);
-}
-
-
-/**
- * ======================================================================
- * Function void flag_transcripts(ExecuteStates state,
- *                              std::map<std::string, QuerySequence>& map)
- *
- * Description          - Sets boolean flags if a certain stage is skipped
- *                        in pipeline
- *                      - Used for statistics
- *
- * Notes                - Will be moved to transcriptome/project object
- *
- * @param state         - Current enum state of execution
- *
- * @return              - None
- * ======================================================================
- */
-void QueryData::flag_transcripts(ExecuteStates state) {
-    for (auto &pair : *_pSEQUENCES) {
-        switch (state) {
-            case EXPRESSION_FILTERING:
-                pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_EXPRESSION_KEPT);
-                break;
-            case FRAME_SELECTION:
-                pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_IS_PROTEIN);        // Probably already done
-                pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_FRAME_KEPT);
-                break;
-            default:
-                break;
-        }
-    }
-}
-
-
 
 /**
  * ======================================================================
@@ -364,8 +294,8 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
         is_prot = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN);
         is_hit = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_BLAST_HIT);
         is_ontology = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ASSIGNED); // TODO Fix for interpro
-        is_one_go = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_ONE_GO);
-        is_one_kegg = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_ONE_KEGG);
+        is_one_go = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ONE_GO);
+        is_one_kegg = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ONE_KEGG);
 
         is_exp_kept ? count_exp_kept++ : count_exp_reject++;
         is_prot ? count_frame_kept++ : count_frame_rejected++;
@@ -401,10 +331,8 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
     file_annotated_nucl.close();
     file_annotated_prot.close();
 
+    _pFileSystem->format_stat_stream(ss, "Final Annotation Statistics");
     ss <<
-       ENTAP_STATS::SOFTWARE_BREAK          <<
-       "Final Annotation Statistics\n"      <<
-       ENTAP_STATS::SOFTWARE_BREAK          <<
        "Total Sequences: "                  << count_total_sequences;
 
     if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
@@ -428,7 +356,7 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
     if (DATA_FLAG_GET(SUCCESS_ONTOLOGY)) {
         for (uint16 flag : ontology_flags) {
             switch (flag) {
-                case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
+                case ONT_EGGNOG_DMND:
                     ss <<
                        "\nGene Families"        <<
                        "\n\tTotal unique sequences with family assignment: "    << count_ontology   <<
@@ -436,7 +364,7 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
                        "\n\tTotal unique sequences with at least one GO term: " << count_one_go     <<
                        "\n\tTotal unique sequences with at least one pathway (KEGG) assignment: "   << count_one_kegg;
                     break;
-                case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
+                case ONT_INTERPRO_SCAN:
                     ss <<
                        "\nFinal InterPro stats coming soon!";
                     break;
@@ -460,12 +388,12 @@ std::string QueryData::trim_sequence_header(std::string &header, std::string lin
     std::string   sequence;
     int16         pos;
 
-    if (line.find(">") != std::string::npos) {
-        pos = (int16) line.find(">");
+    if (line.find('>') != std::string::npos) {
+        pos = (int16) line.find('>');
     } else pos = -1;
     if (_trim) {
-        if (line.find(" ") != std::string::npos) {
-            header = line.substr(pos+1, line.find(" ")-1);
+        if (line.find(' ') != std::string::npos) {
+            header = line.substr(pos+1, line.find(' ')-1);
         } else header = line.substr(pos+1);
         sequence = ">" + header + "\n";
     } else {
@@ -476,21 +404,18 @@ std::string QueryData::trim_sequence_header(std::string &header, std::string lin
     return sequence;
 }
 
-void QueryData::set_frame_stats(const FrameStats &_frame_stats) {
-    QueryData::_frame_stats = _frame_stats;
-}
-
 QUERY_MAP_T* QueryData::get_sequences_ptr() {
     return this->_pSEQUENCES;
 }
 
 QueryData::~QueryData() {
-    FS_dprint("Killing QueryData object...");
+    FS_dprint("Killing Object - QueryData");
     for(QUERY_MAP_T::iterator it = _pSEQUENCES->begin(); it != _pSEQUENCES->end(); it++) {
         delete it->second;
         it->second = nullptr;
     }
-    SAFE_DELETE(_pSEQUENCES);
+    FS_dprint("QuerySequence data freed");
+    delete _pSEQUENCES;
 }
 
 bool QueryData::DATA_FLAG_GET(DATA_FLAGS flag) {
@@ -516,4 +441,156 @@ QuerySequence *QueryData::get_sequence(std::string &query_id) {
     }
 }
 
+bool QueryData::start_alignment_files(std::string &base_path, std::vector<ENTAP_HEADERS> &headers, uint8 lvl,
+                                        std::vector<FileSystem::ENT_FILE_TYPES> &types) {
+    bool ret;
+    OutputFileData outputFileData = OutputFileData();
+    outputFileData.headers = headers;
+    outputFileData.go_level = lvl;
+    outputFileData.file_types = types;
 
+    base_path = base_path + "_lvl" + std::to_string(lvl);
+
+    // add this path to map if it does not exist, otherwise skip
+    if (_alignment_files.find(base_path) == _alignment_files.end()) {
+
+        _alignment_files.emplace(base_path, outputFileData);
+        // Generate files for each data type
+        for (FileSystem::ENT_FILE_TYPES type : types) {
+            if ((type == FileSystem::ENT_FILE_FASTA_FAA || type == FileSystem::ENT_FILE_FASTA_FNN) &&
+                    lvl != 0) {
+                // Do NOT create files for anything other than 0 for FAA or FNN
+                continue;
+            } else {
+                _alignment_files.at(base_path).file_streams[type] =
+                        new std::ofstream(base_path + _pFileSystem->get_extension(type), std::ios::out | std::ios::app);
+                // Initialize headers or any other generic stuff
+                _pFileSystem->initialize_file(_alignment_files.at(base_path).file_streams[type], headers, type);
+            }
+        }
+        ret = true;
+    } else {
+        // File base path already exists!
+        ret = false;
+    }
+    return ret;
+}
+
+bool QueryData::end_alignment_files(std::string &base_path) {
+    // Cleanup/close files
+
+    for (std::ofstream* file_ptr : _alignment_files.at(base_path).file_streams) {
+        // some are unused such as 0
+        if (file_ptr != nullptr) {
+            file_ptr->close();
+            delete file_ptr;
+        }
+    }
+    _alignment_files.erase(base_path);
+    return true;
+}
+
+bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *querySequence, QueryAlignment *alignment) {
+    bool ret = false;
+
+    // Cycle through output file types for this path
+    for (FileSystem::ENT_FILE_TYPES type : _alignment_files.at(base_path).file_types) {
+
+        if (_alignment_files.at(base_path).file_streams[type] == nullptr) continue;
+
+        switch (type) {
+
+            case FileSystem::ENT_FILE_DELIM_TSV:
+                if (alignment == nullptr) {
+                    *_alignment_files.at(base_path).file_streams[type] <<
+                        querySequence->print_delim(_alignment_files.at(base_path).headers,
+                        _alignment_files.at(base_path).go_level, FileSystem::DELIM_TSV) << std::endl;
+                } else {
+                    *_alignment_files.at(base_path).file_streams[type] <<
+                        alignment->print_delim(_alignment_files.at(base_path).headers,
+                        _alignment_files.at(base_path).go_level, FileSystem::DELIM_TSV) << std::endl;
+                }
+                break;
+
+            case FileSystem::ENT_FILE_DELIM_CSV:
+                if (alignment == nullptr) {
+                    *_alignment_files.at(base_path).file_streams[type] <<
+                        querySequence->print_delim(_alignment_files.at(base_path).headers,
+                        _alignment_files.at(base_path).go_level, FileSystem::DELIM_CSV) << std::endl;
+                } else {
+                    *_alignment_files.at(base_path).file_streams[type] <<
+                        alignment->print_delim(_alignment_files.at(base_path).headers,
+                        _alignment_files.at(base_path).go_level, FileSystem::DELIM_CSV) << std::endl;
+                }
+                break;
+
+            case FileSystem::ENT_FILE_FASTA_FAA:
+                if (!querySequence->get_sequence_p().empty())
+                    *_alignment_files.at(base_path).file_streams[type] << querySequence->get_sequence_p() << std::endl;
+                break;
+
+            case FileSystem::ENT_FILE_FASTA_FNN:
+                if (!querySequence->get_sequence_n().empty())
+                    *_alignment_files.at(base_path).file_streams[type] << querySequence->get_sequence_n() << std::endl;
+                break;
+
+            default:
+                FS_dprint("ERROR unhandled file type (add_alignment_data): " + std::to_string(type));
+                break;
+        }
+    }
+    return ret;
+}
+
+bool QueryData::is_protein_data() {
+    return DATA_FLAG_GET(IS_PROTEIN);
+}
+
+void QueryData::set_is_protein_data(bool val) {
+    DATA_FLAG_CHANGE(IS_PROTEIN, val);
+}
+
+void QueryData::set_is_success_frame_selection(bool val) {
+    DATA_FLAG_CHANGE(SUCCESS_FRAME_SEL, val);
+}
+
+void QueryData::set_is_success_expression(bool val) {
+    DATA_FLAG_CHANGE(SUCCESS_EXPRESSION, val);
+}
+
+void QueryData::set_is_success_sim_search(bool val) {
+    DATA_FLAG_CHANGE(SUCCESS_SIM_SEARCH, val);
+}
+
+void QueryData::set_is_success_ontology(bool val) {
+    DATA_FLAG_CHANGE(SUCCESS_ONTOLOGY, val);
+}
+
+void QueryData::DATA_FLAG_CHANGE(QueryData::DATA_FLAGS flag, bool val) {
+    if (val) {
+        DATA_FLAG_SET(flag);
+    } else {
+        DATA_FLAG_CLEAR(flag);
+    }
+}
+
+void QueryData::set_is_uniprot(bool val) {
+    DATA_FLAG_CHANGE(UNIPROT_MATCH, val);
+}
+
+void QueryData::header_set_uniprot(bool val) {
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_DATA_XREF].print_header = val;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_COMMENTS].print_header = val;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_KEGG].print_header = val;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_BIO].print_header = val;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_CELL].print_header = val;
+    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_MOLE].print_header = val;
+}
+
+void QueryData::header_set(ENTAP_HEADERS header, bool val) {
+    ENTAP_HEADER_INFO[header].print_header = val;
+}
+
+void QueryData::print_final_output() {
+
+}

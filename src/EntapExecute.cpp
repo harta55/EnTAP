@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -27,8 +27,6 @@
 
 
 //*********************** Includes *****************************
-#include <boost/serialization/unordered_map.hpp>
-#include "common.h"
 #include "EntapExecute.h"
 //**************************************************************
 
@@ -49,7 +47,7 @@ namespace entapExecute {
     //**************************************************************
 
     //******************** Local Prototype Functions ***************
-    std::string filter_transcriptome(std::string &);
+    std::string copy_final_transcriptome(std::string &);
     void verify_state(std::queue<char> &, bool &);
     bool valid_state(enum ExecuteStates);
     void exit_error(ExecuteStates);
@@ -89,8 +87,9 @@ namespace entapExecute {
         vect_uint16_t                           entap_database_types;
         EntapDatabase::DATABASE_TYPE            entap_database_type;
         EntapDataPtrs                           entap_data_ptrs;
-        EntapDatabase*                          pEntapDatabase;
-
+        EntapDatabase*                          pEntapDatabase=nullptr;
+        QueryData*                              pQUERY_DATA=nullptr;
+        GraphingManager*                        pGraphingManager=nullptr;
 
         if (user_input == nullptr || filesystem == nullptr) {
             throw ExceptionHandler("Unable to allocate memory to EnTAP Execution", ERR_ENTAP_INPUT_PARSE);
@@ -103,15 +102,15 @@ namespace entapExecute {
         entap_data_ptrs         = EntapDataPtrs();
 
         // Pull relevant info input by the user
-        _input_path    = _pUserInput->get_user_input<std::string>(UInput::INPUT_FLAG_TRANSCRIPTOME);
+        _input_path    = _pUserInput->get_user_input<std::string>(_pUserInput->INPUT_FLAG_TRANSCRIPTOME);
         original_input = _input_path;
-        _blastp        = _pUserInput->has_input(UInput::INPUT_FLAG_RUNPROTEIN);
-        ontology_flags = _pUserInput->get_user_input<std::vector<uint16>>(UInput::INPUT_FLAG_ONTOLOGY);
+        _blastp        = _pUserInput->has_input(_pUserInput->INPUT_FLAG_RUNPROTEIN);
+        ontology_flags = _pUserInput->get_user_input<std::vector<uint16>>(_pUserInput->INPUT_FLAG_ONTOLOGY);
         state_queue    = _pUserInput->get_state_queue();    // Will NOT be empty, default is +
-        _databases     = _pUserInput->get_user_input<databases_t>(UInput::INPUT_FLAG_DATABASE);
+        _databases     = _pUserInput->get_user_input<databases_t>(_pUserInput->INPUT_FLAG_DATABASE);
 
         // Find database type that will be used by the rest (use 0 index no matter what)
-        entap_database_types = _pUserInput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_DATABASE_TYPE);
+        entap_database_types = _pUserInput->get_user_input<vect_uint16_t>(_pUserInput->INPUT_FLAG_DATABASE_TYPE);
         entap_database_type = static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
 
         // Set/create outpaths
@@ -126,19 +125,20 @@ namespace entapExecute {
             verify_state(state_queue, state_flag);         // Set state transition
 
             // Initialize Query Data
-            QueryData *pQUERY_DATA = new QueryData(
+            pQUERY_DATA = new QueryData(
                     _input_path,        // User transcriptome
                     _entap_outpath,     // Transcriptome directory
                     _pUserInput,        // User input map
                     _pFileSystem);      // Filesystem object
 
             // Initialize Graphing Manager
-            GraphingManager* pGraphingManager = new GraphingManager(GRAPHING_EXE);
+            pGraphingManager = new GraphingManager(GRAPHING_EXE);
 
             // Initialize EnTAP database
             pEntapDatabase = new EntapDatabase(filesystem);
-            if (!pEntapDatabase->set_database(entap_database_type, "")) {
-                throw ExceptionHandler("Unable to initialize EnTAP database", ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
+            if (!pEntapDatabase->set_database(entap_database_type)) {
+                throw ExceptionHandler("Unable to initialize EnTAP database\n" +
+                                       pEntapDatabase->print_error_log(), ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
             }
 
             entap_data_ptrs._pEntapDatbase = pEntapDatabase;
@@ -146,6 +146,7 @@ namespace entapExecute {
             entap_data_ptrs._pUserInput    = user_input;
             entap_data_ptrs._pGraphingManager = pGraphingManager;
             entap_data_ptrs._pQueryData    = pQUERY_DATA;
+
             if (entap_data_ptrs.is_null()) {
                 throw ExceptionHandler("Unable to allocate memory", ERR_ENTAP_MEM_ALLOC);
             }
@@ -154,10 +155,11 @@ namespace entapExecute {
                 switch (executeStates) {
                     case FRAME_SELECTION: {
                         FS_dprint("STATE - FRAME SELECTION");
-                        if ((_blastp && pQUERY_DATA->DATA_FLAG_GET(QueryData::IS_PROTEIN))) {
+                        if (_blastp && pQUERY_DATA->is_protein_data()) {
                             FS_dprint("Protein sequences input, skipping frame selection");
                         } else if (!_blastp) {
                             FS_dprint("Blastx selected, skipping frame selection");
+                            pQUERY_DATA->header_set(ENTAP_HEADER_FRAME, false);
                         } else {
                             FS_dprint("Continuing with frame selection process...");
                             std::unique_ptr<FrameSelection> frame_selection(new FrameSelection(
@@ -166,8 +168,8 @@ namespace entapExecute {
                             _input_path = frame_selection->execute(_input_path);
 
                             // Set flags for query data
-                            pQUERY_DATA->DATA_FLAG_SET(QueryData::IS_PROTEIN);
-                            pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_FRAME_SEL);
+                            pQUERY_DATA->set_is_protein_data(true);
+                            pQUERY_DATA->set_is_success_frame_selection(true);
 
                             // Copy frame selected file to the trancriptome directory
                             std::string transc_protein_filename = _input_basename + TRANSCRIPTOME_FRAME_TAG;
@@ -178,17 +180,18 @@ namespace entapExecute {
                         break;
                     case EXPRESSION_FILTERING: {
                         FS_dprint("STATE - EXPRESSION FILTERING");
-                        if (!_pUserInput->has_input(UInput::INPUT_FLAG_ALIGN)) {
+                        if (!_pUserInput->has_input(_pUserInput->INPUT_FLAG_ALIGN)) {
                             FS_dprint("No alignment file specified, skipping expression analysis");
+                            pQUERY_DATA->header_set(ENTAP_HEADER_EXP_FPKM, false);
                         } else {
-                            // Proceed with frame selection
+                            // Proceed with expression analysis
                             std::unique_ptr<ExpressionAnalysis> expression(new ExpressionAnalysis(
                                 original_input, entap_data_ptrs
                             ));
                             _input_path = expression->execute(original_input);
 
                             // Set flags for query data
-                            pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_EXPRESSION);
+                            pQUERY_DATA->set_is_success_expression(true);
 
                             // Copy filtered file to entap transcriptome directory
                             std::string transc_filter_filename = _input_basename + TRANSCRIPTOME_FILTERED_TAG;
@@ -197,22 +200,19 @@ namespace entapExecute {
                         }
                     }
                         break;
-                    case FILTER:
-                        _input_path = filter_transcriptome(_input_path);  // Just copies final transcriptome
+                    case COPY_FINAL_TRANSCRIPTOME:
+                        _input_path = copy_final_transcriptome(_input_path);  // Just copies final transcriptome
                         break;
                     case SIMILARITY_SEARCH: {
-                        FS_dprint("STATE - SIM SEARCH RUN");
+                        FS_dprint("STATE - SIMILARITY SEARCH");
                         // Spawn sim search object
                         std::unique_ptr<SimilaritySearch> sim_search(new SimilaritySearch(
                                 _databases,
                                 _input_path,
                                 entap_data_ptrs
                         ));
-
-                        sim_search->execute(_input_path, _blastp);
-                        pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_SIM_SEARCH);
-                        FS_dprint("STATE - SIM SEARCH PARSE");
-                        sim_search->parse_files(_input_path);
+                        sim_search->execute();
+                        pQUERY_DATA->set_is_success_sim_search(true);
                         break;
                     }
                     case GENE_ONTOLOGY: {
@@ -222,7 +222,7 @@ namespace entapExecute {
                                 entap_data_ptrs
                         ));
                         ontology->execute();
-                        pQUERY_DATA->DATA_FLAG_SET(QueryData::SUCCESS_ONTOLOGY);
+                        pQUERY_DATA->set_is_success_ontology(true);
                         break;
                     }
                     default:
@@ -234,11 +234,14 @@ namespace entapExecute {
 
             // *************************** Exit Stuff ********************** //
             pQUERY_DATA->final_statistics(final_out_dir, ontology_flags);
-            _pFileSystem->directory_iterate(true, _outpath);   // Delete empty files
-            SAFE_DELETE(pQUERY_DATA);
-            SAFE_DELETE(pGraphingManager);
-            SAFE_DELETE(pEntapDatabase);
+           // _pFileSystem->directory_iterate(FileSystem::FILE_ITER_DELETE_EMPTY, _outpath);   // Delete empty files
+            delete pQUERY_DATA;
+            delete pGraphingManager;
+            delete pEntapDatabase;
         } catch (const ExceptionHandler &e) {
+            delete pQUERY_DATA;
+            delete pGraphingManager;
+            delete pEntapDatabase;
             exit_error(executeStates);
             throw e;
         }
@@ -258,7 +261,7 @@ namespace entapExecute {
      *
      * =====================================================================
      */
-    std::string filter_transcriptome(std::string &input_path) {
+    std::string copy_final_transcriptome(std::string &input_path) {
         FS_dprint("Beginning to copy final transcriptome to be used...");
 
         std::string   file_name;
@@ -268,7 +271,7 @@ namespace entapExecute {
         out_path = PATHS(_entap_outpath, file_name);
         _pFileSystem->copy_file(input_path,out_path,true);
 
-        FS_dprint("Success!");
+        FS_dprint("Success! Copied to: " + out_path);
         return out_path;
     }
 
@@ -389,7 +392,7 @@ namespace entapExecute {
                    "EnTAP failed execution during the  Frame Selection stage with\n"
                            "previous stages executing correctly.\n";
                 break;
-            case FILTER:
+            case COPY_FINAL_TRANSCRIPTOME:
                 break;
             case SIMILARITY_SEARCH:
                 ss <<

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,15 +30,27 @@
 
 // Compile with boost libraries? Currently this MUST be selected
 #ifndef USE_BOOST
-#define USE_BOOST   1
+//#define USE_BOOST   1
 #endif
 
-// Compile with CURL? Will use wget command otherwise
+// Use EggNOG mapper (not supported, leaving for now)
+#ifndef EGGNOG_MAPPER
+//#define EGGNOG_MAPPER 1
+#endif
+
+// Compile with CURL? Will use wget command otherwise (not supported yet)
 #ifndef USE_CURL
 //#define USE_CURL    1
 #endif
 
-// Compile with ZLIB? Will use tar command otherwise
+#define NCBI_UNIPROT    0       // Compiler flag for future feature
+
+// Compile with using the Fast CSV Parser (required now)
+#ifndef USE_FAST_CSV
+#define USE_FAST_CSV  1
+#endif
+
+// Compile with ZLIB? Will use tar command otherwise (not supported yet)
 #ifndef USE_ZLIB
 //#define USE_ZLIB    1
 #endif

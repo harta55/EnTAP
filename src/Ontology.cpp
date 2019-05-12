@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2018, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -25,26 +25,15 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <boost/filesystem.hpp>
-#include <csv.h>
-#include <fstream>
-#include <boost/archive/binary_iarchive.hpp>
 #include "Ontology.h"
-#include "EntapConfig.h"
-#include <boost/serialization/map.hpp>
-#include <iomanip>
 #include "ExceptionHandler.h"
-#include "EntapExecute.h"
-#include "SimilaritySearch.h"
-#include "database/SQLDatabaseHelper.h"
 #include "EntapGlobals.h"
 #include "ontology/AbstractOntology.h"
 #include "ontology/ModEggnog.h"
 #include "ontology/ModInterpro.h"
 #include "FileSystem.h"
-
-const int16 FINAL_ANNOT_LEN = 3;
-
+#include "ontology/ModEggnogDMND.h"
+#include "similarity_search/ModDiamond.h"
 
 /**
  * ======================================================================
@@ -71,11 +60,11 @@ const int16 FINAL_ANNOT_LEN = 3;
  * =====================================================================
  */
 Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
-    FS_dprint("Spawn object - Ontology");
+    FS_dprint("Spawn Object - Ontology");
 
     _new_input          = input;
     _pGraphingManager   = entap_data._pGraphingManager;
-    _QUERY_DATA         = entap_data._pQueryData;
+    _pQueryData         = entap_data._pQueryData;
     _pFileSystem        = entap_data._pFileSystem;
     _pUserInput         = entap_data._pUserInput;
     _pEntapDatabase     = entap_data._pEntapDatbase;
@@ -84,14 +73,15 @@ Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
 
     _threads            = _pUserInput->get_supported_threads();
     _outpath            = _pFileSystem->get_root_path();
-    _is_overwrite       = _pUserInput->has_input(UInput::INPUT_FLAG_OVERWRITE);
-    _software_flags     = _pUserInput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_ONTOLOGY);
-    _go_levels          = _pUserInput->get_user_input<vect_uint16_t>(UInput::INPUT_FLAG_GO_LEVELS);
-    _blastp             = _pUserInput->has_input(UInput::INPUT_FLAG_RUNPROTEIN);
+    _is_overwrite       = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
+    _software_flags     = _pUserInput->get_user_input<vect_uint16_t>(_pUserInput->INPUT_FLAG_ONTOLOGY);
+    _go_levels          = _pUserInput->get_user_input<vect_uint16_t>(_pUserInput->INPUT_FLAG_GO_LEVELS);
+    _blastp             = _pUserInput->has_input(_pUserInput->INPUT_FLAG_RUNPROTEIN);
     _ontology_dir       = PATHS(_outpath, ONTOLOGY_OUT_PATH);
     _final_outpath_dir  = _pFileSystem->get_final_outdir();
     _eggnog_db_path     = EGG_SQL_DB_PATH;
-    _interpro_databases = _pUserInput->get_user_input<vect_str_t>(UInput::INPUT_FLAG_INTERPRO);
+    _interpro_databases = _pUserInput->get_user_input<vect_str_t>(_pUserInput->INPUT_FLAG_INTERPRO);
+    _alignment_file_types = _pUserInput->get_user_output_types();
 
     if (_is_overwrite) _pFileSystem->delete_dir(_ontology_dir);
     _pFileSystem->create_dir(_ontology_dir);
@@ -119,22 +109,23 @@ Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
  */
 void Ontology::execute() {
 
-    std::pair<bool,std::string> verify_pair;
-    std::unique_ptr<AbstractOntology> ptr;
+    EntapModule::ModVerifyData verify_data;
+    std::unique_ptr<EntapModule> ptr;
 
     init_headers();
     try {
         for (uint16 software : _software_flags) {
             ptr = spawn_object(software);
-            verify_pair = ptr->verify_files();
-            if (!verify_pair.first) ptr->execute();
+            verify_data = ptr->verify_files();
+            if (!verify_data.files_exist) ptr->execute();
             ptr->parse();
             ptr.reset();
         }
-        print_eggnog(*_QUERY_DATA->get_sequences_ptr());
-    } catch (ExceptionHandler &e) {throw e;}
-
-    // TODO move printing to querydata
+        print_eggnog(*_pQueryData->get_sequences_ptr());
+    } catch (ExceptionHandler &e) {
+        ptr.reset();
+        throw e;
+    }
 }
 
 
@@ -154,8 +145,8 @@ void Ontology::execute() {
  */
 std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
     switch (software) {
+#ifdef EGGNOG_MAPPER
         case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-            FS_dprint("Spawn object - EggNOG");
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
                     _outpath,
                     _new_input,
@@ -165,27 +156,30 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
                     _entap_data_ptrs,
                     _eggnog_db_path    // additional data
             ));
-        case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
-            FS_dprint("Spawn object - InterPro");
+#endif
+        case ONT_INTERPRO_SCAN:
             return std::unique_ptr<AbstractOntology>(new ModInterpro(
-                    _outpath,
-                    _new_input,
                     _ontology_dir,
-                    _blastp,
-                    _go_levels,
+                    _new_input,
                     _entap_data_ptrs,
+                    INTERPRO_EXE,
                     _interpro_databases       // Additional data
             ));
-        default:
-            FS_dprint("Spawn object - EggNOG");
-            return std::unique_ptr<AbstractOntology>(new ModEggnog(
-                    _outpath,
-                    _new_input,
+        case ONT_EGGNOG_DMND:
+            return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
                     _ontology_dir,
-                    _blastp,
-                    _go_levels,
+                    _new_input,
                     _entap_data_ptrs,
-                    _eggnog_db_path    // additional data
+                    DIAMOND_EXE,
+                    _eggnog_db_path
+            ));
+        default:
+            return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
+                    _ontology_dir,
+                    _new_input,
+                    _entap_data_ptrs,
+                    DIAMOND_EXE,
+                    _eggnog_db_path
             ));
     }
 }
@@ -209,55 +203,36 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
  */
 void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
     FS_dprint("Beginning to print final results...");
-    std::map<uint16, std::ofstream*[FINAL_ANNOT_LEN]> file_map;
-    std::string file_name;
-    std::string file_contam;
-    std::string file_no_contam;
-    std::string outpath;
-    std::string out_contam;
-    std::string out_no_contam;
 
+    std::string final_annotations_base;
+    std::string final_annotations_contam_base;
+    std::string final_annotations_no_contam_base;
+
+    // TODO move to QueryData
+    // Create output files for go levels (contaminants, no contam, all) and write headers
     for (uint16 lvl : _go_levels) {
-        file_name      = FINAL_ANNOT_FILE + std::to_string(lvl) + ANNOT_FILE_EXT;
-        file_contam    = FINAL_ANNOT_FILE + std::to_string(lvl) + FINAL_ANNOT_FILE_CONTAM + ANNOT_FILE_EXT;
-        file_no_contam = FINAL_ANNOT_FILE + std::to_string(lvl) + FINAL_ANNOT_FILE_NO_CONTAM + ANNOT_FILE_EXT;
-        outpath = PATHS(_final_outpath_dir, file_name);
-        out_contam = PATHS(_final_outpath_dir, file_contam);
-        out_no_contam = PATHS(_final_outpath_dir, file_no_contam);
 
-        file_map[lvl][FINAL_ALL_IND] =
-                new std::ofstream(outpath, std::ios::out | std::ios::app);
-        file_map[lvl][FINAL_CONTAM_IND] =
-                new std::ofstream(out_contam, std::ios::out | std::ios::app);
-        file_map[lvl][FINAL_NO_CONTAM_IND] =
-                new std::ofstream(out_no_contam, std::ios::out | std::ios::app);
-        for (const std::string *header : _HEADERS) {
-            *file_map[lvl][FINAL_ALL_IND] << *header << '\t';
-            *file_map[lvl][FINAL_CONTAM_IND] << *header << '\t';
-            *file_map[lvl][FINAL_NO_CONTAM_IND] << *header << '\t';
-        }
-        *file_map[lvl][FINAL_ALL_IND] << std::endl;
-        *file_map[lvl][FINAL_CONTAM_IND] << std::endl;
-        *file_map[lvl][FINAL_NO_CONTAM_IND] << std::endl;
-    }
-    for (auto &pair : SEQUENCES) {
-        for (uint16 lvl : _go_levels) {
-            for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
-                if (i == FINAL_ALL_IND) {
-                    *file_map[lvl][i] << pair.second->print_tsv(_HEADERS, lvl) << std::endl;
-                } else if (i == FINAL_CONTAM_IND && pair.second->isContaminant()) {
-                    *file_map[lvl][i]<< pair.second->print_tsv(_HEADERS,lvl)<<std::endl;
-                } else if (i == FINAL_NO_CONTAM_IND && !pair.second->isContaminant()) {
-                    *file_map[lvl][i]<< pair.second->print_tsv(_HEADERS,lvl)<<std::endl;
-                }
+        final_annotations_base             = PATHS(_final_outpath_dir, FINAL_ANNOT_FILE);
+        final_annotations_contam_base      = PATHS(_final_outpath_dir, FINAL_ANNOT_FILE_CONTAM);
+        final_annotations_no_contam_base   = PATHS(_final_outpath_dir, FINAL_ANNOT_FILE_NO_CONTAM);
+
+        _pQueryData->start_alignment_files(final_annotations_base, _HEADERS, (uint8)lvl, _alignment_file_types);
+        _pQueryData->start_alignment_files(final_annotations_contam_base, _HEADERS, (uint8)lvl, _alignment_file_types);
+        _pQueryData->start_alignment_files(final_annotations_no_contam_base, _HEADERS,(uint8) lvl, _alignment_file_types);
+
+        for (auto &pair : SEQUENCES) {
+            _pQueryData->add_alignment_data(final_annotations_base, pair.second, nullptr);
+
+            if (pair.second->isContaminant()) {
+                _pQueryData->add_alignment_data(final_annotations_contam_base, pair.second, nullptr);
+            } else {
+                _pQueryData->add_alignment_data(final_annotations_no_contam_base, pair.second, nullptr);
             }
         }
-    }
-    for(auto& pair : file_map) {
-        for (uint16 i=0; i < FINAL_ANNOT_LEN; i++) {
-            pair.second[i]->close();
-            delete pair.second[i];
-        }
+
+        _pQueryData->end_alignment_files(final_annotations_base);
+        _pQueryData->end_alignment_files(final_annotations_contam_base);
+        _pQueryData->end_alignment_files(final_annotations_no_contam_base);
     }
     FS_dprint("Success!");
 }
@@ -280,32 +255,15 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
  */
 void Ontology::init_headers() {
 
-    std::vector<const std::string*>     out_header;
-    std::vector<const std::string*>     add_header;
-    // Add default sim search headers
-    out_header = {
-            &ENTAP_EXECUTE::HEADER_QUERY,
-            &ENTAP_EXECUTE::HEADER_SUBJECT,
-            &ENTAP_EXECUTE::HEADER_PERCENT,
-            &ENTAP_EXECUTE::HEADER_ALIGN_LEN,
-            &ENTAP_EXECUTE::HEADER_MISMATCH,
-            &ENTAP_EXECUTE::HEADER_GAP_OPEN,
-            &ENTAP_EXECUTE::HEADER_QUERY_S,
-            &ENTAP_EXECUTE::HEADER_QUERY_E,
-            &ENTAP_EXECUTE::HEADER_SUBJ_S,
-            &ENTAP_EXECUTE::HEADER_SUBJ_E,
-            &ENTAP_EXECUTE::HEADER_E_VAL,
-            &ENTAP_EXECUTE::HEADER_COVERAGE,
-            &ENTAP_EXECUTE::HEADER_TITLE,
-            &ENTAP_EXECUTE::HEADER_SPECIES,
-            &ENTAP_EXECUTE::HEADER_DATABASE,
-            &ENTAP_EXECUTE::HEADER_FRAME,
-            &ENTAP_EXECUTE::HEADER_CONTAM,
-            &ENTAP_EXECUTE::HEADER_INFORM
-    };
+    std::vector<ENTAP_HEADERS>     out_header;
+    std::vector<ENTAP_HEADERS>     add_header;
+    // Add default sim search headers (pulled from SimilaritySearch.c, separate in case we want something else)
+    out_header = ModDiamond::DEFAULT_HEADERS;
+
     // Add additional headers for ontology software
     for (uint16 &flag : _software_flags) {
         switch (flag) {
+#ifdef EGGNOG_MAPPER
             case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
                 add_header = {
                         &ENTAP_EXECUTE::HEADER_SEED_ORTH,
@@ -322,22 +280,23 @@ void Ontology::init_headers() {
                         &ENTAP_EXECUTE::HEADER_EGG_GO_MOLE
                 };
                 break;
-            case ENTAP_EXECUTE::INTERPRO_INT_FLAG:
+#endif
+            case ONT_INTERPRO_SCAN:
                 add_header = {
-                        &ENTAP_EXECUTE::HEADER_INTER_EVAL,
-                        &ENTAP_EXECUTE::HEADER_INTER_INTERPRO,
-                        &ENTAP_EXECUTE::HEADER_INTER_DATA_TYPE,
-                        &ENTAP_EXECUTE::HEADER_INTER_DATA_TERM,
-                        &ENTAP_EXECUTE::HEADER_INTER_PATHWAY,
-                        &ENTAP_EXECUTE::HEADER_INTER_GO_BIO,
-                        &ENTAP_EXECUTE::HEADER_INTER_GO_CELL,
-                        &ENTAP_EXECUTE::HEADER_INTER_GO_MOLE
+                        ModInterpro::DEFAULT_HEADERS
+                };
+                break;
+            case ONT_EGGNOG_DMND:
+                add_header = {
+                        ModEggnogDMND::DEFAULT_HEADERS
                 };
                 break;
             default:
-                break;
+                throw ExceptionHandler("ERROR: Unknown INT flag used during Ontology",
+                    ERR_ENTAP_MEM_ALLOC);
         }
         out_header.insert(out_header.end(), add_header.begin(), add_header.end());
     }
+
     _HEADERS = out_header;
 }

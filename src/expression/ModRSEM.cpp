@@ -286,7 +286,7 @@ void ModRSEM::parse() {
         std::pair<uint64, uint64> removed_n =
                 _pQUERY_DATA->calculate_N_vals(all_lost_lengths,total_removed_len);
         out_msg <<
-                "\nRemoved Sequences (no frame):"       <<
+                "\nRemoved Sequences (under FPKM threshold):"       <<
                 "\nTotal sequences: "                     << count_removed    <<
                 "\nAverage sequence length(bp): "         << avg_removed      <<
                 "\nn50: "                                 << removed_n.first  <<

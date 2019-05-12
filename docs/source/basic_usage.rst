@@ -22,6 +22,8 @@
 .. |uni_trembl| replace:: ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz
 .. |entap_bin_ftp| replace:: https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.bin.gz
 .. |entap_sql_ftp| replace:: https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.db.gz
+.. |eggnog_sql_ftp| replace:: http://eggnogdb.embl.de/download/emapperdb-4.5.0/eggnog.db.gz
+.. |eggnog_fasta_ftp| replace:: http://eggnogdb.embl.de/download/latest/eggnog-mapper-data/eggnog4.clustered_proteins.fa.gz
 
 .. |flag_path| replace:: paths
 .. |flag_taxon| replace:: taxon
@@ -103,6 +105,7 @@ The following FTP sites contain common reference databases that EnTAP can recogn
    * SwissProt: |uni_swiss|
    
        * Reviewed
+       * It is highly recommended to use the UniProt SwissProt database as EnTAP will map all UniProt alignments to additional database cross-references
 
    * TrEMBL: |uni_trembl|
    
@@ -162,23 +165,26 @@ Configuration can be run without formatting a FASTA database for DIAMOND is as f
 
     EnTAP --config
 
-In both cases, the following databases will be downloaded:
+.. note:: This is the only stage that requires connection to the Internet.
+
+In both cases, the following databases will be downloaded and configured:
 
 * EnTAP Binary Database:
-    * Comprised of Gene Ontology, UniProt, and Taxonomic mappings for use during Execution
+    * Comprised of Gene Ontology, UniProt, and Taxonomic mappings for use during Execution. FTP downloaded file.
+    * Downloaded from |entap_bin_ftp|
     * Filename: entap_database.bin
 
 * EggNOG DIAMOND Reference:
     * Reference database containing EggNOG database entries
+    * FASTA file is downloaded and configured for DIAMOND from |eggnog_fasta_ftp|
     * Filename: eggnog_proteins.dmnd
 
 * EggNOG SQL Database:
     * SQL database containing EggNOG mappings
+    * Downloaded from |eggnog_sql_ftp|
     * Filename: eggnog.db
 
-.. note:: This is the only stage that requires connection to the Internet.
-
-If you experience any trouble in downloading the EnTAP Binary Database from the following FTP addresses, you can use the - - data-generate flag during configuration. 
+The EnTAP Binary Database is downloaded from the FTP addresses below. If you experience any trouble in downloading, you can simply specify the - - data-generate flag during Configuration to configure it locally (more on that later). The database for the newest version of EnTAP will always reside in the "latest" FTP directory. Keep in mind, if you are using an older version of EnTAP, you do not want to download from the "latest" directory. Instead, you will need to consider the version you are using. The FTP will always be updated when a new database version is created. For example, if you see v0.8.2 and v0.8.5 on the FTP while you are using v0.8.3, you will download the database located in the v0.8.2 directory. 
 
     * |entap_bin_ftp|
     * |entap_sql_ftp|

@@ -53,7 +53,7 @@ Why is this important? EnTAP relies on several accompanying software packages an
 
 Normally when a user is trying to execute EnTAP, they will need to specify the path to this Config file with the |flag_path| flag. It's never a bad idea to specify this. However, in an attempt to make things a bit easier for the end user, EnTAP can "assume" some default paths so --|flag_path| does not always need to be specified. If the flag is not specified and EnTAP finds an empty |config_file| file in the working directory (not execution directory here) , the following assumptions will be made:
 
-    * diamond_exe_path=/EnTAP/libs/diamond-0.8.31/bin/diamond
+    * diamond_exe_path=/EnTAP/libs/diamond-0.9.9/bin/diamond
     * rsem_exe_path=/EnTAP/libs/RSEM-1.3.0 (this is a path to the directory)
     * genemarkst_exe_path=/EnTAP/libs/gmst_linux_64/gmst.pl
     * eggnog_sql_database=/EnTAP/databases/eggnog.db (downloaded during Configuration)

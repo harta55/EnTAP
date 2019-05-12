@@ -64,14 +64,16 @@ Before continuing on in the installation process, ensure that the following depe
 
 Pipeline Software
 ------------------
-EnTAP leverages several software distributions within the pipeline to provide the best quality annotations. The packages used (and their tested versions) can be seen below. This is not to say that newer versions will not be compatible, however they have not been tested yet with EnTAP. 
+EnTAP leverages several software distributions within the pipeline to provide the best quality annotations. The packages used (and their current/tested versions) can be seen below. This is not to say that newer versions will not be compatible, however they have not been tested yet with EnTAP. 
 
 .. note:: If the software is already installed on your system, this stage can be skipped
 
 Software:
     * RSEM_ (Expression Filtering with alignment file): version 1.3.0
     * GeneMarkS-T_ (Frame Selection): version 5.1
-    * DIAMOND_ (Similarity Search): version 0.8.31
+    * DIAMOND_ (Similarity Search): version 0.9.9
+        * Version 0.8.31
+        * Version 0.9.19
     * InterProScan_ (Protein Databases): This is not included within the EnTAP repo, but is supported 
 
 If you have downloaded the full repository from the GitLab page, each of these (with the exception of GeneMarkS-T) are contained within the /libs directory. GeneMarkS-T must be acquired from the website linked previously due to licensing (free for academic use). 

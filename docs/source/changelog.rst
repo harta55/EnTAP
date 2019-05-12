@@ -17,10 +17,12 @@ EnTAP Beta v0.9.0-beta
     * - -ontology flag will now use EnTAP's method of EggNOG accession (0) or InterProScan (1)
     * Bug fixes
 
+
 EnTAP Beta v0.8.4-beta
 ------------------------
 
     * Fixed an issue when inputting already translated sequences
+
 
 EnTAP Beta v0.8.3-beta
 ------------------------

@@ -2,12 +2,20 @@ Troubleshooting
 ==================
 This page contains several useful ways to troubleshoot whenever you run into an issue with EnTAP execution or installation. If you do not come to a solution through checking inputs, paths, or the configuration file I'd review these in the order I am laying them out.
 
+#. :ref:`Debug File<debug_file-label>` : EnTAP will pipe any errors to the Debug File printed after every execution as well as the 'standard' output. Depending on your system, the 'standard' output may be placed into separate files or printed to the terminal
+
 #. :ref:`Error Codes<error_codes-label>` : Provide specific information on where your run failed within the EnTAP pipeline. This could be during execution or installation. These can be as general as 'DIAMOND has failed,' or much more detailed. They will be more detailed if the failure was detected by EnTAP rather than accompanying software.
 
-#. :ref:`.err and .out Files<err_out-label>` : Provide information from the software that has failed. These are essentially what the software would print out to the user if an error occurs. Thus, they are out of EnTAP's control and are the most useful item when troubleshooting why a specific program failed. This should be the second thing you look for after checking the standard error code produced by EnTAP. An example would look like: 'DIAMOND was unable to finish execution due to a memory overflow issue.' 
+#. :ref:`.err and .out Files<err_out-label>` : Provide information from the software that has failed. These are essentially what the software utilized by EnTAP (ex: DIAMOND) would print out to the user if an error occurs. Thus, they are out of EnTAP's control and may provide some further insight into the issue. 
 
 #. :ref:`FAQs<faq-label>` : If you're still running into trouble, check out these common issues!
 
+.. _debug_file-label:
+
+Debug File
+------------------------
+
+The Debug File contains detailed information of the EnTAP run. The more relevant information will reside at towards the bottom of the file. This will explicitly tell you what went wrong with the execution. As mentioned above, the pertinent error information will be printed to the terminal as well as to this file. 
 
 .. _error_codes-label:
 
@@ -33,10 +41,19 @@ EnTAP has quite a few error codes that are generally going to have messages atta
 .err and .out Files
 ---------------------
 
+The .err and .out files contain all of the standard output from software utilized by EnTAP. Consider DIAMOND...EnTAP will utilize DIAMOND for Similarity Searching. This software has it's own set of error and output information. EnTAP will print these to the relevant .err and .out files within the proper directory (in this case similarity_search/DIAMOND). Again, this information will also be printed to the Debug File. 
+
 .. _faq-label:
 
 FAQs
 -------------------
+
+This list will be continually updated with common problems experienced by users.
+
+
+------
+
+The following issues remain for historical purposes. They are not relevant beyond EnTAP v0.9.0.
 
 #. I'm having issues reading the EnTAP database!
 

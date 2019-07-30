@@ -36,9 +36,9 @@ Pipeline Stages:
 
 .. note:: All of the software integrated into this pipeline are packaged within the EnTAP repository with the exception of GeneMarkS-T (free for academic use). Installation and usage of EnTAP is documented in this guide.
 
-The figure below represents the typical EnTAP pipeline
+The figure below represents the typical of a EnTAP pipeline. A more detailed version with all output files can be seen within Interpreting the Results.
 
-.. image::    revised_vertical_layout.png
+.. image::    EnTAP_Overview_hires.png
 	:scale: 60%
 	:align: center
 

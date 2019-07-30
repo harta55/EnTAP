@@ -34,12 +34,12 @@ Pipeline Stages:
         5. Orthologous Group Assignment: independent assignment of translated protein sequences to gene families (eggNOG).  Includes protein  domains (SMART/Pfam), Gene Ontology (GO) terms, and KEGG pathway assignment.
         6. InterProScan (optional): sequence search against the families of InterPro databases to assign protein domains, Gene Ontology terms, and pathway information
 
-.. note:: All of the software integrated into this pipeline are packaged within the EnTAP repository with the exception of GeneMarkS-T (free for academic use). Installation and usage of EnTAP is documented in this guide.
+.. note:: All of the software integrated into this pipeline is packaged within the EnTAP repository with the exception of GeneMarkS-T (free for academic use). Installation and usage of EnTAP is documented in this guide.
 
-The figure below represents the typical of a EnTAP pipeline. A more detailed version with all output files can be seen within Interpreting the Results.
+The figure below represents the typical EnTAP pipeline. A more detailed version with all output files can be seen within Interpreting the Results.
 
 .. image::    EnTAP_Overview_hires.png
-	:scale: 60%
+	:scale: 50%
 	:align: center
 
 

@@ -76,7 +76,7 @@ private:
     std::string INTERPRO_EXT_XML            = ".xml";
     std::string INTERPRO_EXT_TSV            = ".tsv";
 
-    std::string _database_flag              = "interpro";   // TODO add full alignment support
+    std::string INTERPRO_DATABASE_FLAG              = "interpro";   // TODO add full alignment support
 
     // Valid databases
     static const std::vector<std::string> INTERPRO_DATABASES;
@@ -97,15 +97,15 @@ private:
     std::string FLAG_PATHWAY  = " --pathways";
     std::string FLAG_TEMP     = " --tempdir";
 
-    std::vector<std::string> _databases;
-    std::string              _final_outpath;
-    std::string              _final_basepath;
+    std::vector<std::string> mDatabases;
+    std::string              mFinalOutpath;
+    std::string              mFinalBasepath;
 
 #if 0
     std::map<std::string,InterProData> parse_xml(void);
 #endif
-    std::map<std::string,InterProData> parse_tsv(void);
-    std::string format_interpro(void);
+    std::map<std::string,InterProData> parse_tsv();
+    std::string format_interpro();
 };
 
 

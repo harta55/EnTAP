@@ -94,20 +94,6 @@ EntapHeader ENTAP_HEADER_INFO[] = {
         {"Unused",                                  false}
 };
 
-namespace ENTAP_STATS {
-    const std::string SOFTWARE_BREAK = "------------------------------------------------------\n";
-}
-
-std::string generate_command(std::unordered_map<std::string,std::string> &map,std::string exe_path) {
-    std::stringstream ss;
-    std::string       out;
-
-    ss << exe_path << " ";
-    for (auto &pair : map)ss << pair.first << " " << pair.second << " ";
-    out = ss.str();
-    return out;
-}
-
 std::string float_to_string(fp64 val) {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2) << val;

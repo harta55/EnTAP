@@ -32,6 +32,5 @@ AbstractOntology::AbstractOntology(std::string &in_hits, std::string &ont_out, E
                                    std::string mod_name, std::string &exe)
 : EntapModule(ont_out, in_hits, entap_data, mod_name, exe) {
 
-    _go_levels          = _pUserInput->get_user_input<vect_uint16_t>(_pUserInput->INPUT_FLAG_GO_LEVELS);
-    _execution_state    = GENE_ONTOLOGY;
+    mExecutionState    = GENE_ONTOLOGY;
 }

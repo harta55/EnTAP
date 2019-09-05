@@ -302,9 +302,12 @@ public:
     go_format_t format_go_delim(std::string terms, char delim);
 
     // Database accession routines
+    // TODO change to const* return if SQL removed
     TaxEntry get_tax_entry(std::string& species);
     GoEntry get_go_entry(std::string& go_id);
     UniprotEntry get_uniprot_entry(std::string& accession);
+
+    bool is_uniprot_entry(std::string &sseqid, UniprotEntry &entry);
 
     // Database versioning
     bool is_valid_version();
@@ -329,6 +332,7 @@ private:
     bool add_uniprot_entry(DATABASE_TYPE type, UniprotEntry &entry);
     void set_err_msg(std::string msg, DATABASE_ERR code);
     bool set_database_versions(DATABASE_TYPE type);
+    void get_uniprot_accession(std::string& sseqid);
 
     DATABASE_ERR serialize_database_save(SERIALIZATION_TYPE, std::string&);
     DATABASE_ERR serialize_database_read(SERIALIZATION_TYPE, std::string&);

@@ -80,12 +80,11 @@ private:
     const unsigned char GRAPH_BOX_FLAG        = 1;
     static constexpr int RSEM_COL_NUM = 7;
 
-    std::string _filename;
-    std::string _rsem_out;
-    std::string _exp_out;
-    int         _threads;
-    float       _fpkm;
-    bool        _issingle;
+    std::string mFilename;
+    std::string mRsemOut;
+    std::string mExpressionOut;
+    float       mFPKM;
+    bool        mIsSingle;
 
     bool rsem_validate_file(std::string);
 #if 0

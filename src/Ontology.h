@@ -29,13 +29,12 @@
 #define ENTAP_ONTOLOGY_H
 
 #include "common.h"
-#include "EntapConfig.h"
+#include "QueryData.h"
 #include "EntapGlobals.h"
 #include "QuerySequence.h"
 #include "database/SQLDatabaseHelper.h"
 #include "GraphingManager.h"
 #include "ontology/AbstractOntology.h"
-#include "QueryData.h"
 #include "EntapModule.h"
 
 class AbstractOntology;
@@ -53,31 +52,24 @@ private:
     const std::string FINAL_ANNOT_FILE      = "final_annotations";
     const std::string FINAL_ANNOT_FILE_CONTAM = "final_annotations_contam";
     const std::string FINAL_ANNOT_FILE_NO_CONTAM = "final_annotations_no_contam";
-    const uint16      FINAL_ALL_IND         = 0;
-    const uint16      FINAL_CONTAM_IND      = 1;
-    const uint16      FINAL_NO_CONTAM_IND   = 2;
 
-    std::vector<std::string>        _interpro_databases;
-    std::vector<uint16>             _go_levels;
-    int                              _threads;
-    std::vector<uint16>             _software_flags;
-    bool                            _is_overwrite;
-    bool                            _blastp;
-    std::string                     _outpath;
-    std::string                     _new_input;
-    std::string                     _ontology_dir;
-    std::string                     _eggnog_db_path;
-    std::string                     _final_outpath_dir;
+    std::vector<std::string>        mInterproDatabases;
+    std::vector<uint16>             mGoLevels;
+    std::vector<uint16>             mSoftwareFlags;
+    bool                            mIsOverwrite;
+    std::string                     mOutpath;
+    std::string                     mNewInput;
+    std::string                     mOntologyDir;
+    std::string                     mEggnogDbPath;
+    std::string                     mFinalOutputDir;
     std::vector<ENTAP_HEADERS>      _HEADERS;
-    GraphingManager                 *_pGraphingManager;
-    QueryData                       *_pQueryData;
-    FileSystem                      *_pFileSystem;
-    UserInput                       *_pUserInput;
-    EntapDatabase                   *_pEntapDatabase;
-    EntapDataPtrs                   _entap_data_ptrs;
-    std::vector<FileSystem::ENT_FILE_TYPES> _alignment_file_types;
+    QueryData                       *mpQueryData;
+    FileSystem                      *mpFileSystem;
+    UserInput                       *mpUserInput;
+    EntapDataPtrs                   mEntapDataPtrs;
+    std::vector<FileSystem::ENT_FILE_TYPES> mAlignmentFileTypes;
 
-    void print_eggnog(QUERY_MAP_T&);
+    void print_eggnog();
     void init_headers();
     std::unique_ptr<AbstractOntology> spawn_object(uint16&);
 };

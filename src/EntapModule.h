@@ -73,26 +73,26 @@ protected:
     const uint16 COUNT_TOP_GO                  = 10;
     const uint16 COUNT_TOP_SPECIES             = 10;
 
-    bool               _blastp;
-    bool               _overwrite;
-    int                _threads;
-    uint16             _software_flag;
-    std::string        _outpath;
-    std::string        _in_hits;
-    std::string        _proc_dir;                   // "processed" directory, or data analyzed
-    std::string        _figure_dir;
-    std::string        _mod_out_dir;
-    std::string        _overall_results_dir;
-    std::string        _exe_path;
-    std::string        _transcript_shortname;       // filename of transcriptome file for file name purposes
-    ExecuteStates      _execution_state;
-    std::vector<uint16> _go_levels;
-    GraphingManager    *_pGraphingManager;
-    QueryData          *_pQUERY_DATA;
-    UserInput          *_pUserInput;
-    FileSystem         *_pFileSystem;
-    EntapDatabase      *_pEntapDatabase;
-    std::vector<FileSystem::ENT_FILE_TYPES> _alignment_file_types; // may be overriden by module
+    bool               mBlastp;                 // TRUE/FALSE whether user has input blastp
+    bool               mOverwrite;              // Indicates whether user would like to delete previous execution files for module
+    int                mThreads;                // Number of threads specified for execution from user
+    uint16             mSoftwareFlag;           // Flag indicating software module being used
+    std::string        mOutpath;
+    std::string        mInHits;
+    std::string        mProcDir;                   // "processed" directory, or data analyzed
+    std::string        mFigureDir;
+    std::string        mModOutDir;
+    std::string        mOverallResultsDir;
+    std::string        mExePath;
+    std::string        mTranscriptomeShortname;       // filename of transcriptome file for file name purposes
+    ExecuteStates      mExecutionState;
+    std::vector<uint16> mGoLevels;
+    GraphingManager    *mpGraphingManager;
+    QueryData          *mpQueryData;
+    UserInput          *mpUserInput;
+    FileSystem         *mpFileSystem;
+    EntapDatabase      *mpEntapDatabase;
+    std::vector<FileSystem::ENT_FILE_TYPES> mAlignmentFileTypes; // may be overriden by module
 
     go_format_t EM_parse_go_list(std::string list, EntapDatabase* database,char delim);
 };

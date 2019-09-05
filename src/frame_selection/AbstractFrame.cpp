@@ -27,10 +27,30 @@
 
 #include "AbstractFrame.h"
 
+/**
+ * ======================================================================
+ * Function AbstractFrame(std::string &execution_stage_path, std::string &in_hits,
+ *                        EntapDataPtrs &entap_data, std::string module_name,
+                          std::string &exe)
+ *
+ * Description          - Constructor for Abstract frame selection class
+ *                      - Initializes protected member variables for
+ *                        expression modules
+ *
+ * Notes                - Constructor
+ *
+ * @param execution_stage_path - Absolute path to the output directory for this stage (Frame Selection)
+ * @param in_hits              - Absolute path to input transcriptome
+ * @param entap_data           - Pointers to necessary entap data for frame selection
+ * @param module_name          - Name of this software module
+ * @param exe                  - Execution method (i.e. executable)
+ *
+ * @return              - AbstractFrame object
+ * ======================================================================
+ */
 AbstractFrame::AbstractFrame(std::string &execution_stage_path, std::string &in_hits,
                              EntapDataPtrs &entap_data, std::string module_name, std::string &exe)
 : EntapModule(execution_stage_path, in_hits, entap_data, module_name, exe) {
 
-    _execution_state = FRAME_SELECTION;
-
+    mExecutionState = FRAME_SELECTION;
 }

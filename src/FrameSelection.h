@@ -30,16 +30,20 @@
 #define ENTAP_FRAMESELECTION_H
 
 //*********************** Includes *****************************
-#include "QuerySequence.h"
-#include "GraphingManager.h"
 #include "frame_selection/AbstractFrame.h"
 #include "QueryData.h"
 #include "common.h"
 //**************************************************************
 
 class AbstractFrame;
-class FrameSelection {
 
+// Supported frame selection software
+enum FRAME_SELECTION_SOFTWARE {
+    FRAME_GENEMARK_ST,
+    FRAME_SOFTWARE_COUNT
+};
+
+class FrameSelection {
 
 public:
     std::string execute(std::string);
@@ -47,19 +51,18 @@ public:
 
 private:
 
-    const std::string FRAME_SELECTION_OUT_DIR       = "frame_selection/";
+    const std::string FRAME_SELECTION_OUT_DIR       = "frame_selection/";   // Frame selection directory name
 
-    std::string      _mod_out_dir;
-    std::string      _exe_path;
-    std::string      _inpath;
-    std::string      _outpath;
-    bool             _overwrite;
-    short            _software_flag;
-    GraphingManager  *_pGraphingManager;
-    QueryData        *_QUERY_DATA;
-    FileSystem       *_pFileSystem;
-    UserInput        *_pUserInput;
-    EntapDataPtrs    _entap_data_ptrs;
+    std::string      mModOutDir;    // Absolute path to Frame Selection out directory
+    std::string      mExePath;      // Executable for Frame Selection
+    std::string      mInPath;       // Absolute path to input transcriptome
+    std::string      mOutpath;      // Absolute path to root output directory
+    bool             mOverwrite;    // SHould old files be overwritten
+    uint16           mSoftwareFlag; // Type of software to use during Frame Selection
+    QueryData        *mQueryData;           // Pointer to query data
+    FileSystem       *mpFileSystem;         // Pointer to EnTAP filesystem
+    UserInput        *mpUserInput;          // Pointer to user input flags
+    EntapDataPtrs    mEntapDataPtrs;        // Contains all data pointers needed during frame selection
 
     std::unique_ptr<AbstractFrame> spawn_object();
 };

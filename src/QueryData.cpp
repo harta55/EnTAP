@@ -119,7 +119,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
                 }
                 _pSEQUENCES->emplace(seq_id, query_seq);
                 count_seqs++;
-                len = (uint16) query_seq->getSeq_length();
+                len = (uint16) query_seq->get_sequence_length();
                 total_len += len;
                 if (len > longest_len) {
                     longest_len = len;longest_seq = seq_id;
@@ -227,7 +227,7 @@ std::pair<uint16, uint16> QueryData::calculate_N_vals
 
 /**
  * ======================================================================
- * Function final_statistics(std::map<std::string, QuerySequence> &SEQUENCE_MAP)
+ * Function final_statistics(std::string &outpath)
  *
  * Description          - Calculates final statistical information after
  *                        completed execution
@@ -235,13 +235,13 @@ std::pair<uint16, uint16> QueryData::calculate_N_vals
  *
  * Notes                - None
  *
- * @param SEQUENCE_MAP  - Map of each query sequence + data
+ * @param outpath       - Absolute path to statistics output directory
  *
  * @return              - None
  *
  * =====================================================================
  */
-void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &ontology_flags) {
+void QueryData::final_statistics(std::string &outpath) {
     FS_dprint("Pipeline finished! Calculating final statistics...");
 
     std::stringstream      ss;
@@ -271,6 +271,9 @@ void QueryData::final_statistics(std::string &outpath, std::vector<uint16> &onto
     bool                   is_ontology;
     bool                   is_one_go;
     bool                   is_one_kegg;
+    std::vector<uint16>    ontology_flags;
+
+    ontology_flags = _pUserInput->get_user_input<std::vector<uint16>>(_pUserInput->INPUT_FLAG_ONTOLOGY);
 
     out_unannotated_nucl_path = PATHS(outpath, OUT_UNANNOTATED_NUCL);
     out_unannotated_prot_path = PATHS(outpath, OUT_UNANNOTATED_PROT);

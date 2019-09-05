@@ -1,4 +1,4 @@
-/*
+/******************************************************************
  *
  * Developed by Alexander Hart
  * Plant Computational Genomics Lab
@@ -23,7 +23,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ *******************************************************************/
 
 
 //*********************** Includes *****************************
@@ -183,7 +183,8 @@
                             "    3. FASTA Amino Acid (default)\n"                       \
                             "    4. FASTA Nucleotide (default)"
 //**************************************************************
-// Externs
+
+//******************** Global Variables ************************
 std::string RSEM_EXE_DIR;
 std::string GENEMARK_EXE;
 std::string DIAMOND_EXE;
@@ -193,8 +194,8 @@ std::string INTERPRO_EXE;
 std::string ENTAP_DATABASE_BIN_PATH;
 std::string ENTAP_DATABASE_SQL_PATH;
 std::string GRAPHING_EXE;
-
 //**************************************************************
+
 
 /**
  * ======================================================================
@@ -216,7 +217,6 @@ std::string GRAPHING_EXE;
 void UserInput::parse_arguments_boost(int argc, const char** argv) {
     try {
         boostPO::options_description description("Options");
-        // TODO separate out into main options and additional config file with defaults
         description.add_options()
                 ((INPUT_FLAG_HELP + ",h").c_str(), DESC_HELP)
                 (INPUT_FLAG_CONFIG.c_str(),DESC_CONFIG)
@@ -303,8 +303,8 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
  *
  * Notes                - None
  *
- * @param argc          - Pushed from main
- * @param argv          - Pushed from main
+ * @param argc          - User input size
+ * @param argv          - User input
  * @return              - None
  * ======================================================================
  */
@@ -426,14 +426,12 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
 
 /**
  * ======================================================================
- * Function void verify_user_input(boostPO::variables_map&       vm)
+ * Function void verify_user_input(void)
  *
- * Description          - Mangages ensuring user input is valid and
- *                        will not cause issues downstream
+ * Description          - Performs sanity checks on user input
  *
  * Notes                - None
  *
- * @param vm            - User variable map of flags
  * @return              - None
  * =====================================================================
  */
@@ -447,12 +445,12 @@ bool UserInput::verify_user_input() {
     std::string              species;
     std::string              input_tran_path;
     std::vector<uint16>      ont_flags;
-    EntapDatabase           *pEntapDatabase = nullptr;
+    EntapDatabase           *pEntap_database = nullptr;
 
 
     // If graphing flag, check if it is allowed then EXIT
     if (has_input(UserInput::INPUT_FLAG_GRAPH)) {
-        if (!_pFileSystem->file_exists(GRAPHING_EXE)) {
+        if (!mpFileSystem->file_exists(GRAPHING_EXE)) {
             std::cout<<"Graphing is NOT enabled on this system! Graphing script could not "
                     "be found at: "<<GRAPHING_EXE << std::endl;
         }
@@ -474,7 +472,7 @@ bool UserInput::verify_user_input() {
     is_protein    = has_input(INPUT_FLAG_RUNPROTEIN);
     is_nucleotide = has_input(INPUT_FLAG_RUNNUCLEOTIDE);
 
-    _is_config = is_config;
+    mIsConfig = is_config;
 
     if (is_protein && is_nucleotide) {
         throw ExceptionHandler("Cannot specify both protein and nucleotide input flags",
@@ -518,21 +516,21 @@ bool UserInput::verify_user_input() {
 
             // Verify EnTAP database can be generated
             FS_dprint("Verifying EnTAP database...");
-            pEntapDatabase = new EntapDatabase(_pFileSystem);
+            pEntap_database = new EntapDatabase(mpFileSystem);
             // Find database type that will be used by the rest (use 0 index no matter what)
             vect_uint16_t entap_database_types =
                     get_user_input<vect_uint16_t>(INPUT_FLAG_DATABASE_TYPE);
             EntapDatabase::DATABASE_TYPE type =
                     static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
-            if (!pEntapDatabase->set_database(type)) {
-                throw ExceptionHandler("Unable to open EnTAP database from paths given" + pEntapDatabase->print_error_log(),
+            if (!pEntap_database->set_database(type)) {
+                throw ExceptionHandler("Unable to open EnTAP database from paths given" + pEntap_database->print_error_log(),
                                        ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
             }
             // Verify database type
-            if (!pEntapDatabase->is_valid_version()) {
+            if (!pEntap_database->is_valid_version()) {
                 throw ExceptionHandler("EnTAP database version invalid with this version of software\nYou have: " +
-                                               pEntapDatabase->get_current_version_str() + "\nYou need: " +
-                                               pEntapDatabase->get_required_version_str(), ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
+                                               pEntap_database->get_current_version_str() + "\nYou need: " +
+                                               pEntap_database->get_required_version_str(), ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
             }
 
             FS_dprint("Success!");
@@ -542,13 +540,13 @@ bool UserInput::verify_user_input() {
                 throw(ExceptionHandler("Must enter a valid transcriptome",ERR_ENTAP_INPUT_PARSE));
             } else {
                 input_tran_path = get_user_input<std::string>(INPUT_FLAG_TRANSCRIPTOME);
-                if (!_pFileSystem->file_exists(input_tran_path)) {
+                if (!mpFileSystem->file_exists(input_tran_path)) {
                     throw(ExceptionHandler("Transcriptome not found at: " + input_tran_path,
                                            ERR_ENTAP_INPUT_PARSE));
-                } else if (_pFileSystem->file_empty(input_tran_path)) {
+                } else if (mpFileSystem->file_empty(input_tran_path)) {
                     throw(ExceptionHandler("Transcriptome file empty: "+ input_tran_path,
                                            ERR_ENTAP_INPUT_PARSE));
-                } else if (!_pFileSystem->check_fasta(input_tran_path)) {
+                } else if (!mpFileSystem->check_fasta(input_tran_path)) {
                     throw(ExceptionHandler("File not in fasta format or corrupt! "+ input_tran_path,
                                            ERR_ENTAP_INPUT_PARSE));
                 }
@@ -556,24 +554,24 @@ bool UserInput::verify_user_input() {
 
             // Verify species for taxonomic relevance
             if (has_input(INPUT_FLAG_SPECIES)) {
-                verify_species(SPECIES, pEntapDatabase);
+                verify_species(SPECIES, pEntap_database);
             }
 
             // Verify contaminant
             if (has_input(INPUT_FLAG_CONTAM)) {
-                verify_species(CONTAMINANT, pEntapDatabase);
+                verify_species(CONTAMINANT, pEntap_database);
             }
 
             // Verify path + extension for alignment file
             if (has_input(INPUT_FLAG_ALIGN)) {
                 std::string align_file = get_user_input<std::string>(INPUT_FLAG_ALIGN);
-                std::string align_ext = _pFileSystem->get_file_extension(align_file, false);
+                std::string align_ext = mpFileSystem->get_file_extension(align_file, false);
                 std::transform(align_ext.begin(), align_ext.end(), align_ext.begin(), ::tolower);
                 if (align_ext != FileSystem::EXT_SAM && align_ext != FileSystem::EXT_BAM) {
                     throw ExceptionHandler("Alignment file must have a .bam or .sam extension",
                                            ERR_ENTAP_INPUT_PARSE);
                 }
-                if (!_pFileSystem->file_exists(align_file)) {
+                if (!mpFileSystem->file_exists(align_file)) {
                     throw ExceptionHandler("BAM/SAM file not found at: " + align_file + " exiting...",
                                            ERR_ENTAP_INPUT_PARSE);
                 }
@@ -643,7 +641,7 @@ bool UserInput::verify_user_input() {
             // Must be config
 
             // Check if EggNOG DIAMOND database exists, if not, check DIAMOND run
-            if (!_pFileSystem->file_exists(EGG_DMND_PATH)) {
+            if (!mpFileSystem->file_exists(EGG_DMND_PATH)) {
                 if (!ModDiamond::is_executable(DIAMOND_EXE)) {
                     throw ExceptionHandler("EggNOG DIAMOND database was not found at: " + EGG_DMND_PATH +
                                            "\nThe DIAMOND test run failed.", ERR_ENTAP_INPUT_PARSE);
@@ -660,35 +658,35 @@ bool UserInput::verify_user_input() {
         }
 
     }catch (const ExceptionHandler &e) {
-        delete pEntapDatabase;
+        delete pEntap_database;
         throw e;
     }
     FS_dprint("Success! Input verified");
-    delete pEntapDatabase;
+    delete pEntap_database;
     return is_config;
 }
 
 
 /**
  * ======================================================================
- * Function void verify_databases(boostPO::variables_map& vm)
+ * Function void verify_databases(bool is_run)
  *
  * Description          - Ensures the user is entering valid databases
- *                        and flags
+ *                        (paths exist, DIAMOND extension if needed)
  *
- * Notes                - Not really currently used, will be updated
+ * Notes                - None
  *
- * @param exe           - Boost variable map of user input
+ * @param is_run        - True is we are running, false if configuration
  * @return              - None
  * ======================================================================
  */
-void UserInput::verify_databases(bool isrun) {
+void UserInput::verify_databases(bool is_run) {
 
     databases_t     other_data;
 
     if (has_input(INPUT_FLAG_DATABASE)) {
         other_data = get_user_input<databases_t>(INPUT_FLAG_DATABASE);
-    } else if (isrun){
+    } else if (is_run){
         // Must specify database when executing
         throw ExceptionHandler("Must select databases when executing main pipeline", ERR_ENTAP_INPUT_PARSE);
     }
@@ -699,19 +697,19 @@ void UserInput::verify_databases(bool isrun) {
 
     // Check each database entered
     for (auto const& path: other_data) {
-        if (!_pFileSystem->file_exists(path) || _pFileSystem->file_empty(path)) {
+        if (!mpFileSystem->file_exists(path) || mpFileSystem->file_empty(path)) {
             throw ExceptionHandler("Database path invalid or empty: " + path, ERR_ENTAP_INPUT_PARSE);
         }
         FS_dprint("User has input a database at: " + path);
         // Is file extension diamond?
-        if (_pFileSystem->get_file_extension(path, false).compare(FileSystem::EXT_DMND) == 0) {
+        if (mpFileSystem->get_file_extension(path, false).compare(FileSystem::EXT_DMND) == 0) {
             // Yes, are we configuring?
-            if (!isrun) {
+            if (!is_run) {
                 throw ExceptionHandler("Cannot input DIAMOND (.dmnd) database when configuring!", ERR_ENTAP_INPUT_PARSE);
             }
         } else {
             // No, are we executing main pipeline?
-            if (isrun) {
+            if (is_run) {
                 throw ExceptionHandler("Must input DIAMOND (.dmnd) database when executing!", ERR_ENTAP_INPUT_PARSE);
             }
         }
@@ -745,7 +743,7 @@ std::unordered_map<std::string,std::string> UserInput::parse_config(pair_str_t &
     std::string                                 key;
     std::string                                 val;
 
-    if (!_pFileSystem->file_exists(exe_paths.first)){
+    if (!mpFileSystem->file_exists(exe_paths.first)){
         FS_dprint("Config file not found, generating new file...");
         new_config = CONFIG_FILE;
         try {
@@ -842,7 +840,8 @@ bool UserInput::check_key(std::string& key) {
  * Description          - Handles printing of user selected flags to
  *                        EnTAP statistics/log file
  *
- * Notes                - Called from main
+ * Notes                - Accesses global software execution paths from
+ *                        config file
  *
  * @return              - None
  *
@@ -858,19 +857,19 @@ void UserInput::print_user_input() {
 
     start_time = std::chrono::system_clock::now();
     time = std::chrono::system_clock::to_time_t(start_time);
-    _is_config ? config_text = "Configuration" : config_text = "Execution";
+    mIsConfig ? config_text = "Configuration" : config_text = "Execution";
 
-    _pFileSystem->format_stat_stream(ss, "EnTAP Run Information - " + config_text);
+    mpFileSystem->format_stat_stream(ss, "EnTAP Run Information - " + config_text);
 
     ss <<
        "Current EnTAP Version: "   << ENTAP_VERSION_STR            <<
        "\nStart time: "            << std::ctime(&time)            <<
-       "\nWorking directory has been set to: "  << _pFileSystem->get_root_path()<<
+       "\nWorking directory has been set to: "  << mpFileSystem->get_root_path()<<
        "\n\nExecution Paths/Commands:"
        "\n\nRSEM Directory: "                  << RSEM_EXE_DIR      <<
        "\nGeneMarkS-T: "                       << GENEMARK_EXE      <<
        "\nDIAMOND: "                           << DIAMOND_EXE       <<
-       "\nInterPro: "                          << INTERPRO_EXE      <<
+       "\nInterProScan: "                      << INTERPRO_EXE      <<
        "\nEggNOG SQL Database: "               << EGG_SQL_DB_PATH   <<
        "\nEggNOG DIAMOND Database: "           << EGG_DMND_PATH     <<
        "\nEnTAP Database (binary): "           << ENTAP_DATABASE_BIN_PATH <<
@@ -912,15 +911,16 @@ void UserInput::print_user_input() {
             }
         } else ss << "null";
     }
+    // Print to log file and debug
     output = ss.str() + "\n";
-    _pFileSystem->print_stats(output);
+    mpFileSystem->print_stats(output);
     FS_dprint(output+"\n");
 }
 
 
 /**
  * ======================================================================
- * Function void verify_species(boostPO::variables_map &map)
+ * Function void verify_species(SPECIES_FLAGS flag, EntapDatabase *database)
  *
  * Description          - Verify species/tax level input by the user
  *                      - Ensure it can be found within the tax database
@@ -1041,10 +1041,10 @@ pair_str_t UserInput::get_config_path() {
         FS_dprint("User input config filepath at: " + output.first);
     } else {
         // if no config input, use default path found in cwd
-        output.first = PATHS(_pFileSystem->get_cur_dir(), CONFIG_FILE);
+        output.first = PATHS(mpFileSystem->get_cur_dir(), CONFIG_FILE);
         FS_dprint("No inputted config file, using default: " + output.first);
     }
-    if (!_pFileSystem->file_exists(output.first)) {
+    if (!mpFileSystem->file_exists(output.first)) {
         FS_dprint("No configuration file with execution paths found at: " +
                 output.first);
         // Will be printed later
@@ -1087,8 +1087,8 @@ void UserInput::process_user_species(std::string &input) {
  * ======================================================================
  */
 void UserInput::verify_uninformative(std::string& path) {
-    if (!_pFileSystem->file_exists(path) || _pFileSystem->file_empty(path) ||
-            !_pFileSystem->file_test_open(path)) {
+    if (!mpFileSystem->file_exists(path) || mpFileSystem->file_empty(path) ||
+            !mpFileSystem->file_test_open(path)) {
         throw ExceptionHandler("Path to uninformative list invalid/empty!",ERR_ENTAP_INPUT_PARSE);
     }
 }
@@ -1153,7 +1153,7 @@ std::pair<bool,std::string> UserInput::verify_software(uint8 &states,std::vector
             switch (flag) {
 #ifdef EGGNOG_MAPPER
                 case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-                    if (!_pFileSystem->file_exists(EGG_SQL_DB_PATH))
+                    if (!pFileSystem->file_exists(EGG_SQL_DB_PATH))
                         return std::make_pair(false, "Could not find EggNOG SQL database at: " + EGG_SQL_DB_PATH);
                     if (!ModEggnog::is_executable())
                         return std::make_pair(false, "Test of EggNOG Emapper failed, "
@@ -1165,9 +1165,9 @@ std::pair<bool,std::string> UserInput::verify_software(uint8 &states,std::vector
                     break;
 
                 case ONT_EGGNOG_DMND:
-                    if (!_pFileSystem->file_exists(EGG_SQL_DB_PATH))
+                    if (!mpFileSystem->file_exists(EGG_SQL_DB_PATH))
                         return std::make_pair(false, "Could not find EggNOG SQL database at: " + EGG_SQL_DB_PATH);
-                    else if (!_pFileSystem->file_exists(EGG_DMND_PATH))
+                    else if (!mpFileSystem->file_exists(EGG_DMND_PATH))
                         return std::make_pair(false, "Could not find EggNOG Diamond Database at: " + EGG_DMND_PATH);
                     else if (!ModEggnogDMND::is_executable(DIAMOND_EXE))
                         return std::make_pair(false, "Test run of DIAMOND for EggNOG analysis has failed");
@@ -1196,7 +1196,7 @@ UserInput::~UserInput() {
 }
 
 void UserInput::set_pFileSystem(FileSystem *_pFileSystem) {
-    UserInput::_pFileSystem = _pFileSystem;
+    UserInput::mpFileSystem = _pFileSystem;
 }
 
 bool UserInput::has_input(const std::string &key) {
@@ -1306,7 +1306,7 @@ std::string UserInput::get_user_transc_basename() {
     std::string user_transcriptome;
 
     user_transcriptome = get_user_input<std::string>(INPUT_FLAG_TRANSCRIPTOME);
-    return _pFileSystem->get_filename(user_transcriptome, false);
+    return mpFileSystem->get_filename(user_transcriptome, false);
 }
 
 

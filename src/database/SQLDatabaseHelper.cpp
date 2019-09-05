@@ -50,11 +50,11 @@
 bool SQLDatabaseHelper::open(std::string file) {
     FS_dprint("Opening SQL database at: " + file);
     int err_code;
-    err_code = sqlite3_open(file.c_str(),&_database);
+    err_code = sqlite3_open(file.c_str(),&mpDatabase);
     if (err_code == SQLITE_OK) {
-        sqlite3_exec(_database,"PRAGMA synchronous = OFF", NULL, NULL, NULL);
-        sqlite3_exec(_database,"PRAGMA count_changes = false", NULL, NULL, NULL);
-        sqlite3_exec(_database,"PRAGMA journal_mode = OFF", NULL, NULL, NULL);
+        sqlite3_exec(mpDatabase,"PRAGMA synchronous = OFF", NULL, NULL, NULL);
+        sqlite3_exec(mpDatabase,"PRAGMA count_changes = false", NULL, NULL, NULL);
+        sqlite3_exec(mpDatabase,"PRAGMA journal_mode = OFF", NULL, NULL, NULL);
         FS_dprint("Success!");
     }
     return err_code == SQLITE_OK;
@@ -75,7 +75,7 @@ bool SQLDatabaseHelper::open(std::string file) {
  * =====================================================================
  */
 void SQLDatabaseHelper::close() {
-    sqlite3_close(_database);
+    sqlite3_close(mpDatabase);
 }
 
 
@@ -118,7 +118,7 @@ std::vector<std::vector<std::string>> SQLDatabaseHelper::query(char *query) {
     sqlite3_stmt *stmt;
     query_struct output;
     char* txt;
-    if (sqlite3_prepare_v2(_database,query,-1,&stmt,0) == SQLITE_OK) {
+    if (sqlite3_prepare_v2(mpDatabase,query,-1,&stmt,0) == SQLITE_OK) {
         int col_num = sqlite3_column_count(stmt);
         int stat = 0;
         while (true) {
@@ -144,7 +144,7 @@ std::vector<std::vector<std::string>> SQLDatabaseHelper::query(char *query) {
         }
         sqlite3_finalize(stmt);
     } else {
-        throw ExceptionHandler("Error querying database: " + std::string(sqlite3_errmsg(_database)),
+        throw ExceptionHandler("Error querying database: " + std::string(sqlite3_errmsg(mpDatabase)),
                                ERR_ENTAP_DATABASE_QUERY);
     }
     return output;
@@ -152,7 +152,7 @@ std::vector<std::vector<std::string>> SQLDatabaseHelper::query(char *query) {
 
 
 SQLDatabaseHelper::SQLDatabaseHelper() {
-    _database = NULL;
+    mpDatabase = NULL;
 }
 
 
@@ -166,7 +166,7 @@ bool SQLDatabaseHelper::execute_cmd(char* cmd) {
 
 //    FS_dprint("Executing SQL cmd:\n" + cmd);
 
-    err = sqlite3_exec(_database, cmd, NULL, 0, &err_msg);
+    err = sqlite3_exec(mpDatabase, cmd, NULL, 0, &err_msg);
 
     if( err != SQLITE_OK ){
         std::string err_str = err_msg;

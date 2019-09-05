@@ -32,6 +32,8 @@ AbstractExpression::AbstractExpression(std::string &execution_stage_path, std::s
                                        std::string &align) :
 EntapModule(execution_stage_path, in_hits, entap_data, module_name, exe) {
 
-    _alignpath = align;
-    _execution_state = EXPRESSION_FILTERING;
+    mAlignPath = align;
+    mExecutionState = EXPRESSION_FILTERING;
+    mIsSingle      = mpUserInput->has_input(mpUserInput->INPUT_FLAG_SINGLE_END);
+    mFPKM          = mpUserInput->get_user_input<fp32>(mpUserInput->INPUT_FLAG_FPKM);
 }

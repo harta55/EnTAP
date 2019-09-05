@@ -27,10 +27,8 @@
 
 #include "FileSystem.h"
 #include "ExceptionHandler.h"
-#include "EntapGlobals.h"
 #include <sys/stat.h>
 #include "config.h"
-#include "TerminalCommands.h"
 
 #ifdef USE_BOOST
 #include <boost/date_time/posix_time/ptime.hpp>
@@ -96,7 +94,7 @@ void FileSystem::close_file(std::ofstream &ofstream) {
 
 /**
  * ======================================================================
- * Function void print_debug(std::string    msg)
+ * Function void print_debug(const std::string &msg)
  *
  * Description          - Handles printing to EnTAP debug file
  *                      - Adds bo to each entry
@@ -210,7 +208,7 @@ bool FileSystem::file_test_open(std::string &path) {
  *
  * Notes                - None
  *
- * @param path          - Path to file
+ * @param path          - Path to file to delete
  *
  * @return              - True/false if successful
  * ======================================================================
@@ -484,22 +482,23 @@ std::string FileSystem::get_cur_dir() {
 
 FileSystem::~FileSystem() {
     FS_dprint("Killing object - FileSystem");
-    delete_dir(_temp_outpath);
+    delete_dir(mTempOutpath);
 }
 
 FileSystem::FileSystem(std::string &root) {
-    // This routine will eventuall process entire root directory here and generate
+    // This routine will eventually process entire root directory here and generate
     // hierarchy
     FS_dprint("Spawn Object - FileSystem");
 
-    _root_path     = root;
-    _final_outpath = PATHS(root, ENTAP_FINAL_OUTPUT);
-    _temp_outpath  = PATHS(root, TEMP_DIRECTORY);
+    mRootPath     = root;
+    mFinalOutpath = PATHS(root, ENTAP_FINAL_OUTPUT);
+    mTempOutpath  = PATHS(root, TEMP_DIRECTORY);
+    mTrancriptomeDir = PATHS(root, ENTAP_TRANSCRIPTOME_DIR);
 
     // Make sure directories are created (or already created)
     create_dir(root);
-    create_dir(_final_outpath);
-    create_dir(_temp_outpath);
+    create_dir(mFinalOutpath);
+    create_dir(mTempOutpath);
 
     // generate log file
     init_log();
@@ -511,7 +510,7 @@ FileSystem::FileSystem(std::string &root) {
  *
  * Description          - Initializes log and debug files
  *
- * Notes                - None
+ * Notes                - Sets globals DEBUG_FILE_PATH and LOG_FILE_PATH
  *
  * @return              - None
  * ======================================================================
@@ -559,19 +558,38 @@ void FileSystem::init_log() {
 
     time_date       = ss.str();
     log_file_name   = LOG_FILENAME   + time_date + LOG_EXTENSION;
-    debug_file_name = DEBUG_FILENAME + time_date + LOG_EXTENSION;
-    DEBUG_FILE_PATH = PATHS(_root_path, debug_file_name);
-    LOG_FILE_PATH   = PATHS(_root_path, log_file_name);
+    debug_file_name = DEBUG_FILENAME + time_date + DEBUG_EXTENSION;
+
+    // Initialize globals
+    DEBUG_FILE_PATH = PATHS(mRootPath, debug_file_name);
+    LOG_FILE_PATH   = PATHS(mRootPath, log_file_name);
     delete_file(DEBUG_FILE_PATH);
     delete_file(LOG_FILE_PATH);
     FS_dprint("Start - EnTAP");
 }
 
 const std::string &FileSystem::get_root_path() const {
-    return _root_path;
+    return mRootPath;
 }
 
-// Stipped without '.'
+/**
+ * ======================================================================
+ * Function std::string FileSystem::get_file_extension(const std::string &path, bool stripped)
+ *
+ * Description          - Returns extension of file (path) with or without
+ *                        (stripped=TRUE) '.' char
+ *                      - Uses Boost FileSystem libraries or Posix
+ *
+ * Notes                - None
+ *
+ * @param path          - Absolute path to file
+ * @param stripped      - TRUE to remove '.' char from extension, FALSE
+ *                        otherwise
+ *
+ * @return              - Extension of file path
+ *
+ * =====================================================================
+ */
 std::string FileSystem::get_file_extension(const std::string &path, bool stripped) {
 #ifdef USE_BOOST
     boostFS::path bpath(path);
@@ -593,6 +611,23 @@ std::string FileSystem::get_file_extension(const std::string &path, bool strippe
 #endif
 }
 
+/**
+ * ======================================================================
+ * Function bool FileSystem::copy_file(std::string inpath, std::string outpath, bool overwrite)
+ *
+ * Description          - Copies file from input path to output path
+ *                      - Utilizes Boost FileSystem library or Posix
+ *
+ * Notes                - None
+ *
+ * @param inpath        - Absolute path to file we are copying
+ * @param outpath       - Absolute path to location where file should be copied
+ * @param overwrite     - TRUE to overwrite if outpath file exists already
+ *
+ * @return              - TRUE if copy was successful
+ *
+ * =====================================================================
+ */
 bool FileSystem::copy_file(std::string inpath, std::string outpath, bool overwrite) {
 #ifdef USE_BOOST
     try {
@@ -606,11 +641,18 @@ bool FileSystem::copy_file(std::string inpath, std::string outpath, bool overwri
     }
     return true;
 #else
-    if (file_exists(outpath) && !overwrite) {
+
+    if (!file_exists(inpath)) {
         return false;
     } else if (file_exists(outpath)) {
-        delete_file(outpath);
+
+        if (overwrite) {
+            delete_file(outpath);
+        } else {
+            return false;
+        }
     }
+
     std::ifstream  in(inpath, std::ios::binary);
     std::ofstream  out(outpath,   std::ios::binary);
     out << in.rdbuf();
@@ -657,11 +699,11 @@ std::string FileSystem::get_filename(std::string &path, bool with_extension) {
 
 
 std::string FileSystem::get_final_outdir() {
-    return this->_final_outpath;
+    return this->mFinalOutpath;
 }
 
 std::string FileSystem::get_temp_outdir() {
-    return this->_temp_outpath;
+    return this->mTempOutpath;
 }
 
 bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) {
@@ -765,6 +807,24 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
 #endif
 }
 
+/**
+ * ======================================================================
+ * Function bool FileSystem::rename_file(std::string &in, std::string &out)
+ *
+ * Description          - Renames input file using Boost FileSystem library
+ *                        or POSIX
+ *                      - Will move files to out path as well
+ *
+ * Notes                - None
+ *
+ * @param in           - Absolute path to file we are renaming
+ * @param out          - Absolute path to renamed file (will be moved if in different
+ *                       directory)
+ *
+ * @return              - TRUE if copy was successful
+ *
+ * =====================================================================
+ */
 bool FileSystem::rename_file(std::string &in, std::string &out) {
     FS_dprint("Moving/renaming file: " + in );
     if (!file_exists(in)) {
@@ -830,11 +890,11 @@ std::string FileSystem::print_file_status(uint16 status, std::string& path) {
 
 void FileSystem::set_error(std::string err_msg) {
 //    FS_dprint(err_msg);
-    _err_msg = err_msg;
+    mErrorMsg = err_msg;
 }
 
 std::string FileSystem::get_error() {
-    return "\n" + _err_msg;
+    return "\n" + mErrorMsg;
 }
 
 bool FileSystem::print_headers(std::ofstream& file_stream, std::vector<ENTAP_HEADERS> &headers, char delim) {
@@ -914,4 +974,12 @@ bool FileSystem::initialize_file(std::ofstream *file_stream, std::vector<ENTAP_H
             break;
     }
     return ret;
+}
+
+bool FileSystem::create_transcriptome_dir() {
+    return create_dir(mTrancriptomeDir);
+}
+
+std::string FileSystem::get_trancriptome_dir() {
+    return mTrancriptomeDir;
 }

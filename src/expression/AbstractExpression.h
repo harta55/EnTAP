@@ -98,8 +98,10 @@ public:
 
 
 protected:
-    std::string     _alignpath;
-    std::string     _final_fasta;
+    std::string     mAlignPath;     // Absolute path to alignment file (BAM/SAM)
+    std::string     mFinalFasta;    // Absolute path to final filtered FASTA produced from this stage
+    fp32            mFPKM;          // FPKM threshold user would like to filter by
+    bool            mIsSingle;       // TRUE if use has non-paired data
 };
 
 #endif //ENTAP_ABSTRACTEXPRESSION_H

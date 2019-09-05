@@ -27,43 +27,57 @@
 
 #include "EntapModule.h"
 
+/**
+ * ======================================================================
+ * @class EntapModule
+ *
+ * Description          - Class for each program/module EnTAP supports
+ *                      - Modules are responsible for Execution, Graphing,
+ *                        calculation of statistics, verification of
+ *                        required inputs to ensure execution is valid
+ *
+ * Notes                - None
+ *
+ * =====================================================================
+ */
 EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
                          std::string module_name, std::string &exe_path) {
 
-    _outpath  = execution_stage_path;       // Should already be created
-    _in_hits  = in_hits;
-    _exe_path = exe_path;
+    mOutpath = execution_stage_path;       // Should already be created
+    mInHits  = in_hits;
+    mExePath = exe_path;
 
-    _pGraphingManager = entap_data._pGraphingManager;
-    _pQUERY_DATA      = entap_data._pQueryData;
-    _pFileSystem      = entap_data._pFileSystem;
-    _pUserInput       = entap_data._pUserInput;
-    _pEntapDatabase   = entap_data._pEntapDatbase;
+    mpGraphingManager = entap_data.mpGraphingManager;
+    mpQueryData       = entap_data.mpQueryData;
+    mpFileSystem      = entap_data.mpFileSystem;
+    mpUserInput       = entap_data.mpUserInput;
+    mpEntapDatabase   = entap_data.mpEntapDatabase;
 
-    _threads         = _pUserInput->get_supported_threads();
-    _blastp          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_RUNPROTEIN);
-    _overwrite       = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
-    _alignment_file_types = _pUserInput->get_user_output_types();   // may be overridden at lower level
+    mThreads         = mpUserInput->get_supported_threads();
+    mBlastp          = mpUserInput->has_input(mpUserInput->INPUT_FLAG_RUNPROTEIN);
+    mOverwrite       = mpUserInput->has_input(mpUserInput->INPUT_FLAG_OVERWRITE);
+    mAlignmentFileTypes = mpUserInput->get_user_output_types();   // may be overridden at lower level
+    mGoLevels        = mpUserInput->get_user_input<vect_uint16_t>(mpUserInput->INPUT_FLAG_GO_LEVELS);
 
-    _transcript_shortname = _pFileSystem->get_filename(_in_hits, false);
+    mTranscriptomeShortname = mpFileSystem->get_filename(mInHits, false);
 
     // INIT directories
-    _mod_out_dir = PATHS(_outpath, module_name);
-    _figure_dir  = PATHS(_mod_out_dir, FIGURE_DIR);
-    _proc_dir    = PATHS(_mod_out_dir, PROCESSED_OUT_DIR);
-    _overall_results_dir = PATHS(_mod_out_dir, OVERALL_RESULTS_DIR);    // generated at app level
+    mModOutDir  = PATHS(mOutpath, module_name);
+    mFigureDir  = PATHS(mModOutDir, FIGURE_DIR);
+    mProcDir    = PATHS(mModOutDir, PROCESSED_OUT_DIR);
+    mOverallResultsDir = PATHS(mModOutDir, OVERALL_RESULTS_DIR);    // generated at app level (some don't need this directory)
 
     // If overwriting data, remove entire execution stage directory
-    if (_overwrite) {
-        _pFileSystem->delete_dir(_mod_out_dir);
+    if (mOverwrite) {
+        mpFileSystem->delete_dir(mModOutDir);
     } else {
-        _pFileSystem->delete_dir(_figure_dir);
-        _pFileSystem->delete_dir(_proc_dir);
+        mpFileSystem->delete_dir(mFigureDir);
+        mpFileSystem->delete_dir(mProcDir);
     }
     // Recreate module + figure + processed directories
-    _pFileSystem->create_dir(_mod_out_dir);
-    _pFileSystem->create_dir(_figure_dir);
-    _pFileSystem->create_dir(_proc_dir);
+    mpFileSystem->create_dir(mModOutDir);
+    mpFileSystem->create_dir(mFigureDir);
+    mpFileSystem->create_dir(mProcDir);
 }
 
 

@@ -43,8 +43,6 @@
 //#define USE_CURL    1
 #endif
 
-#define NCBI_UNIPROT    0       // Compiler flag for future feature
-
 // Compile with using the Fast CSV Parser (required now)
 #ifndef USE_FAST_CSV
 #define USE_FAST_CSV  1
@@ -56,6 +54,6 @@
 #endif
 
 // Comment this out if it is debug code
-#define RELEASE_BUILD
+//#define RELEASE_BUILD
 
 #endif //ENTAP_CONFIG_H

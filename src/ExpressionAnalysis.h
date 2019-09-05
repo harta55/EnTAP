@@ -28,12 +28,10 @@
 #ifndef ENTAP_EXPRESSIONANALYSIS_H
 #define ENTAP_EXPRESSIONANALYSIS_H
 
-#include "QuerySequence.h"
 #include "GraphingManager.h"
 #include "QueryData.h"
 #include "ExceptionHandler.h"
 #include "EntapConfig.h"
-#include "EntapGlobals.h"
 #include "common.h"
 #include "FileSystem.h"
 #include "expression/AbstractExpression.h"
@@ -41,31 +39,33 @@
 
 class AbstractExpression;
 
+enum EXPRESSION_SOFTWARE {
+    EXP_RSEM,
+    EXP_COUNT
+};
+
+
 class ExpressionAnalysis {
+    
 public:
     ExpressionAnalysis(std::string&,EntapDataPtrs&);
     std::string execute(std::string);
 
 private:
 
-    const std::string RSEM_OUT_DIR          = "expression/";
+    const std::string RSEM_OUT_DIR          = "expression/";    // Name of root expression analysis directory
 
-    std::string         _inpath;
-    std::string         _alignpath;
-    std::string         _exepath;
-    std::string         _outpath;
-    std::string         _rsem_dir;
-    bool                _issingle;
-    bool                _trim;
-    bool                _overwrite;
-    short               _software_flag;
-    int                 _threads;
-    float               _fpkm;
-    GraphingManager  *_pGraphingManager;
-    QueryData        *_pQueryData;
-    FileSystem       *_pFileSystem;
-    UserInput        *_pUserInput;
-    EntapDataPtrs    _entap_data;
+    std::string         mInFastaPath;       // FASTA path input from user to perform filtering on
+                                            // *** MUST **** be original to maintain consistent headers
+    std::string         mAlignPath;         // Absolute path to alignment file (BAM/SAM)
+    std::string         mExePath;           // Method of execution (exe path or global variablee)
+    std::string         mExpressionDir;     // Absolute path to root Expression Analysis directory
+    bool                mOverwrite;         // TRUE if user would like to overwrite previous data
+    uint16              mSoftwareFlag;      // FLag indicating Expression Analysis software module
+    QueryData          *mpQueryData;        // Pointer to all Query data
+    FileSystem         *mpFileSystem;       // Pointer to EnTAP filesystem
+    UserInput          *mpUserInput;        // Pointer to User Input data
+    EntapDataPtrs       mpEntapPtrs;        // All required data for execution
 
     std::unique_ptr<AbstractExpression> spawn_object();
 };

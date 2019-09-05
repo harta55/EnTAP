@@ -217,8 +217,8 @@ private:
     const std::string KEY_ENTAP_DATABASE_SQL   = "entap_database_sql_path";
     const std::string KEY_GRAPH_SCRIPT         = "entap_graphing_script";
 
-    FileSystem *_pFileSystem;
-    bool        _is_config;
+    FileSystem *mpFileSystem;
+    bool        mIsConfig;
 
 //**************************************************************
 };

@@ -166,17 +166,17 @@ private:
     const std::string SQL_EVENT_I           = "i";
 
     typename std::unordered_map<std::string, vect_str_t>::const_iterator _it_vect_str;
-    SQLDatabaseHelper *_pSQLDatabase;
-    FileSystem        *_pFilesystem;
-    EntapDatabase     *_pEntapDatabase;
-    QueryData         *_pQueryData;         // Used to control header information
-    std::string        _err_msg;
-    ERR_EGGNOG_DB      _err_code;
-    std::string        _SQL_MEMBER_TABLE;
-    EGGNOG_SQL_VERSION _sql_version;
-    uint16              _VERSION_MAJOR;
-    uint16              _VERSION_MINOR;
-    uint16              _VERSION_REV;
+    SQLDatabaseHelper *mpSQLDatabase;
+    FileSystem        *mpFileSystem;
+    EntapDatabase     *mpEntapDatabase;
+    QueryData         *mpQueryData;         // Used to control header information
+    std::string        mErrMsg;
+    ERR_EGGNOG_DB      mErrCode;
+    std::string        mSQLMemberTable;
+    EGGNOG_SQL_VERSION mSQLVersion;
+    uint16              mVersionMajor;
+    uint16              mVersionMinor;
+    uint16              mVersionRev;
 
     static const std::unordered_map<std::string,std::string> EGGNOG_LEVELS;   // Mappings from tax lvl to full name
     static const std::unordered_map<std::string, vect_str_t> LEVEL_CONTENT;

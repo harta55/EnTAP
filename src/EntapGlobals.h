@@ -38,15 +38,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #endif
-//******************** Defines/Macros **************************
 
-#ifdef USE_BOOST
-#define PATHS(x,y)      (boostFS::path(x) / boostFS::path(y)).string()
-#else
-#define PATHS(x,y)      ((x) + "/" + (y))
-#endif
-
-//**************************************************************
 
 
 class QuerySequence;
@@ -66,8 +58,6 @@ namespace boostAR = boost::archive;
 
 
 //***************** Global Prototype Functions *****************
-std::string generate_command(std::unordered_map<std::string,std::string>&,
-                             std::string);
 std::string float_to_string(fp64);
 std::string float_to_sci(fp64, int);
 vect_str_t  split_string(std::string, char);
@@ -76,7 +66,6 @@ std::string get_cur_time();
 
 
 //**************** Global Structures/Typedefs ******************
-typedef std::unordered_map<std::string, QuerySequence*> QUERY_MAP_T;
 typedef std::map<std::string,std::vector<std::string>> go_format_t;
 typedef std::vector<std::string> databases_t;   // Standard database container
 
@@ -183,16 +172,6 @@ enum SIMILARITY_SOFTWARE {
     SIM_SOFTWARE_COUNT
 };
 
-enum EXPRESSION_SOFTWARE {
-    EXP_RSEM,
-    EXP_COUNT
-};
-
-enum FRAME_SELECTION_SOFTWARE {
-    FRAME_GENEMARK_ST,
-    FRAME_SOFTWARE_COUNT
-};
-
 enum ENTAP_HEADERS {
     ENTAP_HEADER_UNUSED = 0,                // 0
     ENTAP_HEADER_QUERY,
@@ -265,24 +244,24 @@ struct EntapHeader {
 };
 
 struct EntapDataPtrs {
-    EntapDatabase* _pEntapDatbase;
-    FileSystem*    _pFileSystem;
-    UserInput*     _pUserInput;
-    GraphingManager* _pGraphingManager;
-    QueryData*     _pQueryData;
+    EntapDatabase* mpEntapDatabase;
+    FileSystem*    mpFileSystem;
+    UserInput*     mpUserInput;
+    GraphingManager* mpGraphingManager;
+    QueryData*     mpQueryData;
 
     bool is_null() {
-        return _pEntapDatbase == nullptr || _pFileSystem == nullptr ||
-        _pUserInput == nullptr || _pGraphingManager == nullptr ||
-        _pQueryData == nullptr;
+        return mpEntapDatabase == nullptr || mpFileSystem == nullptr ||
+        mpUserInput == nullptr || mpGraphingManager == nullptr ||
+        mpQueryData == nullptr;
     }
 
     EntapDataPtrs() {
-        _pEntapDatbase = nullptr;
-        _pFileSystem   = nullptr;
-        _pUserInput    = nullptr;
-        _pGraphingManager = nullptr;
-        _pQueryData    = nullptr;
+        mpEntapDatabase = nullptr;
+        mpFileSystem   = nullptr;
+        mpUserInput    = nullptr;
+        mpGraphingManager = nullptr;
+        mpQueryData    = nullptr;
     }
 };
 

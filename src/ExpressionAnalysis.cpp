@@ -54,26 +54,20 @@
 ExpressionAnalysis::ExpressionAnalysis(std::string &input,EntapDataPtrs& entap_data) {
     FS_dprint("Spawn Object - ExpressionAnalysis");
 
-    _pQueryData       = entap_data._pQueryData;
-    _pFileSystem      = entap_data._pFileSystem;
-    _pUserInput       = entap_data._pUserInput;
-    _pGraphingManager = entap_data._pGraphingManager;
-    _inpath           = input;
+    mpQueryData       = entap_data.mpQueryData;
+    mpFileSystem      = entap_data.mpFileSystem;
+    mpUserInput       = entap_data.mpUserInput;
+    mInFastaPath           = input;
 
-    _entap_data = entap_data;
+    mpEntapPtrs = entap_data;
 
-    _software_flag = EXP_RSEM;
-    _threads       = _pUserInput->get_supported_threads();
-    _exepath       = RSEM_EXE_DIR;
-    _outpath       = _pFileSystem->get_root_path();
-    _trim          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_TRIM);
-    _overwrite     = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
-    _issingle      = _pUserInput->has_input(_pUserInput->INPUT_FLAG_SINGLE_END);
-    if (_pUserInput->has_input(_pUserInput->INPUT_FLAG_ALIGN)) { // Will be true
-        _alignpath = _pUserInput->get_user_input<std::string>(_pUserInput->INPUT_FLAG_ALIGN);
+    mSoftwareFlag = EXP_RSEM;
+    mExePath       = RSEM_EXE_DIR;
+    mOverwrite     = mpUserInput->has_input(mpUserInput->INPUT_FLAG_OVERWRITE);
+    if (mpUserInput->has_input(mpUserInput->INPUT_FLAG_ALIGN)) { // Will be true
+        mAlignPath = mpUserInput->get_user_input<std::string>(mpUserInput->INPUT_FLAG_ALIGN);
     }
-    _fpkm          = _pUserInput->get_user_input<fp32>(_pUserInput->INPUT_FLAG_FPKM);
-    _rsem_dir      = PATHS(_outpath, RSEM_OUT_DIR);
+    mExpressionDir      = PATHS(mpFileSystem->get_root_path(), RSEM_OUT_DIR);
 }
 
 
@@ -99,17 +93,21 @@ std::string ExpressionAnalysis::execute(std::string input) {
     EntapModule::ModVerifyData          verify_data;
     std::unique_ptr<AbstractExpression> ptr;
 
-    _inpath = input;
-    if (_overwrite) _pFileSystem->delete_dir(_rsem_dir);
-    _pFileSystem->create_dir(_rsem_dir);
+    mInFastaPath = input;
+    if (mOverwrite) mpFileSystem->delete_dir(mExpressionDir);
+    mpFileSystem->create_dir(mExpressionDir);
 
     try {
         ptr = spawn_object();
-        ptr->set_data(_threads, _fpkm, _issingle);  // Will remove later
         verify_data = ptr->verify_files();
         if (!verify_data.files_exist) ptr->execute();
         ptr->parse();
         output = ptr->get_final_fasta();
+
+        // If successful, set flags
+        mpQueryData->set_is_success_expression(true);
+
+
     } catch (const ExceptionHandler &e) {
         ptr.reset();
         throw e;
@@ -133,22 +131,22 @@ std::string ExpressionAnalysis::execute(std::string input) {
  * =====================================================================
  */
 std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
-    switch (_software_flag) {
+    switch (mSoftwareFlag) {
         case EXP_RSEM:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
-                    _rsem_dir,
-                    _inpath,
-                    _entap_data,
-                    _exepath,
-                    _alignpath
+                    mExpressionDir,
+                    mInFastaPath,
+                    mpEntapPtrs,
+                    mExePath,
+                    mAlignPath
             ));
         default:
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
-                    _rsem_dir,
-                    _inpath,
-                    _entap_data,
-                    _exepath,
-                    _alignpath
+                    mExpressionDir,
+                    mInFastaPath,
+                    mpEntapPtrs,
+                    mExePath,
+                    mAlignPath
             ));
     }
 }

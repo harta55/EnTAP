@@ -34,7 +34,8 @@
 class ModDiamond : public AbstractSimilaritySearch {
 
 public:
-    ModDiamond(std::string &out, std::string &in_hits,EntapDataPtrs &entap_data,
+    //******************* Public Functions *********************
+    ModDiamond(std::string &out, std::string &fasta_path,EntapDataPtrs &entap_data,
                 std::string &exe, vect_str_t &databases);
     ~ModDiamond() override = default;
 
@@ -45,18 +46,21 @@ public:
     static bool is_executable(std::string& exe);
 
     // AbstractSimilaritySearch overrides
-    virtual bool run_blast(SimSearchCmd *cmd, bool use_defaults);
+    bool run_blast(SimSearchCmd *cmd, bool use_defaults) override;
+    //**********************************************************
 
+    //******************* Public Variables *********************
     static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
+    //**********************************************************
 
 
 private:
+    //****************** Private Functions *********************
+    void calculate_best_stats(bool is_final, std::string database_path="");
+    //**********************************************************
+
+    //**************** Private Const Variables *****************
     static constexpr int DMND_COL_NUMBER = 14;
-    const std::string SIM_SEARCH_DATABASE_BEST_HITS              = "best_hits";
-    const std::string SIM_SEARCH_DATABASE_BEST_HITS_CONTAM       = "best_hits_contam";
-    const std::string SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM    = "best_hits_no_contam";
-    const std::string SIM_SEARCH_DATABASE_NO_HITS                = "no_hits";
-    const std::string SIM_SEARCH_DATABASE_UNSELECTED             = "unselected";
 
     // Graphing constants
     const uint8 GRAPH_SOFTWARE_FLAG                              = 3;
@@ -74,8 +78,7 @@ private:
     const std::string UNINFORMATIVE_FLAG                         = "Uninformative";
     const std::string INFORMATIVE_FLAG                           = "Informative";
     const std::string NO_HIT_FLAG                                = "No Hits";
-
-    void calculate_best_stats(bool is_final, std::string database_path="");
+    //**********************************************************
 };
 
 

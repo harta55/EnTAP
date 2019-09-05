@@ -357,11 +357,11 @@ typedef int (*sqlite3_callback)(void*,int,char**, char**);
 ** ^If an error occurs while evaluating the SQL statements passed into
 ** sqlite3_exec(), then execution of the current statement stops and
 ** subsequent statements are skipped.  ^If the 5th parameter to sqlite3_exec()
-** is not NULL then any error message is written into memory obtained
+** is not NULL then any error mMessage is written into memory obtained
 ** from [sqlite3_malloc()] and passed back through the 5th parameter.
 ** To avoid memory leaks, the application should invoke [sqlite3_free()]
-** on error message strings returned through the 5th parameter of
-** sqlite3_exec() after the error message string is no longer needed.
+** on error mMessage strings returned through the 5th parameter of
+** sqlite3_exec() after the error mMessage string is no longer needed.
 ** ^If the 5th parameter to sqlite3_exec() is not NULL and no errors
 ** occur, then sqlite3_exec() sets the pointer in its 5th parameter to
 ** NULL before returning.
@@ -926,7 +926,7 @@ struct sqlite3_io_methods {
 ** [SQLITE_FCNTL_PRAGMA] file control can optionally make the first element
 ** of the char** argument point to a string obtained from [sqlite3_mprintf()]
 ** or the equivalent and that string will become the result of the pragma or
-** the error message if the pragma fails. ^If the
+** the error mMessage if the pragma fails. ^If the
 ** [SQLITE_FCNTL_PRAGMA] file control returns [SQLITE_NOTFOUND], then normal 
 ** [PRAGMA] processing continues.  ^If the [SQLITE_FCNTL_PRAGMA]
 ** file control returns [SQLITE_OK], then the parser assumes that the
@@ -1762,7 +1762,7 @@ struct sqlite3_mem_methods {
 ** the logger function is a copy of the first parameter to the corresponding
 ** [sqlite3_log()] call and is intended to be a [result code] or an
 ** [extended result code].  ^The third parameter passed to the logger is
-** log message after formatting via [sqlite3_snprintf()].
+** log mMessage after formatting via [sqlite3_snprintf()].
 ** The SQLite logging interface is not reentrant; the logger function
 ** supplied by the application must not invoke any SQLite interface.
 ** In a multi-threaded application, the application-defined logger
@@ -2689,12 +2689,12 @@ SQLITE_API void sqlite3_randomness(int N, void *P);
 ** rejected with an error.  ^If the authorizer callback returns
 ** any value other than [SQLITE_IGNORE], [SQLITE_OK], or [SQLITE_DENY]
 ** then the [sqlite3_prepare_v2()] or equivalent call that triggered
-** the authorizer will fail with an error message.
+** the authorizer will fail with an error mMessage.
 **
 ** When the callback returns [SQLITE_OK], that means the operation
 ** requested is ok.  ^When the callback returns [SQLITE_DENY], the
 ** [sqlite3_prepare_v2()] or equivalent call that triggered the
-** authorizer will fail with an error message explaining that
+** authorizer will fail with an error mMessage explaining that
 ** access is denied. 
 **
 ** ^The first parameter to the authorizer callback is a copy of the third
@@ -3301,14 +3301,14 @@ SQLITE_API sqlite3_int64 sqlite3_uri_int64(const char*, const char*, sqlite3_int
 **
 ** ^The sqlite3_errmsg() and sqlite3_errmsg16() return English-language
 ** text that describes the error, as either UTF-8 or UTF-16 respectively.
-** ^(Memory to hold the error message string is managed internally.
+** ^(Memory to hold the error mMessage string is managed internally.
 ** The application does not need to worry about freeing the result.
 ** However, the error string might be overwritten or deallocated by
 ** subsequent calls to other SQLite interface functions.)^
 **
 ** ^The sqlite3_errstr() interface returns the English-language text
 ** that describes the [result code], as UTF-8.
-** ^(Memory to hold the error message string is managed internally
+** ^(Memory to hold the error mMessage string is managed internally
 ** and must not be freed by the application)^.
 **
 ** When the serialized [threading mode] is in use, it might be the
@@ -3323,7 +3323,7 @@ SQLITE_API sqlite3_int64 sqlite3_uri_int64(const char*, const char*, sqlite3_int
 **
 ** If an interface fails with SQLITE_MISUSE, that means the interface
 ** was invoked incorrectly by the application.  In that case, the
-** error code and message may or may not be set.
+** error code and mMessage may or may not be set.
 */
 SQLITE_API int sqlite3_errcode(sqlite3 *db);
 SQLITE_API int sqlite3_extended_errcode(sqlite3 *db);
@@ -4857,17 +4857,17 @@ typedef void (*sqlite3_destructor_type)(void*);
 ** cause the implemented SQL function to throw an exception.
 ** ^SQLite uses the string pointed to by the
 ** 2nd parameter of sqlite3_result_error() or sqlite3_result_error16()
-** as the text of an error message.  ^SQLite interprets the error
-** message string from sqlite3_result_error() as UTF-8. ^SQLite
+** as the text of an error mMessage.  ^SQLite interprets the error
+** mMessage string from sqlite3_result_error() as UTF-8. ^SQLite
 ** interprets the string from sqlite3_result_error16() as UTF-16 in native
 ** byte order.  ^If the third parameter to sqlite3_result_error()
 ** or sqlite3_result_error16() is negative then SQLite takes as the error
-** message all text up through the first zero character.
+** mMessage all text up through the first zero character.
 ** ^If the third parameter to sqlite3_result_error() or
 ** sqlite3_result_error16() is non-negative then SQLite takes that many
-** bytes (not characters) from the 2nd parameter as the error message.
+** bytes (not characters) from the 2nd parameter as the error mMessage.
 ** ^The sqlite3_result_error() and sqlite3_result_error16()
-** routines make a private copy of the error message text before
+** routines make a private copy of the error mMessage text before
 ** they return.  Hence, the calling function can deallocate or
 ** modify the text after they return without harm.
 ** ^The sqlite3_result_error_code() function changes the error code
@@ -5710,7 +5710,7 @@ SQLITE_API int sqlite3_table_column_metadata(
 ** [SQLITE_OK] on success and [SQLITE_ERROR] if something goes wrong.
 ** ^If an error occurs and pzErrMsg is not 0, then the
 ** [sqlite3_load_extension()] interface shall attempt to
-** fill *pzErrMsg with error message text stored in memory
+** fill *pzErrMsg with error mMessage text stored in memory
 ** obtained from [sqlite3_malloc()]. The calling function
 ** should free this memory by calling [sqlite3_free()].
 **
@@ -5733,7 +5733,7 @@ SQLITE_API int sqlite3_load_extension(
   sqlite3 *db,          /* Load the extension into this database connection */
   const char *zFile,    /* Name of the shared library containing extension */
   const char *zProc,    /* Entry point.  Derived from zFile if 0 */
-  char **pzErrMsg       /* Put error message here if not 0 */
+  char **pzErrMsg       /* Put error mMessage here if not 0 */
 );
 
 /*
@@ -5785,7 +5785,7 @@ SQLITE_API int sqlite3_enable_load_extension(sqlite3 *db, int onoff);
 ** </pre></blockquote>)^
 **
 ** If the xEntryPoint routine encounters an error, it should make *pzErrMsg
-** point to an appropriate error message (obtained from [sqlite3_mprintf()])
+** point to an appropriate error mMessage (obtained from [sqlite3_mprintf()])
 ** and return an appropriate [error code].  ^SQLite ensures that *pzErrMsg
 ** is NULL before calling the xEntryPoint().  ^SQLite will invoke
 ** [sqlite3_free()] on *pzErrMsg after xEntryPoint() returns.  ^If any
@@ -6091,17 +6091,17 @@ SQLITE_API int sqlite3_create_module_v2(
 ** The purpose of this superclass is to define certain fields that are
 ** common to all module implementations.
 **
-** ^Virtual tables methods can set an error message by assigning a
+** ^Virtual tables methods can set an error mMessage by assigning a
 ** string obtained from [sqlite3_mprintf()] to zErrMsg.  The method should
 ** take care that any prior string is freed by a call to [sqlite3_free()]
-** prior to assigning a new string to zErrMsg.  ^After the error message
+** prior to assigning a new string to zErrMsg.  ^After the error mMessage
 ** is delivered up to the client application, the string will be automatically
 ** freed by sqlite3_free() and the zErrMsg field will be zeroed.
 */
 struct sqlite3_vtab {
   const sqlite3_module *pModule;  /* The module for this virtual table */
   int nRef;                       /* Number of open cursors */
-  char *zErrMsg;                  /* Error message from sqlite3_mprintf() */
+  char *zErrMsg;                  /* Error mMessage from sqlite3_mprintf() */
   /* Virtual table implementations will typically add additional fields */
 };
 
@@ -6226,7 +6226,7 @@ typedef struct sqlite3_blob sqlite3_blob;
 ** </ul>
 **
 ** ^Unless it returns SQLITE_MISUSE, this function sets the 
-** [database connection] error code and message accessible via 
+** [database connection] error code and mMessage accessible via
 ** [sqlite3_errcode()] and [sqlite3_errmsg()] and related functions. 
 **
 ** A BLOB referenced by sqlite3_blob_open() may be read using the
@@ -6294,7 +6294,7 @@ SQLITE_API int sqlite3_blob_open(
 ** SQLITE_ABORT. ^Calling [sqlite3_blob_bytes()] on an aborted blob handle
 ** always returns zero.
 **
-** ^This function sets the database handle error code and message.
+** ^This function sets the database handle error code and mMessage.
 */
 SQLITE_API int sqlite3_blob_reopen(sqlite3_blob *, sqlite3_int64);
 
@@ -6377,7 +6377,7 @@ SQLITE_API int sqlite3_blob_read(sqlite3_blob *, void *Z, int N, int iOffset);
 ** ^(On success, sqlite3_blob_write() returns SQLITE_OK.
 ** Otherwise, an  [error code] or an [extended error code] is returned.)^
 ** ^Unless SQLITE_MISUSE is returned, this function sets the 
-** [database connection] error code and message accessible via 
+** [database connection] error code and mMessage accessible via
 ** [sqlite3_errcode()] and [sqlite3_errmsg()] and related functions. 
 **
 ** ^If the [BLOB handle] passed as the first argument was not opened for
@@ -7429,9 +7429,9 @@ typedef struct sqlite3_backup sqlite3_backup;
 ** destination database.
 **
 ** ^If an error occurs within sqlite3_backup_init(D,N,S,M), then NULL is
-** returned and an error code and error message are stored in the
+** returned and an error code and error mMessage are stored in the
 ** destination [database connection] D.
-** ^The error code and message for the failed call to sqlite3_backup_init()
+** ^The error code and mMessage for the failed call to sqlite3_backup_init()
 ** can be retrieved using the [sqlite3_errcode()], [sqlite3_errmsg()], and/or
 ** [sqlite3_errmsg16()] functions.
 ** ^A successful call to sqlite3_backup_init() returns a pointer to an
@@ -7753,7 +7753,7 @@ SQLITE_API int sqlite3_strlike(const char *zGlob, const char *zStr, unsigned int
 /*
 ** CAPI3REF: Error Logging Interface
 **
-** ^The [sqlite3_log()] interface writes a message into the [error log]
+** ^The [sqlite3_log()] interface writes a mMessage into the [error log]
 ** established by the [SQLITE_CONFIG_LOG] option to [sqlite3_config()].
 ** ^If logging is enabled, the zFormat string and subsequent arguments are
 ** used with [sqlite3_snprintf()] to generate the final output string.
@@ -7766,8 +7766,8 @@ SQLITE_API int sqlite3_strlike(const char *zGlob, const char *zStr, unsigned int
 ** The zFormat string must not be NULL.
 **
 ** To avoid deadlocks and other threading problems, the sqlite3_log() routine
-** will not use dynamically allocated memory.  The log message is stored in
-** a fixed-length buffer on the stack.  If the log message is longer than
+** will not use dynamically allocated memory.  The log mMessage is stored in
+** a fixed-length buffer on the stack.  If the log mMessage is longer than
 ** a few hundred characters, it will be truncated to the length of the
 ** buffer.
 */
@@ -8197,7 +8197,7 @@ SQLITE_API void sqlite3_stmt_scanstatus_reset(sqlite3_stmt*);
 **
 ** ^Otherwise, if no error occurs, [sqlite3_db_cacheflush()] returns SQLITE_OK.
 **
-** ^This function does not set the database handle error code or message
+** ^This function does not set the database handle error code or mMessage
 ** returned by the [sqlite3_errcode()] and [sqlite3_errmsg()] functions.
 */
 SQLITE_API int sqlite3_db_cacheflush(sqlite3*);
@@ -8963,7 +8963,7 @@ SQLITE_API int sqlite3session_changeset(
 ** If the operation successful, SQLITE_OK is returned. Otherwise, an SQLite
 ** error code. In this case, if argument pzErrMsg is not NULL, *pzErrMsg
 ** may be set to point to a buffer containing an English language error 
-** message. It is the responsibility of the caller to free this buffer using
+** mMessage. It is the responsibility of the caller to free this buffer using
 ** sqlite3_free().
 */
 SQLITE_API int sqlite3session_diff(
@@ -9541,7 +9541,7 @@ SQLITE_API void sqlite3changegroup_delete(sqlite3_changegroup*);
 ** </ul>
 **
 ** If there is no compatible table, it is not an error, but none of the
-** changes associated with the table are applied. A warning message is issued
+** changes associated with the table are applied. A warning mMessage is issued
 ** via the sqlite3_log() mechanism with the error code SQLITE_SCHEMA. At most
 ** one such warning is issued for each table in the changeset.
 **

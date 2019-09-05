@@ -66,11 +66,11 @@ private:
     const std::string EGG_ANNOT_STD           = "annotation_std";
     const std::string EGG_ANNOT_APPEND        = ".emapper.annotations";
 
-    std::string _figure_dir;
-    std::string _proc_dir;
+    std::string mFigureDir;
+    std::string mProcDir;
     std::string _egg_out_dir;
-    std::string _eggnog_db_path;
-    std::string _out_hits;
+    std::string mEggnogDbPath;
+    std::string mOutHIts;
 
     static std::string EGG_EMAPPER_EXE;
     std::string eggnog_format(std::string);

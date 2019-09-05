@@ -32,6 +32,7 @@ Y or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #include "../ExceptionHandler.h"
 #include "../FileSystem.h"
 #include "../TerminalCommands.h"
+#include "../GraphingManager.h"
 //**************************************************************
 
 
@@ -51,36 +52,37 @@ Y or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * =====================================================================
  */
 EntapModule::ModVerifyData ModGeneMarkST::verify_files() {
-    ModVerifyData modVerifyData;
+    ModVerifyData modVerifyData;    // Data to return from verification process
 
     modVerifyData.files_exist = false;
 
     FS_dprint("Beginning to verify GeneMarkS-T module files...");
 
-    if (_pFileSystem->file_exists(_final_faa_path) && _pFileSystem->file_exists(_final_lst_path)) {
-        FS_dprint("Files found at: " + _final_faa_path + "\nand: " + _final_lst_path +
+    // If GeneMarkS-T has already been ran
+    if (mpFileSystem->file_exists(mFinalFaaPath) && mpFileSystem->file_exists(mFinalLstPath)) {
+        // Yes, files have been found and GeneMarkS-T has already been ran
+        FS_dprint("Files found at: " + mFinalFaaPath + "\nand: " + mFinalLstPath +
                 "\ncontinuing EnTAP with these files and skipping Frame Selection");
         modVerifyData.files_exist = true;
     } else {
-        FS_dprint("File not found at " + _final_faa_path + "\nor " + _final_lst_path +
+        // No, files not found. GeneMarkS-T needs to be ran
+        FS_dprint("File not found at " + mFinalFaaPath + "\nor " + mFinalLstPath +
                   " so continuing with Frame Selection");
     }
-    modVerifyData.output_paths = vect_str_t{_final_faa_path};
+    modVerifyData.output_paths = vect_str_t{mFinalFaaPath};
     return modVerifyData;
 }
 
 
 /**
  * ======================================================================
- * Function std::string ModGeneMarkST::execute(std::map<std::string, QuerySequence> &SEQUENCES)
+ * Function std::string ModGeneMarkST::execute()
  *
- * Description          - Calculates final statistical information after
- *                        completed execution
- *                      - Compiles stats on each stage of pipeline
+ * Description          - Will run GeneMarkS-T through PStreams terminal
+ *                        commands
+ *                      - 4/5 output files are expected (3 are required to continue to parsing)
  *
- * Notes                - None
- *
- * @param SEQUENCES     - Map of each query sequence + data
+ * Notes                - Fatal Error if an issue occurred during GeneMarkS-T execution
  *
  * @return              - None
  *
@@ -89,50 +91,48 @@ EntapModule::ModVerifyData ModGeneMarkST::verify_files() {
 void ModGeneMarkST::execute() {
     // Outfiles: file/path.faa, file/path.fnn
     // WARNING GeneMarkS-T assumes working directory as output right now
-    std::string     temp_lst_file;
-    std::string     temp_faa_file;
-    std::string     temp_fnn_file;
-    std::string     temp_hmm_file;
-    std::string     temp_gms_log_file;
-    std::string     genemark_cmd;
-    std::string     genemark_std_out;
-    std::string     line;
-    std::string     temp_name;
-    std::string     out_path;
-    int32           err_code;
-    TerminalData    terminalData;
+    std::string     temp_lst_file;      // Absolute path to output lst file from GeneMark (cwd)
+    std::string     temp_faa_file;      // Absolute path to output FAA file from GeneMark (cwd)
+    std::string     temp_fnn_file;      // Absolute path to output FNN file from GeneMark (cwd)
+    std::string     temp_hmm_file;      // Absolute path to output HMM file from GeneMark (cwd)
+    std::string     temp_gms_log_file;  // Absolute path to output log file from GeneMark (cwd)
+    std::string     genemark_cmd;       // Terminal comand for GeneMarkS-T
+    std::string     genemark_std_out;   // Standard output from GeneMark terminal run
+    std::string     line;               // Temp line string
+    int32           err_code;           // Terminal command error code
+    TerminalData    terminalData;       // Terminal command structure (Defined in TerminalCommands.h)
 
     // Set temporary outputs (these will be moved to FINAL outpaths
-    temp_faa_file     = PATHS(_pFileSystem->get_cur_dir(), _transcriptome_filename + FileSystem::EXT_FAA);
-    temp_fnn_file     = PATHS(_pFileSystem->get_cur_dir(), _transcriptome_filename + FileSystem::EXT_FNN);
-    temp_lst_file     = PATHS(_pFileSystem->get_cur_dir(), _transcriptome_filename + FileSystem::EXT_LST);
-    temp_hmm_file     = PATHS(_pFileSystem->get_cur_dir(), GENEMARK_HMM_FILE);
-    temp_gms_log_file = PATHS(_pFileSystem->get_cur_dir(), GENEMARK_LOG_FILE);
+    temp_faa_file     = PATHS(mpFileSystem->get_cur_dir(), mTranscriptomeFilename + FileSystem::EXT_FAA);
+    temp_fnn_file     = PATHS(mpFileSystem->get_cur_dir(), mTranscriptomeFilename + FileSystem::EXT_FNN);
+    temp_lst_file     = PATHS(mpFileSystem->get_cur_dir(), mTranscriptomeFilename + FileSystem::EXT_LST);
+    temp_hmm_file     = PATHS(mpFileSystem->get_cur_dir(), GENEMARK_HMM_FILE);
+    temp_gms_log_file = PATHS(mpFileSystem->get_cur_dir(), GENEMARK_LOG_FILE);
 
-    genemark_cmd     = _exe_path + " -faa -fnn " + _in_hits;
-    genemark_std_out = PATHS(_mod_out_dir, GENEMARK_STD_OUT);
+    genemark_cmd     = mExePath + " -faa -fnn " + mInHits;
+    genemark_std_out = PATHS(mModOutDir, GENEMARK_STD_OUT);
 
     terminalData.command        = genemark_cmd;
     terminalData.print_files    = true;
     terminalData.base_std_path  = genemark_std_out;
 
-    // WARNING!!! GeneMarkS-T output is always in the CWD
+    // !!!WARNING!!! GeneMarkS-T output is always in the CWD
     err_code = TC_execute_cmd(terminalData);
     if (err_code != 0 ) {
         throw ExceptionHandler("Error in running GeneMarkST at file located at: " +
-                               _in_hits + "\nGeneMarkST Error:\n" + terminalData.err_stream,
+                               mInHits + "\nGeneMarkST Error:\n" + terminalData.err_stream,
                                ERR_ENTAP_RUN_GENEMARK);
     }
     FS_dprint("Success!");
 
     // Ensure files successfully printed
-    if (!_pFileSystem->file_exists(temp_faa_file)) {
+    if (!mpFileSystem->file_exists(temp_faa_file)) {
         throw ExceptionHandler("Error unable to find GeneMarkS-T file located at: " + temp_faa_file,
                                ERR_ENTAP_RUN_GENEMARK);
-    } else if (!_pFileSystem->file_exists(temp_fnn_file)) {
+    } else if (!mpFileSystem->file_exists(temp_fnn_file)) {
         throw ExceptionHandler("Error unable to find GeneMarkS-T file located at: " + temp_fnn_file,
                                ERR_ENTAP_RUN_GENEMARK);
-    } else if (!_pFileSystem->file_exists(temp_lst_file)) {
+    } else if (!mpFileSystem->file_exists(temp_lst_file)) {
         throw ExceptionHandler("Error unable to find GeneMarkS-T file located at: " + temp_lst_file,
                                ERR_ENTAP_RUN_GENEMARK);
     }
@@ -141,12 +141,12 @@ void ModGeneMarkST::execute() {
                                             "\nFNN File: " + temp_fnn_file+
                                             "\nLST File: " + temp_lst_file);
 
-    // Format genemarks-t output (remove blank lines)
+    // Format genemarks-t output (remove blank lines for user)
     // Format FNN file
     FS_dprint("Formatting GeneMarkST files...");
     try {
         std::ifstream in_file_fnn(temp_fnn_file);
-        std::ofstream out_file_fnn(_final_fnn_path);
+        std::ofstream out_file_fnn(mFinalFnnPath);
         while(getline(in_file_fnn, line)) {
             if (!line.empty()) {
                 out_file_fnn << line << '\n';
@@ -157,7 +157,7 @@ void ModGeneMarkST::execute() {
 
         // Format FAA file
         std::ifstream in_file_faa(temp_faa_file);
-        std::ofstream out_file_faa(_final_faa_path);
+        std::ofstream out_file_faa(mFinalFaaPath);
         while(getline(in_file_faa, line)) {
             if (!line.empty()) {
                 out_file_faa << line << '\n';
@@ -171,19 +171,19 @@ void ModGeneMarkST::execute() {
     }
 
     // Delete temporary files (ignore errors)
-    _pFileSystem->delete_file(temp_fnn_file);
-    _pFileSystem->delete_file(temp_faa_file);
+    mpFileSystem->delete_file(temp_fnn_file);
+    mpFileSystem->delete_file(temp_faa_file);
 
     // Move other output files to module directory
-    if (!_pFileSystem->rename_file(temp_lst_file, _final_lst_path)) {
+    if (!mpFileSystem->rename_file(temp_lst_file, mFinalLstPath)) {
         throw ExceptionHandler("Error moving GeneMarkS-T results", ERR_ENTAP_RUN_GENEMARK_MOVE);
     }
 
     // move log file, ignore errors not needed for execution
-    _pFileSystem->rename_file(temp_gms_log_file, _final_gmst_log_path);
+    mpFileSystem->rename_file(temp_gms_log_file, mFinalGmstLogPath);
 
     // Does not always exist, not needed for final calculation so ignore errors
-    _pFileSystem->rename_file(temp_hmm_file,_final_hmm_path);
+    mpFileSystem->rename_file(temp_hmm_file,mFinalHmmPath);
     FS_dprint("Success!");
 }
 
@@ -193,8 +193,12 @@ void ModGeneMarkST::execute() {
  * Function void ModGeneMarkST::parse()
  *
  * Description          - Parses/calculates statistics of GeneMark output
+ *                        and prints for user
+ *                      - Calls Graphing Manager to graph results
+ *                      - Prints genes (partial, complete, internal...) to different files
+ *                      - Updates QueryData structure with new frame information (sequence, frame)
  *
- * Notes                - None
+ * Notes                - Fatal Error if any issue occurs
  *
  *
  * @return              - None
@@ -205,71 +209,79 @@ void ModGeneMarkST::parse() {
     // generate maps, query->sequence
     FS_dprint("Beginning to calculate Genemark statistics...");
 
-    std::string                             out_removed_path;
-    std::string                             out_internal_path;
-    std::string                             out_complete_path;
-    std::string                             out_partial_path;
+    std::string                             out_removed_path;       // Absolute base path to removed sequences (no frame)
+    std::string                             out_internal_path;      // Absolute base path to "internal" genes
+    std::string                             out_complete_path;      // Absolute base path to "complete" genes
+    std::string                             out_partial_path;       // Absolute base path to "partial" genes
     std::string                             figure_results_path;
     std::string                             figure_results_png;
     std::string                             figure_removed_path;
     std::string                             figure_removed_png;
-    std::string                             min_removed_seq;
-    std::string                             min_kept_seq;
-    std::string                             max_removed_seq;
-    std::string                             max_kept_seq;
-    std::stringstream                       stat_output;
-    std::map<std::string, std::ofstream*>   file_map_faa;
-    std::map<std::string, std::ofstream*>   file_map_fnn;
-    std::map<std::string, uint32>           count_map;
-    std::vector<uint16>                     all_kept_lengths;
-    std::vector<uint16>                     all_lost_lengths;
-    uint16                                  length;
-    fp32                                    avg_selected;
-    fp32                                    avg_lost;
-    std::pair<uint64, uint64>               kept_n;
-    GraphingData                            graphingStruct;
+    std::string                             min_removed_seq;        // Sequence ID of shortest removed sequence
+    std::string                             min_kept_seq;           // Sequence ID of shortest kept sequence
+    std::string                             max_removed_seq;        // Sequence ID of longest removed sequence
+    std::string                             max_kept_seq;           // Sequence ID of longest kept sequence
+    std::stringstream                       stat_output;            // Output string stream for statistics to Log File
+    std::map<std::string, std::ofstream*>   file_map_faa;           // File map of FAA sequence and frame types
+    std::map<std::string, std::ofstream*>   file_map_fnn;           // File map of FNN sequences ONLY (NO frame types)
+    std::map<std::string, uint32>           count_map;              // Count of sequence types
+    std::vector<uint16>                     all_kept_lengths;       // Total nucleotide length of kept sequences
+    std::vector<uint16>                     all_lost_lengths;       // Total nucleotide length of removed sequences
+    uint16                                  length;                 // Temp nucleotide length variable
+    fp32                                    avg_selected;           // Average nucleotide length of kept sequences
+    fp32                                    avg_lost;               // Average nucleotide length of removed sequences
+    uint32                                  min_removed;            // bp count of smallest removed sequence
+    uint32                                  min_selected;           // bp count of smallest kept sequence
+    uint32                                  max_removed;            // bp count of largest removed sequence
+    uint32                                  max_selected;           // bp count of largest kept sequence
+    uint32                                  count_selected;         // Number of kept genes (frame was found)
+    uint32                                  count_removed;          // Number of removed genes (frame was NOT found)
+    uint64                                  total_removed_len;      // Total bp count of removed sequences
+    uint64                                  total_kept_len;         // Total bp count of kept sequences
+    std::pair<uint64, uint64>               kept_n;                 // N value of kept sequences
+    GraphingData                            graphingStruct;         // Structure containing information for Graphing Manager
 
     // Ensure paths we need exist
-    if (!_pFileSystem->file_exists(_final_faa_path)) {
-        throw ExceptionHandler("Final GeneMarkST output not found at: " + _final_faa_path,
+    if (!mpFileSystem->file_exists(mFinalFaaPath)) {
+        throw ExceptionHandler("Final GeneMarkST output not found at: " + mFinalFaaPath,
             ERR_ENTAP_RUN_GENEMARK_PARSE);
-    } else if (!_pFileSystem->file_exists(_final_lst_path)) {
-        throw ExceptionHandler("Final GeneMarkST lst output not found at: " + _final_lst_path,
+    } else if (!mpFileSystem->file_exists(mFinalLstPath)) {
+        throw ExceptionHandler("Final GeneMarkST lst output not found at: " + mFinalLstPath,
                                ERR_ENTAP_RUN_GENEMARK_PARSE);
-    } else if (!_pFileSystem->file_exists(_final_fnn_path)) {
-        throw ExceptionHandler("Final GeneMarkST lst output not found at: " + _final_fnn_path,
+    } else if (!mpFileSystem->file_exists(mFinalFnnPath)) {
+        throw ExceptionHandler("Final GeneMarkST lst output not found at: " + mFinalFnnPath,
                                ERR_ENTAP_RUN_GENEMARK_PARSE);
     }
 
-    // Set up outpaths, directories are created by super
-    out_removed_path    = PATHS(_proc_dir, FRAME_SELECTION_LOST);
-    out_internal_path   = PATHS(_proc_dir, FRAME_SELECTION_INTERNAL);
-    out_complete_path   = PATHS(_proc_dir, FRAME_SELECTION_COMPLTE);
-    out_partial_path    = PATHS(_proc_dir, FRAME_SELECTION_PARTIAL);
-    figure_removed_path = PATHS(_figure_dir, GRAPH_TEXT_REF_COMPAR);
-    figure_removed_png  = PATHS(_figure_dir, GRAPH_FILE_REF_COMPAR);
-    figure_results_path = PATHS(_figure_dir, GRAPH_TEXT_FRAME_RESUTS);
-    figure_results_png  = PATHS(_figure_dir, GRAPH_FILE_FRAME_RESUTS);
+    // Set up outpaths, directories are already created by super
+    out_removed_path    = PATHS(mProcDir, FRAME_SELECTION_LOST);
+    out_internal_path   = PATHS(mProcDir, FRAME_SELECTION_INTERNAL);
+    out_complete_path   = PATHS(mProcDir, FRAME_SELECTION_COMPLTE);
+    out_partial_path    = PATHS(mProcDir, FRAME_SELECTION_PARTIAL);
+    figure_removed_path = PATHS(mFigureDir, GRAPH_TEXT_REF_COMPAR);
+    figure_removed_png  = PATHS(mFigureDir, GRAPH_FILE_REF_COMPAR);
+    figure_results_path = PATHS(mFigureDir, GRAPH_TEXT_FRAME_RESUTS);
+    figure_results_png  = PATHS(mFigureDir, GRAPH_FILE_FRAME_RESUTS);
 
     // all nucleotide lengths
-    uint32 min_removed=0xFFFFFFFF;
-    uint32 min_selected=0xFFFFFFFF;
-    uint32 max_removed=0;
-    uint32 max_selected=0;
-    uint64 total_removed_len=0;
-    uint64 total_kept_len=0;
+    min_removed=0xFFFFFFFF;
+    min_selected=0xFFFFFFFF;
+    max_removed=0;
+    max_selected=0;
+    total_removed_len=0;
+    total_kept_len=0;
 
     // Sequence count
-    uint32 count_selected=0;
-    uint32 count_removed=0;
+    count_selected=0;
+    count_removed=0;
 
     try {
         // Parse protein file (.faa)
-        std::map<std::string,frame_seq> protein_map = genemark_parse_fasta(_final_faa_path);
+        std::map<std::string,FrameData> protein_map = genemark_parse_fasta(mFinalFaaPath);
         // Parse nucleotide file (.fnn) TODO cleanup/ move to query data just throwing in for now
-        std::map<std::string,frame_seq> nucleotide_map = genemark_parse_fasta(_final_fnn_path);
+        std::map<std::string,FrameData> nucleotide_map = genemark_parse_fasta(mFinalFnnPath);
         // Parse lst file to get info for each sequence (partial, internal...)
-        genemark_parse_lst(_final_lst_path,protein_map);
+        genemark_parse_lst(mFinalLstPath,protein_map);
 
         std::ofstream file_figure_removed(figure_removed_path,std::ios::out | std::ios::app);
         std::ofstream file_figure_results(figure_results_path,std::ios::out | std::ios::app);
@@ -305,21 +317,23 @@ void ModGeneMarkST::parse() {
                 {FRAME_SELECTION_THREE_FLAG   ,0 },
         };
 
-        for (auto& pair : *_pQUERY_DATA->get_sequences_ptr()) {
-            std::map<std::string,frame_seq>::iterator p_it = protein_map.find(pair.first);
-            if (!pair.second->is_kept()) continue; // Skip seqs that were lost to expression
+        for (auto& pair : *mpQueryData->get_sequences_ptr()) {
+            std::map<std::string,FrameData>::iterator p_it = protein_map.find(pair.first);
+            if (!pair.second->is_kept()) continue; // Skip seqs that were lost to expression analysis
             if (p_it != protein_map.end()) {
                 // Kept sequence, either partial, complete, or internal
                 count_selected++;
                 pair.second->set_sequence_p(p_it->second.sequence); // Sets isprotein flag
                 pair.second->setFrame(p_it->second.frame_type);
 
+                // Update nucleotide sequence
                 auto n_it = nucleotide_map.find(pair.first);
                 if (n_it != nucleotide_map.end()) {
                     pair.second->set_sequence_n(n_it->second.sequence);
                 }
 
-                length = (uint16) pair.second->getSeq_length();  // Nucleotide sequence length
+                // Get Nucleotide sequence length for statistic purposes
+                length = (uint16) pair.second->get_sequence_length();
 
                 if (length < min_selected) {
                     min_selected = length;
@@ -329,9 +343,14 @@ void ModGeneMarkST::parse() {
                     max_selected = length;
                     max_kept_seq = pair.first;
                 }
-                total_kept_len += length;
-                all_kept_lengths.push_back(length);
+
+                total_kept_len += length;            // Update total transcriptome length for statistics
+                all_kept_lengths.push_back(length);  // Update individual lengths for statistics
+
+                // Update figure
                 file_figure_removed << GRAPH_KEPT_FLAG << '\t' << std::to_string(length) << std::endl;
+
+                // Print nucleotide + protein sequences to files
                 std::map<std::string, std::ofstream*>::iterator file_it = file_map_faa.find(p_it->second.frame_type);
                 std::map<std::string, std::ofstream*>::iterator file_it_n = file_map_fnn.find(p_it->second.frame_type);
                 if (file_it != file_map_faa.end() && file_it_n != file_map_faa.end()) {
@@ -343,11 +362,12 @@ void ModGeneMarkST::parse() {
                 }
 
             } else {
-                // Lost sequence
+                // Lost sequence from Frame Selection process
                 count_removed++;
                 pair.second->QUERY_FLAG_CLEAR(QuerySequence::QUERY_FRAME_KEPT);
                 *file_map_fnn[FRAME_SELECTION_LOST_FLAG] << pair.second->get_sequence_n() << std::endl;
-                length = (uint16) pair.second->getSeq_length();  // Nucleotide sequence length
+
+                length = (uint16) pair.second->get_sequence_length();  // Nucleotide sequence length for statistics
 
                 if (length < min_removed) {
                     min_removed = length;
@@ -363,7 +383,7 @@ void ModGeneMarkST::parse() {
             }
         }
 
-        // Cleanup/close files
+        // Cleanup/close protein files
         for(auto& pair : file_map_faa) {
             if (pair.first.compare(FRAME_SELECTION_THREE_FLAG)!=0){
                 pair.second->close();
@@ -371,6 +391,7 @@ void ModGeneMarkST::parse() {
                 pair.second = 0;
             }
         }
+        // Cleanup.close nucleotide files
         for(auto& pair : file_map_fnn) {
             if (pair.first.compare(FRAME_SELECTION_THREE_FLAG)!=0){
                 pair.second->close();
@@ -379,19 +400,19 @@ void ModGeneMarkST::parse() {
             }
         }
 
-        // Ensure some sequences were kept and not all removed before we continue
-        if (count_selected == 0) {
-            throw ExceptionHandler("No sequences were kept after Frame Selection!",
+        // Ensure some sequences were kept and not all removed before we continue with printing stats, etc...
+        if (count_selected <= MINIMUM_KEPT_SEQUENCES) {
+            throw ExceptionHandler("Number of Kept sequences were under minimum after Frame Selection process, exiting...",
                 ERR_ENTAP_RUN_GENEMARK_PARSE);
         }
 
         // Calculate and print stats
         FS_dprint("Beginning to calculate statistics...");
         avg_selected = (fp32)total_kept_len / count_selected;
-        _pFileSystem->format_stat_stream(stat_output, "Frame Selected Transcripts (GeneMarkS-T)");
+        mpFileSystem->format_stat_stream(stat_output, "Frame Selected Transcripts (GeneMarkS-T)");
         stat_output <<
                     "Total sequences frame selected: "      << count_selected          <<
-                    "\n\tTranslated protein sequences: "    << _final_faa_path              <<
+                    "\n\tTranslated protein sequences: "    << mFinalFaaPath              <<
                     "\nTotal sequences removed (no frame): "<< count_removed           <<
                     "\n\tFrame selected CDS removed: "      << out_removed_path        <<
                     "\nTotal of "                           <<
@@ -403,9 +424,9 @@ void ModGeneMarkST::parse() {
                     "\nTotal of "                           <<
                     count_map[FRAME_SELECTION_INTERNAL_FLAG]<<" internal genes:\n\t" << out_internal_path<<"\n\n";
 
-        _pFileSystem->format_stat_stream(stat_output, "Frame Selection: New Reference Transcriptome Statistics");
-
-        kept_n = _pQUERY_DATA->calculate_N_vals(all_kept_lengths,total_kept_len);
+        // Determine statistics for NEW reference transcriptome (following frame selection process)
+        mpFileSystem->format_stat_stream(stat_output, "Frame Selection: New Reference Transcriptome Statistics");
+        kept_n = mpQueryData->calculate_N_vals(all_kept_lengths,total_kept_len);
         stat_output <<
                     "\nTotal sequences: "      << count_selected <<
                     "\nTotal length of transcriptome(bp): "      << total_kept_len <<
@@ -415,10 +436,11 @@ void ModGeneMarkST::parse() {
                     "\nLongest sequence(bp): " << max_selected   << " (" << max_kept_seq << ")" <<
                     "\nShortest sequence(bp): "<< min_selected   << " (" << min_kept_seq << ")";
 
+        // Determine statistics for removed sequences following Frame Selection process
         if (count_removed > 0) {
             avg_lost     = (fp32)total_removed_len / count_removed;
             std::pair<uint64, uint64> removed_n =
-                    _pQUERY_DATA->calculate_N_vals(all_lost_lengths,total_removed_len);
+                    mpQueryData->calculate_N_vals(all_lost_lengths,total_removed_len);
             stat_output <<
                         "\n\nRemoved Sequences (no frame):"       <<
                         "\nTotal sequences: "                     << count_removed    <<
@@ -431,7 +453,7 @@ void ModGeneMarkST::parse() {
             stat_output << "WARNING: No sequences were removed from Frame Selection";
         }
         std::string stat_out_msg = stat_output.str();
-        _pFileSystem->print_stats(stat_out_msg);
+        mpFileSystem->print_stats(stat_out_msg);
         FS_dprint("Success!");
 
         //---------------------- Figure handling ----------------------//
@@ -447,17 +469,17 @@ void ModGeneMarkST::parse() {
         graphingStruct.fig_out_path   = figure_results_png;
         graphingStruct.software_flag  = GRAPH_FRAME_FLAG;
         graphingStruct.graph_type     = GRAPH_PIE_RESULTS_FLAG;
-        _pGraphingManager->graph(graphingStruct);
+        mpGraphingManager->graph(graphingStruct);
 
         graphingStruct.text_file_path = figure_removed_path;
         graphingStruct.graph_title    = GRAPH_TITLE_REF_COMPAR;
         graphingStruct.fig_out_path   = figure_removed_png;
         graphingStruct.graph_type     = GRAPH_COMP_BOX_FLAG;
-        _pGraphingManager->graph(graphingStruct);
+        mpGraphingManager->graph(graphingStruct);
         FS_dprint("Success!");
         //-----------------------------------------------------------//
 
-    } catch (ExceptionHandler &e) {throw e;}
+    } catch (const ExceptionHandler &e) {throw e;}
     FS_dprint("Success! Parsing complete");
 }
 
@@ -467,60 +489,56 @@ void ModGeneMarkST::parse() {
  * Function ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_protein
  *                                                  (std::string &protein)
  *
- * Description          - Analyzes protein file to pull protein sequences
- *                      - Will be added to overall data flow
- *
+ * Description          - Analyzes fasta file to pull protein/nucleotide sequences that
+ *                        will be added to QueryData
  * Notes                - None
  *
- * @param protein       - Path to protein (.faa) file
+ * @param protein       - Absolute path to fasta (.faa or .fnn) file
  *
- * @return              - Structure containing protein sequence with seqID
+ * @return              - Structure containing protein sequence keyed to sequence ID
  *
  * =====================================================================
  */
-ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_fasta(std::string &protein) {
-    FS_dprint("Parsing fasta file at: " + protein);
+ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_fasta(std::string &fasta) {
+    FS_dprint("Parsing GeneMarkS-T FASTA file at: " + fasta);
 
-    frame_map_t     protein_map;
-    frame_seq       protein_sequence;
-    std::string     line;
-    std::string     sequence;
-    std::string     seq_id;
-    std::string     sub;
+    frame_map_t     protein_map;        // Map of new data from sequences  keyed to ID
+    FrameData       protein_sequence;   // Data of translated sequences (sequence, frame type, etc...)
+    std::string     line;               // Temp string
+    std::string     sequence;           // FAA or FNN of translated sequence
+    std::string     seq_id;             // ID of translated sequence
     uint16          first;
     uint16          second;
-    uint16          seq_len;
-    uint16          line_chars;
 
     // Filepath checked before
-    std::ifstream in_file(protein);
+    std::ifstream in_file(fasta);
     while(true) {
         getline(in_file,line);
         if (line.empty() && !in_file.eof()) continue;
-        if (line.find(">")==0 || in_file.eof()) {
+        if (line.find(FileSystem::FASTA_FLAG)==0 || in_file.eof()) {
             if (!seq_id.empty()) {
                 if (in_file.eof()) {
                     sequence += line + "\n";
                 }
-                sub        = sequence.substr(sequence.find("\n")+1);
-                line_chars = (uint16) std::count(sub.begin(),sub.end(),'\n');
-                seq_len    = (uint16) (sub.length() - line_chars);
-                if (sequence.at(sequence.length()-1) == '\n')
-                    sequence.pop_back();
-                protein_sequence = {seq_len,sequence, ""};
+                protein_sequence = {sequence, ""};
                 protein_map.emplace(seq_id,protein_sequence);
             }
             if (in_file.eof()) break;
-            first    = (uint16) (line.find(">")+1);
-            second   = (uint16) line.find("\t");
-            seq_id   = line.substr(first,second-first);
-            sequence = ">" + seq_id + "\n";
+            // GeneMarkS-T adds a tab character within the sequence headers
+            // Remove this to find the 'actual' sequence header we can reference against
+            // our original transcriptome
+            first    = (uint16) (line.find(FileSystem::FASTA_FLAG)+1);
+            second   = (uint16) line.find('\t');
+            if (first != std::string::npos || second != std::string::npos) {
+                seq_id   = line.substr(first,line.find('\t')-first);
+                sequence = FileSystem::FASTA_FLAG + seq_id + "\n";
+            }
         } else {
             sequence += line + "\n";
         }
     }
 
-    FS_dprint("Success!");
+    FS_dprint("Success! File parsed");
     in_file.close();
     return protein_map;
 }
@@ -531,8 +549,9 @@ ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_fasta(std::string &prot
  * Function void ModGeneMarkST::genemark_parse_lst(std::string &lst_path,
  *                                                 frame_map_t &current_map)
  *
- * Description          - Parses .lst file produced from GeneMark run
- *                      - Will add this information to map
+ * Description          - Parses .lst file produced from GeneMark run to get Frame types
+ *                        (partial, complete, etc...)
+ *                      - Will update the current_map with frame type information
  *
  * Notes                - None
  *
@@ -544,7 +563,7 @@ ModGeneMarkST::frame_map_t ModGeneMarkST::genemark_parse_fasta(std::string &prot
  * =====================================================================
  */
 void ModGeneMarkST::genemark_parse_lst(std::string &lst_path, frame_map_t &current_map) {
-    FS_dprint("Parsing file at: " + lst_path);
+    FS_dprint("Parsing GeneMarkS-T LST file at: " + lst_path);
 
     std::string     frame;
     std::string     line;
@@ -559,11 +578,11 @@ void ModGeneMarkST::genemark_parse_lst(std::string &lst_path, frame_map_t &curre
         if (line.empty()) continue;
         line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
         if (line.find("FASTA") == 0) {
-            first = (uint16) (line.find(":") + 1);
+            first = (uint16) (line.find(':') + 1);
             seq_id = line.substr(first);
         } else if (isdigit(line.at(0))) {
-            prime_5 = line.find("<") != std::string::npos;
-            prime_3 = line.find(">") != std::string::npos;
+            prime_5 = line.find('<') != std::string::npos;
+            prime_3 = line.find('>') != std::string::npos;
             if (prime_5 && prime_3) {
                 frame = FRAME_SELECTION_INTERNAL_FLAG;
             } else if (!prime_5 && !prime_3) {
@@ -571,12 +590,12 @@ void ModGeneMarkST::genemark_parse_lst(std::string &lst_path, frame_map_t &curre
             } else if (prime_5) {
                 frame = FRAME_SELECTION_FIVE_FLAG;
             } else frame = FRAME_SELECTION_THREE_FLAG;
-            std::map<std::string, frame_seq>::iterator it = current_map.find(seq_id);
+            std::map<std::string, FrameData>::iterator it = current_map.find(seq_id);
             if (it != current_map.end()) {
                 it->second.frame_type = frame;
             } else {
                 throw ExceptionHandler("Sequence: " + seq_id + " not found in map during parsing of "
-                                       "lst file at: " + _final_lst_path,
+                                       "lst file at: " + mFinalLstPath,
                                        ERR_ENTAP_RUN_GENEMARK_PARSE);
             }
         }
@@ -584,24 +603,62 @@ void ModGeneMarkST::genemark_parse_lst(std::string &lst_path, frame_map_t &curre
     FS_dprint("Success!");
 }
 
+/**
+ * ======================================================================
+ * Function void ModGeneMarkST::~ModGeneMarkST()
+ *
+ * Description          - Cleanup
+ *
+ * Notes                - Destructor
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 ModGeneMarkST::~ModGeneMarkST() {
     FS_dprint("Killing object - ModGeneMarkST");
 }
 
+/**
+ * ======================================================================
+ * Function void ModGeneMarkST::ModGeneMarkST()
+ *
+ * Description          - Initializes ModGeneMarkST object calling superclass AbstractFrame
+ *                      - Sets final paths that GeneMarkS-T will create
+ *
+ * Notes                - Constructor
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 ModGeneMarkST::ModGeneMarkST(std::string &execution_stage_path, std::string &in_hits,
                              EntapDataPtrs &entap_data, std::string &exe) :
     AbstractFrame(execution_stage_path, in_hits, entap_data, "GeneMarkS-T", exe) {
-    _transcriptome_filename = _pFileSystem->get_filename(in_hits, true);
+    mTranscriptomeFilename = mpFileSystem->get_filename(in_hits, true);
 
     // Initialize FINAL output file paths
     // GenemarkS-T prints to CWD, they will be moved to these paths after execution
-    _final_faa_path = PATHS(_mod_out_dir, _transcriptome_filename) + FileSystem::EXT_FAA;
-    _final_fnn_path = PATHS(_mod_out_dir, _transcriptome_filename) + FileSystem::EXT_FNN;
-    _final_lst_path = PATHS(_mod_out_dir, _transcriptome_filename + FileSystem::EXT_LST);
-    _final_gmst_log_path = PATHS(_mod_out_dir, GENEMARK_LOG_FILE);
-    _final_hmm_path = PATHS(_mod_out_dir, GENEMARK_HMM_FILE);
+    mFinalFaaPath = PATHS(mModOutDir, mTranscriptomeFilename) + FileSystem::EXT_FAA;
+    mFinalFnnPath = PATHS(mModOutDir, mTranscriptomeFilename) + FileSystem::EXT_FNN;
+    mFinalLstPath = PATHS(mModOutDir, mTranscriptomeFilename + FileSystem::EXT_LST);
+    mFinalGmstLogPath = PATHS(mModOutDir, GENEMARK_LOG_FILE);
+    mFinalHmmPath = PATHS(mModOutDir, GENEMARK_HMM_FILE);
 }
 
+/**
+ * ======================================================================
+ * Function void ModGeneMarkST::get_final_faa()
+ *
+ * Description          - Returns absolute path to final faa (protein) file
+ *                        created from GeneMarkS-T
+ *
+ * Notes                - None
+ *
+ * @return              - Absolute path to final faa (protein) file
+ *
+ * =====================================================================
+ */
 std::string ModGeneMarkST::get_final_faa() {
-    return _final_faa_path;
+    return mFinalFaaPath;
 }

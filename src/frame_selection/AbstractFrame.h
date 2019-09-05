@@ -30,7 +30,6 @@
 #define ENTAP_ABSTRACTFRAME_H
 
 //*********************** Includes *****************************
-#include "../QuerySequence.h"
 #include "../QueryData.h"
 #include "../EntapModule.h"
 //**************************************************************
@@ -54,30 +53,6 @@ class AbstractFrame : public EntapModule {
 
 public:
 
-/**
- * ======================================================================
- * Function AbstractFrame(std::string &exe, std::string &out,
- *                        std::string &in, std::string &proc,
-                          std::string &fig, std::string &frame,
-                          GraphingManager *graphing, QueryData *queryData)
- *
- * Description          - Constructor for Abstract frame selection class
- *                      - Initializes protected member variables for
- *                        expression modules
- *
- * Notes                - Constructor
- *
- * @param exe           - Path to execution directory (EnTAP, unused)
- * @param out           - Path to main outfiles directory (unused)
- * @param in            - Path to filtered transcriptome
- * @param proc          - Path to processed directory (within genemark for now)
- * @param frame         - Path to figure directory (within genemark for now)
- * @param graphing      - Ptr to graphing manager
- * @param query         - Ptr to query data
- *
- * @return              - None
- * ======================================================================
- */
     AbstractFrame(std::string &execution_stage_path, std::string &in_hits,
                   EntapDataPtrs &entap_data, std::string module_name, std::string &exe);
 
@@ -86,6 +61,9 @@ public:
     virtual void execute() = 0;
     virtual void parse() = 0;
     virtual std::string get_final_faa() = 0;
+
+protected:
+    const uint16 MINIMUM_KEPT_SEQUENCES = 0;        // Minimum required kept sequences before continuing pipeline
 
 };
 

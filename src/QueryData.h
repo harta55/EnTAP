@@ -36,6 +36,7 @@
 // Forward Declarations
 class QueryAlignment;
 
+typedef std::unordered_map<std::string, QuerySequence*> QUERY_MAP_T;
 
 class QueryData {
 
@@ -60,7 +61,7 @@ public:
 
     std::pair<uint16, uint16> calculate_N_vals(std::vector<uint16>&,uint64);
     std::string trim_sequence_header(std::string&, std::string);
-    void final_statistics(std::string&, std::vector<uint16>&);
+    void final_statistics(std::string& outpath);
     void print_final_output();
 
     // Output routines

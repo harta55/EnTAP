@@ -34,27 +34,33 @@
 
 class ModGeneMarkST : public AbstractFrame{
 
-struct frame_seq {
-    unsigned long length;
-    std::string sequence;
-    std::string frame_type;
+// Data pulled from GeneMarkS-T FASTA files
+struct FrameData {
+    std::string sequence;   // Sequence (either nucleotide protein) WITH sequence ID
+    std::string frame_type; // Frame type (partial, removed, 5', 3', complete)
 };
-typedef std::map<std::string,ModGeneMarkST::frame_seq> frame_map_t;
+typedef std::map<std::string,ModGeneMarkST::FrameData> frame_map_t;
 
 public:
+
+    //******************* Public Functions *********************
     ModGeneMarkST(std::string &execution_stage_path, std::string &in_hits,
                   EntapDataPtrs &entap_data, std::string &exe);
-
     ~ModGeneMarkST();
-
     virtual ModVerifyData verify_files() override ;
     virtual void execute() override ;
     virtual void parse() override ;
-
     virtual std::string get_final_faa() override ;
+    //**********************************************************
 
 private:
 
+    //****************** Private Functions *********************
+    frame_map_t genemark_parse_fasta(std::string& fasta);
+    void genemark_parse_lst(std::string &, std::map<std::string, FrameData>&);
+    //**********************************************************
+
+    //**************** Private Const Variables *****************
     const std::string GRAPH_TITLE_FRAME_RESULTS     = "Frame_Selection_ORFs";
     const std::string GRAPH_FILE_FRAME_RESUTS       = "frame_results_pie.png";
     const std::string GRAPH_TEXT_FRAME_RESUTS       = "frame_results_pie.txt";
@@ -80,17 +86,16 @@ private:
     const std::string FRAME_SELECTION_THREE_FLAG    = "Partial 3 Prime";
     const std::string FRAME_SELECTION_COMPLETE_FLAG = "Complete";
     const std::string FRAME_SELECTION_INTERNAL_FLAG = "Internal";
+    //**********************************************************
 
-    std::string _final_faa_path;
-    std::string _final_fnn_path;
-    std::string _final_lst_path;
-    std::string _final_gmst_log_path;
-    std::string _final_hmm_path;
-    std::string _transcriptome_filename;    // Filename of input transcriptome
-
-
-    frame_map_t genemark_parse_fasta(std::string& path);
-    void genemark_parse_lst(std::string &, std::map<std::string, frame_seq>&);
+    //****************** Private Variables *********************
+    std::string mFinalFaaPath;      // Absolute path to FAA (protein) file produced from GeneMarkS-T
+    std::string mFinalFnnPath;      // Absolute path to FNN (nucleotide) file produced from GeneMarkS-T
+    std::string mFinalLstPath;      // Absolute path to .lst file produced from GeneMarkS-T
+    std::string mFinalGmstLogPath;  // Absolute path to gmst file produced from GeneMarkS-T
+    std::string mFinalHmmPath;      // Absolute path to HMM file produced from GeneMarkS-T
+    std::string mTranscriptomeFilename;    // Filename of input transcriptome
+    //**********************************************************
 };
 
 

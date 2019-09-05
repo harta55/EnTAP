@@ -27,8 +27,8 @@
 
 #ifndef ENTAP_GRAPHINGMANAGER_H
 #define ENTAP_GRAPHINGMANAGER_H
-#include <iostream>
-#include "EntapGlobals.h"
+
+#include "common.h"
 
 struct  GraphingData{
     std::string     text_file_path;
@@ -54,8 +54,8 @@ private:
     const std::string FLAG_TITLE        = "-t";
     const std::string FLAG_OUT_PATH     = "-p";
 
-    std::string _graph_path;
-    bool _graphing_enabled;
+    std::string mGraphingPath;  // Path to graphing script
+    bool mGraphingEnabled;      // TRUE if graphing is enabled on current system
 
 
 };

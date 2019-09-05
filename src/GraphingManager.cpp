@@ -53,14 +53,14 @@ GraphingManager::GraphingManager(std::string path) {
 
     FS_dprint("Spawn Object - GraphingManager");
 
-    _graph_path = path;
+    mGraphingPath = path;
     cmd = "python " + path + " -s -1 -g -1 -i /temp -t temp";
 
     terminalData.command = cmd;
     terminalData.print_files = false;
 
-    _graphing_enabled = TC_execute_cmd(terminalData) == 0;
-    if (_graphing_enabled) {
+    mGraphingEnabled = TC_execute_cmd(terminalData) == 0;
+    if (mGraphingEnabled) {
         FS_dprint("Graphing is supported");
     } else FS_dprint("Graphing is NOT supported");
 }
@@ -82,7 +82,7 @@ GraphingManager::GraphingManager(std::string path) {
  * =====================================================================
  */
 void GraphingManager::graph(GraphingData& graphingStruct) {
-    if (!_graphing_enabled) return;
+    if (!mGraphingEnabled) return;
 
     std::unordered_map<std::string,std::string>     cmd_map;
     std::string                                     graphing_cmd;
@@ -94,7 +94,7 @@ void GraphingManager::graph(GraphingData& graphingStruct) {
     cmd_map[FLAG_SOFT]       = std::to_string(graphingStruct.software_flag);
     cmd_map[FLAG_GRAPH]      = std::to_string(graphingStruct.graph_type);
 
-    graphing_cmd = generate_command(cmd_map, "python " + _graph_path);
+    graphing_cmd = TC_generate_command(cmd_map, "python " + mGraphingPath);
 
     terminalData.command = graphing_cmd;
     terminalData.print_files = false;
@@ -106,5 +106,5 @@ void GraphingManager::graph(GraphingData& graphingStruct) {
 
 
 bool GraphingManager::is_graphing_enabled() const {
-    return _graphing_enabled;
+    return mGraphingEnabled;
 }

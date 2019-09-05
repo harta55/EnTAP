@@ -52,7 +52,7 @@ public:
     std::string format_string(std::string& str, char delim);
 
 private:
-    sqlite3 *_database;
+    sqlite3 *mpDatabase;
 };
 
 

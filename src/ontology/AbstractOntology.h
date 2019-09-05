@@ -30,9 +30,6 @@
 #define ENTAP_ABSTRACTONTOLOGY_H
 
 #include "../common.h"
-#include "../GraphingManager.h"
-#include "../QuerySequence.h"
-#include "../QueryData.h"
 #include "../EntapGlobals.h"
 #include "../EntapModule.h"
 
@@ -50,8 +47,6 @@ public:
 protected:
     const uint8 GRAPH_ONTOLOGY_FLAG = 4;
     const uint8 GRAPH_TOP_BAR_FLAG  = 1;  // used for tax levels and go term tops
-
-    std::vector<uint16> _go_levels;
 };
 
 

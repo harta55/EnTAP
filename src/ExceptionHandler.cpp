@@ -49,8 +49,8 @@
  * =====================================================================
  */
 ExceptionHandler::ExceptionHandler(const std::string& msg, int err) {
-    this->err_code = err;
-    this->message = msg;
+    this->mErrCode = err;
+    this->mMessage = msg;
 }
 
 
@@ -73,9 +73,9 @@ void ExceptionHandler::print_msg(FileSystem* filesystem) {
     std::stringstream added_msg;
     std::string out_msg;
 
-    added_msg << "Error code: " << err_code << "\n";
+    added_msg << "Error code: " << mErrCode << "\n";
 
-    switch (err_code) {
+    switch (mErrCode) {
         case ERR_ENTAP_INPUT_PARSE:
             added_msg << "Error in parsing input data, please consult -h for more information.";
             break;
@@ -109,6 +109,11 @@ void ExceptionHandler::print_msg(FileSystem* filesystem) {
         case ERR_ENTAP_RUN_EGGNOG:
             added_msg << "Error in running EggNOG Emapper. EggNOG requires a sqlite module in your"
                     "distribution of Python as well as a global DIAMOND installation to call from.";
+            break;
+        case ERR_ENTAP_RUN_EGGNOG_DMND:
+            break;
+        case ERR_ENTAP_PARSE_EGGNOG_DMND:
+            added_msg << "Error in parsing data associated with EggNOG results.";
             break;
         case ERR_ENTAP_PARSE_EGGNOG:
             added_msg << "Error in parsing EggNOG data. Ensure that EggNOG ran properly and the output "
@@ -201,10 +206,10 @@ void ExceptionHandler::print_msg(FileSystem* filesystem) {
 
 
 const char* ExceptionHandler::what() {
-    return message.c_str();
+    return mMessage.c_str();
 }
 
 
 int ExceptionHandler::getErr_code() const {
-    return err_code;
+    return mErrCode;
 }

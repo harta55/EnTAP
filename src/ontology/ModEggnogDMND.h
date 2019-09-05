@@ -30,7 +30,6 @@
 
 
 #include "AbstractOntology.h"
-#include "../config.h"
 
 class ModEggnogDMND : public AbstractOntology {
 
@@ -58,8 +57,7 @@ private:
     const std::string EGG_ANNOT_STD           = "annotation_std";
     static constexpr uint16 COUNT_TOP_TAX_SCOPE = 10;
 
-    std::string _out_hits;
-    std::string _eggnog_db_path;
+    std::string mOutHIts;
 };
 
 

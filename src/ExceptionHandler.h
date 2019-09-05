@@ -31,10 +31,11 @@
 #include "EntapGlobals.h"
 #include "FileSystem.h"
 
-enum entap_err {
+// TODO fix/update error code handling
+enum ENTAP_ERR {
 
-    ERR_ENTAP_INPUT_PARSE                 = 10u,
     ERR_ENTAP_SUCCESS                     = 0u,
+    ERR_ENTAP_INPUT_PARSE                 = 10u,
     ERR_ENTAP_CONFIG_PARSE                = 12u,
     ERR_ENTAP_CONFIG_CREATE               = 13u,
     ERR_ENTAP_CONFIG_CREATE_SUCCESS       = 14u,
@@ -82,6 +83,7 @@ enum entap_err {
     ERR_ENTAP_RUN_INTERPRO                = 170u,
     ERR_ENTAP_PARSE_INTERPRO              = 171u,
     ERR_ENTAP_PARSE_EGGNOG_DMND           = 180u,
+    ERR_ENTAP_RUN_EGGNOG_DMND             = 181u,
     ERR_ENTAP_FILE_IO                     = 200u,
     ERR_ENTAP_MEM_ALLOC                   = 201u,
     ERR_ENTAP_MAX                         = 201u
@@ -97,8 +99,8 @@ public:
     void print_msg(FileSystem*);
 
 private:
-    int err_code;
-    std::string message;
+    int mErrCode;
+    std::string mMessage;
 
     static const std::string ERR_ENTAP_STR [ERR_ENTAP_MAX];
 };

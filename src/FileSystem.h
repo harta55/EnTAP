@@ -31,15 +31,27 @@
 
 //*********************** Includes *****************************
 #include "common.h"
+#include "config.h"
 #include "TerminalCommands.h"
 #include "EntapGlobals.h"
+#ifdef USE_BOOST
+#include <boost/filesystem.hpp>
+#endif
+//**************************************************************
+
+//******************** Defines/Macros **************************
+#ifdef USE_BOOST
+#define PATHS(x,y)      (boostFS::path(x) / boostFS::path(y)).string()
+#else
+#define PATHS(x,y)      ((x) + "/" + (y))
+#endif
 //**************************************************************
 
 
-// Keeping global for now
-void FS_dprint(const std::string&);
-
 //***************** Global Prototype Functions *****************
+void FS_dprint(const std::string&);
+//**************************************************************
+
 class FileSystem {
 
 public:
@@ -96,6 +108,9 @@ public:
     bool check_fasta(std::string&);
     bool create_dir(std::string&);
     void delete_dir(std::string&);
+
+    bool create_transcriptome_dir();
+
     const std::string &get_root_path() const;
     std::string get_file_extension(const std::string&, bool);
     std::string get_filename(std::string&, bool);
@@ -108,6 +123,7 @@ public:
     std::string print_file_status(uint16 status,std::string& path);
     std::string get_error();
     std::string get_extension(ENT_FILE_TYPES type);
+    std::string get_trancriptome_dir();
 
     bool download_ftp_file(std::string,std::string&);
     bool decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES);
@@ -133,24 +149,34 @@ public:
 
     static const char        DELIM_TSV;
     static const char        DELIM_CSV;
-
     static const char        FASTA_FLAG;
 
 private:
+    //****************** Private Functions *********************
     void init_log();
     void set_error(std::string err_msg);
+    //**********************************************************
 
-    const std::string LOG_FILENAME   = "log_file";
-    const std::string LOG_EXTENSION  = ".txt";
-    const std::string DEBUG_FILENAME = "debug";
-    const std::string ENTAP_FINAL_OUTPUT    = "final_results/";
-    const std::string TEMP_DIRECTORY        = "temp/";
-    const std::string SOFTWARE_BREAK = "------------------------------------------------------\n";
+    //**************** Private Const Variables *****************
+    const std::string LOG_FILENAME              = "log_file"; // Filename for EnTAP log file (statistics files)
+    const std::string LOG_EXTENSION             = EXT_TXT; // Extension for EnTAP statistics file
+    const std::string DEBUG_EXTENSION           = EXT_TXT; // Extension for EnTAP debug file
+    const std::string DEBUG_FILENAME            = "debug"; // Filename for EnTAP debug file
+    const std::string ENTAP_FINAL_OUTPUT        = "final_results/"; // Directory name for final output annotations directory
+    const std::string ENTAP_TRANSCRIPTOME_DIR   = "transcriptomes/"; // Directory name for transcriptome directory (frame selected, expression analysis)
+    const std::string TEMP_DIRECTORY            = "temp/"; // Directory name for 'temp' directory  (deleted once EnTAP exits)
 
-    std::string _root_path;     // Root EnTAP output directory
-    std::string _final_outpath; // Path to final files after entap has finished
-    std::string _temp_outpath;  // Temp directory for EnTAP usage
-    std::string _err_msg;
+    // Log file specifics
+    const std::string SOFTWARE_BREAK            = "------------------------------------------------------\n";
+    //**********************************************************
+
+    //****************** Private Variables *********************
+    std::string mRootPath;        // Root EnTAP output directory
+    std::string mFinalOutpath;    // Path to final files after entap has finished
+    std::string mTrancriptomeDir; // Absolute path to EnTAP transcriptome directory
+    std::string mTempOutpath;     // Temp directory for EnTAP usage
+    std::string mErrorMsg;        // String containing error mMessage from execution
+    //**********************************************************
 };
 
 

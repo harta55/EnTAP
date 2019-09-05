@@ -40,6 +40,7 @@ struct TerminalData{
 };
 
 int TC_execute_cmd(TerminalData &terminalData);
-
+std::string TC_generate_command(std::unordered_map<std::string, std::string> &,
+                                std::string);
 
 #endif //ENTAP_TERMINALCOMMANDS_H

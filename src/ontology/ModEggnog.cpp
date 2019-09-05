@@ -53,14 +53,14 @@ std::pair<bool, std::string> ModEggnog::verify_files() {
     std::string                        annotation_base_flag;
 
     annotation_base_flag = PATHS(_egg_out_dir, EGG_ANNOT_RESULTS);
-    _out_hits            = annotation_base_flag  + EGG_ANNOT_APPEND;
+    mOutHIts            = annotation_base_flag  + EGG_ANNOT_APPEND;
 
     FS_dprint("Overwrite was unselected, verifying output files...");
-    if (_pFileSystem->file_exists(_out_hits)) {
-        FS_dprint("File located at: " + _out_hits + " found, skipping EggNOG execution");
+    if (pFileSystem->file_exists(mOutHIts)) {
+        FS_dprint("File located at: " + mOutHIts + " found, skipping EggNOG execution");
         return std::make_pair(true, "");
     } else {
-        FS_dprint("File located at: " + _out_hits + " NOT found, continuing execution");
+        FS_dprint("File located at: " + mOutHIts + " NOT found, continuing execution");
         return std::make_pair(false, "");
     }
 }
@@ -113,13 +113,13 @@ void ModEggnog::parse() {
 
     ss<<std::fixed<<std::setprecision(2);
 
-    if (!EGGNOG_DATABASE.open(_eggnog_db_path))
+    if (!EGGNOG_DATABASE.open(mEggnogDbPath))
         throw ExceptionHandler("Unable to open EggNOG database",ERR_ENTAP_PARSE_EGGNOG);
 
-    path = _out_hits;
+    path = mOutHIts;
 
     FS_dprint("Eggnog file located at " + path + " being filtered");
-    if (!_pFileSystem->file_exists(path)) {
+    if (!pFileSystem->file_exists(path)) {
         FS_dprint("File not found, at: " + path);
         throw ExceptionHandler("EggNOG file not found at: " + path, ERR_ENTAP_PARSE_EGGNOG);
     }
@@ -134,8 +134,8 @@ void ModEggnog::parse() {
     while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, predicted_gene, go_terms, kegg, tax_scope, ogs,
                        best_og, cog_cat, eggnog_annot)) {
         // Check if the query matches one of our original transcriptome sequences
-        QUERY_MAP_T::iterator it = (*_pQUERY_DATA->get_sequences_ptr()).find(qseqid);
-        if (it != (*_pQUERY_DATA->get_sequences_ptr()).end()) {
+        QUERY_MAP_T::iterator it = (*mpQueryData->get_sequences_ptr()).find(qseqid);
+        if (it != (*mpQueryData->get_sequences_ptr()).end()) {
             // EggNOG hit matches one of our original queries (from transcriptome)
 
             count_TOTAL_hits++;     // Increment number of EggNOG hits we got
@@ -147,12 +147,12 @@ void ModEggnog::parse() {
             EggnogResults.seed_score = seed_score;
             EggnogResults.predicted_gene = predicted_gene;
             EggnogResults.ogs = ogs;
-            EggnogResults.raw_go = _pFileSystem->list_to_vect(',', go_terms);    // Turn list into vect
-            EggnogResults.raw_kegg = _pFileSystem->list_to_vect(',', kegg);      // Turn list into vect
+            EggnogResults.raw_go = pFileSystem->list_to_vect(',', go_terms);    // Turn list into vect
+            EggnogResults.raw_kegg = pFileSystem->list_to_vect(',', kegg);      // Turn list into vect
             get_tax_scope(tax_scope, EggnogResults);        // Map virNOG[6] to viridiplantae
             get_og_query(EggnogResults);               // Requires tax_scope first, pulls key to SQL database
             get_sql_data(EggnogResults, EGGNOG_DATABASE);
-            EggnogResults.parsed_go = parse_go_list(go_terms,_pEntapDatabase,',');
+            EggnogResults.parsed_go = parse_go_list(go_terms,pEntapDatabase,',');
 
             it->second->set_eggnog_results(EggnogResults);  // Set EggNOG results to maintained data
 
@@ -194,16 +194,16 @@ void ModEggnog::parse() {
         }
     }
     // delete temp file
-    _pFileSystem->delete_file(path);
+    pFileSystem->delete_file(path);
 
     // Close EggNOG SQL database
     EGGNOG_DATABASE.close();
 
     // Prepare output files
-    out_no_hits_nucl = PATHS(_proc_dir, OUT_UNANNOTATED_NUCL);
-    out_no_hits_prot = PATHS(_proc_dir, OUT_UNANNOTATED_PROT);
-    out_hit_nucl     = PATHS(_proc_dir, OUT_ANNOTATED_NUCL);
-    out_hit_prot     = PATHS(_proc_dir, OUT_ANNOTATED_PROT);
+    out_no_hits_nucl = PATHS(mProcDir, OUT_UNANNOTATED_NUCL);
+    out_no_hits_prot = PATHS(mProcDir, OUT_UNANNOTATED_PROT);
+    out_hit_nucl     = PATHS(mProcDir, OUT_ANNOTATED_NUCL);
+    out_hit_prot     = PATHS(mProcDir, OUT_ANNOTATED_PROT);
     std::ofstream file_no_hits_nucl(out_no_hits_nucl, std::ios::out | std::ios::app);
     std::ofstream file_no_hits_prot(out_no_hits_prot, std::ios::out | std::ios::app);
     std::ofstream file_hits_nucl(out_hit_nucl, std::ios::out | std::ios::app);
@@ -211,7 +211,7 @@ void ModEggnog::parse() {
 
     FS_dprint("Success! Computing overall statistics...");
     // Find how many original sequences did/did not hit the EggNOG database
-    for (auto &pair : *_pQUERY_DATA->get_sequences_ptr()) {
+    for (auto &pair : *mpQueryData->get_sequences_ptr()) {
         if (!pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_EGGNOG_HIT)) {
             // Unannotated sequence
             if (!pair.second->get_sequence_n().empty()) file_no_hits_nucl << pair.second->get_sequence_n() << std::endl;
@@ -242,8 +242,8 @@ void ModEggnog::parse() {
         //--------------------- Top Ten Taxonomic Scopes --------------//
         if (!tax_scope_counter.empty()) {
             // Setup graphing files
-            std::string fig_txt_tax_bar = PATHS(_figure_dir, GRAPH_EGG_TAX_BAR_TXT);
-            std::string fig_png_tax_bar = PATHS(_figure_dir, GRAPH_EGG_TAX_BAR_PNG);
+            std::string fig_txt_tax_bar = PATHS(mFigureDir, GRAPH_EGG_TAX_BAR_TXT);
+            std::string fig_png_tax_bar = PATHS(mFigureDir, GRAPH_EGG_TAX_BAR_PNG);
             std::ofstream file_tax_bar(fig_txt_tax_bar, std::ios::out | std::ios::app);
             file_tax_bar << "Taxonomic Scope\tCount" << std::endl;
 
@@ -266,7 +266,7 @@ void ModEggnog::parse() {
             graphingStruct.graph_title = GRAPH_EGG_TAX_BAR_TITLE;
             graphingStruct.software_flag = GRAPH_ONTOLOGY_FLAG;
             graphingStruct.graph_type = GRAPH_TOP_BAR_FLAG;
-            _pGraphingManager->graph(graphingStruct);
+            mpGraphingManager->graph(graphingStruct);
         }
         //-------------------------------------------------------------//
 
@@ -275,12 +275,12 @@ void ModEggnog::parse() {
           "\nTotal unique sequences without GO terms: " << count_no_go <<
           "\nTotal GO terms assigned: " << go_combined_map[GO_OVERALL_FLAG]._ct_total;;
 
-        for (uint16 lvl : _go_levels) {
+        for (uint16 lvl : mGoLevels) {
             for (auto &pair : go_combined_map) {
                 if (pair.first.empty()) continue;
                 // Count maps (biological/molecular/cellular/overall)
-                fig_txt_go_bar = PATHS(_figure_dir, pair.first) + std::to_string(lvl)+GRAPH_GO_END_TXT;
-                fig_png_go_bar = PATHS(_figure_dir, pair.first) + std::to_string(lvl)+GRAPH_GO_END_PNG;
+                fig_txt_go_bar = PATHS(mFigureDir, pair.first) + std::to_string(lvl)+GRAPH_GO_END_TXT;
+                fig_png_go_bar = PATHS(mFigureDir, pair.first) + std::to_string(lvl)+GRAPH_GO_END_PNG;
                 std::ofstream file_go_bar(fig_txt_go_bar, std::ios::out | std::ios::app);
                 file_go_bar << "Gene Ontology Term\tCount" << std::endl;
 
@@ -321,7 +321,7 @@ void ModEggnog::parse() {
                 if (pair.first == GO_OVERALL_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_ALL_TITLE+ "_Level:_"+std::to_string(lvl);
                 graphingStruct.software_flag = GRAPH_ONTOLOGY_FLAG;
                 graphingStruct.graph_type = GRAPH_TOP_BAR_FLAG;
-                _pGraphingManager->graph(graphingStruct);
+                mpGraphingManager->graph(graphingStruct);
             }
         }
         ss<<
@@ -334,7 +334,7 @@ void ModEggnog::parse() {
         ss << "\nWarning: No EggNOG Alignments";
     }
     out_msg = ss.str();
-    _pFileSystem->print_stats(out_msg);
+    pFileSystem->print_stats(out_msg);
     FS_dprint("Success! EggNOG results parsed");
 }
 
@@ -358,8 +358,8 @@ void ModEggnog::execute() {
     std::string                        cmd;
     std::string                        blast;
 
-    if (_pFileSystem->file_exists(_out_hits)) return;   // Should never occur here
-    _blastp ? blast = "blastp" : blast = "blastx";
+    if (pFileSystem->file_exists(mOutHIts)) return;   // Should never occur here
+    mBlastp ? blast = "blastp" : blast = "blastx";
 
     std::string                        annotation_base_flag;
     std::string                        annotation_std;
@@ -371,21 +371,21 @@ void ModEggnog::execute() {
     eggnog_command       = "python " + EGG_EMAPPER_EXE + " ";
 
     std::unordered_map<std::string,std::string> eggnog_command_map = {
-            {"-i",_inpath},
+            {"-i",mInFastaPath},
             {"--output",annotation_base_flag},
-            {"--cpu",std::to_string(_threads)},
+            {"--cpu",std::to_string(mThreads)},
             {"-m", "diamond"}
     };
-    if (!_blastp) eggnog_command_map["--translate"] = " ";
-    if (_pFileSystem->file_exists(_inpath)) {
+    if (!mBlastp) eggnog_command_map["--translate"] = " ";
+    if (pFileSystem->file_exists(mInFastaPath)) {
         for (auto &pair : eggnog_command_map)eggnog_command += pair.first + " " + pair.second + " ";
         if (TC_execute_cmd(eggnog_command, annotation_std) !=0) {
-            _pFileSystem->delete_file(annotation_base_flag);
+            pFileSystem->delete_file(annotation_base_flag);
             throw ExceptionHandler("Error executing eggnog mapper", ERR_ENTAP_RUN_ANNOTATION);
         }
         FS_dprint("Success! Results written to: " + annotation_base_flag);
     } else {
-        throw ExceptionHandler("No input file found at: " + _inpath, ERR_ENTAP_RUN_EGGNOG);
+        throw ExceptionHandler("No input file found at: " + mInFastaPath, ERR_ENTAP_RUN_EGGNOG);
     }
     FS_dprint("Success! EggNOG execution complete");
 }
@@ -399,7 +399,7 @@ std::string ModEggnog::eggnog_format(std::string file) {
     std::string line;
 
     out_path = file + "_alt";
-    _pFileSystem->delete_file(out_path);
+    pFileSystem->delete_file(out_path);
     std::ifstream in_file(file);
     std::ofstream out_file(out_path);
     while (getline(in_file,line)) {
@@ -635,18 +635,18 @@ ModEggnog::ModEggnog(std::string &out, std::string &in, std::string &ont,
     :AbstractOntology(out, in,ont, blastp, lvls, entap_data){
     FS_dprint("Spawn Object - EggNOG");
 
-    _eggnog_db_path = eggnog_sql_path;
+    mEggnogDbPath = eggnog_sql_path;
 
-    _egg_out_dir= PATHS(_ontology_dir, EGGNOG_DIRECTORY);
-    _figure_dir = PATHS(_egg_out_dir, FIGURE_DIR);
-    _proc_dir   = PATHS(_egg_out_dir, PROCESSED_OUT_DIR);
+    _egg_out_dir= PATHS(mOntologyDir, EGGNOG_DIRECTORY);
+    mFigureDir = PATHS(_egg_out_dir, FIGURE_DIR);
+    mProcDir   = PATHS(_egg_out_dir, PROCESSED_OUT_DIR);
 
-    _pFileSystem->delete_dir(_figure_dir);
-    _pFileSystem->delete_dir(_proc_dir);
+    pFileSystem->delete_dir(mFigureDir);
+    pFileSystem->delete_dir(mProcDir);
 
-    _pFileSystem->create_dir(_egg_out_dir);
-    _pFileSystem->create_dir(_figure_dir);
-    _pFileSystem->create_dir(_proc_dir);
+    pFileSystem->create_dir(_egg_out_dir);
+    pFileSystem->create_dir(mFigureDir);
+    pFileSystem->create_dir(mProcDir);
 }
 
 #endif

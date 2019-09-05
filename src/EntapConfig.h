@@ -27,15 +27,18 @@
 #ifndef ENTAPCONFIG_H
 #define ENTAPCONFIG_H
 
+//*********************** Includes *****************************
 #include "UserInput.h"
 #include "EntapGlobals.h"
 #include "ExceptionHandler.h"
 #include "FileSystem.h"
 #include "database/EntapDatabase.h"
+//**************************************************************
 
 namespace entapConfig {
     //****************** Global Prototype Functions******************
     void execute_main(UserInput*, FileSystem*);
+    //***************************************************************
 }
 
 #endif //ENTAP_INITHANDLER_H

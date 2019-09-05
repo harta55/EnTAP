@@ -68,17 +68,23 @@ public:
 
 protected:
 
-    vect_str_t                      _database_paths;
-    vect_str_t                      _uninformative_vect;
-    vect_str_t                      _contaminants;
-    vect_str_t                      _output_paths;
-    std::map<std::string, std::string> _path_to_database;      // mapping of full database file path to shortened name
-    std::string                     _input_lineage;
-    std::string                     _input_species;
-    std::string                     _blast_type;            // string to signify blast type
-    fp64                            _e_val;
-    fp32                            _qcoverage;
-    fp32                            _tcoverage;
+    vect_str_t                      mDatabasePaths;
+    vect_str_t                      mUninformativeTags;
+    vect_str_t                      mContaminateTaxons;
+    vect_str_t                      mOutputPaths;
+    std::map<std::string, std::string> mPathToDatabase;      // mapping of full database file path to shortened name
+    std::string                     mInputLineage;
+    std::string                     mInputSpecies;
+    std::string                     mBlastType;            // string to signify blast type
+    fp64                            mEVal;
+    fp32                            mQCoverage;
+    fp32                            mTCoverage;
+
+    const std::string SIM_SEARCH_DATABASE_BEST_HITS              = "best_hits";
+    const std::string SIM_SEARCH_DATABASE_BEST_HITS_CONTAM       = "best_hits_contam";
+    const std::string SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM    = "best_hits_no_contam";
+    const std::string SIM_SEARCH_DATABASE_NO_HITS                = "no_hits";
+    const std::string SIM_SEARCH_DATABASE_UNSELECTED             = "unselected";
 
     const std::string BLASTX_STR           = "blastx";
     const std::string BLASTP_STR           = "blastp";
@@ -91,7 +97,6 @@ protected:
     std::pair<bool, std::string> is_contaminant(std::string lineage, vect_str_t &contams);
     bool is_informative(std::string title, vect_str_t &uninformative_vect);
     std::string get_species(std::string &title);
-    bool is_uniprot_entry(std::string &sseqid, UniprotEntry &entry);
 };
 
 

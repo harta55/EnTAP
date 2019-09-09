@@ -48,7 +48,7 @@ Before continuing on in the installation process, ensure that the following depe
 
     * C++11 compiler (GCC 4.8.1 or later)
 	
-    * CMake_ (2.8 or later)
+    * CMake_ (3.00 or later)
 	
 		
     * Python_ (2.7.12 or later) with support for the following modules	

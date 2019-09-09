@@ -59,18 +59,18 @@ Normally when a user is trying to execute EnTAP, they will need to specify the p
     * eggnog_sql_database=/EnTAP/databases/eggnog.db (downloaded during Configuration)
     * eggnog_dmnd_database=/EnTAP/bin/eggnog_proteins.dmnd (downloaded during Configuration)
     * interpro_exe_path=interproscan.sh
-    * entap_database_bin_path=/EnTAP/bin/entap_database.bin (binary version, downloaded during Configuration)
     * entap_database_sql_path=/EnTAP/databases/entap_database.db (text version, downloaded during Configuration)
+    * entap_database_bin_path=/EnTAP/bin/entap_database.bin (binary version, downloaded during Configuration)
     * entap_graphing_script=/EnTAP/src/entap_graphing.py
 
 
 Keep in mind, it is always safer to use the |flag_path| flag to specify the |config_file|. EnTAP will always recognize these paths first and they will override defaults above. 
 
-
 If something is globally installed, such as "interpro_exe_path" above, put how you'd normally run the software after the '='. As another example, running DIAMOND through a global installation may simply be "diamond". The Config File line for DIAMOND will simply read:
 
     * diamond_exe_path=diamond
 
+.. note:: Either the EnTAP binary database (default) or the EnTAP SQL database is required for execution. Both are not needed.
 
 .. warning:: Be sure you set the paths before moving on (besides the databases that haven't been downloaded yet)! 
 
@@ -152,18 +152,18 @@ Usage - Running Configuration
 
 Once you have your protein FASTA database ready, you can begin to run the Configuration stage. As mentioned before, Configuration will only need to be run once prior to :ref:`Execution<exe-label>` unless you would like to configure/update more databases. 
 
-To run configuration with a FASTA database to output directory path/to/output (default is current working directory), the command is as follows (additional databases can be specified if necessary with the -d flag):
+To run configuration with a FASTA database to output directory path/to/output (default is current working directory), the command is as follows (additional databases can be specified if necessary with the -d flag and threads with the -t flag):
 
 .. code-block:: bash
 
-    EnTAP --config -d path/to/database.fasta -d path/to/database2.fasta --out-dir path/to/output
+    EnTAP --config -d path/to/database.fasta -d path/to/database2.fasta --out-dir path/to/output -t 8
 
 
-Configuration can be run without formatting a FASTA database for DIAMOND is as follows:
+Configuration can be run without formatting a FASTA database for DIAMOND is as follows with 8 threads:
 
 .. code-block:: bash
 
-    EnTAP --config
+    EnTAP --config -t 8
 
 .. note:: This is the only stage that requires connection to the Internet.
 
@@ -173,6 +173,7 @@ In both cases, the following databases will be downloaded and configured:
     * Comprised of Gene Ontology, UniProt, and Taxonomic mappings for use during Execution. FTP downloaded file.
     * Downloaded from |entap_bin_ftp|
     * Filename: entap_database.bin
+    * The SQL version is the same database, but formatted as a SQL database. Only one version of the database is needed (binary is used by default)
 
 * EggNOG DIAMOND Reference:
     * Reference database containing EggNOG database entries
@@ -184,7 +185,7 @@ In both cases, the following databases will be downloaded and configured:
     * Downloaded from |eggnog_sql_ftp|
     * Filename: eggnog.db
 
-The EnTAP Binary Database is downloaded from the FTP addresses below. If you experience any trouble in downloading, you can simply specify the - - data-generate flag during Configuration to configure it locally (more on that later). The database for the newest version of EnTAP will always reside in the "latest" FTP directory. Keep in mind, if you are using an older version of EnTAP, you do not want to download from the "latest" directory. Instead, you will need to consider the version you are using. The FTP will always be updated when a new database version is created. For example, if you see v0.8.2 and v0.8.5 on the FTP while you are using v0.8.3, you will download the database located in the v0.8.2 directory. 
+The EnTAP Binary Database is downloaded from the FTP addresses below. By default, the binary version will be downloaded and used. Only one version is required. If you experience any trouble in downloading, you can simply specify the - - data-generate flag during Configuration to configure it locally (more on that later). The database for the newest version of EnTAP will always reside in the "latest" FTP directory. Keep in mind, if you are using an older version of EnTAP, you do not want to download from the "latest" directory. Instead, you will need to consider the version you are using. The FTP will always be updated only when a new database version is created. For example, if you see v0.8.2 and v0.8.5 on the FTP while you are using v0.8.3, you will download the database located in the v0.8.2 directory. 
 
     * |entap_bin_ftp|
     * |entap_sql_ftp|
@@ -303,11 +304,11 @@ A specific run flag (**runP/runN**) must be used:
 * runN: Indicates blastx. Frame selection will not be ran with this input
 
 
-An example run with a nucleotide transcriptome (transcriptome.fasta), two reference DIAMOND databases, and an alignment file (alignment.sam):
+An example run with a nucleotide transcriptome (transcriptome.fasta), two reference DIAMOND databases, an alignment file (alignment.sam), and 8 threads:
 
 .. code-block:: bash
 
-    EnTAP --runP -i path/to/transcriptome.fasta -d path/to/database.dmnd -d path/to/database2.dmnd -a path/to/alignment.sam
+    EnTAP --runP -i path/to/transcriptome.fasta -d path/to/database.dmnd -d path/to/database2.dmnd -a path/to/alignment.sam -t 8
 
 
 With the above command, the entire EnTAP pipeline will run. Both Frame Selection and Expression Filtering can be skipped if preferred by the user. If a protein transcriptome is input with the runP flag, or the runN flag is used, Frame Selection will be skipped.  If there is not a short read alignment file provided in SAM/BAM format, then Expression Filtering via RSEM will be skipped. 

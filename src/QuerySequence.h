@@ -199,6 +199,7 @@ public:
     const std::string &get_sequence() const;
     void set_fpkm(fp32 fpkm);
     const std::string &getMSequenceID() const;
+    void setMTPM(fp64 mTPM);
 
     void set_blasted();
     bool is_kept();
@@ -245,6 +246,7 @@ private:
 
     //****************** Private Variables *********************
     fp32                              mFPKM;            // FPKM value from Expression Filtering
+    fp64                              mTPM;             // TPM value from Expression Filtering
     uint32                            mQueryFlags;      // Status flags for sequence
     std::string                       mSequenceID;      // Sequence ID
     uint64                            mSequenceLength;  // Sequence length (nucleotide bp)

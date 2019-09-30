@@ -148,6 +148,7 @@ namespace entapExecute {
                         if (!pUserInput->has_input(pUserInput->INPUT_FLAG_ALIGN)) {
                             FS_dprint("No alignment file specified, skipping expression analysis");
                             pQUERY_DATA->header_set(ENTAP_HEADER_EXP_FPKM, false);
+                            pQUERY_DATA->header_set(ENTAP_HEADER_EXP_TPM, false);
                         } else {
                             // Proceed with expression analysis
                             std::unique_ptr<ExpressionAnalysis> expression(new ExpressionAnalysis(

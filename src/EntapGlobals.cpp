@@ -34,8 +34,13 @@
 EntapHeader ENTAP_HEADER_INFO[] = {
         {"Unused",              false},                         // 0
         {"Query Sequence",      true},
+
+        /* Frame Selection */
         {"Frame",               true},
+
+        /* Expression Filtering */
         {"FPKM",                true},
+        {"TPM",                 true},
 
         /* Similarity Search - General */
         {"Subject Sequence",    true},
@@ -65,30 +70,30 @@ EntapHeader ENTAP_HEADER_INFO[] = {
         {"UniProt GO Molecular",                    true},
 
         /* Ontology - EggNOG */
-        {"Seed Ortholog",                           true},
-        {"Seed E-Value",                            true},
-        {"Seed Score",                              true},
-        {"Predicted Gene",                          true},
-        {"Tax Scope",                               true},
-        {"Tax Scope Max",                           true},
-        {"Member OGs",                              true},
-        {"EggNOG Description",                      false},
-        {"BIGG Reaction",                           true},
-        {"KEGG Terms",                              true},
-        {"GO Biological",                           true},
-        {"GO Cellular",                             true},
-        {"GO Molecular" ,                           true},
-        {"Protein Domains",                         false},
+        {"EggNOG Seed Ortholog",                    true},
+        {"EggNOG Seed E-Value",                     true},
+        {"EggNOG Seed Score",                       true},
+        {"EggNOG Predicted Gene",                   true},
+        {"EggNOG Tax Scope",                        true},
+        {"EggNOG Tax Scope Max",                    true},
+        {"EggNOG Member OGs",                       true},
+        {"EggNOG EggNOG Description",               false},
+        {"EggNOG BIGG Reaction",                    true},
+        {"EggNOG KEGG Terms",                       true},
+        {"EggNOG GO Biological",                    true},
+        {"EggNOG GO Cellular",                      true},
+        {"EggNOG GO Molecular" ,                    true},
+        {"EggNOG Protein Domains",                  false},
 
         /* Ontology - InterProScan */
         {"IPScan GO Biological",                    true},
         {"IPScan GO Cellular",                      true},
         {"IPScan GO Molecular",                     true},
-        {"Pathways",                                true},
-        {"InterPro",                                true},
-        {"Protein Database",                        true},
-        {"Protein Description",                     true},
-        {"E-Value",                                 true},
+        {"IPScan Pathways",                         true},
+        {"IPScan InterPro ID",                      true},
+        {"IPScan Protein Database",                 true},
+        {"IPScan Protein Description",              true},
+        {"IPScan E-Value",                          true},
 
 
         {"Unused",                                  false}

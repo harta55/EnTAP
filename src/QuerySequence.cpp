@@ -463,6 +463,7 @@ void QuerySequence::set_header_data() {
 
     // Expression Filtering data
     mHeaderInfo[ENTAP_HEADER_EXP_FPKM] = float_to_string(this->mFPKM);
+    mHeaderInfo[ENTAP_HEADER_EXP_TPM] = float_to_string(this->mTPM);
 
     // Similarity Search data
     align_ptr = this->mAlignmentData->get_best_align_ptr(SIMILARITY_SEARCH, SIM_DIAMOND, "");
@@ -850,6 +851,10 @@ bool QuerySequence::is_protein() {
 
 bool QuerySequence::is_kept_expression() {
     return QUERY_FLAG_GET(QUERY_EXPRESSION_KEPT);
+}
+
+void QuerySequence::setMTPM(fp64 mTPM) {
+    QuerySequence::mTPM = mTPM;
 }
 
 

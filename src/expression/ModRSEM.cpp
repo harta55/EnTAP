@@ -165,7 +165,7 @@ void ModRSEM::parse() {
     fp32                in_len;
     fp32                e_leng;
     fp32                e_count;
-    fp32                tpm;
+    fp64                tpm;
     fp32                fpkm_val;
     fp32                rejected_percent=0;
     fp32                avg_removed;
@@ -224,11 +224,11 @@ void ModRSEM::parse() {
         mpQueryData->trim_sequence_header(geneid,geneid);
         QUERY_MAP_T::iterator it = MAP->find(geneid);
         if (it == MAP->end()) {
-            throw ExceptionHandler("Unable to find sequence: " + geneid,
-                                   ERR_ENTAP_RUN_RSEM_EXPRESSION_PARSE);
+            throw ExceptionHandler("Unable to find sequence: " + geneid, ERR_ENTAP_RUN_RSEM_EXPRESSION_PARSE);
         }
         QuerySequence *querySequence = it->second;
         querySequence->set_fpkm(fpkm_val);
+        querySequence->setMTPM(tpm);
         length = (uint16) querySequence->get_sequence_length();
         if (fpkm_val > mFPKM) {
             // Kept sequence

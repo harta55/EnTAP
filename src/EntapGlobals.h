@@ -180,6 +180,7 @@ enum ENTAP_HEADERS {
 
     /* Expression Filtering */
     ENTAP_HEADER_EXP_FPKM,
+    ENTAP_HEADER_EXP_TPM,
 
     /* Similarity Search - General */
     ENTAP_HEADER_SIM_SUBJECT,

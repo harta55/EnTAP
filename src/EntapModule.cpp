@@ -44,7 +44,7 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
                          std::string module_name, std::string &exe_path) {
 
     mOutpath = execution_stage_path;       // Should already be created
-    mInHits  = in_hits;
+    mInputTranscriptome  = in_hits;
     mExePath = exe_path;
 
     mpGraphingManager = entap_data.mpGraphingManager;
@@ -59,7 +59,7 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mAlignmentFileTypes = mpUserInput->get_user_output_types();   // may be overridden at lower level
     mGoLevels        = mpUserInput->get_user_input<vect_uint16_t>(mpUserInput->INPUT_FLAG_GO_LEVELS);
 
-    mTranscriptomeShortname = mpFileSystem->get_filename(mInHits, false);
+    mTranscriptomeShortname = mpFileSystem->get_filename(mInputTranscriptome, false);
 
     // INIT directories
     mModOutDir  = PATHS(mOutpath, module_name);

@@ -54,3 +54,274 @@ AbstractFrame::AbstractFrame(std::string &execution_stage_path, std::string &in_
 
     mExecutionState = FRAME_SELECTION;
 }
+
+void AbstractFrame::frame_calculate_statistics() {
+    FS_dprint("Beginning to calculate Frame Selection statistics...");
+
+    std::string                             out_removed_path;       // Absolute base path to removed sequences (no frame)
+    std::string                             out_internal_path;      // Absolute base path to "internal" genes
+    std::string                             out_complete_path;      // Absolute base path to "complete" genes
+    std::string                             out_partial_path;       // Absolute base path to "partial" genes
+    std::string                             figure_results_path;
+    std::string                             figure_results_png;
+    std::string                             figure_removed_path;
+    std::string                             figure_removed_png;
+    std::string                             min_removed_seq;        // Sequence ID of shortest removed sequence
+    std::string                             min_kept_seq;           // Sequence ID of shortest kept sequence
+    std::string                             max_removed_seq;        // Sequence ID of longest removed sequence
+    std::string                             max_kept_seq;           // Sequence ID of longest kept sequence
+    std::stringstream                       stat_output;            // Output string stream for statistics to Log File
+    std::map<std::string, std::ofstream*>   file_map_faa;           // File map of FAA sequence and frame types
+    std::map<std::string, std::ofstream*>   file_map_fnn;           // File map of FNN sequences ONLY (NO frame types)
+    std::map<std::string, uint32>           count_map;              // Count of sequence types
+    std::vector<uint16>                     all_kept_lengths;       // Total nucleotide length of kept sequences
+    std::vector<uint16>                     all_lost_lengths;       // Total nucleotide length of removed sequences
+    uint16                                  length;                 // Temp nucleotide length variable
+    fp32                                    avg_selected;           // Average nucleotide length of kept sequences
+    fp32                                    avg_lost;               // Average nucleotide length of removed sequences
+    uint32                                  min_removed;            // bp count of smallest removed sequence
+    uint32                                  min_selected;           // bp count of smallest kept sequence
+    uint32                                  max_removed;            // bp count of largest removed sequence
+    uint32                                  max_selected;           // bp count of largest kept sequence
+    uint32                                  count_selected;         // Number of kept genes (frame was found)
+    uint32                                  count_removed;          // Number of removed genes (frame was NOT found)
+    uint64                                  total_removed_len;      // Total bp count of removed sequences
+    uint64                                  total_kept_len;         // Total bp count of kept sequences
+    std::pair<uint64, uint64>               kept_n;                 // N value of kept sequences
+    GraphingData                            graphingStruct;         // Structure containing information for Graphing Manager
+
+    // Set up outpaths, directories are already created by super
+    out_removed_path    = PATHS(mProcDir, FRAME_SELECTION_FILENAME_LOST);
+    out_internal_path   = PATHS(mProcDir, FRAME_SELECTION_FILENAME_INTERNAL);
+    out_complete_path   = PATHS(mProcDir, FRAME_SELECTION_FILENAME_COMPLETE);
+    out_partial_path    = PATHS(mProcDir, FRAME_SELECTION_FILENAME_PARTIAL);
+    figure_removed_path = PATHS(mFigureDir, GRAPH_TEXT_REF_COMPAR);
+    figure_removed_png  = PATHS(mFigureDir, GRAPH_FILE_REF_COMPAR);
+    figure_results_path = PATHS(mFigureDir, GRAPH_TEXT_FRAME_RESUTS);
+    figure_results_png  = PATHS(mFigureDir, GRAPH_FILE_FRAME_RESUTS);
+
+    // all nucleotide lengths
+    min_removed=0xFFFFFFFF;
+    min_selected=0xFFFFFFFF;
+    max_removed=0;
+    max_selected=0;
+    total_removed_len=0;
+    total_kept_len=0;
+
+    // Sequence count
+    count_selected=0;
+    count_removed=0;
+
+    try {
+        std::ofstream file_figure_removed(figure_removed_path,std::ios::out | std::ios::app);
+        std::ofstream file_figure_results(figure_results_path,std::ios::out | std::ios::app);
+
+        file_figure_removed << "flag\tsequence length" << std::endl;    // First line placeholder, not used
+        file_figure_results << "flag\tsequence length" << std::endl;
+
+
+        // Initialize protein output streams (will be moved/changed)
+        file_map_faa[FRAME_SELECTION_INTERNAL_FLAG] =
+                new std::ofstream(out_internal_path+ FileSystem::EXT_FAA, std::ios::out | std::ios::app);
+        file_map_faa[FRAME_SELECTION_COMPLETE_FLAG] =
+                new std::ofstream(out_complete_path + FileSystem::EXT_FAA, std::ios::out | std::ios::app);
+        file_map_faa[FRAME_SELECTION_FIVE_FLAG] =
+                new std::ofstream(out_partial_path + FileSystem::EXT_FAA, std::ios::out | std::ios::app);
+        file_map_faa[FRAME_SELECTION_THREE_FLAG] = file_map_faa[FRAME_SELECTION_FIVE_FLAG];
+
+        // Initialize nucleotide output streams
+        file_map_fnn[FRAME_SELECTION_LOST_FLAG] =
+                new std::ofstream(out_removed_path + FileSystem::EXT_FNN, std::ios::out | std::ios::app);
+        file_map_fnn[FRAME_SELECTION_INTERNAL_FLAG] =
+                new std::ofstream(out_internal_path+ FileSystem::EXT_FNN, std::ios::out | std::ios::app);
+        file_map_fnn[FRAME_SELECTION_COMPLETE_FLAG] =
+                new std::ofstream(out_complete_path+ FileSystem::EXT_FNN, std::ios::out | std::ios::app);
+        file_map_fnn[FRAME_SELECTION_FIVE_FLAG] =
+                new std::ofstream(out_partial_path+ FileSystem::EXT_FNN, std::ios::out | std::ios::app);
+        file_map_fnn[FRAME_SELECTION_THREE_FLAG] = file_map_fnn[FRAME_SELECTION_FIVE_FLAG];
+
+        count_map ={
+                {FRAME_SELECTION_INTERNAL_FLAG,0 },
+                {FRAME_SELECTION_COMPLETE_FLAG,0 },
+                {FRAME_SELECTION_FIVE_FLAG    ,0 },
+                {FRAME_SELECTION_THREE_FLAG   ,0 },
+        };
+
+        for (auto& pair : *mpQueryData->get_sequences_ptr()) {
+            if (!pair.second->is_kept()) continue; // Skip seqs that were lost to expression analysis
+
+            if (pair.second->is_protein() && pair.second->is_kept_expression()) {
+                // Kept sequence, either partial, complete, or internal
+                count_selected++;
+
+                // Get Nucleotide sequence length for statistic purposes
+                length = (uint16) pair.second->get_sequence_length();
+
+                if (length < min_selected) {
+                    min_selected = length;
+                    min_kept_seq = pair.first;
+                }
+                if (length > max_selected) {
+                    max_selected = length;
+                    max_kept_seq = pair.first;
+                }
+
+                total_kept_len += length;            // Update total transcriptome length for statistics
+                all_kept_lengths.push_back(length);  // Update individual lengths for statistics
+
+                // Update figure
+                file_figure_removed << GRAPH_KEPT_FLAG << '\t' << std::to_string(length) << std::endl;
+
+                // Print nucleotide + protein sequences to files
+                std::map<std::string, std::ofstream*>::iterator file_it = file_map_faa.find(pair.second->getFrame());
+                std::map<std::string, std::ofstream*>::iterator file_it_n = file_map_fnn.find(pair.second->getFrame());
+                if (file_it != file_map_faa.end() && file_it_n != file_map_faa.end()) {
+                    *file_it->second << pair.second->get_sequence_p() << std::endl;
+                    *file_it_n->second << pair.second->get_sequence_n() << std::endl;
+                    count_map[pair.second->getFrame()]++;
+                } else {
+                    throw ExceptionHandler("Unknown frame flag found", ERR_ENTAP_RUN_GENEMARK_STATS);
+                }
+
+            } else if (!pair.second->is_protein() && pair.second->is_kept_expression()){
+                // Lost sequence from Frame Selection process
+                count_removed++;
+                pair.second->QUERY_FLAG_CLEAR(QuerySequence::QUERY_FRAME_KEPT);
+                *file_map_fnn[FRAME_SELECTION_LOST_FLAG] << pair.second->get_sequence_n() << std::endl;
+
+                length = (uint16) pair.second->get_sequence_length();  // Nucleotide sequence length for statistics
+
+                if (length < min_removed) {
+                    min_removed = length;
+                    min_removed_seq = pair.first;
+                }
+                if (length > max_removed) {
+                    max_removed_seq = pair.first;
+                    max_removed = length;
+                }
+                file_figure_removed << GRAPH_REJECTED_FLAG << '\t' << std::to_string(length) << std::endl;
+                all_lost_lengths.push_back(length);
+                total_removed_len += length;
+            } else {
+                ;
+            }
+        }
+
+        // Cleanup/close protein files
+        for(auto& pair : file_map_faa) {
+            if (pair.first.compare(FRAME_SELECTION_THREE_FLAG)!=0){
+                pair.second->close();
+                delete pair.second;
+                pair.second = 0;
+            }
+        }
+        // Cleanup.close nucleotide files
+        for(auto& pair : file_map_fnn) {
+            if (pair.first.compare(FRAME_SELECTION_THREE_FLAG)!=0){
+                pair.second->close();
+                delete pair.second;
+                pair.second = 0;
+            }
+        }
+
+        // Ensure some sequences were kept and not all removed before we continue with printing stats, etc...
+        if (count_selected <= MINIMUM_KEPT_SEQUENCES) {
+            throw ExceptionHandler("Number of Kept sequences were under minimum after Frame Selection process, exiting...",
+                                   ERR_ENTAP_RUN_GENEMARK_PARSE);
+        }
+
+        // Calculate and print stats
+        FS_dprint("Beginning to calculate statistics...");
+        avg_selected = (fp32)total_kept_len / count_selected;
+        mpFileSystem->format_stat_stream(stat_output, "Frame Selected Transcripts (GeneMarkS-T)");
+        stat_output <<
+                    "Total sequences frame selected: "      << count_selected          <<
+                    "\n\tTranslated protein sequences: "    << mFinalFaaPath              <<
+                    "\nTotal sequences removed (no frame): "<< count_removed           <<
+                    "\n\tFrame selected CDS removed: "      << out_removed_path        <<
+                    "\nTotal of "                           <<
+                    count_map[FRAME_SELECTION_FIVE_FLAG]    << " 5 prime partials and "<<
+                    count_map[FRAME_SELECTION_THREE_FLAG]   << " 3 prime partials"     <<
+                    "\n\tPartial CDS: "                     << out_partial_path        <<
+                    "\nTotal of "                           <<
+                    count_map[FRAME_SELECTION_COMPLETE_FLAG]<<" complete genes:\n\t" << out_complete_path<<
+                    "\nTotal of "                           <<
+                    count_map[FRAME_SELECTION_INTERNAL_FLAG]<<" internal genes:\n\t" << out_internal_path<<"\n\n";
+
+        // Determine statistics for NEW reference transcriptome (following frame selection process)
+        mpFileSystem->format_stat_stream(stat_output, "Frame Selection: New Reference Transcriptome Statistics");
+        kept_n = mpQueryData->calculate_N_vals(all_kept_lengths,total_kept_len);
+        stat_output <<
+                    "\nTotal sequences: "      << count_selected <<
+                    "\nTotal length of transcriptome(bp): "      << total_kept_len <<
+                    "\nAverage length(bp): "   << avg_selected   <<
+                    "\nn50: "                  << kept_n.first   <<
+                    "\nn90: "                  << kept_n.second  <<
+                    "\nLongest sequence(bp): " << max_selected   << " (" << max_kept_seq << ")" <<
+                    "\nShortest sequence(bp): "<< min_selected   << " (" << min_kept_seq << ")";
+
+        // Determine statistics for removed sequences following Frame Selection process
+        if (count_removed > 0) {
+            avg_lost     = (fp32)total_removed_len / count_removed;
+            std::pair<uint64, uint64> removed_n =
+                    mpQueryData->calculate_N_vals(all_lost_lengths,total_removed_len);
+            stat_output <<
+                        "\n\nRemoved Sequences (no frame):"       <<
+                        "\nTotal sequences: "                     << count_removed    <<
+                        "\nAverage sequence length(bp): "         << avg_lost         <<
+                        "\nn50: "                                 << removed_n.first  <<
+                        "\nn90: "                                 << removed_n.second <<
+                        "\nLongest sequence(bp): "  << max_removed<< " (" << max_removed_seq << ")" <<
+                        "\nShortest sequence(bp): " << min_removed<< " (" << min_removed_seq << ")" <<"\n";
+        } else {
+            stat_output << "WARNING: No sequences were removed from Frame Selection";
+        }
+        std::string stat_out_msg = stat_output.str();
+        mpFileSystem->print_stats(stat_out_msg);
+        FS_dprint("Success!");
+
+        //---------------------- Figure handling ----------------------//
+        FS_dprint("Beginning figure handling...");
+        file_figure_results << GRAPH_REJECTED_FLAG           << '\t' << std::to_string(count_removed)   <<std::endl;
+        file_figure_results << FRAME_SELECTION_FIVE_FLAG     << '\t' << std::to_string(count_map[FRAME_SELECTION_FIVE_FLAG]) <<std::endl;
+        file_figure_results << FRAME_SELECTION_THREE_FLAG    << '\t' << std::to_string(count_map[FRAME_SELECTION_THREE_FLAG]) <<std::endl;
+        file_figure_results << FRAME_SELECTION_COMPLETE_FLAG << '\t' << std::to_string(count_map[FRAME_SELECTION_COMPLETE_FLAG])   <<std::endl;
+        file_figure_results << FRAME_SELECTION_INTERNAL_FLAG << '\t' << std::to_string(count_map[FRAME_SELECTION_INTERNAL_FLAG])   <<std::endl;
+
+        graphingStruct.text_file_path = figure_results_path;
+        graphingStruct.graph_title    = GRAPH_TITLE_FRAME_RESULTS;
+        graphingStruct.fig_out_path   = figure_results_png;
+        graphingStruct.software_flag  = GRAPH_FRAME_FLAG;
+        graphingStruct.graph_type     = GRAPH_PIE_RESULTS_FLAG;
+        mpGraphingManager->graph(graphingStruct);
+
+        graphingStruct.text_file_path = figure_removed_path;
+        graphingStruct.graph_title    = GRAPH_TITLE_REF_COMPAR;
+        graphingStruct.fig_out_path   = figure_removed_png;
+        graphingStruct.graph_type     = GRAPH_COMP_BOX_FLAG;
+        mpGraphingManager->graph(graphingStruct);
+        FS_dprint("Success! Frame Selection statistics completed");
+    } catch (const std::exception &e) {
+        throw ExceptionHandler("ERROR Unable to calculate Frame Selection statistics: " + std::string(e.what()),
+                               ERR_ENTAP_RUN_GENEMARK_PARSE);
+    }
+}
+
+
+/**
+ * ======================================================================
+ * Function void AbstractFrames::get_final_faa()
+ *
+ * Description          - Returns absolute path to final faa (protein) file
+ *                        created from Frame Selection software
+ *
+ * Notes                - None
+ *
+ * @return              - Absolute path to final faa (protein) file
+ *
+ * =====================================================================
+ */
+std::string AbstractFrame::get_final_faa() {
+    return mFinalFaaPath;
+}
+

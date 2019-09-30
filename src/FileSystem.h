@@ -146,6 +146,8 @@ public:
     static const std::string EXT_TSV;
     static const std::string EXT_CSV;
     static const std::string EXT_LST;
+    static const std::string EXT_PEP;
+    static const std::string EXT_CDS;
 
     static const char        DELIM_TSV;
     static const char        DELIM_CSV;

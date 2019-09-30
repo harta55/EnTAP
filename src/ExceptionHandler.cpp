@@ -31,7 +31,6 @@
 #include "ExceptionHandler.h"
 //**************************************************************
 
-
 /**
  * ======================================================================
  * Function ExceptionHandler::ExceptionHandler(const std::string& msg, int err)
@@ -76,13 +75,6 @@ void ExceptionHandler::print_msg(FileSystem* filesystem) {
     added_msg << "Error code: " << mErrCode << "\n";
 
     switch (mErrCode) {
-        case ERR_ENTAP_INPUT_PARSE:
-            added_msg << "Error in parsing input data, please consult -h for more information.";
-            break;
-        case ERR_ENTAP_CONFIG_PARSE:
-            added_msg << "Error in parsing the EnTAP configuration file, ensure all parameters are"
-                    "in the correct format.";
-            break;
         case ERR_ENTAP_CONFIG_CREATE:
             added_msg << "Error in creating the EnTAP configuration file. If this persists, download"
                     "the file from GitHub";
@@ -194,7 +186,8 @@ void ExceptionHandler::print_msg(FileSystem* filesystem) {
             added_msg << "Ensure you have a proper internet connection and wget available";
             break;
         default:
-            added_msg << "Error code not recognized.";
+            FS_dprint("Error code (" + std::to_string(mErrCode) + ") not recognized");
+//            added_msg << "Error code not recognized.";
             break;
     }
 
@@ -210,6 +203,6 @@ const char* ExceptionHandler::what() {
 }
 
 
-int ExceptionHandler::getErr_code() const {
+uint16 ExceptionHandler::getErr_code() const {
     return mErrCode;
 }

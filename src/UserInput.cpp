@@ -39,6 +39,7 @@
 #include "ontology/ModEggnogDMND.h"
 #include "config.h"
 #include "similarity_search/ModDiamond.h"
+#include "FrameSelection.h"
 
 //**************************************************************
 
@@ -81,6 +82,12 @@
                             "Specify flags as follows:\n"                               \
                             "    0. EggNOG (default)\n"                                 \
                             "    1. InterProScan"
+#define DESC_FRAME_SELECTION_FLAG "Specify the Frame Selection software you would like "\
+                            "to use. Only one flag can be specified.\n"                 \
+                            "Specify flags as follows:\n"                               \
+                            "    0. GeneMarkS-T (default)\n"                            \
+                            "    1. Transdecoder"
+#define DESC_TRANSDECODER_MIN_FLAG "Transdecoder only. Specify the minimum protein length"
 #define DESC_GRAPHING       "Check whether or not your system supports graphing.\n"     \
                             "This option does not require any other flags and will"     \
                             "just check whether the version of Python being used has"   \
@@ -187,6 +194,8 @@
 //******************** Global Variables ************************
 std::string RSEM_EXE_DIR;
 std::string GENEMARK_EXE;
+std::string TRANSDECODER_LONGORFS_EXE;
+std::string TRANSDECODER_PREDICT_EXE;
 std::string DIAMOND_EXE;
 std::string EGG_SQL_DB_PATH;
 std::string EGG_DMND_PATH;
@@ -206,7 +215,7 @@ std::string GRAPHING_EXE;
  * Description          - Utilizes boost libraries to parse user input
  *                        arguments
  *
- * Notes                - None
+ * Notes                - DEPRECATED
  *
  * @param argc          - Pushed from main
  * @param argv          - Pushed from main
@@ -282,7 +291,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
                 std::cout<<"EnTAP version: "<<ENTAP_VERSION_STR<<std::endl;
                 throw(ExceptionHandler("",ERR_ENTAP_SUCCESS));
             }
-            _user_inputs = vm;
+            mUserInputs = vm;
         } catch (boost::program_options::required_option& e) {
             throw ExceptionHandler(e.what(),ERR_ENTAP_INPUT_PARSE);
         }
@@ -311,7 +320,8 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
 
  void UserInput::parse_arguments_tclap(int argc, const char ** argv) {
     try {
-        TCLAP::CmdLine cmd("EnTAP\nAlexander Hart and Dr. Jill Wegrzyn\nUniversity of Connecticut\nCopyright 2017-2019", ' ', ENTAP_VERSION_STR);
+        TCLAP::CmdLine cmd("EnTAP\nAlexander Hart and Dr. Jill Wegrzyn\nUniversity of Connecticut\nCopyright 2017-2019",
+                           ' ', ENTAP_VERSION_STR);
 
         // Switch Args
         TCLAP::SwitchArg argConfig("",INPUT_FLAG_CONFIG, DESC_CONFIG, cmd, false);
@@ -329,21 +339,23 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         TCLAP::ValueArg<std::string> argTag("", INPUT_FLAG_TAG, DESC_OUT_FLAG, false, OUTFILE_DEFAULT, "string", cmd);
         TCLAP::ValueArg<fp32> argFPKM("", INPUT_FLAG_FPKM, DESC_FPKM, false, RSEM_FPKM_DEFAULT, "decimal", cmd);
         TCLAP::ValueArg<fp64> argEval("", INPUT_FLAG_E_VAL, DESC_EVAL, false, E_VALUE, "decimal", cmd);
-        TCLAP::ValueArg<int> argThreads("t", INPUT_FLAG_THREADS, DESC_THREADS, false, DEFAULT_THREADS, "integer", cmd);
-        TCLAP::ValueArg<std::string> argAlign("a", INPUT_FLAG_ALIGN, DESC_ALIGN_FILE, false, "","string",cmd);
+        TCLAP::ValueArg<int> argThreads(INPUT_FLAG_SHORT_THREADS, INPUT_FLAG_THREADS, DESC_THREADS, false, DEFAULT_THREADS, "integer", cmd);
+        TCLAP::ValueArg<uint16> argTransMinProtein("", INPUT_FLAG_TRANS_MIN_PROTEIN, DESC_TRANSDECODER_MIN_FLAG, false, DEFAULT_TRANSDECODER_MIN_PROTEIN, "integer", cmd);
+        TCLAP::ValueArg<int> argFrameSelection("", INPUT_FLAG_FRAME_SELECTION, DESC_FRAME_SELECTION_FLAG, false, FRAME_GENEMARK_ST, "integer", cmd);
+        TCLAP::ValueArg<std::string> argAlign(INPUT_FLAG_SHORT_ALIGN, INPUT_FLAG_ALIGN, DESC_ALIGN_FILE, false, "","string",cmd);
         TCLAP::ValueArg<fp32> argQueryCov("", INPUT_FLAG_QCOVERAGE, DESC_QCOVERAGE, false, DEFAULT_QCOVERAGE, "decimal", cmd);
         TCLAP::ValueArg<std::string> argExePath("", INPUT_FLAG_EXE_PATH, DESC_EXE_PATHS, false, "", "string", cmd);
         TCLAP::ValueArg<fp32> argTCoverage("", INPUT_FLAG_TCOVERAGE, DESC_TCOVERAGE, false, DEFAULT_TCOVERAGE, "decimal", cmd);
         TCLAP::ValueArg<std::string> argSpecies("", INPUT_FLAG_SPECIES, DESC_TAXON, false, "", "string", cmd);
         TCLAP::ValueArg<std::string> argState("", INPUT_FLAG_STATE, DESC_STATE, false, DEFAULT_STATE, "string", cmd);
-        TCLAP::ValueArg<std::string> argTranscript("i", INPUT_FLAG_TRANSCRIPTOME, DESC_INPUT_TRAN, false, "", "string", cmd);
+        TCLAP::ValueArg<std::string> argTranscript(INPUT_FLAG_SHORT_TRANSCRIPTOME, INPUT_FLAG_TRANSCRIPTOME, DESC_INPUT_TRAN, false, "", "string", cmd);
 
         // Multi Args
         TCLAP::MultiArg<std::string> argInterpro("", INPUT_FLAG_INTERPRO, DESC_INTER_DATA, false, "string list",cmd);
         TCLAP::MultiArg<uint16> argOntology("", INPUT_FLAG_ONTOLOGY, DESC_ONTOLOGY_FLAG, false, "integer list", cmd);
-        TCLAP::MultiArg<std::string> argDatabase("d", INPUT_FLAG_DATABASE, DESC_DATABASE, false, "string list", cmd);
+        TCLAP::MultiArg<std::string> argDatabase(INPUT_FLAG_SHORT_DATABASE, INPUT_FLAG_DATABASE, DESC_DATABASE, false, "string list", cmd);
         TCLAP::MultiArg<uint16> argGOLevels("", INPUT_FLAG_GO_LEVELS, DESC_ONT_LEVELS, false, "integer list", cmd);
-        TCLAP::MultiArg<std::string> argContam("c", INPUT_FLAG_CONTAM, DESC_CONTAMINANT, false, "string list", cmd  );
+        TCLAP::MultiArg<std::string> argContam(INPUT_FLAG_SHORT_CONTAM, INPUT_FLAG_CONTAM, DESC_CONTAMINANT, false, "string list", cmd  );
         TCLAP::MultiArg<uint16> argDataType("", INPUT_FLAG_DATABASE_TYPE, DESC_DATABASE_TYPE, false, "integer list", cmd);
         TCLAP::MultiArg<uint16> argOutputFormat("", INPUT_FLAG_OUTPUT_FORMAT, DESC_OUTPUT_FORMAT, false, "integer list", cmd);
 
@@ -359,68 +371,66 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         /* Add everything to the map that will be used throughout execution */
 
         // Add SwitchArgs
-        if (argConfig.isSet()) _user_inputs.emplace(INPUT_FLAG_CONFIG, true);
-        if (argProtein.isSet())_user_inputs.emplace(INPUT_FLAG_RUNPROTEIN, true);
-        if (argNucleo.isSet()) _user_inputs.emplace(INPUT_FLAG_RUNNUCLEOTIDE, true);
-        if (argGraph.isSet()) _user_inputs.emplace(INPUT_FLAG_GRAPH, true);
-        if (argTrim.isSet()) _user_inputs.emplace(INPUT_FLAG_TRIM, true);
-        if (argGenerate.isSet()) _user_inputs.emplace(INPUT_FLAG_GENERATE, true);
-        if (argComplete.isSet()) _user_inputs.emplace(INPUT_FLAG_COMPLETE, true);
-        if (argNoCheck.isSet()) _user_inputs.emplace(INPUT_FLAG_NOCHECK, true);
-        if (argOverwrite.isSet()) _user_inputs.emplace(INPUT_FLAG_OVERWRITE, true);
+        if (argConfig.isSet()) mUserInputs.emplace(INPUT_FLAG_CONFIG, true);
+        if (argProtein.isSet())mUserInputs.emplace(INPUT_FLAG_RUNPROTEIN, true);
+        if (argNucleo.isSet()) mUserInputs.emplace(INPUT_FLAG_RUNNUCLEOTIDE, true);
+        if (argGraph.isSet()) mUserInputs.emplace(INPUT_FLAG_GRAPH, true);
+        if (argTrim.isSet()) mUserInputs.emplace(INPUT_FLAG_TRIM, true);
+        if (argGenerate.isSet()) mUserInputs.emplace(INPUT_FLAG_GENERATE, true);
+        if (argComplete.isSet()) mUserInputs.emplace(INPUT_FLAG_COMPLETE, true);
+        if (argNoCheck.isSet()) mUserInputs.emplace(INPUT_FLAG_NOCHECK, true);
+        if (argOverwrite.isSet()) mUserInputs.emplace(INPUT_FLAG_OVERWRITE, true);
 
         // Add ValueArgs
-        if (argUninform.isSet())_user_inputs.emplace(INPUT_FLAG_UNINFORM, argUninform.getValue());
-        _user_inputs.emplace(INPUT_FLAG_TAG, argTag.getValue());
-        _user_inputs.emplace(INPUT_FLAG_FPKM, argFPKM.getValue());
-        _user_inputs.emplace(INPUT_FLAG_E_VAL, argEval.getValue());
-        _user_inputs.emplace(INPUT_FLAG_THREADS, argThreads.getValue());
-        if (argAlign.isSet()) _user_inputs.emplace(INPUT_FLAG_ALIGN, argAlign.getValue());
-        _user_inputs.emplace(INPUT_FLAG_QCOVERAGE, argQueryCov.getValue());
-        if (argExePath.isSet()) _user_inputs.emplace(INPUT_FLAG_EXE_PATH, argExePath.getValue());
-        _user_inputs.emplace(INPUT_FLAG_TCOVERAGE, argTCoverage.getValue());
-        if (argSpecies.isSet()) _user_inputs.emplace(INPUT_FLAG_SPECIES, argSpecies.getValue());
-        _user_inputs.emplace(INPUT_FLAG_STATE, argState.getValue());
-        if (argTranscript.isSet())_user_inputs.emplace(INPUT_FLAG_TRANSCRIPTOME, argTranscript.getValue());
+        if (argUninform.isSet())mUserInputs.emplace(INPUT_FLAG_UNINFORM, argUninform.getValue());
+        mUserInputs.emplace(INPUT_FLAG_TAG, argTag.getValue());
+        mUserInputs.emplace(INPUT_FLAG_FPKM, argFPKM.getValue());
+        mUserInputs.emplace(INPUT_FLAG_E_VAL, argEval.getValue());
+        mUserInputs.emplace(INPUT_FLAG_THREADS, argThreads.getValue());
+        mUserInputs.emplace(INPUT_FLAG_FRAME_SELECTION, argFrameSelection.getValue());
+        if (argAlign.isSet()) mUserInputs.emplace(INPUT_FLAG_ALIGN, argAlign.getValue());
+        mUserInputs.emplace(INPUT_FLAG_QCOVERAGE, argQueryCov.getValue());
+        if (argExePath.isSet()) mUserInputs.emplace(INPUT_FLAG_EXE_PATH, argExePath.getValue());
+        mUserInputs.emplace(INPUT_FLAG_TCOVERAGE, argTCoverage.getValue());
+        if (argSpecies.isSet()) mUserInputs.emplace(INPUT_FLAG_SPECIES, argSpecies.getValue());
+        mUserInputs.emplace(INPUT_FLAG_STATE, argState.getValue());
+        if (argTranscript.isSet())mUserInputs.emplace(INPUT_FLAG_TRANSCRIPTOME, argTranscript.getValue());
 
         // Add MultiArgs (defaults) Couldnt find a way to do defaults in constructor??!
         if (argInterpro.isSet()) {
-            _user_inputs.emplace(INPUT_FLAG_INTERPRO, argInterpro.getValue());
+            mUserInputs.emplace(INPUT_FLAG_INTERPRO, argInterpro.getValue());
         } else {
-            _user_inputs.emplace(INPUT_FLAG_INTERPRO, vect_str_t{ModInterpro::get_default()});
+            mUserInputs.emplace(INPUT_FLAG_INTERPRO, vect_str_t{ModInterpro::get_default()});
         }
         if (argOntology.isSet()) {
-            _user_inputs.emplace(INPUT_FLAG_ONTOLOGY, argOntology.getValue());
+            mUserInputs.emplace(INPUT_FLAG_ONTOLOGY, argOntology.getValue());
         } else {
-            _user_inputs.emplace(INPUT_FLAG_ONTOLOGY, std::vector<uint16>{ONT_EGGNOG_DMND});
+            mUserInputs.emplace(INPUT_FLAG_ONTOLOGY, std::vector<uint16>{ONT_EGGNOG_DMND});
         }
         if (argGOLevels.isSet()) {
-            _user_inputs.emplace(INPUT_FLAG_GO_LEVELS, argGOLevels.getValue());
+            mUserInputs.emplace(INPUT_FLAG_GO_LEVELS, argGOLevels.getValue());
         } else {
-            _user_inputs.emplace(INPUT_FLAG_GO_LEVELS, std::vector<uint16>{0,3,4});
+            mUserInputs.emplace(INPUT_FLAG_GO_LEVELS, std::vector<uint16>{0,3,4});
         }
         if (argDataType.isSet()) {
-            _user_inputs.emplace(INPUT_FLAG_DATABASE_TYPE, argDataType.getValue());
+            mUserInputs.emplace(INPUT_FLAG_DATABASE_TYPE, argDataType.getValue());
         } else {
-            _user_inputs.emplace(INPUT_FLAG_DATABASE_TYPE, std::vector<uint16>{EntapDatabase::ENTAP_SERIALIZED});
+            mUserInputs.emplace(INPUT_FLAG_DATABASE_TYPE, std::vector<uint16>{EntapDatabase::ENTAP_SERIALIZED});
         }
 
         if (argOutputFormat.isSet()) {
-            _user_inputs.emplace(INPUT_FLAG_OUTPUT_FORMAT, argOutputFormat.getValue());
+            mUserInputs.emplace(INPUT_FLAG_OUTPUT_FORMAT, argOutputFormat.getValue());
         } else {
-            _user_inputs.emplace(INPUT_FLAG_OUTPUT_FORMAT, vect_uint16_t{FileSystem::ENT_FILE_DELIM_TSV, FileSystem::ENT_FILE_FASTA_FNN, FileSystem::ENT_FILE_FASTA_FAA});
+            mUserInputs.emplace(INPUT_FLAG_OUTPUT_FORMAT, vect_uint16_t{FileSystem::ENT_FILE_DELIM_TSV, FileSystem::ENT_FILE_FASTA_FNN, FileSystem::ENT_FILE_FASTA_FAA});
         }
 
-        _user_inputs.emplace(INPUT_FLAG_DATABASE, argDatabase.getValue());
-        _user_inputs.emplace(INPUT_FLAG_CONTAM, argContam.getValue());
+        mUserInputs.emplace(INPUT_FLAG_DATABASE, argDatabase.getValue());
+        mUserInputs.emplace(INPUT_FLAG_CONTAM, argContam.getValue());
 
     } catch (TCLAP::ArgException &e) {
         throw ExceptionHandler(e.what(), ERR_ENTAP_INPUT_PARSE);
     }
  }
-
-
-
 
 #endif //USE_BOOST
 
@@ -446,7 +456,6 @@ bool UserInput::verify_user_input() {
     std::string              input_tran_path;
     std::vector<uint16>      ont_flags;
     EntapDatabase           *pEntap_database = nullptr;
-
 
     // If graphing flag, check if it is allowed then EXIT
     if (has_input(UserInput::INPUT_FLAG_GRAPH)) {
@@ -490,9 +499,9 @@ bool UserInput::verify_user_input() {
     }
     print_user_input();
 
-    // If user wants to skip this check, EXIT
+    // If user wants to skip this check, EXIT (do this after we print the input for debugging purposes)
     if (has_input(UserInput::INPUT_FLAG_NOCHECK)) {
-        FS_dprint("User is skipping input verification!! :(");
+        FS_dprint("WARNING User is skipping input verification!! :(");
         return is_config;
     }
 
@@ -549,6 +558,9 @@ bool UserInput::verify_user_input() {
                 } else if (!mpFileSystem->check_fasta(input_tran_path)) {
                     throw(ExceptionHandler("File not in fasta format or corrupt! "+ input_tran_path,
                                            ERR_ENTAP_INPUT_PARSE));
+                } else {
+                    // TODO File must be valid, sanity check content of FASTA file
+                    ;
                 }
             }
 
@@ -622,7 +634,7 @@ bool UserInput::verify_user_input() {
 
             // Verify InterPro databases
             if (is_interpro && !ModInterpro::valid_input(this)) {
-                throw ExceptionHandler("InterPro selected, but invalid databases input!", ERR_ENTAP_INPUT_PARSE);
+                throw ExceptionHandler("InterProScan selected, but invalid databases input!", ERR_ENTAP_INPUT_PARSE);
             }
 
             // Verify uninformative file list
@@ -631,30 +643,16 @@ bool UserInput::verify_user_input() {
                 verify_uninformative(uninform_path);
             }
 
-            // Verify paths from state
-            if (get_user_input<std::string>(INPUT_FLAG_STATE) == DEFAULT_STATE) {
-                std::string state = DEFAULT_STATE;
-                // only handling default now
-                verify_state(state, is_protein, ont_flags);
-            }
         } else {
-            // Must be config
+            // Must be config, nothing special yet
+            ;
+        }
 
-            // Check if EggNOG DIAMOND database exists, if not, check DIAMOND run
-            if (!mpFileSystem->file_exists(EGG_DMND_PATH)) {
-                if (!ModDiamond::is_executable(DIAMOND_EXE)) {
-                    throw ExceptionHandler("EggNOG DIAMOND database was not found at: " + EGG_DMND_PATH +
-                                           "\nThe DIAMOND test run failed.", ERR_ENTAP_INPUT_PARSE);
-                }
-            }
-
-            // Test run DIAMOND if user input databases
-            if (has_input(INPUT_FLAG_DATABASE)) {
-                if (!ModDiamond::is_executable(DIAMOND_EXE)) {
-                    throw ExceptionHandler("Databases have been selected for indexing. A test run of DIAMOND has failed!",
-                                           ERR_ENTAP_INPUT_PARSE);
-                }
-            }
+        // Verify software path for both CONFIG and EXECUTION
+        if (get_user_input<std::string>(INPUT_FLAG_STATE) == DEFAULT_STATE) {
+            std::string state = DEFAULT_STATE;
+            // only handling default now
+            verify_software_paths(state, is_protein, is_run, ont_flags);
         }
 
     }catch (const ExceptionHandler &e) {
@@ -702,7 +700,7 @@ void UserInput::verify_databases(bool is_run) {
         }
         FS_dprint("User has input a database at: " + path);
         // Is file extension diamond?
-        if (mpFileSystem->get_file_extension(path, false).compare(FileSystem::EXT_DMND) == 0) {
+        if (mpFileSystem->get_file_extension(path, false) == FileSystem::EXT_DMND) {
             // Yes, are we configuring?
             if (!is_run) {
                 throw ExceptionHandler("Cannot input DIAMOND (.dmnd) database when configuring!", ERR_ENTAP_INPUT_PARSE);
@@ -791,17 +789,10 @@ std::unordered_map<std::string,std::string> UserInput::parse_config(pair_str_t &
  */
 void UserInput::generate_config(std::string &path) {
     std::ofstream config_file(path, std::ios::out | std::ios::app);
-    config_file <<
-                KEY_DIAMOND_EXE               <<"=\n"<<
-                KEY_RSEM_EXE                  <<"=\n"<<
-                KEY_GENEMARK_EXE              <<"=\n"<<
-                KEY_EGGNOG_SQL_DB             <<"=\n"<<
-                KEY_EGGNOG_DMND               <<"=\n"<<
-                KEY_INTERPRO_EXE              <<"=\n"<<
-                KEY_ENTAP_DATABASE_SQL        <<"=\n"<<
-                KEY_ENTAP_DATABASE_BIN        <<"=\n"<<
-                KEY_GRAPH_SCRIPT              <<"=\n"
-                << std::endl;
+    for (const std::string &key : CONFIG_FILE_KEYS) {
+        config_file << key << "=\n";
+    }
+    config_file << std::endl;
     config_file.close();
 }
 
@@ -821,15 +812,7 @@ void UserInput::generate_config(std::string &path) {
  */
 bool UserInput::check_key(std::string& key) {
     LOWERCASE(key);
-    if (key == KEY_DIAMOND_EXE)      return true;
-    if (key == KEY_GENEMARK_EXE)     return true;
-    if (key == KEY_EGGNOG_SQL_DB)        return true;
-    if (key == KEY_EGGNOG_DMND)        return true;
-    if (key == KEY_INTERPRO_EXE)     return true;
-    if (key == KEY_ENTAP_DATABASE_BIN) return true;
-    if (key == KEY_ENTAP_DATABASE_SQL) return true;
-    if (key == KEY_GRAPH_SCRIPT)     return true;
-    return key == KEY_RSEM_EXE;
+    return std::find(CONFIG_FILE_KEYS.begin(), CONFIG_FILE_KEYS.end(), key) != CONFIG_FILE_KEYS.end();
 }
 
 
@@ -839,6 +822,7 @@ bool UserInput::check_key(std::string& key) {
  *
  * Description          - Handles printing of user selected flags to
  *                        EnTAP statistics/log file
+ *                      - All execution paths are NOT required
  *
  * Notes                - Accesses global software execution paths from
  *                        config file
@@ -868,6 +852,8 @@ void UserInput::print_user_input() {
        "\n\nExecution Paths/Commands:"
        "\n\nRSEM Directory: "                  << RSEM_EXE_DIR      <<
        "\nGeneMarkS-T: "                       << GENEMARK_EXE      <<
+       "\nTransdecoder Long Orfs: "            << TRANSDECODER_LONGORFS_EXE  <<
+       "\nTransdecoder Predict: "              << TRANSDECODER_PREDICT_EXE  <<
        "\nDIAMOND: "                           << DIAMOND_EXE       <<
        "\nInterProScan: "                      << INTERPRO_EXE      <<
        "\nEggNOG SQL Database: "               << EGG_SQL_DB_PATH   <<
@@ -879,7 +865,7 @@ void UserInput::print_user_input() {
 
     // Print all user inputs (fairly raw right now)
 
-    for (const auto& it : _user_inputs) {
+    for (const auto& it : mUserInputs) {
         std::string key = it.first.c_str();
         ss << "\n" << key << ": ";
 #ifdef USE_BOOST
@@ -982,6 +968,8 @@ void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map
     std::string temp_rsem              = map[KEY_RSEM_EXE];
     std::string temp_diamond           = map[KEY_DIAMOND_EXE];
     std::string temp_genemark          = map[KEY_GENEMARK_EXE];
+    std::string temp_transdecoder_long      = map[KEY_TRANSDECODER_LONGORFS_EXE];
+    std::string temp_transdecoder_predict   = map[KEY_TRANSDECODER_PREDICT_EXE];
     std::string temp_interpro          = map[KEY_INTERPRO_EXE];
     std::string temp_eggnog_sql_db     = map[KEY_EGGNOG_SQL_DB];
     std::string temp_eggnog_dmnd_db    = map[KEY_EGGNOG_DMND];
@@ -990,22 +978,26 @@ void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map
     std::string temp_graphing          = map[KEY_GRAPH_SCRIPT];
 
     // Included software paths
-    if (temp_rsem.empty())    temp_rsem           = PATHS(exe,Defaults::RSEM_DEFAULT_EXE);
-    if (temp_diamond.empty()) temp_diamond        = PATHS(exe,Defaults::DIAMOND_DEFAULT_EXE);
-    if (temp_genemark.empty())temp_genemark       = PATHS(exe,Defaults::GENEMARK_DEFAULT_EXE);
-    if (temp_interpro.empty())   temp_interpro    = Defaults::INTERPRO_DEF_EXE;
+    if (temp_rsem.empty())    temp_rsem           = PATHS(exe,EntapDefaults::RSEM_DEFAULT_EXE);
+    if (temp_diamond.empty()) temp_diamond        = PATHS(exe,EntapDefaults::DIAMOND_DEFAULT_EXE);
+    if (temp_genemark.empty())temp_genemark       = PATHS(exe,EntapDefaults::GENEMARK_DEFAULT_EXE);
+    if (temp_transdecoder_long.empty())temp_transdecoder_long = PATHS(exe,EntapDefaults::TRANSDECODER_LONG_DEFAULT_EXE);
+    if (temp_transdecoder_predict.empty())temp_transdecoder_predict = PATHS(exe,EntapDefaults::TRANSDECODER__PREDICT_DEFAULT_EXE);
+    if (temp_interpro.empty())   temp_interpro    = EntapDefaults::INTERPRO_DEF_EXE;
 
     // EggNOG paths
-    if (temp_eggnog_sql_db.empty())  temp_eggnog_sql_db   = PATHS(exe,Defaults::EGG_SQL_DB_DEFAULT);
-    if (temp_eggnog_dmnd_db.empty())  temp_eggnog_dmnd_db   = PATHS(exe,Defaults::EGG_DMND_DEFAULT);
+    if (temp_eggnog_sql_db.empty())  temp_eggnog_sql_db   = PATHS(exe,EntapDefaults::EGG_SQL_DB_DEFAULT);
+    if (temp_eggnog_dmnd_db.empty())  temp_eggnog_dmnd_db   = PATHS(exe,EntapDefaults::EGG_DMND_DEFAULT);
 
     // EnTAP paths
-    if (temp_entap_sql_db.empty()) temp_entap_sql_db = PATHS(exe, Defaults::ENTAP_DATABASE_SQL_DEFAULT);
-    if (temp_entap_bin_db.empty()) temp_entap_bin_db = PATHS(exe, Defaults::ENTAP_DATABASE_BIN_DEFAULT);
-    if (temp_graphing.empty()) temp_graphing = PATHS(exe, Defaults::GRAPH_SCRIPT_DEF);
+    if (temp_entap_sql_db.empty()) temp_entap_sql_db = PATHS(exe, EntapDefaults::ENTAP_DATABASE_SQL_DEFAULT);
+    if (temp_entap_bin_db.empty()) temp_entap_bin_db = PATHS(exe, EntapDefaults::ENTAP_DATABASE_BIN_DEFAULT);
+    if (temp_graphing.empty()) temp_graphing = PATHS(exe, EntapDefaults::GRAPH_SCRIPT_DEF);
 
     DIAMOND_EXE      = temp_diamond;
     GENEMARK_EXE     = temp_genemark;
+    TRANSDECODER_PREDICT_EXE = temp_transdecoder_predict;
+    TRANSDECODER_LONGORFS_EXE = temp_transdecoder_long;
     RSEM_EXE_DIR     = temp_rsem;
     EGG_SQL_DB_PATH  = temp_eggnog_sql_db;
     EGG_DMND_PATH    = temp_eggnog_dmnd_db;
@@ -1096,7 +1088,7 @@ void UserInput::verify_uninformative(std::string& path) {
 
 /**
  * ======================================================================
- * Function void verify_state(std::string &state, bool runP,
+ * Function void verify_state(std::string &state, bool runP, bool is_execution
  *                            std::vector<uint16> &ontology)
  *
  * Description          - Entry to check execution paths for software based
@@ -1106,53 +1098,33 @@ void UserInput::verify_uninformative(std::string& path) {
  *
  * @param state         - State inputted by user (or default)
  * @param runP          - Blastp flag (yes/no)
+ * @param is_execution  - If we are running execution or configuration
  * @param ontology      - Vector of ontology flags
  *
  * @return              - None
  * ======================================================================
  */
-void UserInput::verify_state(std::string &state, bool runP, std::vector<uint16> &ontology) {
+void UserInput::verify_software_paths(std::string &state, bool runP, bool is_execution, std::vector<uint16> &ontology) {
     uint8 execute = 0x0;
     std::pair<bool, std::string> out;
-    if (state.compare(DEFAULT_STATE) == 0) {
+    if (state == DEFAULT_STATE) {
         execute |= SIMILARITY_SEARCH;
         execute |= GENE_ONTOLOGY;
     }
-    out = verify_software(execute, ontology);
-    if (!out.first) throw ExceptionHandler(out.second, ERR_ENTAP_INPUT_PARSE);
-}
-
-
-/**
- * ======================================================================
- * Function std::pair<bool,std::string> verify_software(uint8 &states,
- *                                      std::vector<uint16> &ontology)
- *
- * Description          - Sanity check on software that will be used during
- *                        execution
- *
- * Notes                - None
- *
- * @param states        - State flags
- * @param ontology      - Vector of ontology flags
- *
- * @return              - Pair of yes/no failure and error msg string
- * ======================================================================
- */
-std::pair<bool,std::string> UserInput::verify_software(uint8 &states,std::vector<uint16> &ontology) {
     FS_dprint("Verifying software...");
 
-    if (states & SIMILARITY_SEARCH) {
-        if (!ModDiamond::is_executable(DIAMOND_EXE)) {
-            return std::make_pair(false, "Could not execute a test run of DIAMOND, be sure"
-                    " it's properly installed and the path is correct");
+    if (is_execution) {
+        if (execute & SIMILARITY_SEARCH) {
+            if (!ModDiamond::is_executable(DIAMOND_EXE)) {
+                throw ExceptionHandler("Could not execute a test run of DIAMOND, be sure it's properly "
+                                       "installed and the path is correct", ERR_ENTAP_INPUT_PARSE);
+            }
         }
-    }
-    if (states & GENE_ONTOLOGY) {
-        for (uint16 flag : ontology) {
-            switch (flag) {
+        if (execute & GENE_ONTOLOGY) {
+            for (uint16 flag : ontology) {
+                switch (flag) {
 #ifdef EGGNOG_MAPPER
-                case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
+                    case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
                     if (!pFileSystem->file_exists(EGG_SQL_DB_PATH))
                         return std::make_pair(false, "Could not find EggNOG SQL database at: " + EGG_SQL_DB_PATH);
                     if (!ModEggnog::is_executable())
@@ -1160,25 +1132,42 @@ std::pair<bool,std::string> UserInput::verify_software(uint8 &states,std::vector
                                 "ensure python is properly installed and the paths are correct");
                     break;
 #endif
-                case ONT_INTERPRO_SCAN:
-                    // TODO
-                    break;
+                    case ONT_INTERPRO_SCAN:
+                        // TODO
+                        break;
 
-                case ONT_EGGNOG_DMND:
-                    if (!mpFileSystem->file_exists(EGG_SQL_DB_PATH))
-                        return std::make_pair(false, "Could not find EggNOG SQL database at: " + EGG_SQL_DB_PATH);
-                    else if (!mpFileSystem->file_exists(EGG_DMND_PATH))
-                        return std::make_pair(false, "Could not find EggNOG Diamond Database at: " + EGG_DMND_PATH);
-                    else if (!ModEggnogDMND::is_executable(DIAMOND_EXE))
-                        return std::make_pair(false, "Test run of DIAMOND for EggNOG analysis has failed");
-                default:
-                    break;
+                    case ONT_EGGNOG_DMND:
+                        if (!mpFileSystem->file_exists(EGG_SQL_DB_PATH))
+                            throw ExceptionHandler("Could not find EggNOG SQL database at: " + EGG_SQL_DB_PATH, ERR_ENTAP_INPUT_PARSE);
+                        else if (!mpFileSystem->file_exists(EGG_DMND_PATH))
+                            throw ExceptionHandler("Could not find EggNOG Diamond Database at: " + EGG_DMND_PATH, ERR_ENTAP_INPUT_PARSE);
+                        else if (!ModEggnogDMND::is_executable(DIAMOND_EXE))
+                            throw ExceptionHandler("Could not execute a test run of DIAMOND for EggNOG analysis has failed", ERR_ENTAP_INPUT_PARSE);
+                    default:
+                        break;
+                }
+            }
+        }
+
+    } else {
+
+        // Check if EggNOG DIAMOND database exists, if not, check DIAMOND run
+        if (!mpFileSystem->file_exists(EGG_DMND_PATH)) {
+            if (!ModDiamond::is_executable(DIAMOND_EXE)) {
+                throw ExceptionHandler("EggNOG DIAMOND database was not found at: " + EGG_DMND_PATH +
+                                       "\nThe DIAMOND test run failed.", ERR_ENTAP_INPUT_PARSE);
+            }
+        }
+
+        // Test run DIAMOND if user input databases
+        if (has_input(INPUT_FLAG_DATABASE)) {
+            if (!ModDiamond::is_executable(DIAMOND_EXE)) {
+                throw ExceptionHandler("Databases have been selected for indexing. A test run of DIAMOND has failed!",
+                                       ERR_ENTAP_INPUT_PARSE);
             }
         }
     }
-
     FS_dprint("Success!");
-    return std::make_pair(true, "");
 }
 
 UserInput::UserInput(int argc, const char** argv) {
@@ -1201,9 +1190,9 @@ void UserInput::set_pFileSystem(FileSystem *_pFileSystem) {
 
 bool UserInput::has_input(const std::string &key) {
 #ifdef USE_BOOST
-    return (bool)_user_inputs.count(key);
+    return (bool)mUserInputs.count(key);
 #else
-    return _user_inputs.find(key) != _user_inputs.end();
+    return mUserInputs.find(key) != mUserInputs.end();
 #endif
 }
 
@@ -1234,7 +1223,7 @@ int UserInput::get_supported_threads() {
     user_threads = get_user_input<int>(INPUT_FLAG_THREADS);
     // assuming positive
     if ((uint32) user_threads > supported_threads) {
-        FS_dprint("Specified thread number is larger than available threads,"
+        FS_dprint("WARNING specified thread number is larger than available threads,"
                                         "setting threads to " + std::to_string(supported_threads));
         threads = supported_threads;
     } else {
@@ -1314,7 +1303,7 @@ std::string UserInput::get_user_transc_basename() {
  * ======================================================================
  * Function std::string UserInput::get_executable_dir()
  *
- * Description          - Gets the directory that the executable was detected
+ * Description          - Gets the directory that the EnTAP executable was detected
  *                        in
  *
  * Notes                - Only implemented for UNIX systems now!

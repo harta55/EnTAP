@@ -34,6 +34,22 @@
 #include "../UserInput.h"
 #include "../QuerySequence.h"
 
+/**
+ * ======================================================================
+ * @class ModInterpro
+ *
+ * Description          - This EnTAP module supports execution, parsing, and
+ *                        statistical analysis of the InterProScan software
+ *                        through terminal commands
+ *                      - Parsed data is added to QueryData class
+ *                      - Inherits from AbstractOntology and EntapModule classes
+ *
+ * Citation             - P. Jones et al., “InterProScan 5: genome-scale
+ *                        protein function classification,” (in eng),
+ *                        Bioinformatics, vol. 30, no. 9, pp. 1236-40, May 2014.
+ *
+ * ======================================================================
+ */
 class ModInterpro : public AbstractOntology{
 
     struct InterProData {

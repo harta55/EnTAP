@@ -94,6 +94,7 @@ EntapHeader ENTAP_HEADER_INFO[] = {
         {"Unused",                                  false}
 };
 
+// For C++11 use std::to_string(arg)
 std::string float_to_string(fp64 val) {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2) << val;

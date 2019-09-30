@@ -52,6 +52,8 @@ const std::string FileSystem::EXT_STD  = "_std";
 const std::string FileSystem::EXT_TSV  = ".tsv";
 const std::string FileSystem::EXT_CSV  = ".csv";
 const std::string FileSystem::EXT_LST  = ".lst";
+const std::string FileSystem::EXT_CDS  = ".cds";
+const std::string FileSystem::EXT_PEP  = ".pep";
 
 const char FileSystem::DELIM_TSV = '\t';
 const char FileSystem::DELIM_CSV = ',';

@@ -31,6 +31,26 @@
 
 #include "AbstractOntology.h"
 
+/**
+ * ======================================================================
+ * @class ModEggnogDMND
+ *
+ * Description          - This EnTAP module supports execution, parsing, and
+ *                        statistical analysis of the EggNOG gene family databases
+ *                        through execution of DIAMOND and SQL accession
+ *                      - EggNOG assigns functional information to transcripts
+ *                        according to their gene family
+ *                      - Parsed data is added to QueryData class
+ *                      - Inherits from AbstractOntology and EntapModule classes
+ *
+ * Citation             - Jensen, L. J., Julien, P., Kuhn, M., von Mering,
+ *                        C., Muller, J., Doerks, T., & Bork, P. (2008).
+ *                        eggNOG: automated construction and annotation of
+ *                        orthologous groups of genes. Nucleic acids research,
+ *                        36(Database issue), D250–D254. doi:10.1093/nar/gkm796
+ *
+ * ======================================================================
+ */
 class ModEggnogDMND : public AbstractOntology {
 
 public:

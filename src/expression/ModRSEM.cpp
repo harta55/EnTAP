@@ -63,7 +63,7 @@ ModRSEM::~ModRSEM() {
 EntapModule::ModVerifyData ModRSEM::verify_files() {
     ModVerifyData modVerifyData;
 
-    mFilename = mpFileSystem->get_filename(mInHits, false);
+    mFilename = mpFileSystem->get_filename(mInputTranscriptome, false);
     mExpressionOut  = PATHS(mModOutDir, mFilename);
     mRsemOut = mExpressionOut + RSEM_OUT_FILE;
     if (mpFileSystem->file_exists(mRsemOut)) {
@@ -444,7 +444,7 @@ bool ModRSEM::rsem_generate_reference(std::string& reference_path_out) {
     ref_exe  = PATHS(mExePath, RSEM_PREP_REF_EXE);
     ref_path = PATHS(mModOutDir, mFilename) + "_ref";
     rsem_arg = ref_exe + " "
-               + mInHits + " "
+               + mInputTranscriptome + " "
                + ref_path;
 
     terminalData.command       = rsem_arg;

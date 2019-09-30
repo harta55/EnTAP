@@ -67,6 +67,10 @@ enum ENTAP_ERR {
     ERR_ENTAP_RUN_GENEMARK_PARSE          = 101u,
     ERR_ENTAP_RUN_GENEMARK_STATS          = 102u,
     ERR_ENTAP_RUN_GENEMARK_MOVE           = 103u,
+    ERR_ENTAP_RUN_TRANSDECODER            = 105u,
+    ERR_ENTAP_RUN_TRANSDECODER_PARSE      = 106u,
+    ERR_ENTAP_RUN_TRANSDECODER_STATS      = 107u,
+    ERR_ENTAP_RUN_TRANSDECODER_MOVE       = 108u,
     ERR_ENTAP_RUN_RSEM_VALIDATE           = 110u,
     ERR_ENTAP_RUN_RSEM_CONVERT            = 111u,
     ERR_ENTAP_RUN_RSEM_EXPRESSION         = 112u,
@@ -95,14 +99,14 @@ class ExceptionHandler: public std::exception{
 public:
     ExceptionHandler(const std::string&, int);
     const char* what();
-    int getErr_code() const;
+    uint16 getErr_code() const;
     void print_msg(FileSystem*);
 
 private:
-    int mErrCode;
+    uint16 mErrCode;
     std::string mMessage;
 
-    static const std::string ERR_ENTAP_STR [ERR_ENTAP_MAX];
+//    static const std::string ERR_ENTAP_STR [ERR_ENTAP_MAX];
 };
 
 #endif //ENTAP_EXCEPTIONHANDLER_H

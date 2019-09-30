@@ -209,7 +209,7 @@ void ModDiamond::execute() {
             simSearchCmd.output_path   = output_path;
             simSearchCmd.std_out_path  = output_path + FileSystem::EXT_STD;
             simSearchCmd.threads       = (uint16)mThreads;
-            simSearchCmd.query_path    = mInHits;
+            simSearchCmd.query_path    = mInputTranscriptome;
             simSearchCmd.eval          = mEVal;
             simSearchCmd.tcoverage     = mTCoverage;
             simSearchCmd.qcoverage     = mQCoverage;
@@ -238,29 +238,17 @@ void ModDiamond::execute() {
  * Notes                - Databases must be configured for DIAMOND
  *
  * @param cmd           - DIAMOND flags for blast
- * @param use_defaults  - BOOL to use default values. If TRUE, only DIAMOND
- *                        database/blast flag will be used
+ * @param use_defaults  - BOOL to use default values. If TRUE, override with defaults
  *
  * @return              - BOOL for successful execution
  *
  * =====================================================================
  */
 bool ModDiamond::run_blast(AbstractSimilaritySearch::SimSearchCmd *cmd, bool use_defaults) {
-    std::string     diamond_cmd;    // String DIAMOND terminal command
     TerminalData    terminalData;   // Terminal data
+    command_map_t   tc_commands;    // Terminal command map
     int32           err_code;       // Error codee from terminal execution
     bool            ret = true;     // Return value, if execution has succeeded
-
-    diamond_cmd = cmd->exe_path + " ";
-
-    if (cmd->blastp) {
-        diamond_cmd += BLASTP_STR;
-    } else {
-        diamond_cmd += BLASTX_STR;
-    }
-
-    diamond_cmd += " -d " + cmd->database_path;
-    diamond_cmd += " -q " + cmd->query_path;
 
     // Overwrite values if we should use defaults
     if (use_defaults) {
@@ -269,18 +257,25 @@ bool ModDiamond::run_blast(AbstractSimilaritySearch::SimSearchCmd *cmd, bool use
         cmd->threads = (uint16)mThreads;
     }
 
-    diamond_cmd += " --query-cover " + std::to_string(cmd->qcoverage);
-    diamond_cmd += " --subject-cover " + std::to_string(cmd->tcoverage);
-    diamond_cmd += " --evalue " + std::to_string(cmd->eval);
+    if (cmd->blastp) {
+        tc_commands.emplace(CMD_BLASTP, TC_NULL_ARGUMENT);
+    } else {
+        tc_commands.emplace(CMD_BLASTX, TC_NULL_ARGUMENT);
+    }
 
-    diamond_cmd += " --more-sensitive --top 3";
+    tc_commands.emplace(CMD_DATABASE, cmd->database_path);
+    tc_commands.emplace(CMD_QUERY_PATH, cmd->query_path);
+    tc_commands.emplace(CMD_QUERY_COVERAGE, std::to_string(cmd->qcoverage));
+    tc_commands.emplace(CMD_SUBJECT_COVERAGE, std::to_string(cmd->tcoverage));
+    tc_commands.emplace(CMD_EVALUE, std::to_string(cmd->eval));
+    tc_commands.emplace(CMD_MORE_SENSITIVE, TC_NULL_ARGUMENT);
+    tc_commands.emplace(CMD_TOP_ALIGNMENTS, std::to_string(CMD_DEFAULT_TOP_ALIGN));
 
-    diamond_cmd += " -o " + cmd->output_path;
-    diamond_cmd += " -p " + std::to_string(cmd->threads);
-    diamond_cmd += " -f ";
-    diamond_cmd += "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp stitle";
+    tc_commands.emplace(CMD_OUTPUT_PATH, cmd->output_path);
+    tc_commands.emplace(CMD_THREADS, std::to_string(cmd->threads));
+    tc_commands.emplace(CMD_OUTPUT_FORMAT, CMD_DEFAULT_OUTPUT_FORMAT);
 
-    terminalData.command        = diamond_cmd;
+    terminalData.command        = TC_generate_command(tc_commands, cmd->exe_path);
     terminalData.base_std_path  = cmd->std_out_path;
     terminalData.print_files    = true;
 

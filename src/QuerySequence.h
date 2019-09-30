@@ -198,8 +198,12 @@ public:
     void set_sequence_n(const std::string &_sequence_n);
     const std::string &get_sequence() const;
     void set_fpkm(fp32 fpkm);
+    const std::string &getMSequenceID() const;
+
     void set_blasted();
     bool is_kept();
+    bool is_protein();
+    bool is_kept_expression();
     bool QUERY_FLAG_GET(QUERY_FLAGS flag);
     void QUERY_FLAG_CLEAR(QUERY_FLAGS flag);
     void QUERY_FLAG_CHANGE(QUERY_FLAGS flag, bool val);

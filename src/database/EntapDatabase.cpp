@@ -834,7 +834,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::download_entap_serial(std::string &ou
     FS_dprint("Downloading EnTAP serialized database...");
 
     // set temp path (will be downloaded to this then decompressed)
-    temp_gz_path = PATHS(_temp_directory, Defaults::ENTAP_DATABASE_SERIAL_GZ);
+    temp_gz_path = PATHS(_temp_directory, EntapDefaults::ENTAP_DATABASE_SERIAL_GZ);
 
     // download file (will be compressed as gz)
     if (!_pFilesystem->download_ftp_file(FTP_ENTAP_DATABASE_SERIAL, temp_gz_path)) {
@@ -864,7 +864,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::download_entap_sql(std::string &path)
     FS_dprint("Downloading EnTAP sql database...");
 
     // set temp path (will be downloaded to this then decompressed)
-    temp_gz_path = PATHS(_temp_directory, Defaults::ENTAP_DATABASE_SQL_GZ);
+    temp_gz_path = PATHS(_temp_directory, EntapDefaults::ENTAP_DATABASE_SQL_GZ);
 
     // download file (will be compressed as gz)
     if (!_pFilesystem->download_ftp_file(FTP_ENTAP_DATABASE_SQL, temp_gz_path)) {

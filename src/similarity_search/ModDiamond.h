@@ -31,12 +31,32 @@
 
 #include "AbstractSimilaritySearch.h"
 
+/**
+ * ======================================================================
+ * @class ModInterpro
+ *
+ * Description          - This EnTAP module supports execution, parsing, and
+ *                        statistical analysis of the DIAMOND software
+ *                        through terminal commands
+ *                      - DIAMOND will perform similarity searching against
+ *                        DIAMOND compatible databases provided by the user
+ *                      - Parsed data is added to QueryData class
+ *                      - Inherits from AbstractSimilaritySearch and
+ *                        EntapModule classes
+ *
+ * Citation             - P. Jones et al., “InterProScan 5: genome-scale
+ *                        protein function classification,” (in eng),
+ *                        Bioinformatics, vol. 30, no. 9, pp. 1236-40, May 2014.
+ *
+ * ======================================================================
+ */
 class ModDiamond : public AbstractSimilaritySearch {
 
 public:
     //******************* Public Functions *********************
     ModDiamond(std::string &out, std::string &fasta_path,EntapDataPtrs &entap_data,
                 std::string &exe, vect_str_t &databases);
+    ModDiamond(std::string& execution_path);
     ~ModDiamond() override = default;
 
     // ModEntap overrides
@@ -78,6 +98,24 @@ private:
     const std::string UNINFORMATIVE_FLAG                         = "Uninformative";
     const std::string INFORMATIVE_FLAG                           = "Informative";
     const std::string NO_HIT_FLAG                                = "No Hits";
+
+    // Terminal Command EntapDefaults
+    const uint16 CMD_DEFAULT_TOP_ALIGN  = 3;
+    const std::string CMD_DEFAULT_OUTPUT_FORMAT = "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp stitle";
+
+    // Terminal Commands (as of DIAMOND v0.9.9)
+    const std::string CMD_QUERY_COVERAGE   = "--query-cover";     // Specify minimum query coverage for alignment
+    const std::string CMD_SUBJECT_COVERAGE = "--subject-cover";   // Specify minimum target coverage for alignment
+    const std::string CMD_MORE_SENSITIVE   = "--more-sensitive";  // Specify 'more sensitive' run that will take longer
+    const std::string CMD_EVALUE           = "--evalue";          // Specify highest e-value to accept alignments for
+    const std::string CMD_BLASTX           = "blastx";
+    const std::string CMD_BLASTP           = "blastp";
+    const std::string CMD_DATABASE         = "-d";                // Target database to align against
+    const std::string CMD_QUERY_PATH       = "-q";                // Path to Query FASTA file
+    const std::string CMD_OUTPUT_PATH      = "-o";                // Path to output
+    const std::string CMD_THREADS          = "-p";                // Number of threads to use
+    const std::string CMD_TOP_ALIGNMENTS   = "--top";             // Only keep top alignments (integer)
+    const std::string CMD_OUTPUT_FORMAT    = "-f";
     //**********************************************************
 };
 

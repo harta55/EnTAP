@@ -67,7 +67,6 @@ std::string get_cur_time();
 
 //**************** Global Structures/Typedefs ******************
 typedef std::map<std::string,std::vector<std::string>> go_format_t;
-typedef std::vector<std::string> databases_t;   // Standard database container
 
 
 template <typename T>
@@ -283,6 +282,8 @@ extern std::string DEBUG_FILE_PATH;
 extern std::string LOG_FILE_PATH;
 extern std::string RSEM_EXE_DIR;
 extern std::string GENEMARK_EXE;
+extern std::string TRANSDECODER_LONGORFS_EXE;
+extern std::string TRANSDECODER_PREDICT_EXE;
 extern std::string DIAMOND_EXE;
 extern std::string EGG_SQL_DB_PATH;
 extern std::string EGG_DMND_PATH;

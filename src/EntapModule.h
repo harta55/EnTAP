@@ -45,7 +45,6 @@ public:
 
     EntapModule(std::string &execution_stage_path, std::string &in_hits,
                 EntapDataPtrs &entap_data, std::string module_name, std::string &exe);
-
     virtual ~EntapModule() = default;
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
@@ -78,7 +77,7 @@ protected:
     int                mThreads;                // Number of threads specified for execution from user
     uint16             mSoftwareFlag;           // Flag indicating software module being used
     std::string        mOutpath;
-    std::string        mInHits;
+    std::string        mInputTranscriptome;
     std::string        mProcDir;                   // "processed" directory, or data analyzed
     std::string        mFigureDir;
     std::string        mModOutDir;

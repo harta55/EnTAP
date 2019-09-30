@@ -80,8 +80,8 @@ namespace entapConfig {
         // Get directory to output databases to. Same as "outfiles" path
         rootDir = filesystem->get_root_path();
 
-        binDir  = PATHS(rootDir, Defaults::BIN_PATH_DEFAULT);
-        dataDir = PATHS(rootDir, Defaults::DATABASE_DIR_DEFAULT);
+        binDir  = PATHS(rootDir, EntapDefaults::BIN_PATH_DEFAULT);
+        dataDir = PATHS(rootDir, EntapDefaults::DATABASE_DIR_DEFAULT);
 
         // Create paths
         pFileSystem->create_dir(rootDir);    // Should have already been created, confirm
@@ -236,9 +236,9 @@ namespace entapConfig {
         FS_dprint("Success! EggNOG databases verified");
 #endif
         // setup outpath
-        sql_outpath   = PATHS(dataDir, Defaults::EGG_SQL_DB_FILENAME);
+        sql_outpath   = PATHS(dataDir, EntapDefaults::EGG_SQL_DB_FILENAME);
         fasta_outpath = PATHS(pFileSystem->get_temp_outdir(), "eggnog_fasta_temp.fa");
-        dmnd_outpath  = PATHS(binDir, Defaults::EGG_DMND_FILENAME);
+        dmnd_outpath  = PATHS(binDir, EntapDefaults::EGG_DMND_FILENAME);
 
         // Check if SQL database already exists
         if (!pFileSystem->file_exists(EGG_SQL_DB_PATH) && !pFileSystem->file_exists(sql_outpath)) {
@@ -359,13 +359,13 @@ namespace entapConfig {
                 case EntapDatabase::ENTAP_SERIALIZED:
                     FS_dprint("Generating/downloading Serialized database...");
                     config_outpath  = ENTAP_DATABASE_BIN_PATH;
-                    database_outpath = PATHS(rootDir, Defaults::ENTAP_DATABASE_BIN_DEFAULT);
+                    database_outpath = PATHS(rootDir, EntapDefaults::ENTAP_DATABASE_BIN_DEFAULT);
                     break;
 
                 case EntapDatabase::ENTAP_SQL:
                     FS_dprint("Generating/downloading SQL database");
                     config_outpath   = ENTAP_DATABASE_SQL_PATH;
-                    database_outpath = PATHS(rootDir, Defaults::ENTAP_DATABASE_SQL_DEFAULT);
+                    database_outpath = PATHS(rootDir, EntapDefaults::ENTAP_DATABASE_SQL_DEFAULT);
                     break;
 
                 default:

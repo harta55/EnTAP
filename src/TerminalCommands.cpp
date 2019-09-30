@@ -108,7 +108,7 @@ int TC_execute_cmd(TerminalData &terminalData) {
     return 1;
 }
 
-std::string TC_generate_command(std::unordered_map<std::string, std::string> &map, std::string exe_path) {
+std::string TC_generate_command(command_map_t &map, std::string &exe_path) {
     std::stringstream ss;
     std::string       out;
 

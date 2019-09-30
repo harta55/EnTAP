@@ -118,16 +118,16 @@ private:
     const std::string OUT_ANNOTATED_NUCL   = "final_annotated.fnn";
     const std::string OUT_ANNOTATED_PROT   = "final_annotated.faa";
 
-    QUERY_MAP_T  *_pSEQUENCES;
-    bool         _trim;
-    uint32       _total_sequences;          // Original sequence number
-    uint32       _data_flags;
-    uint64       _start_nuc_len;            // Starting total len (nucleotide)
-    uint64       _start_prot_len;           // Starting total len (protein)
-    uint32       _pipeline_flags;           // Success flags
-    FileSystem  *_pFileSystem;
-    UserInput   *_pUserInput;
-    std::unordered_map<std::string, OutputFileData> _alignment_files;
+    QUERY_MAP_T  *mpSequences;
+    bool         mTrim;
+    uint32       mTotalSequences;          // Original sequence number
+    uint32       mDataFlags;
+    uint64       mNucleoLengthStart;       // Starting total len (nucleotide)
+    uint64       mProteinLengthStart;      // Starting total len (protein)
+    uint32       mPipelineFlags;           // Success flags
+    FileSystem  *mpFileSystem;
+    UserInput   *mpUserInput;
+    std::unordered_map<std::string, OutputFileData> mAlignmentFiles;
 };
 
 

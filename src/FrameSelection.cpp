@@ -31,6 +31,7 @@
 #include "ExceptionHandler.h"
 #include "frame_selection/ModGeneMarkST.h"
 #include "FileSystem.h"
+#include "frame_selection/ModTransdecoder.h"
 //**************************************************************
 
 
@@ -54,7 +55,6 @@ FrameSelection::FrameSelection(std::string &input, EntapDataPtrs &entap_data) {
     FS_dprint("Spawn Object - FrameSelection");
 
     mQueryData        = entap_data.mpQueryData;
-    mExePath          = GENEMARK_EXE;
     mInPath           = input;
     mpFileSystem      = entap_data.mpFileSystem;
     mpUserInput       = entap_data.mpUserInput;
@@ -100,8 +100,8 @@ std::string FrameSelection::execute(std::string input) {
         verify_data = ptr->verify_files();
         if (!verify_data.files_exist) {
             ptr->execute();
-            output = ptr->get_final_faa();
-        } else output = verify_data.output_paths[0];
+        }
+        output = ptr->get_final_faa();
         ptr->parse();
         ptr.reset();
 
@@ -133,13 +133,24 @@ std::string FrameSelection::execute(std::string input) {
 std::unique_ptr<AbstractFrame> FrameSelection::spawn_object() {
     switch (mSoftwareFlag) {
         case FRAME_GENEMARK_ST:
+            mExePath = GENEMARK_EXE;
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
                     mModOutDir,
                     mInPath,
                     mEntapDataPtrs,
                     mExePath
             ));
+        case FRAME_TRANSDECODER:
+            mExePath = TRANSDECODER_LONGORFS_EXE;
+            return std::unique_ptr<AbstractFrame>(new ModTransdecoder(
+                    mModOutDir,
+                    mInPath,
+                    mEntapDataPtrs,
+                    TRANSDECODER_LONGORFS_EXE,
+                    TRANSDECODER_PREDICT_EXE
+            ));
         default:
+            mExePath = GENEMARK_EXE;
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
                     mModOutDir,
                     mInPath,

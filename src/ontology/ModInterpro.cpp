@@ -118,7 +118,7 @@ void ModInterpro::execute() {
     std_out      = PATHS(mModOutDir, INTERPRO_STD_OUT);
     interpro_cmd =
             mExePath    +
-            " -i "          + mInHits +
+            " -i "          + mInputTranscriptome +
             " -b "          + mFinalBasepath +
             FLAG_SEQTYPE    + " " + blast     +
             FLAG_TEMP       + " " + temp_dir  +

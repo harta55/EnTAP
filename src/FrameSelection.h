@@ -40,6 +40,7 @@ class AbstractFrame;
 // Supported frame selection software
 enum FRAME_SELECTION_SOFTWARE {
     FRAME_GENEMARK_ST,
+    FRAME_TRANSDECODER,
     FRAME_SOFTWARE_COUNT
 };
 
@@ -57,7 +58,7 @@ private:
     std::string      mExePath;      // Executable for Frame Selection
     std::string      mInPath;       // Absolute path to input transcriptome
     std::string      mOutpath;      // Absolute path to root output directory
-    bool             mOverwrite;    // SHould old files be overwritten
+    bool             mOverwrite;    // TRUE if old files should be overwritten
     uint16           mSoftwareFlag; // Type of software to use during Frame Selection
     QueryData        *mQueryData;           // Pointer to query data
     FileSystem       *mpFileSystem;         // Pointer to EnTAP filesystem

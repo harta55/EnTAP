@@ -840,6 +840,18 @@ void QuerySequence::set_blasted() {
     QUERY_FLAG_SET(QUERY_BLASTED);
 }
 
+const std::string &QuerySequence::getMSequenceID() const {
+    return mSequenceID;
+}
+
+bool QuerySequence::is_protein() {
+    return QUERY_FLAG_GET(QUERY_IS_PROTEIN);
+}
+
+bool QuerySequence::is_kept_expression() {
+    return QUERY_FLAG_GET(QUERY_EXPRESSION_KEPT);
+}
+
 
 QuerySequence::align_database_hits_t* QuerySequence::AlignmentData::get_database_ptr(ExecuteStates state, uint16 software, std::string& database) {
     if (database.empty()) return nullptr;

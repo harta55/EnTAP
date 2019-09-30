@@ -42,18 +42,19 @@
 #include <tclap/CmdLine.h>
 #include <boost/any.hpp>          // Include any boost library with tclap
 #endif
-
 //**************************************************************
 
 
-namespace Defaults {
+namespace EntapDefaults {
     const std::string RSEM_DEFAULT_EXE         = "/libs/RSEM-1.3.0/";   // Directory
     const std::string GENEMARK_DEFAULT_EXE     = "/libs/gmst_linux_64/gmst.pl";
+    const std::string TRANSDECODER_LONG_DEFAULT_EXE = "TransDecoder.LongOrfs";
+    const std::string TRANSDECODER__PREDICT_DEFAULT_EXE = "TransDecoder.Predict";
     const std::string DIAMOND_DEFAULT_EXE      = "/libs/diamond-0.8.31/bin/diamond";
     const std::string EGG_SQL_DB_FILENAME      = "eggnog.db";
     const std::string EGG_DMND_FILENAME        = "eggnog_proteins.dmnd";
     const std::string INTERPRO_DEF_EXE         = "interproscan.sh";
-    const std::string TAX_DOWNLOAD_DEF         = "/src/download_tax.py";
+    const std::string TAX_DOWNLOAD_DEF         = "/src/download_tax.py";    // Deprecated
     const std::string GRAPH_SCRIPT_DEF         = "/src/entap_graphing.py";
     const std::string BIN_PATH_DEFAULT         = "/bin";
     const std::string DATABASE_DIR_DEFAULT     = "/databases";
@@ -66,6 +67,8 @@ namespace Defaults {
     const std::string EGG_SQL_DB_DEFAULT         = PATHS(DATABASE_DIR_DEFAULT, EGG_SQL_DB_FILENAME);
     const std::string EGG_DMND_DEFAULT           = PATHS(BIN_PATH_DEFAULT, EGG_DMND_FILENAME);
 }
+
+typedef std::vector<std::string> databases_t;   // Standard database container
 
 class UserInput {
 
@@ -89,54 +92,64 @@ public:
     template<class T>
     T get_user_input(const std::string &key) {
 #ifdef USE_BOOST
-        if (_user_inputs.count(key)) {
-            return _user_inputs[key].as<T>();
+        if (mUserInputs.count(key)) {
+            return mUserInputs[key].as<T>();
         } else {
             return T();
         }
 #else // Use TCLAP
         if (has_input(key)) {
-            return boost::any_cast<T>(_user_inputs[key]);
+            return boost::any_cast<T>(mUserInputs[key]);
         } else {
             return T();
         }
 #endif
     }
 
+    /* Generic Commands */
     const std::string INPUT_FLAG_TAG           = "out-dir";
     const std::string INPUT_FLAG_CONFIG        = "config";
-    const std::string INPUT_FLAG_ALIGN         = "align";
     const std::string INPUT_FLAG_RUNPROTEIN    = "runP";
     const std::string INPUT_FLAG_RUNNUCLEOTIDE = "runN";
     const std::string INPUT_FLAG_OVERWRITE     = "overwrite";
-    const std::string INPUT_FLAG_NCBI_1        = "ncbi";
-    const std::string INPUT_FLAG_NCBI_2        = "N";
-    const std::string INPUT_FLAG_UNIPROT       = "uniprot";
-    const std::string INPUT_FLAG_INTERPRO      = "protein";
-    const std::string INPUT_FLAG_ONTOLOGY      = "ontology";
-    const std::string INPUT_FLAG_SPECIES       = "taxon";
-    const std::string INPUT_FLAG_QCOVERAGE     = "qcoverage";
-    const std::string INPUT_FLAG_TCOVERAGE     = "tcoverage";
-    const std::string INPUT_FLAG_COMPLETE      = "complete";
-    const std::string INPUT_FLAG_GO_LEVELS     = "level";
     const std::string INPUT_FLAG_EXE_PATH      = "paths";
-    const std::string INPUT_FLAG_FPKM          = "fpkm";
-    const std::string INPUT_FLAG_CONTAM        = "contam";
-    const std::string INPUT_FLAG_E_VAL         = "e";
     const std::string INPUT_FLAG_HELP          = "help";
     const std::string INPUT_FLAG_VERSION       = "version";
     const std::string INPUT_FLAG_TRANSCRIPTOME = "input";
+    const std::string INPUT_FLAG_SHORT_TRANSCRIPTOME = "i";
     const std::string INPUT_FLAG_DATABASE      = "database";
+    const std::string INPUT_FLAG_SHORT_DATABASE = "d";
     const std::string INPUT_FLAG_GRAPH         = "graph";
     const std::string INPUT_FLAG_TRIM          = "trim";
     const std::string INPUT_FLAG_STATE         = "state";
-    const std::string INPUT_FLAG_SINGLE_END    = "single-end";
     const std::string INPUT_FLAG_THREADS       = "threads";
-    const std::string INPUT_FLAG_UNINFORM      = "uninformative";
+    const std::string INPUT_FLAG_SHORT_THREADS = "t";
     const std::string INPUT_FLAG_NOCHECK       = "no-check";
+    const std::string INPUT_FLAG_OUTPUT_FORMAT = "output-format";
+    /* Configuration Commands */
     const std::string INPUT_FLAG_GENERATE      = "data-generate";
     const std::string INPUT_FLAG_DATABASE_TYPE = "data-type";
-    const std::string INPUT_FLAG_OUTPUT_FORMAT = "output-format";
+    /* Expression Analysis Commands */
+    const std::string INPUT_FLAG_FPKM          = "fpkm";
+    const std::string INPUT_FLAG_ALIGN         = "align";
+    const std::string INPUT_FLAG_SHORT_ALIGN   = "a";
+    const std::string INPUT_FLAG_SINGLE_END    = "single-end";
+    /* Frame Selection Commands*/
+    const std::string INPUT_FLAG_COMPLETE          = "complete";
+    const std::string INPUT_FLAG_FRAME_SELECTION   = "frame-selection";
+    const std::string INPUT_FLAG_TRANS_MIN_PROTEIN = "transdecoder-m";
+    /* Similarity Search Commands */
+    const std::string INPUT_FLAG_SPECIES       = "taxon";
+    const std::string INPUT_FLAG_QCOVERAGE     = "qcoverage";
+    const std::string INPUT_FLAG_TCOVERAGE     = "tcoverage";
+    const std::string INPUT_FLAG_CONTAM        = "contam";
+    const std::string INPUT_FLAG_SHORT_CONTAM  = "c";
+    const std::string INPUT_FLAG_E_VAL         = "e";
+    const std::string INPUT_FLAG_UNINFORM      = "uninformative";
+    /* Ontology Commands */
+    const std::string INPUT_FLAG_INTERPRO      = "protein";
+    const std::string INPUT_FLAG_ONTOLOGY      = "ontology";
+    const std::string INPUT_FLAG_GO_LEVELS     = "level";
 
 private:
     enum SPECIES_FLAGS {
@@ -157,14 +170,14 @@ private:
     void init_exe_paths(std::unordered_map<std::string, std::string> &, std::string);
     void process_user_species(std::string&);
     void verify_uninformative(std::string&);
-    void verify_state(std::string&, bool, std::vector<uint16>&);
-    std::pair<bool,std::string> verify_software(uint8&, std::vector<uint16>&);
+    void verify_software_paths(std::string &state, bool is_protein, bool is_execution,
+                               std::vector<uint16> &ontology_flags);
     std::string get_executable_dir();
 
 #ifdef USE_BOOST
-    boostPO::variables_map _user_inputs;
+    boostPO::variables_map mUserInputs;
 #else
-    std::map<std::string, boost::any> _user_inputs;     // Header only library for any map
+    std::map<std::string, boost::any> mUserInputs;     // Header only library for any map
 #endif
 
     const fp32 DEFAULT_QCOVERAGE               = 50.0;
@@ -176,7 +189,8 @@ private:
     const fp32 RSEM_FPKM_DEFAULT               = 0.5;
     const fp32 FPKM_MIN                        = 0.0;
     const fp32 FPKM_MAX                        = 100.0;
-    const uint8 MAX_DATABASE_SIZE              = 5;
+    const uint8 MAX_DATABASE_SIZE              = 5;         // Maximum number of databases allowed from user
+    const uint16 DEFAULT_TRANSDECODER_MIN_PROTEIN = 100;
     const std::string DEFAULT_STATE            = "+";
     const std::string OUTFILE_DEFAULT          = PATHS(FileSystem::get_cur_dir(),"entap_outfiles");
 
@@ -196,16 +210,11 @@ private:
 
     //-------------------Config File----------------------//
     const std::string CONFIG_FILE              = "entap_config.txt";
-//    const std::string KEY_UNIPROT_SWISS        = "uniprot_swiss_path";
-//    const std::string KEY_UNIPROT_UR90         = "uniprot_ur90_path";
-//    const std::string KEY_UNIPROT_UR100        = "uniprot_ur100_path";
-//    const std::string KEY_UNIPROT_TREMBL       = "uniprot_trembl_path";
-//    const std::string KEY_NCBI_NR              = "ncbi_nr_path";
-//    const std::string KEY_NCBI_REFSEQ_COMPLETE = "ncbi_refseq_complete_path";
-//    const std::string KEY_NCBI_REFSEQ_SEPARATE = "ncbi_refseq_separate_path";
     const std::string KEY_DIAMOND_EXE          = "diamond_exe_path";
     const std::string KEY_RSEM_EXE             = "rsem_exe_path";
     const std::string KEY_GENEMARK_EXE         = "genemarkst_exe_path";
+    const std::string KEY_TRANSDECODER_LONGORFS_EXE = "transdecoder_longorfs_exe_path";
+    const std::string KEY_TRANSDECODER_PREDICT_EXE  = "transdecoder_predict_exe_path";
 #ifdef EGGNOG_MAPPER
     const std::string KEY_EGGNOG_EXE           = "eggnog_exe_path";
     const std::string KEY_EGGNOG_DOWN          = "eggnog_download_exe";
@@ -216,6 +225,25 @@ private:
     const std::string KEY_ENTAP_DATABASE_BIN   = "entap_database_bin_path";
     const std::string KEY_ENTAP_DATABASE_SQL   = "entap_database_sql_path";
     const std::string KEY_GRAPH_SCRIPT         = "entap_graphing_script";
+
+    const vect_str_t CONFIG_FILE_KEYS = {
+            KEY_DIAMOND_EXE,
+            KEY_RSEM_EXE,
+            KEY_GENEMARK_EXE,
+            KEY_TRANSDECODER_LONGORFS_EXE,
+            KEY_TRANSDECODER_PREDICT_EXE,
+#ifdef EGGNOG_MAPPER
+            KEY_EGGNOG_EXE,
+            KEY_EGGNOG_DOWN,
+#endif
+            KEY_INTERPRO_EXE,
+            KEY_EGGNOG_SQL_DB,
+            KEY_EGGNOG_DMND,
+            KEY_ENTAP_DATABASE_BIN,
+            KEY_ENTAP_DATABASE_SQL,
+            KEY_GRAPH_SCRIPT
+    };
+    //----------------------------------------------------//
 
     FileSystem *mpFileSystem;
     bool        mIsConfig;

@@ -69,7 +69,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     std::string                              transcript_type;
     uint32                                   count_seqs=0;
     uint64                                   total_len=0;
-    uint16                                   shortest_len=10000;
+    uint16                                   shortest_len=0xFFFF;
     uint16                                   longest_len=0;
     uint16                                   len;
     fp64                                     avg_len;
@@ -77,25 +77,26 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     std::pair<uint16, uint16>                n_vals;
     bool                                     is_complete;
 
-    _total_sequences = 0;
-    _pipeline_flags  = 0;
-    _data_flags      = 0;
-    _pSEQUENCES      = new QUERY_MAP_T;
+    mTotalSequences = 0;
+    mPipelineFlags  = 0;
+    mDataFlags      = 0;
+    mpSequences      = new QUERY_MAP_T;
 
-    _pUserInput  = userinput;
-    _pFileSystem = filesystem;
+    mpUserInput  = userinput;
+    mpFileSystem = filesystem;
 
-    _trim          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_TRIM);
-    is_complete    = _pUserInput->has_input(_pUserInput->INPUT_FLAG_COMPLETE);
+    mTrim          = mpUserInput->has_input(mpUserInput->INPUT_FLAG_TRIM);
+    is_complete    = mpUserInput->has_input(mpUserInput->INPUT_FLAG_COMPLETE);
 
-    if (!_pFileSystem->file_exists(input_file)) {
+    if (!mpFileSystem->file_exists(input_file)) {
         throw ExceptionHandler("Input transcriptome not found at: " + input_file,ERR_ENTAP_INPUT_PARSE);
     }
 
-    out_name     = _pFileSystem->get_filename(input_file, true);
+    out_name     = mpFileSystem->get_filename(input_file, true);
     out_new_path = PATHS(out_path,out_name);
-    _pFileSystem->delete_file(out_new_path);
+    mpFileSystem->delete_file(out_new_path);
 
+    // Set IS_PROTEIN flag if protein sequences found
     set_input_type(input_file);
     DATA_FLAG_GET(IS_PROTEIN) ? transcript_type = PROTEIN_FLAG : transcript_type = NUCLEO_FLAG;
 
@@ -113,11 +114,12 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
                 }
                 QuerySequence *query_seq = new QuerySequence(DATA_FLAG_GET(IS_PROTEIN),sequence, seq_id);
                 if (is_complete) query_seq->setFrame(COMPLETE_FLAG);
-                if (_pSEQUENCES->find(seq_id) != _pSEQUENCES->end()) {
+                // Check for duplicate headers in input transcriptomes
+                if (mpSequences->find(seq_id) != mpSequences->end()) {
                     throw ExceptionHandler("Duplicate headers in your input transcriptome: " + seq_id,
                         ERR_ENTAP_INPUT_PARSE);
                 }
-                _pSEQUENCES->emplace(seq_id, query_seq);
+                mpSequences->emplace(seq_id, query_seq);
                 count_seqs++;
                 len = (uint16) query_seq->get_sequence_length();
                 total_len += len;
@@ -140,12 +142,12 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     in_file.close();
     out_file.close();
     avg_len = total_len / count_seqs;
-    _total_sequences = count_seqs;
-    DATA_FLAG_GET(IS_PROTEIN)  ? _start_prot_len = total_len : _start_nuc_len = total_len;
+    mTotalSequences = count_seqs;
+    DATA_FLAG_GET(IS_PROTEIN)  ? mProteinLengthStart = total_len : mNucleoLengthStart = total_len;
     // first - n50, second - n90
     n_vals = calculate_N_vals(sequence_lengths, total_len);
 
-    _pFileSystem->format_stat_stream(out_msg, "Transcriptome Statistics");
+    mpFileSystem->format_stat_stream(out_msg, "Transcriptome Statistics");
     out_msg <<
             transcript_type << " sequences found"          <<
             "\nTotal sequences: "                          << count_seqs    <<
@@ -157,7 +159,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
             "\nShortest sequence(bp): "<< shortest_len<<" ("<<shortest_seq<<")";
     if (is_complete)out_msg<<"\nAll sequences ("<<count_seqs<<") were flagged as complete genes";
     std::string msg = out_msg.str();
-    _pFileSystem->print_stats(msg);
+    mpFileSystem->print_stats(msg);
     FS_dprint("Success!");
     input_file = out_new_path;
 }
@@ -273,7 +275,7 @@ void QueryData::final_statistics(std::string &outpath) {
     bool                   is_one_kegg;
     std::vector<uint16>    ontology_flags;
 
-    ontology_flags = _pUserInput->get_user_input<std::vector<uint16>>(_pUserInput->INPUT_FLAG_ONTOLOGY);
+    ontology_flags = mpUserInput->get_user_input<std::vector<uint16>>(mpUserInput->INPUT_FLAG_ONTOLOGY);
 
     out_unannotated_nucl_path = PATHS(outpath, OUT_UNANNOTATED_NUCL);
     out_unannotated_prot_path = PATHS(outpath, OUT_UNANNOTATED_PROT);
@@ -281,17 +283,17 @@ void QueryData::final_statistics(std::string &outpath) {
     out_annotated_prot_path   = PATHS(outpath, OUT_ANNOTATED_PROT);
 
     // Re-write these files
-    _pFileSystem->delete_file(out_unannotated_nucl_path);
-    _pFileSystem->delete_file(out_unannotated_prot_path);
-    _pFileSystem->delete_file(out_annotated_nucl_path);
-    _pFileSystem->delete_file(out_annotated_prot_path);
+    mpFileSystem->delete_file(out_unannotated_nucl_path);
+    mpFileSystem->delete_file(out_unannotated_prot_path);
+    mpFileSystem->delete_file(out_annotated_nucl_path);
+    mpFileSystem->delete_file(out_annotated_prot_path);
 
     std::ofstream file_unannotated_nucl(out_unannotated_nucl_path, std::ios::out | std::ios::app);
     std::ofstream file_unannotated_prot(out_unannotated_prot_path, std::ios::out | std::ios::app);
     std::ofstream file_annotated_nucl(out_annotated_nucl_path, std::ios::out | std::ios::app);
     std::ofstream file_annotated_prot(out_annotated_prot_path, std::ios::out | std::ios::app);
 
-    for (auto &pair : *_pSEQUENCES) {
+    for (auto &pair : *mpSequences) {
         count_total_sequences++;
         is_exp_kept = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_EXPRESSION_KEPT);
         is_prot = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN);
@@ -334,7 +336,7 @@ void QueryData::final_statistics(std::string &outpath) {
     file_annotated_nucl.close();
     file_annotated_prot.close();
 
-    _pFileSystem->format_stat_stream(ss, "Final Annotation Statistics");
+    mpFileSystem->format_stat_stream(ss, "Final Annotation Statistics");
     ss <<
        "Total Sequences: "                  << count_total_sequences;
 
@@ -384,7 +386,7 @@ void QueryData::final_statistics(std::string &outpath) {
        "\n\tTotal unique sequences unannotated (gene family and/or similarity search): " << count_TOTAL_unann;
 
     out_msg = ss.str();
-    _pFileSystem->print_stats(out_msg);
+    mpFileSystem->print_stats(out_msg);
 }
 
 std::string QueryData::trim_sequence_header(std::string &header, std::string line) {
@@ -394,7 +396,7 @@ std::string QueryData::trim_sequence_header(std::string &header, std::string lin
     if (line.find('>') != std::string::npos) {
         pos = (int16) line.find('>');
     } else pos = -1;
-    if (_trim) {
+    if (mTrim) {
         if (line.find(' ') != std::string::npos) {
             header = line.substr(pos+1, line.find(' ')-1);
         } else header = line.substr(pos+1);
@@ -408,34 +410,41 @@ std::string QueryData::trim_sequence_header(std::string &header, std::string lin
 }
 
 QUERY_MAP_T* QueryData::get_sequences_ptr() {
-    return this->_pSEQUENCES;
+    return this->mpSequences;
 }
 
 QueryData::~QueryData() {
+    std::string path;
     FS_dprint("Killing Object - QueryData");
-    for(QUERY_MAP_T::iterator it = _pSEQUENCES->begin(); it != _pSEQUENCES->end(); it++) {
-        delete it->second;
-        it->second = nullptr;
+    for (auto &mpSequence : *mpSequences) {
+        delete mpSequence.second;
+        mpSequence.second = nullptr;
     }
     FS_dprint("QuerySequence data freed");
-    delete _pSEQUENCES;
+    delete mpSequences;
+
+    // Cleanup files in case it was interrupted
+    for (auto &pair : mAlignmentFiles) {
+        path = pair.first;
+        end_alignment_files(path);
+    }
 }
 
 bool QueryData::DATA_FLAG_GET(DATA_FLAGS flag) {
-    return (_data_flags & flag) != 0;
+    return (mDataFlags & flag) != 0;
 }
 
 void QueryData::DATA_FLAG_SET(DATA_FLAGS flag) {
-    _data_flags |= flag;
+    mDataFlags |= flag;
 }
 
 void QueryData::DATA_FLAG_CLEAR(DATA_FLAGS flag) {
-    _data_flags &= ~flag;
+    mDataFlags &= ~flag;
 }
 
 QuerySequence *QueryData::get_sequence(std::string &query_id) {
-    QUERY_MAP_T::iterator it = _pSEQUENCES->find(query_id);
-    if (it != _pSEQUENCES->end()) {
+    QUERY_MAP_T::iterator it = mpSequences->find(query_id);
+    if (it != mpSequences->end()) {
         // Sequence found, return
         return it->second;
     } else {
@@ -455,20 +464,19 @@ bool QueryData::start_alignment_files(std::string &base_path, std::vector<ENTAP_
     base_path = base_path + "_lvl" + std::to_string(lvl);
 
     // add this path to map if it does not exist, otherwise skip
-    if (_alignment_files.find(base_path) == _alignment_files.end()) {
+    if (mAlignmentFiles.find(base_path) == mAlignmentFiles.end()) {
 
-        _alignment_files.emplace(base_path, outputFileData);
+        mAlignmentFiles.emplace(base_path, outputFileData);
         // Generate files for each data type
         for (FileSystem::ENT_FILE_TYPES type : types) {
-            if ((type == FileSystem::ENT_FILE_FASTA_FAA || type == FileSystem::ENT_FILE_FASTA_FNN) &&
-                    lvl != 0) {
+            if ((type == FileSystem::ENT_FILE_FASTA_FAA || type == FileSystem::ENT_FILE_FASTA_FNN) && lvl != 0) {
                 // Do NOT create files for anything other than 0 for FAA or FNN
                 continue;
             } else {
-                _alignment_files.at(base_path).file_streams[type] =
-                        new std::ofstream(base_path + _pFileSystem->get_extension(type), std::ios::out | std::ios::app);
+                mAlignmentFiles.at(base_path).file_streams[type] =
+                        new std::ofstream(base_path + mpFileSystem->get_extension(type), std::ios::out | std::ios::app);
                 // Initialize headers or any other generic stuff
-                _pFileSystem->initialize_file(_alignment_files.at(base_path).file_streams[type], headers, type);
+                mpFileSystem->initialize_file(mAlignmentFiles.at(base_path).file_streams[type], headers, type);
             }
         }
         ret = true;
@@ -482,14 +490,14 @@ bool QueryData::start_alignment_files(std::string &base_path, std::vector<ENTAP_
 bool QueryData::end_alignment_files(std::string &base_path) {
     // Cleanup/close files
 
-    for (std::ofstream* file_ptr : _alignment_files.at(base_path).file_streams) {
+    for (std::ofstream* file_ptr : mAlignmentFiles.at(base_path).file_streams) {
         // some are unused such as 0
         if (file_ptr != nullptr) {
             file_ptr->close();
             delete file_ptr;
         }
     }
-    _alignment_files.erase(base_path);
+    mAlignmentFiles.erase(base_path);
     return true;
 }
 
@@ -497,44 +505,44 @@ bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *queryS
     bool ret = false;
 
     // Cycle through output file types for this path
-    for (FileSystem::ENT_FILE_TYPES type : _alignment_files.at(base_path).file_types) {
+    for (FileSystem::ENT_FILE_TYPES type : mAlignmentFiles.at(base_path).file_types) {
 
-        if (_alignment_files.at(base_path).file_streams[type] == nullptr) continue;
+        if (mAlignmentFiles.at(base_path).file_streams[type] == nullptr) continue;
 
         switch (type) {
 
             case FileSystem::ENT_FILE_DELIM_TSV:
                 if (alignment == nullptr) {
-                    *_alignment_files.at(base_path).file_streams[type] <<
-                        querySequence->print_delim(_alignment_files.at(base_path).headers,
-                        _alignment_files.at(base_path).go_level, FileSystem::DELIM_TSV) << std::endl;
+                    *mAlignmentFiles.at(base_path).file_streams[type] <<
+                        querySequence->print_delim(mAlignmentFiles.at(base_path).headers,
+                        mAlignmentFiles.at(base_path).go_level, FileSystem::DELIM_TSV) << std::endl;
                 } else {
-                    *_alignment_files.at(base_path).file_streams[type] <<
-                        alignment->print_delim(_alignment_files.at(base_path).headers,
-                        _alignment_files.at(base_path).go_level, FileSystem::DELIM_TSV) << std::endl;
+                    *mAlignmentFiles.at(base_path).file_streams[type] <<
+                        alignment->print_delim(mAlignmentFiles.at(base_path).headers,
+                        mAlignmentFiles.at(base_path).go_level, FileSystem::DELIM_TSV) << std::endl;
                 }
                 break;
 
             case FileSystem::ENT_FILE_DELIM_CSV:
                 if (alignment == nullptr) {
-                    *_alignment_files.at(base_path).file_streams[type] <<
-                        querySequence->print_delim(_alignment_files.at(base_path).headers,
-                        _alignment_files.at(base_path).go_level, FileSystem::DELIM_CSV) << std::endl;
+                    *mAlignmentFiles.at(base_path).file_streams[type] <<
+                        querySequence->print_delim(mAlignmentFiles.at(base_path).headers,
+                        mAlignmentFiles.at(base_path).go_level, FileSystem::DELIM_CSV) << std::endl;
                 } else {
-                    *_alignment_files.at(base_path).file_streams[type] <<
-                        alignment->print_delim(_alignment_files.at(base_path).headers,
-                        _alignment_files.at(base_path).go_level, FileSystem::DELIM_CSV) << std::endl;
+                    *mAlignmentFiles.at(base_path).file_streams[type] <<
+                        alignment->print_delim(mAlignmentFiles.at(base_path).headers,
+                        mAlignmentFiles.at(base_path).go_level, FileSystem::DELIM_CSV) << std::endl;
                 }
                 break;
 
             case FileSystem::ENT_FILE_FASTA_FAA:
                 if (!querySequence->get_sequence_p().empty())
-                    *_alignment_files.at(base_path).file_streams[type] << querySequence->get_sequence_p() << std::endl;
+                    *mAlignmentFiles.at(base_path).file_streams[type] << querySequence->get_sequence_p() << std::endl;
                 break;
 
             case FileSystem::ENT_FILE_FASTA_FNN:
                 if (!querySequence->get_sequence_n().empty())
-                    *_alignment_files.at(base_path).file_streams[type] << querySequence->get_sequence_n() << std::endl;
+                    *mAlignmentFiles.at(base_path).file_streams[type] << querySequence->get_sequence_n() << std::endl;
                 break;
 
             default:

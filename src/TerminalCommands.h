@@ -30,17 +30,19 @@
 
 #include "common.h"
 
+#define TC_NULL_ARGUMENT ""
+
 struct TerminalData{
     std::string command;
     std::string out_stream;
     std::string err_stream;
     bool print_files;
     std::string base_std_path;
-
 };
 
+typedef std::unordered_map<std::string, std::string> command_map_t;
+
 int TC_execute_cmd(TerminalData &terminalData);
-std::string TC_generate_command(std::unordered_map<std::string, std::string> &,
-                                std::string);
+std::string TC_generate_command(command_map_t& command_map, std::string& exe_path);
 
 #endif //ENTAP_TERMINALCOMMANDS_H

@@ -32,6 +32,29 @@
 
 #include "AbstractFrame.h"
 
+/**
+ * ======================================================================
+ * @class ModGeneMarkST
+ *
+ * Description          - This EnTAP module supports execution, parsing, and
+ *                        statistical analysis of the GeneMarkS-T software
+ *                        through terminal commands
+ *                      - GeneMarkS-T performs Frame Selection on the
+ *                        transcriptome input from the user. Sequences
+ *                        where a frame was not found will be removed from
+ *                        further pipeline analysis
+ *                      - Parsed data is added to QueryData class
+ *                      - Inherits from AbstractFrame and EntapModule classes
+ *
+ * Citation             - Shiyuyun Tang, Alexandre Lomsadze, Mark Borodovsky,
+ *                        Identification of protein coding regions in RNA
+ *                        transcripts, Nucleic Acids Research, Volume 43,
+ *                        Issue 12, 13 July 2015, Page e78,
+ *                        https://doi.org/10.1093/nar/gkv227
+ *                      - http://exon.gatech.edu/GeneMark/
+ *
+ * ======================================================================
+ */
 class ModGeneMarkST : public AbstractFrame{
 
 // Data pulled from GeneMarkS-T FASTA files
@@ -50,46 +73,23 @@ public:
     virtual ModVerifyData verify_files() override ;
     virtual void execute() override ;
     virtual void parse() override ;
-    virtual std::string get_final_faa() override ;
     //**********************************************************
 
 private:
 
     //****************** Private Functions *********************
-    frame_map_t genemark_parse_fasta(std::string& fasta);
-    void genemark_parse_lst(std::string &, std::map<std::string, FrameData>&);
+    void genemark_parse_fasta(std::string& fasta, FileSystem::ENT_FILE_TYPES file_type);
+    void genemark_parse_lst(std::string & lst_path);
     //**********************************************************
 
     //**************** Private Const Variables *****************
-    const std::string GRAPH_TITLE_FRAME_RESULTS     = "Frame_Selection_ORFs";
-    const std::string GRAPH_FILE_FRAME_RESUTS       = "frame_results_pie.png";
-    const std::string GRAPH_TEXT_FRAME_RESUTS       = "frame_results_pie.txt";
-    const std::string GRAPH_TITLE_REF_COMPAR        = "Frame_Selected_Sequences";
-    const std::string GRAPH_FILE_REF_COMPAR         = "removed_comparison_box.png";
-    const std::string GRAPH_TEXT_REF_COMPAR         = "removed_comparison_box.txt";
-    const std::string GRAPH_REJECTED_FLAG           = "Removed";
-    const std::string GRAPH_KEPT_FLAG               = "Selected";
-
-    const uint8       GRAPH_FRAME_FLAG              = 1;    // Ensure these match with entap_graphing.py
-    const uint8       GRAPH_PIE_RESULTS_FLAG        = 1;
-    const uint8       GRAPH_COMP_BOX_FLAG           = 2;
-
     const std::string GENEMARK_LOG_FILE             = "gms.log";
     const std::string GENEMARK_HMM_FILE             = "GeneMark_hmm.mod";
     const std::string GENEMARK_STD_OUT              = "genemark_run";
-    const std::string FRAME_SELECTION_PARTIAL       = "partial_genes";
-    const std::string FRAME_SELECTION_COMPLTE       = "complete_genes";
-    const std::string FRAME_SELECTION_INTERNAL      = "internal_genes";
-    const std::string FRAME_SELECTION_LOST          = "sequences_removed";
-    const std::string FRAME_SELECTION_LOST_FLAG     = "lost";
-    const std::string FRAME_SELECTION_FIVE_FLAG     = "Partial 5 Prime";
-    const std::string FRAME_SELECTION_THREE_FLAG    = "Partial 3 Prime";
-    const std::string FRAME_SELECTION_COMPLETE_FLAG = "Complete";
-    const std::string FRAME_SELECTION_INTERNAL_FLAG = "Internal";
+
     //**********************************************************
 
     //****************** Private Variables *********************
-    std::string mFinalFaaPath;      // Absolute path to FAA (protein) file produced from GeneMarkS-T
     std::string mFinalFnnPath;      // Absolute path to FNN (nucleotide) file produced from GeneMarkS-T
     std::string mFinalLstPath;      // Absolute path to .lst file produced from GeneMarkS-T
     std::string mFinalGmstLogPath;  // Absolute path to gmst file produced from GeneMarkS-T

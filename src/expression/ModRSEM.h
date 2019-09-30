@@ -40,6 +40,26 @@
 
 //**************************************************************
 
+/**
+ * ======================================================================
+ * @class ModRSEM
+ *
+ * Description          - This EnTAP module supports execution, parsing, and
+ *                        statistical analysis of the RSEM software
+ *                        through terminal commands
+ *                      - RSEM performs Expression Analysis through processing
+ *                        reads from an alignment file input by the user
+ *                      - Parsed data is added to QueryData class
+ *                      - Transcriptome will be filtered based on FPKM value
+ *                      - Inherits from AbstractExpression and EntapModule classes
+ *
+ * Citation             - B. Li and C. N. Dewey, “RSEM: accurate transcript
+ *                        quantification from RNA-Seq data with or without
+ *                        a reference genome,” (in eng), BMC Bioinformatics,
+ *                        vol. 12, p. 323, Aug 2011.
+ *
+ * ======================================================================
+ */
 class ModRSEM : public AbstractExpression {
 
 public:

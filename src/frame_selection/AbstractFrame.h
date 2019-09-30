@@ -32,6 +32,7 @@
 //*********************** Includes *****************************
 #include "../QueryData.h"
 #include "../EntapModule.h"
+#include "../GraphingManager.h"
 //**************************************************************
 
 /**
@@ -60,10 +61,40 @@ public:
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
-    virtual std::string get_final_faa() = 0;
+
+    std::string get_final_faa();
+
 
 protected:
+    const std::string FRAME_SELECTION_FIVE_FLAG     = "Partial 5 Prime";
+    const std::string FRAME_SELECTION_THREE_FLAG    = "Partial 3 Prime";
+    const std::string FRAME_SELECTION_COMPLETE_FLAG = "Complete";
+    const std::string FRAME_SELECTION_INTERNAL_FLAG = "Internal";
+    const std::string FRAME_SELECTION_LOST_FLAG     = "Lost";
+    const std::string FRAME_SELECTION_FILENAME_PARTIAL   = "partial_genes";
+    const std::string FRAME_SELECTION_FILENAME_COMPLETE  = "complete_genes";
+    const std::string FRAME_SELECTION_FILENAME_INTERNAL  = "internal_genes";
+    const std::string FRAME_SELECTION_FILENAME_LOST      = "sequences_removed";
+
+    const std::string GRAPH_TITLE_FRAME_RESULTS     = "Frame_Selection_ORFs";
+    const std::string GRAPH_FILE_FRAME_RESUTS       = "frame_results_pie.png";
+    const std::string GRAPH_TEXT_FRAME_RESUTS       = "frame_results_pie.txt";
+    const std::string GRAPH_TITLE_REF_COMPAR        = "Frame_Selected_Sequences";
+    const std::string GRAPH_FILE_REF_COMPAR         = "removed_comparison_box.png";
+    const std::string GRAPH_TEXT_REF_COMPAR         = "removed_comparison_box.txt";
+    const std::string GRAPH_REJECTED_FLAG           = "Removed";
+    const std::string GRAPH_KEPT_FLAG               = "Selected";
+
+    const uint8       GRAPH_FRAME_FLAG              = 1;    // Ensure these match with entap_graphing.py
+    const uint8       GRAPH_PIE_RESULTS_FLAG        = 1;
+    const uint8       GRAPH_COMP_BOX_FLAG           = 2;
+
     const uint16 MINIMUM_KEPT_SEQUENCES = 0;        // Minimum required kept sequences before continuing pipeline
+
+    std::string mFinalFaaPath;      // Absolute path to FAA (protein) file produced from Frame Selection process
+
+
+    void frame_calculate_statistics();
 
 };
 

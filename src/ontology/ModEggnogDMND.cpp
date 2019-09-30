@@ -91,8 +91,8 @@ void ModEggnogDMND::execute() {
         throw ExceptionHandler("EggNOG DIAMOND database not found at: " + EGG_DMND_PATH,
                                ERR_ENTAP_EGGNOG_FILES);
     }
-    if (!mpFileSystem->file_exists(mInHits)) {
-        throw ExceptionHandler("Input transcriptome not found at: " + mInHits, ERR_ENTAP_EGGNOG_FILES);
+    if (!mpFileSystem->file_exists(mInputTranscriptome)) {
+        throw ExceptionHandler("Input transcriptome not found at: " + mInputTranscriptome, ERR_ENTAP_EGGNOG_FILES);
     }
 
     // Generate paths for DIAMOND run (out_hits set previously)
@@ -106,7 +106,7 @@ void ModEggnogDMND::execute() {
             " -d " + EGG_DMND_PATH +
             " --top 1"             +
             " --more-sensitive"    +
-            " -q "                 + mInHits   +
+            " -q "                 + mInputTranscriptome   +
             " -o "                 + mOutHIts  +
             " -p "                 + std::to_string(mThreads) +
             " -f " + "6 qseqid sseqid pident length mismatch gapopen "

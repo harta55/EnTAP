@@ -39,7 +39,6 @@ class QueryAlignment {
 
 public:
     QueryAlignment(ExecuteStates state, uint16 software, std::string& database_path, QuerySequence* parent);
-    std::string print_delim(std::vector<ENTAP_HEADERS> &, uint8 lvl, char delim);
     bool operator<(const QueryAlignment&query) {return !(*this > query);};
     void set_compare_overall_alignment(bool val);
     virtual ~QueryAlignment() = default;;

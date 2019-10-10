@@ -47,27 +47,6 @@ void QueryAlignment::set_compare_overall_alignment(bool val) {
     mCompareOverallAlignment = val;
 }
 
-std::string QueryAlignment::print_delim(std::vector<ENTAP_HEADERS> &headers, uint8 lvl, char delim)  {
-    std::stringstream stream;
-    std::string temp;
-
-    for (ENTAP_HEADERS header : headers) {
-        if (ENTAP_HEADER_INFO[header].print_header) {
-            if (ALIGN_OUTPUT_MAP.find(header) != ALIGN_OUTPUT_MAP.end()) {
-                // Header applies to this alignment
-                get_header_data(header, temp, lvl);
-                stream << temp << delim;
-
-            } else {
-                // Header does NOT apply to this alignment, get info from parent
-                mpParentSequence->get_header_data(temp, header, lvl);
-                stream << temp << delim;
-            }
-        }
-    }
-    return stream.str();
-}
-
 void QueryAlignment::get_all_header_data(std::string *headers) {
     for (auto &pair : ALIGN_OUTPUT_MAP) {
         headers[pair.first] = *pair.second;
@@ -77,11 +56,17 @@ void QueryAlignment::get_all_header_data(std::string *headers) {
 void QueryAlignment::get_header_data(ENTAP_HEADERS header, std::string &val, uint8 lvl) {
     std::vector<std::string> go_list;
 
-    if (is_go_header(header, go_list)) {
-        val = mpParentSequence->format_go_info(go_list, lvl);
+    if (ALIGN_OUTPUT_MAP.find(header) != ALIGN_OUTPUT_MAP.end()) {
+        if (is_go_header(header, go_list)) {
+            val = mpParentSequence->format_go_info(go_list, lvl);
+        } else {
+            val = *ALIGN_OUTPUT_MAP[header];
+        }
     } else {
-        val = *ALIGN_OUTPUT_MAP[header];
+        // Header does NOT apply to this alignment, get info from parent
+        mpParentSequence->get_header_data(val, header, lvl);
     }
+
 }
 
 uint16 QueryAlignment::getMSoftwareModule() const {

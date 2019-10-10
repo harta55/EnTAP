@@ -62,7 +62,6 @@ public:
     std::pair<uint16, uint16> calculate_N_vals(std::vector<uint16>&,uint64);
     std::string trim_sequence_header(std::string&, std::string);
     void final_statistics(std::string& outpath);
-    void print_final_output();
 
     // Output routines
     bool start_alignment_files(std::string &base_path, std::vector<ENTAP_HEADERS> &headers, uint8 lvl,
@@ -87,6 +86,11 @@ public:
 
 private:
 
+    struct EntapHeader {
+        const std::string title;
+        bool print_header;
+    };
+
     struct OutputFileData {
         std::vector<FileSystem::ENT_FILE_TYPES> file_types;
         uint8 go_level;
@@ -99,6 +103,13 @@ private:
     void DATA_FLAG_SET(DATA_FLAGS);
     void DATA_FLAG_CLEAR(DATA_FLAGS);
     void DATA_FLAG_CHANGE(DATA_FLAGS flag, bool val);
+
+    std::string get_delim_data_sequence(std::vector<ENTAP_HEADERS>&headers, char delim, uint8 lvl,
+                                QuerySequence* sequence);
+    std::string get_delim_data_alignment(std::vector<ENTAP_HEADERS>&headers, char delim, uint8 lvl,
+                                        QueryAlignment* alignment);
+    bool initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HEADERS> &headers, FileSystem::ENT_FILE_TYPES type);
+
 
     const uint8         LINE_COUNT   = 20;
     const uint8         SEQ_DPRINT_CONUT = 10;
@@ -128,6 +139,8 @@ private:
     FileSystem  *mpFileSystem;
     UserInput   *mpUserInput;
     std::unordered_map<std::string, OutputFileData> mAlignmentFiles;
+    static EntapHeader ENTAP_HEADER_INFO[];
+
 };
 
 

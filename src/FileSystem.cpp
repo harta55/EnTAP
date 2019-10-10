@@ -231,12 +231,13 @@ bool FileSystem::delete_file(std::string path) {
  * ======================================================================
  * Function bool FS_directory_iterate(bool del, std::string &path)
  *
- * Description          - WARNING recursive iteration
+ * Description          - Iterates through a FileSystem directory hierarchy
+ *                        performing specified action on files
  *
- * Notes                - None
+ * Notes                - WARNING recursive iteration
  *
- * @param path          - Path to directory
- * @param del           - True/false to delete files that are empty (unused)
+ * @param iter          - Specify what we would like to do to iterated files
+ * @param path          - Absolute path to filesystem directory to iterate through
  *
  * @return              - True/false if successful
  * ======================================================================
@@ -275,7 +276,7 @@ bool FileSystem::directory_iterate(ENT_FILE_ITER iter, std::string &path) {
             if (entry->d_name[0] == '.') continue;
             file_path = PATHS(path, std::string(entry->d_name));
             if (entry->d_type == DT_DIR) {
-                // Directory, WARNING recursive
+                // If this is a directory, WARNING recursive
                 directory_iterate(FILE_ITER_DELETE, file_path);     // Recursive call
             } else {
                 // This is a file decide what we want to do
@@ -899,16 +900,6 @@ std::string FileSystem::get_error() {
     return "\n" + mErrorMsg;
 }
 
-bool FileSystem::print_headers(std::ofstream& file_stream, std::vector<ENTAP_HEADERS> &headers, char delim) {
-    for (ENTAP_HEADERS &header: headers) {
-        if (ENTAP_HEADER_INFO[header].print_header) {
-            file_stream << ENTAP_HEADER_INFO[header].title << delim;
-        }
-    }
-    file_stream << std::endl;
-    return true;
-}
-
 void FileSystem::format_stat_stream(std::stringstream &stream, std::string title) {
     stream<<std::fixed<<std::setprecision(2);
     stream << SOFTWARE_BREAK << title << '\n' << SOFTWARE_BREAK;
@@ -937,45 +928,6 @@ std::string FileSystem::get_extension(FileSystem::ENT_FILE_TYPES type) {
             FS_dprint("ERROR unhandled extension type: " + std::to_string(type));
             return "";
     }
-}
-
-bool FileSystem::initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HEADERS> &headers,
-                                 FileSystem::ENT_FILE_TYPES type) {
-    bool ret;
-
-    switch (type) {
-        case ENT_FILE_DELIM_TSV:
-            for (ENTAP_HEADERS &header: headers) {
-                if (ENTAP_HEADER_INFO[header].print_header) {
-                    *file_stream << ENTAP_HEADER_INFO[header].title << DELIM_TSV;
-                }
-            }
-            *file_stream << std::endl;
-            ret = true;
-            break;
-
-        case ENT_FILE_DELIM_CSV:
-            for (ENTAP_HEADERS &header: headers) {
-                if (ENTAP_HEADER_INFO[header].print_header) {
-                    *file_stream << ENTAP_HEADER_INFO[header].title << DELIM_CSV;
-                }
-            }
-            *file_stream << std::endl;
-            ret = true;
-            break;
-
-        // Fasta files do not need initialization
-        case ENT_FILE_FASTA_FAA:
-        case ENT_FILE_FASTA_FNN:
-            ret = true;
-            break;
-
-        default:
-            FS_dprint("ERROR unhanded file type (initalize file): " + std::to_string(type));
-            ret = false;
-            break;
-    }
-    return ret;
 }
 
 bool FileSystem::create_transcriptome_dir() {

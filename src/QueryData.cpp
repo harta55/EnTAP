@@ -31,6 +31,75 @@
 #include "FileSystem.h"
 #include "UserInput.h"
 
+// This table should match order in EntapGlobals.h ENTAP_HEADERS enum
+QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
+        {"Unused",              false},                         // 0
+        {"Query Sequence",      true},
+
+        /* Frame Selection */
+        {"Frame",               true},
+
+        /* Expression Filtering */
+        {"FPKM",                true},
+        {"TPM",                 true},
+
+        /* Similarity Search - General */
+        {"Subject Sequence",    true},
+        {"Percent Identical",   true},                          // 5
+        {"Alignment Length",    true},
+        {"Mismatches",          true},
+        {"Gap Openings",        true},
+        {"Query Start",         true},
+        {"Query End",           true},                          // 10
+        {"Subject Start",       true},
+        {"Subject End",         true},
+        {"E Value",             true},
+        {"Coverage",            true},
+        {"Description",         true},                          // 15
+        {"Species",             true},
+        {"Taxonomic Lineage",   true},
+        {"Origin Database",     true},
+        {"Contaminant",         true},
+        {"Informative",         true},
+
+        /* Similarity Search - UniProt */
+        {"UniProt Database Cross Reference",        true},      // 20
+        {"UniProt Additional Information",          true},
+        {"UniProt KEGG Terms",                      true},
+        {"UniProt GO Biological",                   true},
+        {"UniProt GO Cellular",                     true},
+        {"UniProt GO Molecular",                    true},
+
+        /* Ontology - EggNOG */
+        {"EggNOG Seed Ortholog",                    true},
+        {"EggNOG Seed E-Value",                     true},
+        {"EggNOG Seed Score",                       true},
+        {"EggNOG Predicted Gene",                   true},
+        {"EggNOG Tax Scope",                        true},
+        {"EggNOG Tax Scope Max",                    true},
+        {"EggNOG Member OGs",                       true},
+        {"EggNOG Description",                     false},
+        {"EggNOG BIGG Reaction",                    true},
+        {"EggNOG KEGG Terms",                       true},
+        {"EggNOG GO Biological",                    true},
+        {"EggNOG GO Cellular",                      true},
+        {"EggNOG GO Molecular" ,                    true},
+        {"EggNOG Protein Domains",                  false},
+
+        /* Ontology - InterProScan */
+        {"IPScan GO Biological",                    true},
+        {"IPScan GO Cellular",                      true},
+        {"IPScan GO Molecular",                     true},
+        {"IPScan Pathways",                         true},
+        {"IPScan InterPro ID",                      true},
+        {"IPScan Protein Database",                 true},
+        {"IPScan Protein Description",              true},
+        {"IPScan E-Value",                          true},
+
+
+        {"Unused",                                  false}
+};
+
 
 /**
  * ======================================================================
@@ -476,7 +545,7 @@ bool QueryData::start_alignment_files(std::string &base_path, std::vector<ENTAP_
                 mAlignmentFiles.at(base_path).file_streams[type] =
                         new std::ofstream(base_path + mpFileSystem->get_extension(type), std::ios::out | std::ios::app);
                 // Initialize headers or any other generic stuff
-                mpFileSystem->initialize_file(mAlignmentFiles.at(base_path).file_streams[type], headers, type);
+                initialize_file(mAlignmentFiles.at(base_path).file_streams[type], headers, type);
             }
         }
         ret = true;
@@ -514,24 +583,24 @@ bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *queryS
             case FileSystem::ENT_FILE_DELIM_TSV:
                 if (alignment == nullptr) {
                     *mAlignmentFiles.at(base_path).file_streams[type] <<
-                        querySequence->print_delim(mAlignmentFiles.at(base_path).headers,
-                        mAlignmentFiles.at(base_path).go_level, FileSystem::DELIM_TSV) << std::endl;
+                        get_delim_data_sequence(mAlignmentFiles.at(base_path).headers,FileSystem::DELIM_TSV,
+                        mAlignmentFiles.at(base_path).go_level, querySequence) << std::endl;
                 } else {
                     *mAlignmentFiles.at(base_path).file_streams[type] <<
-                        alignment->print_delim(mAlignmentFiles.at(base_path).headers,
-                        mAlignmentFiles.at(base_path).go_level, FileSystem::DELIM_TSV) << std::endl;
+                        get_delim_data_alignment(mAlignmentFiles.at(base_path).headers,FileSystem::DELIM_TSV,
+                        mAlignmentFiles.at(base_path).go_level, alignment) << std::endl;
                 }
                 break;
 
             case FileSystem::ENT_FILE_DELIM_CSV:
                 if (alignment == nullptr) {
                     *mAlignmentFiles.at(base_path).file_streams[type] <<
-                        querySequence->print_delim(mAlignmentFiles.at(base_path).headers,
-                        mAlignmentFiles.at(base_path).go_level, FileSystem::DELIM_CSV) << std::endl;
+                        get_delim_data_sequence(mAlignmentFiles.at(base_path).headers, FileSystem::DELIM_CSV,
+                        mAlignmentFiles.at(base_path).go_level, querySequence) << std::endl;
                 } else {
                     *mAlignmentFiles.at(base_path).file_streams[type] <<
-                        alignment->print_delim(mAlignmentFiles.at(base_path).headers,
-                        mAlignmentFiles.at(base_path).go_level, FileSystem::DELIM_CSV) << std::endl;
+                        get_delim_data_alignment(mAlignmentFiles.at(base_path).headers,FileSystem::DELIM_CSV,
+                        mAlignmentFiles.at(base_path).go_level, alignment) << std::endl;
                 }
                 break;
 
@@ -602,6 +671,126 @@ void QueryData::header_set(ENTAP_HEADERS header, bool val) {
     ENTAP_HEADER_INFO[header].print_header = val;
 }
 
-void QueryData::print_final_output() {
+/**
+ * ======================================================================
+ * Function std::string QueryData::get_delim_data_sequence(std::vector<ENTAP_HEADERS> &headers,
+ *                                              char delim, uint8 lvl,
+ *                                              QuerySequence *sequence)
+ *
+ * Description          - Accesses QuerySequence object to pull all relevant
+ *                        Header data for input headers
+ *
+ * Notes                - None
+ *
+ * @param headers       - EnTAP headers we would like to pull data for
+ * @param delim         - Character to use as deliminator for return string
+ * @param lvl           - Gene Ontology level we would like data for
+ * @param sequence      - Pointer to QuerySequence object to pull data from
+ *
+ * @return              - String of relevant header data with specified deliminator
+ *
+ * =====================================================================
+ */
+std::string QueryData::get_delim_data_sequence(std::vector<ENTAP_HEADERS> &headers, char delim,
+                                               uint8 lvl, QuerySequence *sequence) {
+    std::string val;
+    std::stringstream ret;
 
+    for (ENTAP_HEADERS header : headers) {
+        if (ENTAP_HEADER_INFO[header].print_header) {
+            sequence->get_header_data(val, header, lvl);
+            ret << val << delim;
+        }
+    }
+    return ret.str();
+}
+
+/**
+ * ======================================================================
+ * Function std::string QueryData::get_delim_data_alignment(std::vector<ENTAP_HEADERS> &headers,
+ *                                              char delim, uint8 lvl,
+ *                                              QueryAlignment *alignment)
+ *
+ * Description          - Accesses QueryAlignment object to pull all relevant
+ *                        Header data for input headers
+ *
+ * Notes                - None
+ *
+ * @param headers       - EnTAP headers we would like to pull data for
+ * @param delim         - Character to use as deliminator for return string
+ * @param lvl           - Gene Ontology level we would like data for
+ * @param alignment     - Pointer to QueryAlignment object to pull data from
+ *
+ * @return              - String of relevant header data with specified delminator
+ *
+ * =====================================================================
+ */
+std::string QueryData::get_delim_data_alignment(std::vector<ENTAP_HEADERS> &headers, char delim,
+                                                uint8 lvl, QueryAlignment *alignment) {
+    std::string val;
+    std::stringstream ret;
+
+    for (ENTAP_HEADERS header : headers) {
+        if (ENTAP_HEADER_INFO[header].print_header) {
+            alignment->get_header_data(header, val, lvl);
+            ret << val << delim;
+        }
+    }
+    return ret.str();
+}
+
+/**
+ * ======================================================================
+ * Function bool QueryData::initialize_file(std::ofstream *file_stream,
+ *                               std::vector<ENTAP_HEADERS> &headers,
+ *                               FileSystem::ENT_FILE_TYPES type)
+ *
+ * Description          - Initializes output files depending on their type
+ *                        (ex: deliminated files will print headers as the
+ *                        first line of the file)
+ *
+ * Notes                - None
+ *
+ * @param file_stream   - File stream to print to
+ * @param headers       - EnTAP headers we are considering for this file (delim)
+ * @param type          - Type of file we want to initialize
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
+bool QueryData::initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HEADERS> &headers,
+                                 FileSystem::ENT_FILE_TYPES type) {
+    bool ret=true;
+
+    switch (type) {
+        case FileSystem::ENT_FILE_DELIM_TSV:
+            for (ENTAP_HEADERS &header: headers) {
+                if (ENTAP_HEADER_INFO[header].print_header) {
+                    *file_stream << ENTAP_HEADER_INFO[header].title << FileSystem::DELIM_TSV;
+                }
+            }
+            *file_stream << std::endl;
+            break;
+
+        case FileSystem::ENT_FILE_DELIM_CSV:
+            for (ENTAP_HEADERS &header: headers) {
+                if (ENTAP_HEADER_INFO[header].print_header) {
+                    *file_stream << ENTAP_HEADER_INFO[header].title << FileSystem::DELIM_CSV;
+                }
+            }
+            *file_stream << std::endl;
+            break;
+
+            // Fasta files do not need initialization
+        case FileSystem::ENT_FILE_FASTA_FAA:
+        case FileSystem::ENT_FILE_FASTA_FNN:
+            break;
+
+        default:
+            FS_dprint("ERROR unhandled file type (initialize file): " + std::to_string(type));
+            ret = false;
+            break;
+    }
+    return ret;
 }

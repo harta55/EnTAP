@@ -41,7 +41,6 @@
 
 
 
-class QuerySequence;
 class EntapDatabase;
 class FileSystem;
 class UserInput;
@@ -238,11 +237,6 @@ enum ENTAP_HEADERS {
     ENTAP_HEADER_COUNT
 };
 
-struct EntapHeader {
-    const std::string title;
-    bool print_header;
-};
-
 struct EntapDataPtrs {
     EntapDatabase* mpEntapDatabase;
     FileSystem*    mpFileSystem;
@@ -293,8 +287,6 @@ extern std::string ENTAP_DATABASE_BIN_PATH;
 extern std::string ENTAP_DATABASE_SQL_PATH;
 extern std::string GRAPHING_EXE;
 extern std::string EGG_EMAPPER_EXE;
-
-extern EntapHeader ENTAP_HEADER_INFO[];
 
 // ************************************************************
 

@@ -62,7 +62,7 @@ public:
         ENT_FILE_DELIM_CSV,
         ENT_FILE_FASTA_FAA,
         ENT_FILE_FASTA_FNN,
-        ENT_FILE_OUTPUT_FORMAT_MAX,
+        ENT_FILE_OUTPUT_FORMAT_MAX,     // File types above this are supported for data output
 
         ENT_FILE_XML,                   // Not yet supported for output format
         ENT_FILE_TAR_GZ,
@@ -128,8 +128,6 @@ public:
     bool download_ftp_file(std::string,std::string&);
     bool decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES);
 
-    bool print_headers(std::ofstream &file_stream, std::vector<ENTAP_HEADERS> &headers, char delim);
-    bool initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HEADERS> &headers, ENT_FILE_TYPES type);
     void format_stat_stream(std::stringstream &stream, std::string title);
 
 //**************************************************************

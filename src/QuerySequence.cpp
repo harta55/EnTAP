@@ -344,40 +344,6 @@ const std::string &QuerySequence::get_sequence() const {
     }
 }
 
-
-/**
- * ======================================================================
- * Function std::string QuerySequence::print_delim(std::vector<ENTAP_HEADERS> &headers,
- *                                              short lvl, char delim)
- *
- * Description          - Returns string stream data corresponding to specified headers,
- *                        and level
- *                      - Formats according to delim character
- *                      - Pulls header information from individual alignments if needed
- *
- * Notes                - None
- *
- * @param headers       - Vector of headers we want to print
- * @param lvl           - Go level that should be normalized to
- * @param delim         - Character for delim files
- *
- * @return              - String of output
- *
- * =====================================================================
- */
-std::string QuerySequence::print_delim(std::vector<ENTAP_HEADERS> &headers, short lvl, char delim) {
-    std::stringstream stream;       // Returned output stream
-    std::string       val;          // Temp string
-
-    for (ENTAP_HEADERS &header : headers) {
-        if (ENTAP_HEADER_INFO[header].print_header) {
-            get_header_data(val, header, (uint8)lvl);
-            stream << val << delim;
-        }
-    }
-    return stream.str();
-}
-
 /**
  * ======================================================================
  * Function void QuerySequence::get_header_data(std::string &data, ENTAP_HEADERS header,

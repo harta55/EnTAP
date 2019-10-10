@@ -508,6 +508,9 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
 
     // Open unselected hits, so every hit that was not the best hit (tsv)
     std::string out_unselected_tsv  = PATHS(base_path, SIM_SEARCH_DATABASE_UNSELECTED + FileSystem::EXT_TSV);
+    std::vector<FileSystem::ENT_FILE_TYPES> unselected_files = {FileSystem::ENT_FILE_DELIM_TSV};
+    mpQueryData->start_alignment_files(out_unselected_tsv, DEFAULT_HEADERS, 0, unselected_files);
+
     std::ofstream file_unselected_hits(out_unselected_tsv, std::ios::out | std::ios::app);
 
     // Open no hits file (fasta nucleotide)
@@ -532,10 +535,6 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     std::ofstream graph_sum_file(graph_sum_txt_path, std::ios::out | std::ios::app);
 
     // ------------------------------------------------------------------ //
-
-    // Print headers to relevant tsv files
-    mpFileSystem->print_headers(file_unselected_hits, DEFAULT_HEADERS, FileSystem::DELIM_TSV);
-
 
     try {
         graph_species_file << "Species\tCount"     << std::endl;
@@ -582,7 +581,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                     for (auto &hit : *alignment_data) {
                         count_TOTAL_alignments++;
                         if (hit != best_hit) {  // If this hit is not the best hit
-                            file_unselected_hits << hit->print_delim(DEFAULT_HEADERS, 0, FileSystem::DELIM_TSV) << std::endl;
+                            mpQueryData->add_alignment_data(out_unselected_tsv, pair.second, hit);
                             count_unselected++;
                         } else {
                             ;   // Do notthing

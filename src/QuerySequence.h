@@ -188,7 +188,6 @@ public:
     QuerySequence();
     QuerySequence(bool, std::string, std::string);
     ~QuerySequence();
-    std::string print_delim(std::vector<ENTAP_HEADERS> &, short lvl ,char delim);
     void setFrame(const std::string &frame);
     uint64 get_sequence_length() const;
     const std::string &getFrame() const;

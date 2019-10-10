@@ -63,7 +63,7 @@ FrameSelection::FrameSelection(std::string &input, EntapDataPtrs &entap_data) {
 
     mOutpath         = mpFileSystem->get_root_path();
     mOverwrite       = mpUserInput->has_input(mpUserInput->INPUT_FLAG_OVERWRITE);
-    mSoftwareFlag    = FRAME_GENEMARK_ST;
+    mSoftwareFlag    = mpUserInput->get_user_input<uint16>(mpUserInput->INPUT_FLAG_FRAME_SELECTION);
 
     mModOutDir   = PATHS(mOutpath, FRAME_SELECTION_OUT_DIR);
 }
@@ -123,7 +123,7 @@ std::string FrameSelection::execute(std::string input) {
  *
  * Description           - Spawns object for specified frame selection software
  *
- * Notes                 - Currently only GeneMarkS-T support
+ * Notes                 - Currently supports GeneMarkS-T and TransDecoder
  *
  *
  * @return               - Frame Selection module object

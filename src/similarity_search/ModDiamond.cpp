@@ -507,11 +507,9 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     mpQueryData->start_alignment_files(out_best_hits_no_contams, DEFAULT_HEADERS, 0, mAlignmentFileTypes);
 
     // Open unselected hits, so every hit that was not the best hit (tsv)
-    std::string out_unselected_tsv  = PATHS(base_path, SIM_SEARCH_DATABASE_UNSELECTED + FileSystem::EXT_TSV);
+    std::string out_unselected_tsv  = PATHS(base_path, SIM_SEARCH_DATABASE_UNSELECTED);
     std::vector<FileSystem::ENT_FILE_TYPES> unselected_files = {FileSystem::ENT_FILE_DELIM_TSV};
     mpQueryData->start_alignment_files(out_unselected_tsv, DEFAULT_HEADERS, 0, unselected_files);
-
-    std::ofstream file_unselected_hits(out_unselected_tsv, std::ios::out | std::ios::app);
 
     // Open no hits file (fasta nucleotide)
     std::string out_no_hits_fa_nucl = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS + FileSystem::EXT_FNN);
@@ -635,14 +633,13 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
         mpQueryData->end_alignment_files(out_best_contams_filepath);
         mpQueryData->end_alignment_files(out_best_hits_filepath);
         mpQueryData->end_alignment_files(out_best_hits_no_contams);
+        mpQueryData->end_alignment_files(out_unselected_tsv);
 
         mpFileSystem->close_file(file_no_hits_nucl);
         mpFileSystem->close_file(file_no_hits_prot);
-        mpFileSystem->close_file(file_unselected_hits);
     } catch (const ExceptionHandler &e) {throw e;}
 
     // ------------ Calculate statistics and print to output ------------ //
-    ss<<std::fixed<<std::setprecision(2);
 
     // Different headers if final analysis or database specific analysis
     if (is_final) {

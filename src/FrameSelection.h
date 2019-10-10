@@ -39,6 +39,7 @@ class AbstractFrame;
 
 // Supported frame selection software
 enum FRAME_SELECTION_SOFTWARE {
+    FRAME_UNUSED=0,
     FRAME_GENEMARK_ST,
     FRAME_TRANSDECODER,
     FRAME_SOFTWARE_COUNT

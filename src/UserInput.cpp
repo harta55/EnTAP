@@ -85,8 +85,8 @@
 #define DESC_FRAME_SELECTION_FLAG "Specify the Frame Selection software you would like "\
                             "to use. Only one flag can be specified.\n"                 \
                             "Specify flags as follows:\n"                               \
-                            "    0. GeneMarkS-T (default)\n"                            \
-                            "    1. Transdecoder"
+                            "    1. GeneMarkS-T (default)\n"                            \
+                            "    2. Transdecoder"
 #define DESC_TRANSDECODER_MIN_FLAG "Transdecoder only. Specify the minimum protein length"
 #define DESC_GRAPHING       "Check whether or not your system supports graphing.\n"     \
                             "This option does not require any other flags and will"     \
@@ -341,7 +341,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         TCLAP::ValueArg<fp64> argEval("", INPUT_FLAG_E_VAL, DESC_EVAL, false, E_VALUE, "decimal", cmd);
         TCLAP::ValueArg<int> argThreads(INPUT_FLAG_SHORT_THREADS, INPUT_FLAG_THREADS, DESC_THREADS, false, DEFAULT_THREADS, "integer", cmd);
         TCLAP::ValueArg<uint16> argTransMinProtein("", INPUT_FLAG_TRANS_MIN_PROTEIN, DESC_TRANSDECODER_MIN_FLAG, false, DEFAULT_TRANSDECODER_MIN_PROTEIN, "integer", cmd);
-        TCLAP::ValueArg<int> argFrameSelection("", INPUT_FLAG_FRAME_SELECTION, DESC_FRAME_SELECTION_FLAG, false, FRAME_GENEMARK_ST, "integer", cmd);
+        TCLAP::ValueArg<uint16> argFrameSelection("", INPUT_FLAG_FRAME_SELECTION, DESC_FRAME_SELECTION_FLAG, false, FRAME_GENEMARK_ST, "integer", cmd);
         TCLAP::ValueArg<std::string> argAlign(INPUT_FLAG_SHORT_ALIGN, INPUT_FLAG_ALIGN, DESC_ALIGN_FILE, false, "","string",cmd);
         TCLAP::ValueArg<fp32> argQueryCov("", INPUT_FLAG_QCOVERAGE, DESC_QCOVERAGE, false, DEFAULT_QCOVERAGE, "decimal", cmd);
         TCLAP::ValueArg<std::string> argExePath("", INPUT_FLAG_EXE_PATH, DESC_EXE_PATHS, false, "", "string", cmd);
@@ -639,8 +639,16 @@ bool UserInput::verify_user_input() {
 
             // Verify uninformative file list
             if (has_input(INPUT_FLAG_UNINFORM)) {
-                std::string uninform_path = get_user_input<std::string>(UserInput::INPUT_FLAG_UNINFORM);
+                std::string uninform_path = get_user_input<std::string>(INPUT_FLAG_UNINFORM);
                 verify_uninformative(uninform_path);
+            }
+
+            // Verify Frame Selection flag
+            if (has_input(INPUT_FLAG_FRAME_SELECTION)) {
+                uint8 frame_software = get_user_input<uint8>(INPUT_FLAG_FRAME_SELECTION);
+                if (frame_software <= FRAME_UNUSED || frame_software >= FRAME_SOFTWARE_COUNT) {
+                    throw ExceptionHandler("Invalid Frame Selection software input!", ERR_ENTAP_INPUT_PARSE);
+                }
             }
 
         } else {

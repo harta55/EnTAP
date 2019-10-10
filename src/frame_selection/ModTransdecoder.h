@@ -85,6 +85,7 @@ private:
     const std::string CMD_TRANSCRIPTOME_INPUT = "-t";      // Command to specify input
     const std::string CMD_MIN_PROTEIN_LENGTH  = "-m";
     const std::string CMD_OUTPUT_DIR          = "-O";                   // Specify output directory WARNING added in v5.5.0
+                                                                        // and doesn't really work
     const std::string CMD_SINGLE_BEST_ONLY    = "--single_best_only";   // Only retain one best ORF per transcript
 
     const std::string STD_OUTPUT_TRAINING = "long_orfs_std";

@@ -85,10 +85,6 @@ protected:
     const std::string GRAPH_REJECTED_FLAG           = "Removed";
     const std::string GRAPH_KEPT_FLAG               = "Selected";
 
-    const uint8       GRAPH_FRAME_FLAG              = 1;    // Ensure these match with entap_graphing.py
-    const uint8       GRAPH_PIE_RESULTS_FLAG        = 1;
-    const uint8       GRAPH_COMP_BOX_FLAG           = 2;
-
     const uint16 MINIMUM_KEPT_SEQUENCES = 0;        // Minimum required kept sequences before continuing pipeline
 
     std::string mFinalFaaPath;      // Absolute path to FAA (protein) file produced from Frame Selection process

@@ -6,55 +6,74 @@ import collections
 import os
 from operator import add
 
-_stats_path = ""
-_software_flag = ""
-_graph_flag = ""
-_base_path = ""
-_graph_title = ""
-_output_path = ""
-_version = 0.0
-plt = None
+# ------------------- GLOBALS -------------------
+gTextFilePath = ""
+gGraphType = ""
+gBasePath = ""
+gGraphTitle = ""
+gOutputPath = ""
+gIniFilePath = ""
+gVersion = 0.0
+gPlot = None
+# -----------------------------------------------
 
-BOX_SEQ_LEN_LABEL = "Sequence Length"
+# ------------------ CONSTANTS ------------------
+# WARNING Input flags must match those defined in GraphingManager.h
+INPUT_FLAG_TEXT_PATH = "-i"
+INPUT_FLAG_GRAPH_TYPE = "-g"
+INPUT_FLAG_GRAPH_TITLE = "-t"
+INPUT_FLAG_OUT_PATH = "-o"
+INPUT_FLAG_INI_FILE_PATH = "-f"
 
-# Ensure these flags match with main EnTAP project #
-# Frame Selection   = 1
-# Expression        = 2
-# Similarity Search = 3
-# Ontology          = 4
-#***************************************************#
+# WARNING Graphing Types must match those defined in GraphingManager.h
+GRAPH_TYPE_TESTING = -1
+GRAPH_TYPE_BAR_HORIZONTAL = 0
+GRAPH_TYPE_BAR_VERTICAL = 1
+GRAPH_TYPE_LINE_HORIZONTAL = 2
+GRAPH_TYPE_LINE_VERTICAL = 3
+GRAPH_TYPE_PIE_CHART = 4
+GRAPH_TYPE_BOX_PLOT_VERTICAL = 5
+GRAPH_TYPE_BOX_PLOT_HORIZONTAL = 6
+GRAPH_TYPE_BAR_STACKED = 7
 
+ENTAP_EXIT_OK = 0
+ENTAP_EXIT_UNSUPPORTED_SOFTWARE = 1
+ENTAP_EXIT_UNSUPPORTED_GRAPH_TYPE = 2
+
+# --------------CONSTANTS END -------------------
+# TODO graphing needs a lot of updating
 
 def init_argparse():
-    global _base_path
-    global _stats_path
-    global _software_flag
-    global _graph_flag
-    global _graph_title
-    global _output_path
+    global gBasePath
+    global gTextFilePath
+    global gGraphType
+    global gGraphTitle
+    global gOutputPath
+    global gIniFilePath
     parser = argparse.ArgumentParser()
-    parser.add_argument('-i', action='store', dest='stats', help='Path to graphing file', type=str)
-    parser.add_argument('-s', action='store', dest='soft', help='Software flag', type=int)
-    parser.add_argument('-g', action='store', dest='graph', help='Graph flag', type=int)
-    parser.add_argument('-t', action='store', dest='title', help='Graph title', type=str)
-    parser.add_argument('-p', action='store', dest='path', help='Output path', type=str)
+    parser.add_argument(INPUT_FLAG_TEXT_PATH, action='store', dest='stats', help='Path to graphing data', type=str)
+    parser.add_argument(INPUT_FLAG_GRAPH_TYPE, action='store', dest='graph', help='Graphing type', type=int)
+    parser.add_argument(INPUT_FLAG_GRAPH_TITLE, action='store', dest='title', help='Graph title', type=str)
+    parser.add_argument(INPUT_FLAG_OUT_PATH, action='store', dest='path', help='Output path', type=str)
+    parser.add_argument(INPUT_FLAG_INI_FILE_PATH, action='store', dest='ini_file', help='Absolute path to INI file', type=str)
     args = parser.parse_args()
-    _stats_path = args.stats
-    _output_path = args.path
-    _graph_title = args.title
-    if _graph_title is not None:
-        _graph_title = _graph_title.replace("_", " ")
-    _graph_flag = args.graph
-    _software_flag = args.soft
+
+    gTextFilePath = args.stats
+    gOutputPath = args.path
+    gGraphTitle = args.title
+    gIniFilePath = args.ini_file
+    if gGraphTitle is not None:
+        gGraphTitle = gGraphTitle.replace("_", " ")
+    gGraphType = args.graph
 
 
 def init_version():
-    global _version
-    _version = sys.version_info[0] + 0.1*sys.version_info[1]
+    global gVersion
+    gVersion = sys.version_info[0] + 0.1 * sys.version_info[1]
 
 
 def verify_package():
-    is_2 = 2 <= _version < 3
+    is_2 = 2 <= gVersion < 3
     has_matplot = False
     if is_2:
         import imp
@@ -63,84 +82,66 @@ def verify_package():
             has_matplot = True
         except ImportError:
             has_matplot = False
-    elif _version >= 3.4:
+    elif gVersion >= 3.4:
         import importlib.util
         check = importlib.util.find_spec("matplotlib")
         has_matplot = check is not None
-    elif not is_2 and _version < 3.4:
+    elif not is_2 and gVersion < 3.4:
         import importlib
         spam_loader = importlib.find_loader("matplotlib")
         has_matplot = spam_loader is not None
     else:
         print("Python version not compatable.")
-        exit(1)
+        exit(ENTAP_EXIT_UNSUPPORTED_SOFTWARE)
     if has_matplot:
-        global plt
+        global gPlot
         import matplotlib
-        import matplotlib.pyplot as plt
-        plt.switch_backend('agg')
+        import matplotlib.pyplot as gPlot
+        gPlot.switch_backend('agg')
     else:
         print("Matplotlib module not found. Not able to graph data.")
-        exit(1)
+        exit(ENTAP_EXIT_UNSUPPORTED_SOFTWARE)
 
 
 def init_graphs():
     pass
 
 
-def frame_selection_graphs():
-    if _graph_flag == 1:            # Pie chart of each gene type
-        InputValues = parse_input(_stats_path)
-        create_pie(_graph_title, _output_path, InputValues.values, InputValues.labels)
-    elif _graph_flag == 2:          # Box plot of rejected vs kept sequences and length
-        input_vals = parse_input_dict(_stats_path)
-        create_boxplot(_graph_title, _output_path, input_vals, BOX_SEQ_LEN_LABEL)
-
-    pass
-
-
-def expression_graphs():
-    if _graph_flag == 1:
-        input_vals = parse_input_dict(_stats_path)
-        create_boxplot(_graph_title, _output_path, input_vals, BOX_SEQ_LEN_LABEL)
-    pass
-
-
-# Flag 3
-def sim_search_graphs():
-    if _graph_flag == 1:
-        InputValues = parse_input(_stats_path)
-        create_bar(_graph_title, _output_path, InputValues.values, InputValues.labels,
+def create_graphs(graph_type):
+    if graph_type == GRAPH_TYPE_TESTING:                  # Initial test case
+        exit(ENTAP_EXIT_OK)
+    elif graph_type == GRAPH_TYPE_BAR_HORIZONTAL:
+        InputValues = parse_input(gTextFilePath)
+        create_bar(gGraphTitle, gOutputPath, InputValues.values, InputValues.labels,
                    InputValues.xlabel, InputValues.ylabel)
-    elif _graph_flag == 2:  # Stacked informative/uninformative bar graph
-        InputValues = parse_sim_stack(_stats_path)
-        create_bar_stacked(_graph_title, _output_path, InputValues.label_map,
+    elif graph_type == GRAPH_TYPE_BAR_VERTICAL:
+        InputValues = parse_input(gTextFilePath)
+        create_bar(gGraphTitle, gOutputPath, InputValues.values, InputValues.labels,
+                   InputValues.xlabel, InputValues.ylabel)
+    elif graph_type == GRAPH_TYPE_LINE_HORIZONTAL:
+        pass
+    elif graph_type == GRAPH_TYPE_LINE_VERTICAL:
+        pass
+    elif graph_type == GRAPH_TYPE_PIE_CHART:
+        InputValues = parse_input(gTextFilePath)
+        create_pie(gGraphTitle, gOutputPath, InputValues.values, InputValues.labels)
+        pass
+    elif graph_type == GRAPH_TYPE_BOX_PLOT_VERTICAL:
+        input_vals = parse_input_dict(gTextFilePath)
+        create_boxplot(gGraphTitle, gOutputPath, input_vals, BOX_SEQ_LEN_LABEL)
+        pass
+    elif graph_type == GRAPH_TYPE_BOX_PLOT_HORIZONTAL:
+        input_vals = parse_input_dict(gTextFilePath)
+        create_boxplot(gGraphTitle, gOutputPath, input_vals, BOX_SEQ_LEN_LABEL)
+        pass
+    elif graph_type == GRAPH_TYPE_BAR_STACKED:
+        InputValues = parse_sim_stack(gTextFilePath)
+        create_bar_stacked(gGraphTitle, gOutputPath, InputValues.label_map,
                            InputValues.xlabel, InputValues.ylabel)
-
-    pass
-
-
-def ontology_graphs():
-    if _graph_flag == 1:
-        InputValues = parse_input(_stats_path)
-        create_bar(_graph_title, _output_path, InputValues.values, InputValues.labels,
-                   InputValues.xlabel, InputValues.ylabel)
-    pass
-
-
-def create_graphs(flag):
-    if flag == -1:                  # Initial test case
-        exit(0)
-    if flag == 1:
-        frame_selection_graphs()
-    elif flag == 2:
-        expression_graphs()
-    elif flag == 3:
-        sim_search_graphs()
-    elif flag == 4:
-        ontology_graphs()
+        pass
     else:
-        init_graphs()
+        exit(ENTAP_EXIT_UNSUPPORTED_GRAPH_TYPE)
+
 
 
 # dict[dict] structure
@@ -162,27 +163,27 @@ def create_bar_stacked(title, file, value_map, xlab, ylab):
     totals = [0] * len(value_map.keys())
     for key in stacked_vals:
         if not prev_key == "":
-            p = plt.bar(indices, stacked_vals[key], bottom=totals)
+            p = gPlot.bar(indices, stacked_vals[key], bottom=totals)
         else:
-            p = plt.bar(indices, stacked_vals[key])
+            p = gPlot.bar(indices, stacked_vals[key])
         plts.append(p)
         legend_labels.append(key)
         prev_key = key
         totals = map(add, totals, stacked_vals[key])
 
-    plt.legend(plts, legend_labels)
-    plt.xticks(indices, x_labels)
-    plt.ylabel(ylab)
-    plt.title(title)
-    plt.savefig(file, bbox_inches="tight")
+    gPlot.legend(plts, legend_labels)
+    gPlot.xticks(indices, x_labels)
+    gPlot.ylabel(ylab)
+    gPlot.title(title)
+    gPlot.savefig(file, bbox_inches="tight")
 
 
 def create_pie(title, file, vals, labels):
-    plt.pie(vals, labels=labels, autopct=autopct_vals(vals))
-    plt.axis('equal')
-    plt.title(title)
-    plt.gcf().subplots_adjust(bottom=0.15)
-    plt.savefig(file)
+    gPlot.pie(vals, labels=labels, autopct=autopct_vals(vals))
+    gPlot.axis('equal')
+    gPlot.title(title)
+    gPlot.gcf().subplots_adjust(bottom=0.15)
+    gPlot.savefig(file)
 
 
 # label_vals = dictionary of lists containing different series. Such as all rejected seqs and kept
@@ -194,20 +195,20 @@ def create_boxplot(title, file, label_vals, y_label):
         for val in label_vals[key]:
             temp.append(val)
         data.append(temp)
-    plt.ylabel(y_label)
-    plt.boxplot(data, labels=labels)
-    plt.title(title)
-    plt.gcf().subplots_adjust(bottom=0.15)
-    plt.savefig(file)
+    gPlot.ylabel(y_label)
+    gPlot.boxplot(data, labels=labels)
+    gPlot.title(title)
+    gPlot.gcf().subplots_adjust(bottom=0.15)
+    gPlot.savefig(file)
 
 
 def create_bar(title, file, vals, labels, xlabel, ylabel):
-    plt.barh(range(len(labels)), vals, align='center', alpha=0.5)   # Horizontal bar graph
-    plt.yticks(range(len(labels)), labels)
-    plt.ylabel(xlabel)
-    plt.xlabel(ylabel)
-    plt.title(title)
-    plt.savefig(file, bbox_inches="tight")
+    gPlot.barh(range(len(labels)), vals, align='center', alpha=0.5)   # Horizontal bar graph
+    gPlot.yticks(range(len(labels)), labels)
+    gPlot.ylabel(xlabel)
+    gPlot.xlabel(ylabel)
+    gPlot.title(title)
+    gPlot.savefig(file, bbox_inches="tight")
 
 
 def autopct_vals(values):
@@ -275,8 +276,8 @@ def main():
     init_version()
     verify_package()
     init_argparse()
-    plt.ioff()  # disable interactiveness
-    create_graphs(_software_flag)
+    gPlot.ioff()  # disable interactiveness
+    create_graphs(gGraphType)
 
 if __name__ == "__main__":
     main()

@@ -120,7 +120,7 @@ namespace entapExecute {
                     pFileSystem);      // Filesystem object
 
             // Initialize Graphing Manager
-            pGraphing_Manager = new GraphingManager(GRAPHING_EXE);
+            pGraphing_Manager = new GraphingManager(GRAPHING_EXE, pFileSystem);
 
             // Initialize EnTAP database
             pEntap_Database = new EntapDatabase(filesystem);

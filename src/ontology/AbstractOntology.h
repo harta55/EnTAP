@@ -43,10 +43,6 @@ public:
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
-
-protected:
-    const uint8 GRAPH_ONTOLOGY_FLAG = 4;
-    const uint8 GRAPH_TOP_BAR_FLAG  = 1;  // used for tax levels and go term tops
 };
 
 

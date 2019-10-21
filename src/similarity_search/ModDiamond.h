@@ -83,8 +83,6 @@ private:
     static constexpr int DMND_COL_NUMBER = 14;
 
     // Graphing constants
-    const uint8 GRAPH_SOFTWARE_FLAG                              = 3;
-    const uint8 GRAPH_BAR_FLAG                                   = 1;
     const uint8 GRAPH_SUM_FLAG                                   = 2;
     const std::string GRAPH_DATABASE_SUM_TITLE                   = "_Summary";
     const std::string GRAPH_DATABASE_SUM_TXT                     = "_summary_bar.txt";

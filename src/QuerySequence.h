@@ -194,7 +194,7 @@ public:
     const std::string &get_sequence_p() const;
     void set_sequence_p(std::string &seq);
     const std::string &get_sequence_n() const;
-    void set_sequence_n(const std::string &_sequence_n);
+    void set_sequence_n(std::string &_sequence_n);
     const std::string &get_sequence() const;
     void set_fpkm(fp32 fpkm);
     const std::string &getMSequenceID() const;

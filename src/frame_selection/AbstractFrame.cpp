@@ -62,10 +62,6 @@ void AbstractFrame::frame_calculate_statistics() {
     std::string                             out_internal_path;      // Absolute base path to "internal" genes
     std::string                             out_complete_path;      // Absolute base path to "complete" genes
     std::string                             out_partial_path;       // Absolute base path to "partial" genes
-    std::string                             figure_results_path;
-    std::string                             figure_results_png;
-    std::string                             figure_removed_path;
-    std::string                             figure_removed_png;
     std::string                             min_removed_seq;        // Sequence ID of shortest removed sequence
     std::string                             min_kept_seq;           // Sequence ID of shortest kept sequence
     std::string                             max_removed_seq;        // Sequence ID of longest removed sequence
@@ -88,17 +84,12 @@ void AbstractFrame::frame_calculate_statistics() {
     uint64                                  total_removed_len;      // Total bp count of removed sequences
     uint64                                  total_kept_len;         // Total bp count of kept sequences
     std::pair<uint64, uint64>               kept_n;                 // N value of kept sequences
-    GraphingData                            graphingStruct;         // Structure containing information for Graphing Manager
 
     // Set up outpaths, directories are already created by super
     out_removed_path    = PATHS(mProcDir, FRAME_SELECTION_FILENAME_LOST);
     out_internal_path   = PATHS(mProcDir, FRAME_SELECTION_FILENAME_INTERNAL);
     out_complete_path   = PATHS(mProcDir, FRAME_SELECTION_FILENAME_COMPLETE);
     out_partial_path    = PATHS(mProcDir, FRAME_SELECTION_FILENAME_PARTIAL);
-    figure_removed_path = PATHS(mFigureDir, GRAPH_TEXT_REF_COMPAR);
-    figure_removed_png  = PATHS(mFigureDir, GRAPH_FILE_REF_COMPAR);
-    figure_results_path = PATHS(mFigureDir, GRAPH_TEXT_FRAME_RESUTS);
-    figure_results_png  = PATHS(mFigureDir, GRAPH_FILE_FRAME_RESUTS);
 
     // all nucleotide lengths
     min_removed=0xFFFFFFFF;
@@ -113,13 +104,6 @@ void AbstractFrame::frame_calculate_statistics() {
     count_removed=0;
 
     try {
-        std::ofstream file_figure_removed(figure_removed_path,std::ios::out | std::ios::app);
-        std::ofstream file_figure_results(figure_results_path,std::ios::out | std::ios::app);
-
-        file_figure_removed << "flag\tsequence length" << std::endl;    // First line placeholder, not used
-        file_figure_results << "flag\tsequence length" << std::endl;
-
-
         // Initialize protein output streams (will be moved/changed)
         file_map_faa[FRAME_SELECTION_INTERNAL_FLAG] =
                 new std::ofstream(out_internal_path+ FileSystem::EXT_FAA, std::ios::out | std::ios::app);
@@ -147,6 +131,27 @@ void AbstractFrame::frame_calculate_statistics() {
                 {FRAME_SELECTION_THREE_FLAG   ,0 },
         };
 
+        // Initialize graphing data
+        GraphingManager::GraphingData graph_pie_results;
+        graph_pie_results.x_axis_label = ENT_GRAPH_NULL;
+        graph_pie_results.y_axis_label = "Sequence Length";
+        graph_pie_results.text_file_path = PATHS(mFigureDir, GRAPH_TEXT_FRAME_RESUTS);
+        graph_pie_results.fig_out_path   = PATHS(mFigureDir, GRAPH_FILE_FRAME_RESUTS);
+        graph_pie_results.graph_title    = GRAPH_TITLE_FRAME_RESULTS;
+        graph_pie_results.graph_type     = GraphingManager::ENT_GRAPH_PIE_CHART;
+
+        GraphingManager::GraphingData graph_box_comparison;
+        graph_box_comparison.x_axis_label = ENT_GRAPH_NULL;
+        graph_box_comparison.y_axis_label = "Sequence Length";
+        graph_box_comparison.text_file_path = PATHS(mFigureDir, GRAPH_TEXT_REF_COMPAR);
+        graph_box_comparison.fig_out_path   = PATHS(mFigureDir, GRAPH_FILE_REF_COMPAR);
+        graph_box_comparison.graph_title    = GRAPH_TITLE_REF_COMPAR;
+        graph_box_comparison.graph_type     = GraphingManager::ENT_GRAPH_BOX_PLOT_VERTICAL;
+
+        mpGraphingManager->initialize_graph_data(graph_pie_results);
+        mpGraphingManager->initialize_graph_data(graph_box_comparison);
+
+
         for (auto& pair : *mpQueryData->get_sequences_ptr()) {
             if (!pair.second->is_kept()) continue; // Skip seqs that were lost to expression analysis
 
@@ -170,7 +175,7 @@ void AbstractFrame::frame_calculate_statistics() {
                 all_kept_lengths.push_back(length);  // Update individual lengths for statistics
 
                 // Update figure
-                file_figure_removed << GRAPH_KEPT_FLAG << '\t' << std::to_string(length) << std::endl;
+                mpGraphingManager->add_datapoint(graph_box_comparison.text_file_path, {GRAPH_KEPT_FLAG, std::to_string(length)});
 
                 // Print nucleotide + protein sequences to files
                 std::map<std::string, std::ofstream*>::iterator file_it = file_map_faa.find(pair.second->getFrame());
@@ -199,7 +204,7 @@ void AbstractFrame::frame_calculate_statistics() {
                     max_removed_seq = pair.first;
                     max_removed = length;
                 }
-                file_figure_removed << GRAPH_REJECTED_FLAG << '\t' << std::to_string(length) << std::endl;
+                mpGraphingManager->add_datapoint(graph_box_comparison.text_file_path, {GRAPH_REJECTED_FLAG, std::to_string(length)});
                 all_lost_lengths.push_back(length);
                 total_removed_len += length;
             } else {
@@ -282,25 +287,18 @@ void AbstractFrame::frame_calculate_statistics() {
 
         //---------------------- Figure handling ----------------------//
         FS_dprint("Beginning figure handling...");
-        file_figure_results << GRAPH_REJECTED_FLAG           << '\t' << std::to_string(count_removed)   <<std::endl;
-        file_figure_results << FRAME_SELECTION_FIVE_FLAG     << '\t' << std::to_string(count_map[FRAME_SELECTION_FIVE_FLAG]) <<std::endl;
-        file_figure_results << FRAME_SELECTION_THREE_FLAG    << '\t' << std::to_string(count_map[FRAME_SELECTION_THREE_FLAG]) <<std::endl;
-        file_figure_results << FRAME_SELECTION_COMPLETE_FLAG << '\t' << std::to_string(count_map[FRAME_SELECTION_COMPLETE_FLAG])   <<std::endl;
-        file_figure_results << FRAME_SELECTION_INTERNAL_FLAG << '\t' << std::to_string(count_map[FRAME_SELECTION_INTERNAL_FLAG])   <<std::endl;
+        mpGraphingManager->add_datapoint(graph_pie_results.text_file_path, {GRAPH_REJECTED_FLAG, std::to_string(count_removed)});
+        mpGraphingManager->add_datapoint(graph_pie_results.text_file_path, {FRAME_SELECTION_FIVE_FLAG, std::to_string(count_map[FRAME_SELECTION_FIVE_FLAG])});
+        mpGraphingManager->add_datapoint(graph_pie_results.text_file_path, {FRAME_SELECTION_THREE_FLAG, std::to_string(count_map[FRAME_SELECTION_THREE_FLAG])});
+        mpGraphingManager->add_datapoint(graph_pie_results.text_file_path, {FRAME_SELECTION_COMPLETE_FLAG, std::to_string(count_map[FRAME_SELECTION_COMPLETE_FLAG])});
+        mpGraphingManager->add_datapoint(graph_pie_results.text_file_path, {FRAME_SELECTION_INTERNAL_FLAG, std::to_string(count_map[FRAME_SELECTION_INTERNAL_FLAG])});
 
-        graphingStruct.text_file_path = figure_results_path;
-        graphingStruct.graph_title    = GRAPH_TITLE_FRAME_RESULTS;
-        graphingStruct.fig_out_path   = figure_results_png;
-        graphingStruct.software_flag  = GRAPH_FRAME_FLAG;
-        graphingStruct.graph_type     = GRAPH_PIE_RESULTS_FLAG;
-        mpGraphingManager->graph(graphingStruct);
+        mpGraphingManager->graph_data(graph_pie_results.text_file_path);
+        mpGraphingManager->graph_data(graph_box_comparison.text_file_path);
+        //------------------------------------------------------------//
 
-        graphingStruct.text_file_path = figure_removed_path;
-        graphingStruct.graph_title    = GRAPH_TITLE_REF_COMPAR;
-        graphingStruct.fig_out_path   = figure_removed_png;
-        graphingStruct.graph_type     = GRAPH_COMP_BOX_FLAG;
-        mpGraphingManager->graph(graphingStruct);
         FS_dprint("Success! Frame Selection statistics completed");
+
     } catch (const std::exception &e) {
         throw ExceptionHandler("ERROR Unable to calculate Frame Selection statistics: " + std::string(e.what()),
                                ERR_ENTAP_RUN_GENEMARK_PARSE);

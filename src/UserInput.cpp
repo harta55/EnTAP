@@ -463,7 +463,7 @@ bool UserInput::verify_user_input() {
             std::cout<<"Graphing is NOT enabled on this system! Graphing script could not "
                     "be found at: "<<GRAPHING_EXE << std::endl;
         }
-        GraphingManager gmanager = GraphingManager(GRAPHING_EXE);
+        GraphingManager gmanager = GraphingManager(GRAPHING_EXE, mpFileSystem);
         if (gmanager.is_graphing_enabled()) {
             std::cout<< "Graphing is enabled on this system!" << std::endl;
             throw ExceptionHandler("",ERR_ENTAP_SUCCESS);

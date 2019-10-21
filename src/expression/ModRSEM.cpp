@@ -178,8 +178,6 @@ void ModRSEM::parse() {
     std::string         kept_filename;
     std::string         original_filename;
     std::string         removed_filename;
-    std::string         fig_txt_box_path;
-    std::string         fig_png_box_path;
     std::string         min_kept_seq;
     std::string         max_kept_seq;
     std::string         max_removed_seq;
@@ -188,7 +186,6 @@ void ModRSEM::parse() {
     std::vector<uint16> all_kept_lengths;
     std::vector<uint16> all_lost_lengths;
     std::pair<uint64,uint64> kept_n;
-    GraphingData        graphingStruct;
     QUERY_MAP_T         *MAP;
 
     MAP = mpQueryData->get_sequences_ptr();
@@ -199,12 +196,14 @@ void ModRSEM::parse() {
     }
 
     // Setup figure files, directories already created
-    fig_txt_box_path = PATHS(mFigureDir, GRAPH_TXT_BOX_PLOT);
-    fig_png_box_path = PATHS(mFigureDir, GRAPH_PNG_BOX_PLOT);
-
-    // Open figure text file
-    std::ofstream file_fig_box(fig_txt_box_path, std::ios::out | std::ios::app);
-    file_fig_box << "flag\tsequence length" << std::endl;    // First line placeholder, not used
+    GraphingManager::GraphingData graph_box_plot;
+    graph_box_plot.x_axis_label = "Flag";
+    graph_box_plot.y_axis_label = "Sequence Length";
+    graph_box_plot.text_file_path = PATHS(mFigureDir, GRAPH_TXT_BOX_PLOT);
+    graph_box_plot.fig_out_path   = PATHS(mFigureDir, GRAPH_PNG_BOX_PLOT);
+    graph_box_plot.graph_title    = GRAPH_TITLE_BOX_PLOT;
+    graph_box_plot.graph_type     = GraphingManager::ENT_GRAPH_BOX_PLOT_VERTICAL;
+    mpGraphingManager->initialize_graph_data(graph_box_plot);
 
     // Setup processed file paths, directories already created
     original_filename = mFilename;
@@ -233,7 +232,7 @@ void ModRSEM::parse() {
         if (fpkm_val > mFPKM) {
             // Kept sequence
             out_file << querySequence->get_sequence() << std::endl;
-            file_fig_box << GRAPH_KEPT_FLAG << '\t' << std::to_string(length) << std::endl;
+            mpGraphingManager->add_datapoint(graph_box_plot.text_file_path, {GRAPH_KEPT_FLAG, std::to_string(length)});
             //TODO move to QueryData
             if (length < min_selected) {
                 min_selected = length;
@@ -250,7 +249,7 @@ void ModRSEM::parse() {
             // Removed sequence
             querySequence->QUERY_FLAG_CLEAR(QuerySequence::QUERY_EXPRESSION_KEPT);
             removed_file << querySequence->get_sequence() << std::endl;
-            file_fig_box << GRAPH_REJECTED_FLAG << '\t' << std::to_string(length) << std::endl;
+            mpGraphingManager->add_datapoint(graph_box_plot.text_file_path, {GRAPH_REJECTED_FLAG, std::to_string(length)});
 
             if (length < min_removed) {
                 min_removed = length;
@@ -318,19 +317,13 @@ void ModRSEM::parse() {
     mpFileSystem->print_stats(out_str);
     out_file.close();
     removed_file.close();
-    file_fig_box.close();
     FS_dprint("Success!");
     //--------------------------------------------------------//
 
 
     //------------------------Graphing------------------------//
     FS_dprint("Beginning to send data to graphing manager...");
-    graphingStruct.text_file_path   = fig_txt_box_path;
-    graphingStruct.graph_title      = GRAPH_TITLE_BOX_PLOT;
-    graphingStruct.fig_out_path     = fig_png_box_path;
-    graphingStruct.software_flag    = GRAPH_EXPRESSION_FLAG;
-    graphingStruct.graph_type       = GRAPH_BOX_FLAG;
-    mpGraphingManager->graph(graphingStruct);
+    mpGraphingManager->graph_data(graph_box_plot.text_file_path);
     FS_dprint("Success!");
     //--------------------------------------------------------//
 

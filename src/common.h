@@ -59,6 +59,7 @@
 #define STR_ERASE(x,y)      x.erase(std::remove(x.begin(), x.end(), y),x.end())
 #define FIND_VECT(x,y)      std::find(y.begin(), y.end(), x) != y.end() // find x in y
 #define SAFE_DELETE(x)      if (x) delete x; x = nullptr
+#define ENTAP_PERCENT       (100.0f)
 //**************************************************************
 
 

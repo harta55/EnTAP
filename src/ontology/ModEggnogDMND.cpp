@@ -208,18 +208,18 @@ void ModEggnogDMND::parse() {
 void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     FS_dprint("Success! Calculating statistics and accessing database...");
 
-    QuerySequence::EggnogResults       *eggnog_results;
-    EggnogDmndAlignment *best_hit;
+    QuerySequence::EggnogResults                          *eggnog_results;
+    EggnogDmndAlignment                                  *best_hit;
     Compair<std::string>                                  tax_scope_counter;
     std::unordered_map<std::string,Compair<std::string>>  go_combined_map;
-    GraphingData                        graphingStruct;
-    EggnogDatabase    *eggnogDatabase;
-    std::vector<ENTAP_HEADERS> output_headers;
+    EggnogDatabase                                       *eggnogDatabase;
+    std::vector<ENTAP_HEADERS>                            output_headers;
+    GraphingManager::GraphingData                         graphing_data_temp;
 
     uint64         ct_alignments=0;
     uint64         ct_no_alignment=0;
-    uint64         ct_total_go_hits=0;      // Sequences that had atleast one go
-    uint64         ct_total_kegg_hits=0;    // Sequences that had atleast one kegg
+    uint64         ct_total_go_hits=0;      // Sequences that had at least one go
+    uint64         ct_total_kegg_hits=0;    // Sequences that had at least one kegg
     uint64         ct_total_kegg_terms=0;
     uint32         ct = 0;
     fp32           percent;
@@ -308,10 +308,15 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     //--------------------- Top Ten Taxonomic Scopes --------------//
     if (!tax_scope_counter.empty()) {
         // Setup graphing files
-        std::string fig_txt_tax_bar = PATHS(mFigureDir, GRAPH_EGG_TAX_BAR_TXT);
-        std::string fig_png_tax_bar = PATHS(mFigureDir, GRAPH_EGG_TAX_BAR_PNG);
-        std::ofstream file_tax_bar(fig_txt_tax_bar, std::ios::out | std::ios::app);
-        file_tax_bar << "Taxonomic Scope\tCount" << std::endl;
+        graphing_data_temp = GraphingManager::GraphingData();
+        graphing_data_temp.x_axis_label = "Taxonomic Scope";
+        graphing_data_temp.y_axis_label = "Count";
+        graphing_data_temp.text_file_path = PATHS(mFigureDir, GRAPH_EGG_TAX_BAR_TXT);
+        graphing_data_temp.fig_out_path   = PATHS(mFigureDir, GRAPH_EGG_TAX_BAR_PNG);
+        graphing_data_temp.graph_title    = GRAPH_EGG_TAX_BAR_TITLE;
+        graphing_data_temp.graph_type     = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
+
+        mpGraphingManager->initialize_graph_data(graphing_data_temp);
 
         stream << "\nTop " << std::to_string(COUNT_TOP_TAX_SCOPE) << " Taxonomic Scopes Assigned:";
         ct = 1;
@@ -323,16 +328,10 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
             stream <<
                "\n\t" << ct << ")" << pair.first << ": " << pair.second <<
                "(" << percent << "%)";
-            file_tax_bar << pair.first << '\t' << std::to_string(pair.second) << std::endl;
+            mpGraphingManager->add_datapoint(graphing_data_temp.text_file_path, {pair.first, std::to_string(pair.second)});
             ct++;
         }
-        file_tax_bar.close();
-        graphingStruct.fig_out_path = fig_png_tax_bar;
-        graphingStruct.text_file_path = fig_txt_tax_bar;
-        graphingStruct.graph_title = GRAPH_EGG_TAX_BAR_TITLE;
-        graphingStruct.software_flag = GRAPH_ONTOLOGY_FLAG;
-        graphingStruct.graph_type = GRAPH_TOP_BAR_FLAG;
-        mpGraphingManager->graph(graphingStruct);
+        mpGraphingManager->graph_data(graphing_data_temp.text_file_path);
     }
 
     //-------------------------- Gene Ontology --------------------//
@@ -351,10 +350,19 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
             for (auto &pair : go_combined_map) {
                 if (pair.first.empty()) continue;
                 // Count maps (biological/molecular/cellular/overall)
-                fig_txt_go_bar = PATHS(mFigureDir, pair.first) + std::to_string(lvl)+GRAPH_GO_END_TXT;
-                fig_png_go_bar = PATHS(mFigureDir, pair.first) + std::to_string(lvl)+GRAPH_GO_END_PNG;
-                std::ofstream file_go_bar(fig_txt_go_bar, std::ios::out | std::ios::app);
-                file_go_bar << "Gene Ontology Term\tCount" << std::endl;
+                graphing_data_temp = GraphingManager::GraphingData();
+                graphing_data_temp.x_axis_label = "Gene Ontology Term";
+                graphing_data_temp.y_axis_label = "Count";
+                graphing_data_temp.text_file_path = PATHS(mFigureDir, pair.first) + std::to_string(lvl)+GRAPH_GO_END_TXT;
+                graphing_data_temp.fig_out_path   = PATHS(mFigureDir, pair.first) + std::to_string(lvl)+GRAPH_GO_END_PNG;
+
+                if (pair.first == GO_BIOLOGICAL_FLAG) graphing_data_temp.graph_title = GRAPH_GO_BAR_BIO_TITLE + "_Level:_"+std::to_string(lvl);
+                if (pair.first == GO_CELLULAR_FLAG) graphing_data_temp.graph_title = GRAPH_GO_BAR_CELL_TITLE+ "_Level:_"+std::to_string(lvl);
+                if (pair.first == GO_MOLECULAR_FLAG) graphing_data_temp.graph_title = GRAPH_GO_BAR_MOLE_TITLE+ "_Level:_"+std::to_string(lvl);
+                if (pair.first == GO_OVERALL_FLAG) graphing_data_temp.graph_title = GRAPH_GO_BAR_ALL_TITLE+ "_Level:_"+std::to_string(lvl);
+                graphing_data_temp.graph_type = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
+
+                mpGraphingManager->initialize_graph_data(graphing_data_temp);
 
                 // Sort count maps
                 pair.second.sort(true);
@@ -380,20 +388,11 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
                         stream <<
                                "\n\t" << ct << ")" << pair2.first << ": " << pair2.second <<
                                "(" << percent << "%)";
-                        file_go_bar << pair2.first << '\t' << std::to_string(pair2.second) << std::endl;
+                        mpGraphingManager->add_datapoint(graphing_data_temp.text_file_path, {pair2.first, std::to_string(pair2.second)});
                         ct++;
                     }
                 }
-                file_go_bar.close();
-                graphingStruct.fig_out_path   = fig_png_go_bar;
-                graphingStruct.text_file_path = fig_txt_go_bar;
-                if (pair.first == GO_BIOLOGICAL_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_BIO_TITLE + "_Level:_"+std::to_string(lvl);
-                if (pair.first == GO_CELLULAR_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_CELL_TITLE+ "_Level:_"+std::to_string(lvl);
-                if (pair.first == GO_MOLECULAR_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_MOLE_TITLE+ "_Level:_"+std::to_string(lvl);
-                if (pair.first == GO_OVERALL_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_ALL_TITLE+ "_Level:_"+std::to_string(lvl);
-                graphingStruct.software_flag = GRAPH_ONTOLOGY_FLAG;
-                graphingStruct.graph_type = GRAPH_TOP_BAR_FLAG;
-                mpGraphingManager->graph(graphingStruct);
+                mpGraphingManager->graph_data(graphing_data_temp.text_file_path);
             }
         }
     }

@@ -191,7 +191,10 @@ const std::string &QuerySequence::get_sequence_n() const {
  *
  * =====================================================================
  */
-void QuerySequence::set_sequence_n(const std::string &sequence_n) {
+void QuerySequence::set_sequence_n(std::string &sequence_n) {
+    if (!sequence_n.empty() && sequence_n[sequence_n.length()-1] == '\n') {
+        sequence_n.pop_back();
+    }
     QuerySequence::mSequenceNucleo = sequence_n;
 }
 
@@ -307,7 +310,8 @@ void QuerySequence::set_eggnog_results(const EggnogResults &eggnogResults) {
  */
 void QuerySequence::init_sequence() {
     mSequenceLength = 0;
-    mFPKM = 0;
+    mFPKM = 0.0;
+    mTPM = 0.0;
 
     mAlignmentData = new AlignmentData(this);
     mEggnogResults = EggnogResults();

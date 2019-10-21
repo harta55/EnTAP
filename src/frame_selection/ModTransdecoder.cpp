@@ -409,7 +409,7 @@ void ModTransdecoder::parse_transdecoder_fasta(std::string &fasta_path, FileSyst
                     } else {
                         // Ensure we have the correct ID
                         seq_id = pQuery_sequence->getMSequenceID();
-                        sequence = FileSystem::FASTA_FLAG + seq_id;
+                        sequence = FileSystem::FASTA_FLAG + seq_id + "\n";
 
                         // Verify frame is correct and update with standard
                         verify_ORF(frame);

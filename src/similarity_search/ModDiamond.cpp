@@ -456,8 +456,8 @@ typedef std::map<std::string,std::map<std::string,uint32>> graph_sum_t;
  */
 void ModDiamond::calculate_best_stats (bool is_final, std::string database_path) {
 
-    GraphingData                graphingStruct;         // Graphing data
-    std::string                 species;                //
+    GraphingManager::GraphingData graphingStruct;         // Graphing data
+    std::string                 species;
     std::string                 database_shortname;
     std::string                 figure_base;
     std::string                 frame;
@@ -478,7 +478,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     Compair<std::string>        contam_counter;
     Compair<std::string>        species_counter;
     Compair<std::string>        contam_species_counter;
-    graph_sum_t                 graphing_sum_map;
+    std::unordered_map<std::string, Compair<std::string>> frame_inform_counter;
 
     // Set up output directories for individual databases
     if (is_final) {
@@ -519,26 +519,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     std::string out_no_hits_fa_prot  = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS + FileSystem::EXT_FAA);
     std::ofstream file_no_hits_prot(out_no_hits_fa_prot, std::ios::out | std::ios::app);
 
-    // ------------------- Setup graphing files ------------------------- //
-
-    std::string graph_species_txt_path           = PATHS(figure_base, GRAPH_SPECIES_BAR_TXT);
-    std::string graph_species_png_path           = PATHS(figure_base, GRAPH_SPECIES_BAR_PNG);
-    std::string graph_contam_txt_path            = PATHS(figure_base, GRAPH_CONTAM_BAR_TXT);
-    std::string graph_contam_png_path            = PATHS(figure_base, GRAPH_CONTAM_BAR_PNG);
-    std::string graph_sum_txt_path               = PATHS(figure_base, GRAPH_DATABASE_SUM_TXT);
-    std::string graph_sum_png_path               = PATHS(figure_base, GRAPH_DATABASE_SUM_PNG);
-
-    std::ofstream graph_species_file(graph_species_txt_path, std::ios::out | std::ios::app);
-    std::ofstream graph_contam_file(graph_contam_txt_path, std::ios::out | std::ios::app);
-    std::ofstream graph_sum_file(graph_sum_txt_path, std::ios::out | std::ios::app);
-
-    // ------------------------------------------------------------------ //
-
     try {
-        graph_species_file << "Species\tCount"     << std::endl;
-        graph_contam_file  << "Contaminant Species\tCount" << std::endl;
-        graph_sum_file     << "Category\tCount"    << std::endl;
-
         // Cycle through all sequences
         for (auto &pair : *mpQueryData->get_sequences_ptr()) {
             // Check if original sequences have hit a database
@@ -553,9 +534,13 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                     file_no_hits_prot << pair.second->get_sequence_p() << std::endl;
                     // Graphing
                     frame = pair.second->getFrame();
-                    if (graphing_sum_map[frame].find(NO_HIT_FLAG) != graphing_sum_map[frame].end()) {
-                        graphing_sum_map[frame][NO_HIT_FLAG]++;
-                    } else graphing_sum_map[frame][NO_HIT_FLAG] = 1;
+                    if (!frame.empty()) {
+                        if (frame_inform_counter.find(NO_HIT_FLAG) == frame_inform_counter.end()) {
+                            frame_inform_counter.emplace(NO_HIT_FLAG, Compair<std::string>());
+                        }
+                        frame_inform_counter[NO_HIT_FLAG].add_value(frame);
+                    }
+
                 } else {
                     pair.second->set_blasted();
                 }
@@ -615,15 +600,22 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                 if (sim_search_data->is_informative) {
                     count_informative++;
                     // Graphing
-                    if (graphing_sum_map[frame].find(INFORMATIVE_FLAG) != graphing_sum_map[frame].end()) {
-                        graphing_sum_map[frame][INFORMATIVE_FLAG]++;
-                    } else graphing_sum_map[frame][INFORMATIVE_FLAG] = 1;
+                    if (!frame.empty()) {
+                        if (frame_inform_counter.find(INFORMATIVE_FLAG) == frame_inform_counter.end()) {
+                            frame_inform_counter.emplace(INFORMATIVE_FLAG, Compair<std::string>());
+                        }
+                        frame_inform_counter[INFORMATIVE_FLAG].add_value(frame);
+                    }
 
                 } else {
                     count_uninformative++;
-                    if (graphing_sum_map[frame].find(UNINFORMATIVE_FLAG) != graphing_sum_map[frame].end()) {
-                        graphing_sum_map[frame][UNINFORMATIVE_FLAG]++;
-                    } else graphing_sum_map[frame][UNINFORMATIVE_FLAG] = 1;
+                    // Graphing
+                    if (!frame.empty()) {
+                        if (frame_inform_counter.find(UNINFORMATIVE_FLAG) == frame_inform_counter.end()) {
+                            frame_inform_counter.emplace(UNINFORMATIVE_FLAG, Compair<std::string>());
+                        }
+                        frame_inform_counter[UNINFORMATIVE_FLAG].add_value(frame);
+                    }
                 }
             }
         }
@@ -640,6 +632,38 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     } catch (const ExceptionHandler &e) {throw e;}
 
     // ------------ Calculate statistics and print to output ------------ //
+
+    // ------------------- Setup graphing files ------------------------- //
+
+    GraphingManager::GraphingData graph_species_bar;
+    graph_species_bar.x_axis_label   = "Species";
+    graph_species_bar.y_axis_label   = "Count";
+    graph_species_bar.text_file_path = PATHS(figure_base, GRAPH_SPECIES_BAR_TXT);
+    graph_species_bar.fig_out_path   = PATHS(figure_base, GRAPH_SPECIES_BAR_PNG);
+    graph_species_bar.graph_title    = database_shortname + GRAPH_SPECIES_TITLE;
+    graph_species_bar.graph_type     = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
+
+    GraphingManager::GraphingData graph_contaminants_bar;
+    graph_contaminants_bar.x_axis_label   = "Contaminant Species";
+    graph_contaminants_bar.y_axis_label   = "Count";
+    graph_contaminants_bar.text_file_path = PATHS(figure_base, GRAPH_CONTAM_BAR_TXT);
+    graph_contaminants_bar.fig_out_path   = PATHS(figure_base, GRAPH_CONTAM_BAR_PNG);
+    graph_contaminants_bar.graph_title    = database_shortname + GRAPH_CONTAM_TITLE;
+    graph_contaminants_bar.graph_type     = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
+
+    GraphingManager::GraphingData graph_frame_inform_stack;
+    graph_frame_inform_stack.x_axis_label = "Category";
+    graph_frame_inform_stack.y_axis_label = "Count";
+    graph_frame_inform_stack.text_file_path = PATHS(figure_base, GRAPH_DATABASE_SUM_TXT);
+    graph_frame_inform_stack.fig_out_path   = PATHS(figure_base, GRAPH_DATABASE_SUM_PNG);
+    graph_frame_inform_stack.graph_title    = database_shortname + GRAPH_DATABASE_SUM_TITLE;
+    graph_frame_inform_stack.graph_type     = GraphingManager::ENT_GRAPH_BAR_STACKED;
+
+    mpGraphingManager->initialize_graph_data(graph_species_bar);
+    mpGraphingManager->initialize_graph_data(graph_contaminants_bar);
+    mpGraphingManager->initialize_graph_data(graph_frame_inform_stack);
+
+    // ------------------------------------------------------------------ //
 
     // Different headers if final analysis or database specific analysis
     if (is_final) {
@@ -664,14 +688,17 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
         ss << "WARNING: No alignments for this database";
         std::string out_msg = ss.str() + "\n";
         mpFileSystem->print_stats(out_msg);
-        return;
+        return; // RETURN we do not have any alignments
     }
 
     // Sort counters
     contam_species_counter.sort(true);
     species_counter.sort(true);
+    for (auto &pair : frame_inform_counter) {
+        pair.second.sort(true);
+    }
 
-    contam_percent = ((fp64) count_contam / count_filtered) * 100;
+    contam_percent = ((fp64) count_contam / count_filtered) * ENTAP_PERCENT;
 
     ss <<
        "\n\tTotal unique transcripts with an alignment: " << count_filtered <<
@@ -680,31 +707,29 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
        "\n\tTotal unique transcripts without an alignment: " << count_no_hit <<
        "\n\t\tReference transcriptome sequences without an alignment (FASTA):\n\t\t\t" << out_no_hits_fa_prot;
     // Have frame information
-    if (graphing_sum_map.size() > 1) {
-        for (auto &pair : graphing_sum_map) {
-            // Frame -> Map of uninform/inform/no hits
-            ss << "\n\t\t" << pair.first << "(" << pair.second[NO_HIT_FLAG] << ")";
-            graph_sum_file << pair.first << "\t" << NO_HIT_FLAG << "\t" << pair.second[NO_HIT_FLAG] << "\n";
+    if (frame_inform_counter.find(NO_HIT_FLAG) != frame_inform_counter.end()) {
+        for (auto &pair : frame_inform_counter[NO_HIT_FLAG]._data) {
+            ss << "\n\t\t" << pair.first << "(" << pair.second << ")";
+            mpGraphingManager->add_datapoint(graph_frame_inform_stack.text_file_path, {pair.first, NO_HIT_FLAG,
+                                                                                       std::to_string(pair.second)});
         }
     }
     ss <<
        "\n\tTotal unique informative alignments: " << count_informative;
-    if (graphing_sum_map.size() > 1) {
-        for (auto &pair : graphing_sum_map) {
-            // Frame -> Map of uninform/inform/no hits
-            ss << "\n\t\t" << pair.first << "(" << pair.second[INFORMATIVE_FLAG] << ")";
-            graph_sum_file << pair.first << "\t" << INFORMATIVE_FLAG << "\t" << pair.second[INFORMATIVE_FLAG]
-                           << "\n";
+    if (frame_inform_counter.find(INFORMATIVE_FLAG) != frame_inform_counter.end()) {
+        for (auto &pair : frame_inform_counter[INFORMATIVE_FLAG]._data) {
+            ss << "\n\t\t" << pair.first << "(" << pair.second << ")";
+            mpGraphingManager->add_datapoint(graph_frame_inform_stack.text_file_path, {pair.first, INFORMATIVE_FLAG,
+                                                                                       std::to_string(pair.second)});
         }
     }
     ss <<
        "\n\tTotal unique uninformative alignments: " << count_uninformative;
-    if (graphing_sum_map.size() > 1) {
-        for (auto &pair : graphing_sum_map) {
-            // Frame -> Map of uninform/inform/no hits
-            ss << "\n\t\t" << pair.first << "(" << pair.second[UNINFORMATIVE_FLAG] << ")";
-            graph_sum_file << pair.first << "\t" << UNINFORMATIVE_FLAG << "\t" << pair.second[UNINFORMATIVE_FLAG]
-                           << "\n";
+    if (frame_inform_counter.find(UNINFORMATIVE_FLAG) != frame_inform_counter.end()) {
+        for (auto &pair : frame_inform_counter[UNINFORMATIVE_FLAG]._data) {
+            ss << "\n\t\t" << pair.first << "(" << pair.second << ")";
+            mpGraphingManager->add_datapoint(graph_frame_inform_stack.text_file_path, {pair.first, UNINFORMATIVE_FLAG,
+                                                                                       std::to_string(pair.second)});
         }
     }
 
@@ -728,11 +753,11 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
         ct = 1;
         for (auto &pair : contam_species_counter._sorted) {
             if (ct > COUNT_TOP_SPECIES) break;
-            percent = ((fp64) pair.second / count_contam) * 100;
+            percent = ((fp64) pair.second / count_contam) * ENTAP_PERCENT;
             ss
                     << "\n\t\t\t" << ct << ")" << pair.first << ": "
                     << pair.second << "(" << percent << "%)";
-            graph_contam_file << pair.first << '\t' << std::to_string(pair.second) << std::endl;
+            mpGraphingManager->add_datapoint(graph_contaminants_bar.text_file_path, {pair.first, std::to_string(pair.second)});
             ct++;
         }
     }
@@ -741,11 +766,11 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     ct = 1;
     for (auto &pair : species_counter._sorted) {
         if (ct > COUNT_TOP_SPECIES) break;
-        percent = ((fp64) pair.second / count_filtered) * 100;
+        percent = ((fp64) pair.second / count_filtered) * ENTAP_PERCENT;
         ss
                 << "\n\t\t\t" << ct << ")" << pair.first << ": "
                 << pair.second << "(" << percent << "%)";
-        graph_species_file << pair.first << '\t' << std::to_string(pair.second) << std::endl;
+        mpGraphingManager->add_datapoint(graph_species_bar.text_file_path, {pair.first, std::to_string(pair.second)});
         ct++;
     }
     std::string out_msg = ss.str() + "\n";
@@ -754,27 +779,8 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
 
 
     // -------------------------- Graphing Handle ----------------------- //
-    graphingStruct.software_flag = GRAPH_SOFTWARE_FLAG;
-    mpFileSystem->close_file(graph_contam_file);
-    mpFileSystem->close_file(graph_species_file);
-    mpFileSystem->close_file(graph_sum_file);
-    if (count_contam > 0) {
-        graphingStruct.fig_out_path   = graph_contam_png_path;
-        graphingStruct.graph_title    = database_shortname + GRAPH_CONTAM_TITLE;
-        graphingStruct.text_file_path = graph_contam_txt_path;
-        graphingStruct.graph_type     = GRAPH_BAR_FLAG;
-        mpGraphingManager->graph(graphingStruct);
-    }
-    graphingStruct.fig_out_path   = graph_species_png_path;
-    graphingStruct.graph_title    = database_shortname + GRAPH_SPECIES_TITLE;
-    graphingStruct.text_file_path = graph_species_txt_path;
-    graphingStruct.graph_type     = GRAPH_BAR_FLAG;
-    mpGraphingManager->graph(graphingStruct);
-
-    graphingStruct.fig_out_path   = graph_sum_png_path;
-    graphingStruct.graph_title    = database_shortname + GRAPH_DATABASE_SUM_TITLE;
-    graphingStruct.text_file_path = graph_sum_txt_path;
-    graphingStruct.graph_type     = GRAPH_SUM_FLAG;
-    mpGraphingManager->graph(graphingStruct);
+    mpGraphingManager->graph_data(graph_species_bar.text_file_path);
+    mpGraphingManager->graph_data(graph_contaminants_bar.text_file_path);
+    mpGraphingManager->graph_data(graph_frame_inform_stack.text_file_path);
     // ------------------------------------------------------------------ //
 }

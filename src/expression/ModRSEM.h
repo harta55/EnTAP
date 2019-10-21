@@ -96,14 +96,12 @@ private:
     const std::string GRAPH_KEPT_FLAG       = "Selected";
     const float REJECTED_ERROR_CUTOFF       = 75.0;
 
-    const unsigned char GRAPH_EXPRESSION_FLAG = 2;
-    const unsigned char GRAPH_BOX_FLAG        = 1;
     static constexpr int RSEM_COL_NUM = 7;
 
     std::string mFilename;
     std::string mRsemOut;
     std::string mExpressionOut;
-    float       mFPKM;
+    fp32       mFPKM;
     bool        mIsSingle;
 
     bool rsem_validate_file(std::string);

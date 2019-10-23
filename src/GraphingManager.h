@@ -132,7 +132,7 @@ public:
     protected:
 
         GraphingData mGraphingData;
-        std::ofstream mOutputTextStream;
+        std::ofstream *mpOutputTextStream;
     };
 
     class EntapGraphBarVertical : public EntapGraphBase {

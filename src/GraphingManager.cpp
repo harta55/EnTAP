@@ -217,8 +217,8 @@ void GraphingManager::graph_data(std::string &path) {
 
 GraphingManager::EntapGraphBase::EntapGraphBase(GraphingManager::GraphingData &graphingData) {
     this->mGraphingData = graphingData;
-    this->mOutputTextStream = std::ofstream(graphingData.text_file_path, std::ios::out | std::ios::trunc);
-    this->mOutputTextStream << graphingData.x_axis_label << '\t' << graphingData.y_axis_label << std::endl;
+    this->mpOutputTextStream = new std::ofstream(graphingData.text_file_path, std::ios::out | std::ios::trunc);
+    *this->mpOutputTextStream << graphingData.x_axis_label << '\t' << graphingData.y_axis_label << std::endl;
 }
 
 GraphingManager::EntapGraphBase::~EntapGraphBase() {
@@ -232,10 +232,12 @@ bool GraphingManager::EntapGraphBase::close_graphing_file() {
     FS_dprint("GraphingManager - closing graphing file at: " + this->mGraphingData.text_file_path);
 
     try {
-        if (this->mOutputTextStream.is_open()) {
-            this->mOutputTextStream.close();
+        if (this->mpOutputTextStream->is_open()) {
+            this->mpOutputTextStream->close();
+            delete this->mpOutputTextStream;
         }
     } catch (...) {
+        delete this->mpOutputTextStream;
         ret = false;
     }
     return ret;
@@ -259,9 +261,9 @@ bool GraphingManager::EntapGraphBarVertical::add_datapoint(std::list<std::string
     if (list.size() < MINIMUM_ARGS) {
         return false;
     } else {
-        this->mOutputTextStream << list.front() << '\t';
+        *this->mpOutputTextStream << list.front() << '\t';
         list.pop_front();
-        this->mOutputTextStream << list.front() << std::endl;
+        *this->mpOutputTextStream << list.front() << std::endl;
         return true;
     }
 }
@@ -280,9 +282,9 @@ bool GraphingManager::EntapGraphBarHorizontal::add_datapoint(std::list<std::stri
     if (list.size() < MINIMUM_ARGS) {
         return false;
     } else {
-        this->mOutputTextStream << list.front() << '\t';
+        *this->mpOutputTextStream << list.front() << '\t';
         list.pop_front();
-        this->mOutputTextStream << list.front() << std::endl;
+        *this->mpOutputTextStream << list.front() << std::endl;
         return true;
     }
 }
@@ -335,9 +337,9 @@ bool GraphingManager::EntapGraphPieChart::add_datapoint(std::list<std::string> &
     if (list.size() < MINIMUM_ARGS || list.size() > MAXIMUM_ARGS) {
         ret = false;
     } else {
-        mOutputTextStream << list.front() << '\t';
+        *mpOutputTextStream << list.front() << '\t';
         list.pop_front();
-        mOutputTextStream << list.front() << std::endl;
+        *mpOutputTextStream << list.front() << std::endl;
     }
     return ret;
 }
@@ -359,9 +361,9 @@ bool GraphingManager::EntapGraphBoxPlotVertical::add_datapoint(std::list<std::st
     if (list.size() < MINIMUM_ARGS || list.size() > MAXIMUM_ARGS) {
         ret = false;
     } else {
-        mOutputTextStream << list.front() << '\t';
+        *mpOutputTextStream << list.front() << '\t';
         list.pop_front();
-        mOutputTextStream << list.front() << std::endl;
+        *mpOutputTextStream << list.front() << std::endl;
     }
     return ret;}
 
@@ -382,9 +384,9 @@ bool GraphingManager::EntapGraphBoxPlotHorizontal::add_datapoint(std::list<std::
     if (list.size() < MINIMUM_ARGS || list.size() > MAXIMUM_ARGS) {
         ret = false;
     } else {
-        mOutputTextStream << list.front() << '\t';
+        *mpOutputTextStream << list.front() << '\t';
         list.pop_front();
-        mOutputTextStream << list.front() << std::endl;
+        *mpOutputTextStream << list.front() << std::endl;
     }
     return ret;
 }
@@ -412,7 +414,7 @@ bool GraphingManager::EntapGraphBarStacked::add_datapoint(std::list<std::string>
         }
 
         out.pop_back(); // Remove trailing tab character
-        mOutputTextStream << out << std::endl;
+        *mpOutputTextStream << out << std::endl;
     }
     return ret;
 }

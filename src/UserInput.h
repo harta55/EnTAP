@@ -50,11 +50,10 @@ namespace EntapDefaults {
     const std::string GENEMARK_DEFAULT_EXE     = "/libs/gmst_linux_64/gmst.pl";
     const std::string TRANSDECODER_LONG_DEFAULT_EXE = "TransDecoder.LongOrfs";
     const std::string TRANSDECODER__PREDICT_DEFAULT_EXE = "TransDecoder.Predict";
-    const std::string DIAMOND_DEFAULT_EXE      = "/libs/diamond-0.8.31/bin/diamond";
+    const std::string DIAMOND_DEFAULT_EXE      = "/libs/diamond-0.9.9/bin/diamond";
     const std::string EGG_SQL_DB_FILENAME      = "eggnog.db";
     const std::string EGG_DMND_FILENAME        = "eggnog_proteins.dmnd";
     const std::string INTERPRO_DEF_EXE         = "interproscan.sh";
-    const std::string TAX_DOWNLOAD_DEF         = "/src/download_tax.py";    // Deprecated
     const std::string GRAPH_SCRIPT_DEF         = "/src/entap_graphing.py";
     const std::string BIN_PATH_DEFAULT         = "/bin";
     const std::string DATABASE_DIR_DEFAULT     = "/databases";
@@ -209,7 +208,7 @@ private:
     };
 
     //-------------------Config File----------------------//
-    const std::string CONFIG_FILE              = "entap_config.txt";
+    const std::string CONFIG_FILE              = "entap_config.ini";
     const std::string KEY_DIAMOND_EXE          = "diamond_exe_path";
     const std::string KEY_RSEM_EXE             = "rsem_exe_path";
     const std::string KEY_GENEMARK_EXE         = "genemarkst_exe_path";

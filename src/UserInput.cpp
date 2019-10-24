@@ -30,7 +30,6 @@
 #include "UserInput.h"
 #include "ExceptionHandler.h"
 #include "GraphingManager.h"
-#include "SimilaritySearch.h"
 #include "common.h"
 #include "ontology/ModEggnog.h"
 #include "ontology/ModInterpro.h"
@@ -46,18 +45,18 @@
 //*********************** Defines ******************************
 #define DESC_HELP           "Print all the help options for this version of EnTAP!"
 #define DESC_CONFIG         "Configure EnTAP for execution later.\n"                    \
-                            "If this is your first time running EnTAP run this first!"  \
+                            "If this is your first time running EnTAP run this first! " \
                             "This will perform the following:\n"                        \
                             "    - Downloading EnTAP taxonomic database\n"              \
                             "    - Downloading Gene Ontology term database\n"           \
                             "    - Formatting any database you would like for diamond"
 #define DESC_RUN_PROTEIN    "Execute EnTAP functionality through blastp\n"              \
                             "Note, if your input sequences are nucleotide, they will be"\
-                            "frame selected automatically."
+                            " frame selected automatically."
 #define DESC_RUN_NUCLEO     "Execute EnTAP functionality through blastx\n"              \
                             "This will not frame select your sequences and will run them"\
-                            "through each stage of the pipeline as nucelotide sequences"
-#define DESC_INTER_DATA     "Select which databases you would like for InterProScan"    \
+                            " through each stage of the pipeline as nucelotide sequences"
+#define DESC_INTER_DATA     "Select which databases you would like for InterProScan. "    \
                             "Databases must be one of the following:\n"                 \
                             "    -tigrfam\n"                                            \
                             "    -sfld\n"                                               \
@@ -76,7 +75,7 @@
                             "    -coils\n"                                              \
                             "    -morbidblite\n"                                        \
                             "Make sure the database is downloaded, EnTAP will not check!"
-#define DESC_ONTOLOGY_FLAG  "Specify the ontology software you would like to use\n"     \
+#define DESC_ONTOLOGY_FLAG  " Specify the ontology software you would like to use\n"     \
                             "Note: it is possible to specify more than one! Just use"   \
                             "multiple --ontology flags\n"                               \
                             "Specify flags as follows:\n"                               \
@@ -90,40 +89,40 @@
 #define DESC_TRANSDECODER_MIN_FLAG "Transdecoder only. Specify the minimum protein length"
 #define DESC_GRAPHING       "Check whether or not your system supports graphing.\n"     \
                             "This option does not require any other flags and will"     \
-                            "just check whether the version of Python being used has"   \
-                            "MatPlotLib accessible."
+                            " just check whether the version of Python being used has"   \
+                            " MatPlotLib accessible."
 #define DESC_OUT_FLAG       "Specify the output directory you would like the data to"   \
                             " be saved to."
 #define DESC_DATABASE       "Provide the paths to the databases you would like to use\n"\
                             "For running: ensure the databases selected are .dmnd"      \
-                            "formatted.\n"                                              \
+                            " formatted.\n"                                              \
                             "For configuration: ensure the databases are FASTA format\n"\
                             "Note: if your databases are not NCBI or Uniprot\n"         \
                             "databases, taxonomic filtering might not be able to pull"  \
-                            "the species information!"
+                            " the species information!"
 #define DESC_ONT_LEVELS     "Specify the Gene Ontology levels you would like printed\n" \
                             "Default: 0, 3, 4\n"                                        \
-                            "A level of 0 means that every term will be printed!"       \
+                            "A level of 0 means that every term will be printed! "       \
                             "It is possible to specify multiple flags as well with\n"   \
                             "multiple --level flags\n"                                  \
                             "Example: --level 0 --level 3 --level 1"
 #define DESC_FPKM           "Specify the FPKM threshold with expression analysis\n"     \
-                            "EnTAP will filter out transcripts below this value!"
+                            "EnTAP will filter out transcripts below this value! (default: 0.5)"
 #define DESC_EVAL           "Specify the E-Value that will be used as a cutoff during"  \
-                            "similarity searching"
+                            " similarity searching"
 #define DESC_THREADS        "Specify the number of threads that will be used throughout\n"
-#define DESC_SINGLE_END     "Specify this flag if your BAM/SAM file was generated\n"    \
+#define DESC_SINGLE_END     "Specify this flag if your BAM/SAM file was generated "    \
                             "through single-end reads\n"                                \
                             "Note: this is only required in expression analysis\n"      \
                             "Default: paired-end"
 #define DESC_ALIGN_FILE     "Specify the path to the BAM/SAM file for expression analysis"
 #define DESC_CONTAMINANT    "Specify the contaminants you would like to filter out"     \
-                            "from similarity searching\n"                               \
-                            "Note: since hits are based upon a multitide of factors"    \
+                            " from similarity searching\n"                               \
+                            "Note: since hits are based upon a multitide of factors "    \
                             "a contaminant might be the best hit for a query!\n"        \
                             "Contaminants can be selected by species (homo_sapiens)"    \
-                            "or through a specific taxon (homo)\n"                      \
-                            "If your taxon is more than one word just replace the"      \
+                            " or through a specific taxon (homo)\n"                      \
+                            "If your taxon is more than one word just replace the "      \
                             "spaces with underscores (_)"
 #define DESC_TRIM           "Trim the input sequences to the first space\n"             \
                             "This may help with readability later on with TSV files\n"  \
@@ -131,11 +130,11 @@
                             ">TRINITY_231.1 Protein Information\n"                      \
                             "will become...\n"                                          \
                             ">TRINITY_231.1\n"
-#define DESC_QCOVERAGE      "Select the minimum query coverage to be allowed during"    \
-                            "similarity searching"
-#define DESC_TCOVERAGE      "Select the minimum target coverage to be allowed during"   \
-                            "similarity searching"
-#define DESC_EXE_PATHS      "Specify path to the entap_config.txt file that will"       \
+#define DESC_QCOVERAGE      "Select the minimum query coverage to be allowed during "    \
+                            "similarity searching (default: 50.0)"
+#define DESC_TCOVERAGE      "Select the minimum target coverage to be allowed during "   \
+                            "similarity searching (default: 50.0)"
+#define DESC_EXE_PATHS      "Specify path to the entap_config.txt file that will "       \
                             "be used to find all of the executables!"
 #define DESC_DATA_GENERATE  "Specify whether you would like to generate EnTAP databases"\
                             " instead of downloading them.\nDefault: Download\nIf you"  \
@@ -148,22 +147,21 @@
                             "Either or both can be selected with an additional flag. "  \
                             "The serialized database will be faster although requires " \
                             "more memory usage. The SQLITE database may be slightly "   \
-                            "slower and does not require the Boost libraries if you "   \
-                            "are experiencing any incompatibility there."
-#define DESC_TAXON          "Specify the type of species/taxon you are analyzing and"   \
-                            "would like hits closer in taxonomic relevance to be"       \
+                            "slower."
+#define DESC_TAXON          "Specify the type of species/taxon you are analyzing and "   \
+                            "would like hits closer in taxonomic relevance to be "       \
                             "favored (based on NCBI Taxonomic Database)\n"              \
-                            "Note: formatting works just like with the contaminants"
+                            "Note: formatting works just like with the contaminants "
 #define DESC_STATE          "Specify the state of execution (EXPERIMENTAL)\n"           \
                             "More information is available in the documentation\n"      \
                             "This flag may have undesired affects and may not run properly!"
 #define DESC_INPUT_TRAN     "Path to the input transcriptome file"
-#define DESC_COMPLET_PROT   "Select this option if all of your sequences are complete"  \
+#define DESC_COMPLET_PROT   "Select this option if all of your sequences are complete " \
                             "proteins.\n"                                               \
-                            "At this point, this option will merely flag the sequences"
-#define DESC_OVERWRITE      "Select this option if you would like to overwrite previous"\
+                            "At this point, this option will merely flag the sequences "
+#define DESC_OVERWRITE      "Select this option if you would like to overwrite previous "\
                             "files\n"                                                   \
-                            "Note: do NOT use this if you would like to pickup from"    \
+                            "Note: do NOT use this if you would like to pickup from "    \
                             "a previous run!"
 #define DESC_UNINFORMATIVE  "Path to a list of keywords that should be used to specify" \
                             " uninformativeness of hits during similarity searching. "  \
@@ -184,7 +182,7 @@
                             " This is not advised to use! Your run may fail later on "  \
                             "if inputs are not checked"
 #define DESC_OUTPUT_FORMAT  "Specify the output format for the processed alignments."   \
-                            "Multiple flags can be specified."                          \
+                            "Multiple flags can be specified.\n"                          \
                             "    1. TSV Format (default)\n"                             \
                             "    2. CSV Format\n"                                       \
                             "    3. FASTA Amino Acid (default)\n"                       \

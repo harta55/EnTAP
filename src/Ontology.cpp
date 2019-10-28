@@ -70,13 +70,13 @@ Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
     mEntapDataPtrs = entap_data;
 
     mOutpath            = mpFileSystem->get_root_path();
-    mIsOverwrite       = mpUserInput->has_input(mpUserInput->INPUT_FLAG_OVERWRITE);
-    mSoftwareFlags     = mpUserInput->get_user_input<vect_uint16_t>(mpUserInput->INPUT_FLAG_ONTOLOGY);
-    mGoLevels          = mpUserInput->get_user_input<vect_uint16_t>(mpUserInput->INPUT_FLAG_GO_LEVELS);
-    mOntologyDir       = PATHS(mOutpath, ONTOLOGY_OUT_PATH);
-    mFinalOutputDir  = mpFileSystem->get_final_outdir();
-    mEggnogDbPath     = EGG_SQL_DB_PATH;
-    mInterproDatabases = mpUserInput->get_user_input<vect_str_t>(mpUserInput->INPUT_FLAG_INTERPRO);
+    mIsOverwrite        = mpUserInput->has_input(INPUT_FLAG_OVERWRITE);
+    mSoftwareFlags      = mpUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_ONTOLOGY);
+    mGoLevels           = mpUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_GO_LEVELS);
+    mOntologyDir        = PATHS(mOutpath, ONTOLOGY_OUT_PATH);
+    mFinalOutputDir     = mpFileSystem->get_final_outdir();
+    mEggnogDbPath       = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
+    mInterproDatabases  = mpUserInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_INTERPRO);
     mAlignmentFileTypes = mpUserInput->get_user_output_types();
 
     if (mIsOverwrite) mpFileSystem->delete_dir(mOntologyDir);
@@ -144,6 +144,7 @@ void Ontology::execute() {
  * =====================================================================
  */
 std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
+    ent_input_str_t exe_path;
     switch (software) {
 #ifdef EGGNOG_MAPPER
         case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
@@ -158,27 +159,30 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
             ));
 #endif
         case ONT_INTERPRO_SCAN:
+            exe_path = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_INTERPRO_EXE);
             return std::unique_ptr<AbstractOntology>(new ModInterpro(
                     mOntologyDir,
                     mNewInput,
                     mEntapDataPtrs,
-                    INTERPRO_EXE,
+                    exe_path,
                     mInterproDatabases       // Additional data
             ));
         case ONT_EGGNOG_DMND:
+            exe_path = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
             return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
                     mOntologyDir,
                     mNewInput,
                     mEntapDataPtrs,
-                    DIAMOND_EXE,
+                    exe_path,
                     mEggnogDbPath
             ));
         default:
+            exe_path = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
             return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
                     mOntologyDir,
                     mNewInput,
                     mEntapDataPtrs,
-                    DIAMOND_EXE,
+                    exe_path,
                     mEggnogDbPath
             ));
     }

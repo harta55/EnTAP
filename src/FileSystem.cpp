@@ -71,6 +71,27 @@ void FileSystem::open_out(std::string &path, std::ofstream &ofstream) {
 #endif
 
 
+FileSystem::~FileSystem() {
+    FS_dprint("Killing object - FileSystem");
+    delete_dir(mTempOutpath);
+}
+
+FileSystem::FileSystem() {
+    // This routine will eventually process entire root directory here and generate
+    // hierarchy
+    mExeDirectory = "";
+    mRootPath = "";
+    mFinalOutpath = "";
+    mTrancriptomeDir = "";
+    mTempOutpath = "";
+
+    FS_dprint("Spawn Object - FileSystem");
+    set_executable_dir();
+    mCurrentWDir = get_cur_dir();
+}
+
+
+
 /**
  * ======================================================================
  * Function void FS_close_file(std::ofstream &ofstream)
@@ -483,15 +504,7 @@ std::string FileSystem::get_cur_dir() {
 
 }
 
-FileSystem::~FileSystem() {
-    FS_dprint("Killing object - FileSystem");
-    delete_dir(mTempOutpath);
-}
-
-FileSystem::FileSystem(std::string &root) {
-    // This routine will eventually process entire root directory here and generate
-    // hierarchy
-    FS_dprint("Spawn Object - FileSystem");
+void FileSystem::set_root_dir(std::string &root) {
 
     mRootPath     = root;
     mFinalOutpath = PATHS(root, ENTAP_FINAL_OUTPUT);
@@ -506,6 +519,7 @@ FileSystem::FileSystem(std::string &root) {
     // generate log file
     init_log();
 }
+
 
 /**
  * ======================================================================
@@ -936,4 +950,36 @@ bool FileSystem::create_transcriptome_dir() {
 
 std::string FileSystem::get_trancriptome_dir() {
     return mTrancriptomeDir;
+}
+
+/**
+ * ======================================================================
+ * Function std::string FileSystem::set_executable_dir()
+ *
+ * Description          - Gets the directory that the EnTAP executable was detected
+ *                        in
+ *
+ * Notes                - Only implemented for UNIX systems now!
+ *
+ *
+ * @return              - Path to directory that EnTAP exe was found
+ * ======================================================================
+ */
+void FileSystem::set_executable_dir() {
+    mExeDirectory = get_exe_dir();
+}
+
+std::string FileSystem::get_exe_dir() {
+    try {
+        char buff[1024];
+        ssize_t len = ::readlink("/proc/self/exe", buff, sizeof(buff)-1);
+        if (len != -1) {
+            buff[len] = '\0';
+            std::string path = std::string(buff);
+            return path.substr(0,path.find_last_of('/'));
+        }
+    } catch (...) {
+        return "";
+    }
+    return "";
 }

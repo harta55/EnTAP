@@ -293,7 +293,7 @@ public:
         TaxonomyNode(std::string id);
     };
 
-    explicit EntapDatabase(FileSystem*);
+    EntapDatabase(FileSystem* fileSystem, UserInput* userInput);
     ~EntapDatabase();
     bool set_database(DATABASE_TYPE type);
     DATABASE_ERR download_database(DATABASE_TYPE, std::string&);
@@ -349,6 +349,9 @@ private:
     const std::string FTP_UNIPROT_FLAT_FILE     =
             "ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.dat.gz";
 
+    const std::string ENTAP_DATABASE_SERIAL_GZ = "entap_database.bin.gz";
+    const std::string ENTAP_DATABASE_SQL_GZ            = "entap_database.db.gz";
+
     // NCBI Taxonomy filenames
     const std::string NCBI_TAX_ROOT          = "root[Subtree]"; // Unused
     const std::string NCBI_TAX_DATABASE      = "taxonomy";      // Unused
@@ -403,14 +406,15 @@ private:
 
     const uint8 STATUS_UPDATES = 5;     // Percentage of updates when downloading/configuring
 
-    EntapDatabaseStruct *_pSerializedDatabase;
-    FileSystem          *_pFilesystem;
-    SQLDatabaseHelper   *_pDatabaseHelper;
-    std::string          _temp_directory;
-    go_serial_map_t      _sql_go_helper;    // Using to increase speeds for now, change later
-    bool                 _use_serial;
-    std::string          _err_msg;
-    DATABASE_ERR         _err_code;
+    EntapDatabaseStruct *mpSerializedDatabase;
+    FileSystem          *mpFileSystem;
+    UserInput           *mpUserInput;
+    SQLDatabaseHelper   *mpDatabaseHelper;
+    std::string          mTempDirectory;
+    go_serial_map_t      mSqlGoHelper;    // Using to increase speeds for now, change later
+    bool                 mUseSerial;
+    std::string          mErrMsg;
+    DATABASE_ERR         mErrCode;
 
     const std::string ENTAP_DATABASE_TYPES_STR[ENTAP_MAX_TYPES-1] {
             "EnTAP Serialized Database",

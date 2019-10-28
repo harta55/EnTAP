@@ -275,19 +275,6 @@ namespace std {
 
 extern std::string DEBUG_FILE_PATH;
 extern std::string LOG_FILE_PATH;
-extern std::string RSEM_EXE_DIR;
-extern std::string GENEMARK_EXE;
-extern std::string TRANSDECODER_LONGORFS_EXE;
-extern std::string TRANSDECODER_PREDICT_EXE;
-extern std::string DIAMOND_EXE;
-extern std::string EGG_SQL_DB_PATH;
-extern std::string EGG_DMND_PATH;
-extern std::string INTERPRO_EXE;
-extern std::string ENTAP_DATABASE_BIN_PATH;
-extern std::string ENTAP_DATABASE_SQL_PATH;
-extern std::string GRAPHING_EXE;
-extern std::string EGG_EMAPPER_EXE;
-
 // ************************************************************
 
 static const std::string GO_MOLECULAR_FLAG     = "molecular_function";

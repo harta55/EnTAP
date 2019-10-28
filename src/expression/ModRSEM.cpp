@@ -38,6 +38,10 @@ ModRSEM::ModRSEM(std::string &execution_stage_path, std::string &in_hits, EntapD
         AbstractExpression(execution_stage_path, in_hits, entap_data, "RSEM", exe, align){
     FS_dprint("Spawn Object - ModRSEM");
 
+    mCalcExpressionExe = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_RSEM_CALC_EXPRES);
+    mSamValidExe       = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_RSEM_SAM_VALID);
+    mPrepReferenceExe  = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_RSEM_PREP_REF);
+    mConvertSamExe     = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_RSEM_CONVERT_SAM);
 }
 
 ModRSEM::~ModRSEM() {
@@ -354,7 +358,7 @@ bool ModRSEM::rsem_validate_file(std::string filename) {
     std::string out_path;
     TerminalData terminalData;
 
-    rsem_arg = PATHS(mExePath, RSEM_SAM_VALID) + " " + mAlignPath;
+    rsem_arg = mSamValidExe + " " + mAlignPath;
     out_path = PATHS(mModOutDir, filename) + STD_VALID_OUT;
 
     terminalData.command        = rsem_arg;
@@ -405,38 +409,14 @@ bool ModRSEM::rsem_conv_to_bam(std::string file_name) {
 }
 #endif
 
-/**
- * ======================================================================
- * Function void ModRSEM::set_data(int thread, float fpmk, bool paired)
- *
- * Description          - Sets specific data used by each module (probably
- *                        will change in adding modules)
- *
- * Notes                - None
- *
- * @param thread        - Thead count
- * @param fpkm          - User selected FPKM threshold (for filtering)
- * @param paired        - Yes/no if reads were paired-end during alignment
- *
- * @return              - True if file is empty
- *
- * =====================================================================
- */
-void ModRSEM::set_data(int thread, float fpkm, bool single) {
-    mFPKM = fpkm;
-    mIsSingle = single;
-}
-
 bool ModRSEM::rsem_generate_reference(std::string& reference_path_out) {
-    std::string       ref_exe;    // executable path to reference generation
     std::string       ref_path;   // reference path
     std::string       rsem_arg;
     int32             err_code;
     TerminalData      terminalData;
 
-    ref_exe  = PATHS(mExePath, RSEM_PREP_REF_EXE);
     ref_path = PATHS(mModOutDir, mFilename) + "_ref";
-    rsem_arg = ref_exe + " "
+    rsem_arg = mPrepReferenceExe + " "
                + mInputTranscriptome + " "
                + ref_path;
 
@@ -458,13 +438,11 @@ bool ModRSEM::rsem_generate_reference(std::string& reference_path_out) {
 }
 
 bool ModRSEM::rsem_expression_analysis(std::string& ref_path, std::string& bam) {
-    std::string expression_exe;
     std::string rsem_arg;
     int32             err_code;
     TerminalData      terminalData;
 
-    expression_exe = PATHS(mExePath, RSEM_CALC_EXP_EXE);
-    rsem_arg = expression_exe +
+    rsem_arg = mCalcExpressionExe +
                " --" + bam +
                " -p " + std::to_string(mThreads) + " " +
                mAlignPath +" "+

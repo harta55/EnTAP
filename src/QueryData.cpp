@@ -154,8 +154,8 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     mpUserInput  = userinput;
     mpFileSystem = filesystem;
 
-    mTrim          = mpUserInput->has_input(mpUserInput->INPUT_FLAG_TRIM);
-    is_complete    = mpUserInput->has_input(mpUserInput->INPUT_FLAG_COMPLETE);
+    mTrim          = mpUserInput->has_input(INPUT_FLAG_TRIM);
+    is_complete    = mpUserInput->has_input(INPUT_FLAG_COMPLETE);
 
     if (!mpFileSystem->file_exists(input_file)) {
         throw ExceptionHandler("Input transcriptome not found at: " + input_file,ERR_ENTAP_INPUT_PARSE);
@@ -342,9 +342,9 @@ void QueryData::final_statistics(std::string &outpath) {
     bool                   is_ontology;
     bool                   is_one_go;
     bool                   is_one_kegg;
-    std::vector<uint16>    ontology_flags;
+    ent_input_multi_int_t  ontology_flags;
 
-    ontology_flags = mpUserInput->get_user_input<std::vector<uint16>>(mpUserInput->INPUT_FLAG_ONTOLOGY);
+    ontology_flags = mpUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_ONTOLOGY);
 
     out_unannotated_nucl_path = PATHS(outpath, OUT_UNANNOTATED_NUCL);
     out_unannotated_prot_path = PATHS(outpath, OUT_UNANNOTATED_PROT);

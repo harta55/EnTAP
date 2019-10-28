@@ -92,15 +92,13 @@ public:
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
-    virtual void set_data(int, fp32, bool)=0;
-
     virtual std::string get_final_fasta()=0;
 
 
 protected:
     std::string     mAlignPath;     // Absolute path to alignment file (BAM/SAM)
     std::string     mFinalFasta;    // Absolute path to final filtered FASTA produced from this stage
-    fp32            mFPKM;          // FPKM threshold user would like to filter by
+    fp64            mFPKM;          // FPKM threshold user would like to filter by
     bool            mIsSingle;       // TRUE if use has non-paired data
 };
 

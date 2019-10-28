@@ -54,10 +54,10 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mpEntapDatabase   = entap_data.mpEntapDatabase;
 
     mThreads         = mpUserInput->get_supported_threads();
-    mBlastp          = mpUserInput->has_input(mpUserInput->INPUT_FLAG_RUNPROTEIN);
-    mOverwrite       = mpUserInput->has_input(mpUserInput->INPUT_FLAG_OVERWRITE);
+    mBlastp          = mpUserInput->has_input(INPUT_FLAG_RUNPROTEIN);
+    mOverwrite       = mpUserInput->has_input(INPUT_FLAG_OVERWRITE);
     mAlignmentFileTypes = mpUserInput->get_user_output_types();   // may be overridden at lower level
-    mGoLevels        = mpUserInput->get_user_input<vect_uint16_t>(mpUserInput->INPUT_FLAG_GO_LEVELS);
+    mGoLevels        = mpUserInput->get_user_input<ent_input_multi_int_t >(INPUT_FLAG_GO_LEVELS);
 
     mTranscriptomeShortname = mpFileSystem->get_filename(mInputTranscriptome, false);
 

@@ -62,10 +62,10 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,EntapDataPtrs& entap_d
     mpEntapPtrs = entap_data;
 
     mSoftwareFlag = EXP_RSEM;
-    mExePath       = RSEM_EXE_DIR;
-    mOverwrite     = mpUserInput->has_input(mpUserInput->INPUT_FLAG_OVERWRITE);
-    if (mpUserInput->has_input(mpUserInput->INPUT_FLAG_ALIGN)) { // Will be true
-        mAlignPath = mpUserInput->get_user_input<std::string>(mpUserInput->INPUT_FLAG_ALIGN);
+    mExePath       = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_RSEM_CALC_EXPRES);
+    mOverwrite     = mpUserInput->has_input(INPUT_FLAG_OVERWRITE);
+    if (mpUserInput->has_input(INPUT_FLAG_ALIGN)) { // Will be true
+        mAlignPath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_ALIGN);
     }
     mExpressionDir      = PATHS(mpFileSystem->get_root_path(), RSEM_OUT_DIR);
 }

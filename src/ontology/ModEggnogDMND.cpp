@@ -56,6 +56,8 @@ ModEggnogDMND::ModEggnogDMND(std::string &ont_out, std::string &in_hits,
     FS_dprint("Spawn Object - ModEggnogDMND");
 
     mSoftwareFlag = ONT_EGGNOG_DMND;
+    mEggnogDbDiamond = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
+    mEggnogDbSQL     = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
 }
 
 EntapModule::ModVerifyData ModEggnogDMND::verify_files() {
@@ -87,8 +89,8 @@ void ModEggnogDMND::execute() {
     FS_dprint("Running EggNOG against Diamond database...");
 
     // Ensure both input path and EggNOG DMND database exist before continuing
-    if (!mpFileSystem->file_exists(EGG_DMND_PATH)) {
-        throw ExceptionHandler("EggNOG DIAMOND database not found at: " + EGG_DMND_PATH,
+    if (!mpFileSystem->file_exists(mEggnogDbDiamond)) {
+        throw ExceptionHandler("EggNOG DIAMOND database not found at: " + mEggnogDbDiamond,
                                ERR_ENTAP_EGGNOG_FILES);
     }
     if (!mpFileSystem->file_exists(mInputTranscriptome)) {
@@ -101,9 +103,9 @@ void ModEggnogDMND::execute() {
 
     //Run DIAMOND
     cmd =
-            DIAMOND_EXE + " " +
+            mExePath + " " +
             blast +
-            " -d " + EGG_DMND_PATH +
+            " -d " + mEggnogDbDiamond +
             " --top 1"             +
             " --more-sensitive"    +
             " -q "                 + mInputTranscriptome   +
@@ -121,7 +123,7 @@ void ModEggnogDMND::execute() {
         mpFileSystem->delete_file(mOutHIts);
         FS_dprint("DIAMOND STD OUT:\n" + terminalData.out_stream);
         throw ExceptionHandler("Error in running DIAMOND against EggNOG database at: " +
-                               EGG_DMND_PATH + "\nDIAMOND Error:\n" + terminalData.err_stream, ERR_ENTAP_RUN_EGGNOG_DMND);
+                               mEggnogDbDiamond + "\nDIAMOND Error:\n" + terminalData.err_stream, ERR_ENTAP_RUN_EGGNOG_DMND);
     }
 }
 
@@ -129,7 +131,6 @@ void ModEggnogDMND::parse() {
     uint16         file_status=0;
     uint64         sequence_ct=0;   // dprintf sequence count
     std::stringstream stats_stream;
-
 
     FS_dprint("Parsing EggNOG DMND file located at: " + mOutHIts);
 
@@ -182,7 +183,7 @@ void ModEggnogDMND::parse() {
 
             // WARNING!!! SQL lookups are done in "calculate_stats" below to save execution time
             //      (only best hits are looked up) headers are populated then!
-            querySequence->add_alignment(GENE_ONTOLOGY, mSoftwareFlag, eggnogResults, EGG_DMND_PATH);
+            querySequence->add_alignment(GENE_ONTOLOGY, mSoftwareFlag, eggnogResults, mEggnogDbDiamond);
 
         } // End WHILE in.read_row
 
@@ -232,7 +233,8 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
 
     // Generate EggNOG database
     eggnogDatabase = new EggnogDatabase(mpFileSystem, mpEntapDatabase, mpQueryData);
-    if (eggnogDatabase->open_sql(EGG_SQL_DB_PATH) != EggnogDatabase::ERR_EGG_OK) {
+    if (eggnogDatabase->open_sql(mEggnogDbSQL) != EggnogDatabase::ERR_EGG_OK) {
+        delete eggnogDatabase;
         throw ExceptionHandler("Unable to open EggNOG SQL Database", ERR_ENTAP_PARSE_EGGNOG_DMND);
     }
 
@@ -246,12 +248,12 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     // Parse through all query sequences
     for (auto &pair : *mpQueryData->get_sequences_ptr()) {
         // Check if each sequence is an eggnog alignment
-        if (pair.second->hit_database(GENE_ONTOLOGY, mSoftwareFlag, EGG_DMND_PATH)) {
+        if (pair.second->hit_database(GENE_ONTOLOGY, mSoftwareFlag, mEggnogDbDiamond)) {
             // Yes, hit EggNOG database
             ct_alignments++;
 
             best_hit = pair.second->get_best_hit_alignment<EggnogDmndAlignment>
-                    (GENE_ONTOLOGY, mSoftwareFlag, EGG_DMND_PATH);
+                    (GENE_ONTOLOGY, mSoftwareFlag, mEggnogDbDiamond);
 
             eggnog_results = best_hit->get_results();
             eggnogDatabase->get_eggnog_entry(eggnog_results);

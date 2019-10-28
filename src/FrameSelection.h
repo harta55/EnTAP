@@ -56,7 +56,6 @@ private:
     const std::string FRAME_SELECTION_OUT_DIR       = "frame_selection/";   // Frame selection directory name
 
     std::string      mModOutDir;    // Absolute path to Frame Selection out directory
-    std::string      mExePath;      // Executable for Frame Selection
     std::string      mInPath;       // Absolute path to input transcriptome
     std::string      mOutpath;      // Absolute path to root output directory
     bool             mOverwrite;    // TRUE if old files should be overwritten

@@ -71,7 +71,8 @@ namespace entapExecute {
         std::string                             input_path;      // Absolute path to transciptome (WARNING changes depending on user selection)
         std::string                             final_out_dir;   // Absolute path to output directory for final stats
         std::string                             transcriptome_outpath;
-        databases_t                             databases;       // NCBI+UNIPROT+Other
+        std::string                             entap_graphing_path;
+        ent_input_multi_str_t                   databases;       // NCBI+UNIPROT+Other
         std::queue<char>                        state_queue;
         bool                                    state_flag;
         bool                                    blastp;                 // false for blastx, true for mBlastp
@@ -94,14 +95,15 @@ namespace entapExecute {
         entap_data_ptrs         = EntapDataPtrs();
 
         // Pull relevant info input by the user
-        input_path     = pUserInput->get_user_input<std::string>(pUserInput->INPUT_FLAG_TRANSCRIPTOME);
+        input_path     = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_TRANSCRIPTOME);
         original_input = input_path;
-        blastp         = pUserInput->has_input(pUserInput->INPUT_FLAG_RUNPROTEIN);
+        blastp         = pUserInput->has_input(INPUT_FLAG_RUNPROTEIN);
         state_queue    = pUserInput->get_state_queue();    // Will NOT be empty, default is +
-        databases     = pUserInput->get_user_input<databases_t>(pUserInput->INPUT_FLAG_DATABASE);
+        databases     = pUserInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_DATABASE);
+        entap_graphing_path = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_GRAPH);
 
         // Find database type that will be used by the rest (use 0 index no matter what)
-        entap_database_types = pUserInput->get_user_input<vect_uint16_t>(pUserInput->INPUT_FLAG_DATABASE_TYPE);
+        entap_database_types = pUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_DATABASE_TYPE);
         entap_database_type = static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
 
         // Set/create outpaths
@@ -120,10 +122,10 @@ namespace entapExecute {
                     pFileSystem);      // Filesystem object
 
             // Initialize Graphing Manager
-            pGraphing_Manager = new GraphingManager(GRAPHING_EXE, pFileSystem);
+            pGraphing_Manager = new GraphingManager(entap_graphing_path, pFileSystem);
 
             // Initialize EnTAP database
-            pEntap_Database = new EntapDatabase(filesystem);
+            pEntap_Database = new EntapDatabase(filesystem, pUserInput);
             if (!pEntap_Database->set_database(entap_database_type)) {
                 throw ExceptionHandler("Unable to initialize EnTAP database\n" +
                                        pEntap_Database->print_error_log(), ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
@@ -145,7 +147,7 @@ namespace entapExecute {
 
                     case EXPRESSION_FILTERING: {
                         FS_dprint("STATE - EXPRESSION FILTERING");
-                        if (!pUserInput->has_input(pUserInput->INPUT_FLAG_ALIGN)) {
+                        if (!pUserInput->has_input(INPUT_FLAG_ALIGN)) {
                             FS_dprint("No alignment file specified, skipping expression analysis");
                             pQUERY_DATA->header_set(ENTAP_HEADER_EXP_FPKM, false);
                             pQUERY_DATA->header_set(ENTAP_HEADER_EXP_TPM, false);
@@ -374,7 +376,7 @@ namespace entapExecute {
     void exit_error(ExecuteStates s) {
         std::stringstream ss;
 
-        ss << "------------------------------------\n";
+        ss << "----------------------------------------------------\n";
 #if 0
         switch (s) {
             case INIT:
@@ -409,13 +411,13 @@ namespace entapExecute {
 #endif
         ss <<
            "Here are a few ways to help diagnose some general issues:\n"
-                   "\t1. Check the (detailed) printed error mMessage below\n"
+                   "\t1. Check the (detailed) printed error message below\n"
                    "\t2. Review the .err files of the execution stage (they will\n"
                    "\t\tbe in the directory for whatever stage you failed\n"
                    "\t3. Check the debug.txt file that is printed after execution\n"
-                   "\t4. Ensure your paths/inputs are correct in entap_config.txt\n"
+                   "\t4. Ensure your paths/inputs are correct in entap_config.ini\n"
                    "\t\tand log_file.txt (this will show your inputs)\n";
-        ss << "------------------------------------";
+        ss << "----------------------------------------------------";
         std::cerr<<ss.str()<<std::endl;
     }
 }

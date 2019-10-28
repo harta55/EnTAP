@@ -71,7 +71,7 @@ public:
     virtual ModVerifyData verify_files() override ;
     virtual void execute() override ;
     virtual void parse() override ;
-    static bool is_executable();
+    static bool is_executable(std::string &exe);
 
     static bool valid_input(UserInput* userinput);
     static std::string get_default();

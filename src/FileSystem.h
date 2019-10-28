@@ -92,8 +92,9 @@ public:
     } ENT_FILE_ITER;
 
 
-    FileSystem(std::string&);
+    FileSystem();
     ~FileSystem();
+    void set_root_dir(std::string &root_dir);
     //void open_out(std::string &, std::ofstream &);
     bool file_is_open(std::ofstream&);
     void close_file(std::ofstream&);
@@ -115,6 +116,7 @@ public:
     std::string get_file_extension(const std::string&, bool);
     std::string get_filename(std::string&, bool);
     static std::string get_cur_dir();
+    static std::string get_exe_dir();
     std::vector<std::string> list_to_vect(char, std::string&);
     std::string get_final_outdir();
     std::string get_temp_outdir();
@@ -155,6 +157,7 @@ private:
     //****************** Private Functions *********************
     void init_log();
     void set_error(std::string err_msg);
+    void set_executable_dir();
     //**********************************************************
 
     //**************** Private Const Variables *****************
@@ -176,6 +179,8 @@ private:
     std::string mTrancriptomeDir; // Absolute path to EnTAP transcriptome directory
     std::string mTempOutpath;     // Temp directory for EnTAP usage
     std::string mErrorMsg;        // String containing error mMessage from execution
+    std::string mExeDirectory;    // Directory of the EnTAP executable
+    std::string mCurrentWDir;     // Current working directory;
     //**********************************************************
 };
 

@@ -27,6 +27,7 @@
 
 #include "ModTransdecoder.h"
 
+
 /**
  * ======================================================================
  * Function ModTransdecoder::ModTransdecoder(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
@@ -58,7 +59,7 @@ ModTransdecoder::ModTransdecoder(std::string &execution_stage_path, std::string 
     mTransdecoderLongOrfsExe = long_orfs_exe;
     mTransdecoderPredictExe = predict_exe;
 
-    mMinProteinLength = mpUserInput->get_user_input<uint16>(mpUserInput->INPUT_FLAG_TRANS_MIN_PROTEIN);
+    mMinProteinLength = mpUserInput->get_user_input<ent_input_uint_t >(INPUT_FLAG_TRANS_MIN_PROTEIN);
 
     // Determine TransDecoder output file naming
     temp_filename = mpFileSystem->get_filename(in_hits, true) + FILE_TRANSDECODER_SUFFIX + FileSystem::EXT_CDS;

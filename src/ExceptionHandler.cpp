@@ -76,7 +76,7 @@ void ExceptionHandler::print_msg(FileSystem* filesystem) {
 
     switch (mErrCode) {
         case ERR_ENTAP_CONFIG_CREATE:
-            added_msg << "Error in creating the EnTAP configuration file. If this persists, download"
+            added_msg << "Error in creating the EnTAP configuration file. If this persists, download "
                     "the file from GitHub";
             break;
         case ERR_ENTAP_CONFIG_CREATE_SUCCESS:

@@ -123,24 +123,13 @@ void init_entap(int argc, const char** argv) {
     // Begin timing
     startTime = std::chrono::system_clock::now();
 
-    // parse user flags and turn into map
-    pUserInput = new UserInput(argc, argv);
+    // Create filesystem
+    pFileSystem = new FileSystem();
 
-    // get output path from user
-    root_outfiles = pUserInput->get_user_input<std::string>(pUserInput->INPUT_FLAG_TAG);
+    // parse user flags and set the root filesystem directory according to user input
+    pUserInput = new UserInput(argc, argv, pFileSystem);
 
-    // create filesystem and begin logging
-    pFileSystem = new FileSystem(root_outfiles);
-    pUserInput->set_pFileSystem(pFileSystem);
-
-    // get config file path and default to find exe paths
-    // First: config path, Second: Software directory defaults
-    config_default = pUserInput->get_config_path();
-
-    // Parse config file
-    pUserInput->parse_config(config_default);
-
-    // Verify and print user input, sets if user selected config or execute
+    // Verify and print user input (marks begining of log file), sets if user selected config or execute
     isConfig = pUserInput->verify_user_input();
 }
 

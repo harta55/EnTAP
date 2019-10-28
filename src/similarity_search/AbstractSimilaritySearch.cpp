@@ -58,9 +58,9 @@ AbstractSimilaritySearch::AbstractSimilaritySearch(std::string &execution_stage_
 
     // Get relevant user info for similarity searching
     mInputSpecies    = mpUserInput->get_target_species_str();
-    mQCoverage        = mpUserInput->get_user_input<fp32>(mpUserInput->INPUT_FLAG_QCOVERAGE);
-    mTCoverage        = mpUserInput->get_user_input<fp32>(mpUserInput->INPUT_FLAG_TCOVERAGE);
-    mEVal            = mpUserInput->get_user_input<fp64>(mpUserInput->INPUT_FLAG_E_VAL);
+    mQCoverage        = mpUserInput->get_user_input<ent_input_fp_t >(INPUT_FLAG_QCOVERAGE);
+    mTCoverage        = mpUserInput->get_user_input<ent_input_fp_t >(INPUT_FLAG_TCOVERAGE);
+    mEVal            = mpUserInput->get_user_input<ent_input_fp_t>(INPUT_FLAG_E_VALUE);
     mContaminateTaxons     = mpUserInput->get_contaminants();
     mUninformativeTags= mpUserInput->get_uninformative_vect();
 

@@ -171,8 +171,8 @@ bool SimSearchAlignment::operator>(const QueryAlignment &alignment) {
     fp64 eval1 = this->_sim_search_results.e_val_raw;
     fp64 eval2 = alignment_cast._sim_search_results.e_val_raw;
     // Avoid error on taking log
-    if (eval1 == 0) eval1 = 1E-200;
-    if (eval2 == 0) eval2 = 1E-200;
+    if (eval1 == 0) eval1 = 1E-300;
+    if (eval2 == 0) eval2 = 1E-300;
     fp64 cov1 = this->_sim_search_results.coverage_raw;
     fp64 cov2 = alignment_cast._sim_search_results.coverage_raw;
     fp64 coverage_dif = fabs(cov1 - cov2);

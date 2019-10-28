@@ -62,8 +62,8 @@ FrameSelection::FrameSelection(std::string &input, EntapDataPtrs &entap_data) {
     mEntapDataPtrs = entap_data;
 
     mOutpath         = mpFileSystem->get_root_path();
-    mOverwrite       = mpUserInput->has_input(mpUserInput->INPUT_FLAG_OVERWRITE);
-    mSoftwareFlag    = mpUserInput->get_user_input<uint16>(mpUserInput->INPUT_FLAG_FRAME_SELECTION);
+    mOverwrite       = mpUserInput->has_input(INPUT_FLAG_OVERWRITE);
+    mSoftwareFlag    = mpUserInput->get_user_input<ent_input_uint_t >(INPUT_FLAG_FRAME_SELECTION);
 
     mModOutDir   = PATHS(mOutpath, FRAME_SELECTION_OUT_DIR);
 }
@@ -132,31 +132,35 @@ std::string FrameSelection::execute(std::string input) {
  */
 std::unique_ptr<AbstractFrame> FrameSelection::spawn_object() {
     switch (mSoftwareFlag) {
-        case FRAME_GENEMARK_ST:
-            mExePath = GENEMARK_EXE;
+        case FRAME_GENEMARK_ST: {
+            ent_input_str_t exe_path = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_GENEMARKST_EXE);
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
                     mModOutDir,
                     mInPath,
                     mEntapDataPtrs,
-                    mExePath
+                    exe_path
             ));
-        case FRAME_TRANSDECODER:
-            mExePath = TRANSDECODER_LONGORFS_EXE;
+        }
+        case FRAME_TRANSDECODER: {
+            ent_input_str_t trans_long = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_LONGORF_EXE);
+            ent_input_str_t trans_predict = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_PREDICT_EXE);
             return std::unique_ptr<AbstractFrame>(new ModTransdecoder(
                     mModOutDir,
                     mInPath,
                     mEntapDataPtrs,
-                    TRANSDECODER_LONGORFS_EXE,
-                    TRANSDECODER_PREDICT_EXE
+                    trans_long,
+                    trans_predict
             ));
-        default:
-            mExePath = GENEMARK_EXE;
+        }
+        default: {
+            ent_input_str_t exe_path_def = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_GENEMARKST_EXE);
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
                     mModOutDir,
                     mInPath,
                     mEntapDataPtrs,
-                    mExePath
+                    exe_path_def
             ));
+        }
     }
 }
 

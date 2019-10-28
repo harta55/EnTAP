@@ -77,8 +77,8 @@ protected:
     std::string                     mInputSpecies;
     std::string                     mBlastType;            // string to signify blast type
     fp64                            mEVal;
-    fp32                            mQCoverage;
-    fp32                            mTCoverage;
+    fp64                            mQCoverage;
+    fp64                            mTCoverage;
 
     const std::string SIM_SEARCH_DATABASE_BEST_HITS              = "best_hits";
     const std::string SIM_SEARCH_DATABASE_BEST_HITS_CONTAM       = "best_hits_contam";

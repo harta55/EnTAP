@@ -34,6 +34,6 @@ EntapModule(execution_stage_path, in_hits, entap_data, module_name, exe) {
 
     mAlignPath = align;
     mExecutionState = EXPRESSION_FILTERING;
-    mIsSingle      = mpUserInput->has_input(mpUserInput->INPUT_FLAG_SINGLE_END);
-    mFPKM          = mpUserInput->get_user_input<fp32>(mpUserInput->INPUT_FLAG_FPKM);
+    mIsSingle      = mpUserInput->has_input(INPUT_FLAG_SINGLE_END);
+    mFPKM          = mpUserInput->get_user_input<ent_input_fp_t >(INPUT_FLAG_FPKM);
 }

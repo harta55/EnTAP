@@ -61,12 +61,12 @@ SimilaritySearch::SimilaritySearch(vect_str_t &database_paths, std::string &inpu
     mpFileSystem    = entap_data.mpFileSystem;
     mpEntapData    = &entap_data;
     mInputFastaPath     = input;
-    mDiamondExe    = DIAMOND_EXE;      // Set to extern set previously
+    mDiamondExe    = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
     mDatabasePaths = database_paths;
 
     // Set sim search paths/directories
     mSimSearchDir  = PATHS(mpFileSystem->get_root_path(), SIM_SEARCH_DIR);
-    mOverwrite = mpUserInput->has_input(mpUserInput->INPUT_FLAG_OVERWRITE);
+    mOverwrite = mpUserInput->has_input(INPUT_FLAG_OVERWRITE);
 
     if (mOverwrite) {
         mpFileSystem->delete_dir(mSimSearchDir);

@@ -78,6 +78,8 @@ private:
     static constexpr uint16 COUNT_TOP_TAX_SCOPE = 10;
 
     std::string mOutHIts;
+    std::string mEggnogDbDiamond;       // User input path to the EggNOG DMND database
+    std::string mEggnogDbSQL;           // User input path to the EggNOG SQL database
 };
 
 

@@ -463,16 +463,23 @@ ModInterpro::~ModInterpro() {
     FS_dprint("Killing object - ModInterpro");
 }
 
-bool ModInterpro::is_executable() {
-    // TODO add execute command for interpro
-    return true;
+bool ModInterpro::is_executable(std::string &exe) {
+    std::string test_command;
+    TerminalData terminalData;
+
+    test_command = exe + " --version";
+
+    terminalData.command = test_command;
+    terminalData.print_files = false;
+
+    return TC_execute_cmd(terminalData) == 0;    return true;
 }
 
 bool ModInterpro::valid_input(UserInput* userInput) {
-    std::vector<std::string> databases;
+    ent_input_multi_str_t databases;
 
-    if (!userInput->has_input(userInput->INPUT_FLAG_INTERPRO)) return false;
-    databases = userInput->get_user_input<std::vector<std::string>>(userInput->INPUT_FLAG_INTERPRO);
+    if (!userInput->has_input(INPUT_FLAG_INTERPRO)) return false;
+    databases = userInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_INTERPRO);
 
     for (std::string &data : databases) {
         LOWERCASE(data);

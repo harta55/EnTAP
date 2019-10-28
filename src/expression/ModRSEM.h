@@ -72,16 +72,10 @@ public:
     virtual ModVerifyData verify_files() override ;
     virtual void execute() override ;
     virtual void parse() override;
-    virtual void set_data(int, float, bool) override    ;
-
     virtual std::string get_final_fasta() override ;
 
 private:
-    
-    const std::string RSEM_SAM_VALID        = "rsem-sam-validator";
-    const std::string RSEM_PREP_REF_EXE     = "rsem-prepare-reference";
-    const std::string RSEM_CALC_EXP_EXE     = "rsem-calculate-expression";
-    const std::string RSEM_CONV_SAM         = "convert-sam-for-rsem";
+
     const std::string RSEM_OUT_KEPT         = "_kept.fasta";
     const std::string RSEM_OUT_REMOVED      = "_removed.fasta";
     const std::string RSEM_OUT_FILE         = ".genes.results";
@@ -101,7 +95,11 @@ private:
     std::string mFilename;
     std::string mRsemOut;
     std::string mExpressionOut;
-    fp32       mFPKM;
+    std::string mCalcExpressionExe;     // User input to RSEM calc expression exe
+    std::string mSamValidExe;           // User input to RSEM sam validate exe
+    std::string mPrepReferenceExe;      // User input to RSEM prep reference exe
+    std::string mConvertSamExe;         // User input to RSEM convert SAM for RSEM exe
+    fp32        mFPKM;
     bool        mIsSingle;
 
     bool rsem_validate_file(std::string);

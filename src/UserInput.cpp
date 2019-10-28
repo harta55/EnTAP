@@ -625,9 +625,10 @@ void UserInput::generate_ini_file(std::string &ini_path) {
                 while (std::getline(ss,line)) {
                     ini_file << INI_FILE_COMMENT << line << std::endl;
                 }
+                ss.str(""); ss.clear();
 
                 // Print example
-                ss = std::stringstream(entry->example);
+                ss.str(entry->example);
                 while (std::getline(ss,line)) {
                     ini_file << INI_FILE_COMMENT << line << std::endl;
                 }

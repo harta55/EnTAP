@@ -175,16 +175,31 @@ private:
         ENT_INI_FILE
     } ENT_INPUT_TYPES;
 
+    // WARNING order must match VAR_TYPE_STR
     typedef enum {
-        ENT_INI_VAR_STRING,
+        ENT_INI_VAR_STRING=0,
         ENT_INI_VAR_MULTI_STRING,
         ENT_INI_VAR_INT,
         ENT_INI_VAR_MULTI_INT,
         ENT_INI_VAR_FLOAT,
         ENT_INI_VAR_MULTI_FLOAT,
-        ENT_INI_VAR_BOOL
+        ENT_INI_VAR_BOOL,
+
+        ENT_INI_MAX_TYPES
 
     } ENT_INI_VAR_TYPES;
+
+    // WARNING order must match ENT_INI_VAR_TYPES
+    const std::string VAR_TYPE_STR[ENT_INI_MAX_TYPES] {
+        "string",
+        "list (string)",
+        "integer",
+        "list (integer)",
+        "floating point",
+        "list (floating point)",
+        "boolean (true/false)"
+    };
+
 
     struct EntapINIEntry {
         std::string category;
@@ -237,6 +252,7 @@ private:
             "uncultured",
             "uninformative"
     };
+
     static const std::string RSEM_DEFAULT_EXE_DIR                  ;
     static const std::string RSEM_SAM_VALID    ;
     static const std::string RSEM_PREP_REF_EXE ;

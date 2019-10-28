@@ -386,7 +386,7 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_GENERAL   ,CMD_THREADS              ,CMD_SHORT_THREADS    ,DESC_THREADS          ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT         ,DEFAULT_THREADS        ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_STATE                ,ENTAP_INI_NULL  ,DESC_STATE                 ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_STATE          ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_NOCHECK              ,ENTAP_INI_NULL  ,DESC_NOCHECK               ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
-        {INI_GENERAL   ,CMD_OUTPUT_FORMAT        ,ENTAP_INI_NULL  ,DESC_OUTPUT_FORMAT         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_OUT_FORMAT     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_OUTPUT_FORMAT        ,ENTAP_INI_NULL  ,DESC_OUTPUT_FORMAT         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_OUT_FORMAT     ,ENT_INI_FILE         ,ENTAP_INI_NULL_VAL},
 
 /* EnTAP Commands */
         {INI_ENTAP     ,CMD_ENTAP_DB_BIN         ,ENTAP_INI_NULL  ,DESC_ENTAP_DB_BIN          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENTAP_DB_BIN_INI, ENT_INI_FILE        ,ENTAP_INI_NULL_VAL},
@@ -568,7 +568,7 @@ void UserInput::parse_ini(std::string &ini_path) {
                                     ini_entry->parsed_value = vect;
                                     break;
                                 }
-                                case ENT_INI_VAR_MULTI_STRING:
+                                case ENT_INI_VAR_MULTI_STRING: {
                                     ent_input_multi_str_t vect;
                                     std::stringstream ss(val);
                                     std::string token;
@@ -576,6 +576,10 @@ void UserInput::parse_ini(std::string &ini_path) {
                                         vect.push_back(token);
                                     }
                                     ini_entry->parsed_value = vect;
+                                    break;
+                                }
+
+                                default:
                                     break;
                             }
                         } catch (...) {
@@ -605,6 +609,17 @@ void UserInput::generate_ini_file(std::string &ini_path) {
     }
 
     try {
+
+        // Print instructions on how to use the ini file
+        ini_file << INI_FILE_COMMENT << "-------------------------------" << std::endl;
+        ini_file << INI_FILE_COMMENT << " [" << "ini_instructions]"       << std::endl;
+        ini_file << INI_FILE_COMMENT <<
+                 "When using this ini file keep the following in mind:\n"              << INI_FILE_COMMENT <<
+                  "\t1. Do not edit the input keys to the left side of the '=' sign\n" << INI_FILE_COMMENT <<
+                  "\t2. Be sure to use the proper value type (either a string, list, or number)\n" << INI_FILE_COMMENT <<
+                  "\t3. Do not add unecessary spaces to your input\n"                                         << INI_FILE_COMMENT <<
+                  "\t4. When inputting a list, only add a '" << INI_FILE_MULTI_DELIM << "' between each entry" << std::endl;
+
         for (auto& pair : printed_categories) {
 
             // If this category has no entries, skip
@@ -632,6 +647,9 @@ void UserInput::generate_ini_file(std::string &ini_path) {
                 while (std::getline(ss,line)) {
                     ini_file << INI_FILE_COMMENT << line << std::endl;
                 }
+
+                // Print input type
+                ini_file << INI_FILE_COMMENT << "type:" << VAR_TYPE_STR[entry->var_type] << std::endl;
 
                 ini_file << entry->input << INI_FILE_ASSIGN;
 

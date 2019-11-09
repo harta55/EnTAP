@@ -50,6 +50,7 @@ enum ENTAP_ERR {
     ERR_ENTAP_INIT_DOWN_SQL_DATA          = 34u,
     ERR_ENTAP_INIT_DOWN_SERIAL_DATA       = 35u,
     ERR_ENTAP_INIT_DATA_GENERIC           = 36u,
+    ERR_ENTAP_INIT_BUSCO_GENERIC          = 37u,
     ERR_ENTAP_INIT_EGGNOG                 = 40u,
 
     ERR_ENTAP_INIT_TAX_READ               = 55u,

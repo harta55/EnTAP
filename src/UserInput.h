@@ -126,6 +126,11 @@ typedef enum {
     INPUT_FLAG_INTERPRO_EXE,
     INPUT_FLAG_INTERPRO,
 
+    /* Transcriptome Eval Commands - BUSCO */
+    INPUT_FLAG_BUSCO_EXE,
+    INPUT_FLAG_BUSCO_DATABASE,
+    INPUT_FLAG_BUSCO_EVAL,
+
 
     INPUT_FLAG_MAX
 
@@ -195,8 +200,8 @@ private:
         "list (string)",
         "integer",
         "list (integer)",
-        "floating point",
-        "list (floating point)",
+        "decimal",
+        "list (decimal)",
         "boolean (true/false)"
     };
 
@@ -210,19 +215,15 @@ private:
         ENT_INI_VAR_TYPES   var_type;
         boost::any          default_value;
         ENT_INPUT_TYPES     input_type;
-        boost::any  parsed_value;
+        boost::any          parsed_value;
     };
 
-    enum SPECIES_FLAGS {
+    typedef enum {
         SPECIES,
         CONTAMINANT
-    };
+    } SPECIES_FLAGS;
 
-#ifdef USE_BOOST
-    void parse_arguments_boost(int, const char**);
-#else
     void parse_arguments_tclap(int, const char **);
-#endif
     void print_user_input();
     EntapINIEntry* check_ini_key(std::string &);
     void verify_databases(bool);
@@ -270,6 +271,7 @@ private:
     static const std::string EGG_DMND_FILENAME                 ;
     static const std::string INTERPRO_DEF_EXE                  ;
     static const std::string GRAPH_SCRIPT_DEF                  ;
+    static const std::string DEFAULT_BUSCO_EXE;
     static const std::string BIN_PATH_DEFAULT                  ;
     static const std::string DATABASE_DIR_DEFAULT              ;
     static const std::string ENTAP_DATABASE_SQL_FILENAME       ;
@@ -285,6 +287,7 @@ private:
     static const std::string DEFAULT_ENTAP_GRAPH_INI;
 
     static const fp64          DEFAULT_E_VALUE;
+    static const fp64          DEFAULT_BUSCO_E_VALUE;
     static const uint16        DEFAULT_THREADS;
     static const fp64          RSEM_FPKM_DEFAULT;
     static const fp64          DEFAULT_QCOVERAGE;

@@ -30,6 +30,7 @@
 #include "EntapConfig.h"
 #include "database/EggnogDatabase.h"
 #include "TerminalCommands.h"
+#include "database/BuscoDatabase.h"
 //**************************************************************
 
 namespace entapConfig {
@@ -45,8 +46,9 @@ namespace entapConfig {
 
     // ***************** Local Prototype Functions******************
     void init_entap_database();
-    void init_diamond_index(std::string &diamond_exe, int threads, vect_str_t &compiled_databases);
-    void init_eggnog(int threads, std::string &diamond_exe);
+    void init_diamond_index(std::string &diamond_exe, uint16 threads, vect_str_t &compiled_databases);
+    void init_eggnog(uint16 threads, std::string &diamond_exe);
+    void init_busco();
     // *************************************************************
 
 
@@ -69,7 +71,7 @@ namespace entapConfig {
      */
     void execute_main(UserInput *input, FileSystem *filesystem) {
 
-        int                                threads;             // supported threads for execution
+        uint16                             threads;             // supported threads for execution
         ent_input_str_t                    diamond_exe;         // DIAMOND executable path
         ent_input_multi_str_t              compiled_databases;  // databases input from user
 
@@ -89,7 +91,7 @@ namespace entapConfig {
         pFileSystem->create_dir(binDir);
         pFileSystem->create_dir(dataDir);
 
-        threads = pUserInput->get_supported_threads();
+        threads = (uint16)pUserInput->get_supported_threads();
         diamond_exe = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
 
         if (pUserInput->has_input(INPUT_FLAG_DATABASE)) {
@@ -104,6 +106,8 @@ namespace entapConfig {
 
             init_eggnog(threads, diamond_exe);
 
+            init_busco();
+
         } catch (ExceptionHandler &e){
             delete pEntapDatabase;
             throw ExceptionHandler(e.what(), e.getErr_code());
@@ -115,7 +119,7 @@ namespace entapConfig {
     /**
      * ======================================================================
      * Function init_diamond_index(std::string diamond_exe,std::string out_path,
-     *                             int threads)
+     *                             uint16 threads)
      *
      * Description          - Responsible for indexing user specified FASTA formatted
      *                        database for DIAMOND usage
@@ -130,7 +134,7 @@ namespace entapConfig {
      *
      * =====================================================================
      */
-    void init_diamond_index(std::string &diamond_exe, int threads, vect_str_t &compiled_databases) {
+    void init_diamond_index(std::string &diamond_exe, uint16 threads, vect_str_t &compiled_databases) {
         FS_dprint("Preparing to index database(s) with Diamond...");
 
         std::string indexed_path;       // Absolute path to final, DMND indexed database
@@ -191,7 +195,7 @@ namespace entapConfig {
 
     /**
      * ======================================================================
-     * Function init_eggnog(int threads, std::string &diamond_exe)
+     * Function init_eggnog(uint16 threads, std::string &diamond_exe)
      *
      * Description          - Downloads and configured required EggNOG databases
      *                        (SQL database and FASTA database)
@@ -206,7 +210,7 @@ namespace entapConfig {
      *
      * =====================================================================
      */
-    void init_eggnog(int threads, std::string &diamond_exe) {
+    void init_eggnog(uint16 threads, std::string &diamond_exe) {
         std::string sql_outpath;                // Absolute path to EggNOG sql output
         std::string fasta_outpath;              // Absolute path to EggNOG fasta output
         std::string dmnd_outpath;               // Absolute path to converted FASTA -> DMND
@@ -285,6 +289,7 @@ namespace entapConfig {
             FS_dprint("Success! EggNOG FASTA downloaded, indexing for DIAMOND...");
             log_msg << "EggNOG FASTA database written to: " + fasta_outpath << std::endl;
 
+            // TODO move to DIAMOND module
             index_cmd =
                     diamond_exe + " makedb --in " + fasta_outpath +
                     " -d "      + dmnd_outpath +
@@ -326,7 +331,7 @@ namespace entapConfig {
      *                        (SQL database and FASTA database)
      *                      - Configured FASTA database for DIAMOND if necessary
      *
-     * Notes                - None
+     * Notes                - Requires Internet connection
      *
      *
      * @return              - None
@@ -377,7 +382,7 @@ namespace entapConfig {
                     break;
 
                 default:
-                    FS_dprint("Unrecognized database code: " + std::to_string(data));
+                    FS_dprint("WARNING Unrecognized database code: " + std::to_string(data));
                     continue;
             }
 
@@ -414,5 +419,64 @@ namespace entapConfig {
         std::string temp = log_msg.str();
         pFileSystem->print_stats(temp);
         delete pEntapDatabase;
+    }
+
+    /**
+     * ======================================================================
+     * Function init_busco()
+     *
+     * Description          - Downloads and configures required files for the
+     *                        BUSCO module from user input (OrthoDB datasets)
+     *
+     * Notes                - Require Internet connection
+     *
+     *
+     * @return              - None
+     *
+     * =====================================================================
+     */
+    void init_busco() {
+        std::string busco_outpath;          // Absolute path to download BUSCO database to
+        std::string busco_database;         // BUSCO database tag/URL input by user
+        std::string busco_out_filename;     // Filename of output BUSCO database
+        BuscoDatabase::BUSCO_DB_ERR busco_db_err;   // BUSCO database error code
+        std::stringstream log_msg;               // Log message to print to EnTAP log file
+
+        if (!pUserInput->has_input(INPUT_FLAG_BUSCO_DATABASE)) {
+            FS_dprint("No BUSCO database input by the user, skipping...");
+            return; // EXIT - user has not input a BUSCO database
+        }
+
+        FS_dprint("Initializing BUSCO database...");
+        busco_db_err = BuscoDatabase::ERR_DATA_OK;
+        pFileSystem->format_stat_stream(log_msg, "BUSCO Database Configuration");
+        busco_database = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_BUSCO_DATABASE);
+        if (pFileSystem->is_url(busco_database)) {
+            busco_out_filename = pFileSystem->get_filename(busco_database, false);
+        } else {
+            busco_out_filename = busco_database;
+        }
+        busco_outpath = PATHS(dataDir, busco_out_filename);
+
+        if (pFileSystem->file_exists(busco_outpath)) {
+            FS_dprint("BUSCO database already exists at: " + busco_outpath);
+            log_msg << "Database skipped, already exists at: " << busco_outpath << std::endl;
+
+        } else {
+            // Database does not exist, download it
+            BuscoDatabase buscoDatabase = BuscoDatabase(pFileSystem);
+            busco_db_err = buscoDatabase.download_database(busco_database, busco_outpath);
+
+            if (busco_db_err == BuscoDatabase::ERR_DATA_OK) {
+                FS_dprint("Success! BUSCO database downloaded to: " + busco_outpath);
+                log_msg << "Database written to: " << busco_outpath << std::endl;
+            } else {
+                // Fatal if database download fails
+                throw ExceptionHandler(buscoDatabase.print_error_log(), ERR_ENTAP_INIT_BUSCO_GENERIC);
+            }
+        }
+
+        std::string temp = log_msg.str();
+        pFileSystem->print_stats(temp);
     }
 }

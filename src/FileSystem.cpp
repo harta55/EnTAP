@@ -151,7 +151,7 @@ void FS_dprint(const std::string &msg) {
  * =====================================================================
  */
 void FileSystem::print_stats(std::string &msg) {
-    std::ofstream log_file(LOG_FILE_PATH, std::ios::out | std::ios::app);
+    std::ofstream log_file(mLogFilePath, std::ios::out | std::ios::app);
     log_file << msg << std::endl;
     close_file(log_file);
 }
@@ -579,9 +579,9 @@ void FileSystem::init_log() {
 
     // Initialize globals
     DEBUG_FILE_PATH = PATHS(mRootPath, debug_file_name);
-    LOG_FILE_PATH   = PATHS(mRootPath, log_file_name);
+    mLogFilePath   = PATHS(mRootPath, log_file_name);
     delete_file(DEBUG_FILE_PATH);
-    delete_file(LOG_FILE_PATH);
+    delete_file(mLogFilePath);
     FS_dprint("Start - EnTAP");
 }
 
@@ -693,8 +693,9 @@ std::string FileSystem::get_filename(std::string &path, bool with_extension) {
         return file_name;
     }
 #else
-    unsigned long dir_pos = path.find_last_of('/');
-    unsigned long ext_pos = path.find_last_of('.');
+    STR_REPLACE(path, '\\', '/');
+    uint64 dir_pos = path.find_last_of('/');
+    uint64 ext_pos = path.find_last_of('.');
 
     if (dir_pos == std::string::npos && ext_pos == std::string::npos) return path;
     if (ext_pos == std::string::npos) return path.substr(dir_pos + 1);
@@ -725,6 +726,7 @@ std::string FileSystem::get_temp_outdir() {
 
 bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) {
     TerminalData terminalData;
+    clear_error();
 
     terminalData.print_files = false;
     terminalData.base_std_path = "";
@@ -780,6 +782,7 @@ bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) 
 
 bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES type) {
     TerminalData terminalData;
+    clear_error();
 
     terminalData.print_files = false;
     terminalData.base_std_path = "";
@@ -982,4 +985,12 @@ std::string FileSystem::get_exe_dir() {
         return "";
     }
     return "";
+}
+
+bool FileSystem::is_url(std::string &url) {
+    return ((url.find("http") != std::string::npos && (url.find("www") != std::string::npos)));
+}
+
+void FileSystem::clear_error() {
+    mErrorMsg = "";
 }

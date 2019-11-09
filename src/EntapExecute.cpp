@@ -356,7 +356,7 @@ namespace entapExecute {
      * ======================================================================
      */
     bool valid_state(ExecuteStates current_state) {
-        return (current_state >= EXPRESSION_FILTERING && current_state <= EXIT);
+        return (current_state > INIT && current_state <= EXIT);
     }
 
 

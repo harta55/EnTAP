@@ -40,6 +40,7 @@
 #include "similarity_search/ModDiamond.h"
 #include "FrameSelection.h"
 #include "frame_selection/ModTransdecoder.h"
+#include "database/BuscoDatabase.h"
 //**************************************************************
 
 //*********************** Defines ******************************
@@ -286,8 +287,16 @@
                             "multiple --level flags\n"                                  \
                             "Example: --level 0 --level 3 --level 1"
 
-
-
+/* Transriptome Evaluation */
+#define CMD_BUSCO_EXE      "busco-exe"
+#define DESC_BUSCO_EXE     "Specify the execution method of BUSCO."
+#define EX_BUSCO_EXE       "Example: run_BUSCO.py"
+#define CMD_BUSCO_DATABASE "busco-database"
+#define DESC_BUSCO_DATABASE "Specify the BUSCO/OrthoDB databases you would like to download. They \n"  \
+                            "can be specified by their type (eukaryota) or through a direct link to \n"\
+                            "the database (http://www...)."
+#define CMD_BUSCO_EVAL     "busco-eval"
+#define DESC_BUSCO_EVAL    "Minimum E-Value for BUSCO related BLAST searches."
 
 
 #define INI_FRAME_GENEMARK "frame_selection-genemarks-t"
@@ -302,6 +311,8 @@
 #define INI_ONTOLOGY "ontology"
 #define INI_ONT_EGGNOG "ontology-eggnog"
 #define INI_ENTAP "entap"
+#define INI_TRANSC_EVAL "transcriptome-eval"
+#define INI_TRANSC_BUSCO "transcriptome-busco"
 
 #define ENTAP_INI_NULL_STR_VECT vect_str_t()
 #define ENTAP_INI_NULL_INT_VECT vect_uint16_t()
@@ -314,6 +325,7 @@
 //**************************************************************
 const std::string UserInput::ENTAP_INI_FILENAME         = "entap_config.ini";
 const fp64   UserInput::DEFAULT_E_VALUE                 = 1e-5;
+const fp64   UserInput::DEFAULT_BUSCO_E_VALUE           = 1e-5;
 const uint16 UserInput::DEFAULT_THREADS                 = 1;
 const fp64   UserInput::RSEM_FPKM_DEFAULT               = 0.5;
 const fp64   UserInput::DEFAULT_QCOVERAGE               = 50.0;
@@ -363,6 +375,7 @@ const std::string UserInput::DEFAULT_ENTAP_DB_SQL_INI    = PATHS(FileSystem::get
 const std::string UserInput::DEFAULT_EGG_SQL_DB_INI      = PATHS(FileSystem::get_exe_dir(), EGG_SQL_DB_DEFAULT);
 const std::string UserInput::DEFAULT_EGG_DMND_DB_INI     = PATHS(FileSystem::get_exe_dir(), EGG_DMND_DEFAULT);
 const std::string UserInput::DEFAULT_ENTAP_GRAPH_INI     = PATHS(FileSystem::get_exe_dir(), GRAPH_SCRIPT_DEF);
+const std::string UserInput::DEFAULT_BUSCO_EXE           = "run_BUSCO.py";
 
 // WARNING must match ENTAP_INPUT_FLAGS enum in UserInput.h
 // If no default value exists, must use boost::any()
@@ -371,7 +384,7 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {ENTAP_INI_NULL,ENTAP_INI_NULL           ,ENTAP_INI_NULL  ,ENTAP_INI_NULL             , ENTAP_INI_NULL  ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
 
 /* General Input Commands */
-        {INI_GENERAL   ,CMD_OUTPUT_DIR           ,ENTAP_INI_NULL  ,DESC_OUTPUT_FORMAT         ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_OUT_DIR        ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_OUTPUT_DIR           ,ENTAP_INI_NULL  ,DESC_OUTPUT_DIR            ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_OUT_DIR        ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_CONFIG               ,ENTAP_INI_NULL  ,DESC_CONFIG                ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_RUN_PROTEIN          ,ENTAP_INI_NULL  ,DESC_RUN_PROTEIN           ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_RUN_NUCLEO           ,ENTAP_INI_NULL  ,DESC_RUN_NUCLEO            ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
@@ -439,6 +452,12 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
 /* Ontology - InterPro Commands */
         {INI_ONT_INTERPRO,CMD_INTERPRO_EXE       ,ENTAP_INI_NULL  ,DESC_INTERPRO_EXE          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,INTERPRO_DEF_EXE       ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
         {INI_ONT_INTERPRO,CMD_INTER_DATA         ,ENTAP_INI_NULL  ,DESC_INTER_DATA            ,EX_INTER_DATA    ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+
+/* Transcriptome Eval Commands - BUSCO */
+        {INI_TRANSC_BUSCO,CMD_BUSCO_EXE          ,ENTAP_INI_NULL  ,DESC_BUSCO_EXE             ,EX_BUSCO_EXE     ,ENT_INI_VAR_STRING      ,DEFAULT_BUSCO_EXE      ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_TRANSC_BUSCO,CMD_BUSCO_DATABASE     ,ENTAP_INI_NULL  ,DESC_BUSCO_DATABASE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_TRANSC_BUSCO,CMD_BUSCO_EVAL         ,ENTAP_INI_NULL  ,DESC_BUSCO_EVAL            ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_BUSCO_E_VALUE  ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+
 
         {ENTAP_INI_NULL,ENTAP_INI_NULL           ,ENTAP_INI_NULL  ,ENTAP_INI_NULL             , ENTAP_INI_NULL  ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL}
 };
@@ -772,6 +791,7 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key) {
  *
  * @param argc          - User input size
  * @param argv          - User input
+ *
  * @return              - None
  * ======================================================================
  */
@@ -1173,8 +1193,18 @@ bool UserInput::verify_user_input() {
             }
 
         } else {
-            // Must be config, nothing special yet
-            ;
+            // Must be config
+
+            // Verify BUSCO database if the user has input it
+            if (has_input(INPUT_FLAG_BUSCO_DATABASE)) {
+                ent_input_str_t busco_db = get_user_input<ent_input_str_t>(INPUT_FLAG_BUSCO_DATABASE);
+                BuscoDatabase buscoDatabase = BuscoDatabase(mpFileSystem);
+                std::string temp;
+                if (!buscoDatabase.valid_database(busco_db, temp)) {
+                    throw ExceptionHandler("Invalid BUSCO database entered must be a URL or valid database name: " + busco_db,
+                                           ERR_ENTAP_INPUT_PARSE);
+                }
+            }
         }
 
         // Verify software path for both CONFIG and EXECUTION
@@ -1468,17 +1498,18 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
     ent_input_str_t interpro_exe;
     ent_input_multi_int_t ontology_flags;
 
-    dmnd_exe = get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
-    egg_db_dmnd = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
-    egg_db_sql  = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
-    interpro_exe= get_user_input<ent_input_str_t>(INPUT_FLAG_INTERPRO_EXE);
+    dmnd_exe     = get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
+    egg_db_dmnd  = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
+    egg_db_sql   = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
+    interpro_exe = get_user_input<ent_input_str_t>(INPUT_FLAG_INTERPRO_EXE);
 
-    ontology_flags =get_user_input<ent_input_multi_int_t>(INPUT_FLAG_ONTOLOGY);
+    ontology_flags = get_user_input<ent_input_multi_int_t>(INPUT_FLAG_ONTOLOGY);
 
     if (state == DEFAULT_STATE) {
 
         execute |= SIMILARITY_SEARCH;
         execute |= GENE_ONTOLOGY;
+
     }
     FS_dprint("Verifying software...");
 
@@ -1534,7 +1565,7 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
         // Test run DIAMOND if user input databases
         if (has_input(INPUT_FLAG_DATABASE)) {
             if (!ModDiamond::is_executable(dmnd_exe)) {
-                throw ExceptionHandler("Databases have been selected for indexing. A test run of DIAMOND has failed!",
+                throw ExceptionHandler("Databases have been selected for indexing. The test run of DIAMOND has failed!",
                                        ERR_ENTAP_INPUT_PARSE);
             }
         }

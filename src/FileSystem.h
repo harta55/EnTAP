@@ -129,6 +129,7 @@ public:
 
     bool download_ftp_file(std::string,std::string&);
     bool decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES);
+    bool is_url(std::string &url);
 
     void format_stat_stream(std::stringstream &stream, std::string title);
 
@@ -158,6 +159,7 @@ private:
     void init_log();
     void set_error(std::string err_msg);
     void set_executable_dir();
+    void clear_error();
     //**********************************************************
 
     //**************** Private Const Variables *****************
@@ -174,6 +176,7 @@ private:
     //**********************************************************
 
     //****************** Private Variables *********************
+    std::string mLogFilePath;
     std::string mRootPath;        // Root EnTAP output directory
     std::string mFinalOutpath;    // Path to final files after entap has finished
     std::string mTrancriptomeDir; // Absolute path to EnTAP transcriptome directory

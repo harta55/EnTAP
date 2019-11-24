@@ -66,7 +66,6 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,EntapDataPtrs& entap_d
     _threads       = _pUserInput->get_supported_threads();
     _exepath       = RSEM_EXE_DIR;
     _outpath       = _pFileSystem->get_root_path();
-    _trim          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_TRIM);
     _overwrite     = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
     _issingle      = _pUserInput->has_input(_pUserInput->INPUT_FLAG_SINGLE_END);
     if (_pUserInput->has_input(_pUserInput->INPUT_FLAG_ALIGN)) { // Will be true

@@ -85,7 +85,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     _pUserInput  = userinput;
     _pFileSystem = filesystem;
 
-    _trim          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_TRIM);
+    _no_trim          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_NO_TRIM);
     is_complete    = _pUserInput->has_input(_pUserInput->INPUT_FLAG_COMPLETE);
 
     if (!_pFileSystem->file_exists(input_file)) {
@@ -391,15 +391,15 @@ std::string QueryData::trim_sequence_header(std::string &header, std::string lin
     if (line.find('>') != std::string::npos) {
         pos = (int16) line.find('>');
     } else pos = -1;
-    if (_trim) {
-        if (line.find(' ') != std::string::npos) {
-            header = line.substr(pos+1, line.find(' ')-1);
-        } else header = line.substr(pos+1);
-        sequence = ">" + header + "\n";
-    } else {
+    if (_no_trim) {
         line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
         header = line.substr(pos+1);
         sequence = line + "\n";
+    } else {
+        if (line.find(' ') != std::string::npos) {
+            header = line.substr(pos+1, line.find(' ')-(pos+1));
+        } else header = line.substr(pos+1);
+        sequence = ">" + header + "\n";
     }
     return sequence;
 }

@@ -118,12 +118,15 @@
                             "or through a specific taxon (homo)\n"                      \
                             "If your taxon is more than one word just replace the"      \
                             "spaces with underscores (_)"
-#define DESC_TRIM           "Trim the input sequences to the first space\n"             \
-                            "This may help with readability later on with TSV files\n"  \
+#define DESC_NO_TRIM        "By default, EnTAP will trim the input sequences to the first space.\n"             \
+                            "This helps with compatibility across different software\n"  \
                             "Example:\n"                                                \
                             ">TRINITY_231.1 Protein Information\n"                      \
                             "will become...\n"                                          \
-                            ">TRINITY_231.1\n"
+                            ">TRINITY_231.1\n"                                          \
+                            "Use this command if you would like to instead remove all\n"\
+                            "spaces in your sequence headers to retain information. \n" \
+                            "Warning: this may cause issues recognizing headers from your BAM or SAM files."
 #define DESC_QCOVERAGE      "Select the minimum query coverage to be allowed during"    \
                             "similarity searching"
 #define DESC_TCOVERAGE      "Select the minimum target coverage to be allowed during"   \
@@ -248,7 +251,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
                 ((INPUT_FLAG_ALIGN + ",a").c_str(), boostPO::value<std::string>(),DESC_ALIGN_FILE)
                 ((INPUT_FLAG_CONTAM + ",c").c_str(),
                  boostPO::value<std::vector<std::string>>()->multitoken(),DESC_CONTAMINANT)
-                (INPUT_FLAG_TRIM.c_str(), DESC_TRIM)
+                (INPUT_FLAG_NO_TRIM.c_str(), DESC_NO_TRIM)
                 (INPUT_FLAG_QCOVERAGE.c_str(),
                  boostPO::value<fp32>()->default_value(DEFAULT_QCOVERAGE), DESC_QCOVERAGE)
                 (INPUT_FLAG_EXE_PATH.c_str(), boostPO::value<std::string>(), DESC_EXE_PATHS)
@@ -318,7 +321,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         TCLAP::SwitchArg argProtein("", INPUT_FLAG_RUNPROTEIN, DESC_RUN_PROTEIN, cmd, false);   // can xor these
         TCLAP::SwitchArg argNucleo("", INPUT_FLAG_RUNNUCLEOTIDE, DESC_RUN_NUCLEO, cmd, false);
         TCLAP::SwitchArg argGraph("", INPUT_FLAG_GRAPH, DESC_GRAPHING, cmd, false);
-        TCLAP::SwitchArg argTrim("", INPUT_FLAG_TRIM, DESC_TRIM, cmd, false);
+        TCLAP::SwitchArg argTrim("", INPUT_FLAG_NO_TRIM, DESC_NO_TRIM, cmd, false);
         TCLAP::SwitchArg argGenerate("", INPUT_FLAG_GENERATE, DESC_DATA_GENERATE, cmd, false);
         TCLAP::SwitchArg argComplete("", INPUT_FLAG_COMPLETE, DESC_COMPLET_PROT, cmd, false);
         TCLAP::SwitchArg argNoCheck("", INPUT_FLAG_NOCHECK, DESC_NOCHECK, cmd, false);
@@ -363,7 +366,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         if (argProtein.isSet())_user_inputs.emplace(INPUT_FLAG_RUNPROTEIN, true);
         if (argNucleo.isSet()) _user_inputs.emplace(INPUT_FLAG_RUNNUCLEOTIDE, true);
         if (argGraph.isSet()) _user_inputs.emplace(INPUT_FLAG_GRAPH, true);
-        if (argTrim.isSet()) _user_inputs.emplace(INPUT_FLAG_TRIM, true);
+        if (argTrim.isSet()) _user_inputs.emplace(INPUT_FLAG_NO_TRIM, true);
         if (argGenerate.isSet()) _user_inputs.emplace(INPUT_FLAG_GENERATE, true);
         if (argComplete.isSet()) _user_inputs.emplace(INPUT_FLAG_COMPLETE, true);
         if (argNoCheck.isSet()) _user_inputs.emplace(INPUT_FLAG_NOCHECK, true);

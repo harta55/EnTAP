@@ -118,7 +118,7 @@ private:
     const std::string OUT_ANNOTATED_PROT   = "final_annotated.faa";
 
     QUERY_MAP_T  *_pSEQUENCES;
-    bool         _trim;
+    bool         _no_trim;
     uint32       _total_sequences;          // Original sequence number
     uint32       _data_flags;
     uint64       _start_nuc_len;            // Starting total len (nucleotide)

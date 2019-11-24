@@ -128,7 +128,7 @@ public:
     const std::string INPUT_FLAG_TRANSCRIPTOME = "input";
     const std::string INPUT_FLAG_DATABASE      = "database";
     const std::string INPUT_FLAG_GRAPH         = "graph";
-    const std::string INPUT_FLAG_TRIM          = "trim";
+    const std::string INPUT_FLAG_NO_TRIM       = "no-trim";
     const std::string INPUT_FLAG_STATE         = "state";
     const std::string INPUT_FLAG_SINGLE_END    = "single-end";
     const std::string INPUT_FLAG_THREADS       = "threads";

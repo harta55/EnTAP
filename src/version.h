@@ -32,10 +32,10 @@
 #define LICENSE_YEAR_START      2017
 #define LICENSE_YEAR_END        2019
 
-// When changing Version ensure the EnTAP Database version/FTP is up-to-date (EntapDatabase.h)
+// When changing Version ensure the EnTAP Database version/FTP is up-to-date if changed (EntapDatabase.h)
 #define MAJOR_VERSION     0
 #define MINOR_VERSION     9
-#define BUILD_VERSION     0
+#define BUILD_VERSION     1
 
 #define TO_STR2(x)             #x
 #define TO_STR(x)              TO_STR2(x)

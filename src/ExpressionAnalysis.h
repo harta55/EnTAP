@@ -56,7 +56,6 @@ private:
     std::string         _outpath;
     std::string         _rsem_dir;
     bool                _issingle;
-    bool                _trim;
     bool                _overwrite;
     short               _software_flag;
     int                 _threads;

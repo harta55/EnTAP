@@ -212,7 +212,10 @@ void ModRSEM::parse() {
         _pQUERY_DATA->trim_sequence_header(geneid,geneid);
         QUERY_MAP_T::iterator it = MAP->find(geneid);
         if (it == MAP->end()) {
-            throw ExceptionHandler("Unable to find sequence: " + geneid,
+            throw ExceptionHandler("Unable to find sequence: " + geneid + " there may be a discrepancy between"
+                                                                          " sequence headers in your transcriptome and "
+                                                                          "headers in your BAM/SAM file. Try trimming"
+                                                                          " your sequence headers to the first space and re-running.",
                                    ERR_ENTAP_RUN_RSEM_EXPRESSION_PARSE);
         }
         QuerySequence *querySequence = it->second;

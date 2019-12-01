@@ -49,7 +49,9 @@ void QueryAlignment::set_compare_overall_alignment(bool val) {
 
 void QueryAlignment::get_all_header_data(std::string *headers) {
     for (auto &pair : ALIGN_OUTPUT_MAP) {
-        headers[pair.first] = *pair.second;
+        if (pair.second != nullptr) {
+            headers[pair.first] = *pair.second;
+        }
     }
 }
 
@@ -153,9 +155,9 @@ SimSearchAlignment::SimSearchAlignment(ExecuteStates state, uint16 software, std
             {ENTAP_HEADER_SIM_INFORM          , &_sim_search_results.yes_no_inform},
             {ENTAP_HEADER_SIM_UNI_DATA_XREF   , &_sim_search_results.uniprot_info.database_x_refs},
             {ENTAP_HEADER_SIM_UNI_COMMENTS    , &_sim_search_results.uniprot_info.comments},
-//            {ENTAP_HEADER_SIM_UNI_GO_CELL     , &_sim_search_results.uniprot_info.go_terms.at(GO_CELLULAR_FLAG)},
-//            {ENTAP_HEADER_SIM_UNI_GO_BIO      , &_sim_search_results.uniprot_info.go_terms.at(GO_BIOLOGICAL_FLAG)},
-//            {ENTAP_HEADER_SIM_UNI_GO_MOLE     , &_sim_search_results.uniprot_info.go_terms.at(GO_MOLECULAR_FLAG)}
+            {ENTAP_HEADER_SIM_UNI_GO_CELL     , nullptr},
+            {ENTAP_HEADER_SIM_UNI_GO_BIO      , nullptr},
+            {ENTAP_HEADER_SIM_UNI_GO_MOLE     , nullptr}
     };
 }
 

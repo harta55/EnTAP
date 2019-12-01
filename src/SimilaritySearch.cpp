@@ -86,6 +86,8 @@ void SimilaritySearch::execute() {
             ptr->execute();
         }
         ptr->parse();
+        ptr->set_success_flags();
+
         ptr.reset();
     } catch (const ExceptionHandler &e) {
         ptr.reset();

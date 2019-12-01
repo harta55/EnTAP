@@ -47,8 +47,8 @@ public:
 
         uint16              threads;
         fp64                eval;
-        fp32                qcoverage;      // query coverage
-        fp32                tcoverage;      // target coverage
+        fp64                qcoverage;      // query coverage
+        fp64                tcoverage;      // target coverage
         uint16              top_num;        // default = 3
         uint16              output_flags;    // currently unused
     };
@@ -58,11 +58,13 @@ public:
                              EntapDataPtrs &entap_data,
                              std::string mod_name,
                              std::string &exe,
+                             std::vector<ENTAP_HEADERS> &module_headers,
                              vect_str_t &databases);
     ~AbstractSimilaritySearch() = default;
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
+    virtual void set_success_flags() override ;
 
     virtual bool run_blast(SimSearchCmd *cmd, bool use_defaults) = 0;
 

@@ -86,6 +86,7 @@ private:
     const std::string GENEMARK_LOG_FILE             = "gms.log";
     const std::string GENEMARK_HMM_FILE             = "GeneMark_hmm.mod";
     const std::string GENEMARK_STD_OUT              = "genemark_run";
+    static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
     //**********************************************************
 

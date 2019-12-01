@@ -80,7 +80,6 @@ public:
     void set_is_uniprot(bool val);
 
     // Header routines
-    void header_set_uniprot(bool val);
     void header_set(ENTAP_HEADERS header, bool val);
 
 

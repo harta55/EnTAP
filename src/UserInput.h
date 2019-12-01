@@ -77,6 +77,7 @@ typedef enum {
     INPUT_FLAG_ENTAP_DB_BIN,
     INPUT_FLAG_ENTAP_DB_SQL,
     INPUT_FLAG_ENTAP_GRAPH,
+    INPUT_FLAG_ENTAP_HEADERS,
 
     /* Configuration Commands */
     INPUT_FLAG_DATABASE_GENERATE,
@@ -177,7 +178,8 @@ private:
 
     typedef enum {
         ENT_COMMAND_LINE,
-        ENT_INI_FILE
+        ENT_INI_FILE,
+        ENT_INPUT_FUTURE    // Flag for a future feature, will not be in other input methods yet
     } ENT_INPUT_TYPES;
 
     // WARNING order must match VAR_TYPE_STR
@@ -223,6 +225,7 @@ private:
         CONTAMINANT
     } SPECIES_FLAGS;
 
+    void parse_future_inputs();
     void parse_arguments_tclap(int, const char **);
     void print_user_input();
     EntapINIEntry* check_ini_key(std::string &);

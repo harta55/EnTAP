@@ -405,6 +405,7 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_ENTAP     ,CMD_ENTAP_DB_BIN         ,ENTAP_INI_NULL  ,DESC_ENTAP_DB_BIN          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENTAP_DB_BIN_INI, ENT_INI_FILE        ,ENTAP_INI_NULL_VAL},
         {INI_ENTAP     ,CMD_ENTAP_DB_SQL         ,ENTAP_INI_NULL  ,DESC_ENTAP_DB_SQL          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENTAP_DB_SQL_INI, ENT_INI_FILE        ,ENTAP_INI_NULL_VAL},
         {INI_ENTAP     ,CMD_ENTAP_GRAPH_PATH     ,ENTAP_INI_NULL  ,DESC_ENTAP_GRAPH_PATH      ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENTAP_GRAPH_INI , ENT_INI_FILE        ,ENTAP_INI_NULL_VAL},
+        {INI_ENTAP     ,ENTAP_INI_NULL           ,ENTAP_INI_NULL  ,ENTAP_INI_NULL             ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT,ENTAP_INI_NULL_VAL      , ENT_INPUT_FUTURE    ,ENTAP_INI_NULL_VAL},
 
 /* Configuration Commands */
         {INI_CONFIG    ,CMD_DATA_GENERATE        ,ENTAP_INI_NULL  ,DESC_DATA_GENERATE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
@@ -494,10 +495,51 @@ UserInput::UserInput(int argc, const char** argv, FileSystem *fileSystem) {
         mIniFilePath = ini_file_path;
         parse_ini(mIniFilePath);
     }
+    parse_future_inputs();
 }
 
 UserInput::~UserInput() {
     FS_dprint("Killing object - UserInput");
+}
+
+/**
+ * ======================================================================
+ * Function void parse_future_inputs()
+ *
+ * Description          - Manages parsing and verifying of future inputs
+ *                        that have defaults right now until they are used
+ *                        as an actual input
+ *                      - Will simply add these to user input database
+ *
+ * Notes                - Entry
+ *
+ *
+ * @return              - None
+ * ======================================================================
+ */
+void UserInput::parse_future_inputs() {
+    ENTAP_INPUT_FLAGS input_flag;
+
+    for (uint16 i=INPUT_FLAG_UNUSED; i <INPUT_FLAG_MAX; i++) {
+        if (mUserInputs[i].input_type != ENT_INPUT_FUTURE) continue;
+
+        input_flag = static_cast<ENTAP_INPUT_FLAGS>(i);
+
+        switch (input_flag) {
+
+            case INPUT_FLAG_ENTAP_HEADERS: {
+                std::vector<ENTAP_HEADERS> header_vect(ENTAP_HEADER_COUNT-1);
+                uint32 n = ENTAP_HEADER_UNUSED;
+                std::generate(header_vect.begin(), header_vect.end(),
+                              [&] { return static_cast<ENTAP_HEADERS>(++n); });
+                mUserInputs[i].parsed_value = header_vect;
+                break;
+            }
+
+            default:
+                break;
+        }
+    }
 }
 
 /**
@@ -1300,6 +1342,7 @@ void UserInput::print_user_input() {
     std::time_t         time;
     std::chrono::time_point<std::chrono::system_clock> start_time;
 
+    FS_dprint("Printing user input...");
     start_time = std::chrono::system_clock::now();
     time = std::chrono::system_clock::to_time_t(start_time);
     mIsConfig ? config_text = "Configuration" : config_text = "Execution";
@@ -1318,7 +1361,7 @@ void UserInput::print_user_input() {
 
         const auto* it = &mUserInputs[i];
 
-        if (it == nullptr) continue;
+        if (it == nullptr || (it->input_type == ENT_INPUT_FUTURE)) continue;
 
         key = it->input;
         input_flag = static_cast<ENTAP_INPUT_FLAGS>(i);

@@ -27,6 +27,9 @@
 
 #include "ModTransdecoder.h"
 
+std::vector<ENTAP_HEADERS> ModTransdecoder::DEFAULT_HEADERS = {
+        ENTAP_HEADER_FRAME
+};
 
 /**
  * ======================================================================
@@ -51,7 +54,7 @@
  */
 ModTransdecoder::ModTransdecoder(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
                                  std::string &long_orfs_exe, std::string &predict_exe) :
-    AbstractFrame(execution_stage_path, in_hits, entap_data, "TransDecoder", long_orfs_exe){
+    AbstractFrame(execution_stage_path, in_hits, entap_data, "TransDecoder", long_orfs_exe, DEFAULT_HEADERS){
     std::string temp_filename;
 
     FS_dprint("Spawn Object - ModTransdecoder");

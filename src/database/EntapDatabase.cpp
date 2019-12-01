@@ -1301,15 +1301,14 @@ bool EntapDatabase::set_database_versions(EntapDatabase::DATABASE_TYPE type) {
 bool EntapDatabase::is_uniprot_entry(std::string &sseqid, UniprotEntry &entry) {
     std::string accession;
 
-    get_uniprot_accession(sseqid);
+    accession = get_uniprot_accession(sseqid);
     entry = get_uniprot_entry(accession);
     return !entry.is_empty();
 }
 
-void EntapDatabase::get_uniprot_accession(std::string &sseqid) {
+std::string EntapDatabase::get_uniprot_accession(std::string &sseqid) {
     std::string accession;  // UniPro accession number
 
     accession = sseqid.substr(sseqid.rfind('|',sseqid.length())+1);     // Q9FJZ9
-    sseqid = accession;
+    return accession;
 }
-

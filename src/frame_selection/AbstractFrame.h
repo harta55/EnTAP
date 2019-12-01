@@ -55,12 +55,15 @@ class AbstractFrame : public EntapModule {
 public:
 
     AbstractFrame(std::string &execution_stage_path, std::string &in_hits,
-                  EntapDataPtrs &entap_data, std::string module_name, std::string &exe);
+                  EntapDataPtrs &entap_data, std::string module_name, std::string &exe,
+                  std::vector<ENTAP_HEADERS> &module_headers);
 
     virtual ~AbstractFrame() = default;
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
+
+    virtual void set_success_flags() override ;
 
     std::string get_final_faa();
 
@@ -91,7 +94,6 @@ protected:
 
 
     void frame_calculate_statistics();
-
 };
 
 

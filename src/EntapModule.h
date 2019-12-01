@@ -44,11 +44,13 @@ public:
 
 
     EntapModule(std::string &execution_stage_path, std::string &in_hits,
-                EntapDataPtrs &entap_data, std::string module_name, std::string &exe);
+                EntapDataPtrs &entap_data, std::string module_name, std::string &exe,
+                std::vector<ENTAP_HEADERS> &module_headers);
     virtual ~EntapModule() = default;
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
+    virtual void set_success_flags() = 0;
 
 protected:
 
@@ -72,6 +74,7 @@ protected:
     const uint16 COUNT_TOP_GO                  = 10;
     const uint16 COUNT_TOP_SPECIES             = 10;
 
+    static std::vector<ENTAP_HEADERS>   mModuleHeaders;
     bool               mBlastp;                 // TRUE/FALSE whether user has input blastp
     bool               mOverwrite;              // Indicates whether user would like to delete previous execution files for module
     int                mThreads;                // Number of threads specified for execution from user
@@ -79,13 +82,14 @@ protected:
     std::string        mOutpath;
     std::string        mInputTranscriptome;
     std::string        mProcDir;                   // "processed" directory, or data analyzed
-    std::string        mFigureDir;
-    std::string        mModOutDir;
+    std::string        mFigureDir;                 // "figure" directory to place any generated figures
+    std::string        mModOutDir;                 // Root out directory for the EnTAP module we are dealing with
     std::string        mOverallResultsDir;
     std::string        mExePath;
     std::string        mTranscriptomeShortname;       // filename of transcriptome file for file name purposes
     ExecuteStates      mExecutionState;
     std::vector<uint16> mGoLevels;
+    std::vector<ENTAP_HEADERS> mEntapHeaders;
     GraphingManager    *mpGraphingManager;
     QueryData          *mpQueryData;
     UserInput          *mpUserInput;
@@ -94,6 +98,8 @@ protected:
     std::vector<FileSystem::ENT_FILE_TYPES> mAlignmentFileTypes; // may be overriden by module
 
     go_format_t EM_parse_go_list(std::string list, EntapDatabase* database,char delim);
+    void enable_headers();
+    virtual std::vector<ENTAP_HEADERS>  &moduleHeaders() { return mModuleHeaders; }
 };
 
 

@@ -56,7 +56,6 @@ public:
     //******************* Public Functions *********************
     ModDiamond(std::string &out, std::string &fasta_path,EntapDataPtrs &entap_data,
                 std::string &exe, vect_str_t &databases);
-    ModDiamond(std::string& execution_path);
     ~ModDiamond() override = default;
 
     // ModEntap overrides
@@ -69,11 +68,6 @@ public:
     bool run_blast(SimSearchCmd *cmd, bool use_defaults) override;
     //**********************************************************
 
-    //******************* Public Variables *********************
-    static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
-    //**********************************************************
-
-
 private:
     //****************** Private Functions *********************
     void calculate_best_stats(bool is_final, std::string database_path="");
@@ -81,6 +75,8 @@ private:
 
     //**************** Private Const Variables *****************
     static constexpr int DMND_COL_NUMBER = 14;
+    static std::vector<ENTAP_HEADERS> UNIPROT_HEADERS;
+    static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
     // Graphing constants
     const uint8 GRAPH_SUM_FLAG                                   = 2;
@@ -115,6 +111,8 @@ private:
     const std::string CMD_TOP_ALIGNMENTS   = "--top";             // Only keep top alignments (integer)
     const std::string CMD_OUTPUT_FORMAT    = "-f";
     //**********************************************************
+
+    void set_uniprot_headers();
 };
 
 

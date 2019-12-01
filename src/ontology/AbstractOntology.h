@@ -35,14 +35,15 @@
 
 class AbstractOntology : public EntapModule {
 public:
-    AbstractOntology(std::string &in_hits,
-                     std::string &ont_out,
-                     EntapDataPtrs &entap_data,
-                     std::string mod_name, std::string &exe);
+    AbstractOntology(std::string &in_hits, std::string &ont_out,
+                     EntapDataPtrs &entap_data, std::string mod_name,
+                     std::string &exe, std::vector<ENTAP_HEADERS> &module_headers);
     ~AbstractOntology() = default;
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
+
+    virtual void set_success_flags() override ;
 };
 
 

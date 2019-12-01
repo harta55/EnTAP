@@ -49,8 +49,9 @@
  * ======================================================================
  */
 AbstractFrame::AbstractFrame(std::string &execution_stage_path, std::string &in_hits,
-                             EntapDataPtrs &entap_data, std::string module_name, std::string &exe)
-: EntapModule(execution_stage_path, in_hits, entap_data, module_name, exe) {
+                             EntapDataPtrs &entap_data, std::string module_name, std::string &exe,
+                             std::vector<ENTAP_HEADERS> &module_headers)
+: EntapModule(execution_stage_path, in_hits, entap_data, module_name, exe, module_headers) {
 
     mExecutionState = FRAME_SELECTION;
 }
@@ -321,5 +322,10 @@ void AbstractFrame::frame_calculate_statistics() {
  */
 std::string AbstractFrame::get_final_faa() {
     return mFinalFaaPath;
+}
+
+void AbstractFrame::set_success_flags() {
+    mpQueryData->set_is_protein_data(true);
+    mpQueryData->set_is_success_frame_selection(true);
 }
 

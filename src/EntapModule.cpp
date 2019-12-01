@@ -26,6 +26,11 @@
 */
 
 #include "EntapModule.h"
+#include "QueryData.h"
+
+std::vector<ENTAP_HEADERS> EntapModule::mModuleHeaders = {
+        ENTAP_HEADER_QUERY
+};
 
 /**
  * ======================================================================
@@ -41,7 +46,7 @@
  * =====================================================================
  */
 EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
-                         std::string module_name, std::string &exe_path) {
+                         std::string module_name, std::string &exe_path, std::vector<ENTAP_HEADERS> &module_headers) {
 
     mOutpath = execution_stage_path;       // Should already be created
     mInputTranscriptome  = in_hits;
@@ -52,12 +57,14 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mpFileSystem      = entap_data.mpFileSystem;
     mpUserInput       = entap_data.mpUserInput;
     mpEntapDatabase   = entap_data.mpEntapDatabase;
+    mModuleHeaders    = module_headers;
 
     mThreads         = mpUserInput->get_supported_threads();
     mBlastp          = mpUserInput->has_input(INPUT_FLAG_RUNPROTEIN);
     mOverwrite       = mpUserInput->has_input(INPUT_FLAG_OVERWRITE);
     mAlignmentFileTypes = mpUserInput->get_user_output_types();   // may be overridden at lower level
     mGoLevels        = mpUserInput->get_user_input<ent_input_multi_int_t >(INPUT_FLAG_GO_LEVELS);
+    mEntapHeaders    = mpUserInput->get_user_input<std::vector<ENTAP_HEADERS>>(INPUT_FLAG_ENTAP_HEADERS);
 
     mTranscriptomeShortname = mpFileSystem->get_filename(mInputTranscriptome, false);
 
@@ -78,6 +85,8 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mpFileSystem->create_dir(mModOutDir);
     mpFileSystem->create_dir(mFigureDir);
     mpFileSystem->create_dir(mProcDir);
+
+    enable_headers();
 }
 
 
@@ -96,4 +105,10 @@ go_format_t EntapModule::EM_parse_go_list(std::string list, EntapDatabase* datab
                                              "(L=" + term_info.level + ")");
     }
     return output;
+}
+
+void EntapModule::enable_headers() {
+    for (auto &header : mModuleHeaders) {
+        mpQueryData->header_set(header, true);
+    }
 }

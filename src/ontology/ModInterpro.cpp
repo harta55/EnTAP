@@ -44,7 +44,7 @@ using boost::property_tree::ptree;
 
 //**************************************************************
 
-const std::vector<ENTAP_HEADERS> ModInterpro::DEFAULT_HEADERS = {
+std::vector<ENTAP_HEADERS> ModInterpro::DEFAULT_HEADERS = {
         ENTAP_HEADER_ONT_INTER_GO_BIO,
         ENTAP_HEADER_ONT_INTER_GO_CELL,
         ENTAP_HEADER_ONT_INTER_GO_MOLE,
@@ -490,13 +490,9 @@ bool ModInterpro::valid_input(UserInput* userInput) {
     return true;
 }
 
-std::string ModInterpro::get_default() {
-    return INTERPRO_DEFAULT;
-}
-
-ModInterpro::ModInterpro(std::string &ont, std::string &in,
-                         EntapDataPtrs& entap_data, std::string &exe, vect_str_t databases)
-    : AbstractOntology(in, ont, entap_data, "InterProScan", exe){
+ModInterpro::ModInterpro(std::string &ont, std::string &in, EntapDataPtrs& entap_data,
+                         std::string &exe, vect_str_t databases)
+    : AbstractOntology(in, ont, entap_data, "InterProScan", exe, DEFAULT_HEADERS){
     FS_dprint("Spawn Object - InterPro");
 
     mDatabases    = databases;

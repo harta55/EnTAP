@@ -86,7 +86,7 @@ public:
  */
     AbstractExpression(std::string &execution_stage_path, std::string &in_hits,
                        EntapDataPtrs &entap_data, std::string module_name, std::string &exe,
-                       std::string &align);
+                       std::vector<ENTAP_HEADERS> &module_headers);
 
     virtual ~AbstractExpression() = default;
     virtual ModVerifyData verify_files()=0;
@@ -94,6 +94,7 @@ public:
     virtual void parse() = 0;
     virtual std::string get_final_fasta()=0;
 
+    virtual void set_success_flags() override ;
 
 protected:
     std::string     mAlignPath;     // Absolute path to alignment file (BAM/SAM)

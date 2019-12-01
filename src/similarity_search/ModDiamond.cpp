@@ -39,9 +39,6 @@
 #endif
 
 std::vector<ENTAP_HEADERS> ModDiamond::DEFAULT_HEADERS = {
-        ENTAP_HEADER_QUERY,
-        ENTAP_HEADER_FRAME,
-        ENTAP_HEADER_EXP_FPKM,
         ENTAP_HEADER_SIM_SUBJECT,
         ENTAP_HEADER_SIM_PERCENT,
         ENTAP_HEADER_SIM_ALIGN_LEN,
@@ -58,13 +55,16 @@ std::vector<ENTAP_HEADERS> ModDiamond::DEFAULT_HEADERS = {
         ENTAP_HEADER_SIM_TAXONOMIC_LINEAGE,
         ENTAP_HEADER_SIM_DATABASE,
         ENTAP_HEADER_SIM_CONTAM,
-        ENTAP_HEADER_SIM_INFORM,
+        ENTAP_HEADER_SIM_INFORM
+};
+
+std::vector<ENTAP_HEADERS> ModDiamond::UNIPROT_HEADERS = {
+        ENTAP_HEADER_SIM_UNI_DATA_XREF,
+        ENTAP_HEADER_SIM_UNI_COMMENTS,
+        ENTAP_HEADER_SIM_UNI_KEGG,
         ENTAP_HEADER_SIM_UNI_GO_BIO,
         ENTAP_HEADER_SIM_UNI_GO_CELL,
-        ENTAP_HEADER_SIM_UNI_GO_MOLE,
-        ENTAP_HEADER_SIM_UNI_KEGG,
-        ENTAP_HEADER_SIM_UNI_DATA_XREF,
-        ENTAP_HEADER_SIM_UNI_COMMENTS
+        ENTAP_HEADER_SIM_UNI_GO_MOLE
 };
 
 /**
@@ -91,7 +91,7 @@ std::vector<ENTAP_HEADERS> ModDiamond::DEFAULT_HEADERS = {
  */
 ModDiamond::ModDiamond(std::string &execution_stage_path, std::string &fasta_path, EntapDataPtrs &entap_data,
                        std::string &exe, vect_str_t &databases)
-: AbstractSimilaritySearch(execution_stage_path, fasta_path, entap_data, "DIAMOND", exe, databases){
+: AbstractSimilaritySearch(execution_stage_path, fasta_path, entap_data, "DIAMOND", exe, DEFAULT_HEADERS, databases){
 
     FS_dprint("Spawn Object - ModDiamond");
     mSoftwareFlag = SIM_DIAMOND;
@@ -334,8 +334,6 @@ void ModDiamond::parse() {
     FS_dprint("Beginning to filter individual DIAMOND files...");
 
     // disable UniProt headers until we know we have a hit
-    mpQueryData->header_set_uniprot(false);
-
     for (std::string &output_path : mOutputPaths) {
         FS_dprint("DIAMOND file located at " + output_path + " being parsed");
 
@@ -383,8 +381,7 @@ void ModDiamond::parse() {
                         uniprot_attempts++;
                     } else {
                         FS_dprint("Database file at " + output_path + "\nDetermined to be UniProt");
-                        mpQueryData->set_is_uniprot(true);
-                        mpQueryData->header_set_uniprot(true);
+                        set_uniprot_headers();
                     }
                 } // Else, database is NOT UniProt after # of attempts
             }
@@ -496,20 +493,20 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
 
     // Open contam best hit tsv file and print headers
     std::string out_best_contams_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_CONTAM);
-    mpQueryData->start_alignment_files(out_best_contams_filepath, DEFAULT_HEADERS, 0, mAlignmentFileTypes);
+    mpQueryData->start_alignment_files(out_best_contams_filepath, mEntapHeaders, 0, mAlignmentFileTypes);
 
     // Open best hits files
     std::string out_best_hits_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS);
-    mpQueryData->start_alignment_files(out_best_hits_filepath, DEFAULT_HEADERS, 0, mAlignmentFileTypes);
+    mpQueryData->start_alignment_files(out_best_hits_filepath, mEntapHeaders, 0, mAlignmentFileTypes);
 
     // Open best hits files with no contaminants
     std::string out_best_hits_no_contams = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM);
-    mpQueryData->start_alignment_files(out_best_hits_no_contams, DEFAULT_HEADERS, 0, mAlignmentFileTypes);
+    mpQueryData->start_alignment_files(out_best_hits_no_contams, mEntapHeaders, 0, mAlignmentFileTypes);
 
     // Open unselected hits, so every hit that was not the best hit (tsv)
     std::string out_unselected_tsv  = PATHS(base_path, SIM_SEARCH_DATABASE_UNSELECTED);
     std::vector<FileSystem::ENT_FILE_TYPES> unselected_files = {FileSystem::ENT_FILE_DELIM_TSV};
-    mpQueryData->start_alignment_files(out_unselected_tsv, DEFAULT_HEADERS, 0, unselected_files);
+    mpQueryData->start_alignment_files(out_unselected_tsv, mEntapHeaders, 0, unselected_files);
 
     // Open no hits file (fasta nucleotide)
     std::string out_no_hits_fa_nucl = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS + FileSystem::EXT_FNN);
@@ -783,4 +780,11 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     mpGraphingManager->graph_data(graph_contaminants_bar.text_file_path);
     mpGraphingManager->graph_data(graph_frame_inform_stack.text_file_path);
     // ------------------------------------------------------------------ //
+}
+
+void ModDiamond::set_uniprot_headers() {
+    for (auto& header: UNIPROT_HEADERS) {
+        mpQueryData->header_set(header, true);
+    }
+    mpQueryData->set_is_uniprot(true);
 }

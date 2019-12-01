@@ -91,6 +91,7 @@ private:
     const float REJECTED_ERROR_CUTOFF       = 75.0;
 
     static constexpr int RSEM_COL_NUM = 7;
+    static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
     std::string mFilename;
     std::string mRsemOut;

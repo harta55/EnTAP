@@ -33,9 +33,15 @@
 
 //**************************************************************
 
+std::vector<ENTAP_HEADERS> ModRSEM::DEFAULT_HEADERS = {
+        ENTAP_HEADER_EXP_FPKM,
+        ENTAP_HEADER_EXP_TPM
+};
+
+
 ModRSEM::ModRSEM(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
                  std::string &exe, std::string &align) :
-        AbstractExpression(execution_stage_path, in_hits, entap_data, "RSEM", exe, align){
+        AbstractExpression(execution_stage_path, in_hits, entap_data, "RSEM", exe, DEFAULT_HEADERS){
     FS_dprint("Spawn Object - ModRSEM");
 
     mCalcExpressionExe = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_RSEM_CALC_EXPRES);
@@ -190,9 +196,6 @@ void ModRSEM::parse() {
     std::vector<uint16> all_kept_lengths;
     std::vector<uint16> all_lost_lengths;
     std::pair<uint64,uint64> kept_n;
-    QUERY_MAP_T         *MAP;
-
-    MAP = mpQueryData->get_sequences_ptr();
 
     if (!mpFileSystem->file_exists(mRsemOut)) {
         throw ExceptionHandler("File does not exist at: " + mRsemOut,
@@ -225,11 +228,10 @@ void ModRSEM::parse() {
     while (in.read_row(geneid, transid, in_len, e_leng, e_count, tpm, fpkm_val)) {
         count_total++;
         mpQueryData->trim_sequence_header(geneid,geneid);
-        QUERY_MAP_T::iterator it = MAP->find(geneid);
-        if (it == MAP->end()) {
+        QuerySequence *querySequence = mpQueryData->get_sequence(geneid);
+        if (querySequence == nullptr) {
             throw ExceptionHandler("Unable to find sequence: " + geneid, ERR_ENTAP_RUN_RSEM_EXPRESSION_PARSE);
         }
-        QuerySequence *querySequence = it->second;
         querySequence->set_fpkm(fpkm_val);
         querySequence->setMTPM(tpm);
         length = (uint16) querySequence->get_sequence_length();

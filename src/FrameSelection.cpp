@@ -103,11 +103,10 @@ std::string FrameSelection::execute(std::string input) {
         }
         output = ptr->get_final_faa();
         ptr->parse();
-        ptr.reset();
-
         // If successful, set flags
-        mQueryData->set_is_protein_data(true);
-        mQueryData->set_is_success_frame_selection(true);
+        ptr->set_success_flags();
+
+        ptr.reset();
 
         return output;
     } catch (const ExceptionHandler &e) {

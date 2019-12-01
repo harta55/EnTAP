@@ -37,64 +37,64 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
         {"Query Sequence",      true},
 
         /* Frame Selection */
-        {"Frame",               true},
+        {"Frame",               false},
 
         /* Expression Filtering */
-        {"FPKM",                true},
-        {"TPM",                 true},
+        {"FPKM",                false},
+        {"TPM",                 false},
 
         /* Similarity Search - General */
-        {"Subject Sequence",    true},
-        {"Percent Identical",   true},                          // 5
-        {"Alignment Length",    true},
-        {"Mismatches",          true},
-        {"Gap Openings",        true},
-        {"Query Start",         true},
-        {"Query End",           true},                          // 10
-        {"Subject Start",       true},
-        {"Subject End",         true},
-        {"E Value",             true},
-        {"Coverage",            true},
-        {"Description",         true},                          // 15
-        {"Species",             true},
-        {"Taxonomic Lineage",   true},
-        {"Origin Database",     true},
-        {"Contaminant",         true},
-        {"Informative",         true},
+        {"Subject Sequence",    false},
+        {"Percent Identical",   false},                          // 5
+        {"Alignment Length",    false},
+        {"Mismatches",          false},
+        {"Gap Openings",        false},
+        {"Query Start",         false},
+        {"Query End",           false},                          // 10
+        {"Subject Start",       false},
+        {"Subject End",         false},
+        {"E Value",             false},
+        {"Coverage",            false},
+        {"Description",         false},                          // 15
+        {"Species",             false},
+        {"Taxonomic Lineage",   false},
+        {"Origin Database",     false},
+        {"Contaminant",         false},
+        {"Informative",         false},
 
         /* Similarity Search - UniProt */
-        {"UniProt Database Cross Reference",        true},      // 20
-        {"UniProt Additional Information",          true},
-        {"UniProt KEGG Terms",                      true},
-        {"UniProt GO Biological",                   true},
-        {"UniProt GO Cellular",                     true},
-        {"UniProt GO Molecular",                    true},
+        {"UniProt Database Cross Reference",        false},      // 20
+        {"UniProt Additional Information",          false},
+        {"UniProt KEGG Terms",                      false},
+        {"UniProt GO Biological",                   false},
+        {"UniProt GO Cellular",                     false},
+        {"UniProt GO Molecular",                    false},
 
         /* Ontology - EggNOG */
-        {"EggNOG Seed Ortholog",                    true},
-        {"EggNOG Seed E-Value",                     true},
-        {"EggNOG Seed Score",                       true},
-        {"EggNOG Predicted Gene",                   true},
-        {"EggNOG Tax Scope",                        true},
-        {"EggNOG Tax Scope Max",                    true},
-        {"EggNOG Member OGs",                       true},
+        {"EggNOG Seed Ortholog",                   false},
+        {"EggNOG Seed E-Value",                    false},
+        {"EggNOG Seed Score",                      false},
+        {"EggNOG Predicted Gene",                  false},
+        {"EggNOG Tax Scope",                       false},
+        {"EggNOG Tax Scope Max",                   false},
+        {"EggNOG Member OGs",                      false},
         {"EggNOG Description",                     false},
-        {"EggNOG BIGG Reaction",                    true},
-        {"EggNOG KEGG Terms",                       true},
-        {"EggNOG GO Biological",                    true},
-        {"EggNOG GO Cellular",                      true},
-        {"EggNOG GO Molecular" ,                    true},
-        {"EggNOG Protein Domains",                  false},
+        {"EggNOG BIGG Reaction",                   false},
+        {"EggNOG KEGG Terms",                      false},
+        {"EggNOG GO Biological",                   false},
+        {"EggNOG GO Cellular",                     false},
+        {"EggNOG GO Molecular" ,                   false},
+        {"EggNOG Protein Domains",                 false},
 
         /* Ontology - InterProScan */
-        {"IPScan GO Biological",                    true},
-        {"IPScan GO Cellular",                      true},
-        {"IPScan GO Molecular",                     true},
-        {"IPScan Pathways",                         true},
-        {"IPScan InterPro ID",                      true},
-        {"IPScan Protein Database",                 true},
-        {"IPScan Protein Description",              true},
-        {"IPScan E-Value",                          true},
+        {"IPScan GO Biological",                    false},
+        {"IPScan GO Cellular",                      false},
+        {"IPScan GO Molecular",                     false},
+        {"IPScan Pathways",                         false},
+        {"IPScan InterPro ID",                      false},
+        {"IPScan Protein Database",                 false},
+        {"IPScan Protein Description",              false},
+        {"IPScan E-Value",                          false},
 
 
         {"Unused",                                  false}
@@ -467,7 +467,7 @@ std::string QueryData::trim_sequence_header(std::string &header, std::string lin
     } else pos = -1;
     if (mTrim) {
         if (line.find(' ') != std::string::npos) {
-            header = line.substr(pos+1, line.find(' ')-1);
+            header = line.substr(pos+1, line.find(' ')-(pos+1));
         } else header = line.substr(pos+1);
         sequence = ">" + header + "\n";
     } else {
@@ -656,15 +656,6 @@ void QueryData::DATA_FLAG_CHANGE(QueryData::DATA_FLAGS flag, bool val) {
 
 void QueryData::set_is_uniprot(bool val) {
     DATA_FLAG_CHANGE(UNIPROT_MATCH, val);
-}
-
-void QueryData::header_set_uniprot(bool val) {
-    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_DATA_XREF].print_header = val;
-    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_COMMENTS].print_header = val;
-    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_KEGG].print_header = val;
-    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_BIO].print_header = val;
-    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_CELL].print_header = val;
-    ENTAP_HEADER_INFO[ENTAP_HEADER_SIM_UNI_GO_MOLE].print_header = val;
 }
 
 void QueryData::header_set(ENTAP_HEADERS header, bool val) {

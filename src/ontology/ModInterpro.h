@@ -74,11 +74,6 @@ public:
     static bool is_executable(std::string &exe);
 
     static bool valid_input(UserInput* userinput);
-    static std::string get_default();
-
-    static const std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
-
-
 private:
     std::string NUCLEO_TAG                  = "n";
     std::string PROTEIN_TAG                 = "p";
@@ -93,6 +88,7 @@ private:
     std::string INTERPRO_EXT_TSV            = ".tsv";
 
     std::string INTERPRO_DATABASE_FLAG              = "interpro";   // TODO add full alignment support
+    static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
     // Valid databases
     static const std::vector<std::string> INTERPRO_DATABASES;

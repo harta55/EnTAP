@@ -34,7 +34,7 @@
 #include "../GraphingManager.h"
 
 
-const std::vector<ENTAP_HEADERS> ModEggnogDMND::DEFAULT_HEADERS = {
+std::vector<ENTAP_HEADERS> ModEggnogDMND::DEFAULT_HEADERS = {
     ENTAP_HEADER_ONT_EGG_SEED_ORTHO,
     ENTAP_HEADER_ONT_EGG_SEED_EVAL,
     ENTAP_HEADER_ONT_EGG_SEED_SCORE,
@@ -51,8 +51,8 @@ const std::vector<ENTAP_HEADERS> ModEggnogDMND::DEFAULT_HEADERS = {
 };
 
 ModEggnogDMND::ModEggnogDMND(std::string &ont_out, std::string &in_hits,
-                             EntapDataPtrs &entap_data, std::string &exe, std::string sql_db_path)
-        : AbstractOntology(in_hits, ont_out, entap_data, "EggNOG_DMND", exe) {
+                             EntapDataPtrs &entap_data, std::string &exe)
+        : AbstractOntology(in_hits, ont_out, entap_data, "EggNOG_DMND", exe, DEFAULT_HEADERS) {
     FS_dprint("Spawn Object - ModEggnogDMND");
 
     mSoftwareFlag = ONT_EGGNOG_DMND;

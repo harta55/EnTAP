@@ -78,6 +78,7 @@ Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
     mEggnogDbPath       = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
     mInterproDatabases  = mpUserInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_INTERPRO);
     mAlignmentFileTypes = mpUserInput->get_user_output_types();
+    mEntapHeaders       = mpUserInput->get_user_input<std::vector<ENTAP_HEADERS>>(INPUT_FLAG_ENTAP_HEADERS);
 
     if (mIsOverwrite) mpFileSystem->delete_dir(mOntologyDir);
     mpFileSystem->create_dir(mOntologyDir);
@@ -108,17 +109,15 @@ void Ontology::execute() {
     EntapModule::ModVerifyData verify_data;
     std::unique_ptr<EntapModule> ptr;
 
-    init_headers();
     try {
         for (uint16 software : mSoftwareFlags) {
             ptr = spawn_object(software);
             verify_data = ptr->verify_files();
             if (!verify_data.files_exist) ptr->execute();
             ptr->parse();
+            ptr->set_success_flags();
             ptr.reset();
         }
-        // If no error, flag
-        mpQueryData->set_is_success_ontology(true);
 
         // Print final annotations
         print_eggnog();
@@ -173,8 +172,7 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
                     mOntologyDir,
                     mNewInput,
                     mEntapDataPtrs,
-                    exe_path,
-                    mEggnogDbPath
+                    exe_path
             ));
         default:
             exe_path = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
@@ -182,8 +180,7 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
                     mOntologyDir,
                     mNewInput,
                     mEntapDataPtrs,
-                    exe_path,
-                    mEggnogDbPath
+                    exe_path
             ));
     }
 }
@@ -219,9 +216,9 @@ void Ontology::print_eggnog() {
         final_annotations_contam_base      = PATHS(mFinalOutputDir, FINAL_ANNOT_FILE_CONTAM);
         final_annotations_no_contam_base   = PATHS(mFinalOutputDir, FINAL_ANNOT_FILE_NO_CONTAM);
 
-        mpQueryData->start_alignment_files(final_annotations_base, _HEADERS, (uint8)lvl, mAlignmentFileTypes);
-        mpQueryData->start_alignment_files(final_annotations_contam_base, _HEADERS, (uint8)lvl, mAlignmentFileTypes);
-        mpQueryData->start_alignment_files(final_annotations_no_contam_base, _HEADERS,(uint8) lvl, mAlignmentFileTypes);
+        mpQueryData->start_alignment_files(final_annotations_base, mEntapHeaders, (uint8)lvl, mAlignmentFileTypes);
+        mpQueryData->start_alignment_files(final_annotations_contam_base, mEntapHeaders, (uint8)lvl, mAlignmentFileTypes);
+        mpQueryData->start_alignment_files(final_annotations_no_contam_base, mEntapHeaders,(uint8) lvl, mAlignmentFileTypes);
 
         for (auto &pair : *mpQueryData->get_sequences_ptr()) {
             mpQueryData->add_alignment_data(final_annotations_base, pair.second, nullptr);
@@ -238,68 +235,4 @@ void Ontology::print_eggnog() {
         mpQueryData->end_alignment_files(final_annotations_no_contam_base);
     }
     FS_dprint("Success!");
-}
-
-
-/**
- * ======================================================================
- * Function void Ontology::init_headers()
- *
- * Description          - Initializes default headers that will be printed
- *                        to final tsv as well as extra headers for software
- *                        being ran
- *
- * Notes                - None
- *
- *
- * @return              - None
- *
- * =====================================================================
- */
-void Ontology::init_headers() {
-
-    std::vector<ENTAP_HEADERS>     out_header;
-    std::vector<ENTAP_HEADERS>     add_header;
-    // Add default sim search headers (pulled from SimilaritySearch.c, separate in case we want something else)
-    out_header = ModDiamond::DEFAULT_HEADERS;
-
-    // Add additional headers for ontology software
-    for (uint16 &flag : mSoftwareFlags) {
-        switch (flag) {
-#ifdef EGGNOG_MAPPER
-            case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-                add_header = {
-                        &ENTAP_EXECUTE::HEADER_SEED_ORTH,
-                        &ENTAP_EXECUTE::HEADER_SEED_EVAL,
-                        &ENTAP_EXECUTE::HEADER_SEED_SCORE,
-                        &ENTAP_EXECUTE::HEADER_PRED_GENE,
-                        &ENTAP_EXECUTE::HEADER_TAX_SCOPE,
-                        &ENTAP_EXECUTE::HEADER_EGG_OGS,
-                        &ENTAP_EXECUTE::HEADER_EGG_DESC,
-                        &ENTAP_EXECUTE::HEADER_EGG_KEGG,
-                        &ENTAP_EXECUTE::HEADER_EGG_PROTEIN,
-                        &ENTAP_EXECUTE::HEADER_EGG_GO_BIO,
-                        &ENTAP_EXECUTE::HEADER_EGG_GO_CELL,
-                        &ENTAP_EXECUTE::HEADER_EGG_GO_MOLE
-                };
-                break;
-#endif
-            case ONT_INTERPRO_SCAN:
-                add_header = {
-                        ModInterpro::DEFAULT_HEADERS
-                };
-                break;
-            case ONT_EGGNOG_DMND:
-                add_header = {
-                        ModEggnogDMND::DEFAULT_HEADERS
-                };
-                break;
-            default:
-                throw ExceptionHandler("ERROR: Unknown INT flag used during Ontology",
-                    ERR_ENTAP_MEM_ALLOC);
-        }
-        out_header.insert(out_header.end(), add_header.begin(), add_header.end());
-    }
-
-    _HEADERS = out_header;
 }

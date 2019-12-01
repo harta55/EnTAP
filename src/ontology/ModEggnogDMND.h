@@ -55,14 +55,12 @@ class ModEggnogDMND : public AbstractOntology {
 
 public:
     ModEggnogDMND(std::string &ont_out, std::string &in_hits,
-                  EntapDataPtrs &entap_data, std::string &exe, std::string sql_db_path);
+                  EntapDataPtrs &entap_data, std::string &exe);
     virtual ModVerifyData verify_files() override;
     ~ModEggnogDMND();
     virtual void execute() override ;
     virtual void parse() override;
     static bool is_executable(std::string &exe);
-
-    static const std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
 private:
     std::string get_output_dmnd_filepath(bool final);
@@ -76,6 +74,7 @@ private:
     const std::string EGG_ANNOT_RESULTS       = "annotation_results";
     const std::string EGG_ANNOT_STD           = "annotation_std";
     static constexpr uint16 COUNT_TOP_TAX_SCOPE = 10;
+    static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
     std::string mOutHIts;
     std::string mEggnogDbDiamond;       // User input path to the EggNOG DMND database

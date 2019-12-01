@@ -104,6 +104,8 @@ private:
     const std::string FLAG_QUERYID_END   = "~~";
     // Transdecoder file naming conventions
     const std::string FILE_TRANSDECODER_SUFFIX = ".transdecoder";
+
+    static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
     //**********************************************************
 
 

@@ -105,8 +105,8 @@ std::string ExpressionAnalysis::execute(std::string input) {
         output = ptr->get_final_fasta();
 
         // If successful, set flags
-        mpQueryData->set_is_success_expression(true);
-
+        ptr->set_success_flags();
+        ptr.reset();
 
     } catch (const ExceptionHandler &e) {
         ptr.reset();
@@ -141,6 +141,7 @@ std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
                     mAlignPath
             ));
         default:
+            FS_dprint("WARNING unexpected software type in ExpressionAnalysis");
             return std::unique_ptr<AbstractExpression>(new ModRSEM(
                     mExpressionDir,
                     mInFastaPath,

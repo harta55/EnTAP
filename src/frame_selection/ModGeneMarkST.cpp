@@ -35,6 +35,10 @@ Y or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #include "../GraphingManager.h"
 //**************************************************************
 
+std::vector<ENTAP_HEADERS> ModGeneMarkST::DEFAULT_HEADERS = {
+        ENTAP_HEADER_FRAME
+};
+
 
 /**
  * ======================================================================
@@ -397,7 +401,7 @@ ModGeneMarkST::~ModGeneMarkST() {
  */
 ModGeneMarkST::ModGeneMarkST(std::string &execution_stage_path, std::string &in_hits,
                              EntapDataPtrs &entap_data, std::string &exe) :
-    AbstractFrame(execution_stage_path, in_hits, entap_data, "GeneMarkS-T", exe) {
+    AbstractFrame(execution_stage_path, in_hits, entap_data, "GeneMarkS-T", exe, DEFAULT_HEADERS) {
     mTranscriptomeFilename = mpFileSystem->get_filename(in_hits, true);
 
     // Initialize FINAL output file paths

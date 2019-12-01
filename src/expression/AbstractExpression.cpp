@@ -26,14 +26,21 @@
 */
 
 #include "AbstractExpression.h"
+#include "../QueryData.h"
 
 AbstractExpression::AbstractExpression(std::string &execution_stage_path, std::string &in_hits,
                                        EntapDataPtrs &entap_data, std::string module_name, std::string &exe,
-                                       std::string &align) :
-EntapModule(execution_stage_path, in_hits, entap_data, module_name, exe) {
+                                       std::vector<ENTAP_HEADERS> &module_headers) :
+EntapModule(execution_stage_path, in_hits, entap_data, module_name, exe, module_headers) {
 
-    mAlignPath = align;
-    mExecutionState = EXPRESSION_FILTERING;
+    if (mpUserInput->has_input(INPUT_FLAG_ALIGN)) { // Will be true
+        mAlignPath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_ALIGN);
+    }
+    mExecutionState= EXPRESSION_FILTERING;
     mIsSingle      = mpUserInput->has_input(INPUT_FLAG_SINGLE_END);
     mFPKM          = mpUserInput->get_user_input<ent_input_fp_t >(INPUT_FLAG_FPKM);
+}
+
+void AbstractExpression::set_success_flags() {
+    mpQueryData->set_is_success_expression(true);
 }

@@ -27,10 +27,15 @@
 
 
 #include "AbstractOntology.h"
+#include "../QueryData.h"
 
 AbstractOntology::AbstractOntology(std::string &in_hits, std::string &ont_out, EntapDataPtrs &entap_data,
-                                   std::string mod_name, std::string &exe)
-: EntapModule(ont_out, in_hits, entap_data, mod_name, exe) {
+                                   std::string mod_name, std::string &exe, std::vector<ENTAP_HEADERS> &module_headers)
+: EntapModule(ont_out, in_hits, entap_data, mod_name, exe, module_headers) {
 
     mExecutionState    = GENE_ONTOLOGY;
+}
+
+void AbstractOntology::set_success_flags() {
+    mpQueryData->set_is_success_ontology(true);
 }

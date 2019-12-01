@@ -332,7 +332,7 @@ private:
     bool add_uniprot_entry(DATABASE_TYPE type, UniprotEntry &entry);
     void set_err_msg(std::string msg, DATABASE_ERR code);
     bool set_database_versions(DATABASE_TYPE type);
-    void get_uniprot_accession(std::string& sseqid);
+    std::string get_uniprot_accession(std::string& sseqid);
 
     DATABASE_ERR serialize_database_save(SERIALIZATION_TYPE, std::string&);
     DATABASE_ERR serialize_database_read(SERIALIZATION_TYPE, std::string&);

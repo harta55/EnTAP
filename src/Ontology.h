@@ -53,6 +53,7 @@ private:
     const std::string FINAL_ANNOT_FILE_CONTAM = "final_annotations_contam";
     const std::string FINAL_ANNOT_FILE_NO_CONTAM = "final_annotations_no_contam";
 
+    std::vector<ENTAP_HEADERS>      mEntapHeaders;
     std::vector<std::string>        mInterproDatabases;
     std::vector<uint16>             mGoLevels;
     std::vector<uint16>             mSoftwareFlags;
@@ -62,7 +63,6 @@ private:
     std::string                     mOntologyDir;
     std::string                     mEggnogDbPath;
     std::string                     mFinalOutputDir;
-    std::vector<ENTAP_HEADERS>      _HEADERS;
     QueryData                       *mpQueryData;
     FileSystem                      *mpFileSystem;
     UserInput                       *mpUserInput;
@@ -70,7 +70,6 @@ private:
     std::vector<FileSystem::ENT_FILE_TYPES> mAlignmentFileTypes;
 
     void print_eggnog();
-    void init_headers();
     std::unique_ptr<AbstractOntology> spawn_object(uint16&);
 };
 

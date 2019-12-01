@@ -27,6 +27,7 @@
 
 #include <regex>
 #include "AbstractSimilaritySearch.h"
+#include "../QueryData.h"
 
 /**
  * ======================================================================
@@ -51,8 +52,9 @@
  */
 AbstractSimilaritySearch::AbstractSimilaritySearch(std::string &execution_stage_path, std::string &in_hits,
                                                    EntapDataPtrs &entap_data, std::string mod_name,
-                                                   std::string &exe, vect_str_t &databases)
-    :EntapModule(execution_stage_path, in_hits, entap_data, mod_name, exe) {
+                                                   std::string &exe, std::vector<ENTAP_HEADERS> &module_headers,
+                                                   vect_str_t &databases)
+    :EntapModule(execution_stage_path, in_hits, entap_data, mod_name, exe, module_headers) {
 
     mExecutionState = SIMILARITY_SEARCH;
 
@@ -245,4 +247,8 @@ std::string AbstractSimilaritySearch::get_species(std::string &title) {
     if (species[species.length()-1] == ']') species = species.substr(0,species.length()-1);
 
     return species;
+}
+
+void AbstractSimilaritySearch::set_success_flags() {
+    mpQueryData->set_is_success_sim_search(true);
 }

@@ -50,10 +50,13 @@ FAQs
 
 This list will be continually updated with common problems experienced by users.
 
+#. I am getting an error that a sequence header could not be found during Expression Analysis (RSEM).
+
+        * EnTAP tries to eliminate any inconsistencies between software packages by trimming your sequence headers (i.e. ">trinity_3122_1") to the first space. Versions before 0.9.1 will not do this by default. However sometimes, especially when using BAM/SAM files, EnTAP may not be able to match one of the headers to your input transcriptome. If this is the case, try trimming the excess information beyond the first space then re-running EnTAP. An example sequence, ">trinity_3122_1 extra info", should be input as ">trinity_3122_1".
 
 ------
 
-The following issues remain for historical purposes. They are not relevant beyond EnTAP v0.9.0.
+The following issues remain for historical purposes. They are not relevant after the release of EnTAP v0.9.0.
 
 #. I'm having issues reading the EnTAP database!
 

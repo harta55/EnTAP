@@ -1,6 +1,13 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.9.0-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.9.1-beta
+
+EnTAP Beta v0.9.1-beta
+-------------------------
+
+    * Changed --trim flag to --no-trim. Trimming sequence headers to the first space is the default now. If you have executions from previous versions, you may need to use the --no-trim flag as needed for backwards compatibility (picking up where you left off). 
+    * Fixed a bug where the --single-end command was not properly recognized.
+
 
 EnTAP Beta v0.9.0-beta
 ------------------------

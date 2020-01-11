@@ -393,12 +393,14 @@ Optional Flags:
 * (-t/ - - threads)
     * Specify the number of threads of execution
 
-* ( - - trim)
-    * This flag will trim your sequence headers to anything before a space. It will make your data easier to read if you have a lot of excess information you do not need in your headers.
+* ( - - no-trim)
+    * By default, EnTAP will trim your sequence headers to the first space to maintain compatbility across different software. Using this flag will instead retain the information of the header by removing all spaces.
     * Example: 
    
-        * >TRINITY_231.1 protein12312_43_inform
-        * >TRINITY_231.1
+        * >TRINITY_231.1 protein12312_43 inform
+        * >TRINITY_231.1protein12312_43inform
+
+    * A word of caution when using this flag. EnTAP may have difficulty matching sequence headers from BAM/SAM files to your input transcriptome during Expression Analysis. You will receive an error if this occurs. 
 
 * (- - state)
     * Precise control over execution :ref:`stages<state-label>`. This flag allows for certain parts to be ran while skipping others. 
@@ -568,7 +570,7 @@ Since file naming is based on your input as well, the flags below **must** remai
 
 * (- - tcoverage)
 
-* (- - trim)
+* (- - no-trim)
 
 * (- - out-dir)
 

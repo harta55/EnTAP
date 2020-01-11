@@ -326,6 +326,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         TCLAP::SwitchArg argComplete("", INPUT_FLAG_COMPLETE, DESC_COMPLET_PROT, cmd, false);
         TCLAP::SwitchArg argNoCheck("", INPUT_FLAG_NOCHECK, DESC_NOCHECK, cmd, false);
         TCLAP::SwitchArg argOverwrite("", INPUT_FLAG_OVERWRITE, DESC_OVERWRITE, cmd, false);
+        TCLAP::SwitchArg argSingleEnd("", INPUT_FLAG_SINGLE_END, DESC_SINGLE_END, cmd, false);
 
         // Value Args
         TCLAP::ValueArg<std::string> argUninform("", INPUT_FLAG_UNINFORM, DESC_UNINFORMATIVE, false, "", "string", cmd);
@@ -371,6 +372,7 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
         if (argComplete.isSet()) _user_inputs.emplace(INPUT_FLAG_COMPLETE, true);
         if (argNoCheck.isSet()) _user_inputs.emplace(INPUT_FLAG_NOCHECK, true);
         if (argOverwrite.isSet()) _user_inputs.emplace(INPUT_FLAG_OVERWRITE, true);
+        if (argSingleEnd.isSet()) _user_inputs.emplace(INPUT_FLAG_SINGLE_END, true);
 
         // Add ValueArgs
         if (argUninform.isSet())_user_inputs.emplace(INPUT_FLAG_UNINFORM, argUninform.getValue());

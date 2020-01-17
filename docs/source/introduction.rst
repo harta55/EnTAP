@@ -21,6 +21,9 @@ The final annotation integrates across multiple databases and selects an optimal
 
 EnTAP is optimized to generate extensive functional information for the gene space of organisms with limited or poorly characterized genomic resources.
 
+How to cite:
+    * Hart, Alexander J., et al. “EnTAP: Bringing Faster and Smarter Functional Annotation to Non-Model Eukaryotic Transcriptomes.” Molecular Ecology Resources, 2019, doi:10.1111/1755-0998.13106.
+
 
 Pipeline Stages:
 ----------------
@@ -34,7 +37,7 @@ Pipeline Stages:
         5. Orthologous Group Assignment: independent assignment of translated protein sequences to gene families (eggNOG).  Includes protein  domains (SMART/Pfam), Gene Ontology (GO) terms, and KEGG pathway assignment.
         6. InterProScan (optional): sequence search against the families of InterPro databases to assign protein domains, Gene Ontology terms, and pathway information
 
-.. note:: For information/bug reports, contact Alexander Hart at entap.dev@gmail.com
+.. note:: For information/bug reports, contact Alexander Hart at entap.dev@gmail.com or visit the Slack channel at: entap-help.slack.com. 
 
 The figure below represents the typical EnTAP pipeline. A more detailed version with all output files can be seen within Interpreting the Results.
 

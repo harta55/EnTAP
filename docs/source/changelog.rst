@@ -2,6 +2,12 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.9.1-beta
 
+EnTAP Beta v0.9.2-beta (June 4, 2020)
+------------------------------------------
+
+    * Updated EggNOG Database links
+
+
 EnTAP Beta v0.9.1-beta (January 12, 2020)
 -------------------------------------------
 

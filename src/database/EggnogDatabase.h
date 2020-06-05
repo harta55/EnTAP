@@ -85,11 +85,17 @@ public:
 
 
 private:
+
+/* OLD Links
     const std::string FTP_EGGNOG_SQL  = "http://eggnogdb.embl.de/download/emapperdb-4.5.0/eggnog.db.gz";
-//    const std::string FTP_EGGNOG_SQL  = "http://eggnogdb.embl.de/download/latest/eggnog-mapper-data/eggnog.db.gz";
+    const std::string FTP_EGGNOG_SQL  = "http://eggnogdb.embl.de/download/latest/eggnog-mapper-data/eggnog.db.gz";
     const std::string FTP_EGGNOG_DMND = "http://eggnogdb.embl.de/download/latest/eggnog-mapper-data/eggnog_proteins.dmnd.gz";
     const std::string FTP_EGGNOG_FASTA= "http://eggnogdb.embl.de/download/latest/eggnog-mapper-data/eggnog4.clustered_proteins.fa.gz";
-
+*/
+	const std::string FTP_EGGNOG_SQL  = "http://eggnogdb.embl.de/download/emapperdb-4.5.0/eggnog.db.gz";
+	const std::string FTP_EGGNOG_DMND = "http://eggnog5.embl.de/download/emapperdb-4.5.0/eggnog_proteins.dmnd.gz";
+    const std::string FTP_EGGNOG_FASTA= "http://eggnog5.embl.de/download/emapperdb-4.5.0/eggnog4.clustered_proteins.fa.gz";
+	
     const std::string TEMP_SQL_GZ = "temp_egg_sql.gz";
     const std::string TEMP_DMND_GZ = "temp_egg_dmnd.gz";
     const std::string TEMP_FAST_GZ = "temp_egg_fasta.gz";

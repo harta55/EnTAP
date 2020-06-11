@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -41,6 +41,7 @@
 #include "FrameSelection.h"
 #include "frame_selection/ModTransdecoder.h"
 #include "database/BuscoDatabase.h"
+#include "ontology/ModBUSCO.h"
 //**************************************************************
 
 //*********************** Defines ******************************
@@ -98,10 +99,11 @@
                             " just check whether the version of Python being used has"   \
                             " MatPlotLib accessible."
 #define CMD_GRAPHING        "graph"
-#define DESC_TRIM           "Trim the input sequences to the first space\n"             \
-                            "This may help with readability later on with TSV files\n"
-#define EX_TRIM             ">TRINITY_231.1 Protein Information will become...\n>TRINITY_231.1\n"
-#define CMD_TRIM            "trim"
+#define DESC_NO_TRIM        "By default, EnTAP will trim the sequence ID to the nearest space \n"\
+                            "to help with compatibility across software. This command will instead remove \n"\
+                            "the spaces in a sequence ID rather than trimming."
+#define EX_NO_TRIM          ">TRINITY_231.1 Protein Information will become...\n>>TRINITY_231.1ProteinInformation \n"
+#define CMD_NO_TRIM         "no-trim"
 #define DESC_THREADS        "Specify the number of threads that will be used throughout\n"
 #define CMD_THREADS         "threads"
 #define CMD_SHORT_THREADS   "t"
@@ -287,7 +289,7 @@
                             "multiple --level flags\n"                                  \
                             "Example: --level 0 --level 3 --level 1"
 
-/* Transriptome Evaluation */
+/* BUSCO */
 #define CMD_BUSCO_EXE      "busco-exe"
 #define DESC_BUSCO_EXE     "Specify the execution method of BUSCO."
 #define EX_BUSCO_EXE       "Example: run_BUSCO.py"
@@ -311,8 +313,7 @@
 #define INI_ONTOLOGY "ontology"
 #define INI_ONT_EGGNOG "ontology-eggnog"
 #define INI_ENTAP "entap"
-#define INI_TRANSC_EVAL "transcriptome-eval"
-#define INI_TRANSC_BUSCO "transcriptome-busco"
+#define INI_TRANSC_BUSCO "ontology-busco"
 
 #define ENTAP_INI_NULL_STR_VECT vect_str_t()
 #define ENTAP_INI_NULL_INT_VECT vect_uint16_t()
@@ -395,7 +396,7 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_GENERAL   ,CMD_INPUT_TRAN           ,CMD_SHORT_INPUT_TRAN ,DESC_INPUT_TRAN       ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_DATABASE             ,CMD_SHORT_DATABASE   ,DESC_DATABASE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_GRAPHING             ,ENTAP_INI_NULL  ,DESC_GRAPHING              ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
-        {INI_GENERAL   ,CMD_TRIM                 ,ENTAP_INI_NULL  ,DESC_TRIM                  ,EX_TRIM          ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_NO_TRIM                 ,ENTAP_INI_NULL  ,DESC_NO_TRIM                  ,EX_NO_TRIM          ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_THREADS              ,CMD_SHORT_THREADS    ,DESC_THREADS          ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT         ,DEFAULT_THREADS        ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_STATE                ,ENTAP_INI_NULL  ,DESC_STATE                 ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_STATE          ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_NOCHECK              ,ENTAP_INI_NULL  ,DESC_NOCHECK               ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
@@ -454,12 +455,12 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_ONT_INTERPRO,CMD_INTERPRO_EXE       ,ENTAP_INI_NULL  ,DESC_INTERPRO_EXE          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,INTERPRO_DEF_EXE       ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
         {INI_ONT_INTERPRO,CMD_INTER_DATA         ,ENTAP_INI_NULL  ,DESC_INTER_DATA            ,EX_INTER_DATA    ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
 
-/* Transcriptome Eval Commands - BUSCO */
+/* Ontology - BUSCO Commands */
         {INI_TRANSC_BUSCO,CMD_BUSCO_EXE          ,ENTAP_INI_NULL  ,DESC_BUSCO_EXE             ,EX_BUSCO_EXE     ,ENT_INI_VAR_STRING      ,DEFAULT_BUSCO_EXE      ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
         {INI_TRANSC_BUSCO,CMD_BUSCO_DATABASE     ,ENTAP_INI_NULL  ,DESC_BUSCO_DATABASE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
         {INI_TRANSC_BUSCO,CMD_BUSCO_EVAL         ,ENTAP_INI_NULL  ,DESC_BUSCO_EVAL            ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_BUSCO_E_VALUE  ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
 
-
+/* END COMMANDS */
         {ENTAP_INI_NULL,ENTAP_INI_NULL           ,ENTAP_INI_NULL  ,ENTAP_INI_NULL             , ENTAP_INI_NULL  ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL}
 };
 
@@ -845,7 +846,7 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key) {
     boost::any any_val;
 
     try {
-        TCLAP::CmdLine cmd("EnTAP\nAlexander Hart and Dr. Jill Wegrzyn\nUniversity of Connecticut\nCopyright 2017-2019",
+        TCLAP::CmdLine cmd("EnTAP\nAlexander Hart and Dr. Jill Wegrzyn\nUniversity of Connecticut\nCopyright 2017-2020",
                            ' ', ENTAP_VERSION_STR);
 
         // Generate Arguments and add them to CMD
@@ -1239,13 +1240,16 @@ bool UserInput::verify_user_input() {
 
             // Verify BUSCO database if the user has input it
             if (has_input(INPUT_FLAG_BUSCO_DATABASE)) {
-                ent_input_str_t busco_db = get_user_input<ent_input_str_t>(INPUT_FLAG_BUSCO_DATABASE);
+                ent_input_multi_str_t busco_db = get_user_input<ent_input_multi_str_t>(INPUT_FLAG_BUSCO_DATABASE);
                 BuscoDatabase buscoDatabase = BuscoDatabase(mpFileSystem);
-                std::string temp;
-                if (!buscoDatabase.valid_database(busco_db, temp)) {
-                    throw ExceptionHandler("Invalid BUSCO database entered must be a URL or valid database name: " + busco_db,
-                                           ERR_ENTAP_INPUT_PARSE);
+                for (std::string &database : busco_db) {
+                    std::string temp;
+                    if (!buscoDatabase.valid_database(database, temp)) {
+                        throw ExceptionHandler("Invalid BUSCO database entered must be a URL or valid database name: " + database,
+                                               ERR_ENTAP_INPUT_PARSE);
+                    }
                 }
+
             }
         }
 
@@ -1521,6 +1525,7 @@ void UserInput::verify_uninformative(std::string& path) {
  *
  * Description          - Entry to check execution paths for software based
  *                        on state
+ *                      - Sanity check on software specific commands
  *
  * Notes                - Throw error on failure
  *
@@ -1539,12 +1544,15 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
     ent_input_str_t egg_db_dmnd;
     ent_input_str_t egg_db_sql;
     ent_input_str_t interpro_exe;
+    ent_input_str_t busco_exe;
     ent_input_multi_int_t ontology_flags;
 
     dmnd_exe     = get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
     egg_db_dmnd  = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
     egg_db_sql   = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
     interpro_exe = get_user_input<ent_input_str_t>(INPUT_FLAG_INTERPRO_EXE);
+    busco_exe    = get_user_input<ent_input_str_t>(INPUT_FLAG_BUSCO_EXE);
+
 
     ontology_flags = get_user_input<ent_input_multi_int_t>(INPUT_FLAG_ONTOLOGY);
 
@@ -1576,25 +1584,48 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
                     break;
 #endif
                     case ONT_INTERPRO_SCAN:
+                        FS_dprint("Verifying InterProScan inputs...");
                         if (!ModInterpro::is_executable(interpro_exe)) {
                             throw ExceptionHandler("Could not execute test run of InterProScan with execution command: " +
                                 interpro_exe, ERR_ENTAP_INPUT_PARSE);
                         }
+                        FS_dprint("Success!");
                         break;
 
                     case ONT_EGGNOG_DMND:
+                        FS_dprint("Verifying EggNOG inputs...");
                         if (!mpFileSystem->file_exists(egg_db_sql))
                             throw ExceptionHandler("Could not find EggNOG SQL database at: " + egg_db_sql, ERR_ENTAP_INPUT_PARSE);
                         else if (!mpFileSystem->file_exists(egg_db_dmnd))
                             throw ExceptionHandler("Could not find EggNOG Diamond Database at: " + egg_db_dmnd, ERR_ENTAP_INPUT_PARSE);
                         else if (!ModEggnogDMND::is_executable(dmnd_exe))
                             throw ExceptionHandler("Could not execute a test run of DIAMOND for EggNOG analysis has failed", ERR_ENTAP_INPUT_PARSE);
+                        FS_dprint("Success!");
+                        break;
+
+                    case ONT_BUSCO:
+                        FS_dprint("Verifying BUSCO inputs...");
+                        if (ModBUSCO::is_executable(busco_exe)) {
+                            ent_input_multi_str_t busco_databases = get_user_input<ent_input_multi_str_t>(INPUT_FLAG_BUSCO_DATABASE);
+                            for (std::string &database : busco_databases) {
+                                if (!mpFileSystem->file_exists(database)) {
+                                    throw ExceptionHandler("Could not locate BUSCO database at: " + database, ERR_ENTAP_INPUT_PARSE);
+                                }
+                            }
+
+                        } else {
+                            throw ExceptionHandler("Could not execute test run of BUSCO with execution command: " +
+                                busco_exe, ERR_ENTAP_INPUT_PARSE);
+                        }
+                        FS_dprint("Success!");
+                        break;
+
                     default:
                         break;
                 }
             }
         }
-
+    // No, using CONFIGURATION stage of pipeline
     } else {
 
         // Check if EggNOG DIAMOND database exists, if not, check DIAMOND run

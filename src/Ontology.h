@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -54,14 +54,12 @@ private:
     const std::string FINAL_ANNOT_FILE_NO_CONTAM = "final_annotations_no_contam";
 
     std::vector<ENTAP_HEADERS>      mEntapHeaders;
-    std::vector<std::string>        mInterproDatabases;
     std::vector<uint16>             mGoLevels;
     std::vector<uint16>             mSoftwareFlags;
     bool                            mIsOverwrite;
     std::string                     mOutpath;
     std::string                     mNewInput;
     std::string                     mOntologyDir;
-    std::string                     mEggnogDbPath;
     std::string                     mFinalOutputDir;
     QueryData                       *mpQueryData;
     FileSystem                      *mpFileSystem;

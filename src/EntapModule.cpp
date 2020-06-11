@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -46,11 +46,10 @@ std::vector<ENTAP_HEADERS> EntapModule::mModuleHeaders = {
  * =====================================================================
  */
 EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
-                         std::string module_name, std::string &exe_path, std::vector<ENTAP_HEADERS> &module_headers) {
+                         std::string module_name, std::vector<ENTAP_HEADERS> &module_headers) {
 
     mOutpath = execution_stage_path;       // Should already be created
     mInputTranscriptome  = in_hits;
-    mExePath = exe_path;
 
     mpGraphingManager = entap_data.mpGraphingManager;
     mpQueryData       = entap_data.mpQueryData;

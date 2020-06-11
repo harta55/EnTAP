@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -60,7 +60,7 @@ public:
 
     //******************* Public Functions *********************
     ModTransdecoder(std::string &execution_stage_path, std::string &in_hits,
-            EntapDataPtrs &entap_data, std::string &long_orfs_exe, std::string &predict_exe);
+            EntapDataPtrs &entap_data);
     ~ModTransdecoder();
 
     virtual ModVerifyData verify_files() override;

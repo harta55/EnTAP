@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -68,7 +68,7 @@ public:
 
     //******************* Public Functions *********************
     ModGeneMarkST(std::string &execution_stage_path, std::string &in_hits,
-                  EntapDataPtrs &entap_data, std::string &exe);
+                  EntapDataPtrs &entap_data);
     ~ModGeneMarkST();
     virtual ModVerifyData verify_files() override ;
     virtual void execute() override ;

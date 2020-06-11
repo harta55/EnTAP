@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -400,9 +400,10 @@ ModGeneMarkST::~ModGeneMarkST() {
  * =====================================================================
  */
 ModGeneMarkST::ModGeneMarkST(std::string &execution_stage_path, std::string &in_hits,
-                             EntapDataPtrs &entap_data, std::string &exe) :
-    AbstractFrame(execution_stage_path, in_hits, entap_data, "GeneMarkS-T", exe, DEFAULT_HEADERS) {
+                             EntapDataPtrs &entap_data) :
+    AbstractFrame(execution_stage_path, in_hits, entap_data, "GeneMarkS-T", DEFAULT_HEADERS) {
     mTranscriptomeFilename = mpFileSystem->get_filename(in_hits, true);
+    mExePath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_GENEMARKST_EXE);
 
     // Initialize FINAL output file paths
     // GenemarkS-T prints to CWD, they will be moved to these paths after execution

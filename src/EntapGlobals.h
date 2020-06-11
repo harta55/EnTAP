@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -159,6 +159,7 @@ enum ExecuteStates {
 enum ONTOLOGY_SOFTWARE {
     ONT_EGGNOG_DMND,
     ONT_INTERPRO_SCAN,
+    ONT_BUSCO,
 #ifdef EGGNOG_MAPPER
     EGGNOG_INT_FLAG,
 #endif
@@ -188,7 +189,7 @@ enum ENTAP_HEADERS {
     ENTAP_HEADER_SIM_MISMATCH,
     ENTAP_HEADER_SIM_GAP_OPEN,
     ENTAP_HEADER_SIM_QUERY_S,
-    ENTAP_HEADER_SIM_QUERY_E,               // 10
+    ENTAP_HEADER_SIM_QUERY_E,                        // 10
     ENTAP_HEADER_SIM_SUBJ_S,
     ENTAP_HEADER_SIM_SUBJ_E,
     ENTAP_HEADER_SIM_E_VAL,
@@ -201,7 +202,7 @@ enum ENTAP_HEADERS {
     ENTAP_HEADER_SIM_INFORM,
 
     /* Similarity Search - UniProt*/
-    ENTAP_HEADER_SIM_UNI_DATA_XREF,         // 20
+    ENTAP_HEADER_SIM_UNI_DATA_XREF,                  // 20
     ENTAP_HEADER_SIM_UNI_COMMENTS,
     ENTAP_HEADER_SIM_UNI_KEGG,
     ENTAP_HEADER_SIM_UNI_GO_BIO,
@@ -225,7 +226,7 @@ enum ENTAP_HEADERS {
     ENTAP_HEADER_ONT_EGG_PROTEIN,
 
     /* Ontology - InterProScan */
-    ENTAP_HEADER_ONT_INTER_GO_BIO,
+    ENTAP_HEADER_ONT_INTER_GO_BIO,                  // 40
     ENTAP_HEADER_ONT_INTER_GO_CELL,
     ENTAP_HEADER_ONT_INTER_GO_MOLE,
     ENTAP_HEADER_ONT_INTER_PATHWAYS,
@@ -234,15 +235,22 @@ enum ENTAP_HEADERS {
     ENTAP_HEADER_ONT_INTER_DATA_TERM,
     ENTAP_HEADER_ONT_INTER_EVAL,
 
+    /* Ontology - BUSCO */
+    ENTAP_HEADER_ONT_BUSCO_ID,
+    ENTAP_HEADER_ONT_BUSCO_STATUS,
+    ENTAP_HEADER_ONT_BUSCO_LENGTH,                  // 50
+    ENTAP_HEADER_ONT_BUSCO_SCORE,
+
+
     ENTAP_HEADER_COUNT
 };
 
 struct EntapDataPtrs {
-    EntapDatabase* mpEntapDatabase;
-    FileSystem*    mpFileSystem;
-    UserInput*     mpUserInput;
+    EntapDatabase*   mpEntapDatabase;
+    FileSystem*      mpFileSystem;
+    UserInput*       mpUserInput;
     GraphingManager* mpGraphingManager;
-    QueryData*     mpQueryData;
+    QueryData*       mpQueryData;
 
     bool is_null() {
         return mpEntapDatabase == nullptr || mpFileSystem == nullptr ||

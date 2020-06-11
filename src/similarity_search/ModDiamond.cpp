@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -90,11 +90,12 @@ std::vector<ENTAP_HEADERS> ModDiamond::UNIPROT_HEADERS = {
  * =====================================================================
  */
 ModDiamond::ModDiamond(std::string &execution_stage_path, std::string &fasta_path, EntapDataPtrs &entap_data,
-                       std::string &exe, vect_str_t &databases)
-: AbstractSimilaritySearch(execution_stage_path, fasta_path, entap_data, "DIAMOND", exe, DEFAULT_HEADERS, databases){
+                       vect_str_t &databases)
+: AbstractSimilaritySearch(execution_stage_path, fasta_path, entap_data, "DIAMOND", DEFAULT_HEADERS, databases){
 
     FS_dprint("Spawn Object - ModDiamond");
     mSoftwareFlag = SIM_DIAMOND;
+    mExePath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
 }
 
 /**

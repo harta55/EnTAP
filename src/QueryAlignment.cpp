@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -180,7 +180,19 @@ bool SimSearchAlignment::operator>(const QueryAlignment &alignment) {
     fp64 coverage_dif = fabs(cov1 - cov2);
     if (!this->mCompareOverallAlignment) {
         // For hits of the same database "better hit"
-        if (fabs(log10(eval1) - log10(eval2)) < E_VAL_DIF) {
+
+        fp64 log1 = 0.0;
+        fp64 log2 = 0.0;
+
+        if (eval1 != 0.0) {
+            log1 = log10(eval1);
+        }
+
+        if (eval2 != 0.0) {
+            log2 = log10(eval2);
+        }
+
+        if (fabs(log1 - log2) < E_VAL_DIF) {
             if (coverage_dif > COV_DIF) {
                 return cov1 > cov2;
             }

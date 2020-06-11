@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -52,15 +52,15 @@ std::vector<ENTAP_HEADERS> ModTransdecoder::DEFAULT_HEADERS = {
  *
  * =====================================================================
  */
-ModTransdecoder::ModTransdecoder(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
-                                 std::string &long_orfs_exe, std::string &predict_exe) :
-    AbstractFrame(execution_stage_path, in_hits, entap_data, "TransDecoder", long_orfs_exe, DEFAULT_HEADERS){
+ModTransdecoder::ModTransdecoder(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data) :
+    AbstractFrame(execution_stage_path, in_hits, entap_data, "TransDecoder", DEFAULT_HEADERS){
     std::string temp_filename;
 
     FS_dprint("Spawn Object - ModTransdecoder");
 
-    mTransdecoderLongOrfsExe = long_orfs_exe;
-    mTransdecoderPredictExe = predict_exe;
+    mTransdecoderLongOrfsExe = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_LONGORF_EXE);
+    mTransdecoderPredictExe = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_PREDICT_EXE);
+    mExePath = mTransdecoderLongOrfsExe;
 
     mMinProteinLength = mpUserInput->get_user_input<ent_input_uint_t >(INPUT_FLAG_TRANS_MIN_PROTEIN);
 

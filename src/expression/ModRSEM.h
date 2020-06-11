@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -64,8 +64,7 @@ class ModRSEM : public AbstractExpression {
 
 public:
     ModRSEM(std::string &execution_stage_path, std::string &in_hits,
-            EntapDataPtrs &entap_data, std::string &exe,
-            std::string &align);
+            EntapDataPtrs &entap_data, std::string &align);
 
     ~ModRSEM() ;
 

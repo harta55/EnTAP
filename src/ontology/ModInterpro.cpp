@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -472,7 +472,7 @@ bool ModInterpro::is_executable(std::string &exe) {
     terminalData.command = test_command;
     terminalData.print_files = false;
 
-    return TC_execute_cmd(terminalData) == 0;    return true;
+    return TC_execute_cmd(terminalData) == 0;
 }
 
 bool ModInterpro::valid_input(UserInput* userInput) {
@@ -490,11 +490,11 @@ bool ModInterpro::valid_input(UserInput* userInput) {
     return true;
 }
 
-ModInterpro::ModInterpro(std::string &ont, std::string &in, EntapDataPtrs& entap_data,
-                         std::string &exe, vect_str_t databases)
-    : AbstractOntology(in, ont, entap_data, "InterProScan", exe, DEFAULT_HEADERS){
+ModInterpro::ModInterpro(std::string &ont, std::string &in, EntapDataPtrs& entap_data)
+    : AbstractOntology(in, ont, entap_data, "InterProScan", DEFAULT_HEADERS){
     FS_dprint("Spawn Object - InterPro");
 
-    mDatabases    = databases;
+    mDatabases    = mpUserInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_INTERPRO);
     mSoftwareFlag = ONT_INTERPRO_SCAN;
+    mExePath      = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_INTERPRO_EXE);
 }

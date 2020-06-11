@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -51,13 +51,14 @@ std::vector<ENTAP_HEADERS> ModEggnogDMND::DEFAULT_HEADERS = {
 };
 
 ModEggnogDMND::ModEggnogDMND(std::string &ont_out, std::string &in_hits,
-                             EntapDataPtrs &entap_data, std::string &exe)
-        : AbstractOntology(in_hits, ont_out, entap_data, "EggNOG_DMND", exe, DEFAULT_HEADERS) {
+                             EntapDataPtrs &entap_data)
+        : AbstractOntology(in_hits, ont_out, entap_data, "EggNOG_DMND", DEFAULT_HEADERS) {
     FS_dprint("Spawn Object - ModEggnogDMND");
 
     mSoftwareFlag = ONT_EGGNOG_DMND;
     mEggnogDbDiamond = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
     mEggnogDbSQL     = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
+    mExePath         = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
 }
 
 EntapModule::ModVerifyData ModEggnogDMND::verify_files() {

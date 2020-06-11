@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -69,7 +69,7 @@ public:
         QUERY_INTERPRO          = (1 << 8),         // Matched against InterPro databases
         QUERY_IS_PROTEIN        = (1 << 9),         // Sequence has a corresponding protein sequence
         QUERY_BLASTED           = (1 << 10),        // Sequence was BLASTED (Sim Search was ran)
-        QUERY_CONTAMINANT       = (1 << 11),        // Sequence is determined as a contaminant
+        QUERY_CONTAMINANT       = (1 << 11),        // Sequence is determined as a contaminant from Sim Search
         QUERY_FAMILY_ONE_KEGG   = (1 << 12),        // Sequence contains at least one KEGG from EggNOG process
         QUERY_FAMILY_ONE_GO     = (1 << 13),        // Sequence contains at least one GO from EggNOG process
         QUERY_ONT_INTERPRO_GO   = (1 << 14),        // Sequence contains at least one GO from InterPro process
@@ -207,6 +207,7 @@ public:
     bool QUERY_FLAG_GET(QUERY_FLAGS flag);
     void QUERY_FLAG_CLEAR(QUERY_FLAGS flag);
     void QUERY_FLAG_CHANGE(QUERY_FLAGS flag, bool val);
+    bool QUERY_FLAG_CONTAINS(uint32 flags);
     bool is_contaminant();
 #ifdef EGGNOG_MAPPER
     void set_eggnog_results(const EggnogResults&);

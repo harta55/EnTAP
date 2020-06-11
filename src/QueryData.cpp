@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -87,7 +87,7 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
         {"EggNOG Protein Domains",                 false},
 
         /* Ontology - InterProScan */
-        {"IPScan GO Biological",                    false},
+        {"IPScan GO Biological",                    false},     // 40
         {"IPScan GO Cellular",                      false},
         {"IPScan GO Molecular",                     false},
         {"IPScan Pathways",                         false},
@@ -95,6 +95,12 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
         {"IPScan Protein Database",                 false},
         {"IPScan Protein Description",              false},
         {"IPScan E-Value",                          false},
+
+        /* Ontology - BUSCO */
+        {"BUSCO ID",                                false},
+        {"BUSCO Status",                            false},
+        {"BUSCO Length",                            false},    // 50
+        {"BUSCO Score",                             false},
 
 
         {"Unused",                                  false}
@@ -154,7 +160,7 @@ QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *
     mpUserInput  = userinput;
     mpFileSystem = filesystem;
 
-    mTrim          = mpUserInput->has_input(INPUT_FLAG_TRIM);
+    mNoTrim        = mpUserInput->has_input(INPUT_FLAG_NO_TRIM);
     is_complete    = mpUserInput->has_input(INPUT_FLAG_COMPLETE);
 
     if (!mpFileSystem->file_exists(input_file)) {
@@ -465,15 +471,17 @@ std::string QueryData::trim_sequence_header(std::string &header, std::string lin
     if (line.find('>') != std::string::npos) {
         pos = (int16) line.find('>');
     } else pos = -1;
-    if (mTrim) {
+    if (mNoTrim) {
+        // No trimming, just remove spaces
+        line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
+        header = line.substr(pos+1);
+        sequence = line + "\n";
+    } else {
+        // Trim to first space
         if (line.find(' ') != std::string::npos) {
             header = line.substr(pos+1, line.find(' ')-(pos+1));
         } else header = line.substr(pos+1);
         sequence = ">" + header + "\n";
-    } else {
-        line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
-        header = line.substr(pos+1);
-        sequence = line + "\n";
     }
     return sequence;
 }
@@ -784,4 +792,17 @@ bool QueryData::initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HE
             break;
     }
     return ret;
+}
+
+QUERY_MAP_T QueryData::get_specific_sequences(uint32 flags) {
+    QUERY_MAP_T ret_map = QUERY_MAP_T();
+
+    for (auto &pair : *mpSequences) {
+        // Check if this sequence has any of the flags we want
+        if (pair.second->QUERY_FLAG_CONTAINS(flags)){
+            // Yes, add to map
+            ret_map.emplace(pair.first, pair.second);
+        }
+    }
+    return ret_map;
 }

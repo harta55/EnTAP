@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -62,7 +62,6 @@ ExpressionAnalysis::ExpressionAnalysis(std::string &input,EntapDataPtrs& entap_d
     mpEntapPtrs = entap_data;
 
     mSoftwareFlag = EXP_RSEM;
-    mExePath       = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_RSEM_CALC_EXPRES);
     mOverwrite     = mpUserInput->has_input(INPUT_FLAG_OVERWRITE);
     if (mpUserInput->has_input(INPUT_FLAG_ALIGN)) { // Will be true
         mAlignPath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_ALIGN);
@@ -137,7 +136,6 @@ std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
                     mExpressionDir,
                     mInFastaPath,
                     mpEntapPtrs,
-                    mExePath,
                     mAlignPath
             ));
         default:
@@ -146,7 +144,6 @@ std::unique_ptr<AbstractExpression> ExpressionAnalysis::spawn_object() {
                     mExpressionDir,
                     mInFastaPath,
                     mpEntapPtrs,
-                    mExePath,
                     mAlignPath
             ));
     }

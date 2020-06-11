@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -58,7 +58,6 @@ private:
     std::string         mInFastaPath;       // FASTA path input from user to perform filtering on
                                             // *** MUST **** be original to maintain consistent headers
     std::string         mAlignPath;         // Absolute path to alignment file (BAM/SAM)
-    std::string         mExePath;           // Method of execution (exe path or global variablee)
     std::string         mExpressionDir;     // Absolute path to root Expression Analysis directory
     bool                mOverwrite;         // TRUE if user would like to overwrite previous data
     uint16              mSoftwareFlag;      // FLag indicating Expression Analysis software module

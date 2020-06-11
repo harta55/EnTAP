@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,8 +30,8 @@
 #include "../QueryData.h"
 
 AbstractOntology::AbstractOntology(std::string &in_hits, std::string &ont_out, EntapDataPtrs &entap_data,
-                                   std::string mod_name, std::string &exe, std::vector<ENTAP_HEADERS> &module_headers)
-: EntapModule(ont_out, in_hits, entap_data, mod_name, exe, module_headers) {
+                                   std::string mod_name, std::vector<ENTAP_HEADERS> &module_headers)
+: EntapModule(ont_out, in_hits, entap_data, mod_name, module_headers) {
 
     mExecutionState    = GENE_ONTOLOGY;
 }

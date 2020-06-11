@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -34,6 +34,7 @@
 #include "FileSystem.h"
 #include "ontology/ModEggnogDMND.h"
 #include "similarity_search/ModDiamond.h"
+#include "ontology/ModBUSCO.h"
 
 /**
  * ======================================================================
@@ -62,7 +63,7 @@
 Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
     FS_dprint("Spawn Object - Ontology");
 
-    mNewInput          = input;
+    mNewInput           = input;
     mpQueryData         = entap_data.mpQueryData;
     mpFileSystem        = entap_data.mpFileSystem;
     mpUserInput         = entap_data.mpUserInput;
@@ -75,8 +76,6 @@ Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
     mGoLevels           = mpUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_GO_LEVELS);
     mOntologyDir        = PATHS(mOutpath, ONTOLOGY_OUT_PATH);
     mFinalOutputDir     = mpFileSystem->get_final_outdir();
-    mEggnogDbPath       = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
-    mInterproDatabases  = mpUserInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_INTERPRO);
     mAlignmentFileTypes = mpUserInput->get_user_output_types();
     mEntapHeaders       = mpUserInput->get_user_input<std::vector<ENTAP_HEADERS>>(INPUT_FLAG_ENTAP_HEADERS);
 
@@ -158,29 +157,28 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
             ));
 #endif
         case ONT_INTERPRO_SCAN:
-            exe_path = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_INTERPRO_EXE);
             return std::unique_ptr<AbstractOntology>(new ModInterpro(
                     mOntologyDir,
                     mNewInput,
-                    mEntapDataPtrs,
-                    exe_path,
-                    mInterproDatabases       // Additional data
+                    mEntapDataPtrs
             ));
         case ONT_EGGNOG_DMND:
-            exe_path = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
             return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
                     mOntologyDir,
                     mNewInput,
-                    mEntapDataPtrs,
-                    exe_path
+                    mEntapDataPtrs
             ));
+        case ONT_BUSCO:
+            return std::unique_ptr<AbstractOntology>(new ModBUSCO(
+                    mOntologyDir,
+                    mNewInput,
+                    mEntapDataPtrs
+             ));
         default:
-            exe_path = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
             return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
                     mOntologyDir,
                     mNewInput,
-                    mEntapDataPtrs,
-                    exe_path
+                    mEntapDataPtrs
             ));
     }
 }

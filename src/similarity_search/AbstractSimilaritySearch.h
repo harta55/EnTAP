@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -57,7 +57,6 @@ public:
                              std::string &in_hits,
                              EntapDataPtrs &entap_data,
                              std::string mod_name,
-                             std::string &exe,
                              std::vector<ENTAP_HEADERS> &module_headers,
                              vect_str_t &databases);
     ~AbstractSimilaritySearch() = default;

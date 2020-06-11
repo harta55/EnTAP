@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -132,32 +132,24 @@ std::string FrameSelection::execute(std::string input) {
 std::unique_ptr<AbstractFrame> FrameSelection::spawn_object() {
     switch (mSoftwareFlag) {
         case FRAME_GENEMARK_ST: {
-            ent_input_str_t exe_path = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_GENEMARKST_EXE);
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
                     mModOutDir,
                     mInPath,
-                    mEntapDataPtrs,
-                    exe_path
+                    mEntapDataPtrs
             ));
         }
         case FRAME_TRANSDECODER: {
-            ent_input_str_t trans_long = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_LONGORF_EXE);
-            ent_input_str_t trans_predict = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_PREDICT_EXE);
             return std::unique_ptr<AbstractFrame>(new ModTransdecoder(
                     mModOutDir,
                     mInPath,
-                    mEntapDataPtrs,
-                    trans_long,
-                    trans_predict
+                    mEntapDataPtrs
             ));
         }
         default: {
-            ent_input_str_t exe_path_def = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_GENEMARKST_EXE);
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
                     mModOutDir,
                     mInPath,
-                    mEntapDataPtrs,
-                    exe_path_def
+                    mEntapDataPtrs
             ));
         }
     }

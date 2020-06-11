@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -70,6 +70,8 @@ public:
     bool add_alignment_data(std::string &base_path, QuerySequence *querySequence, QueryAlignment *alignment);
     QuerySequence* get_sequence(std::string&);
 
+    QUERY_MAP_T get_specific_sequences(uint32 flags);
+
     // DATA_FLAG routines
     bool is_protein_data();
     void set_is_protein_data(bool val);
@@ -129,7 +131,7 @@ private:
     const std::string OUT_ANNOTATED_PROT   = "final_annotated.faa";
 
     QUERY_MAP_T  *mpSequences;
-    bool         mTrim;
+    bool         mNoTrim;
     uint32       mTotalSequences;          // Original sequence number
     uint32       mDataFlags;
     uint64       mNucleoLengthStart;       // Starting total len (nucleotide)

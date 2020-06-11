@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -65,8 +65,7 @@ class ModInterpro : public AbstractOntology{
 
 public:
     ~ModInterpro();
-    ModInterpro(std::string &ont, std::string &in,
-                EntapDataPtrs& entap_data, std::string &exe, vect_str_t );
+    ModInterpro(std::string &ont, std::string &in, EntapDataPtrs& entap_data);
 
     virtual ModVerifyData verify_files() override ;
     virtual void execute() override ;
@@ -109,7 +108,7 @@ private:
     std::string FLAG_PATHWAY  = " --pathways";
     std::string FLAG_TEMP     = " --tempdir";
 
-    std::vector<std::string> mDatabases;
+    vect_str_t               mDatabases;
     std::string              mFinalOutpath;
     std::string              mFinalBasepath;
 

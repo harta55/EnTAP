@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -54,8 +54,7 @@ class ModDiamond : public AbstractSimilaritySearch {
 
 public:
     //******************* Public Functions *********************
-    ModDiamond(std::string &out, std::string &fasta_path,EntapDataPtrs &entap_data,
-                std::string &exe, vect_str_t &databases);
+    ModDiamond(std::string &out, std::string &fasta_path,EntapDataPtrs &entap_data, vect_str_t &databases);
     ~ModDiamond() override = default;
 
     // ModEntap overrides

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -44,7 +44,7 @@ public:
 
 
     EntapModule(std::string &execution_stage_path, std::string &in_hits,
-                EntapDataPtrs &entap_data, std::string module_name, std::string &exe,
+                EntapDataPtrs &entap_data, std::string module_name,
                 std::vector<ENTAP_HEADERS> &module_headers);
     virtual ~EntapModule() = default;
     virtual ModVerifyData verify_files()=0;
@@ -80,12 +80,12 @@ protected:
     int                mThreads;                // Number of threads specified for execution from user
     uint16             mSoftwareFlag;           // Flag indicating software module being used
     std::string        mOutpath;
-    std::string        mInputTranscriptome;
+    ent_input_str_t    mInputTranscriptome;
     std::string        mProcDir;                   // "processed" directory, or data analyzed
     std::string        mFigureDir;                 // "figure" directory to place any generated figures
     std::string        mModOutDir;                 // Root out directory for the EnTAP module we are dealing with
     std::string        mOverallResultsDir;
-    std::string        mExePath;
+    ent_input_str_t    mExePath;
     std::string        mTranscriptomeShortname;       // filename of transcriptome file for file name purposes
     ExecuteStates      mExecutionState;
     std::vector<uint16> mGoLevels;

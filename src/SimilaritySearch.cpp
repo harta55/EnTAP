@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -61,7 +61,6 @@ SimilaritySearch::SimilaritySearch(vect_str_t &database_paths, std::string &inpu
     mpFileSystem    = entap_data.mpFileSystem;
     mpEntapData    = &entap_data;
     mInputFastaPath     = input;
-    mDiamondExe    = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
     mDatabasePaths = database_paths;
 
     // Set sim search paths/directories
@@ -102,7 +101,7 @@ std::unique_ptr<AbstractSimilaritySearch> SimilaritySearch::spawn_object() {
         case SIM_DIAMOND:
         default:
             return std::unique_ptr<AbstractSimilaritySearch>(new ModDiamond(
-                    mSimSearchDir, mInputFastaPath, *mpEntapData, mDiamondExe, mDatabasePaths
+                    mSimSearchDir, mInputFastaPath, *mpEntapData, mDatabasePaths
                     ));
     }
 }

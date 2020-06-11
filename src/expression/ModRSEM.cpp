@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -40,14 +40,15 @@ std::vector<ENTAP_HEADERS> ModRSEM::DEFAULT_HEADERS = {
 
 
 ModRSEM::ModRSEM(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
-                 std::string &exe, std::string &align) :
-        AbstractExpression(execution_stage_path, in_hits, entap_data, "RSEM", exe, DEFAULT_HEADERS){
+                 std::string &align) :
+        AbstractExpression(execution_stage_path, in_hits, entap_data, "RSEM", DEFAULT_HEADERS){
     FS_dprint("Spawn Object - ModRSEM");
 
     mCalcExpressionExe = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_RSEM_CALC_EXPRES);
     mSamValidExe       = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_RSEM_SAM_VALID);
     mPrepReferenceExe  = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_RSEM_PREP_REF);
     mConvertSamExe     = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_RSEM_CONVERT_SAM);
+    mExePath           = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_RSEM_CALC_EXPRES);
 }
 
 ModRSEM::~ModRSEM() {
@@ -165,10 +166,10 @@ void ModRSEM::parse() {
     uint32              count_removed=0;
     uint32              count_kept=0;
     uint32              count_total=0;      // Used to warn user if high percentage is removed
-    uint32              min_removed=10000;
-    uint32              min_selected=10000;
-    uint32              max_removed=0xFFFFFFFF;
-    uint32              max_selected=0xFFFFFFFF;
+    uint32              min_removed=0xFFFFFFFF;
+    uint32              min_selected=0xFFFFFFFF;
+    uint32              max_removed=0;
+    uint32              max_selected=0;
     uint64              total_removed_len=0;
     uint64              total_kept_len=0;
     uint16              length;
@@ -230,7 +231,11 @@ void ModRSEM::parse() {
         mpQueryData->trim_sequence_header(geneid,geneid);
         QuerySequence *querySequence = mpQueryData->get_sequence(geneid);
         if (querySequence == nullptr) {
-            throw ExceptionHandler("Unable to find sequence: " + geneid, ERR_ENTAP_RUN_RSEM_EXPRESSION_PARSE);
+            throw ExceptionHandler("Unable to find sequence: " + geneid + " there may be a discrepancy between"
+                                                                          " sequence headers in your transcriptome and "
+                                                                          "headers in your BAM/SAM file. Try trimming"
+                                                                          " your sequence headers to the first space and re-running.",
+                                   ERR_ENTAP_RUN_RSEM_EXPRESSION_PARSE);
         }
         querySequence->set_fpkm(fpkm_val);
         querySequence->setMTPM(tpm);

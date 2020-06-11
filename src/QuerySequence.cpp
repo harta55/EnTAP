@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -827,6 +827,9 @@ void QuerySequence::setMTPM(fp64 mTPM) {
     QuerySequence::mTPM = mTPM;
 }
 
+bool QuerySequence::QUERY_FLAG_CONTAINS(uint32 flags) {
+    return ((flags & mQueryFlags) != 0);
+}
 
 QuerySequence::align_database_hits_t* QuerySequence::AlignmentData::get_database_ptr(ExecuteStates state, uint16 software, std::string& database) {
     if (database.empty()) return nullptr;

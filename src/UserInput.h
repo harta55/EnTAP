@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -67,7 +67,7 @@ typedef enum {
     INPUT_FLAG_TRANSCRIPTOME,
     INPUT_FLAG_DATABASE,
     INPUT_FLAG_GRAPH,
-    INPUT_FLAG_TRIM,
+    INPUT_FLAG_NO_TRIM,
     INPUT_FLAG_THREADS,
     INPUT_FLAG_STATE,
     INPUT_FLAG_NOCHECK,
@@ -127,7 +127,7 @@ typedef enum {
     INPUT_FLAG_INTERPRO_EXE,
     INPUT_FLAG_INTERPRO,
 
-    /* Transcriptome Eval Commands - BUSCO */
+    /* Ontology Commands - BUSCO */
     INPUT_FLAG_BUSCO_EXE,
     INPUT_FLAG_BUSCO_DATABASE,
     INPUT_FLAG_BUSCO_EVAL,

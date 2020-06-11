@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -49,9 +49,9 @@
  * ======================================================================
  */
 AbstractFrame::AbstractFrame(std::string &execution_stage_path, std::string &in_hits,
-                             EntapDataPtrs &entap_data, std::string module_name, std::string &exe,
+                             EntapDataPtrs &entap_data, std::string module_name,
                              std::vector<ENTAP_HEADERS> &module_headers)
-: EntapModule(execution_stage_path, in_hits, entap_data, module_name, exe, module_headers) {
+: EntapModule(execution_stage_path, in_hits, entap_data, module_name, module_headers) {
 
     mExecutionState = FRAME_SELECTION;
 }

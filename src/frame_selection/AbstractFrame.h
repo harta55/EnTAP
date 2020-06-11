@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -55,7 +55,7 @@ class AbstractFrame : public EntapModule {
 public:
 
     AbstractFrame(std::string &execution_stage_path, std::string &in_hits,
-                  EntapDataPtrs &entap_data, std::string module_name, std::string &exe,
+                  EntapDataPtrs &entap_data, std::string module_name,
                   std::vector<ENTAP_HEADERS> &module_headers);
 
     virtual ~AbstractFrame() = default;

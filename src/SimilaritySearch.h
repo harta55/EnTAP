@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -56,7 +56,6 @@ public:
 private:
 
     vect_str_t                      mDatabasePaths;     // Absolute paths to databases input from user
-    std::string                     mDiamondExe;        // Execution method for selected module
     std::string                     mInputFastaPath;    // Absolute path to input FASTA file from user
     std::string                     mSimSearchDir;      // Absolute path to root Similarity Search directory
     SIMILARITY_SOFTWARE             mSoftwareFlag;      // Selected sim search module

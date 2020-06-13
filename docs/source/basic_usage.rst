@@ -22,8 +22,8 @@
 .. |uni_trembl| replace:: ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz
 .. |entap_bin_ftp| replace:: https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.bin.gz
 .. |entap_sql_ftp| replace:: https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.db.gz
-.. |eggnog_sql_ftp| replace:: http://eggnogdb.embl.de/download/emapperdb-4.5.0/eggnog.db.gz
-.. |eggnog_fasta_ftp| replace:: http://eggnog5.embl.de/download/emapperdb-4.5.0/eggnog4.clustered_proteins.fa.gz
+.. |eggnog_sql_ftp| replace:: http://eggnog5.embl.de/download/eggnog_4.1/eggnog-mapper-data/eggnog.db.gz
+.. |eggnog_fasta_ftp| replace:: http://eggnog5.embl.de/download/eggnog_4.1/eggnog-mapper-data/eggnog4.clustered_proteins.fa.gz
 
 .. |flag_path| replace:: paths
 .. |flag_taxon| replace:: taxon

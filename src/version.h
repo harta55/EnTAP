@@ -35,7 +35,7 @@
 // When changing Version ensure the EnTAP Database version/FTP is up-to-date if changed (EntapDatabase.h)
 #define MAJOR_VERSION     0
 #define MINOR_VERSION     9
-#define BUILD_VERSION     1
+#define BUILD_VERSION     2
 
 #define TO_STR2(x)             #x
 #define TO_STR(x)              TO_STR2(x)

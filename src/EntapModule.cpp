@@ -58,6 +58,11 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mpEntapDatabase   = entap_data.mpEntapDatabase;
     mModuleHeaders    = module_headers;
 
+    // Initialize version numbers
+    mVersionMajor = 0;
+    mVersionMinor = 0;
+    mVersionRev   = 0;
+
     mThreads         = mpUserInput->get_supported_threads();
     mBlastp          = mpUserInput->has_input(INPUT_FLAG_RUNPROTEIN);
     mOverwrite       = mpUserInput->has_input(INPUT_FLAG_OVERWRITE);

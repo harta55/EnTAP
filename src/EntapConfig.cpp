@@ -437,7 +437,7 @@ namespace entapConfig {
      */
     void init_busco() {
         std::string busco_outpath;          // Absolute path to download BUSCO database to
-        std::string busco_database;         // BUSCO database tag/URL input by user
+        ent_input_multi_str_t busco_databases;         // BUSCO database tag/URL input by user
         std::string busco_out_filename;     // Filename of output BUSCO database
         BuscoDatabase::BUSCO_DB_ERR busco_db_err;   // BUSCO database error code
         std::stringstream log_msg;               // Log message to print to EnTAP log file
@@ -450,29 +450,32 @@ namespace entapConfig {
         FS_dprint("Initializing BUSCO database...");
         busco_db_err = BuscoDatabase::ERR_DATA_OK;
         pFileSystem->format_stat_stream(log_msg, "BUSCO Database Configuration");
-        busco_database = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_BUSCO_DATABASE);
-        if (pFileSystem->is_url(busco_database)) {
-            busco_out_filename = pFileSystem->get_filename(busco_database, false);
-        } else {
-            busco_out_filename = busco_database;
-        }
-        busco_outpath = PATHS(dataDir, busco_out_filename);
+        busco_databases = pUserInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_BUSCO_DATABASE);
 
-        if (pFileSystem->file_exists(busco_outpath)) {
-            FS_dprint("BUSCO database already exists at: " + busco_outpath);
-            log_msg << "Database skipped, already exists at: " << busco_outpath << std::endl;
-
-        } else {
-            // Database does not exist, download it
-            BuscoDatabase buscoDatabase = BuscoDatabase(pFileSystem);
-            busco_db_err = buscoDatabase.download_database(busco_database, busco_outpath);
-
-            if (busco_db_err == BuscoDatabase::ERR_DATA_OK) {
-                FS_dprint("Success! BUSCO database downloaded to: " + busco_outpath);
-                log_msg << "Database written to: " << busco_outpath << std::endl;
+        for (std::string &busco_database : busco_databases) {
+            if (pFileSystem->is_url(busco_database)) {
+                busco_out_filename = pFileSystem->get_filename(busco_database, false);
             } else {
-                // Fatal if database download fails
-                throw ExceptionHandler(buscoDatabase.print_error_log(), ERR_ENTAP_INIT_BUSCO_GENERIC);
+                busco_out_filename = busco_database;
+            }
+            busco_outpath = PATHS(dataDir, busco_out_filename);
+
+            if (pFileSystem->file_exists(busco_outpath)) {
+                FS_dprint("BUSCO database already exists at: " + busco_outpath);
+                log_msg << "BUSCO Database skipped, already exists at: " << busco_outpath << std::endl;
+
+            } else {
+                // Database does not exist, download it
+                BuscoDatabase buscoDatabase = BuscoDatabase(pFileSystem);
+                busco_db_err = buscoDatabase.download_database(busco_database, busco_outpath);
+
+                if (busco_db_err == BuscoDatabase::ERR_DATA_OK) {
+                    FS_dprint("Success! BUSCO database downloaded to: " + busco_outpath);
+                    log_msg << "BUSCO Database written to: " << busco_outpath << std::endl;
+                } else {
+                    // Fatal if database download fails
+                    throw ExceptionHandler(buscoDatabase.print_error_log(), ERR_ENTAP_INIT_BUSCO_GENERIC);
+                }
             }
         }
 

@@ -41,6 +41,15 @@ public:
     static bool is_executable(std::string &exe);
 
 private:
+
+    std::string get_output_dir(std::string &output_path);
+
+    typedef enum {
+        BUSCO_VERSION_UNKNOWN,
+        BUSCO_VERSION_3,
+        BUSCO_VERSION_4
+    } BUSCO_VERSION;
+
     static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
     // WARNING current as of version 3.0.2, subject to change!!
@@ -50,16 +59,18 @@ private:
     const std::string BUSCO_INPUT_DATABASE = "-l";          // Specify path to BUSCO database
     const std::string BUSCO_INPUT_CPU      = "--cpu";       // Specify number of threads to BUSCO
 
-    // BUSCO prepends this tag before all directory creations (-o command)
+    // BUSCO 3.0.2 prepends this tag before all directory creations (-o command)
     const std::string BUSCO_PREPEND_TAG    = "run_";
 
     const std::string BUSCO_RUN_TYPE_TRAN  = "tran";
     const std::string BUSCO_RUN_TYPE_PROT  = "prot";
 
-    std::string mExePath;      // Path to BUSCO executable
-    std::string mRunType;      // Execution type for BUSCO (prot or tran based on blastp)
+    BUSCO_VERSION mBuscoVersion;
+    std::string mExePath;       // Path to BUSCO executable
+    std::string mRunType;       // Execution type for BUSCO (prot or tran based on blastp)
     vect_str_t  mDatabasePaths; // Vector of BUSCO databases we want to use
-    fp64        mEval;         // Eval to use during BUSCO search
+    vect_str_t  mOutputDirs;    // Paths to directories output from BUSCO
+    fp64        mEval;          // Eval to use during BUSCO search
 
 
 };

@@ -250,6 +250,7 @@ bool ModDiamond::run_blast(AbstractSimilaritySearch::SimSearchCmd *cmd, bool use
     command_map_t   tc_commands;    // Terminal command map
     int32           err_code;       // Error codee from terminal execution
     bool            ret = true;     // Return value, if execution has succeeded
+    std::string     temp_exe;       // DIAMOND needs blastp/x directly after DIAMOND exe
 
     // Overwrite values if we should use defaults
     if (use_defaults) {
@@ -259,9 +260,9 @@ bool ModDiamond::run_blast(AbstractSimilaritySearch::SimSearchCmd *cmd, bool use
     }
 
     if (cmd->blastp) {
-        tc_commands.emplace(CMD_BLASTP, TC_NULL_ARGUMENT);
+        temp_exe = cmd->exe_path + " " + CMD_BLASTP;
     } else {
-        tc_commands.emplace(CMD_BLASTX, TC_NULL_ARGUMENT);
+        temp_exe = cmd->exe_path + " " + CMD_BLASTX;
     }
 
     tc_commands.emplace(CMD_DATABASE, cmd->database_path);
@@ -276,7 +277,7 @@ bool ModDiamond::run_blast(AbstractSimilaritySearch::SimSearchCmd *cmd, bool use
     tc_commands.emplace(CMD_THREADS, std::to_string(cmd->threads));
     tc_commands.emplace(CMD_OUTPUT_FORMAT, CMD_DEFAULT_OUTPUT_FORMAT);
 
-    terminalData.command        = TC_generate_command(tc_commands, cmd->exe_path);
+    terminalData.command        = TC_generate_command(tc_commands, temp_exe);
     terminalData.base_std_path  = cmd->std_out_path;
     terminalData.print_files    = true;
 

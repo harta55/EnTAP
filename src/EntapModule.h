@@ -79,6 +79,9 @@ protected:
     bool               mOverwrite;              // Indicates whether user would like to delete previous execution files for module
     int                mThreads;                // Number of threads specified for execution from user
     uint16             mSoftwareFlag;           // Flag indicating software module being used
+    uint16             mVersionMajor;
+    uint16             mVersionMinor;
+    uint16             mVersionRev;
     std::string        mOutpath;
     ent_input_str_t    mInputTranscriptome;
     std::string        mProcDir;                   // "processed" directory, or data analyzed

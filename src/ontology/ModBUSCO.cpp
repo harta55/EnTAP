@@ -43,7 +43,6 @@ ModBUSCO::ModBUSCO(std::string &in_hits, std::string &ont_out, EntapDataPtrs &en
     mDatabasePaths = mpUserInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_BUSCO_DATABASE);
     mExePath       = mpUserInput->get_user_input<ent_input_fp_t >(INPUT_FLAG_BUSCO_EVAL);
     mBlastp ? mRunType = BUSCO_RUN_TYPE_PROT : mRunType= BUSCO_RUN_TYPE_TRAN;
-
 }
 
 ModBUSCO::~ModBUSCO() {
@@ -63,28 +62,56 @@ bool ModBUSCO::is_executable(std::string &exe) {
 }
 
 void ModBUSCO::execute() {
+    std::string  database_out_path;     // Base path that BUSCO will output files to
+                                        // WARNING!!! BUSCO prepends "run_" to this
+    std::string  database_out_filename;
     std::string  std_out;
     std::string  cmd;
     TerminalData terminalData;
 
+    // Execute BUSCO analysis against all of the databases input by the user
     for (std::string &database : mDatabasePaths) {
 
         if (mpFileSystem->file_exists(database)) {
             FS_dprint("Running BUSCO against database at: " + database);
 
-//            cmd =
-//                    mExePath + " " +
-//                    BUSCO_INPUT_IN  + " " + mInputTranscriptome + /* Input Transcriptome*/
-//                    BU
+            switch (mBuscoVersion) {
+
+                case BUSCO_VERSION_3:
+                    database_out_filename = mpFileSystem->get_filename(database, false) + "_" + mRunType + "_results";
+                    database_out_path = PATHS(mModOutDir, database_out_filename);
+                    std_out = PATHS(mModOutDir, database_out_filename) + "_" + FileSystem::EXT_STD;
+
+                    cmd =
+                            mExePath + " " +
+                            BUSCO_INPUT_IN       + " " + mInputTranscriptome + " " + /* Input Transcriptome*/
+                            BUSCO_INPUT_OUTPUT   + " " + database_out_path   + " " + /* Output base path */
+                            BUSCO_INPUT_RUN_TYPE + " " + mRunType            + " " + /* Run type (tran or prot) */
+                            BUSCO_INPUT_DATABASE + " " + database            + " " + /* Database */
+                            BUSCO_INPUT_CPU      + " " + std::to_string(mThreads);
+
+
+                    terminalData = {};
+                    terminalData.base_std_path = std_out;
+                    terminalData.command = cmd;
+                    terminalData.print_files = true;
 
 
 
-            terminalData = {};
-            terminalData.print_files = true;
+                    if (TC_execute_cmd(terminalData) != 0) {
+                        // Error in run
+                    }
+                    break;
 
+                case BUSCO_VERSION_4:
+                    break;
+
+                default:
+                    break;
+            }
 
         } else {
-            // NO, Database does not exist!!
+            // NO, Database does not exist!! Default exit execution
             throw ExceptionHandler("ERROR BUSCO database does not exist at: " + database,
                 ERR_ENTAP_RUN_BUSCO);
         }
@@ -101,4 +128,10 @@ void ModBUSCO::parse() {
 
 EntapModule::ModVerifyData ModBUSCO::verify_files() {
     return EntapModule::ModVerifyData();
+}
+
+std::string ModBUSCO::get_output_dir(std::string &output_path) {
+    std::string ret;
+
+    return std::__cxx11::string();
 }

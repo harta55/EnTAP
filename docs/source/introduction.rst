@@ -22,7 +22,7 @@ The final annotation integrates across multiple databases and selects an optimal
 EnTAP is optimized to generate extensive functional information for the gene space of organisms with limited or poorly characterized genomic resources.
 
 How to cite:
-    * Hart, Alexander J., et al. “EnTAP: Bringing Faster and Smarter Functional Annotation to Non-Model Eukaryotic Transcriptomes.” Molecular Ecology Resources, 2019, doi:10.1111/1755-0998.13106.
+    * Hart AJ, Ginzburg S, Xu M, et al. EnTAP: Bringing faster and smarter functional annotation to non-model eukaryotic transcriptomes. Mol Ecol Resour. 2020;20:591–604. https://doi.org/10.1111/1755-0998.13106
 
 
 Pipeline Stages:
@@ -42,7 +42,7 @@ Pipeline Stages:
 The figure below represents the typical EnTAP pipeline. A more detailed version with all output files can be seen within Interpreting the Results.
 
 .. image::    EnTAP_Overview_hires.png
-	:scale: 50%
+	:width: 400
 	:align: center
 
 

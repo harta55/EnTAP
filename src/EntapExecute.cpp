@@ -162,6 +162,7 @@ namespace entapExecute {
                             std::string transc_filter_filename = pUserInput->get_user_transc_basename() + TRANSCRIPTOME_FILTERED_TAG;
                             std::string transc_filter_outpath  = PATHS(transcriptome_outpath, transc_filter_filename);
 
+                            pFileSystem->delete_file(transc_filter_outpath);
                             uint32 sequence_flags = 0;
                             QueryData::SEQUENCE_TYPES sequence_type;
                             sequence_flags |= QuerySequence::QUERY_EXPRESSION_KEPT;
@@ -198,6 +199,7 @@ namespace entapExecute {
                             std::string transc_protein_outpath  = PATHS(transcriptome_outpath, transc_protein_filename);
                             uint32 sequence_flags=0;
                             sequence_flags |= QuerySequence::QUERY_FRAME_KEPT;
+                            pFileSystem->delete_file(transc_protein_outpath);
                             if (pQUERY_DATA->generate_transcriptome(sequence_flags, transc_protein_outpath,
                                                                     QueryData::SEQUENCE_AMINO_ACID)){
                                 FS_dprint("Protein transcriptome generated to: " + transc_protein_outpath);
@@ -225,6 +227,7 @@ namespace entapExecute {
                         sequence_flags |= QuerySequence::QUERY_EXPRESSION_KEPT;
                         blastp ? sequence_type = QueryData::SEQUENCE_AMINO_ACID
                                : sequence_type = QueryData::SEQUENCE_NUCLEOTIDE;
+                       pFileSystem->delete_file(out_path);
                         if (pQUERY_DATA->generate_transcriptome(sequence_flags, out_path, sequence_type)) {
                             FS_dprint("FINAL transcriptome generated to: " + out_path);
                             // WARNING: Set our next input path to the frame selected version

@@ -843,9 +843,7 @@ bool QueryData::generate_transcriptome(uint32 flags, std::string &outpath, SEQUE
                             outfile << pair.second->get_sequence_p() << std::endl;
                             sequence_ct++;
                         } else {
-                            FS_dprint("WARNING: amino acid requested but not available for sequence");
-                            ret = false;
-                            break;
+                            ;
                         }
                         break;
 
@@ -854,8 +852,7 @@ bool QueryData::generate_transcriptome(uint32 flags, std::string &outpath, SEQUE
                             outfile << pair.second->get_sequence_n() << std::endl;
                             sequence_ct++;
                         } else {
-                            FS_dprint("WARNING: nucleotide requested but not available for sequence");
-                            ret = false;
+                            ;
                         }
                         break;
 

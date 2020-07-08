@@ -130,7 +130,7 @@ EntapModule::ModVerifyData ModBUSCO::verify_files() {
 std::string ModBUSCO::get_output_dir(std::string &output_path) {
     std::string ret;
 
-    return std::__cxx11::string();
+    return ret;
 }
 
 void ModBUSCO::get_version() {

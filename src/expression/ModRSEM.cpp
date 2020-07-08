@@ -370,6 +370,7 @@ bool ModRSEM::rsem_validate_file(std::string filename) {
 
     terminalData.command        = rsem_arg;
     terminalData.print_files    = true;
+    terminalData.suppress_std_err = false;
     terminalData.base_std_path  = PATHS(mModOutDir, filename) + STD_VALID_OUT;
 
 
@@ -430,6 +431,7 @@ bool ModRSEM::rsem_generate_reference(std::string& reference_path_out) {
     terminalData.command       = rsem_arg;
     terminalData.base_std_path = PATHS(mModOutDir, mFilename) + STD_REF_OUT;
     terminalData.print_files   = true;
+    terminalData.suppress_std_err = false;
 
     reference_path_out = ref_path;
 
@@ -459,6 +461,7 @@ bool ModRSEM::rsem_expression_analysis(std::string& ref_path, std::string& bam) 
 
     terminalData.command        = rsem_arg;
     terminalData.print_files    = true;
+    terminalData.suppress_std_err = false;
     terminalData.base_std_path  = PATHS(mModOutDir, mFilename) + STD_EXP_OUT;
 
 
@@ -474,4 +477,8 @@ bool ModRSEM::rsem_expression_analysis(std::string& ref_path, std::string& bam) 
 
 std::string ModRSEM::get_final_fasta() {
     return this->mFinalFasta;
+}
+
+void ModRSEM::get_version() {
+    return;
 }

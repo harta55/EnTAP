@@ -109,10 +109,10 @@ namespace entapConfig {
             init_busco();
 
         } catch (ExceptionHandler &e){
-            delete pEntapDatabase;
+            SAFE_DELETE(pEntapDatabase);
             throw ExceptionHandler(e.what(), e.getErr_code());
         }
-        delete pEntapDatabase;
+        SAFE_DELETE(pEntapDatabase);
         FS_dprint("Configuration complete!");
     }
 
@@ -178,6 +178,7 @@ namespace entapConfig {
                 terminalData.command       = index_command;
                 terminalData.base_std_path = std_out;
                 terminalData.print_files   = true;
+                terminalData.suppress_std_err = false;
 
                 if (TC_execute_cmd(terminalData) != 0) {
                     throw ExceptionHandler("Error indexing database at: " + fasta_path + "\nDIAMOND Error: " + terminalData.err_stream,
@@ -301,6 +302,7 @@ namespace entapConfig {
             terminalData.command       = index_cmd;
             terminalData.base_std_path = std_out;
             terminalData.print_files   = true;
+            terminalData.suppress_std_err = false;
 
             if (TC_execute_cmd(terminalData) != 0) {
                 throw ExceptionHandler("Error indexing database at: " + dmnd_outpath + "\nError:" +
@@ -418,7 +420,7 @@ namespace entapConfig {
         // print to log
         std::string temp = log_msg.str();
         pFileSystem->print_stats(temp);
-        delete pEntapDatabase;
+        SAFE_DELETE(pEntapDatabase);
     }
 
     /**

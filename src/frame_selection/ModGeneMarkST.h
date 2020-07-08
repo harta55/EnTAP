@@ -73,6 +73,7 @@ public:
     virtual ModVerifyData verify_files() override ;
     virtual void execute() override ;
     virtual void parse() override ;
+    virtual void get_version() override;
     //**********************************************************
 
 private:

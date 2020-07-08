@@ -57,6 +57,7 @@ bool ModBUSCO::is_executable(std::string &exe) {
 
     terminalData.command = test_command;
     terminalData.print_files = false;
+    terminalData.suppress_std_err = false;
 
     return TC_execute_cmd(terminalData) == 0;
 }
@@ -68,6 +69,8 @@ void ModBUSCO::execute() {
     std::string  std_out;
     std::string  cmd;
     TerminalData terminalData;
+
+    // first we want to get the version
 
     // Execute BUSCO analysis against all of the databases input by the user
     for (std::string &database : mDatabasePaths) {
@@ -90,13 +93,11 @@ void ModBUSCO::execute() {
                             BUSCO_INPUT_DATABASE + " " + database            + " " + /* Database */
                             BUSCO_INPUT_CPU      + " " + std::to_string(mThreads);
 
-
                     terminalData = {};
                     terminalData.base_std_path = std_out;
                     terminalData.command = cmd;
                     terminalData.print_files = true;
-
-
+                    terminalData.suppress_std_err = false;
 
                     if (TC_execute_cmd(terminalData) != 0) {
                         // Error in run
@@ -115,11 +116,7 @@ void ModBUSCO::execute() {
             throw ExceptionHandler("ERROR BUSCO database does not exist at: " + database,
                 ERR_ENTAP_RUN_BUSCO);
         }
-
     }
-
-
-
 }
 
 void ModBUSCO::parse() {
@@ -134,4 +131,8 @@ std::string ModBUSCO::get_output_dir(std::string &output_path) {
     std::string ret;
 
     return std::__cxx11::string();
+}
+
+void ModBUSCO::get_version() {
+    return;
 }

@@ -51,7 +51,12 @@ public:
         UNIPROT_MATCH      = (1 << 5),
 
         DATA_FLAGS_MAX     = (1 << 31)
-    }DATA_FLAGS;
+    } DATA_FLAGS;
+
+    typedef enum {
+        SEQUENCE_AMINO_ACID=0,
+        SEQUENCE_NUCLEOTIDE,
+    } SEQUENCE_TYPES;
 
 
     QueryData(std::string&, std::string&, UserInput*, FileSystem*);
@@ -69,6 +74,7 @@ public:
     bool end_alignment_files(std::string &base_path);
     bool add_alignment_data(std::string &base_path, QuerySequence *querySequence, QueryAlignment *alignment);
     QuerySequence* get_sequence(std::string&);
+    bool generate_transcriptome(uint32 flags, std::string &outpath, SEQUENCE_TYPES sequence_type);
 
     QUERY_MAP_T get_specific_sequences(uint32 flags);
 

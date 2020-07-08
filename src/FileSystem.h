@@ -108,6 +108,7 @@ public:
     bool directory_iterate(ENT_FILE_ITER, std::string&);
     bool check_fasta(std::string&);
     bool create_dir(std::string&);
+    bool move_dir(std::string& original, std::string &final);
     void delete_dir(std::string&);
 
     bool create_transcriptome_dir();

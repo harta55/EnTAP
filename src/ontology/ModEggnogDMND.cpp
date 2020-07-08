@@ -117,6 +117,7 @@ void ModEggnogDMND::execute() {
 
     terminalData.command        = cmd;
     terminalData.print_files    = true;
+    terminalData.suppress_std_err = false;
     terminalData.base_std_path  = std_out;
 
     if (TC_execute_cmd(terminalData) != 0) {
@@ -421,6 +422,7 @@ bool ModEggnogDMND::is_executable(std::string &exe) {
 
     terminalData.command = test_command;
     terminalData.print_files = false;
+    terminalData.suppress_std_err = false;
 
     return TC_execute_cmd(terminalData) == 0;
 }
@@ -436,4 +438,9 @@ std::string ModEggnogDMND::get_output_dmnd_filepath(bool final) {
     filename += "_" + mpUserInput->get_user_transc_basename() + "_eggnog_proteins";
     if (final) filename += FileSystem::EXT_OUT;
     return PATHS(mModOutDir, filename);
+}
+
+void ModEggnogDMND::get_version() {
+    return;
+
 }

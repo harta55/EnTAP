@@ -62,6 +62,7 @@ public:
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
+    virtual void get_version() = 0;
 
     virtual void set_success_flags() override ;
 

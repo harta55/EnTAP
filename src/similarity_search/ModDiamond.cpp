@@ -172,6 +172,7 @@ bool ModDiamond::is_executable(std::string &exe) {
 
     terminalData.command = exe + " --version";
     terminalData.print_files = false;
+    terminalData.suppress_std_err = false;
 
     return TC_execute_cmd(terminalData) == 0;
 }
@@ -280,6 +281,7 @@ bool ModDiamond::run_blast(AbstractSimilaritySearch::SimSearchCmd *cmd, bool use
     terminalData.command        = TC_generate_command(tc_commands, temp_exe);
     terminalData.base_std_path  = cmd->std_out_path;
     terminalData.print_files    = true;
+    terminalData.suppress_std_err = false;
 
     err_code = TC_execute_cmd(terminalData);
 
@@ -444,7 +446,7 @@ typedef std::map<std::string,std::map<std::string,uint32>> graph_sum_t;
  *
  * Notes                - Empty database_path indicates overall database statistics
  *
- * @param is_final      - BOOL indicates overall statistics (TRUE) or individual
+ * @param is_final      - BOOL indicates overall statistics (TRUE) or individual database
  *                        statistics (FALSE)
  * @param database_path - Absolute path to database output to calculate statistics
  *                      - Empty path indicates "overall" statistics
@@ -633,7 +635,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     // ------------ Calculate statistics and print to output ------------ //
 
     // ------------------- Setup graphing files ------------------------- //
-
+    GraphingManager::GraphingData graph_contaminants_bar;
     GraphingManager::GraphingData graph_species_bar;
     graph_species_bar.x_axis_label   = "Species";
     graph_species_bar.y_axis_label   = "Count";
@@ -641,14 +643,17 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     graph_species_bar.fig_out_path   = PATHS(figure_base, GRAPH_SPECIES_BAR_PNG);
     graph_species_bar.graph_title    = database_shortname + GRAPH_SPECIES_TITLE;
     graph_species_bar.graph_type     = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
+    mpGraphingManager->initialize_graph_data(graph_species_bar);
 
-    GraphingManager::GraphingData graph_contaminants_bar;
-    graph_contaminants_bar.x_axis_label   = "Contaminant Species";
-    graph_contaminants_bar.y_axis_label   = "Count";
-    graph_contaminants_bar.text_file_path = PATHS(figure_base, GRAPH_CONTAM_BAR_TXT);
-    graph_contaminants_bar.fig_out_path   = PATHS(figure_base, GRAPH_CONTAM_BAR_PNG);
-    graph_contaminants_bar.graph_title    = database_shortname + GRAPH_CONTAM_TITLE;
-    graph_contaminants_bar.graph_type     = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
+    if (count_contam >= MIN_CONTAM_COUNT) {
+        graph_contaminants_bar.x_axis_label   = "Contaminant Species";
+        graph_contaminants_bar.y_axis_label   = "Count";
+        graph_contaminants_bar.text_file_path = PATHS(figure_base, GRAPH_CONTAM_BAR_TXT);
+        graph_contaminants_bar.fig_out_path   = PATHS(figure_base, GRAPH_CONTAM_BAR_PNG);
+        graph_contaminants_bar.graph_title    = database_shortname + GRAPH_CONTAM_TITLE;
+        graph_contaminants_bar.graph_type     = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
+        mpGraphingManager->initialize_graph_data(graph_contaminants_bar);
+    }
 
     GraphingManager::GraphingData graph_frame_inform_stack;
     graph_frame_inform_stack.x_axis_label = "Category";
@@ -657,10 +662,8 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     graph_frame_inform_stack.fig_out_path   = PATHS(figure_base, GRAPH_DATABASE_SUM_PNG);
     graph_frame_inform_stack.graph_title    = database_shortname + GRAPH_DATABASE_SUM_TITLE;
     graph_frame_inform_stack.graph_type     = GraphingManager::ENT_GRAPH_BAR_STACKED;
-
-    mpGraphingManager->initialize_graph_data(graph_species_bar);
-    mpGraphingManager->initialize_graph_data(graph_contaminants_bar);
     mpGraphingManager->initialize_graph_data(graph_frame_inform_stack);
+
 
     // ------------------------------------------------------------------ //
 
@@ -741,7 +744,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
 
 
     // ********** Contaminant Calculations ************** //
-    if (count_contam > 0) {
+    if (count_contam >= MIN_CONTAM_COUNT) {
         ss << "\n\t\tFlagged contaminants (all % based on total contaminants):";
         for (auto &pair : contam_counter._data) {
             percent = ((fp64) pair.second / count_contam) * 100;
@@ -779,7 +782,9 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
 
     // -------------------------- Graphing Handle ----------------------- //
     mpGraphingManager->graph_data(graph_species_bar.text_file_path);
-    mpGraphingManager->graph_data(graph_contaminants_bar.text_file_path);
+    if (count_contam >= MIN_CONTAM_COUNT) {
+        mpGraphingManager->graph_data(graph_contaminants_bar.text_file_path);
+    }
     mpGraphingManager->graph_data(graph_frame_inform_stack.text_file_path);
     // ------------------------------------------------------------------ //
 }
@@ -789,4 +794,8 @@ void ModDiamond::set_uniprot_headers() {
         mpQueryData->header_set(header, true);
     }
     mpQueryData->set_is_uniprot(true);
+}
+
+void ModDiamond::get_version() {
+    return;
 }

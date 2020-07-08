@@ -39,6 +39,7 @@ public:
     virtual void parse() override;
     virtual ModVerifyData verify_files() override;
     static bool is_executable(std::string &exe);
+    virtual void get_version() override ;
 
 private:
 

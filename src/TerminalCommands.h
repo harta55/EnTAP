@@ -37,6 +37,7 @@ struct TerminalData{
     std::string out_stream;
     std::string err_stream;
     bool print_files;
+    bool suppress_std_err;  // Suppress std error to the debug file
     std::string base_std_path;
 };
 

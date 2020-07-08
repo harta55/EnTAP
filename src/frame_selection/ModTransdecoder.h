@@ -66,6 +66,7 @@ public:
     virtual ModVerifyData verify_files() override;
     virtual void execute() override ;
     virtual void parse() override;
+    virtual void get_version() override;
 
     static bool is_executable(std::string &long_orfs_exe, std::string &predict_exe);
     //**********************************************************
@@ -82,6 +83,8 @@ private:
 
 
     //**************** Private Const Variables *****************
+
+    /* Transdecoder Commands as of v5.5.0 */
     const std::string CMD_TRANSCRIPTOME_INPUT = "-t";      // Command to specify input
     const std::string CMD_MIN_PROTEIN_LENGTH  = "-m";
     const std::string CMD_OUTPUT_DIR          = "-O";                   // Specify output directory WARNING added in v5.5.0

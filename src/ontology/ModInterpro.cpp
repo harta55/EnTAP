@@ -136,6 +136,7 @@ void ModInterpro::execute() {
     // Execute command
     terminalData.command       = interpro_cmd;
     terminalData.print_files   = true;
+    terminalData.suppress_std_err = false;
     terminalData.base_std_path = std_out;
 
 
@@ -471,6 +472,7 @@ bool ModInterpro::is_executable(std::string &exe) {
 
     terminalData.command = test_command;
     terminalData.print_files = false;
+    terminalData.suppress_std_err = false;
 
     return TC_execute_cmd(terminalData) == 0;
 }
@@ -497,4 +499,8 @@ ModInterpro::ModInterpro(std::string &ont, std::string &in, EntapDataPtrs& entap
     mDatabases    = mpUserInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_INTERPRO);
     mSoftwareFlag = ONT_INTERPRO_SCAN;
     mExePath      = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_INTERPRO_EXE);
+}
+
+void ModInterpro::get_version() {
+    return;
 }

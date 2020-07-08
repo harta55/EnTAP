@@ -118,6 +118,7 @@ void ModGeneMarkST::execute() {
 
     terminalData.command        = genemark_cmd;
     terminalData.print_files    = true;
+    terminalData.suppress_std_err = false;
     terminalData.base_std_path  = genemark_std_out;
 
     // !!!WARNING!!! GeneMarkS-T output is always in the CWD
@@ -271,7 +272,7 @@ void ModGeneMarkST::genemark_parse_fasta(std::string &fasta, FileSystem::ENT_FIL
     uint16          second;
     QuerySequence  *pQuery_sequence;
 
-    // Filepath checked beforeww
+    // Filepath checked before
     std::ifstream in_file(fasta);
     while(true) {
         getline(in_file,line);
@@ -412,4 +413,8 @@ ModGeneMarkST::ModGeneMarkST(std::string &execution_stage_path, std::string &in_
     mFinalLstPath = PATHS(mModOutDir, mTranscriptomeFilename + FileSystem::EXT_LST);
     mFinalGmstLogPath = PATHS(mModOutDir, GENEMARK_LOG_FILE);
     mFinalHmmPath = PATHS(mModOutDir, GENEMARK_HMM_FILE);
+}
+
+void ModGeneMarkST::get_version() {
+    return;
 }

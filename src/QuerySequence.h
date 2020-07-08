@@ -68,12 +68,13 @@ public:
         QUERY_INFORMATIVE       = (1 << 7),         // Sequence is determined as informative from Sim Search
         QUERY_INTERPRO          = (1 << 8),         // Matched against InterPro databases
         QUERY_IS_PROTEIN        = (1 << 9),         // Sequence has a corresponding protein sequence
-        QUERY_BLASTED           = (1 << 10),        // Sequence was BLASTED (Sim Search was ran)
-        QUERY_CONTAMINANT       = (1 << 11),        // Sequence is determined as a contaminant from Sim Search
-        QUERY_FAMILY_ONE_KEGG   = (1 << 12),        // Sequence contains at least one KEGG from EggNOG process
-        QUERY_FAMILY_ONE_GO     = (1 << 13),        // Sequence contains at least one GO from EggNOG process
-        QUERY_ONT_INTERPRO_GO   = (1 << 14),        // Sequence contains at least one GO from InterPro process
-        QUERY_ONT_INTERPRO_PATHWAY = (1 << 15),     // Sequence contains at least one KEGG from InterPro process
+        QUERY_IS_NUCLEOTIDE     = (1 << 10),        // Sequence has a corresponding nucleotide sequence
+        QUERY_BLASTED           = (1 << 11),        // Sequence was BLASTED (Sim Search was ran)
+        QUERY_CONTAMINANT       = (1 << 12),        // Sequence is determined as a contaminant from Sim Search
+        QUERY_FAMILY_ONE_KEGG   = (1 << 13),        // Sequence contains at least one KEGG from EggNOG process
+        QUERY_FAMILY_ONE_GO     = (1 << 14),        // Sequence contains at least one GO from EggNOG process
+        QUERY_ONT_INTERPRO_GO   = (1 << 15),        // Sequence contains at least one GO from InterPro process
+        QUERY_ONT_INTERPRO_PATHWAY = (1 << 16),     // Sequence contains at least one KEGG from InterPro process
 
         QUERY_MAX               = (1 << 31)
 
@@ -200,9 +201,12 @@ public:
     const std::string &getMSequenceID() const;
     void setMTPM(fp64 mTPM);
 
+    uint32 getMQueryFlags() const;
+
     void set_blasted();
     bool is_kept();
     bool is_protein();
+    bool is_nucleotide();
     bool is_kept_expression();
     bool QUERY_FLAG_GET(QUERY_FLAGS flag);
     void QUERY_FLAG_CLEAR(QUERY_FLAGS flag);

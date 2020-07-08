@@ -59,6 +59,7 @@ GraphingManager::GraphingManager(std::string path, FileSystem *fileSystem) {
 
     terminalData.command = cmd;
     terminalData.print_files = false;
+    terminalData.suppress_std_err = false;
 
     try {
         mGraphingEnabled = TC_execute_cmd(terminalData) == 0;
@@ -77,7 +78,7 @@ GraphingManager::~GraphingManager() {
     for (auto &pair : mGraphData) {
         if (pair.second != nullptr) {
             pair.second->close_graphing_file();
-            delete pair.second;
+            SAFE_DELETE(pair.second);
         }
         mGraphData.erase(pair.first);
     }
@@ -117,6 +118,7 @@ void GraphingManager::graph(GraphingData* graphingStruct) {
 
     terminalData.command = graphing_cmd;
     terminalData.print_files = false;
+    terminalData.suppress_std_err = false;
 
     if (TC_execute_cmd(terminalData) != 0) {
         FS_dprint("\nError generating graph from:\n" + graphing_cmd);
@@ -203,7 +205,7 @@ void GraphingManager::graph_data(std::string &path) {
         if (graph_base != nullptr) {
             graph(&graph_base->getMGraphingData());
             graph_base->close_graphing_file();
-            delete graph_base;
+            SAFE_DELETE(graph_base);
             mGraphData.erase(path);
         }
     }
@@ -231,13 +233,14 @@ bool GraphingManager::EntapGraphBase::close_graphing_file() {
 
     FS_dprint("GraphingManager - closing graphing file at: " + this->mGraphingData.text_file_path);
 
+    if (mpOutputTextStream == nullptr) return ret; // File was already cleaned up
     try {
         if (this->mpOutputTextStream->is_open()) {
             this->mpOutputTextStream->close();
-            delete this->mpOutputTextStream;
+            SAFE_DELETE(this->mpOutputTextStream);
         }
     } catch (...) {
-        delete this->mpOutputTextStream;
+        SAFE_DELETE(this->mpOutputTextStream);
         ret = false;
     }
     return ret;

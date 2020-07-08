@@ -258,6 +258,7 @@ int ModTransdecoder::train_data(std::string &err_msg) {
     terminal_data.command = TC_generate_command(tc_command_map, mTransdecoderLongOrfsExe);
     terminal_data.base_std_path = PATHS(mModOutDir, STD_OUTPUT_TRAINING);
     terminal_data.print_files = true;
+    terminal_data.suppress_std_err = true;  // Transdecoder goes ham on logging to err std, suppress it to not flood log
 
     ret = TC_execute_cmd(terminal_data);
     if (ret != 0) {
@@ -295,6 +296,7 @@ int ModTransdecoder::predict_frame(std::string &err_msg) {
     terminal_data.command = TC_generate_command(tc_command_map, mTransdecoderPredictExe);
     terminal_data.base_std_path = PATHS(mModOutDir, STD_OUTPUT_PREDICTION);
     terminal_data.print_files = true;
+    terminal_data.suppress_std_err = true; // Transdecoder goes ham on logging to err std, suppress it to not flood log
 
     ret = TC_execute_cmd(terminal_data);
     if (ret != 0) {
@@ -328,6 +330,7 @@ bool ModTransdecoder::is_executable(std::string &long_orfs_exe, std::string &pre
     /* Test TransDecoder.LongOrfs */
     terminal_data.command = long_orfs_exe;
     terminal_data.print_files = false;
+    terminal_data.suppress_std_err = false;
 
     FS_dprint("Testing TransDecoder.LongOrfs executable...");
     if (TC_execute_cmd(terminal_data) != 0) {
@@ -508,4 +511,8 @@ void ModTransdecoder::parse_transdecoder_fasta_header(std::string &seq_id, std::
     } else {
         frame = line.substr(ind1 + FLAG_FRAME_BEGIN.size(), ind2 - ind1 - FLAG_FRAME_BEGIN.size());
     }
+}
+
+void ModTransdecoder::get_version() {
+    return;
 }

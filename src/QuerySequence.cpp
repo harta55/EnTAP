@@ -94,6 +94,7 @@ QuerySequence::QuerySequence(bool is_protein, std::string seq, std::string seqid
         mSequenceProtein = seq;
     } else {
         QUERY_FLAG_CLEAR(QUERY_IS_PROTEIN);
+        QUERY_FLAG_SET(QUERY_IS_NUCLEOTIDE);
         mSequenceNucleo = seq;
     }
 
@@ -192,6 +193,7 @@ const std::string &QuerySequence::get_sequence_n() const {
  * =====================================================================
  */
 void QuerySequence::set_sequence_n(std::string &sequence_n) {
+    QUERY_FLAG_SET(QUERY_IS_NUCLEOTIDE);
     if (!sequence_n.empty() && sequence_n[sequence_n.length()-1] == '\n') {
         sequence_n.pop_back();
     }
@@ -829,6 +831,14 @@ void QuerySequence::setMTPM(fp64 mTPM) {
 
 bool QuerySequence::QUERY_FLAG_CONTAINS(uint32 flags) {
     return ((flags & mQueryFlags) != 0);
+}
+
+uint32 QuerySequence::getMQueryFlags() const {
+    return mQueryFlags;
+}
+
+bool QuerySequence::is_nucleotide() {
+    return QUERY_FLAG_GET(QUERY_IS_NUCLEOTIDE);
 }
 
 QuerySequence::align_database_hits_t* QuerySequence::AlignmentData::get_database_ptr(ExecuteStates state, uint16 software, std::string& database) {

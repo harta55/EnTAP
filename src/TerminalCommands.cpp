@@ -85,8 +85,12 @@ int TC_execute_cmd(TerminalData &terminalData) {
     terminalData.err_stream = err_stream.str();
     terminalData.out_stream = out_stream.str();
 
-    // Print error to debug file
-    FS_dprint("\nStd Err:\n" + terminalData.err_stream);
+    // Print error to debug file if we are not suppressing output
+    if (!terminalData.suppress_std_err) {
+        FS_dprint("\nStd Err:\n" + terminalData.err_stream);\
+    } else {
+        FS_dprint("WARNING: Suppressing error log from child process, check error file generated for full output");
+    }
 
     if (terminalData.print_files) {
         std::string out_path = terminalData.base_std_path + FileSystem::EXT_OUT;

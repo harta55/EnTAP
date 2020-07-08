@@ -64,6 +64,7 @@ public:
     virtual void execute() = 0;
     virtual void parse() = 0;
     virtual void set_success_flags() override ;
+    virtual void get_version() = 0;
 
     virtual bool run_blast(SimSearchCmd *cmd, bool use_defaults) = 0;
 
@@ -90,6 +91,7 @@ protected:
     const std::string BLASTX_STR           = "blastx";
     const std::string BLASTP_STR           = "blastp";
     const uint8       UNIPROT_ATTEMPTS     = 15;   // Number of attempts to see if database is uniprot
+    const uint8       MIN_CONTAM_COUNT     = 1;    // Minimum number of contaminants to graph
     const std::string NCBI_REGEX          = "\\[(.+)\\](?!.+\\[.+\\])";
     const std::string UNIPROT_REGEX       = "OS=(.+?)\\s\\S\\S=";
 

@@ -806,3 +806,75 @@ QUERY_MAP_T QueryData::get_specific_sequences(uint32 flags) {
     }
     return ret_map;
 }
+
+/**
+ * ======================================================================
+ * Function bool QueryData::generate_transcriptome(uint32 flags, std::string outpath,
+ *                                                  SEQUENCE_TYPES sequence_type)
+ *
+ * Description          - Generates a transcriptome with sequences based on the
+ *                        flags input. If any flags match , it will be printed
+ *
+ * Notes                - None
+ *
+ * @param flags         - QuerySequence flags we would like to print
+ * @param outpath       - Absolute outpath to print transcriptome
+ * @param sequence_type - Sequence type we would like to print to the file
+ *
+ * @return              - Successful (true) or unsuccessful (false) generation of file
+ *
+ * =====================================================================
+ */
+bool QueryData::generate_transcriptome(uint32 flags, std::string &outpath, SEQUENCE_TYPES sequence_type) {
+
+    std::ofstream outfile(outpath, std::ios::out | std::ios::app);
+    bool ret = true;
+    uint64 sequence_ct = 0;
+
+    try {
+        for (auto& pair : *mpSequences) {
+            // If sequence flags match what we are looking for
+            if (pair.second->getMQueryFlags() & flags) {
+                // Yes, print to the file
+                switch (sequence_type) {
+
+                    case SEQUENCE_AMINO_ACID:
+                        if (pair.second->is_protein()) {
+                            outfile << pair.second->get_sequence_p() << std::endl;
+                            sequence_ct++;
+                        } else {
+                            FS_dprint("WARNING: amino acid requested but not available for sequence");
+                            ret = false;
+                            break;
+                        }
+                        break;
+
+                    case SEQUENCE_NUCLEOTIDE:
+                        if (pair.second->is_nucleotide()) {
+                            outfile << pair.second->get_sequence_n() << std::endl;
+                            sequence_ct++;
+                        } else {
+                            FS_dprint("WARNING: nucleotide requested but not available for sequence");
+                            ret = false;
+                        }
+                        break;
+
+                    default:
+                        FS_dprint("WARNING: QueryData generate_transcriptome unrecognized case");
+                        break;
+                }
+            }
+
+            if (!ret) break; // WARNING break out of loop if we failed inner case
+        }
+    } catch (...) {
+        ret = false;
+    }
+
+    if (sequence_ct == 0) {
+        FS_dprint("WARNING: No sequences were printed to file " + outpath);
+        ret = false;
+    }
+    outfile.close();
+    return ret;
+}

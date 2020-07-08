@@ -264,9 +264,9 @@ EntapDatabase::~EntapDatabase() {
     FS_dprint("Killing Object - EntapDatabase");
     if (mpDatabaseHelper != nullptr) {
         mpDatabaseHelper->close();
-        delete(mpDatabaseHelper);
+        SAFE_DELETE(mpDatabaseHelper);
     }
-    delete mpSerializedDatabase;
+    SAFE_DELETE(mpSerializedDatabase);
 }
 
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DATABASE_TYPE type) {

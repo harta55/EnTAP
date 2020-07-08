@@ -729,6 +729,7 @@ bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) 
     clear_error();
 
     terminalData.print_files = false;
+    terminalData.suppress_std_err = false;
     terminalData.base_std_path = "";
 
 
@@ -785,6 +786,7 @@ bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT
     clear_error();
 
     terminalData.print_files = false;
+    terminalData.suppress_std_err = false;
     terminalData.base_std_path = "";
 
     FS_dprint("Decompressing file at: " + in_path);
@@ -993,4 +995,24 @@ bool FileSystem::is_url(std::string &url) {
 
 void FileSystem::clear_error() {
     mErrorMsg = "";
+}
+
+/**
+ * ======================================================================
+ * Function bool FileSystem::move_dir(std::string &original, std::string &final)
+ *
+ * Description          - Moves input file using Boost FileSystem library
+ *                        or POSIX (calls rename_file())
+ *
+ * Notes                - None
+ *
+ * @param original     - Absolute path to dir we want to move
+ * @param final        - Absolute path to where we are moving the directory
+ *
+ * @return              - TRUE if copy was successful
+ *
+ * =====================================================================
+ */
+bool FileSystem::move_dir(std::string &original, std::string &final) {
+    return rename_file(original, final);    // rename_file checks for directory existence
 }

@@ -40,7 +40,6 @@ namespace entapExecute {
     //**************************************************************
 
     //******************** Local Prototype Functions ***************
-    std::string copy_final_transcriptome(std::string &input_path, std::string& transcriptome_outpath);
     void verify_state(std::queue<char> &queue, bool test);
     bool valid_state(enum ExecuteStates current_state);
     void exit_error(ExecuteStates exiting_state);
@@ -162,7 +161,19 @@ namespace entapExecute {
                             // Copy filtered file to entap transcriptome directory
                             std::string transc_filter_filename = pUserInput->get_user_transc_basename() + TRANSCRIPTOME_FILTERED_TAG;
                             std::string transc_filter_outpath  = PATHS(transcriptome_outpath, transc_filter_filename);
-                            pFileSystem->copy_file(input_path, transc_filter_outpath, true);
+
+                            uint32 sequence_flags = 0;
+                            QueryData::SEQUENCE_TYPES sequence_type;
+                            sequence_flags |= QuerySequence::QUERY_EXPRESSION_KEPT;
+                            blastp ? sequence_type = QueryData::SEQUENCE_AMINO_ACID : sequence_type = QueryData::SEQUENCE_NUCLEOTIDE;
+                            if (pQUERY_DATA->generate_transcriptome(sequence_flags, transc_filter_outpath, sequence_type)){
+                                FS_dprint("Expression filtered transcriptome generated to: " + transc_filter_outpath);
+                                // WARNING: Set our next input path to the frame selected version
+                                input_path = transc_filter_outpath;
+                            } else {
+                                throw ExceptionHandler("ERROR: unable to generate filtered transcriptome from frame selecttion results",
+                                                       ERR_ENTAP_GENERATE_TRANSCRIPTOME);
+                            }
                         }
                         break;
                     }
@@ -179,23 +190,52 @@ namespace entapExecute {
                             std::unique_ptr<FrameSelection> frame_selection(new FrameSelection(
                                     input_path, entap_data_ptrs
                             ));
-                            // WARNING: Set our next input path to the frame selected version
-                            input_path = frame_selection->execute(input_path);
+
+                            frame_selection->execute(input_path);
 
                             // Copy frame selected file to the trancriptome directory
                             std::string transc_protein_filename = pUserInput->get_user_transc_basename() + TRANSCRIPTOME_FRAME_TAG;
                             std::string transc_protein_outpath  = PATHS(transcriptome_outpath, transc_protein_filename);
-                            pFileSystem->copy_file(input_path, transc_protein_outpath, true);
+                            uint32 sequence_flags=0;
+                            sequence_flags |= QuerySequence::QUERY_FRAME_KEPT;
+                            if (pQUERY_DATA->generate_transcriptome(sequence_flags, transc_protein_outpath,
+                                                                    QueryData::SEQUENCE_AMINO_ACID)){
+                                FS_dprint("Protein transcriptome generated to: " + transc_protein_outpath);
+                                // WARNING: Set our next input path to the frame selected version
+                                input_path = transc_protein_outpath;
+                            } else {
+                                throw ExceptionHandler("ERROR: unable to generate protein transcriptome from frame selecttion results",
+                                                       ERR_ENTAP_GENERATE_TRANSCRIPTOME);
+                            }
                         }
                         break;
                     }
 
-                    case COPY_FINAL_TRANSCRIPTOME:
+                    case COPY_FINAL_TRANSCRIPTOME: {
                         // At this point, input_path is the final transcriptome we will be using
                         // copy this final trancriptome and then set input_path to the copied trancriptome
                         // absolute paths only!
-                        input_path = copy_final_transcriptome(input_path, transcriptome_outpath);
+                        FS_dprint("Beginning to copy final transcriptome to be used...");
+
+                        std::string file_name = pUserInput->get_user_transc_basename() + TRANSCRIPTOME_FINAL_TAG;
+                        std::string out_path = PATHS(transcriptome_outpath, file_name);
+                        uint32 sequence_flags = 0;
+                        QueryData::SEQUENCE_TYPES sequence_type;
+                        sequence_flags |= QuerySequence::QUERY_FRAME_KEPT;
+                        sequence_flags |= QuerySequence::QUERY_EXPRESSION_KEPT;
+                        blastp ? sequence_type = QueryData::SEQUENCE_AMINO_ACID
+                               : sequence_type = QueryData::SEQUENCE_NUCLEOTIDE;
+                        if (pQUERY_DATA->generate_transcriptome(sequence_flags, out_path, sequence_type)) {
+                            FS_dprint("FINAL transcriptome generated to: " + out_path);
+                            // WARNING: Set our next input path to the frame selected version
+                            input_path = out_path;
+                        } else {
+                            throw ExceptionHandler(
+                                    "ERROR: unable to generate final transcriptome from frame selecttion results",
+                                    ERR_ENTAP_GENERATE_TRANSCRIPTOME);
+                        }
                         break;
+                    }
 
                     case SIMILARITY_SEARCH: {
                         FS_dprint("STATE - SIMILARITY SEARCH");
@@ -243,37 +283,6 @@ namespace entapExecute {
             throw e;
         }
     }
-
-    /**
-     * ======================================================================
-     * Function std::string copy_final_transcriptome(std::string &input_path, std::string &transcriptome_outpath)
-     *
-     * Description          - Copies final transriptome (after filtering/frame selection)
-     *                        to the trancriptmoe directory
-     *
-     * Notes                - None
-     *
-     * @param input_path            - Absolute path to Input transcriptome (expression and/or frame selected)
-     * @param transcriptome_outpath - Absolute path to output transcriptome directory
-     *
-     * @return              - Absolute path to final transcriptome
-     *
-     * =====================================================================
-     */
-    std::string copy_final_transcriptome(std::string &input_path, std::string &transcriptome_outpath) {
-        FS_dprint("Beginning to copy final transcriptome to be used...");
-
-        std::string   file_name;
-        std::string   out_path;
-
-        file_name = pUserInput->get_user_transc_basename() + TRANSCRIPTOME_FINAL_TAG;
-        out_path = PATHS(transcriptome_outpath, file_name);
-        pFileSystem->copy_file(input_path,out_path,true);
-
-        FS_dprint("Success! Copied to: " + out_path);
-        return out_path;
-    }
-
 
     /**
      * ======================================================================
@@ -362,7 +371,7 @@ namespace entapExecute {
 
     /**
      * ======================================================================
-     * Function void exit_error(ExecuteStates s)
+     * Function void exit_error(ExecuteStates exiting_state)
      *
      * Description          - Prints a "summary" report for user during a
      *                        fatal error depending on stage
@@ -373,7 +382,7 @@ namespace entapExecute {
      * @return              - None
      * ======================================================================
      */
-    void exit_error(ExecuteStates s) {
+    void exit_error(ExecuteStates exiting_state) {
         std::stringstream ss;
 
         ss << "----------------------------------------------------\n";

@@ -188,8 +188,8 @@
 #define DESC_FRAME_SELECTION_FLAG "Specify the Frame Selection software you would like "\
                             "to use. Only one flag can be specified.\n"                 \
                             "Specify flags as follows:\n"                               \
-                            "    1. GeneMarkS-T (default)\n"                            \
-                            "    2. Transdecoder"
+                            "    1. GeneMarkS-T\n"                            \
+                            "    2. Transdecoder (default)"
 #define DESC_COMPLETE_PROT  "Select this option if all of your sequences are complete " \
                             "proteins.\n"                                               \
                             "At this point, this option will merely flag the sequences in your output file"
@@ -247,9 +247,9 @@
 
 
 /* -------------------- Ontology Commands --------------------*/
-#define DESC_EGGNOG_DMND     "Path to EggNOG DIAMOND configured database."
+#define DESC_EGGNOG_DMND     "Path to EggNOG DIAMOND configured database that was generated during the Configuration stage."
 #define CMD_EGGNOG_DMND     "eggnog-dmnd"
-#define DESC_EGGNOG_SQL     "Path to EggNOG SQL database."
+#define DESC_EGGNOG_SQL     "Absolute path to the EggNOG SQL database that was downloaded duirng the Configuration stage."
 #define CMD_EGGNOG_SQL      "eggnog-sql"
 #define DESC_INTERPRO_EXE   "Execution method of InterProScan."
 #define CMD_INTERPRO_EXE    "interproscan-exe"
@@ -283,7 +283,7 @@
                             "    1. InterProScan"
 #define CMD_GO_LEVELS      "level"
 #define DESC_ONT_LEVELS     "Specify the Gene Ontology levels you would like printed\n" \
-                            "Default: 0, 3, 4\n"                                        \
+                            "Default: 1\n"                                        \
                             "A level of 0 means that every term will be printed! "       \
                             "It is possible to specify multiple flags as well with\n"   \
                             "multiple --level flags\n"                                  \
@@ -333,8 +333,8 @@ const fp64   UserInput::DEFAULT_QCOVERAGE               = 50.0;
 const fp64   UserInput::DEFAULT_TCOVERAGE               = 50.0;
 const vect_uint16_t UserInput::DEFAULT_DATA_TYPE        = vect_uint16_t{EntapDatabase::ENTAP_SERIALIZED};
 const std::string UserInput::DEFAULT_STATE              ="+";
-const uint16 UserInput::DEFAULT_FRAME_SELECTION         = FRAME_GENEMARK_ST;
-const vect_uint16_t UserInput::DEFAULT_ONT_LEVELS       =vect_uint16_t{0,3,4};
+const uint16 UserInput::DEFAULT_FRAME_SELECTION         = FRAME_TRANSDECODER;
+const vect_uint16_t UserInput::DEFAULT_ONT_LEVELS       =vect_uint16_t{1};
 const vect_uint16_t UserInput::DEFAULT_ONTOLOGY         =vect_uint16_t{ONT_EGGNOG_DMND};
 const vect_uint16_t UserInput::DEFAULT_OUT_FORMAT       =vect_uint16_t{FileSystem::ENT_FILE_DELIM_TSV,
                                                                        FileSystem::ENT_FILE_FASTA_FAA,

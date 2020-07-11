@@ -309,6 +309,9 @@ void EggnogDmndAlignment::refresh_headers() {
             {ENTAP_HEADER_ONT_EGG_BIGG,       &mEggnogResults.bigg},
             {ENTAP_HEADER_ONT_EGG_KEGG,       &mEggnogResults.kegg},
             {ENTAP_HEADER_ONT_EGG_PROTEIN,    &mEggnogResults.protein_domains},
+            {ENTAP_HEADER_ONT_EGG_GO_BIO ,    nullptr},
+            {ENTAP_HEADER_ONT_EGG_GO_CELL,    nullptr},
+            {ENTAP_HEADER_ONT_EGG_GO_MOLE,    nullptr}
     };
     mpParentSequence->set_header_data();
     mpParentSequence->update_query_flags(GENE_ONTOLOGY, ONT_EGGNOG_DMND);
@@ -331,7 +334,10 @@ InterproAlignment::InterproAlignment(ExecuteStates state, uint16 software, std::
             {ENTAP_HEADER_ONT_INTER_INTERPRO, &mInterproResults.interpro_desc_id},
             {ENTAP_HEADER_ONT_INTER_DATA_TERM,&mInterproResults.database_desc_id},
             {ENTAP_HEADER_ONT_INTER_DATA_TYPE,&mInterproResults.database_type},
-            {ENTAP_HEADER_ONT_INTER_PATHWAYS, &mInterproResults.pathways}
+            {ENTAP_HEADER_ONT_INTER_PATHWAYS, &mInterproResults.pathways},
+            {ENTAP_HEADER_ONT_INTER_GO_MOLE,  nullptr},
+            {ENTAP_HEADER_ONT_INTER_GO_CELL,  nullptr},
+            {ENTAP_HEADER_ONT_INTER_GO_BIO,   nullptr}
     };
 }
 

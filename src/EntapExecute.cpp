@@ -70,6 +70,7 @@ namespace entapExecute {
         std::string                             input_path;      // Absolute path to transciptome (WARNING changes depending on user selection)
         std::string                             final_out_dir;   // Absolute path to output directory for final stats
         std::string                             transcriptome_outpath;
+        std::string                             transcrtipeom_out_filename;
         std::string                             entap_graphing_path;
         ent_input_multi_str_t                   databases;       // NCBI+UNIPROT+Other
         std::queue<char>                        state_queue;
@@ -107,8 +108,9 @@ namespace entapExecute {
 
         // Set/create outpaths
         final_out_dir  = pFileSystem->get_final_outdir();
-        pFileSystem->create_transcriptome_dir();        // Directory where filtere transcriptomes will be copied
-        transcriptome_outpath = pFileSystem->get_trancriptome_dir();
+        pFileSystem->create_transcriptome_dir();        // Directory where filtered transcriptomes will be copied
+        transcrtipeom_out_filename = pFileSystem->get_filename(input_path, true);   // Pull filename from input transcriptome
+        transcriptome_outpath = PATHS(pFileSystem->get_trancriptome_dir(), transcrtipeom_out_filename);
 
         try {
             verify_state(state_queue, state_flag);         // Set state transition
@@ -146,11 +148,12 @@ namespace entapExecute {
 
                     case EXPRESSION_FILTERING: {
                         FS_dprint("STATE - EXPRESSION FILTERING");
-                        if (!pUserInput->has_input(INPUT_FLAG_ALIGN)) {
+                        if (!user_input->run_expression_filtering()) {
                             FS_dprint("No alignment file specified, skipping expression analysis");
                             pQUERY_DATA->header_set(ENTAP_HEADER_EXP_FPKM, false);
                             pQUERY_DATA->header_set(ENTAP_HEADER_EXP_TPM, false);
                         } else {
+                            FS_dprint("Continuing with Expression Analysis");
                             // Proceed with expression analysis
                             std::unique_ptr<ExpressionAnalysis> expression(new ExpressionAnalysis(
                                     original_input, entap_data_ptrs
@@ -167,7 +170,7 @@ namespace entapExecute {
                             QueryData::SEQUENCE_TYPES sequence_type;
                             sequence_flags |= QuerySequence::QUERY_EXPRESSION_KEPT;
                             blastp ? sequence_type = QueryData::SEQUENCE_AMINO_ACID : sequence_type = QueryData::SEQUENCE_NUCLEOTIDE;
-                            if (pQUERY_DATA->generate_transcriptome(sequence_flags, transc_filter_outpath, sequence_type)){
+                            if (pQUERY_DATA->print_transcriptome(sequence_flags, transc_filter_outpath, sequence_type)){
                                 FS_dprint("Expression filtered transcriptome generated to: " + transc_filter_outpath);
                                 // WARNING: Set our next input path to the frame selected version
                                 input_path = transc_filter_outpath;
@@ -181,35 +184,43 @@ namespace entapExecute {
 
                     case FRAME_SELECTION: {
                         FS_dprint("STATE - FRAME SELECTION");
-                        if (blastp && pQUERY_DATA->is_protein_data()) {
-                            FS_dprint("Protein sequences input, skipping frame selection");
-                        } else if (!blastp) {
-                            FS_dprint("Blastx selected, skipping frame selection");
-                            pQUERY_DATA->header_set(ENTAP_HEADER_FRAME, false);
-                        } else {
-                            FS_dprint("Continuing with frame selection process...");
-                            std::unique_ptr<FrameSelection> frame_selection(new FrameSelection(
-                                    input_path, entap_data_ptrs
-                            ));
+                        bool run_frame_selection;
+                        if (pUserInput->run_frame_selection(pQUERY_DATA, run_frame_selection)) {
+                            // We were able to determine if we want to run frame selection
+                            if (run_frame_selection) {
 
-                            frame_selection->execute(input_path);
+                                FS_dprint("Continuing with frame selection process...");
+                                std::unique_ptr<FrameSelection> frame_selection(new FrameSelection(
+                                        input_path, entap_data_ptrs
+                                ));
 
-                            // Copy frame selected file to the trancriptome directory
-                            std::string transc_protein_filename = pUserInput->get_user_transc_basename() + TRANSCRIPTOME_FRAME_TAG;
-                            std::string transc_protein_outpath  = PATHS(transcriptome_outpath, transc_protein_filename);
-                            uint32 sequence_flags=0;
-                            sequence_flags |= QuerySequence::QUERY_FRAME_KEPT;
-                            pFileSystem->delete_file(transc_protein_outpath);
-                            if (pQUERY_DATA->generate_transcriptome(sequence_flags, transc_protein_outpath,
-                                                                    QueryData::SEQUENCE_AMINO_ACID)){
-                                FS_dprint("Protein transcriptome generated to: " + transc_protein_outpath);
-                                // WARNING: Set our next input path to the frame selected version
-                                input_path = transc_protein_outpath;
+                                frame_selection->execute(input_path);
+
+                                // Copy frame selected file to the trancriptome directory
+                                std::string transc_protein_filename = pUserInput->get_user_transc_basename() + TRANSCRIPTOME_FRAME_TAG;
+                                std::string transc_protein_outpath  = PATHS(transcriptome_outpath, transc_protein_filename);
+                                uint32 sequence_flags=0;
+                                sequence_flags |= QuerySequence::QUERY_FRAME_KEPT;
+                                pFileSystem->delete_file(transc_protein_outpath);
+                                if (pQUERY_DATA->print_transcriptome(sequence_flags, transc_protein_outpath,
+                                                                     QueryData::SEQUENCE_AMINO_ACID)){
+                                    FS_dprint("Protein transcriptome generated to: " + transc_protein_outpath);
+                                    // WARNING: Set our next input path to the frame selected version
+                                    input_path = transc_protein_outpath;
+                                } else {
+                                    throw ExceptionHandler("ERROR: unable to generate protein transcriptome from frame selecttion results",
+                                                           ERR_ENTAP_GENERATE_TRANSCRIPTOME);
+                                }
                             } else {
-                                throw ExceptionHandler("ERROR: unable to generate protein transcriptome from frame selecttion results",
-                                                       ERR_ENTAP_GENERATE_TRANSCRIPTOME);
+                                // No, we are going to skip frame selection process
+                                pQUERY_DATA->header_set(ENTAP_HEADER_FRAME, false);
                             }
+                        } else {
+                            // Should never happen
+                            throw ExceptionHandler("Unable to determine if we want to run Frame Selection",
+                                ERR_ENTAP_INPUT_PARSE);
                         }
+
                         break;
                     }
 
@@ -228,7 +239,7 @@ namespace entapExecute {
                         blastp ? sequence_type = QueryData::SEQUENCE_AMINO_ACID
                                : sequence_type = QueryData::SEQUENCE_NUCLEOTIDE;
                        pFileSystem->delete_file(out_path);
-                        if (pQUERY_DATA->generate_transcriptome(sequence_flags, out_path, sequence_type)) {
+                        if (pQUERY_DATA->print_transcriptome(sequence_flags, out_path, sequence_type)) {
                             FS_dprint("FINAL transcriptome generated to: " + out_path);
                             // WARNING: Set our next input path to the frame selected version
                             input_path = out_path;

@@ -74,6 +74,7 @@ public:
     virtual void execute() override ;
     virtual void parse() override ;
     virtual void get_version() override;
+    static bool is_executable(std::string& exe);
     //**********************************************************
 
 private:

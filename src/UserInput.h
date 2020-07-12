@@ -163,6 +163,9 @@ public:
     vect_str_t get_uninformative_vect();
     std::string get_user_transc_basename();
     std::vector<FileSystem::ENT_FILE_TYPES> get_user_output_types();
+    bool run_frame_selection(QueryData *queryData, bool &run_frame_selection);
+    bool run_expression_filtering();
+
 
     template<class T>
     T get_user_input(ENTAP_INPUT_FLAGS key) {
@@ -233,7 +236,7 @@ private:
     void verify_species (SPECIES_FLAGS, EntapDatabase*);
     void process_user_species(std::string&);
     void verify_uninformative(std::string&);
-    void verify_software_paths(std::string &state, bool is_protein, bool is_execution);
+    void verify_software_paths(std::string &state, bool is_protein, bool is_execution, QueryData *pQuery_data);
     void generate_ini_file(std::string& ini_path);
 
     const uint16 TRANS_MIN_PROTEIN_MIN         = 0;
@@ -316,7 +319,6 @@ private:
     std::string mIniFilePath;
     bool        mIsConfig;
     static EntapINIEntry mUserInputs[];
-
 };
 
 

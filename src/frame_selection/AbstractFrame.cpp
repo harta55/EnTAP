@@ -239,7 +239,7 @@ void AbstractFrame::frame_calculate_statistics() {
         // Calculate and print stats
         FS_dprint("Beginning to calculate statistics...");
         avg_selected = (fp32)total_kept_len / count_selected;
-        mpFileSystem->format_stat_stream(stat_output, "Frame Selected Transcripts (GeneMarkS-T)");
+        mpFileSystem->format_stat_stream(stat_output, "Frame Selected Transcripts (" + mModuleName + ")");
         stat_output <<
                     "Total sequences frame selected: "      << count_selected          <<
                     "\n\tTranslated protein sequences: "    << mFinalFaaPath              <<

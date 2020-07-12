@@ -70,6 +70,7 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mGoLevels        = mpUserInput->get_user_input<ent_input_multi_int_t >(INPUT_FLAG_GO_LEVELS);
     mEntapHeaders    = mpUserInput->get_user_input<std::vector<ENTAP_HEADERS>>(INPUT_FLAG_ENTAP_HEADERS);
 
+    mModuleName      = module_name;
     mTranscriptomeShortname = mpFileSystem->get_filename(mInputTranscriptome, false);
 
     // INIT directories

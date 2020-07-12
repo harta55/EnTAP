@@ -59,6 +59,7 @@ public:
     } SEQUENCE_TYPES;
 
 
+    QueryData(std::string &input_path, UserInput* userInput, FileSystem* fileSystem);
     QueryData(std::string&, std::string&, UserInput*, FileSystem*);
     ~QueryData();
 
@@ -74,7 +75,7 @@ public:
     bool end_alignment_files(std::string &base_path);
     bool add_alignment_data(std::string &base_path, QuerySequence *querySequence, QueryAlignment *alignment);
     QuerySequence* get_sequence(std::string&);
-    bool generate_transcriptome(uint32 flags, std::string &outpath, SEQUENCE_TYPES sequence_type);
+    bool print_transcriptome(uint32 flags, std::string &outpath, SEQUENCE_TYPES sequence_type);
 
     QUERY_MAP_T get_specific_sequences(uint32 flags);
 
@@ -111,12 +112,13 @@ private:
     void DATA_FLAG_CLEAR(DATA_FLAGS);
     void DATA_FLAG_CHANGE(DATA_FLAGS flag, bool val);
 
+    void init_params(FileSystem *fileSystem, UserInput *userInput);
     std::string get_delim_data_sequence(std::vector<ENTAP_HEADERS>&headers, char delim, uint8 lvl,
                                 QuerySequence* sequence);
     std::string get_delim_data_alignment(std::vector<ENTAP_HEADERS>&headers, char delim, uint8 lvl,
                                         QueryAlignment* alignment);
     bool initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HEADERS> &headers, FileSystem::ENT_FILE_TYPES type);
-
+    void generate_transcriptome(std::string &input_path, bool print_output, std::string output_path);
 
     const uint8         LINE_COUNT   = 20;
     const uint8         SEQ_DPRINT_CONUT = 10;
@@ -138,6 +140,7 @@ private:
 
     QUERY_MAP_T  *mpSequences;
     bool         mNoTrim;
+    bool         mIsComplete;              // All sequences can be tagged as 'complete' genes
     uint32       mTotalSequences;          // Original sequence number
     uint32       mDataFlags;
     uint64       mNucleoLengthStart;       // Starting total len (nucleotide)
@@ -145,6 +148,7 @@ private:
     uint32       mPipelineFlags;           // Success flags
     FileSystem  *mpFileSystem;
     UserInput   *mpUserInput;
+    std::string mTranscriptTypeStr;
     std::unordered_map<std::string, OutputFileData> mAlignmentFiles;
     static EntapHeader ENTAP_HEADER_INFO[];
 

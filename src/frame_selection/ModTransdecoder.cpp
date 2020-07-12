@@ -328,7 +328,7 @@ bool ModTransdecoder::is_executable(std::string &long_orfs_exe, std::string &pre
     TerminalData terminal_data;
 
     /* Test TransDecoder.LongOrfs */
-    terminal_data.command = long_orfs_exe;
+    terminal_data.command = long_orfs_exe + " --version";
     terminal_data.print_files = false;
     terminal_data.suppress_std_err = false;
 
@@ -341,7 +341,7 @@ bool ModTransdecoder::is_executable(std::string &long_orfs_exe, std::string &pre
     terminal_data = {};
 
     /* Test TransDecoder.Predict */
-    terminal_data.command = predict_exe;
+    terminal_data.command = predict_exe + " --version";
     terminal_data.print_files = false;
 
     FS_dprint("Testing TransDecoder.Predict executable...");

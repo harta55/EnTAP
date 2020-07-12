@@ -42,6 +42,7 @@
 #include "frame_selection/ModTransdecoder.h"
 #include "database/BuscoDatabase.h"
 #include "ontology/ModBUSCO.h"
+#include "frame_selection/ModGeneMarkST.h"
 //**************************************************************
 
 //*********************** Defines ******************************
@@ -1031,6 +1032,7 @@ bool UserInput::verify_user_input() {
     std::string              input_tran_path;
     std::vector<uint16>      ont_flags;
     EntapDatabase           *pEntap_database = nullptr;
+    std::unique_ptr<QueryData> pQuery_Data=nullptr;
 
     // If graphing flag, check if it is allowed then EXIT
     if (has_input(INPUT_FLAG_GRAPH)) {
@@ -1134,8 +1136,13 @@ bool UserInput::verify_user_input() {
                     throw(ExceptionHandler("File not in fasta format or corrupt! "+ input_tran_path,
                                            ERR_ENTAP_INPUT_PARSE));
                 } else {
-                    // TODO File must be valid, sanity check content of FASTA file
-                    ;
+                    // File valid, verify that the transcriptome is in correct format
+                    try {
+                        pQuery_Data = std::unique_ptr<QueryData>(new QueryData(input_tran_path, this, mpFileSystem));
+                    } catch (const ExceptionHandler &e) {
+                        throw e;
+                    }
+
                 }
             }
 
@@ -1257,7 +1264,7 @@ bool UserInput::verify_user_input() {
         if (get_user_input<ent_input_str_t>(INPUT_FLAG_STATE) == DEFAULT_STATE) {
             std::string state = DEFAULT_STATE;
             // only handling default now
-            verify_software_paths(state, is_protein, is_run);
+            verify_software_paths(state, is_protein, is_run,pQuery_Data.get());
         }
 
     }catch (const ExceptionHandler &e) {
@@ -1537,7 +1544,7 @@ void UserInput::verify_uninformative(std::string& path) {
  * @return              - None
  * ======================================================================
  */
-void UserInput::verify_software_paths(std::string &state, bool runP, bool is_execution) {
+void UserInput::verify_software_paths(std::string &state, bool runP, bool is_execution, QueryData *pQuery_data) {
     uint8 execute = 0x0;
     std::pair<bool, std::string> out;
     ent_input_str_t dmnd_exe;
@@ -1545,19 +1552,36 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
     ent_input_str_t egg_db_sql;
     ent_input_str_t interpro_exe;
     ent_input_str_t busco_exe;
+    ent_input_str_t genemarkst_exe;
+    ent_input_str_t transdecoder_exe_predict;
+    ent_input_str_t transdecoder_exe_longorf;
     ent_input_multi_int_t ontology_flags;
+    ent_input_uint_t frame_selection_software;
 
     dmnd_exe     = get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
     egg_db_dmnd  = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
     egg_db_sql   = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
     interpro_exe = get_user_input<ent_input_str_t>(INPUT_FLAG_INTERPRO_EXE);
     busco_exe    = get_user_input<ent_input_str_t>(INPUT_FLAG_BUSCO_EXE);
-
+    genemarkst_exe = get_user_input<ent_input_str_t>(INPUT_FLAG_GENEMARKST_EXE);
+    transdecoder_exe_predict = get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_PREDICT_EXE);
+    transdecoder_exe_longorf = get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_LONGORF_EXE);
 
     ontology_flags = get_user_input<ent_input_multi_int_t>(INPUT_FLAG_ONTOLOGY);
+    frame_selection_software = get_user_input<ent_input_uint_t>(INPUT_FLAG_FRAME_SELECTION);
 
     if (state == DEFAULT_STATE) {
+        bool is_run_frame_select;
 
+        if (run_expression_filtering()) {
+            execute |= EXPRESSION_FILTERING;
+        }
+
+        if (run_frame_selection(pQuery_data, is_run_frame_select)) {
+            if (is_run_frame_select) {
+                execute |= FRAME_SELECTION;
+            }
+        }
         execute |= SIMILARITY_SEARCH;
         execute |= GENE_ONTOLOGY;
 
@@ -1565,6 +1589,34 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
     FS_dprint("Verifying software...");
 
     if (is_execution) {
+
+        // add expression filtering
+
+        // Check frame selection software
+        if (execute & FRAME_SELECTION) {
+            switch (frame_selection_software) {
+
+                case FRAME_GENEMARK_ST:
+                    FS_dprint("Verifying that GeneMarkS-T is executable...");
+                    if (!ModGeneMarkST::is_executable(genemarkst_exe)) {
+                        throw ExceptionHandler("Could not execute a test run of GeneMarkS-T, be sure "
+                                               "it's properly installed and the executable is correct",
+                                               ERR_ENTAP_INPUT_PARSE);
+                    }
+                    break;
+
+                case FRAME_TRANSDECODER:
+                    FS_dprint("Verifying that Transdecoder is executable");
+                    if (!ModTransdecoder::is_executable(transdecoder_exe_longorf, transdecoder_exe_predict)) {
+                        throw ExceptionHandler("Could not execute a test run of Transdecoder, be sure "
+                                               "it's properly installed and the executable is correct",
+                                               ERR_ENTAP_INPUT_PARSE);
+                    }
+                    break;
+            }
+        }
+
+        // Check SIMLARITY SEARCH software
         if (execute & SIMILARITY_SEARCH) {
             if (!ModDiamond::is_executable(dmnd_exe)) {
                 throw ExceptionHandler("Could not execute a test run of DIAMOND, be sure it's properly "
@@ -1792,4 +1844,45 @@ const std::string &UserInput::getENTAP_DATABASE_BIN_DEFAULT() {
 
 const std::string &UserInput::getENTAP_DATABASE_SQL_DEFAULT() {
     return ENTAP_DATABASE_SQL_DEFAULT;
+}
+
+// Returns false if unable to determine whether we want to run frame selection
+bool UserInput::run_frame_selection(QueryData *queryData, bool &run_frame_selection) {
+    FS_dprint("Determining if we want to run frame selection...");
+    bool blastp;    // User input runP/blastp (TRUE) or runN (false) or config (false)
+    bool ret;
+
+    ret = true;
+    blastp = has_input(INPUT_FLAG_RUNPROTEIN);
+
+    if (queryData == nullptr) {
+        FS_dprint("ERROR Unable to determine, nullptr!");
+        ret = false;
+    } else{
+
+        if (blastp && queryData->is_protein_data()) {
+            FS_dprint("NO Protein sequences input AND runP, skipping frame selection");
+            run_frame_selection = false;
+        } else if (!blastp) {
+            FS_dprint("NO Blastx/runN selected, skipping frame selection");
+            run_frame_selection = false;
+        } else {
+            FS_dprint("YES, run frame selection");
+            run_frame_selection = true;
+        }
+    }
+
+    return ret;
+}
+
+bool UserInput::run_expression_filtering() {
+    FS_dprint("Determining if we want to run expression analysis");
+
+    if (has_input(INPUT_FLAG_ALIGN)) {
+        FS_dprint("YES, alignment file input from user");
+        return true;
+    } else {
+        return false;
+        FS_dprint("NO, no alignment file specified from user");
+    }
 }

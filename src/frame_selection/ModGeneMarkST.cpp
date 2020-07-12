@@ -418,3 +418,13 @@ ModGeneMarkST::ModGeneMarkST(std::string &execution_stage_path, std::string &in_
 void ModGeneMarkST::get_version() {
     return;
 }
+
+bool ModGeneMarkST::is_executable(std::string &exe) {
+    TerminalData terminalData;
+
+    terminalData.command = exe + " --version";
+    terminalData.print_files = false;
+    terminalData.suppress_std_err = false;
+
+    return TC_execute_cmd(terminalData) == 0;
+}

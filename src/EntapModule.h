@@ -85,6 +85,7 @@ protected:
     uint16             mVersionRev;
     std::string        mOutpath;
     ent_input_str_t    mInputTranscriptome;
+    std::string        mModuleName;                // Name of module
     std::string        mProcDir;                   // "processed" directory, or data analyzed
     std::string        mFigureDir;                 // "figure" directory to place any generated figures
     std::string        mModOutDir;                 // Root out directory for the EnTAP module we are dealing with

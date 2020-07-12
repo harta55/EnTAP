@@ -62,8 +62,8 @@ public:
     } ERR_EGGNOG_DB;
 
     typedef enum {
-        EGGNOG_VERSION_UNKONWN=0,
-        EGGNOG_VERSION_EARLIER,
+        EGGNOG_VERSION_UNKONWN=0,   // We could NOT find version and did not assume one
+        EGGNOG_VERSION_EARLIER,     // EggNOG Database v4.1 (default)
         EGGNOG_VERSION_4_5_1,
         EGGNOG_VERSION_MAX
     } EGGNOG_SQL_VERSION;
@@ -183,7 +183,7 @@ private:
     static const vect_str_t                                  TAXONOMIC_RESOLUTION;
 
     void get_tax_scope(QuerySequence::EggnogResults*);
-    void get_sql_data(QuerySequence::EggnogResults* eggnogResults);
+    void get_additional_sql_data(QuerySequence::EggnogResults* eggnogResults);
     std::string format_sql_data(std::string&);
     void get_og_query(QuerySequence::EggnogResults* eggnogResults);
     void get_member_ogs(QuerySequence::EggnogResults* eggnog_results);

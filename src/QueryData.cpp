@@ -106,139 +106,210 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
         {"Unused",                                  false}
 };
 
+/**
+ * ======================================================================
+ * Function QueryData::QueryData(std::string &input_path,
+ *                               UserInput *userInput,
+ *                               FileSystem *fileSystem)
+ *
+ * Description          - Parses input transcriptome and converts to map of
+ *                        each query sequence
+ *                      - This map is passed throughout EnTAP execution and
+ *                        updated throughout
+ *
+ * Notes                - Used during Config, will NOT print output
+ *
+ * @param input_path    - Absolute path to input transcriptome
+ * @param userInput     - Pointer to UserInput object
+ * @param fileSystem    - Pointer to FileSystem object
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
+QueryData::QueryData(std::string &input_path, UserInput *userInput, FileSystem *fileSystem) {
+    FS_dprint("Spawn Object - QueryData");
+
+    init_params(fileSystem, userInput); // Initialize member variables
+    try {
+        generate_transcriptome(input_path, false, "");
+    } catch (const ExceptionHandler &e) {
+        throw e;
+    }
+}
+
 
 /**
  * ======================================================================
  * Function QueryData::QueryData(std::string &input_file,
  *                              std::string &out_path,
- *                              bool &is_complete,
- *                              bool &trim)
+ *                              userInput  *userinput,
+ *                              FileSystem *filesystem,
  *
  * Description          - Parses input transcriptome and converts to map of
  *                        each query sequence
  *                      - This map is passed throughout EnTAP execution and
- *                        updated
+ *                        updated throughout
  *
- * Notes                - None
+ * Notes                - Will print transcriptome to output file + generate log
  *
  * @param input_file    - Path to input transcriptome
- * @param trim          - Flag from user to trim sequence ID to first space
- * @param is_complete   - Flag from user if the entire transcriptome is a
- *                        complete gene
- * @return              - None
+ * @param out_path      - Path to output formatted transcriptome
+ * @param userinput     - Pointer to UserInput object
+ * @param filesystem    - Pointer to FileSystem object
+ *
+ * @return              - Sets input_file to out_path
  *
  * =====================================================================
  */
 QueryData::QueryData(std::string &input_file, std::string &out_path, UserInput *userinput,
                     FileSystem* filesystem) {
-    FS_dprint("Processing transcriptome...");
+    FS_dprint("Spawn Object - QueryData");
 
-    std::stringstream                        out_msg;
-    std::string                              out_name;
-    std::string                              out_new_path;
-    std::string                              line;
-    std::string                              sequence;
-    std::string                              seq_id;
-    std::string                              longest_seq;
-    std::string                              shortest_seq;
-    std::string                              transcript_type;
-    uint32                                   count_seqs=0;
-    uint64                                   total_len=0;
-    uint16                                   shortest_len=0xFFFF;
-    uint16                                   longest_len=0;
-    uint16                                   len;
-    fp64                                     avg_len;
-    std::vector<uint16>                      sequence_lengths;
-    std::pair<uint16, uint16>                n_vals;
-    bool                                     is_complete;
+    init_params(filesystem, userinput); // Initialize member variables
 
-    mTotalSequences = 0;
-    mPipelineFlags  = 0;
-    mDataFlags      = 0;
-    mpSequences      = new QUERY_MAP_T;
-
-    mpUserInput  = userinput;
-    mpFileSystem = filesystem;
-
-    mNoTrim        = mpUserInput->has_input(INPUT_FLAG_NO_TRIM);
-    is_complete    = mpUserInput->has_input(INPUT_FLAG_COMPLETE);
-
-    if (!mpFileSystem->file_exists(input_file)) {
-        throw ExceptionHandler("Input transcriptome not found at: " + input_file,ERR_ENTAP_INPUT_PARSE);
+    try{
+        generate_transcriptome(input_file, true, out_path);
+    } catch (const ExceptionHandler &e) {
+        throw e;
     }
 
-    out_name     = mpFileSystem->get_filename(input_file, true);
-    out_new_path = PATHS(out_path,out_name);
-    mpFileSystem->delete_file(out_new_path);
+    input_file = out_path;
+}
 
-    // Set IS_PROTEIN flag if protein sequences found
-    set_input_type(input_file);
-    DATA_FLAG_GET(IS_PROTEIN) ? transcript_type = PROTEIN_FLAG : transcript_type = NUCLEO_FLAG;
 
-    std::ifstream in_file(input_file);
-    std::ofstream out_file(out_new_path,std::ios::out | std::ios::app);
+void QueryData::generate_transcriptome(std::string &input_path, bool print_output, std::string output_path) {
 
+    std::string                     line;                   // Line read from input trancriptome (temp)
+    std::string                     seq_id;                 // Sequence ID of each sequence in input (temp)
+    std::string                     sequence;               // Sequence of each in input transcriptome (temp)
+    std::string                     longest_seq;            // Sequence ID of longest sequence
+    std::string                     shortest_seq;           // Sequence ID of shortest sequence
+    std::ifstream                   in_file;                // INPUT stream of input file
+    std::ofstream                   out_file;               // OUTPUT stream of output file
+    std::stringstream               out_msg;                // Output string stream to log file
+    uint32                          count_seqs=0;           // Total number of sequences
+    uint64                          total_len=0;            // Total length (BP) of transcriptome
+    uint16                          shortest_len=0xFFFF;    // Length (BP) of shortest sequence
+    uint16                          longest_len=0;          // Length (BP) of longest sequence
+    uint16                          len;
+    fp64                            avg_len;
+    std::vector<uint16>             sequence_lengths;
+    std::pair<uint16, uint16>       n_vals;
+
+    FS_dprint("Generating transcriptome mappings...");
+
+    // Verify input
+    if (!mpFileSystem->file_exists(input_path)) {
+        throw ExceptionHandler("Input transcriptome not found at: " + input_path,ERR_ENTAP_INPUT_PARSE);
+    } else if (mpFileSystem->file_empty(input_path)) {
+        throw ExceptionHandler("Input transcriptome is empty at: " + input_path, ERR_ENTAP_INPUT_PARSE);
+    }
+
+    // Set IS_PROTEIN flag if protein sequences detected
+    set_input_type(input_path);
+
+    // Ensure we can open input file
+    try {
+        in_file.open(input_path);  // Open transcriptome
+    } catch(std::exception &e) {
+        FS_dprint("ERROR opening input transcriptome.: " + std::string(e.what()));
+        throw ExceptionHandler("Error opening input transcriptome, check permissions at: " +
+            input_path, ERR_ENTAP_INPUT_PARSE);
+    }
+
+    // Ensure we can write to a file
+    if (print_output) {
+        try {
+            mpFileSystem->delete_file(output_path);
+            out_file.open(output_path,std::ios::out | std::ios::app);
+        } catch (std::exception &e) {
+            throw ExceptionHandler("ERROR writing to output file, check permissions at: " + output_path,
+                                   ERR_ENTAP_INPUT_PARSE);
+        }
+    }
+
+    // Being to parse transcriptome and generate data map
     while (true) {
         std::getline(in_file, line);
         if (line.empty() && !in_file.eof()) continue;
         if (line.find(FileSystem::FASTA_FLAG) == 0 || in_file.eof()) {
             if (!seq_id.empty()) {
                 if (in_file.eof()) {
-                    out_file << line << std::endl;
+                    if (print_output) out_file << line << std::endl;
                     sequence += line + "\n";
                 }
                 QuerySequence *query_seq = new QuerySequence(DATA_FLAG_GET(IS_PROTEIN),sequence, seq_id);
-                if (is_complete) query_seq->setFrame(COMPLETE_FLAG);
+                if (mIsComplete) query_seq->setFrame(COMPLETE_FLAG);
                 // Check for duplicate headers in input transcriptomes
                 if (mpSequences->find(seq_id) != mpSequences->end()) {
                     throw ExceptionHandler("Duplicate headers in your input transcriptome: " + seq_id,
-                        ERR_ENTAP_INPUT_PARSE);
+                                           ERR_ENTAP_INPUT_PARSE);
                 }
                 mpSequences->emplace(seq_id, query_seq);
                 count_seqs++;
                 len = (uint16) query_seq->get_sequence_length();
                 total_len += len;
                 if (len > longest_len) {
-                    longest_len = len;longest_seq = seq_id;
+                    longest_len = len;
+                    longest_seq = seq_id;
                 }
                 if (len < shortest_len) {
-                    shortest_len = len;shortest_seq = seq_id;
+                    shortest_len = len;
+                    shortest_seq = seq_id;
                 }
                 sequence_lengths.push_back(len);
             }
             if (in_file.eof()) break;
             sequence = trim_sequence_header(seq_id, line);
-            out_file << sequence;
+            if (print_output) out_file << sequence;
         } else {
-            out_file << line << std::endl;
+            if (print_output) out_file << line << std::endl;
             sequence += line + "\n";
         }
     }
+    // Close files
     in_file.close();
-    out_file.close();
+    if (print_output) out_file.close();
+
     avg_len = total_len / count_seqs;
     mTotalSequences = count_seqs;
     DATA_FLAG_GET(IS_PROTEIN)  ? mProteinLengthStart = total_len : mNucleoLengthStart = total_len;
     // first - n50, second - n90
     n_vals = calculate_N_vals(sequence_lengths, total_len);
 
-    mpFileSystem->format_stat_stream(out_msg, "Transcriptome Statistics");
-    out_msg <<
-            transcript_type << " sequences found"          <<
-            "\nTotal sequences: "                          << count_seqs    <<
-            "\nTotal length of transcriptome(bp): "        << total_len     <<
-            "\nAverage sequence length(bp): "              << avg_len       <<
-            "\nn50: "                                      << n_vals.first  <<
-            "\nn90: "                                      << n_vals.second <<
-            "\nLongest sequence(bp): " << longest_len << " ("<<longest_seq<<")"<<
-            "\nShortest sequence(bp): "<< shortest_len<<" ("<<shortest_seq<<")";
-    if (is_complete)out_msg<<"\nAll sequences ("<<count_seqs<<") were flagged as complete genes";
-    std::string msg = out_msg.str();
-    mpFileSystem->print_stats(msg);
+    // Print output to Log file and debug
+    if (print_output) {
+        mpFileSystem->format_stat_stream(out_msg, "Transcriptome Statistics");
+        out_msg <<
+                mTranscriptTypeStr << " sequences found"          <<
+                "\nTotal sequences: "                          << count_seqs    <<
+                "\nTotal length of transcriptome(bp): "        << total_len     <<
+                "\nAverage sequence length(bp): "              << avg_len       <<
+                "\nn50: "                                      << n_vals.first  <<
+                "\nn90: "                                      << n_vals.second <<
+                "\nLongest sequence(bp): " << longest_len << " ("<<longest_seq<<")"<<
+                "\nShortest sequence(bp): "<< shortest_len<<" ("<<shortest_seq<<")";
+        if (mIsComplete)out_msg<<"\nAll sequences ("<<count_seqs<<") were flagged as complete genes";
+        std::string msg = out_msg.str();
+        mpFileSystem->print_stats(msg);
+    }
     FS_dprint("Success!");
-    input_file = out_new_path;
 }
 
+
+void QueryData::init_params(FileSystem *fileSystem, UserInput *userInput) {
+    mTotalSequences = 0;
+    mPipelineFlags  = 0;
+    mDataFlags      = 0;
+    mpSequences      = new QUERY_MAP_T;
+
+    mpUserInput  = userInput;
+    mpFileSystem = fileSystem;
+
+    mNoTrim        = mpUserInput->has_input(INPUT_FLAG_NO_TRIM);
+    mIsComplete    = mpUserInput->has_input(INPUT_FLAG_COMPLETE);
+}
 
 void QueryData::set_input_type(std::string &in) {
     std::string    line;
@@ -265,6 +336,7 @@ void QueryData::set_input_type(std::string &in) {
     if (deviations > NUCLEO_DEV) {
         DATA_FLAG_SET(IS_PROTEIN);
     }
+    DATA_FLAG_GET(IS_PROTEIN) ? mTranscriptTypeStr = PROTEIN_FLAG : mTranscriptTypeStr = NUCLEO_FLAG;
     in_file.close();
 }
 
@@ -825,7 +897,7 @@ QUERY_MAP_T QueryData::get_specific_sequences(uint32 flags) {
  *
  * =====================================================================
  */
-bool QueryData::generate_transcriptome(uint32 flags, std::string &outpath, SEQUENCE_TYPES sequence_type) {
+bool QueryData::print_transcriptome(uint32 flags, std::string &outpath, SEQUENCE_TYPES sequence_type) {
 
     std::ofstream outfile(outpath, std::ios::out | std::ios::app);
     bool ret = true;
@@ -857,12 +929,10 @@ bool QueryData::generate_transcriptome(uint32 flags, std::string &outpath, SEQUE
                         break;
 
                     default:
-                        FS_dprint("WARNING: QueryData generate_transcriptome unrecognized case");
+                        FS_dprint("WARNING: QueryData print_transcriptome unrecognized case");
                         break;
                 }
             }
-
-            if (!ret) break; // WARNING break out of loop if we failed inner case
         }
     } catch (...) {
         ret = false;

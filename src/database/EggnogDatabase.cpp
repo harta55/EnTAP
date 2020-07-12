@@ -394,7 +394,8 @@ void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults *eggnog_data)
     orthologs = member_orthologs["all"];        // default, can change
 
     if (!orthologs.empty()) {
-        get_annotations(orthologs, eggnog_data);
+        get_annotations(orthologs, eggnog_data);    // Pull final annotations from database
+        get_additional_sql_data(eggnog_data);       // Pull any additional info from database
     }
 }
 
@@ -435,11 +436,10 @@ void EggnogDatabase::get_tax_scope(QuerySequence::EggnogResults *eggnogResults) 
 
 /**
  * ======================================================================
- * Function void EggnogDatabase::get_sql_data(QuerySequence::EggnogResults &eggnogResults,
+ * Function void EggnogDatabase::get_additional_sql_data(QuerySequence::EggnogResults &eggnogResults,
  *                                          DatabaseHelper &database)
  *
- * Description          - Query EggNOG SQL database and pull relevant info
- *                      - Sets values in EggnogResults struct
+ * Description          - Query EggNOG SQL database and pull additional information
  *
  * Notes                - None
  *
@@ -449,8 +449,11 @@ void EggnogDatabase::get_tax_scope(QuerySequence::EggnogResults *eggnogResults) 
  * @return              - None
  * ======================================================================
  */
-void EggnogDatabase::get_sql_data(QuerySequence::EggnogResults *eggnogResults) {
+void EggnogDatabase::get_additional_sql_data(QuerySequence::EggnogResults *eggnogResults) {
     // Lookup description, KEGG, protein domain from SQL database
+
+    if (mSQLVersion != EGGNOG_VERSION_EARLIER) return;  // Only supported for earlier versions of SQL database currently
+
     if (!eggnogResults->og_key.empty()) {
         std::vector<std::vector<std::string>>results;
         std::string sql_kegg;
@@ -466,9 +469,11 @@ void EggnogDatabase::get_sql_data(QuerySequence::EggnogResults *eggnogResults) {
             sql_kegg = results[0][1];
             sql_protein = results[0][2];
             if (!sql_desc.empty() && sql_desc.find("[]") != 0) eggnogResults->description = sql_desc;
+#if 0
             if (!sql_kegg.empty() && sql_kegg.find("[]") != 0) {
                 eggnogResults->kegg = format_sql_data(sql_kegg);
             }
+#endif
             if (!sql_protein.empty() && sql_protein.find("{}") != 0){
                 eggnogResults->protein_domains = format_sql_data(sql_protein);
             }

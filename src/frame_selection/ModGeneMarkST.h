@@ -79,6 +79,12 @@ public:
 
 private:
 
+    typedef enum {
+
+        GENEMARK_RETURN_OK=1        // WARNING perl exit commands need to be shifted by 8 >>8
+
+    } GENEMARK_RETURN_CODE;
+
     //****************** Private Functions *********************
     void genemark_parse_fasta(std::string& fasta, FileSystem::ENT_FILE_TYPES file_type);
     void genemark_parse_lst(std::string & lst_path);

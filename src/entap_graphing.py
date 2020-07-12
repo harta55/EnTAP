@@ -65,6 +65,8 @@ ENTAP_EXIT_OK = 0
 ENTAP_EXIT_UNSUPPORTED_SOFTWARE = 1
 ENTAP_EXIT_UNSUPPORTED_GRAPH_TYPE = 2
 
+BOX_SEQ_LEN_LABEL = "Sequence Length" # temporary
+
 # --------------CONSTANTS END -------------------
 # TODO graphing needs a lot of updating
 

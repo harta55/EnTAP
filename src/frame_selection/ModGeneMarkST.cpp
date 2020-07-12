@@ -421,10 +421,14 @@ void ModGeneMarkST::get_version() {
 
 bool ModGeneMarkST::is_executable(std::string &exe) {
     TerminalData terminalData;
+    int return_code;
 
     terminalData.command = exe + " --version";
     terminalData.print_files = false;
     terminalData.suppress_std_err = false;
 
-    return TC_execute_cmd(terminalData) == 0;
+    return_code = TC_execute_cmd(terminalData);  // GeneMarkS-T returns 1 with this command
+    return_code >>= 8;                           // WARNING perl terminal command needs to be shifted by 8
+
+    return return_code == GENEMARK_RETURN_OK;
 }

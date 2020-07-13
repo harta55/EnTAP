@@ -7,7 +7,11 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
+<<<<<<< HEAD
  * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+=======
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+>>>>>>> master
  *
  * This file is part of EnTAP.
  *
@@ -25,16 +29,24 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+<<<<<<< HEAD
 #include <csv.h>
+=======
+>>>>>>> master
 #include "ModEggnogDMND.h"
 #include "../database/EggnogDatabase.h"
 #include "../TerminalCommands.h"
 #include "../QueryAlignment.h"
+<<<<<<< HEAD
 #include "../QueryData.h"
 #include "../GraphingManager.h"
 
 
 std::vector<ENTAP_HEADERS> ModEggnogDMND::DEFAULT_HEADERS = {
+=======
+
+const std::vector<ENTAP_HEADERS> ModEggnogDMND::DEFAULT_HEADERS = {
+>>>>>>> master
     ENTAP_HEADER_ONT_EGG_SEED_ORTHO,
     ENTAP_HEADER_ONT_EGG_SEED_EVAL,
     ENTAP_HEADER_ONT_EGG_SEED_SCORE,
@@ -42,7 +54,10 @@ std::vector<ENTAP_HEADERS> ModEggnogDMND::DEFAULT_HEADERS = {
     ENTAP_HEADER_ONT_EGG_TAX_SCOPE_READABLE,
     ENTAP_HEADER_ONT_EGG_TAX_SCOPE_MAX,
     ENTAP_HEADER_ONT_EGG_MEMBER_OGS,
+<<<<<<< HEAD
     ENTAP_HEADER_ONT_EGG_DESC,
+=======
+>>>>>>> master
     ENTAP_HEADER_ONT_EGG_KEGG,
     ENTAP_HEADER_ONT_EGG_BIGG,
     ENTAP_HEADER_ONT_EGG_GO_BIO,
@@ -52,6 +67,7 @@ std::vector<ENTAP_HEADERS> ModEggnogDMND::DEFAULT_HEADERS = {
 };
 
 ModEggnogDMND::ModEggnogDMND(std::string &ont_out, std::string &in_hits,
+<<<<<<< HEAD
                              EntapDataPtrs &entap_data)
         : AbstractOntology(in_hits, ont_out, entap_data, "EggNOG_DMND", DEFAULT_HEADERS) {
     FS_dprint("Spawn Object - ModEggnogDMND");
@@ -60,6 +76,15 @@ ModEggnogDMND::ModEggnogDMND(std::string &ont_out, std::string &in_hits,
     mEggnogDbDiamond = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
     mEggnogDbSQL     = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
     mExePath         = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
+=======
+                             EntapDataPtrs &entap_data, std::string &exe, std::string sql_db_path)
+        : AbstractOntology(in_hits, ont_out, entap_data, "EggNOG_DMND", exe) {
+    FS_dprint("Spawn Object - ModEggnogDMND");
+
+    _eggnog_db_path = sql_db_path;
+    _software_flag = ONT_EGGNOG_DMND;
+
+>>>>>>> master
 }
 
 EntapModule::ModVerifyData ModEggnogDMND::verify_files() {
@@ -68,17 +93,29 @@ EntapModule::ModVerifyData ModEggnogDMND::verify_files() {
     uint16 file_status = 0;
 
     FS_dprint("Overwrite was unselected, verifying output files...");
+<<<<<<< HEAD
     mOutHIts = get_output_dmnd_filepath(true);
     file_status = mpFileSystem->get_file_status(mOutHIts);
 
     if (file_status != 0) {
         FS_dprint(mpFileSystem->print_file_status(file_status,mOutHIts));
+=======
+    _out_hits = get_output_dmnd_filepath(true);
+    file_status = _pFileSystem->get_file_status(_out_hits);
+
+    if (file_status != 0) {
+        FS_dprint(_pFileSystem->print_file_status(file_status,_out_hits));
+>>>>>>> master
         FS_dprint("Errors in opening file, continuing with execution...");
         modVerifyData.files_exist = false;
     } else {
         modVerifyData.files_exist = true;
     }
+<<<<<<< HEAD
     modVerifyData.output_paths = vect_str_t{mOutHIts};
+=======
+    modVerifyData.output_paths = vect_str_t{_out_hits};
+>>>>>>> master
     return modVerifyData;
 }
 
@@ -91,16 +128,26 @@ void ModEggnogDMND::execute() {
     FS_dprint("Running EggNOG against Diamond database...");
 
     // Ensure both input path and EggNOG DMND database exist before continuing
+<<<<<<< HEAD
     if (!mpFileSystem->file_exists(mEggnogDbDiamond)) {
         throw ExceptionHandler("EggNOG DIAMOND database not found at: " + mEggnogDbDiamond,
                                ERR_ENTAP_EGGNOG_FILES);
     }
     if (!mpFileSystem->file_exists(mInputTranscriptome)) {
         throw ExceptionHandler("Input transcriptome not found at: " + mInputTranscriptome, ERR_ENTAP_EGGNOG_FILES);
+=======
+    if (!_pFileSystem->file_exists(EGG_DMND_PATH)) {
+        throw ExceptionHandler("EggNOG DIAMOND database not found at: " + EGG_DMND_PATH,
+                               ERR_ENTAP_EGGNOG_FILES);
+    }
+    if (!_pFileSystem->file_exists(_in_hits)) {
+        throw ExceptionHandler("Input transcriptome not found at: " + _in_hits, ERR_ENTAP_EGGNOG_FILES);
+>>>>>>> master
     }
 
     // Generate paths for DIAMOND run (out_hits set previously)
     std_out = get_output_dmnd_filepath(false) + "_" + FileSystem::EXT_STD;
+<<<<<<< HEAD
     mBlastp ? blast = "blastp" : blast = "blastx";
 
     //Run DIAMOND
@@ -113,20 +160,44 @@ void ModEggnogDMND::execute() {
             " -q "                 + mInputTranscriptome   +
             " -o "                 + mOutHIts  +
             " -p "                 + std::to_string(mThreads) +
+=======
+    _blastp ? blast = "blastp" : blast = "blastx";
+
+    //Run DIAMOND
+    cmd =
+            DIAMOND_EXE + " " +
+            blast +
+            " -d " + EGG_DMND_PATH +
+            " --top 1"             +
+            " --more-sensitive"    +
+            " -q "                 + _in_hits   +
+            " -o "                 + _out_hits  +
+            " -p "                 + std::to_string(_threads) +
+>>>>>>> master
             " -f " + "6 qseqid sseqid pident length mismatch gapopen "
                     "qstart qend sstart send evalue bitscore qcovhsp stitle";
 
     terminalData.command        = cmd;
     terminalData.print_files    = true;
+<<<<<<< HEAD
     terminalData.suppress_std_err = false;
+=======
+>>>>>>> master
     terminalData.base_std_path  = std_out;
 
     if (TC_execute_cmd(terminalData) != 0) {
         // Error in run
+<<<<<<< HEAD
         mpFileSystem->delete_file(mOutHIts);
         FS_dprint("DIAMOND STD OUT:\n" + terminalData.out_stream);
         throw ExceptionHandler("Error in running DIAMOND against EggNOG database at: " +
                                mEggnogDbDiamond + "\nDIAMOND Error:\n" + terminalData.err_stream, ERR_ENTAP_RUN_EGGNOG_DMND);
+=======
+        _pFileSystem->delete_file(_out_hits);
+        FS_dprint("DIAMOND STD OUT:\n" + terminalData.out_stream);
+        throw ExceptionHandler("Error in running DIAMOND against EggNOG database at: " +
+                               EGG_DMND_PATH + "\nDIAMOND Error:\n" + terminalData.err_stream, ERR_ENTAP_RUN_EGGNOG);
+>>>>>>> master
     }
 }
 
@@ -135,18 +206,32 @@ void ModEggnogDMND::parse() {
     uint64         sequence_ct=0;   // dprintf sequence count
     std::stringstream stats_stream;
 
+<<<<<<< HEAD
     FS_dprint("Parsing EggNOG DMND file located at: " + mOutHIts);
 
     // Ensure file is valid
     file_status = mpFileSystem->get_file_status(mOutHIts);
     if (file_status != 0) {
         throw ExceptionHandler(mpFileSystem->print_file_status(file_status,mOutHIts),
+=======
+
+    FS_dprint("Parsing EggNOG DMND file located at: " + _out_hits);
+
+    // Ensure file is valid
+    file_status = _pFileSystem->get_file_status(_out_hits);
+    if (file_status != 0) {
+        throw ExceptionHandler(_pFileSystem->print_file_status(file_status,_out_hits),
+>>>>>>> master
                                ERR_ENTAP_PARSE_EGGNOG_DMND);
     }
 
     // File valid, continue
     FS_dprint("Beginning to parse EggNOG results...");
+<<<<<<< HEAD
     mpFileSystem->format_stat_stream(stats_stream, "Gene Family - Gene Ontology and Pathway - EggNOG");
+=======
+    _pFileSystem->format_stat_stream(stats_stream, "Gene Family - Gene Ontology and Pathway - EggNOG");
+>>>>>>> master
 
 #ifdef USE_FAST_CSV
     // ------------------ Read from DIAMOND output ---------------------- //
@@ -159,7 +244,11 @@ void ModEggnogDMND::parse() {
     // ----------------------------------------------------------------- //
     // Begin using CSVReader lib to parse data
     try {
+<<<<<<< HEAD
         io::CSVReader<DMND_COL_NUMBER, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(mOutHIts);
+=======
+        io::CSVReader<DMND_COL_NUMBER, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(_out_hits);
+>>>>>>> master
         while (in.read_row(qseqid, sseqid, pident, length, mismatch, gapopen,
                            qstart, qend, sstart, send, evalue, bitscore, coverage,stitle)) {
             // Currently throwing away most DIAMOND results
@@ -170,7 +259,11 @@ void ModEggnogDMND::parse() {
             }
 
             // Ensure we recognize the query sequence before continuing
+<<<<<<< HEAD
             querySequence = mpQueryData->get_sequence(qseqid);
+=======
+            querySequence = _pQUERY_DATA->get_sequence(qseqid);
+>>>>>>> master
             if (querySequence == nullptr) {
                 throw ExceptionHandler("Unable to find sequence " + qseqid + " in input transcriptome",
                                        ERR_ENTAP_PARSE_EGGNOG_DMND);
@@ -186,7 +279,11 @@ void ModEggnogDMND::parse() {
 
             // WARNING!!! SQL lookups are done in "calculate_stats" below to save execution time
             //      (only best hits are looked up) headers are populated then!
+<<<<<<< HEAD
             querySequence->add_alignment(GENE_ONTOLOGY, mSoftwareFlag, eggnogResults, mEggnogDbDiamond);
+=======
+            querySequence->add_alignment(GENE_ONTOLOGY, _software_flag, eggnogResults, EGG_DMND_PATH);
+>>>>>>> master
 
         } // End WHILE in.read_row
 
@@ -212,6 +309,7 @@ void ModEggnogDMND::parse() {
 void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     FS_dprint("Success! Calculating statistics and accessing database...");
 
+<<<<<<< HEAD
     QuerySequence::EggnogResults                          *eggnog_results;
     EggnogDmndAlignment                                  *best_hit;
     Compair<std::string>                                  tax_scope_counter;
@@ -224,6 +322,20 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     uint64         ct_no_alignment=0;
     uint64         ct_total_go_hits=0;      // Sequences that had at least one go
     uint64         ct_total_kegg_hits=0;    // Sequences that had at least one kegg
+=======
+    QuerySequence::EggnogResults       *eggnog_results;
+    EggnogDmndAlignment *best_hit;
+    Compair<std::string>                                  tax_scope_counter;
+    std::unordered_map<std::string,Compair<std::string>>  go_combined_map;
+    GraphingData                        graphingStruct;
+    EggnogDatabase    *eggnogDatabase;
+    std::vector<ENTAP_HEADERS> output_headers;
+
+    uint64         ct_alignments=0;
+    uint64         ct_no_alignment=0;
+    uint64         ct_total_go_hits=0;      // Sequences that had atleast one go
+    uint64         ct_total_kegg_hits=0;    // Sequences that had atleast one kegg
+>>>>>>> master
     uint64         ct_total_kegg_terms=0;
     uint32         ct = 0;
     fp32           percent;
@@ -235,13 +347,19 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     output_headers.insert(output_headers.begin(), ENTAP_HEADER_QUERY);
 
     // Generate EggNOG database
+<<<<<<< HEAD
     eggnogDatabase = new EggnogDatabase(mpFileSystem, mpEntapDatabase, mpQueryData);
     if (eggnogDatabase->open_sql(mEggnogDbSQL) != EggnogDatabase::ERR_EGG_OK) {
         delete eggnogDatabase;
+=======
+    eggnogDatabase = new EggnogDatabase(_pFileSystem, _pEntapDatabase, _pQUERY_DATA);
+    if (eggnogDatabase->open_sql(EGG_SQL_DB_PATH) != EggnogDatabase::ERR_EGG_OK) {
+>>>>>>> master
         throw ExceptionHandler("Unable to open EggNOG SQL Database", ERR_ENTAP_PARSE_EGGNOG_DMND);
     }
 
     // Output files
+<<<<<<< HEAD
     std::string out_no_hits_base = PATHS(mProcDir, FILENAME_OUT_UNANNOTATED);
     std::string out_hits_base    = PATHS(mProcDir, FILENAME_OUT_ANNOTATED);
 
@@ -252,17 +370,37 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     for (auto &pair : *mpQueryData->get_sequences_ptr()) {
         // Check if each sequence is an eggnog alignment
         if (pair.second->hit_database(GENE_ONTOLOGY, mSoftwareFlag, mEggnogDbDiamond)) {
+=======
+    std::string out_no_hits_base = PATHS(_proc_dir, FILENAME_OUT_UNANNOTATED);
+    std::string out_hits_base    = PATHS(_proc_dir, FILENAME_OUT_ANNOTATED);
+
+    _pQUERY_DATA->start_alignment_files(out_no_hits_base, output_headers, 0, _alignment_file_types);
+    _pQUERY_DATA->start_alignment_files(out_hits_base, output_headers, 0, _alignment_file_types);
+
+    // Parse through all query sequences
+    for (auto &pair : *_pQUERY_DATA->get_sequences_ptr()) {
+        // Check if each sequence is an eggnog alignment
+        if (pair.second->hit_database(GENE_ONTOLOGY, _software_flag, EGG_DMND_PATH)) {
+>>>>>>> master
             // Yes, hit EggNOG database
             ct_alignments++;
 
             best_hit = pair.second->get_best_hit_alignment<EggnogDmndAlignment>
+<<<<<<< HEAD
                     (GENE_ONTOLOGY, mSoftwareFlag, mEggnogDbDiamond);
+=======
+                    (GENE_ONTOLOGY, _software_flag, EGG_DMND_PATH);
+>>>>>>> master
 
             eggnog_results = best_hit->get_results();
             eggnogDatabase->get_eggnog_entry(eggnog_results);
             best_hit->refresh_headers();
 
+<<<<<<< HEAD
             mpQueryData->add_alignment_data(out_hits_base, pair.second, nullptr);
+=======
+            _pQUERY_DATA->add_alignment_data(out_hits_base, pair.second, nullptr);
+>>>>>>> master
 
             //  Analyze Gene Ontology Stats
             if (!eggnog_results->parsed_go.empty()) {
@@ -293,13 +431,22 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
         } else {
             // No, did not hit database
             ct_no_alignment++;
+<<<<<<< HEAD
             mpQueryData->add_alignment_data(out_no_hits_base, pair.second, nullptr);
+=======
+            _pQUERY_DATA->add_alignment_data(out_no_hits_base, pair.second, nullptr);
+>>>>>>> master
         }
     } // END FOR LOOP
 
     // Close files
+<<<<<<< HEAD
     mpQueryData->end_alignment_files(out_hits_base);
     mpQueryData->end_alignment_files(out_no_hits_base);
+=======
+    _pQUERY_DATA->end_alignment_files(out_hits_base);
+    _pQUERY_DATA->end_alignment_files(out_no_hits_base);
+>>>>>>> master
     delete eggnogDatabase;
 
     // Begin to print stats / files
@@ -313,6 +460,7 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     //--------------------- Top Ten Taxonomic Scopes --------------//
     if (!tax_scope_counter.empty()) {
         // Setup graphing files
+<<<<<<< HEAD
         graphing_data_temp = GraphingManager::GraphingData();
         graphing_data_temp.x_axis_label = "Taxonomic Scope";
         graphing_data_temp.y_axis_label = "Count";
@@ -322,6 +470,12 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
         graphing_data_temp.graph_type     = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
 
         mpGraphingManager->initialize_graph_data(graphing_data_temp);
+=======
+        std::string fig_txt_tax_bar = PATHS(_figure_dir, GRAPH_EGG_TAX_BAR_TXT);
+        std::string fig_png_tax_bar = PATHS(_figure_dir, GRAPH_EGG_TAX_BAR_PNG);
+        std::ofstream file_tax_bar(fig_txt_tax_bar, std::ios::out | std::ios::app);
+        file_tax_bar << "Taxonomic Scope\tCount" << std::endl;
+>>>>>>> master
 
         stream << "\nTop " << std::to_string(COUNT_TOP_TAX_SCOPE) << " Taxonomic Scopes Assigned:";
         ct = 1;
@@ -333,10 +487,23 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
             stream <<
                "\n\t" << ct << ")" << pair.first << ": " << pair.second <<
                "(" << percent << "%)";
+<<<<<<< HEAD
             mpGraphingManager->add_datapoint(graphing_data_temp.text_file_path, {pair.first, std::to_string(pair.second)});
             ct++;
         }
         mpGraphingManager->graph_data(graphing_data_temp.text_file_path);
+=======
+            file_tax_bar << pair.first << '\t' << std::to_string(pair.second) << std::endl;
+            ct++;
+        }
+        file_tax_bar.close();
+        graphingStruct.fig_out_path = fig_png_tax_bar;
+        graphingStruct.text_file_path = fig_txt_tax_bar;
+        graphingStruct.graph_title = GRAPH_EGG_TAX_BAR_TITLE;
+        graphingStruct.software_flag = GRAPH_ONTOLOGY_FLAG;
+        graphingStruct.graph_type = GRAPH_TOP_BAR_FLAG;
+        _pGraphingManager->graph(graphingStruct);
+>>>>>>> master
     }
 
     //-------------------------- Gene Ontology --------------------//
@@ -351,6 +518,7 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
                "\nTotal unique sequences without GO terms: " << ct_alignments - ct_total_go_hits <<
                "\nTotal GO terms assigned: " << go_combined_map[GO_OVERALL_FLAG]._ct_total;;
 
+<<<<<<< HEAD
         for (uint16 lvl : mGoLevels) {
             for (auto &pair : go_combined_map) {
                 if (pair.first.empty()) continue;
@@ -368,6 +536,16 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
                 graphing_data_temp.graph_type = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
 
                 mpGraphingManager->initialize_graph_data(graphing_data_temp);
+=======
+        for (uint16 lvl : _go_levels) {
+            for (auto &pair : go_combined_map) {
+                if (pair.first.empty()) continue;
+                // Count maps (biological/molecular/cellular/overall)
+                fig_txt_go_bar = PATHS(_figure_dir, pair.first) + std::to_string(lvl)+GRAPH_GO_END_TXT;
+                fig_png_go_bar = PATHS(_figure_dir, pair.first) + std::to_string(lvl)+GRAPH_GO_END_PNG;
+                std::ofstream file_go_bar(fig_txt_go_bar, std::ios::out | std::ios::app);
+                file_go_bar << "Gene Ontology Term\tCount" << std::endl;
+>>>>>>> master
 
                 // Sort count maps
                 pair.second.sort(true);
@@ -393,11 +571,28 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
                         stream <<
                                "\n\t" << ct << ")" << pair2.first << ": " << pair2.second <<
                                "(" << percent << "%)";
+<<<<<<< HEAD
                         mpGraphingManager->add_datapoint(graphing_data_temp.text_file_path, {pair2.first, std::to_string(pair2.second)});
                         ct++;
                     }
                 }
                 mpGraphingManager->graph_data(graphing_data_temp.text_file_path);
+=======
+                        file_go_bar << pair2.first << '\t' << std::to_string(pair2.second) << std::endl;
+                        ct++;
+                    }
+                }
+                file_go_bar.close();
+                graphingStruct.fig_out_path   = fig_png_go_bar;
+                graphingStruct.text_file_path = fig_txt_go_bar;
+                if (pair.first == GO_BIOLOGICAL_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_BIO_TITLE + "_Level:_"+std::to_string(lvl);
+                if (pair.first == GO_CELLULAR_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_CELL_TITLE+ "_Level:_"+std::to_string(lvl);
+                if (pair.first == GO_MOLECULAR_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_MOLE_TITLE+ "_Level:_"+std::to_string(lvl);
+                if (pair.first == GO_OVERALL_FLAG) graphingStruct.graph_title = GRAPH_GO_BAR_ALL_TITLE+ "_Level:_"+std::to_string(lvl);
+                graphingStruct.software_flag = GRAPH_ONTOLOGY_FLAG;
+                graphingStruct.graph_type = GRAPH_TOP_BAR_FLAG;
+                _pGraphingManager->graph(graphingStruct);
+>>>>>>> master
             }
         }
     }
@@ -411,7 +606,11 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     }
 
     out_msg = stream.str();
+<<<<<<< HEAD
     mpFileSystem->print_stats(out_msg);
+=======
+    _pFileSystem->print_stats(out_msg);
+>>>>>>> master
     FS_dprint("Success! EggNOG results parsed");
 }
 
@@ -423,7 +622,10 @@ bool ModEggnogDMND::is_executable(std::string &exe) {
 
     terminalData.command = test_command;
     terminalData.print_files = false;
+<<<<<<< HEAD
     terminalData.suppress_std_err = false;
+=======
+>>>>>>> master
 
     return TC_execute_cmd(terminalData) == 0;
 }
@@ -435,6 +637,7 @@ ModEggnogDMND::~ModEggnogDMND() {
 std::string ModEggnogDMND::get_output_dmnd_filepath(bool final) {
     std::string filename;
 
+<<<<<<< HEAD
     mBlastp ? filename = "blastp" : filename = "blastx";
     filename += "_" + mpUserInput->get_user_transc_basename() + "_eggnog_proteins";
     if (final) filename += FileSystem::EXT_OUT;
@@ -444,4 +647,10 @@ std::string ModEggnogDMND::get_output_dmnd_filepath(bool final) {
 void ModEggnogDMND::get_version() {
     return;
 
+=======
+    _blastp ? filename = "blastp" : filename = "blastx";
+    filename += "_" + _pUserInput->get_user_transc_basename() + "_eggnog_proteins";
+    if (final) filename += FileSystem::EXT_OUT;
+    return PATHS(_mod_out_dir, filename);
+>>>>>>> master
 }

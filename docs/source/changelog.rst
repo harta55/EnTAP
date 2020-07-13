@@ -1,9 +1,22 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.9.0-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.9.1-beta
 
-EnTAP Beta v0.9.0-beta
-------------------------
+EnTAP Beta v0.9.2-beta (June 4, 2020)
+------------------------------------------
+
+    * Updated EggNOG Database links
+
+
+EnTAP Beta v0.9.1-beta (January 12, 2020)
+-------------------------------------------
+
+    * Changed --trim flag to --no-trim. Trimming sequence headers to the first space is the default now. If you have executions from previous versions, you may need to use the --no-trim flag as needed for backwards compatibility (picking up where you left off). 
+    * Fixed a bug where the --single-end command was not properly recognized.
+
+
+EnTAP Beta v0.9.0-beta (May 12, 2019)
+--------------------------------------
 
     * This release focused on reducing installation complexity and removing dependencies
     * Overhauled the configuration/execution process by removing EggNOG-mapper and replacing it with an internal EnTAP method. This will make installation and both stages much clearer for the user
@@ -18,21 +31,21 @@ EnTAP Beta v0.9.0-beta
     * Bug fixes
 
 
-EnTAP Beta v0.8.4-beta
-------------------------
+EnTAP Beta v0.8.4-beta (August 2, 2018)
+-------------------------------------
 
     * Fixed an issue when inputting already translated sequences
 
 
-EnTAP Beta v0.8.3-beta
-------------------------
+EnTAP Beta v0.8.3-beta (May 23, 2018)
+--------------------------------------
 
     * Minor bug fixes
     * Changes to CMake to hopefully resolve issues a couple users had with linking to Boost Libraries
 
 
-EnTAP Beta v0.8.2-beta
-------------------------
+EnTAP Beta v0.8.2-beta (April 29, 2018)
+----------------------------------------
 
     * Revamped configuration stage of EnTAP (reduced time and hopefully made things clear/more compatible across systems)
     * Removed - -database-out flag (seemed a bit redundant to me). - -outfiles flag will be the default when indexing databases
@@ -42,8 +55,8 @@ EnTAP Beta v0.8.2-beta
     * Removed download_tax.py script (no longer necessary)
 
 
-EnTAP Beta v0.8.1-beta
-------------------------
+EnTAP Beta v0.8.1-beta (April 14, 2018)
+--------------------------------------
 
     * Added additional error logging to provide more information when something goes wrong
     * Configuration file mandatory (default place to look is current working directory)
@@ -66,8 +79,8 @@ EnTAP Beta v0.8.1-beta
     * Fixed Frame Selection not printing new lines for certain files
 
 
-EnTAP Beta v0.8.0-beta
-------------------------
+EnTAP Beta v0.8.0-beta (December 16, 2017)
+-----------------------------
 
     * Overhaul of the taxonomic/gene ontology databases
         
@@ -114,12 +127,12 @@ EnTAP Beta v0.8.0-beta
     * Fixed a bug in parsing input fasta file (added corrupt file checks)
 		
 
-EnTAP Beta v0.7.4.1-beta
--------------------
+EnTAP Beta v0.7.4.1-beta (September 5, 2017)
+-------------------------------
 
     * Minor changes to taxonomic database download and indexing
 
-EnTAP Beta v0.7.4-beta
-------------------
+EnTAP Beta v0.7.4-beta (August 26, 2017)
+----------------------------------
 
     * Initial beta release!

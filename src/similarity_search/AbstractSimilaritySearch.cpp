@@ -7,7 +7,11 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
+<<<<<<< HEAD
  * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+=======
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+>>>>>>> master
  *
  * This file is part of EnTAP.
  *
@@ -27,6 +31,7 @@
 
 #include <regex>
 #include "AbstractSimilaritySearch.h"
+<<<<<<< HEAD
 #include "../QueryData.h"
 
 /**
@@ -138,6 +143,50 @@ std::string AbstractSimilaritySearch::get_database_output_path(std::string &data
  *
  * =====================================================================
  */
+=======
+
+AbstractSimilaritySearch::AbstractSimilaritySearch(std::string &execution_stage_path, std::string &in_hits,
+                                                   EntapDataPtrs &entap_data, std::string mod_name,
+                                                   std::string &exe, vect_str_t &databases)
+    :EntapModule(execution_stage_path, in_hits, entap_data, mod_name, exe) {
+
+    _execution_state = SIMILARITY_SEARCH;
+
+    // Get relevant user info for similarity searching
+    _input_species    = _pUserInput->get_target_species_str();
+    _qcoverage        = _pUserInput->get_user_input<fp32>(_pUserInput->INPUT_FLAG_QCOVERAGE);
+    _tcoverage        = _pUserInput->get_user_input<fp32>(_pUserInput->INPUT_FLAG_TCOVERAGE);
+    _e_val            = _pUserInput->get_user_input<fp64>(_pUserInput->INPUT_FLAG_E_VAL);
+    _contaminants     = _pUserInput->get_contaminants();
+    _uninformative_vect= _pUserInput->get_uninformative_vect();
+
+    _database_paths = databases;
+
+    // Get input species lineage information
+    TaxEntry taxEntry = _pEntapDatabase->get_tax_entry(_input_species);
+    _input_lineage    = taxEntry.lineage;
+
+    // set blast string to use for file naming
+    _blastp ? _blast_type = BLASTP_STR : _blast_type = BLASTX_STR;
+
+    // create overall results dir
+    _pFileSystem->delete_dir(_overall_results_dir);
+    _pFileSystem->create_dir(_overall_results_dir);
+
+}
+
+// Returns database "shortname" from database full path
+// This is just the filename, without any extension or path
+std::string AbstractSimilaritySearch::get_database_shortname(std::string &full_path) {
+    return _pFileSystem->get_filename(full_path, false);
+}
+
+std::string AbstractSimilaritySearch::get_database_output_path(std::string &database_name) {
+
+    return PATHS(_mod_out_dir,_blast_type + "_" + _transcript_shortname + "_" + get_database_shortname(database_name) + FileSystem::EXT_OUT);
+}
+
+>>>>>>> master
 std::pair<bool,std::string> AbstractSimilaritySearch::is_contaminant(std::string lineage, vect_str_t &contams) {
     // species and tax database both lowercase
     if (contams.empty()) return std::pair<bool,std::string>(false,"");
@@ -150,6 +199,7 @@ std::pair<bool,std::string> AbstractSimilaritySearch::is_contaminant(std::string
     return std::pair<bool,std::string>(false,"");
 }
 
+<<<<<<< HEAD
 /**
  * ======================================================================
  * Function bool AbstractSimilaritySearch::is_informative(std::string title,
@@ -167,6 +217,8 @@ std::pair<bool,std::string> AbstractSimilaritySearch::is_contaminant(std::string
  *
  * =====================================================================
  */
+=======
+>>>>>>> master
 bool AbstractSimilaritySearch::is_informative(std::string title, vect_str_t &uninformative_vect) {
     LOWERCASE(title);
     for (std::string &item : uninformative_vect) { // Already lowercase
@@ -175,6 +227,7 @@ bool AbstractSimilaritySearch::is_informative(std::string title, vect_str_t &uni
     return true;
 }
 
+<<<<<<< HEAD
 /**
  * ======================================================================
  * Function std::string AbstractSimilaritySearch::get_species(std::string &title)
@@ -192,6 +245,12 @@ bool AbstractSimilaritySearch::is_informative(std::string title, vect_str_t &uni
  */
 std::string AbstractSimilaritySearch::get_species(std::string &title) {
     std::string species;
+=======
+std::string AbstractSimilaritySearch::get_species(std::string &title) {
+    // TODO fix issue
+
+    std::string species="";
+>>>>>>> master
 
 
 #ifdef USE_BOOST
@@ -221,6 +280,10 @@ std::string AbstractSimilaritySearch::get_species(std::string &title) {
         }
     }
 #endif
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
     uint64 ind1, ind2;
     ind1 = title.find("OS=");
 
@@ -240,6 +303,10 @@ std::string AbstractSimilaritySearch::get_species(std::string &title) {
             species = title.substr(ind1 + 1, (ind2 - ind1 - 1));
         }
     }
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
 #endif
 
     // Double bracket fix
@@ -249,6 +316,19 @@ std::string AbstractSimilaritySearch::get_species(std::string &title) {
     return species;
 }
 
+<<<<<<< HEAD
 void AbstractSimilaritySearch::set_success_flags() {
     mpQueryData->set_is_success_sim_search(true);
 }
+=======
+bool AbstractSimilaritySearch::is_uniprot_entry(std::string &sseqid, UniprotEntry &entry) {
+    std::string accession;
+
+    // sseqid - sp|Q9FJZ9|PER72_ARATH
+    if (_pEntapDatabase == nullptr || sseqid.empty()) return false;
+
+    accession = sseqid.substr(sseqid.rfind('|',sseqid.length())+1);     // Q9FJZ9
+    entry = _pEntapDatabase->get_uniprot_entry(accession);
+    return !entry.is_empty();
+}
+>>>>>>> master

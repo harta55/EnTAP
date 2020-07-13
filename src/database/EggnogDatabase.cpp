@@ -7,7 +7,11 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
+<<<<<<< HEAD
  * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+=======
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+>>>>>>> master
  *
  * This file is part of EnTAP.
  *
@@ -26,7 +30,11 @@
 */
 
 #include "EggnogDatabase.h"
+<<<<<<< HEAD
 #include "../QueryData.h"
+=======
+
+>>>>>>> master
 
 const std::unordered_map<std::string,std::string> EggnogDatabase::EGGNOG_LEVELS = {
         {"acoNOG", "Aconoidasida"},
@@ -235,6 +243,7 @@ const vect_str_t EggnogDatabase::TAXONOMIC_RESOLUTION = {"apiNOG", "virNOG", "ne
 
 
 EggnogDatabase::EggnogDatabase(FileSystem* filesystem, EntapDatabase* entap_data, QueryData* queryData) {
+<<<<<<< HEAD
     mpFileSystem = filesystem;
     mpSQLDatabase = nullptr;
     mpEntapDatabase = entap_data;
@@ -245,11 +254,27 @@ EggnogDatabase::EggnogDatabase(FileSystem* filesystem, EntapDatabase* entap_data
     mVersionMinor = 0;
     mVersionRev   = 0;
     mSQLVersion = EGGNOG_VERSION_UNKONWN;
+=======
+    _pFilesystem = filesystem;
+    _pSQLDatabase = nullptr;
+    _pEntapDatabase = entap_data;
+    _pQueryData = queryData;
+    _err_msg = "";
+    _err_code = ERR_EGG_OK;
+    _VERSION_MAJOR = 0;
+    _VERSION_MINOR = 0;
+    _VERSION_REV   = 0;
+    _sql_version = EGGNOG_VERSION_UNKONWN;
+>>>>>>> master
 }
 
 EggnogDatabase::~EggnogDatabase() {
     FS_dprint("Killing object - EggNOG Database");
+<<<<<<< HEAD
     delete mpSQLDatabase;   // closes on SQLDatabaseHelper destructor
+=======
+    delete _pSQLDatabase;   // closes on SQLDatabaseHelper destructor
+>>>>>>> master
 }
 
 EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::download(EggnogDatabase::EGGNOG_DB_TYPES type, std::string out_path) {
@@ -259,17 +284,29 @@ EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::download(EggnogDatabase::EGGNOG_DB
     switch (type) {
         case EGGNOG_SQL:
             FS_dprint("Downloading EggNOG SQL database...");
+<<<<<<< HEAD
             temp_path = PATHS(mpFileSystem->get_temp_outdir(), TEMP_SQL_GZ);
             if (!mpFileSystem->download_ftp_file(FTP_EGGNOG_SQL, temp_path)) {
                 set_error("Unable to download from FTP address at: " + FTP_EGGNOG_SQL +
                           mpFileSystem->get_error(), ERR_EGG_SQL_FTP);
+=======
+            temp_path = PATHS(_pFilesystem->get_temp_outdir(), TEMP_SQL_GZ);
+            if (!_pFilesystem->download_ftp_file(FTP_EGGNOG_SQL, temp_path)) {
+                set_error("Unable to download from FTP address at: " + FTP_EGGNOG_SQL +
+                          _pFilesystem->get_error(), ERR_EGG_SQL_FTP);
+>>>>>>> master
                 return ERR_EGG_SQL_FTP;
             }
 
             FS_dprint("Success! Decompressing...");
 
+<<<<<<< HEAD
             if (!mpFileSystem->decompress_file(temp_path, out_path, FileSystem::ENT_FILE_GZ)) {
                 set_error("Unable to decompress file at: " + temp_path + mpFileSystem->get_error(),
+=======
+            if (!_pFilesystem->decompress_file(temp_path, out_path, FileSystem::ENT_FILE_GZ)) {
+                set_error("Unable to decompress file at: " + temp_path + _pFilesystem->get_error(),
+>>>>>>> master
                           ERR_EGG_SQL_DECOMP);
                 return ERR_EGG_SQL_DECOMP;
             }
@@ -278,20 +315,35 @@ EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::download(EggnogDatabase::EGGNOG_DB
 
         case EGGNOG_DIAMOND:
             FS_dprint("Downloading EggNOG DIAMOND database...");
+<<<<<<< HEAD
             temp_path = PATHS(mpFileSystem->get_temp_outdir(), TEMP_DMND_GZ);
             if (!mpFileSystem->download_ftp_file(FTP_EGGNOG_DMND, temp_path)) {
                 set_error("Unable to download from FTP address at: " + FTP_EGGNOG_DMND + mpFileSystem->get_error(),
                         ERR_EGG_DMND_FTP);
                 mpFileSystem->delete_file(temp_path);
+=======
+            temp_path = PATHS(_pFilesystem->get_temp_outdir(), TEMP_DMND_GZ);
+            if (!_pFilesystem->download_ftp_file(FTP_EGGNOG_DMND, temp_path)) {
+                set_error("Unable to download from FTP address at: " + FTP_EGGNOG_DMND + _pFilesystem->get_error(),
+                        ERR_EGG_DMND_FTP);
+                _pFilesystem->delete_file(temp_path);
+>>>>>>> master
                 return ERR_EGG_DMND_FTP;
             }
 
             FS_dprint("Success! Decompressing...");
 
+<<<<<<< HEAD
             if (!mpFileSystem->decompress_file(temp_path, out_path, FileSystem::ENT_FILE_GZ)) {
                 set_error("Unable to decompress file at: " + temp_path +mpFileSystem->get_error(),
                         ERR_EGG_DMND_DECOMP);
                 mpFileSystem->delete_file(out_path);
+=======
+            if (!_pFilesystem->decompress_file(temp_path, out_path, FileSystem::ENT_FILE_GZ)) {
+                set_error("Unable to decompress file at: " + temp_path +_pFilesystem->get_error(),
+                        ERR_EGG_DMND_DECOMP);
+                _pFilesystem->delete_file(out_path);
+>>>>>>> master
                 return ERR_EGG_DMND_DECOMP;
             }
             FS_dprint("Success! EggNOG DIAMOND database sent to: " + out_path);
@@ -299,20 +351,35 @@ EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::download(EggnogDatabase::EGGNOG_DB
 
         case EGGNOG_FASTA:
             FS_dprint("Downloading EggNOG DIAMOND database...");
+<<<<<<< HEAD
             temp_path = PATHS(mpFileSystem->get_temp_outdir(), TEMP_FAST_GZ);
             if (!mpFileSystem->download_ftp_file(FTP_EGGNOG_FASTA, temp_path)) {
                 set_error("Unable to download from FTP address at: " + FTP_EGGNOG_FASTA + mpFileSystem->get_error(),
                         ERR_EGG_FASTA_FTP);
                 mpFileSystem->delete_file(temp_path);
+=======
+            temp_path = PATHS(_pFilesystem->get_temp_outdir(), TEMP_FAST_GZ);
+            if (!_pFilesystem->download_ftp_file(FTP_EGGNOG_FASTA, temp_path)) {
+                set_error("Unable to download from FTP address at: " + FTP_EGGNOG_FASTA + _pFilesystem->get_error(),
+                        ERR_EGG_FASTA_FTP);
+                _pFilesystem->delete_file(temp_path);
+>>>>>>> master
                 return ERR_EGG_FASTA_FTP;
             }
 
             FS_dprint("Success! Decompressing...");
 
+<<<<<<< HEAD
             if (!mpFileSystem->decompress_file(temp_path, out_path, FileSystem::ENT_FILE_GZ)) {
                 set_error("Unable to decompress file at: " + temp_path + mpFileSystem->get_error(),
                         ERR_EGG_FASTA_DECOMP);
                 mpFileSystem->delete_file(out_path);
+=======
+            if (!_pFilesystem->decompress_file(temp_path, out_path, FileSystem::ENT_FILE_GZ)) {
+                set_error("Unable to decompress file at: " + temp_path + _pFilesystem->get_error(),
+                        ERR_EGG_FASTA_DECOMP);
+                _pFilesystem->delete_file(out_path);
+>>>>>>> master
                 return ERR_EGG_FASTA_DECOMP;
             }
             FS_dprint("Success! EggNOG FASTA sent to: " + out_path);
@@ -327,18 +394,31 @@ EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::download(EggnogDatabase::EGGNOG_DB
 
 EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::open_sql(std::string& sql_path) {
     FS_dprint("Opening SQL database...");
+<<<<<<< HEAD
     if (!mpFileSystem->file_exists(sql_path)) {
+=======
+    if (!_pFilesystem->file_exists(sql_path)) {
+>>>>>>> master
         FS_dprint("File does not exist at: " + sql_path);
         return ERR_EGG_SQL_FILE_EXISTS;
     }
 
+<<<<<<< HEAD
     if (mpSQLDatabase != nullptr) {
+=======
+    if (_pSQLDatabase != nullptr) {
+>>>>>>> master
         FS_dprint("Database already created");
         return ERR_EGG_OK;
     }
 
+<<<<<<< HEAD
     mpSQLDatabase = new SQLDatabaseHelper();
     if (!mpSQLDatabase->open(sql_path)) {
+=======
+    _pSQLDatabase = new SQLDatabaseHelper();
+    if (!_pSQLDatabase->open(sql_path)) {
+>>>>>>> master
         FS_dprint("Unable to open SQL database");
         return ERR_EGG_SQL_OPEN;
     }
@@ -348,7 +428,11 @@ EggnogDatabase::ERR_EGGNOG_DB EggnogDatabase::open_sql(std::string& sql_path) {
 }
 
 std::string EggnogDatabase::print_err() {
+<<<<<<< HEAD
     return "\nEggNOG Database Error: " + mErrMsg;
+=======
+    return "\nEggNOG Database Error: " + _err_msg;
+>>>>>>> master
 }
 
 void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults *eggnog_data) {
@@ -394,8 +478,12 @@ void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults *eggnog_data)
     orthologs = member_orthologs["all"];        // default, can change
 
     if (!orthologs.empty()) {
+<<<<<<< HEAD
         get_annotations(orthologs, eggnog_data);    // Pull final annotations from database
         get_additional_sql_data(eggnog_data);       // Pull any additional info from database
+=======
+        get_annotations(orthologs, eggnog_data);
+>>>>>>> master
     }
 }
 
@@ -436,10 +524,18 @@ void EggnogDatabase::get_tax_scope(QuerySequence::EggnogResults *eggnogResults) 
 
 /**
  * ======================================================================
+<<<<<<< HEAD
  * Function void EggnogDatabase::get_additional_sql_data(QuerySequence::EggnogResults &eggnogResults,
  *                                          DatabaseHelper &database)
  *
  * Description          - Query EggNOG SQL database and pull additional information
+=======
+ * Function void EggnogDatabase::get_sql_data(QuerySequence::EggnogResults &eggnogResults,
+ *                                          DatabaseHelper &database)
+ *
+ * Description          - Query EggNOG SQL database and pull relevant info
+ *                      - Sets values in EggnogResults struct
+>>>>>>> master
  *
  * Notes                - None
  *
@@ -449,11 +545,16 @@ void EggnogDatabase::get_tax_scope(QuerySequence::EggnogResults *eggnogResults) 
  * @return              - None
  * ======================================================================
  */
+<<<<<<< HEAD
 void EggnogDatabase::get_additional_sql_data(QuerySequence::EggnogResults *eggnogResults) {
     // Lookup description, KEGG, protein domain from SQL database
 
     if (mSQLVersion != EGGNOG_VERSION_EARLIER) return;  // Only supported for earlier versions of SQL database currently
 
+=======
+void EggnogDatabase::get_sql_data(QuerySequence::EggnogResults *eggnogResults) {
+    // Lookup description, KEGG, protein domain from SQL database
+>>>>>>> master
     if (!eggnogResults->og_key.empty()) {
         std::vector<std::vector<std::string>>results;
         std::string sql_kegg;
@@ -464,16 +565,26 @@ void EggnogDatabase::get_additional_sql_data(QuerySequence::EggnogResults *eggno
                 "SELECT description, KEGG_freq, SMART_freq FROM og WHERE og=%Q",
                 eggnogResults->og_key.c_str());
         try {
+<<<<<<< HEAD
             results = mpSQLDatabase->query(query);
+=======
+            results = _pSQLDatabase->query(query);
+>>>>>>> master
             sql_desc = results[0][0];
             sql_kegg = results[0][1];
             sql_protein = results[0][2];
             if (!sql_desc.empty() && sql_desc.find("[]") != 0) eggnogResults->description = sql_desc;
+<<<<<<< HEAD
 #if 0
             if (!sql_kegg.empty() && sql_kegg.find("[]") != 0) {
                 eggnogResults->kegg = format_sql_data(sql_kegg);
             }
 #endif
+=======
+            if (!sql_kegg.empty() && sql_kegg.find("[]") != 0) {
+                eggnogResults->kegg = format_sql_data(sql_kegg);
+            }
+>>>>>>> master
             if (!sql_protein.empty() && sql_protein.find("{}") != 0){
                 eggnogResults->protein_domains = format_sql_data(sql_protein);
             }
@@ -581,7 +692,11 @@ void EggnogDatabase::get_member_ogs(QuerySequence::EggnogResults *eggnog_results
 
     if (eggnog_results->seed_ortholog.empty()) return;
 
+<<<<<<< HEAD
     if (mSQLVersion == EGGNOG_VERSION_4_5_1) {
+=======
+    if (_sql_version == EGGNOG_VERSION_4_5_1) {
+>>>>>>> master
         // emapper.db-4.5.1
         query = sqlite3_mprintf(
                 "SELECT %q FROM %q WHERE %q=%Q",
@@ -595,12 +710,20 @@ void EggnogDatabase::get_member_ogs(QuerySequence::EggnogResults *eggnog_results
         query = sqlite3_mprintf(
                 "SELECT %q FROM %q WHERE %q=%Q",
                 SQL_MEMBER_GROUP.c_str(),
+<<<<<<< HEAD
                 mSQLMemberTable.c_str(),
+=======
+                _SQL_MEMBER_TABLE.c_str(),
+>>>>>>> master
                 SQL_MEMBER_NAME.c_str(),
                 eggnog_results->seed_ortholog.c_str());
     }
 
+<<<<<<< HEAD
     results = mpSQLDatabase->query(query);
+=======
+    results = _pSQLDatabase->query(query);
+>>>>>>> master
     if (!results.empty()) {
         eggnog_results->member_ogs = results[0][0];
     }
@@ -621,10 +744,17 @@ EggnogDatabase::member_orthologs_t EggnogDatabase::get_member_orthologs(EggnogDa
     sql_query = sqlite3_mprintf(
             "SELECT %q FROM %q WHERE %q=%Q",
             SQL_MEMBER_ORTHOINDEX.c_str(),
+<<<<<<< HEAD
             mSQLMemberTable.c_str(),
             SQL_MEMBER_NAME.c_str(),
             best_hit.c_str());
     sql_results = mpSQLDatabase->query(sql_query);
+=======
+            _SQL_MEMBER_TABLE.c_str(),
+            SQL_MEMBER_NAME.c_str(),
+            best_hit.c_str());
+    sql_results = _pSQLDatabase->query(sql_query);
+>>>>>>> master
     if (!sql_results.empty()) {
         event_indexes = sql_results[0][0];
     } else return member_orthologs_t();
@@ -638,11 +768,19 @@ EggnogDatabase::member_orthologs_t EggnogDatabase::get_member_orthologs(EggnogDa
             SQL_EVENT_SIDE2.c_str(),
             SQL_EVENT_TABLE.c_str(),
             SQL_EVENT_I.c_str(),
+<<<<<<< HEAD
             mpSQLDatabase->format_string(event_indexes,',').c_str(),
             SQL_EVENT_LEVEL.c_str(),
             mpSQLDatabase->format_container(target_lvls).c_str()
     );
     sql_results = mpSQLDatabase->query(sql_query);
+=======
+            _pSQLDatabase->format_string(event_indexes,',').c_str(),
+            SQL_EVENT_LEVEL.c_str(),
+            _pSQLDatabase->format_container(target_lvls).c_str()
+    );
+    sql_results = _pSQLDatabase->query(sql_query);
+>>>>>>> master
 
     std::map<std::pair<std::string,set_str_t>,
             std::set<std::pair<std::string,set_str_t>>> ortholog_map;
@@ -805,7 +943,11 @@ void EggnogDatabase::get_annotations(set_str_t& orthologs, QuerySequence::Eggnog
     SQLDatabaseHelper::query_struct sql_results;
 
     // This is different depending on version on eggnog using
+<<<<<<< HEAD
     if (mSQLVersion == EGGNOG_VERSION_4_5_1) {
+=======
+    if (_sql_version == EGGNOG_VERSION_4_5_1) {
+>>>>>>> master
         sql_query = sqlite3_mprintf(
                 "SELECT %q, %q, %q, %q, %q FROM %q "\
                 "LEFT JOIN seq on %q = %q "\
@@ -823,7 +965,11 @@ void EggnogDatabase::get_annotations(set_str_t& orthologs, QuerySequence::Eggnog
                 SQL_EGGNOG_GO_NAME.c_str(), SQL_EGGNOG_NAME.c_str(),
                 SQL_EGGNOG_KEGG_NAME.c_str(), SQL_EGGNOG_NAME.c_str(),
                 SQL_EGGNOG_BIGG_NAME.c_str(), SQL_EGGNOG_NAME.c_str(),
+<<<<<<< HEAD
                 SQL_EGGNOG_NAME.c_str(), mpSQLDatabase->format_container(orthologs).c_str()
+=======
+                SQL_EGGNOG_NAME.c_str(), _pSQLDatabase->format_container(orthologs).c_str()
+>>>>>>> master
         );
     } else {
         // Older versions
@@ -833,19 +979,32 @@ void EggnogDatabase::get_annotations(set_str_t& orthologs, QuerySequence::Eggnog
                 SQL_MEMBER_PNAME.c_str(),
                 SQL_MEMBER_GO.c_str(),
                 SQL_MEMBER_KEGG.c_str(),
+<<<<<<< HEAD
                 mSQLMemberTable.c_str(),
                 SQL_MEMBER_NAME.c_str(), mpSQLDatabase->format_container(orthologs).c_str()
         );
     }
 
     sql_results = mpSQLDatabase->query(sql_query);
+=======
+                _SQL_MEMBER_TABLE.c_str(),
+                SQL_MEMBER_NAME.c_str(), _pSQLDatabase->format_container(orthologs).c_str()
+        );
+    }
+
+    sql_results = _pSQLDatabase->query(sql_query);
+>>>>>>> master
     if (!sql_results.empty()) {
         for (vect_str_t &data : sql_results) {
             update_dataset(all_pnames, EGGNOG_DATA_PNAME, data[1]);
             pname_counter.add_value(data[1]);
             update_dataset(all_gos, EGGNOG_DATA_GO, data[2]);
             update_dataset(all_kegg, EGGNOG_DATA_KEGG, data[3]);
+<<<<<<< HEAD
             if (mSQLVersion == EGGNOG_VERSION_4_5_1)
+=======
+            if (_sql_version == EGGNOG_VERSION_4_5_1)
+>>>>>>> master
                 update_dataset(all_bigg, EGGNOG_DATA_BIGG, data[4]);
         }
         eggnog_results->pname  = container_to_string<std::string>(all_pnames,",");
@@ -857,9 +1016,15 @@ void EggnogDatabase::get_annotations(set_str_t& orthologs, QuerySequence::Eggnog
         }
 
         delim_list = container_to_string<std::string>(all_gos, ",");
+<<<<<<< HEAD
         eggnog_results->parsed_go = mpEntapDatabase->format_go_delim(delim_list,',');
         eggnog_results->kegg = container_to_string<std::string>(all_kegg, ",");
         if (mSQLVersion == EGGNOG_VERSION_4_5_1)
+=======
+        eggnog_results->parsed_go = _pEntapDatabase->format_go_delim(delim_list,',');
+        eggnog_results->kegg = container_to_string<std::string>(all_kegg, ",");
+        if (_sql_version == EGGNOG_VERSION_4_5_1)
+>>>>>>> master
             eggnog_results->bigg = container_to_string<std::string>(all_bigg, ",");
     } else {
         eggnog_results->pname = "";
@@ -871,8 +1036,13 @@ void EggnogDatabase::get_annotations(set_str_t& orthologs, QuerySequence::Eggnog
 
 void EggnogDatabase::set_error(std::string msg, ERR_EGGNOG_DB code) {
     FS_dprint(msg);
+<<<<<<< HEAD
     mErrMsg = msg;
     mErrCode = code;
+=======
+    _err_msg = msg;
+    _err_code = code;
+>>>>>>> master
 }
 
 void EggnogDatabase::set_database_version() {
@@ -883,9 +1053,15 @@ void EggnogDatabase::set_database_version() {
 
     FS_dprint("Getting EggNOG database SQL version...");
 
+<<<<<<< HEAD
     if (mpSQLDatabase == nullptr) {
         FS_dprint("Could not find EggNOG version, NULL");
         mSQLVersion = EGGNOG_VERSION_UNKONWN;
+=======
+    if (_pSQLDatabase == nullptr) {
+        FS_dprint("Could not find EggNOG version, NULL");
+        _sql_version = EGGNOG_VERSION_UNKONWN;
+>>>>>>> master
         return;
     }
 
@@ -895,13 +1071,18 @@ void EggnogDatabase::set_database_version() {
 
     try {
         FS_dprint("Executing sql cmd: " + std::string(query));
+<<<<<<< HEAD
         version_str = mpSQLDatabase->query(query)[0][0];
+=======
+        version_str = _pSQLDatabase->query(query)[0][0];
+>>>>>>> master
         if (version_str.empty())
             throw std::runtime_error("NULL version from query");
 
         indexl = (uint8) version_str.find('.');
         indexr = (uint8) version_str.rfind('.');
 
+<<<<<<< HEAD
         mVersionMajor = (uint16) std::stoi(version_str.substr(0,indexl));
         mVersionMinor = (uint16) std::stoi(version_str.substr(indexl+1, (uint32) (indexr - indexl - 1)));
         mVersionRev   = (uint16) std::stoi(version_str.substr(indexr+1));
@@ -915,11 +1096,27 @@ void EggnogDatabase::set_database_version() {
             mSQLVersion = EGGNOG_VERSION_EARLIER;
             if (mpQueryData != nullptr)
                 mpQueryData->header_set(ENTAP_HEADER_ONT_EGG_BIGG, false);   // Not supported for older version
+=======
+        _VERSION_MAJOR = (uint16) std::stoi(version_str.substr(0,indexl));
+        _VERSION_MINOR = (uint16) std::stoi(version_str.substr(indexl+1, (uint32) (indexr - indexl - 1)));
+        _VERSION_REV   = (uint16) std::stoi(version_str.substr(indexr+1));
+
+        if (_VERSION_MAJOR == 4 && _VERSION_MINOR == 5 && _VERSION_REV == 1) {
+            _sql_version = EGGNOG_VERSION_4_5_1;
+            FS_dprint("SQL Version set to 4.5.1");
+
+        } else if (_VERSION_MAJOR <= 4 ){
+            FS_dprint("WARNING: SQL Version less than 4, setting to 'earlier'");
+            _sql_version = EGGNOG_VERSION_EARLIER;
+            if (_pQueryData != nullptr)
+                _pQueryData->header_set(ENTAP_HEADER_ONT_EGG_BIGG, false);   // Not supported for older version
+>>>>>>> master
         }
         FS_dprint("Success!");
 
     } catch (...) {
         FS_dprint("WARNING: couldn't get SQL version.Setting to earlier version by default");
+<<<<<<< HEAD
         mSQLVersion = EGGNOG_VERSION_EARLIER;
         if (mpQueryData != nullptr)
             mpQueryData->header_set(ENTAP_HEADER_ONT_EGG_BIGG, false);       // Not supported for older version
@@ -929,6 +1126,17 @@ void EggnogDatabase::set_database_version() {
         mSQLMemberTable = SQL_MEMBER_TABLE_1;
     } else {
         mSQLMemberTable = SQL_MEMBER_TABLE;
+=======
+        _sql_version = EGGNOG_VERSION_EARLIER;
+        if (_pQueryData != nullptr)
+            _pQueryData->header_set(ENTAP_HEADER_ONT_EGG_BIGG, false);       // Not supported for older version
+    }
+
+    if (_sql_version == EGGNOG_VERSION_4_5_1) {
+        _SQL_MEMBER_TABLE = SQL_MEMBER_TABLE_1;
+    } else {
+        _SQL_MEMBER_TABLE = SQL_MEMBER_TABLE;
+>>>>>>> master
     }
 }
 

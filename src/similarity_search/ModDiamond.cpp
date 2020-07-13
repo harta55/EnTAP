@@ -7,7 +7,11 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
+<<<<<<< HEAD
  * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+=======
+ * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+>>>>>>> master
  *
  * This file is part of EnTAP.
  *
@@ -29,8 +33,11 @@
 #include "ModDiamond.h"
 #include "../QuerySequence.h"
 #include "../QueryAlignment.h"
+<<<<<<< HEAD
 #include "../QueryData.h"
 #include "../GraphingManager.h"
+=======
+>>>>>>> master
 
 #ifdef USE_BOOST
 #include <boost/regex.hpp>
@@ -39,6 +46,12 @@
 #endif
 
 std::vector<ENTAP_HEADERS> ModDiamond::DEFAULT_HEADERS = {
+<<<<<<< HEAD
+=======
+        ENTAP_HEADER_QUERY,
+        ENTAP_HEADER_FRAME,
+        ENTAP_HEADER_EXP_FPKM,
+>>>>>>> master
         ENTAP_HEADER_SIM_SUBJECT,
         ENTAP_HEADER_SIM_PERCENT,
         ENTAP_HEADER_SIM_ALIGN_LEN,
@@ -55,6 +68,7 @@ std::vector<ENTAP_HEADERS> ModDiamond::DEFAULT_HEADERS = {
         ENTAP_HEADER_SIM_TAXONOMIC_LINEAGE,
         ENTAP_HEADER_SIM_DATABASE,
         ENTAP_HEADER_SIM_CONTAM,
+<<<<<<< HEAD
         ENTAP_HEADER_SIM_INFORM
 };
 
@@ -112,41 +126,88 @@ ModDiamond::ModDiamond(std::string &execution_stage_path, std::string &fasta_pat
  *
  * =====================================================================
  */
+=======
+        ENTAP_HEADER_SIM_INFORM,
+        ENTAP_HEADER_SIM_UNI_GO_BIO,
+        ENTAP_HEADER_SIM_UNI_GO_CELL,
+        ENTAP_HEADER_SIM_UNI_GO_MOLE,
+        ENTAP_HEADER_SIM_UNI_KEGG,
+        ENTAP_HEADER_SIM_UNI_DATA_XREF,
+        ENTAP_HEADER_SIM_UNI_COMMENTS
+};
+
+ModDiamond::ModDiamond(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
+                       std::string &exe, vect_str_t &databases)
+: AbstractSimilaritySearch(execution_stage_path, in_hits, entap_data, "DIAMOND", exe, databases){
+    FS_dprint("Spawn Object - ModDiamond");
+
+    _software_flag = SIM_DIAMOND;
+}
+
+>>>>>>> master
 EntapModule::ModVerifyData ModDiamond::verify_files() {
     // Transcriptome + database paths already verified
     ModVerifyData verify_data;
     std::string   database_name;        // Shortened name to be used for file naming
     std::string   out_path;             // Full output path for each database alignment
+<<<<<<< HEAD
     uint16 file_status = 0;             // File statuses (empty, doesn't exist, etc...)
 
     verify_data.files_exist = true;
 
     for (std::string &data_path : mDatabasePaths) {
+=======
+    std::string   std_out;
+    uint16 file_status = 0;
+
+    verify_data.files_exist = true;
+
+    for (std::string &data_path : _database_paths) {
+>>>>>>> master
         FS_dprint("Verifying previous execution of database: " + data_path + "...");
 
         database_name = get_database_shortname(data_path);
 
         // set full path output for this database
         out_path = get_database_output_path(data_path);
+<<<<<<< HEAD
 
         // add mapping of output file to shortened database name
         mPathToDatabase[out_path] = database_name;
 
         // Check if file exists/can be read/empty
         file_status = mpFileSystem->get_file_status(out_path);
+=======
+        std_out  = out_path + FileSystem::EXT_STD;
+
+        // add mapping of output file to shortened database name
+        _path_to_database[out_path] = database_name;
+
+        // Check if file exists/can be read/empty
+        file_status = _pFileSystem->get_file_status(out_path);
+>>>>>>> master
         if (file_status != 0) {
             FS_dprint("File for database " + database_name + " does not exist.\n" + out_path);
             // If we need to execute against ANY database
             verify_data.files_exist = false;
             // delete file just in case it is corrupt/empty
+<<<<<<< HEAD
             mpFileSystem->delete_file(out_path);
+=======
+            _pFileSystem->delete_file(out_path);
+>>>>>>> master
         } else {
             // File found + is 'legit', can skip execution for it
             FS_dprint("File for database " + database_name + " exists, skipping...\n" + out_path);
         }
+<<<<<<< HEAD
 
         verify_data.output_paths.push_back(out_path);   // Add paths to verify data (not currently used)
         mOutputPaths.push_back(out_path);
+=======
+        verify_data.output_paths.push_back(out_path);
+        _output_paths.push_back(out_path);
+>>>>>>> master
     }
 
     FS_dprint("Success! Verified files for DIAMOND, continuing...");
@@ -154,6 +215,7 @@ EntapModule::ModVerifyData ModDiamond::verify_files() {
     return verify_data;
 }
 
+<<<<<<< HEAD
 /**
  * ======================================================================
  * Function bool ModDiamond::is_executable()
@@ -173,10 +235,21 @@ bool ModDiamond::is_executable(std::string &exe) {
     terminalData.command = exe + " --version";
     terminalData.print_files = false;
     terminalData.suppress_std_err = false;
+=======
+bool ModDiamond::is_executable(std::string &exe) {
+    std::string test_command;
+    TerminalData terminalData;
+
+    test_command = exe + " --version";
+
+    terminalData.command = test_command;
+    terminalData.print_files = false;
+>>>>>>> master
 
     return TC_execute_cmd(terminalData) == 0;
 }
 
+<<<<<<< HEAD
 /**
  * ======================================================================
  * Function void ModDiamond::execute()
@@ -202,6 +275,19 @@ void ModDiamond::execute() {
         output_path = get_database_output_path(database_path);
 
         file_status = mpFileSystem->get_file_status(output_path);
+=======
+void ModDiamond::execute() {
+    std::string output_path;
+    uint16 file_status = 0;
+    SimSearchCmd simSearchCmd;
+
+    FS_dprint("Executing DIAMOND for necessary files....");
+
+    for (std::string &database_path : _database_paths) {
+        output_path = get_database_output_path(database_path);
+
+        file_status = _pFileSystem->get_file_status(output_path);
+>>>>>>> master
         if (file_status != 0) {
             // If file does not exist or cannot be read, execute diamond
             FS_dprint("File not found, executing against database at: " + database_path);
@@ -210,6 +296,7 @@ void ModDiamond::execute() {
             simSearchCmd.database_path = database_path;
             simSearchCmd.output_path   = output_path;
             simSearchCmd.std_out_path  = output_path + FileSystem::EXT_STD;
+<<<<<<< HEAD
             simSearchCmd.threads       = (uint16)mThreads;
             simSearchCmd.query_path    = mInputTranscriptome;
             simSearchCmd.eval          = mEVal;
@@ -217,6 +304,15 @@ void ModDiamond::execute() {
             simSearchCmd.qcoverage     = mQCoverage;
             simSearchCmd.exe_path      = mExePath;
             simSearchCmd.blastp        = mBlastp;
+=======
+            simSearchCmd.threads       = (uint16)_threads;
+            simSearchCmd.query_path    = _in_hits;
+            simSearchCmd.eval          = _e_val;
+            simSearchCmd.tcoverage     = _tcoverage;
+            simSearchCmd.qcoverage     = _qcoverage;
+            simSearchCmd.exe_path      = _exe_path;
+            simSearchCmd.blastp        = _blastp;
+>>>>>>> master
 
             try {
                 run_blast(&simSearchCmd, true);
@@ -229,6 +325,7 @@ void ModDiamond::execute() {
     }
 }
 
+<<<<<<< HEAD
 /**
  * ======================================================================
  * Function bool ModDiamond::run_blast()
@@ -282,12 +379,45 @@ bool ModDiamond::run_blast(AbstractSimilaritySearch::SimSearchCmd *cmd, bool use
     terminalData.base_std_path  = cmd->std_out_path;
     terminalData.print_files    = true;
     terminalData.suppress_std_err = false;
+=======
+bool ModDiamond::run_blast(AbstractSimilaritySearch::SimSearchCmd *cmd, bool use_defaults) {
+    std::string     diamond_cmd;
+    TerminalData    terminalData;
+    int32           err_code;
+    bool            ret = true;
+
+    diamond_cmd = cmd->exe_path + " ";
+
+    if (cmd->blastp) {
+        diamond_cmd += BLASTP_STR;
+    } else {
+        diamond_cmd += BLASTX_STR;
+    }
+
+    diamond_cmd += " -d " + cmd->database_path;
+    diamond_cmd += " --query-cover " + std::to_string(cmd->qcoverage);
+    diamond_cmd += " --subject-cover " + std::to_string(cmd->tcoverage);
+    diamond_cmd += " --evalue " + std::to_string(cmd->eval);
+
+    diamond_cmd += " --more-sensitive --top 3";
+
+    diamond_cmd += " -q " + cmd->query_path;
+    diamond_cmd += " -o " + cmd->output_path;
+    diamond_cmd += " -p " + std::to_string(cmd->threads);
+    diamond_cmd += " -f ";
+    diamond_cmd += "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp stitle";
+
+    terminalData.command        = diamond_cmd;
+    terminalData.base_std_path  = cmd->std_out_path;
+    terminalData.print_files    = true;
+>>>>>>> master
 
     err_code = TC_execute_cmd(terminalData);
 
     // will change at some point
     if (err_code != 0) {
         // delete output file if run failed
+<<<<<<< HEAD
         mpFileSystem->delete_file(cmd->output_path);
         throw ExceptionHandler("Error with database located at: " + cmd->database_path + "\nDIAMOND Error: " +
             terminalData.err_stream, ERR_ENTAP_RUN_SIM_SEARCH_RUN);
@@ -334,11 +464,43 @@ void ModDiamond::parse() {
     fp64 evalue;                    // E-value
     fp64 coverage;                  // Coverage
     // ------------------------------------------------------------------ //
+=======
+        _pFileSystem->delete_file(cmd->output_path);
+        throw ExceptionHandler("Error with database located at: " + cmd->database_path + "\nDIAMOND Error: " +
+            terminalData.err_stream, ERR_ENTAP_RUN_SIM_SEARCH_RUN);
+    }
+
+    return ret;
+}
+
+void ModDiamond::parse() {
+    bool                is_uniprot;
+    uint32              uniprot_attempts=0;
+    uint16              file_status=0;
+    std::string         database_shortname;
+    std::string         species;
+    QuerySequence::SimSearchResults simSearchResults;
+    TaxEntry            taxEntry;
+    std::pair<bool, std::string> contam_info;
+
+    // ------------------ Read from DIAMOND output ---------------------- //
+    std::string qseqid, sseqid, stitle, database_name,pident, bitscore,
+            length, mismatch, gapopen, qstart, qend, sstart, send;
+    fp64  evalue, coverage;
+
+    // ----------------------------------------------------------------- //
+>>>>>>> master
 
     FS_dprint("Beginning to filter individual DIAMOND files...");
 
     // disable UniProt headers until we know we have a hit
+<<<<<<< HEAD
     for (std::string &output_path : mOutputPaths) {
+=======
+    _pQUERY_DATA->header_set_uniprot(false);
+
+    for (std::string &output_path : _output_paths) {
+>>>>>>> master
         FS_dprint("DIAMOND file located at " + output_path + " being parsed");
 
         // reset uniprot info for each database
@@ -347,11 +509,21 @@ void ModDiamond::parse() {
         simSearchResults = {};
 
         // ensure file exists
+<<<<<<< HEAD
         file_status = mpFileSystem->get_file_status(output_path);
+=======
+        file_status = _pFileSystem->get_file_status(output_path);
+>>>>>>> master
         if (file_status != 0) {
             throw ExceptionHandler("File not found or empty: " + output_path, ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
         }
 
+<<<<<<< HEAD
+=======
+        // setup individual database directories for stats/figures
+        database_shortname = _path_to_database[output_path];
+
+>>>>>>> master
         // Begin using CSVReader lib to parse data
         io::CSVReader<DMND_COL_NUMBER, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(output_path);
         while (in.read_row(qseqid, sseqid, pident, length, mismatch, gapopen,
@@ -359,12 +531,17 @@ void ModDiamond::parse() {
             simSearchResults = {};
 
             // Get pointer to sequence in overall map
+<<<<<<< HEAD
             QuerySequence *query = mpQueryData->get_sequence(qseqid);
+=======
+            QuerySequence *query = _pQUERY_DATA->get_sequence(qseqid);
+>>>>>>> master
             if (query == nullptr) {
                 throw ExceptionHandler("Unable to find sequence in transcriptome: " + qseqid + " from file: " + output_path,
                                        ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
             }
 
+<<<<<<< HEAD
             // get species from database alignment title
             species = get_species(stitle);
             // get taxonomic information with species
@@ -381,11 +558,33 @@ void ModDiamond::parse() {
                 if (uniprot_attempts <= UNIPROT_ATTEMPTS) {
                     // First UniProt match assumes the rest are UniProt as well in database
                     is_uniprot = mpEntapDatabase->is_uniprot_entry(sseqid, simSearchResults.uniprot_info);
+=======
+            // get species from database alignment (using boost regex for now)
+            species = get_species(stitle);
+            // get taxonomic information with species
+            taxEntry = _pEntapDatabase->get_tax_entry(species);
+            // get contaminant information
+            contam_info = is_contaminant(taxEntry.lineage, _contaminants);
+
+            // Check if this is a UniProt match and pull back info if so
+            if (is_uniprot) {
+                // Get uniprot info
+                is_uniprot_entry(sseqid, simSearchResults.uniprot_info);
+            } else {
+                if (uniprot_attempts <= UNIPROT_ATTEMPTS) {
+                    // First UniProt match assumes the rest are UniProt as well in database
+                    is_uniprot = is_uniprot_entry(sseqid, simSearchResults.uniprot_info);
+>>>>>>> master
                     if (!is_uniprot) {
                         uniprot_attempts++;
                     } else {
                         FS_dprint("Database file at " + output_path + "\nDetermined to be UniProt");
+<<<<<<< HEAD
                         set_uniprot_headers();
+=======
+                        _pQUERY_DATA->set_is_uniprot(true);
+                        _pQUERY_DATA->header_set_uniprot(true);
+>>>>>>> master
                     }
                 } // Else, database is NOT UniProt after # of attempts
             }
@@ -414,12 +613,21 @@ void ModDiamond::parse() {
             simSearchResults.contam_type = contam_info.second;
             simSearchResults.contaminant ? simSearchResults.yes_no_contam = YES_FLAG :
                     simSearchResults.yes_no_contam  = NO_FLAG;
+<<<<<<< HEAD
             simSearchResults.is_informative = is_informative(stitle, mUninformativeTags);
             simSearchResults.is_informative ? simSearchResults.yes_no_inform = YES_FLAG :
                     simSearchResults.yes_no_inform  = NO_FLAG;
 
             query->add_alignment(mExecutionState, mSoftwareFlag,
                     simSearchResults, output_path, mInputLineage);
+=======
+            simSearchResults.is_informative = is_informative(stitle, _uninformative_vect);
+            simSearchResults.is_informative ? simSearchResults.yes_no_inform = YES_FLAG :
+                    simSearchResults.yes_no_inform  = NO_FLAG;
+
+            query->add_alignment(_execution_state, _software_flag,
+                    simSearchResults, output_path, _input_lineage);
+>>>>>>> master
         } // END WHILE LOOP
 
         // Finished parsing and adding to alignment data, being to calc stats
@@ -435,6 +643,7 @@ void ModDiamond::parse() {
 
 typedef std::map<std::string,std::map<std::string,uint32>> graph_sum_t;
 
+<<<<<<< HEAD
 
 /**
  * ======================================================================
@@ -458,6 +667,11 @@ typedef std::map<std::string,std::map<std::string,uint32>> graph_sum_t;
 void ModDiamond::calculate_best_stats (bool is_final, std::string database_path) {
 
     GraphingManager::GraphingData graphingStruct;         // Graphing data
+=======
+void ModDiamond::calculate_best_stats (bool is_final, std::string database_path) {
+
+    GraphingData                graphingStruct;
+>>>>>>> master
     std::string                 species;
     std::string                 database_shortname;
     std::string                 figure_base;
@@ -479,6 +693,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     Compair<std::string>        contam_counter;
     Compair<std::string>        species_counter;
     Compair<std::string>        contam_species_counter;
+<<<<<<< HEAD
     std::unordered_map<std::string, Compair<std::string>> frame_inform_counter;
 
     // Set up output directories for individual databases
@@ -511,6 +726,39 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     std::string out_unselected_tsv  = PATHS(base_path, SIM_SEARCH_DATABASE_UNSELECTED);
     std::vector<FileSystem::ENT_FILE_TYPES> unselected_files = {FileSystem::ENT_FILE_DELIM_TSV};
     mpQueryData->start_alignment_files(out_unselected_tsv, mEntapHeaders, 0, unselected_files);
+=======
+    graph_sum_t                 graphing_sum_map;
+
+    // Set up output directories (processed directory cleared earlier so these will be empty)
+    if (is_final) {
+        // Overall results across databases
+        base_path = _overall_results_dir;
+        database_shortname = "";
+    } else {
+        // Individual database results
+        database_shortname = _path_to_database[database_path];
+        base_path   = PATHS(_proc_dir, database_shortname);
+    }
+    figure_base = PATHS(base_path, FIGURE_DIR);
+    _pFileSystem->create_dir(base_path);
+    _pFileSystem->create_dir(figure_base);
+
+    // Open contam best hit tsv file and print headers
+    std::string out_best_contams_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_CONTAM);
+    _pQUERY_DATA->start_alignment_files(out_best_contams_filepath, DEFAULT_HEADERS, 0, _alignment_file_types);
+
+    // Open best hits files
+    std::string out_best_hits_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS);
+    _pQUERY_DATA->start_alignment_files(out_best_hits_filepath, DEFAULT_HEADERS, 0, _alignment_file_types);
+
+    // Open best hits files with no contaminants
+    std::string out_best_hits_no_contams = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM);
+    _pQUERY_DATA->start_alignment_files(out_best_hits_no_contams, DEFAULT_HEADERS, 0, _alignment_file_types);
+
+    // Open unselected hits, so every hit that was not the best hit (tsv)
+    std::string out_unselected_tsv  = PATHS(base_path, SIM_SEARCH_DATABASE_UNSELECTED + FileSystem::EXT_TSV);
+    std::ofstream file_unselected_hits(out_unselected_tsv, std::ios::out | std::ios::app);
+>>>>>>> master
 
     // Open no hits file (fasta nucleotide)
     std::string out_no_hits_fa_nucl = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS + FileSystem::EXT_FNN);
@@ -520,21 +768,56 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     std::string out_no_hits_fa_prot  = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS + FileSystem::EXT_FAA);
     std::ofstream file_no_hits_prot(out_no_hits_fa_prot, std::ios::out | std::ios::app);
 
+<<<<<<< HEAD
     try {
         // Cycle through all sequences
         for (auto &pair : *mpQueryData->get_sequences_ptr()) {
+=======
+    // ------------------- Setup graphing files ------------------------- //
+
+    std::string graph_species_txt_path           = PATHS(figure_base, GRAPH_SPECIES_BAR_TXT);
+    std::string graph_species_png_path           = PATHS(figure_base, GRAPH_SPECIES_BAR_PNG);
+    std::string graph_contam_txt_path            = PATHS(figure_base, GRAPH_CONTAM_BAR_TXT);
+    std::string graph_contam_png_path            = PATHS(figure_base, GRAPH_CONTAM_BAR_PNG);
+    std::string graph_sum_txt_path               = PATHS(figure_base, GRAPH_DATABASE_SUM_TXT);
+    std::string graph_sum_png_path               = PATHS(figure_base, GRAPH_DATABASE_SUM_PNG);
+
+    std::ofstream graph_species_file(graph_species_txt_path, std::ios::out | std::ios::app);
+    std::ofstream graph_contam_file(graph_contam_txt_path, std::ios::out | std::ios::app);
+    std::ofstream graph_sum_file(graph_sum_txt_path, std::ios::out | std::ios::app);
+
+    // ------------------------------------------------------------------ //
+
+    // Print headers to relevant tsv files
+    _pFileSystem->print_headers(file_unselected_hits, DEFAULT_HEADERS, FileSystem::DELIM_TSV);
+
+
+    try {
+        graph_species_file << "Species\tCount"     << std::endl;
+        graph_contam_file  << "Contaminant Species\tCount" << std::endl;
+        graph_sum_file     << "Category\tCount"    << std::endl;
+
+        // Cycle through all sequences
+        for (auto &pair : *_pQUERY_DATA->get_sequences_ptr()) {
+>>>>>>> master
             // Check if original sequences have hit a database
             if (!pair.second->hit_database(SIMILARITY_SEARCH, SIM_DIAMOND, database_path)) {
                 // Did NOT hit a database during sim search
                 // Do NOT log if it was never blasted
+<<<<<<< HEAD
                 if ((pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN) && mBlastp) ||
                     (!pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN) && !mBlastp)) {
+=======
+                if ((pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN) && _blastp) ||
+                    (!pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN) && !_blastp)) {
+>>>>>>> master
                     // Protein/nucleotide did not hit database
                     count_no_hit++;
                     file_no_hits_nucl << pair.second->get_sequence_n() << std::endl;
                     file_no_hits_prot << pair.second->get_sequence_p() << std::endl;
                     // Graphing
                     frame = pair.second->getFrame();
+<<<<<<< HEAD
                     if (!frame.empty()) {
                         if (frame_inform_counter.find(NO_HIT_FLAG) == frame_inform_counter.end()) {
                             frame_inform_counter.emplace(NO_HIT_FLAG, Compair<std::string>());
@@ -544,6 +827,13 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
 
                 } else {
                     pair.second->set_blasted();
+=======
+                    if (graphing_sum_map[frame].find(NO_HIT_FLAG) != graphing_sum_map[frame].end()) {
+                        graphing_sum_map[frame][NO_HIT_FLAG]++;
+                    } else graphing_sum_map[frame][NO_HIT_FLAG] = 1;
+                } else {
+                    pair.second->QUERY_FLAG_SET(QuerySequence::QUERY_BLASTED);
+>>>>>>> master
                 }
             } else {
                 // HIT a database during sim search
@@ -565,7 +855,11 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                     for (auto &hit : *alignment_data) {
                         count_TOTAL_alignments++;
                         if (hit != best_hit) {  // If this hit is not the best hit
+<<<<<<< HEAD
                             mpQueryData->add_alignment_data(out_unselected_tsv, pair.second, hit);
+=======
+                            file_unselected_hits << hit->print_delim(DEFAULT_HEADERS, 0, FileSystem::DELIM_TSV) << std::endl;
+>>>>>>> master
                             count_unselected++;
                         } else {
                             ;   // Do notthing
@@ -575,7 +869,11 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                 count_filtered++;   // increment best hit
 
                 // Write to best hits files
+<<<<<<< HEAD
                 mpQueryData->add_alignment_data(out_best_hits_filepath, pair.second, best_hit);
+=======
+                _pQUERY_DATA->add_alignment_data(out_best_hits_filepath, pair.second, best_hit);
+>>>>>>> master
 
                 frame = pair.second->getFrame();     // Used for graphing
                 species = sim_search_data->species;
@@ -584,14 +882,22 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                 if (sim_search_data->contaminant) {
                     // Species is considered a contaminant
                     count_contam++;
+<<<<<<< HEAD
                     mpQueryData->add_alignment_data(out_best_contams_filepath, pair.second, best_hit);
+=======
+                    _pQUERY_DATA->add_alignment_data(out_best_contams_filepath, pair.second, best_hit);
+>>>>>>> master
 
                     contam = sim_search_data->contam_type;
                     contam_counter.add_value(contam);
                     contam_species_counter.add_value(species);
                 } else {
                     // Species is NOT a contaminant, print to files
+<<<<<<< HEAD
                     mpQueryData->add_alignment_data(out_best_hits_no_contams, pair.second, best_hit);
+=======
+                    _pQUERY_DATA->add_alignment_data(out_best_hits_no_contams, pair.second, best_hit);
+>>>>>>> master
                 }
 
                 // Count species type
@@ -601,6 +907,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                 if (sim_search_data->is_informative) {
                     count_informative++;
                     // Graphing
+<<<<<<< HEAD
                     if (!frame.empty()) {
                         if (frame_inform_counter.find(INFORMATIVE_FLAG) == frame_inform_counter.end()) {
                             frame_inform_counter.emplace(INFORMATIVE_FLAG, Compair<std::string>());
@@ -617,12 +924,24 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                         }
                         frame_inform_counter[UNINFORMATIVE_FLAG].add_value(frame);
                     }
+=======
+                    if (graphing_sum_map[frame].find(INFORMATIVE_FLAG) != graphing_sum_map[frame].end()) {
+                        graphing_sum_map[frame][INFORMATIVE_FLAG]++;
+                    } else graphing_sum_map[frame][INFORMATIVE_FLAG] = 1;
+
+                } else {
+                    count_uninformative++;
+                    if (graphing_sum_map[frame].find(UNINFORMATIVE_FLAG) != graphing_sum_map[frame].end()) {
+                        graphing_sum_map[frame][UNINFORMATIVE_FLAG]++;
+                    } else graphing_sum_map[frame][UNINFORMATIVE_FLAG] = 1;
+>>>>>>> master
                 }
             }
         }
     } catch (const std::exception &e){throw ExceptionHandler(e.what(), ERR_ENTAP_RUN_SIM_SEARCH_FILTER);}
 
     try {
+<<<<<<< HEAD
         mpQueryData->end_alignment_files(out_best_contams_filepath);
         mpQueryData->end_alignment_files(out_best_hits_filepath);
         mpQueryData->end_alignment_files(out_best_hits_no_contams);
@@ -672,6 +991,25 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
         mpFileSystem->format_stat_stream(ss, "Compiled Similarity Search - DIAMOND - Best Overall");
     } else {
         mpFileSystem->format_stat_stream(ss, "Similarity Search - DIAMOND - " + database_shortname);
+=======
+        _pQUERY_DATA->end_alignment_files(out_best_contams_filepath);
+        _pQUERY_DATA->end_alignment_files(out_best_hits_filepath);
+        _pQUERY_DATA->end_alignment_files(out_best_hits_no_contams);
+
+        _pFileSystem->close_file(file_no_hits_nucl);
+        _pFileSystem->close_file(file_no_hits_prot);
+        _pFileSystem->close_file(file_unselected_hits);
+    } catch (const ExceptionHandler &e) {throw e;}
+
+    // ------------ Calculate statistics and print to output ------------ //
+    ss<<std::fixed<<std::setprecision(2);
+
+    // Different headers if final analysis or database specific analysis
+    if (is_final) {
+        _pFileSystem->format_stat_stream(ss, "Compiled Similarity Search - DIAMOND - Best Overall");
+    } else {
+        _pFileSystem->format_stat_stream(ss, "Similarity Search - DIAMOND - " + database_shortname);
+>>>>>>> master
         ss <<
            "Search results:\n"            << database_path <<
            "\n\tTotal alignments: "               << count_TOTAL_alignments   <<
@@ -689,18 +1027,28 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     if (!is_final && (count_TOTAL_alignments == 0 || count_filtered == 0)) {
         ss << "WARNING: No alignments for this database";
         std::string out_msg = ss.str() + "\n";
+<<<<<<< HEAD
         mpFileSystem->print_stats(out_msg);
         return; // RETURN we do not have any alignments
+=======
+        _pFileSystem->print_stats(out_msg);
+        return;
+>>>>>>> master
     }
 
     // Sort counters
     contam_species_counter.sort(true);
     species_counter.sort(true);
+<<<<<<< HEAD
     for (auto &pair : frame_inform_counter) {
         pair.second.sort(true);
     }
 
     contam_percent = ((fp64) count_contam / count_filtered) * ENTAP_PERCENT;
+=======
+
+    contam_percent = ((fp64) count_contam / count_filtered) * 100;
+>>>>>>> master
 
     ss <<
        "\n\tTotal unique transcripts with an alignment: " << count_filtered <<
@@ -709,29 +1057,55 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
        "\n\tTotal unique transcripts without an alignment: " << count_no_hit <<
        "\n\t\tReference transcriptome sequences without an alignment (FASTA):\n\t\t\t" << out_no_hits_fa_prot;
     // Have frame information
+<<<<<<< HEAD
     if (frame_inform_counter.find(NO_HIT_FLAG) != frame_inform_counter.end()) {
         for (auto &pair : frame_inform_counter[NO_HIT_FLAG]._data) {
             ss << "\n\t\t" << pair.first << "(" << pair.second << ")";
             mpGraphingManager->add_datapoint(graph_frame_inform_stack.text_file_path, {pair.first, NO_HIT_FLAG,
                                                                                        std::to_string(pair.second)});
+=======
+    if (graphing_sum_map.size() > 1) {
+        for (auto &pair : graphing_sum_map) {
+            // Frame -> Map of uninform/inform/no hits
+            ss << "\n\t\t" << pair.first << "(" << pair.second[NO_HIT_FLAG] << ")";
+            graph_sum_file << pair.first << "\t" << NO_HIT_FLAG << "\t" << pair.second[NO_HIT_FLAG] << "\n";
+>>>>>>> master
         }
     }
     ss <<
        "\n\tTotal unique informative alignments: " << count_informative;
+<<<<<<< HEAD
     if (frame_inform_counter.find(INFORMATIVE_FLAG) != frame_inform_counter.end()) {
         for (auto &pair : frame_inform_counter[INFORMATIVE_FLAG]._data) {
             ss << "\n\t\t" << pair.first << "(" << pair.second << ")";
             mpGraphingManager->add_datapoint(graph_frame_inform_stack.text_file_path, {pair.first, INFORMATIVE_FLAG,
                                                                                        std::to_string(pair.second)});
+=======
+    if (graphing_sum_map.size() > 1) {
+        for (auto &pair : graphing_sum_map) {
+            // Frame -> Map of uninform/inform/no hits
+            ss << "\n\t\t" << pair.first << "(" << pair.second[INFORMATIVE_FLAG] << ")";
+            graph_sum_file << pair.first << "\t" << INFORMATIVE_FLAG << "\t" << pair.second[INFORMATIVE_FLAG]
+                           << "\n";
+>>>>>>> master
         }
     }
     ss <<
        "\n\tTotal unique uninformative alignments: " << count_uninformative;
+<<<<<<< HEAD
     if (frame_inform_counter.find(UNINFORMATIVE_FLAG) != frame_inform_counter.end()) {
         for (auto &pair : frame_inform_counter[UNINFORMATIVE_FLAG]._data) {
             ss << "\n\t\t" << pair.first << "(" << pair.second << ")";
             mpGraphingManager->add_datapoint(graph_frame_inform_stack.text_file_path, {pair.first, UNINFORMATIVE_FLAG,
                                                                                        std::to_string(pair.second)});
+=======
+    if (graphing_sum_map.size() > 1) {
+        for (auto &pair : graphing_sum_map) {
+            // Frame -> Map of uninform/inform/no hits
+            ss << "\n\t\t" << pair.first << "(" << pair.second[UNINFORMATIVE_FLAG] << ")";
+            graph_sum_file << pair.first << "\t" << UNINFORMATIVE_FLAG << "\t" << pair.second[UNINFORMATIVE_FLAG]
+                           << "\n";
+>>>>>>> master
         }
     }
 
@@ -744,7 +1118,11 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
 
 
     // ********** Contaminant Calculations ************** //
+<<<<<<< HEAD
     if (count_contam >= MIN_CONTAM_COUNT) {
+=======
+    if (count_contam > 0) {
+>>>>>>> master
         ss << "\n\t\tFlagged contaminants (all % based on total contaminants):";
         for (auto &pair : contam_counter._data) {
             percent = ((fp64) pair.second / count_contam) * 100;
@@ -755,11 +1133,19 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
         ct = 1;
         for (auto &pair : contam_species_counter._sorted) {
             if (ct > COUNT_TOP_SPECIES) break;
+<<<<<<< HEAD
             percent = ((fp64) pair.second / count_contam) * ENTAP_PERCENT;
             ss
                     << "\n\t\t\t" << ct << ")" << pair.first << ": "
                     << pair.second << "(" << percent << "%)";
             mpGraphingManager->add_datapoint(graph_contaminants_bar.text_file_path, {pair.first, std::to_string(pair.second)});
+=======
+            percent = ((fp64) pair.second / count_contam) * 100;
+            ss
+                    << "\n\t\t\t" << ct << ")" << pair.first << ": "
+                    << pair.second << "(" << percent << "%)";
+            graph_contam_file << pair.first << '\t' << std::to_string(pair.second) << std::endl;
+>>>>>>> master
             ct++;
         }
     }
@@ -768,6 +1154,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     ct = 1;
     for (auto &pair : species_counter._sorted) {
         if (ct > COUNT_TOP_SPECIES) break;
+<<<<<<< HEAD
         percent = ((fp64) pair.second / count_filtered) * ENTAP_PERCENT;
         ss
                 << "\n\t\t\t" << ct << ")" << pair.first << ": "
@@ -798,4 +1185,44 @@ void ModDiamond::set_uniprot_headers() {
 
 void ModDiamond::get_version() {
     return;
+=======
+        percent = ((fp64) pair.second / count_filtered) * 100;
+        ss
+                << "\n\t\t\t" << ct << ")" << pair.first << ": "
+                << pair.second << "(" << percent << "%)";
+        graph_species_file << pair.first << '\t' << std::to_string(pair.second) << std::endl;
+        ct++;
+    }
+    std::string out_msg = ss.str() + "\n";
+    _pFileSystem->print_stats(out_msg);
+
+
+    // ------------------------------------------------------------------ //
+    // ********* Graphing Handle ********** //
+    graphingStruct.software_flag = GRAPH_SOFTWARE_FLAG;
+    _pFileSystem->close_file(graph_contam_file);
+    _pFileSystem->close_file(graph_species_file);
+    _pFileSystem->close_file(graph_sum_file);
+    if (count_contam > 0) {
+        graphingStruct.fig_out_path   = graph_contam_png_path;
+        graphingStruct.graph_title    = database_shortname + GRAPH_CONTAM_TITLE;
+        graphingStruct.text_file_path = graph_contam_txt_path;
+        graphingStruct.graph_type     = GRAPH_BAR_FLAG;
+        _pGraphingManager->graph(graphingStruct);
+    }
+    graphingStruct.fig_out_path   = graph_species_png_path;
+    graphingStruct.graph_title    = database_shortname + GRAPH_SPECIES_TITLE;
+    graphingStruct.text_file_path = graph_species_txt_path;
+    graphingStruct.graph_type     = GRAPH_BAR_FLAG;
+    _pGraphingManager->graph(graphingStruct);
+
+    graphingStruct.fig_out_path   = graph_sum_png_path;
+    graphingStruct.graph_title    = database_shortname + GRAPH_DATABASE_SUM_TITLE;
+    graphingStruct.text_file_path = graph_sum_txt_path;
+    graphingStruct.graph_type     = GRAPH_SUM_FLAG;
+    _pGraphingManager->graph(graphingStruct);
+
+    // check if final - different graph
+    // ************************************ //
+>>>>>>> master
 }

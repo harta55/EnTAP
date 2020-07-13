@@ -48,7 +48,7 @@ Before continuing on in the installation process, ensure that the following depe
 
     * C++11 compiler (GCC 4.8.1 or later)
 	
-    * CMake_ (2.8 or later)
+    * CMake_ (3.00 or later)
 	
 		
     * Python_ (2.7.12 or later) with support for the following modules	
@@ -106,7 +106,8 @@ Run the following command to compile:
 
     make
 
-All set! Ensure that DIAMOND has been properly setup and add the correct path to the entap_config.txt file. If installed globally, add 'diamond' (without quotes) to the file. If installed locally, add 'path/to/EnTAP/libs/diamond-0.8.31/bin/diamond'.
+
+All set! Ensure that DIAMOND has been properly setup and add the correct path to the entap_config.txt file. If installed globally, add 'diamond' (without quotes) to the file. If installed locally, add 'path/to/EnTAP/libs/diamond-0.9.9/bin/diamond'.
 
 .. _rsem-label:
 

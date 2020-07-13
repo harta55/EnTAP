@@ -7,11 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
-<<<<<<< HEAD
  * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
-=======
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
->>>>>>> master
  *
  * This file is part of EnTAP.
  *
@@ -34,7 +30,6 @@
 
 
 #include "AbstractOntology.h"
-<<<<<<< HEAD
 
 /**
  * ======================================================================
@@ -56,30 +51,17 @@
  *
  * ======================================================================
  */
-=======
-#include "../config.h"
-
->>>>>>> master
 class ModEggnogDMND : public AbstractOntology {
 
 public:
     ModEggnogDMND(std::string &ont_out, std::string &in_hits,
-<<<<<<< HEAD
                   EntapDataPtrs &entap_data);
-=======
-                  EntapDataPtrs &entap_data, std::string &exe, std::string sql_db_path);
->>>>>>> master
     virtual ModVerifyData verify_files() override;
     ~ModEggnogDMND();
     virtual void execute() override ;
     virtual void parse() override;
     static bool is_executable(std::string &exe);
-<<<<<<< HEAD
     virtual void get_version() override;
-=======
-
-    static const std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
->>>>>>> master
 
 private:
     std::string get_output_dmnd_filepath(bool final);
@@ -93,17 +75,11 @@ private:
     const std::string EGG_ANNOT_RESULTS       = "annotation_results";
     const std::string EGG_ANNOT_STD           = "annotation_std";
     static constexpr uint16 COUNT_TOP_TAX_SCOPE = 10;
-<<<<<<< HEAD
     static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
     std::string mOutHIts;
     std::string mEggnogDbDiamond;       // User input path to the EggNOG DMND database
     std::string mEggnogDbSQL;           // User input path to the EggNOG SQL database
-=======
-
-    std::string _out_hits;
-    std::string _eggnog_db_path;
->>>>>>> master
 };
 
 

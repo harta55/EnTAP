@@ -7,11 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
-<<<<<<< HEAD
  * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
-=======
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
->>>>>>> master
  *
  * This file is part of EnTAP.
  *
@@ -35,7 +31,6 @@
 
 #include "AbstractSimilaritySearch.h"
 
-<<<<<<< HEAD
 /**
  * ======================================================================
  * @class ModInterpro
@@ -60,13 +55,6 @@ class ModDiamond : public AbstractSimilaritySearch {
 public:
     //******************* Public Functions *********************
     ModDiamond(std::string &out, std::string &fasta_path,EntapDataPtrs &entap_data, vect_str_t &databases);
-=======
-class ModDiamond : public AbstractSimilaritySearch {
-
-public:
-    ModDiamond(std::string &out, std::string &in_hits,EntapDataPtrs &entap_data,
-                std::string &exe, vect_str_t &databases);
->>>>>>> master
     ~ModDiamond() override = default;
 
     // ModEntap overrides
@@ -74,7 +62,6 @@ public:
     virtual void execute() override ;
     virtual void parse() override ;
     static bool is_executable(std::string& exe);
-<<<<<<< HEAD
     virtual void get_version() override;
 
     // AbstractSimilaritySearch overrides
@@ -92,26 +79,6 @@ private:
     static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
     // Graphing constants
-=======
-
-    // AbstractSimilaritySearch overrides
-    virtual bool run_blast(SimSearchCmd *cmd, bool use_defaults);
-
-    static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
-
-
-private:
-    static constexpr int DMND_COL_NUMBER = 14;
-    const std::string SIM_SEARCH_DATABASE_BEST_HITS              = "best_hits";
-    const std::string SIM_SEARCH_DATABASE_BEST_HITS_CONTAM       = "best_hits_contam";
-    const std::string SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM    = "best_hits_no_contam";
-    const std::string SIM_SEARCH_DATABASE_NO_HITS                = "no_hits";
-    const std::string SIM_SEARCH_DATABASE_UNSELECTED             = "unselected";
-
-    // Graphing constants
-    const uint8 GRAPH_SOFTWARE_FLAG                              = 3;
-    const uint8 GRAPH_BAR_FLAG                                   = 1;
->>>>>>> master
     const uint8 GRAPH_SUM_FLAG                                   = 2;
     const std::string GRAPH_DATABASE_SUM_TITLE                   = "_Summary";
     const std::string GRAPH_DATABASE_SUM_TXT                     = "_summary_bar.txt";
@@ -126,7 +93,6 @@ private:
     const std::string INFORMATIVE_FLAG                           = "Informative";
     const std::string NO_HIT_FLAG                                = "No Hits";
 
-<<<<<<< HEAD
     // Terminal Command EntapDefaults
     const uint16 CMD_DEFAULT_TOP_ALIGN  = 3;
     const std::string CMD_DEFAULT_OUTPUT_FORMAT = "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp stitle";
@@ -147,9 +113,6 @@ private:
     //**********************************************************
 
     void set_uniprot_headers();
-=======
-    void calculate_best_stats(bool is_final, std::string database_path="");
->>>>>>> master
 };
 
 

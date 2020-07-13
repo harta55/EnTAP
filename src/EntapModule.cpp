@@ -7,11 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
-<<<<<<< HEAD
  * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
-=======
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
->>>>>>> master
  *
  * This file is part of EnTAP.
  *
@@ -30,7 +26,6 @@
 */
 
 #include "EntapModule.h"
-<<<<<<< HEAD
 #include "QueryData.h"
 
 std::vector<ENTAP_HEADERS> EntapModule::mModuleHeaders = {
@@ -97,46 +92,6 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mpFileSystem->create_dir(mProcDir);
 
     enable_headers();
-=======
-
-EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
-                         std::string module_name, std::string &exe_path) {
-
-    _outpath  = execution_stage_path;       // Should already be created
-    _in_hits  = in_hits;
-    _exe_path = exe_path;
-
-    _pGraphingManager = entap_data._pGraphingManager;
-    _pQUERY_DATA      = entap_data._pQueryData;
-    _pFileSystem      = entap_data._pFileSystem;
-    _pUserInput       = entap_data._pUserInput;
-    _pEntapDatabase   = entap_data._pEntapDatbase;
-
-    _threads         = _pUserInput->get_supported_threads();
-    _blastp          = _pUserInput->has_input(_pUserInput->INPUT_FLAG_RUNPROTEIN);
-    _overwrite       = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
-    _alignment_file_types = _pUserInput->get_user_output_types();   // may be overridden at lower level
-
-    _transcript_shortname = _pFileSystem->get_filename(_in_hits, false);
-
-    // INIT directories
-    _mod_out_dir = PATHS(_outpath, module_name);
-    _figure_dir  = PATHS(_mod_out_dir, FIGURE_DIR);
-    _proc_dir    = PATHS(_mod_out_dir, PROCESSED_OUT_DIR);
-    _overall_results_dir = PATHS(_mod_out_dir, OVERALL_RESULTS_DIR);    // generated at app level
-
-    // If overwriting data, remove entire execution stage directory
-    if (_overwrite) {
-        _pFileSystem->delete_dir(_mod_out_dir);
-    } else {
-        _pFileSystem->delete_dir(_figure_dir);
-        _pFileSystem->delete_dir(_proc_dir);
-    }
-    // Recreate module + figure + processed directories
-    _pFileSystem->create_dir(_mod_out_dir);
-    _pFileSystem->create_dir(_figure_dir);
-    _pFileSystem->create_dir(_proc_dir);
->>>>>>> master
 }
 
 
@@ -155,7 +110,6 @@ go_format_t EntapModule::EM_parse_go_list(std::string list, EntapDatabase* datab
                                              "(L=" + term_info.level + ")");
     }
     return output;
-<<<<<<< HEAD
 }
 
 void EntapModule::enable_headers() {
@@ -163,6 +117,3 @@ void EntapModule::enable_headers() {
         mpQueryData->header_set(header, true);
     }
 }
-=======
-}
->>>>>>> master

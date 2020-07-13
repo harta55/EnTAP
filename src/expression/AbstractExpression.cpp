@@ -7,11 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
-<<<<<<< HEAD
  * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
-=======
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
->>>>>>> master
  *
  * This file is part of EnTAP.
  *
@@ -30,7 +26,6 @@
 */
 
 #include "AbstractExpression.h"
-<<<<<<< HEAD
 #include "../QueryData.h"
 
 AbstractExpression::AbstractExpression(std::string &execution_stage_path, std::string &in_hits,
@@ -49,14 +44,3 @@ EntapModule(execution_stage_path, in_hits, entap_data, module_name, module_heade
 void AbstractExpression::set_success_flags() {
     mpQueryData->set_is_success_expression(true);
 }
-=======
-
-AbstractExpression::AbstractExpression(std::string &execution_stage_path, std::string &in_hits,
-                                       EntapDataPtrs &entap_data, std::string module_name, std::string &exe,
-                                       std::string &align) :
-EntapModule(execution_stage_path, in_hits, entap_data, module_name, exe) {
-
-    _alignpath = align;
-    _execution_state = EXPRESSION_FILTERING;
-}
->>>>>>> master

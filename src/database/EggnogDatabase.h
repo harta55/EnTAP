@@ -7,11 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
-<<<<<<< HEAD
  * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
-=======
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
->>>>>>> master
  *
  * This file is part of EnTAP.
  *
@@ -66,13 +62,8 @@ public:
     } ERR_EGGNOG_DB;
 
     typedef enum {
-<<<<<<< HEAD
         EGGNOG_VERSION_UNKONWN=0,   // We could NOT find version and did not assume one
         EGGNOG_VERSION_EARLIER,     // EggNOG Database v4.1 (default)
-=======
-        EGGNOG_VERSION_UNKONWN=0,
-        EGGNOG_VERSION_EARLIER,
->>>>>>> master
         EGGNOG_VERSION_4_5_1,
         EGGNOG_VERSION_MAX
     } EGGNOG_SQL_VERSION;
@@ -94,18 +85,7 @@ public:
 
 
 private:
-<<<<<<< HEAD
     // EggNOG 4.1 URLs
-=======
-
-/* OLD Links
-    const std::string FTP_EGGNOG_SQL  = "http://eggnogdb.embl.de/download/emapperdb-4.5.0/eggnog.db.gz";
-    const std::string FTP_EGGNOG_SQL  = "http://eggnogdb.embl.de/download/latest/eggnog-mapper-data/eggnog.db.gz";
-    const std::string FTP_EGGNOG_DMND = "http://eggnogdb.embl.de/download/latest/eggnog-mapper-data/eggnog_proteins.dmnd.gz";
-    const std::string FTP_EGGNOG_FASTA= "http://eggnogdb.embl.de/download/latest/eggnog-mapper-data/eggnog4.clustered_proteins.fa.gz";
-*/
-    // EggNOG 4.1 Links
->>>>>>> master
     const std::string FTP_EGGNOG_SQL  = "http://eggnog5.embl.de/download/eggnog_4.1/eggnog-mapper-data/eggnog.db.gz";
     const std::string FTP_EGGNOG_DMND = "http://eggnog5.embl.de/download/eggnog_4.1/eggnog-mapper-data/eggnog_proteins.dmnd.gz";
     const std::string FTP_EGGNOG_FASTA= "http://eggnog5.embl.de/download/eggnog_4.1/eggnog-mapper-data/eggnog4.clustered_proteins.fa.gz";
@@ -186,7 +166,6 @@ private:
     const std::string SQL_EVENT_I           = "i";
 
     typename std::unordered_map<std::string, vect_str_t>::const_iterator _it_vect_str;
-<<<<<<< HEAD
     SQLDatabaseHelper *mpSQLDatabase;
     FileSystem        *mpFileSystem;
     EntapDatabase     *mpEntapDatabase;
@@ -198,30 +177,13 @@ private:
     uint16              mVersionMajor;
     uint16              mVersionMinor;
     uint16              mVersionRev;
-=======
-    SQLDatabaseHelper *_pSQLDatabase;
-    FileSystem        *_pFilesystem;
-    EntapDatabase     *_pEntapDatabase;
-    QueryData         *_pQueryData;         // Used to control header information
-    std::string        _err_msg;
-    ERR_EGGNOG_DB      _err_code;
-    std::string        _SQL_MEMBER_TABLE;
-    EGGNOG_SQL_VERSION _sql_version;
-    uint16              _VERSION_MAJOR;
-    uint16              _VERSION_MINOR;
-    uint16              _VERSION_REV;
->>>>>>> master
 
     static const std::unordered_map<std::string,std::string> EGGNOG_LEVELS;   // Mappings from tax lvl to full name
     static const std::unordered_map<std::string, vect_str_t> LEVEL_CONTENT;
     static const vect_str_t                                  TAXONOMIC_RESOLUTION;
 
     void get_tax_scope(QuerySequence::EggnogResults*);
-<<<<<<< HEAD
     void get_additional_sql_data(QuerySequence::EggnogResults* eggnogResults);
-=======
-    void get_sql_data(QuerySequence::EggnogResults* eggnogResults);
->>>>>>> master
     std::string format_sql_data(std::string&);
     void get_og_query(QuerySequence::EggnogResults* eggnogResults);
     void get_member_ogs(QuerySequence::EggnogResults* eggnog_results);

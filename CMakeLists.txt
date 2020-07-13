@@ -65,7 +65,9 @@ set(SOURCE_FILES
         src/EntapModule.cpp src/EntapModule.h
         src/similarity_search/AbstractSimilaritySearch.cpp src/similarity_search/AbstractSimilaritySearch.h
         src/similarity_search/ModDiamond.cpp src/similarity_search/ModDiamond.h
-        src/QueryAlignment.cpp src/QueryAlignment.h)
+        src/QueryAlignment.cpp src/QueryAlignment.h
+        src/frame_selection/ModTransdecoder.cpp src/frame_selection/ModTransdecoder.h
+        src/database/BuscoDatabase.cpp src/database/BuscoDatabase.h src/ontology/ModBUSCO.cpp src/ontology/ModBUSCO.h)
 
 # Include libraries
 include_directories(libs/pstream)

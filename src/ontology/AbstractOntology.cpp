@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -27,11 +27,15 @@
 
 
 #include "AbstractOntology.h"
+#include "../QueryData.h"
 
 AbstractOntology::AbstractOntology(std::string &in_hits, std::string &ont_out, EntapDataPtrs &entap_data,
-                                   std::string mod_name, std::string &exe)
-: EntapModule(ont_out, in_hits, entap_data, mod_name, exe) {
+                                   std::string mod_name, std::vector<ENTAP_HEADERS> &module_headers)
+: EntapModule(ont_out, in_hits, entap_data, mod_name, module_headers) {
 
-    _go_levels          = _pUserInput->get_user_input<vect_uint16_t>(_pUserInput->INPUT_FLAG_GO_LEVELS);
-    _execution_state    = GENE_ONTOLOGY;
+    mExecutionState    = GENE_ONTOLOGY;
+}
+
+void AbstractOntology::set_success_flags() {
+    mpQueryData->set_is_success_ontology(true);
 }

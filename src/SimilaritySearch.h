@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -55,16 +55,14 @@ public:
 
 private:
 
-    vect_str_t                      _database_paths;
-    std::string                     _diamond_exe;
-    std::string                     _outpath;
-    std::string                     _input_path;
-    std::string                     _sim_search_dir;
-    SIMILARITY_SOFTWARE             _software_flag;
-    bool                            _overwrite;
-    FileSystem                      *_pFileSystem;
-    UserInput                       *_pUserInput;
-    EntapDataPtrs                   *_pEntap_data;
+    vect_str_t                      mDatabasePaths;     // Absolute paths to databases input from user
+    std::string                     mInputFastaPath;    // Absolute path to input FASTA file from user
+    std::string                     mSimSearchDir;      // Absolute path to root Similarity Search directory
+    SIMILARITY_SOFTWARE             mSoftwareFlag;      // Selected sim search module
+    bool                            mOverwrite;         // TRUE if user would like to remove previous data
+    FileSystem                      *mpFileSystem;      // Pointer to EnTAP File System
+    UserInput                       *mpUserInput;       // Pointer to User Input
+    EntapDataPtrs                   *mpEntapData;       // Pointer to all data required for execution
 
     std::string SIM_SEARCH_DIR = "similarity_search";
 

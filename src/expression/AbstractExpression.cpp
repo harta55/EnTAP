@@ -7,7 +7,11 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
+<<<<<<< HEAD
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+=======
  * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+>>>>>>> master
  *
  * This file is part of EnTAP.
  *
@@ -26,6 +30,26 @@
 */
 
 #include "AbstractExpression.h"
+<<<<<<< HEAD
+#include "../QueryData.h"
+
+AbstractExpression::AbstractExpression(std::string &execution_stage_path, std::string &in_hits,
+                                       EntapDataPtrs &entap_data, std::string module_name,
+                                       std::vector<ENTAP_HEADERS> &module_headers) :
+EntapModule(execution_stage_path, in_hits, entap_data, module_name, module_headers) {
+
+    if (mpUserInput->has_input(INPUT_FLAG_ALIGN)) { // Will be true
+        mAlignPath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_ALIGN);
+    }
+    mExecutionState= EXPRESSION_FILTERING;
+    mIsSingle      = mpUserInput->has_input(INPUT_FLAG_SINGLE_END);
+    mFPKM          = mpUserInput->get_user_input<ent_input_fp_t >(INPUT_FLAG_FPKM);
+}
+
+void AbstractExpression::set_success_flags() {
+    mpQueryData->set_is_success_expression(true);
+}
+=======
 
 AbstractExpression::AbstractExpression(std::string &execution_stage_path, std::string &in_hits,
                                        EntapDataPtrs &entap_data, std::string module_name, std::string &exe,
@@ -35,3 +59,4 @@ EntapModule(execution_stage_path, in_hits, entap_data, module_name, exe) {
     _alignpath = align;
     _execution_state = EXPRESSION_FILTERING;
 }
+>>>>>>> master

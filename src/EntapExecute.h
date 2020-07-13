@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -46,11 +46,9 @@ class QueryData;
 namespace entapExecute {
 
     // ********************** Global Constants *********************
-    const std::string ENTAP_OUTPUT            = "transcriptomes/";
     const std::string TRANSCRIPTOME_FINAL_TAG = "_final.fasta";
     const std::string TRANSCRIPTOME_FRAME_TAG = "_frame_selected.fasta";
     const std::string TRANSCRIPTOME_FILTERED_TAG = "_expression_filtered.fasta";
-
     //**************************************************************
 
 

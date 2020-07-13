@@ -6,7 +6,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -27,15 +27,18 @@
 #ifndef ENTAPCONFIG_H
 #define ENTAPCONFIG_H
 
+//*********************** Includes *****************************
 #include "UserInput.h"
 #include "EntapGlobals.h"
 #include "ExceptionHandler.h"
 #include "FileSystem.h"
 #include "database/EntapDatabase.h"
+//**************************************************************
 
 namespace entapConfig {
     //****************** Global Prototype Functions******************
     void execute_main(UserInput*, FileSystem*);
+    //***************************************************************
 }
 
 #endif //ENTAP_INITHANDLER_H

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -28,136 +28,357 @@
 
 #include "QuerySequence.h"
 #include "EntapGlobals.h"
-#include "FileSystem.h"
 #include "common.h"
-#include "ExceptionHandler.h"
 #include "QueryAlignment.h"
 
-unsigned long QuerySequence::getSeq_length() const {
-    return _seq_length;
+/**
+ * ======================================================================
+ * Function uint64 QuerySequence::get_sequence_length() const
+ *
+ * Description           - Returns nucleotide sequence length
+ *
+ * Notes                 - None
+ *
+ * @return               - Sequence length (nucleotide base pairs)
+ *
+ * =====================================================================
+ */
+uint64 QuerySequence::get_sequence_length() const {
+    return mSequenceLength;
 }
 
+/**
+ * ======================================================================
+ * Function QuerySequence::QuerySequence()
+ *
+ * Description           - Initializes QuerySequence object
+ *
+ * Notes                 - Constructor
+ *
+ * @return               - Query Sequence object
+ *
+ * =====================================================================
+ */
 QuerySequence::QuerySequence() {
     init_sequence();
 }
 
-const std::string &QuerySequence::get_sequence_p() const {
-    return _sequence_p;
-}
-
-void QuerySequence::set_sequence_p(std::string &seq) {
-    QUERY_FLAG_SET(QUERY_IS_PROTEIN);
-    _seq_length = calc_seq_length(seq,true);
-    if (!seq.empty() && seq[seq.length()-1] == '\n') {
-        seq.pop_back();
-    }
-    _sequence_p = seq;}
-
-const std::string &QuerySequence::get_sequence_n() const {
-    return _sequence_n;
-}
-
-void QuerySequence::set_sequence_n(const std::string &_sequence_n) {
-    QuerySequence::_sequence_n = _sequence_n;
-}
-
-QuerySequence::QuerySequence(bool is_protein, std::string seq, std::string seqid){
+/**
+ * ======================================================================
+ * Function QuerySequence::QuerySequence(bool is_protein, std::string seq,
+ *                                       std::string seqid)
+ *
+ * Description          - Initializes QuerySequence object with sequence, ID, and length
+ *                      - Calculates sequence length and may set QUERY_IS_PROTEIN
+ *                        flag
+ *
+ * Notes                - Constructor
+ *
+ * @param is_protein    - TRUE/FALSE if protein/nucleotide sequence
+ * @param seq           - Sequence to set for QuerySequence
+ * @param seqid         - Sequence ID
+ *
+ *
+ * @return              - QuerySequence object
+ *
+ * =====================================================================
+ */
+QuerySequence::QuerySequence(bool is_protein, std::string seq, std::string seqid) {
     init_sequence();
-    this->_seq_id = seqid;
-    is_protein ? this->QUERY_FLAG_SET(QUERY_IS_PROTEIN) : this->QUERY_FLAG_CLEAR(QUERY_IS_PROTEIN);
-    _seq_length = calc_seq_length(seq,is_protein);
-    if (!seq.empty() && seq[seq.length()-1] == '\n') {
-        seq.pop_back();
+    trim_sequence(seq);
+
+    mSequenceID = seqid;
+
+    if (is_protein) {
+        QUERY_FLAG_SET(QUERY_IS_PROTEIN);
+        mSequenceProtein = seq;
+    } else {
+        QUERY_FLAG_CLEAR(QUERY_IS_PROTEIN);
+        QUERY_FLAG_SET(QUERY_IS_NUCLEOTIDE);
+        mSequenceNucleo = seq;
     }
-    is_protein ? _sequence_p = seq : _sequence_n = seq;
+
+    mSequenceLength = calc_seq_length(seq,is_protein);
     set_header_data();
 }
 
-unsigned long QuerySequence::calc_seq_length(std::string &seq,bool protein) {
+/**
+ * ======================================================================
+ * Function QuerySequence::~QuerySequence()
+ *
+ * Description           - Cleans up allocated memory (all alignment data)
+ *
+ * Notes                 - Destructor
+ *
+ * @return               - None
+ *
+ * =====================================================================
+ */
+QuerySequence::~QuerySequence() {
+    // Clear alignment data
+    delete mAlignmentData;
+}
+
+/**
+ * ======================================================================
+ * Function const std::string &QuerySequence::get_sequence_p() const
+ *
+ * Description          - Returns protein sequence (amino acid)
+ *
+ * Notes                - None
+ *
+ * @return              - Protein sequence
+ *
+ * =====================================================================
+ */
+const std::string &QuerySequence::get_sequence_p() const {
+    return mSequenceProtein;
+}
+
+/**
+ * ======================================================================
+ * Function void QuerySequence::set_sequence_p(std::string &seq)
+ *
+ * Description          - Sets protein (amino acid) sequence and re-calculates
+ *                        sequence length (bp)
+ *                      - Sets QUERY_IS_PROTEIN flag
+ *
+ * Notes                - None
+ *
+ * @param seq           - Protein (amino acid) sequence
+ *
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
+void QuerySequence::set_sequence_p(std::string &seq) {
+    QUERY_FLAG_SET(QUERY_IS_PROTEIN);
+    mSequenceLength = calc_seq_length(seq,true);
+    if (!seq.empty() && seq[seq.length()-1] == '\n') {
+        seq.pop_back();
+    }
+    mSequenceProtein = seq;
+}
+
+/**
+ * ======================================================================
+ * Function const std::string &QuerySequence::get_sequence_n() const
+ *
+ * Description          - Returns nucleotide sequence
+ *
+ * Notes                - None
+ *
+ * @return              - Nucleotide sequence
+ *
+ * =====================================================================
+ */
+const std::string &QuerySequence::get_sequence_n() const {
+    return mSequenceNucleo;
+}
+
+/**
+ * ======================================================================
+ * Function void QuerySequence::set_sequence_n(const std::string &_sequence_n)
+ *
+ * Description          - Sets nucleotide sequence
+ *
+ * Notes                - None
+ *
+ * @param sequence_n    - Nucleotide sequence
+ *
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
+void QuerySequence::set_sequence_n(std::string &sequence_n) {
+    QUERY_FLAG_SET(QUERY_IS_NUCLEOTIDE);
+    if (!sequence_n.empty() && sequence_n[sequence_n.length()-1] == '\n') {
+        sequence_n.pop_back();
+    }
+    QuerySequence::mSequenceNucleo = sequence_n;
+}
+
+/**
+ * ======================================================================
+ * Function void QuerySequence::trim_sequence(std::string &sequence)
+ *
+ * Description          - Removes trailing newline character
+ *
+ * Notes                - None
+ *
+ * @param sequence      - Sequence to be trimmed
+ *
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
+void QuerySequence::trim_sequence(std::string &sequence) {
+    if (!sequence.empty() && sequence[sequence.length()-1] == '\n') {
+        sequence.pop_back();
+    }
+}
+
+/**
+ * ======================================================================
+ * Function unsigned long QuerySequence::calc_seq_length(std::string &seq,
+ *                                                      bool protein)
+ *
+ * Description          - Calculates sequence length in bp from nucleotide
+ *                        or protein input sequence
+ *
+ * Notes                - None
+ *
+ * @param protein       - TRUE/FALSE if protein/nucleotide sequence
+ * @param seq           - Sequence to calculate bp length for
+ *
+ *
+ * @return              - Sequence bp length
+ *
+ * =====================================================================
+ */
+uint64 QuerySequence::calc_seq_length(std::string &seq,bool protein) {
     std::string sub = seq.substr(seq.find('n')+1);
     long line_chars = std::count(sub.begin(),sub.end(),'\n');
-    unsigned long seq_len = sub.length() - line_chars;
-    if (protein) seq_len *= 3;
+    uint64 seq_len = sub.length() - line_chars;
+    if (protein) seq_len *= NUCLEO_PER_AMINO;
     return seq_len;
 }
 
+/**
+ * ======================================================================
+ * Function const std::string &QuerySequence::getFrame() const
+ *
+ * Description          - Returns frame type of sequence (internal,
+ *                        complete, partial...etc)
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - Type of frame for sequence (partial, internal,etc)
+ *
+ * =====================================================================
+ */
 const std::string &QuerySequence::getFrame() const {
-    return _frame;
+    return mFrameType;
 }
 
+/**
+ * ======================================================================
+ * Function void QuerySequence::setFrame(const std::string &frame)
+ *
+ * Description          - Sets frame type (Defined in ModGeneMarkST.h)
+ *
+ * Notes                - None
+ *
+ * @param frame         - Frame type (defined in ModGeneMarkST.h)
+ *
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void QuerySequence::setFrame(const std::string &frame) {
-    QuerySequence::_frame = frame;
+    QuerySequence::mFrameType = frame;
     set_header_data();
 }
 
 #ifdef EGGNOG_MAPPER
 void QuerySequence::set_eggnog_results(const EggnogResults &eggnogResults) {
-    memcpy(&this->_eggnog_results, &eggnogResults, sizeof(eggnogResults));
+    memcpy(&this->mEggnogResults, &eggnogResults, sizeof(eggnogResults));
     QUERY_FLAG_SET(QUERY_EGGNOG_HIT);
     QUERY_FLAG_SET(QUERY_FAMILY_ASSIGNED);
 }
 #endif
 
+/**
+ * ======================================================================
+ * Function void QuerySequence::init_sequence()
+ *
+ * Description          - INITs sequence data
+ *                      - Sets QUERY_FRAME/EXPRESSION_KEPT flags
+ *                      - Initializes header mappings
+ *
+ * Notes                - None
+ *
+ * @param frame         - Frame type (defined in ModGeneMarkST.h)
+ *
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void QuerySequence::init_sequence() {
-    _seq_length = 0;
-    _fpkm = 0;
+    mSequenceLength = 0;
+    mFPKM = 0.0;
+    mTPM = 0.0;
 
-    _alignment_data = new AlignmentData(this);
-    _eggnog_results = EggnogResults();
+    mAlignmentData = new AlignmentData(this);
+    mEggnogResults = EggnogResults();
 
-    _frame = "";
-    _sequence_p = "";
-    _sequence_n = "";
+    mFrameType = "";
+    mSequenceProtein = "";
+    mSequenceNucleo = "";
 
-    _query_flags = 0;
+    mQueryFlags = 0;
     QUERY_FLAG_SET(QUERY_FRAME_KEPT);
     QUERY_FLAG_SET(QUERY_EXPRESSION_KEPT);
     set_header_data();
 }
 
-const std::string &QuerySequence::get_sequence() const {
-    if (_sequence_n.empty()) return _sequence_p;
-    return _sequence_n;
-}
-
-
 /**
  * ======================================================================
- * Function std::string QuerySequence::print_tsv(std::vector<const std::string*>& headers,
- *                                                  short lvl)
+ * Function const std::string &QuerySequence::get_sequence() const
  *
- * Description          - Formats data from Query Sequence to be print in ontology
- *                      -
+ * Description          - Returns nucleotide sequence (if exists) or protein
  *
- * Notes                - None
+ * Notes                - Used during Expression Analysis only
  *
- * @param headers       - Map of headers from ontology
- * @param lvl           - Go level that would be normalized to
  *
- * @return              - String of output
+ * @return              - None
  *
  * =====================================================================
  */
-std::string QuerySequence::print_delim(std::vector<ENTAP_HEADERS> &headers, short lvl, char delim) {
-//    init_header();
-    std::stringstream stream;
-    go_format_t go_terms;
-    std::string val;
-
-    for (ENTAP_HEADERS &header : headers) {
-        if (ENTAP_HEADER_INFO[header].print_header) {
-            get_header_data(val, header, lvl);
-            stream << val << delim;
-        }
+const std::string &QuerySequence::get_sequence() const {
+    if (mSequenceNucleo.empty()) {
+        return mSequenceProtein;
     }
-    return stream.str();
+    else {
+        return mSequenceNucleo;
+    }
 }
 
+/**
+ * ======================================================================
+ * Function void QuerySequence::get_header_data(std::string &data, ENTAP_HEADERS header,
+ *                                              uint8 lvl)
+ *
+ * Description          - Returns data corresponding to the requested header from
+ *                        mHeaderInfo
+ *                      - May access alignment data depending on header
+ *                      - Normalizes GO terms to input level
+ *
+ * Notes                - None
+ *
+ * @param data          - Pointer to requested header data, will be modified
+ * @param header        - Requested header
+ * @param lvl           - GO term level to normalize to
+ *
+ * @return              - None (modifies data ptr)
+ *
+ * =====================================================================
+ */
 void QuerySequence::get_header_data(std::string &data, ENTAP_HEADERS header, uint8 lvl) {
-    QueryAlignment *align_ptr = nullptr;
 
+    QueryAlignment *align_ptr;      // Pointer to alignment data
+
+    align_ptr = nullptr;
     data = "";
 
+    // Need to re-access alignment data to normalize to the GO level
+    // Otherwise, access member header data
     switch (header) {
 
         case ENTAP_HEADER_SIM_UNI_GO_BIO:
@@ -179,7 +400,7 @@ void QuerySequence::get_header_data(std::string &data, ENTAP_HEADERS header, uin
             break;
 
         default:
-            data = _header_info[header];
+            data = mHeaderInfo[header];
             break;
     }
 
@@ -188,60 +409,120 @@ void QuerySequence::get_header_data(std::string &data, ENTAP_HEADERS header, uin
     }
 }
 
+/**
+ * ======================================================================
+ * Function void QuerySequence::set_header_data()
+ *
+ * Description          - Updates the header data in member mHeaderInfo variable
+ *                      - Accesses "best hit" for alignment data and updates header
+ *                        info
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void QuerySequence::set_header_data() {
     QueryAlignment *align_ptr = nullptr;
 
     // General data
-    _header_info[ENTAP_HEADER_QUERY] = this->_seq_id;
+    mHeaderInfo[ENTAP_HEADER_QUERY] = this->mSequenceID;
 
     // Frame Selection data
-    _header_info[ENTAP_HEADER_FRAME] = this->_frame;
+    mHeaderInfo[ENTAP_HEADER_FRAME] = this->mFrameType;
 
     // Expression Filtering data
-    _header_info[ENTAP_HEADER_EXP_FPKM] = float_to_string(this->_fpkm);
+    mHeaderInfo[ENTAP_HEADER_EXP_FPKM] = float_to_string(this->mFPKM);
+    mHeaderInfo[ENTAP_HEADER_EXP_TPM] = float_to_string(this->mTPM);
 
     // Similarity Search data
-    align_ptr = this->_alignment_data->get_best_align_ptr(SIMILARITY_SEARCH, SIM_DIAMOND, "");
+    align_ptr = this->mAlignmentData->get_best_align_ptr(SIMILARITY_SEARCH, SIM_DIAMOND, "");
     if (align_ptr != nullptr) {
-        align_ptr->get_all_header_data(_header_info);
+        align_ptr->get_all_header_data(mHeaderInfo);
     }
 
     // Ontology EggNOG data
-    align_ptr = this->_alignment_data->get_best_align_ptr(GENE_ONTOLOGY, ONT_EGGNOG_DMND, "");
+    align_ptr = this->mAlignmentData->get_best_align_ptr(GENE_ONTOLOGY, ONT_EGGNOG_DMND, "");
     if (align_ptr != nullptr) {
-        align_ptr->get_all_header_data(_header_info);
+        align_ptr->get_all_header_data(mHeaderInfo);
     }
 
     // Ontology InterProScan data
-    align_ptr = this->_alignment_data->get_best_align_ptr(GENE_ONTOLOGY, ONT_INTERPRO_SCAN, "");
+    align_ptr = this->mAlignmentData->get_best_align_ptr(GENE_ONTOLOGY, ONT_INTERPRO_SCAN, "");
     if (align_ptr != nullptr) {
-        align_ptr->get_all_header_data(_header_info);
+        align_ptr->get_all_header_data(mHeaderInfo);
     }
 }
 
-void QuerySequence::set_fpkm(float _fpkm) {
-    QuerySequence::_fpkm = _fpkm;
-    set_header_data();
+/**
+ * ======================================================================
+ * Function void QuerySequence::set_fpkm(float fpkm)
+ *
+ * Description          - Sets the FPKM value from Expression Filtering
+ *
+ * Notes                - None
+ *
+ * @param fpkm          - FPKM value to set
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
+void QuerySequence::set_fpkm(fp32 fpkm) {
+    mFPKM = fpkm;
+    set_header_data();  // Reset header data
 }
 
-bool QuerySequence::isContaminant() {
+/**
+ * ======================================================================
+ * Function bool QuerySequence::isContaminant()
+ *
+ * Description          - Returns contaminant status (from Similarity Search)
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - TRUE/FALSE whether sequence was flagged as a
+ *                        contaminant
+ *
+ * =====================================================================
+ */
+bool QuerySequence::is_contaminant() {
     return this->QUERY_FLAG_GET(QUERY_CONTAMINANT);
 }
 
+/**
+ * ======================================================================
+ * Function bool QuerySequence::is_kept()
+ *
+ * Description          - Returns status if the sequence has not been removed
+ *                        through Expression Filtering or Frame Selection
+ *
+ * Notes                - None
+ *
+ *
+ * @return              - TRUE/FALSE whether sequence is kept or removed
+ *                        from analysis
+ *
+ * =====================================================================
+ */
 bool QuerySequence::is_kept() {
     return QUERY_FLAG_GET(QUERY_EXPRESSION_KEPT) && QUERY_FLAG_GET(QUERY_FRAME_KEPT);
 }
 
+
 bool QuerySequence::QUERY_FLAG_GET(QUERY_FLAGS flag) {
-    return (_query_flags & flag) != 0;
+    return (mQueryFlags & flag) != 0;
 }
 
 void QuerySequence::QUERY_FLAG_SET(QUERY_FLAGS flag) {
-    _query_flags |= flag;
+    mQueryFlags |= flag;
 }
 
 void QuerySequence::QUERY_FLAG_CLEAR(QUERY_FLAGS flag) {
-    _query_flags &= ~flag;
+    mQueryFlags &= ~flag;
 }
 
 void QuerySequence::QUERY_FLAG_CHANGE(QuerySequence::QUERY_FLAGS flag, bool val) {
@@ -252,41 +533,121 @@ void QuerySequence::QUERY_FLAG_CHANGE(QuerySequence::QUERY_FLAGS flag, bool val)
     }
 }
 
-
-QuerySequence::~QuerySequence() {
-    // Clear alignment data
-    delete _alignment_data;
-}
-
+/**
+ * ======================================================================
+ * Function void QuerySequence::add_alignment(ExecuteStates state, uint16 software,
+ *                                      EggnogResults &results, std::string& database)
+ *
+ * Description          - Adds EggNOG alignment to AlignmentData and updates
+ *                        pertinent data/best hits (flags, EggnogResults...)
+ *
+ * Notes                - None
+ *
+ * @param state         - State that alignment was created in
+ * @param software      - Software that alignment was created using (DIAMOND, EggNOG...)
+ * @param results       - EggNOG data
+ * @param database      - Absolute path to database associated with alignment
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void QuerySequence::add_alignment(ExecuteStates state, uint16 software, EggnogResults &results, std::string& database) {
     QUERY_FLAG_SET(QUERY_EGGNOG_HIT);
     QUERY_FLAG_SET(QUERY_FAMILY_ASSIGNED);
-    _alignment_data->update_best_hit(state, software, database, new EggnogDmndAlignment(results,this));
+    QueryAlignment *new_alignment = new EggnogDmndAlignment(state, software, database, this, results);
+    mAlignmentData->update_best_hit(new_alignment);
 }
 
+/**
+ * ======================================================================
+ * Function void QuerySequence::add_alignment(ExecuteStates state, uint16 software,
+ *                                      SimSearchResults &results, std::string& database)
+ *
+ * Description          - Adds Similarity Search alignment to AlignmentData and updates
+ *                        pertinent data/best hits (flags, EggnogResults...)
+ *
+ * Notes                - None
+ *
+ * @param state         - State that alignment was created in
+ * @param software      - Software that alignment was created using (DIAMOND, EggNOG...)
+ * @param results       - Similarity Search data
+ * @param database      - Absolute path to database associated with alignment
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 void QuerySequence::add_alignment(ExecuteStates state, uint16 software, SimSearchResults &results, std::string& database,std::string lineage) {
     QUERY_FLAG_SET(QUERY_BLAST_HIT);
-    QueryAlignment *new_alignment = new SimSearchAlignment(results, lineage, this);
-    _alignment_data->update_best_hit(state, software, database, new_alignment);
+    QueryAlignment *new_alignment = new SimSearchAlignment(state, software, database, this, results, lineage);
+    mAlignmentData->update_best_hit(new_alignment);
 }
 
-void QuerySequence::add_alignment(ExecuteStates state, uint16 software, QuerySequence::InterProResults &results,
+/**
+ * ======================================================================
+ * Function void QuerySequence::add_alignment(ExecuteStates state, uint16 software,
+ *                                      InterProResults &results, std::string& database)
+ *
+ * Description          - Adds InterPro alignment to AlignmentData and updates
+ *                        pertinent data/best hits (flags, EggnogResults...)
+ *
+ * Notes                - None
+ *
+ * @param state         - State that alignment was created in
+ * @param software      - Software that alignment was created using (DIAMOND, EggNOG...)
+ * @param results       - InterPro data
+ * @param database      - Absolute path to database associated with alignment
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
+void QuerySequence::add_alignment(ExecuteStates state, uint16 software, InterProResults &results,
                                   std::string &database) {
     QUERY_FLAG_SET(QUERY_INTERPRO);
-    QueryAlignment *new_alignmet = new InterproAlignment(results, this);
-    _alignment_data->update_best_hit(state, software, database, new_alignmet);
+    QueryAlignment *new_alignmet = new InterproAlignment(state, software, database, this, results);
+    mAlignmentData->update_best_hit(new_alignmet);
 }
 
 //**********************************************************************
 //**********************************************************************
-//                              AlignmentData
+//                 AlignmentData Nested Structure
 //**********************************************************************
 //**********************************************************************
 
+/**
+ * ======================================================================
+ * Function QuerySequence::AlignmentData::AlignmentData(QuerySequence *sequence)
+ *
+ * Description          - Initializes alignment data class
+ *
+ * Notes                - Constructor
+ *
+ * @param sequence      - Pointer to parent sequence
+ *
+ * @return              - AlignmentData object
+ *
+ * =====================================================================
+ */
 QuerySequence::AlignmentData::AlignmentData(QuerySequence *sequence){
     querySequence = sequence;
 }
 
+/**
+ * ======================================================================
+ * Function QuerySequence::AlignmentData::~AlignmentData()
+ *
+ * Description          - Cleans up AlignmentData memory by accessing
+ *                        all QueryAlignments
+ *
+ * Notes                - Destructor
+ *
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
 QuerySequence::AlignmentData::~AlignmentData() {
     // remove sim search alignments
     for (ALIGNMENT_DATA_T &software_data : sim_search_data) {
@@ -311,43 +672,60 @@ QuerySequence::AlignmentData::~AlignmentData() {
     }
 }
 
+/**
+ * ======================================================================
+ * Function void QuerySequence::AlignmentData::update_best_hit(ExecuteStates state,
+ *          uint16 software, std::string &database, QueryAlignment* new_alignment)
+ *
+ * Description          - Updates all alignment data including best hit for
+ *                        each database, overall software best hit across
+ *                        every database, calls Query flag update
+ *
+ * Notes                - None
+ *
+ * @param state         - Execution state the algnment belongs to
+ *
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
+void QuerySequence::AlignmentData::update_best_hit(QueryAlignment* new_alignment) {
 
-void QuerySequence::AlignmentData::update_best_hit(ExecuteStates state, uint16 software, std::string &database, QueryAlignment* new_alignment) {
-    ALIGNMENT_DATA_T* alignment_arr = get_software_ptr(state, software);
-
+    ALIGNMENT_DATA_T* alignment_arr = get_software_ptr(new_alignment->getMExecutionState(), new_alignment->getMSoftwareModule());
 
     // Did we hit against this database yet
-    if (!hit_database(state, software, database)) {
+    if (!hit_database(new_alignment->getMExecutionState(), new_alignment->getMSoftwareModule(),
+                      new_alignment->getMDatabasePath())) {
         // No, create new vector for that database and add as best hit for database
         align_database_hits_t vect = {new_alignment};
-        alignment_arr->emplace(database, vect);
+        alignment_arr->emplace(new_alignment->getMDatabasePath(), vect);
     } else {
         // Yes, add alignment to list then update
-        alignment_arr->at(database).push_back(new_alignment);
+        alignment_arr->at(new_alignment->getMDatabasePath()).push_back(new_alignment);
     }
 
     // Always will have hit this database, get alignments
-    align_database_hits_t *database_data = &alignment_arr->at(database);
+    align_database_hits_t *database_data = &alignment_arr->at(new_alignment->getMDatabasePath());
 
     // Sort alignments for that database (0 index is best hit)
     std::sort(database_data->begin(), database_data->end(), sort_descending_database());
 
     // See if this alignment is better than the overall alignment
     new_alignment->set_compare_overall_alignment(true);
-    QueryAlignment* best_alignment = get_best_align_ptr(state, software, "");
+    QueryAlignment* best_alignment = get_best_align_ptr(new_alignment->getMExecutionState(), new_alignment->getMSoftwareModule(), "");
 
     if (best_alignment == nullptr) {
-        // Replace if so
-        set_best_alignment(state, software, new_alignment);
+        set_best_alignment(new_alignment);
     } else {
         best_alignment->set_compare_overall_alignment(true);
         if (*new_alignment > *best_alignment) {
-            set_best_alignment(state, software, new_alignment);
+            set_best_alignment(new_alignment);
         }
     }
 
     // Update any overall flags that may have changed with best hit changes
-    querySequence->update_query_flags(state, software);
+    querySequence->update_query_flags(new_alignment->getMExecutionState(), new_alignment->getMSoftwareModule());
 }
 
 bool QuerySequence::AlignmentData::hit_database(ExecuteStates state, uint16 software, std::string &database) {
@@ -376,7 +754,6 @@ void QuerySequence::update_query_flags(ExecuteStates state, uint16 software) {
                     EggnogDmndAlignment *best_align = get_best_hit_alignment<EggnogDmndAlignment>(state, software,"");
                     EggnogResults *results = best_align->get_results();
 
-                    // in case results were 'refreshed'
                     if (best_align != nullptr) {
                         QUERY_FLAG_CHANGE(QUERY_FAMILY_ONE_GO, !results->parsed_go.empty());
                         QUERY_FLAG_CHANGE(QUERY_FAMILY_ONE_KEGG, !results->kegg.empty());
@@ -414,7 +791,7 @@ void QuerySequence::update_query_flags(ExecuteStates state, uint16 software) {
 
 QuerySequence::align_database_hits_t *
 QuerySequence::get_database_hits(std::string &database, ExecuteStates state, uint16 software) {
-    return this->_alignment_data->get_database_ptr(state, software, database);
+    return this->mAlignmentData->get_database_ptr(state, software, database);
 }
 
 std::string QuerySequence::format_go_info(std::vector<std::string> &go_list, uint8 lvl) {
@@ -429,7 +806,39 @@ std::string QuerySequence::format_go_info(std::vector<std::string> &go_list, uin
 }
 
 bool QuerySequence::hit_database(ExecuteStates state, uint16 software, std::string database) {
-    return _alignment_data->hit_database(state, software, database);
+    return mAlignmentData->hit_database(state, software, database);
+}
+
+void QuerySequence::set_blasted() {
+    QUERY_FLAG_SET(QUERY_BLASTED);
+}
+
+const std::string &QuerySequence::getMSequenceID() const {
+    return mSequenceID;
+}
+
+bool QuerySequence::is_protein() {
+    return QUERY_FLAG_GET(QUERY_IS_PROTEIN);
+}
+
+bool QuerySequence::is_kept_expression() {
+    return QUERY_FLAG_GET(QUERY_EXPRESSION_KEPT);
+}
+
+void QuerySequence::setMTPM(fp64 mTPM) {
+    QuerySequence::mTPM = mTPM;
+}
+
+bool QuerySequence::QUERY_FLAG_CONTAINS(uint32 flags) {
+    return ((flags & mQueryFlags) != 0);
+}
+
+uint32 QuerySequence::getMQueryFlags() const {
+    return mQueryFlags;
+}
+
+bool QuerySequence::is_nucleotide() {
+    return QUERY_FLAG_GET(QUERY_IS_NUCLEOTIDE);
 }
 
 QuerySequence::align_database_hits_t* QuerySequence::AlignmentData::get_database_ptr(ExecuteStates state, uint16 software, std::string& database) {
@@ -453,7 +862,7 @@ QuerySequence::align_database_hits_t* QuerySequence::AlignmentData::get_database
     }
 }
 
-QuerySequence::ALIGNMENT_DATA_T* QuerySequence::AlignmentData::get_software_ptr(ExecuteStates state, uint16 software) {
+QuerySequence::AlignmentData::ALIGNMENT_DATA_T* QuerySequence::AlignmentData::get_software_ptr(ExecuteStates state, uint16 software) {
     switch (state) {
         case SIMILARITY_SEARCH:
             return &this->sim_search_data[software];
@@ -473,8 +882,8 @@ QueryAlignment* QuerySequence::AlignmentData::get_best_align_ptr(ExecuteStates s
 }
 
 void
-QuerySequence::AlignmentData::set_best_alignment(ExecuteStates state, uint16 software, QueryAlignment *alignment) {
-    overall_alignment[state][software] = alignment;
+QuerySequence::AlignmentData::set_best_alignment(QueryAlignment *new_alignment) {
+    overall_alignment[new_alignment->getMExecutionState()][new_alignment->getMSoftwareModule()] = new_alignment;
 }
 
 bool QuerySequence::AlignmentData::sort_descending_database::operator()(QueryAlignment *first,

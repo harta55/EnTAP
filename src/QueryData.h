@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -36,6 +36,7 @@
 // Forward Declarations
 class QueryAlignment;
 
+typedef std::unordered_map<std::string, QuerySequence*> QUERY_MAP_T;
 
 class QueryData {
 
@@ -50,9 +51,15 @@ public:
         UNIPROT_MATCH      = (1 << 5),
 
         DATA_FLAGS_MAX     = (1 << 31)
-    }DATA_FLAGS;
+    } DATA_FLAGS;
+
+    typedef enum {
+        SEQUENCE_AMINO_ACID=0,
+        SEQUENCE_NUCLEOTIDE,
+    } SEQUENCE_TYPES;
 
 
+    QueryData(std::string &input_path, UserInput* userInput, FileSystem* fileSystem);
     QueryData(std::string&, std::string&, UserInput*, FileSystem*);
     ~QueryData();
 
@@ -60,8 +67,7 @@ public:
 
     std::pair<uint16, uint16> calculate_N_vals(std::vector<uint16>&,uint64);
     std::string trim_sequence_header(std::string&, std::string);
-    void final_statistics(std::string&, std::vector<uint16>&);
-    void print_final_output();
+    void final_statistics(std::string& outpath);
 
     // Output routines
     bool start_alignment_files(std::string &base_path, std::vector<ENTAP_HEADERS> &headers, uint8 lvl,
@@ -69,6 +75,9 @@ public:
     bool end_alignment_files(std::string &base_path);
     bool add_alignment_data(std::string &base_path, QuerySequence *querySequence, QueryAlignment *alignment);
     QuerySequence* get_sequence(std::string&);
+    bool print_transcriptome(uint32 flags, std::string &outpath, SEQUENCE_TYPES sequence_type);
+
+    QUERY_MAP_T get_specific_sequences(uint32 flags);
 
     // DATA_FLAG routines
     bool is_protein_data();
@@ -80,11 +89,15 @@ public:
     void set_is_uniprot(bool val);
 
     // Header routines
-    void header_set_uniprot(bool val);
     void header_set(ENTAP_HEADERS header, bool val);
 
 
 private:
+
+    struct EntapHeader {
+        const std::string title;
+        bool print_header;
+    };
 
     struct OutputFileData {
         std::vector<FileSystem::ENT_FILE_TYPES> file_types;
@@ -98,6 +111,14 @@ private:
     void DATA_FLAG_SET(DATA_FLAGS);
     void DATA_FLAG_CLEAR(DATA_FLAGS);
     void DATA_FLAG_CHANGE(DATA_FLAGS flag, bool val);
+
+    void init_params(FileSystem *fileSystem, UserInput *userInput);
+    std::string get_delim_data_sequence(std::vector<ENTAP_HEADERS>&headers, char delim, uint8 lvl,
+                                QuerySequence* sequence);
+    std::string get_delim_data_alignment(std::vector<ENTAP_HEADERS>&headers, char delim, uint8 lvl,
+                                        QueryAlignment* alignment);
+    bool initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HEADERS> &headers, FileSystem::ENT_FILE_TYPES type);
+    void generate_transcriptome(std::string &input_path, bool print_output, std::string output_path);
 
     const uint8         LINE_COUNT   = 20;
     const uint8         SEQ_DPRINT_CONUT = 10;
@@ -117,16 +138,20 @@ private:
     const std::string OUT_ANNOTATED_NUCL   = "final_annotated.fnn";
     const std::string OUT_ANNOTATED_PROT   = "final_annotated.faa";
 
-    QUERY_MAP_T  *_pSEQUENCES;
-    bool         _no_trim;
-    uint32       _total_sequences;          // Original sequence number
-    uint32       _data_flags;
-    uint64       _start_nuc_len;            // Starting total len (nucleotide)
-    uint64       _start_prot_len;           // Starting total len (protein)
-    uint32       _pipeline_flags;           // Success flags
-    FileSystem  *_pFileSystem;
-    UserInput   *_pUserInput;
-    std::unordered_map<std::string, OutputFileData> _alignment_files;
+    QUERY_MAP_T  *mpSequences;
+    bool         mNoTrim;
+    bool         mIsComplete;              // All sequences can be tagged as 'complete' genes
+    uint32       mTotalSequences;          // Original sequence number
+    uint32       mDataFlags;
+    uint64       mNucleoLengthStart;       // Starting total len (nucleotide)
+    uint64       mProteinLengthStart;      // Starting total len (protein)
+    uint32       mPipelineFlags;           // Success flags
+    FileSystem  *mpFileSystem;
+    UserInput   *mpUserInput;
+    std::string mTranscriptTypeStr;
+    std::unordered_map<std::string, OutputFileData> mAlignmentFiles;
+    static EntapHeader ENTAP_HEADER_INFO[];
+
 };
 
 

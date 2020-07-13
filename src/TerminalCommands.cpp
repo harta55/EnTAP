@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -85,8 +85,12 @@ int TC_execute_cmd(TerminalData &terminalData) {
     terminalData.err_stream = err_stream.str();
     terminalData.out_stream = out_stream.str();
 
-    // Print error to debug file
-    FS_dprint("\nStd Err:\n" + terminalData.err_stream);
+    // Print error to debug file if we are not suppressing output
+    if (!terminalData.suppress_std_err) {
+        FS_dprint("\nStd Err:\n" + terminalData.err_stream);\
+    } else {
+        FS_dprint("WARNING: Suppressing error log from child process, check error file generated for full output");
+    }
 
     if (terminalData.print_files) {
         std::string out_path = terminalData.base_std_path + FileSystem::EXT_OUT;
@@ -106,4 +110,14 @@ int TC_execute_cmd(TerminalData &terminalData) {
     if (child.rdbuf()->exited())
         return child.rdbuf()->status();
     return 1;
+}
+
+std::string TC_generate_command(command_map_t &map, std::string &exe_path) {
+    std::stringstream ss;
+    std::string       out;
+
+    ss << exe_path << " ";
+    for (auto &pair : map)ss << pair.first << " " << pair.second << " ";
+    out = ss.str();
+    return out;
 }

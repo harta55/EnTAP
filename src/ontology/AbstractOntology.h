@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,28 +30,21 @@
 #define ENTAP_ABSTRACTONTOLOGY_H
 
 #include "../common.h"
-#include "../GraphingManager.h"
-#include "../QuerySequence.h"
-#include "../QueryData.h"
 #include "../EntapGlobals.h"
 #include "../EntapModule.h"
 
 class AbstractOntology : public EntapModule {
 public:
-    AbstractOntology(std::string &in_hits,
-                     std::string &ont_out,
-                     EntapDataPtrs &entap_data,
-                     std::string mod_name, std::string &exe);
+    AbstractOntology(std::string &in_hits, std::string &ont_out,
+                     EntapDataPtrs &entap_data, std::string mod_name,
+                     std::vector<ENTAP_HEADERS> &module_headers);
     ~AbstractOntology() = default;
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
+    virtual void get_version() = 0;
 
-protected:
-    const uint8 GRAPH_ONTOLOGY_FLAG = 4;
-    const uint8 GRAPH_TOP_BAR_FLAG  = 1;  // used for tax levels and go term tops
-
-    std::vector<uint16> _go_levels;
+    virtual void set_success_flags() override ;
 };
 
 

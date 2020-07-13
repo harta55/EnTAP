@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,39 +30,56 @@
 #define ENTAP_QUERYSEQUENCE_H
 
 #include "common.h"
-#include "EntapExecute.h"
 #include "database/EntapDatabase.h"
 
 class QueryAlignment;
 
+/**
+ * ======================================================================
+ * @class QuerySequence
+ *
+ * Description          - Handles sequence specific routines and data
+ *                        management
+ *                      - Allows setting of data for each of the supported
+ *                        EnTAP modules/software (GeneMarkS-T, DIAMOND, etc)
+ *                      - Organizes data corresponding to EnTAP headers into
+ *                        mHeaderInfo for access during printing
+ *                      - AlignmentData nested structure handles all alignment
+ *                        information from each of the modules with alignments
+ *
+ * ======================================================================
+ */
 class QuerySequence {
+
 public:
 
+    //**************** Public Typedefs/Enums *******************
     typedef std::vector<QueryAlignment*> align_database_hits_t;
-    typedef std::unordered_map<std::string,align_database_hits_t> ALIGNMENT_DATA_T;
 
     typedef enum {
 
-        QUERY_BLAST_HIT         = (1 << 0),
-        QUERY_EGGNOG_HIT        = (1 << 1),
-        QUERY_EXPRESSION_KEPT   = (1 << 2),
-        QUERY_FRAME_KEPT        = (1 << 3),
-        QUERY_FAMILY_ASSIGNED   = (1 << 4),
-        QUERY_ONE_KEGG          = (1 << 5),
-        QUERY_ONE_GO            = (1 << 6),
-        QUERY_INFORMATIVE       = (1 << 7),
-        QUERY_INTERPRO          = (1 << 8),
-        QUERY_IS_PROTEIN        = (1 << 9),
-        QUERY_BLASTED           = (1 << 10),
-        QUERY_CONTAMINANT       = (1 << 11),
-        QUERY_FAMILY_ONE_KEGG   = (1 << 12),
-        QUERY_FAMILY_ONE_GO     = (1 << 13),
-        QUERY_ONT_INTERPRO_GO   = (1 << 14),
-        QUERY_ONT_INTERPRO_PATHWAY = (1 << 15),
+        QUERY_BLAST_HIT         = (1 << 0),         // Aligned against sequence during Similarity Search
+        QUERY_EGGNOG_HIT        = (1 << 1),         // Aligned against sequence during EggNOG
+        QUERY_EXPRESSION_KEPT   = (1 << 2),         // Was not removed during Expression Analysis
+        QUERY_FRAME_KEPT        = (1 << 3),         // Was not removed during Frame Selection
+        QUERY_FAMILY_ASSIGNED   = (1 << 4),         // Family was assigned during EggNOG
+        QUERY_ONE_KEGG          = (1 << 5),         // Sequence contains at least one KEGG term from ANY process
+        QUERY_ONE_GO            = (1 << 6),         // Sequence contains at least one GO term from ANY process
+        QUERY_INFORMATIVE       = (1 << 7),         // Sequence is determined as informative from Sim Search
+        QUERY_INTERPRO          = (1 << 8),         // Matched against InterPro databases
+        QUERY_IS_PROTEIN        = (1 << 9),         // Sequence has a corresponding protein sequence
+        QUERY_IS_NUCLEOTIDE     = (1 << 10),        // Sequence has a corresponding nucleotide sequence
+        QUERY_BLASTED           = (1 << 11),        // Sequence was BLASTED (Sim Search was ran)
+        QUERY_CONTAMINANT       = (1 << 12),        // Sequence is determined as a contaminant from Sim Search
+        QUERY_FAMILY_ONE_KEGG   = (1 << 13),        // Sequence contains at least one KEGG from EggNOG process
+        QUERY_FAMILY_ONE_GO     = (1 << 14),        // Sequence contains at least one GO from EggNOG process
+        QUERY_ONT_INTERPRO_GO   = (1 << 15),        // Sequence contains at least one GO from InterPro process
+        QUERY_ONT_INTERPRO_PATHWAY = (1 << 16),     // Sequence contains at least one KEGG from InterPro process
 
         QUERY_MAX               = (1 << 31)
 
     } QUERY_FLAGS;
+    //**********************************************************
 
     struct EggnogResults {
         std::string              member_ogs;        // 0A01R@biNOG,0V8CP@meNOG (ortholgous groups)
@@ -124,10 +141,27 @@ public:
         UniprotEntry                      uniprot_info;
     };
 
-
-
-
+    /**
+     * ======================================================================
+     * @struct AlignmentData - nested
+     *
+     * Description          - Controls all alignment data from EnTAP modules
+     *                        such as DIAMOND (multiple alignments/hits from
+     *                        homology)
+     *                      - Data is organized into maps of vectors (QueryAligments)
+     *                        keyed to the database associated with the alignment
+     *                      - First element in an alignment vector is the best hit
+     *                        for that database
+     *                      - All statuses in parent QuerySequence are based upon
+     *                        the 'overall' best hit across all databases
+     *                      - Best hit algorithm is implemented by the QueryAlignment
+     *                        class
+     *
+     * ======================================================================
+     */
     struct AlignmentData {
+        typedef std::unordered_map<std::string,align_database_hits_t> ALIGNMENT_DATA_T;
+
         ALIGNMENT_DATA_T sim_search_data[SIM_SOFTWARE_COUNT];
         ALIGNMENT_DATA_T ontology_data[ONT_SOFTWARE_COUNT];
         QuerySequence* querySequence;
@@ -141,13 +175,12 @@ public:
         AlignmentData(QuerySequence* sequence);
         ~AlignmentData();
 
-        void set_best_alignment(ExecuteStates state, uint16 software, QueryAlignment *);
-        void update_best_hit(ExecuteStates state, uint16 software, std::string &database, QueryAlignment* new_alignment);
+        void set_best_alignment(QueryAlignment *new_alignment);
+        void update_best_hit(QueryAlignment* new_alignment);
         bool hit_database(ExecuteStates state, uint16 software, std::string &database);
         align_database_hits_t* get_database_ptr(ExecuteStates, uint16, std::string&);
         QueryAlignment* get_best_align_ptr(ExecuteStates, uint16 software, std::string database);
         ALIGNMENT_DATA_T* get_software_ptr(ExecuteStates state, uint16 software);
-
     };
 
 
@@ -156,22 +189,30 @@ public:
     QuerySequence();
     QuerySequence(bool, std::string, std::string);
     ~QuerySequence();
-    std::string print_delim(std::vector<ENTAP_HEADERS> &, short lvl ,char delim);
     void setFrame(const std::string &frame);
-    unsigned long getSeq_length() const;
+    uint64 get_sequence_length() const;
     const std::string &getFrame() const;
     const std::string &get_sequence_p() const;
     void set_sequence_p(std::string &seq);
     const std::string &get_sequence_n() const;
-    void set_sequence_n(const std::string &_sequence_n);
+    void set_sequence_n(std::string &_sequence_n);
     const std::string &get_sequence() const;
-    void set_fpkm(float _fpkm);
+    void set_fpkm(fp32 fpkm);
+    const std::string &getMSequenceID() const;
+    void setMTPM(fp64 mTPM);
+
+    uint32 getMQueryFlags() const;
+
+    void set_blasted();
     bool is_kept();
+    bool is_protein();
+    bool is_nucleotide();
+    bool is_kept_expression();
     bool QUERY_FLAG_GET(QUERY_FLAGS flag);
-    void QUERY_FLAG_SET(QUERY_FLAGS flag);
     void QUERY_FLAG_CLEAR(QUERY_FLAGS flag);
     void QUERY_FLAG_CHANGE(QUERY_FLAGS flag, bool val);
-    bool isContaminant();
+    bool QUERY_FLAG_CONTAINS(uint32 flags);
+    bool is_contaminant();
 #ifdef EGGNOG_MAPPER
     void set_eggnog_results(const EggnogResults&);
 #endif
@@ -186,7 +227,7 @@ public:
     // Returns recast alignment pointer
     template<class T>
     T *get_best_hit_alignment(ExecuteStates state, uint16 software, std::string database) {
-        return static_cast<T*>(_alignment_data->get_best_align_ptr(state, software, database));
+        return static_cast<T*>(mAlignmentData->get_best_align_ptr(state, software, database));
     }
 
     // Checks whether an alignment was found against specific atabase
@@ -196,21 +237,30 @@ public:
     void set_header_data();
 
 private:
-    fp32                              _fpkm;
-    uint32                            _query_flags;
-    std::string                       _seq_id;
-    unsigned long                     _seq_length;
-    std::string                       _sequence_p;
-    std::string                       _sequence_n;
-    std::string                       _frame;
-    EggnogResults                     _eggnog_results;
-    AlignmentData                     *_alignment_data;  // contains all alignment data
-    std::string                       _header_info[ENTAP_HEADER_COUNT];
-
-    /* Private Functions */
+    //****************** Private Functions *********************
     void init_sequence();
-    unsigned long calc_seq_length(std::string &,bool);
+    uint64 calc_seq_length(std::string &,bool);
+    void trim_sequence(std::string& sequence);
+    void QUERY_FLAG_SET(QUERY_FLAGS flag);
+    //**********************************************************
 
+    //**************** Private Const Variables *****************
+    static constexpr uint8 NUCLEO_PER_AMINO = 3;        // Nucleotide/bp per Amino Acid
+    //**********************************************************
+
+    //****************** Private Variables *********************
+    fp32                              mFPKM;            // FPKM value from Expression Filtering
+    fp64                              mTPM;             // TPM value from Expression Filtering
+    uint32                            mQueryFlags;      // Status flags for sequence
+    std::string                       mSequenceID;      // Sequence ID
+    uint64                            mSequenceLength;  // Sequence length (nucleotide bp)
+    std::string                       mSequenceProtein; // Protein sequence
+    std::string                       mSequenceNucleo;  // Nucleotide sequence
+    std::string                       mFrameType;       // Frame type from Frame Selection
+    EggnogResults                     mEggnogResults;   // EggNOG mapper results
+    AlignmentData                     *mAlignmentData;  // Alignment information
+    std::string                       mHeaderInfo[ENTAP_HEADER_COUNT];  // Header mappings
+    //**********************************************************
 };
 
 

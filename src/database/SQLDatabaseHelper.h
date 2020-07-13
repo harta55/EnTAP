@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -52,7 +52,7 @@ public:
     std::string format_string(std::string& str, char delim);
 
 private:
-    sqlite3 *_database;
+    sqlite3 *mpDatabase;
 };
 
 

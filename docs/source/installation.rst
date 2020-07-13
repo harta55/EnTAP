@@ -106,6 +106,7 @@ Run the following command to compile:
 
     make
 
+
 All set! Ensure that DIAMOND has been properly setup and add the correct path to the entap_config.txt file. If installed globally, add 'diamond' (without quotes) to the file. If installed locally, add 'path/to/EnTAP/libs/diamond-0.9.9/bin/diamond'.
 
 .. _rsem-label:

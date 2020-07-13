@@ -7,7 +7,11 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
+<<<<<<< HEAD
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+=======
  * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+>>>>>>> master
  *
  * This file is part of EnTAP.
  *
@@ -26,6 +30,74 @@
 */
 
 #include "EntapModule.h"
+<<<<<<< HEAD
+#include "QueryData.h"
+
+std::vector<ENTAP_HEADERS> EntapModule::mModuleHeaders = {
+        ENTAP_HEADER_QUERY
+};
+
+/**
+ * ======================================================================
+ * @class EntapModule
+ *
+ * Description          - Class for each program/module EnTAP supports
+ *                      - Modules are responsible for Execution, Graphing,
+ *                        calculation of statistics, verification of
+ *                        required inputs to ensure execution is valid
+ *
+ * Notes                - None
+ *
+ * =====================================================================
+ */
+EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
+                         std::string module_name, std::vector<ENTAP_HEADERS> &module_headers) {
+
+    mOutpath = execution_stage_path;       // Should already be created
+    mInputTranscriptome  = in_hits;
+
+    mpGraphingManager = entap_data.mpGraphingManager;
+    mpQueryData       = entap_data.mpQueryData;
+    mpFileSystem      = entap_data.mpFileSystem;
+    mpUserInput       = entap_data.mpUserInput;
+    mpEntapDatabase   = entap_data.mpEntapDatabase;
+    mModuleHeaders    = module_headers;
+
+    // Initialize version numbers
+    mVersionMajor = 0;
+    mVersionMinor = 0;
+    mVersionRev   = 0;
+
+    mThreads         = mpUserInput->get_supported_threads();
+    mBlastp          = mpUserInput->has_input(INPUT_FLAG_RUNPROTEIN);
+    mOverwrite       = mpUserInput->has_input(INPUT_FLAG_OVERWRITE);
+    mAlignmentFileTypes = mpUserInput->get_user_output_types();   // may be overridden at lower level
+    mGoLevels        = mpUserInput->get_user_input<ent_input_multi_int_t >(INPUT_FLAG_GO_LEVELS);
+    mEntapHeaders    = mpUserInput->get_user_input<std::vector<ENTAP_HEADERS>>(INPUT_FLAG_ENTAP_HEADERS);
+
+    mModuleName      = module_name;
+    mTranscriptomeShortname = mpFileSystem->get_filename(mInputTranscriptome, false);
+
+    // INIT directories
+    mModOutDir  = PATHS(mOutpath, module_name);
+    mFigureDir  = PATHS(mModOutDir, FIGURE_DIR);
+    mProcDir    = PATHS(mModOutDir, PROCESSED_OUT_DIR);
+    mOverallResultsDir = PATHS(mModOutDir, OVERALL_RESULTS_DIR);    // generated at app level (some don't need this directory)
+
+    // If overwriting data, remove entire execution stage directory
+    if (mOverwrite) {
+        mpFileSystem->delete_dir(mModOutDir);
+    } else {
+        mpFileSystem->delete_dir(mFigureDir);
+        mpFileSystem->delete_dir(mProcDir);
+    }
+    // Recreate module + figure + processed directories
+    mpFileSystem->create_dir(mModOutDir);
+    mpFileSystem->create_dir(mFigureDir);
+    mpFileSystem->create_dir(mProcDir);
+
+    enable_headers();
+=======
 
 EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits, EntapDataPtrs &entap_data,
                          std::string module_name, std::string &exe_path) {
@@ -64,6 +136,7 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     _pFileSystem->create_dir(_mod_out_dir);
     _pFileSystem->create_dir(_figure_dir);
     _pFileSystem->create_dir(_proc_dir);
+>>>>>>> master
 }
 
 
@@ -82,4 +155,14 @@ go_format_t EntapModule::EM_parse_go_list(std::string list, EntapDatabase* datab
                                              "(L=" + term_info.level + ")");
     }
     return output;
+<<<<<<< HEAD
 }
+
+void EntapModule::enable_headers() {
+    for (auto &header : mModuleHeaders) {
+        mpQueryData->header_set(header, true);
+    }
+}
+=======
+}
+>>>>>>> master

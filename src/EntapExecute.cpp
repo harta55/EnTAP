@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -34,43 +34,30 @@
 namespace entapExecute {
 
     //*********************** Local Variables ***********************
-    ExecuteStates           executeStates;
-    std::string             _outpath;
-    std::string             _entap_outpath;
-    bool                    _blastp;          // false for blastx, true for _blastp
-    std::string             _input_path;      // FASTA changes depending on execution
-    std::string             _input_basename;
-    int                     _threads;
-    databases_t             _databases;       // NCBI+UNIPROT+Other
-    FileSystem             *_pFileSystem;
-    UserInput              *_pUserInput;
+    ExecuteStates           executeStates;    // Current Execution state
+    FileSystem             *pFileSystem;      // Pointer to EnTAP filesystem
+    UserInput              *pUserInput;       // Pointer to input flags from user
     //**************************************************************
 
     //******************** Local Prototype Functions ***************
-    std::string copy_final_transcriptome(std::string &);
-    void verify_state(std::queue<char> &, bool &);
-    bool valid_state(enum ExecuteStates);
-    void exit_error(ExecuteStates);
+    void verify_state(std::queue<char> &queue, bool test);
+    bool valid_state(enum ExecuteStates current_state);
+    void exit_error(ExecuteStates exiting_state);
     //**************************************************************
 
 /**
  * ======================================================================
- * Function execute_main(boostPO::variables_map      &user_input,
- *                       std::string                 exe_path,
-                         std::unordered_map<std::string, std::string> &config_map)
+ * Function execute_main(UserInput *user_input, FileSystem *filesystem)
  *
  * Description          - Entry into main annotation portion of EnTAP, manages
  *                        calling each state of the pipeline
  *                      - Calculates overall statistics and parses input
  *                        transcriptome
- *                      - Parses input databases
- *                      - Determines execution paths based on configuration file
  *
  * Notes                - Entry
  *
- * @param user_input    - Boost parsed user input flags
- * @param exe_path      - Path to EnTAP executable and main directory
- * @param config_map    - Map of the EnTAP configuration file
+ * @param user_input    - Pointer to user input flags
+ * @param filesystem    - Pointer to EnTAP filesystem
  *
  * @return              - None
  *
@@ -79,73 +66,78 @@ namespace entapExecute {
     void execute_main(UserInput *user_input, FileSystem *filesystem) {
         FS_dprint("EnTAP Executing...");
 
-        std::vector<uint16>                     ontology_flags;
-        std::string                             original_input;  // ALWAYS use for Expression
-        std::string                             final_out_dir;
+        std::string                             original_input;  // Absolute path to ORIGINAL transcriptome (ALWAYS use for Expression)
+        std::string                             input_path;      // Absolute path to transciptome (WARNING changes depending on user selection)
+        std::string                             final_out_dir;   // Absolute path to output directory for final stats
+        std::string                             transcriptome_outpath;
+        std::string                             transcrtipeom_out_filename;
+        std::string                             entap_graphing_path;
+        ent_input_multi_str_t                   databases;       // NCBI+UNIPROT+Other
         std::queue<char>                        state_queue;
         bool                                    state_flag;
-        vect_uint16_t                           entap_database_types;
-        EntapDatabase::DATABASE_TYPE            entap_database_type;
-        EntapDataPtrs                           entap_data_ptrs;
-        EntapDatabase*                          pEntapDatabase=nullptr;
-        QueryData*                              pQUERY_DATA=nullptr;
-        GraphingManager*                        pGraphingManager=nullptr;
+        bool                                    blastp;                 // false for blastx, true for mBlastp
+        vect_uint16_t                           entap_database_types;   // Database types from user
+        EntapDatabase::DATABASE_TYPE            entap_database_type;    // First database type selected by user that will be used
+        EntapDataPtrs                           entap_data_ptrs;        // Struct of Execution pointers
+        EntapDatabase*                          pEntap_Database=nullptr; // Pointer to the EnTAP database (binary / sql)
+        QueryData*                              pQUERY_DATA=nullptr;    // Pointer to the trancsriptome data
+        GraphingManager*                        pGraphing_Manager=nullptr;   // Pointer to the graphing manager
 
+        // Ensure data exists
         if (user_input == nullptr || filesystem == nullptr) {
-            throw ExceptionHandler("Unable to allocate memory to EnTAP Execution", ERR_ENTAP_INPUT_PARSE);
+            throw ExceptionHandler("Unable to allocate memory to EnTAP Execution", ERR_ENTAP_MEM_ALLOC);
         }
 
         executeStates           = INIT;
         state_flag              = false;
-        _pUserInput             = user_input;
-        _pFileSystem            = filesystem;
+        pUserInput              = user_input;
+        pFileSystem             = filesystem;
         entap_data_ptrs         = EntapDataPtrs();
 
         // Pull relevant info input by the user
-        _input_path    = _pUserInput->get_user_input<std::string>(_pUserInput->INPUT_FLAG_TRANSCRIPTOME);
-        original_input = _input_path;
-        _blastp        = _pUserInput->has_input(_pUserInput->INPUT_FLAG_RUNPROTEIN);
-        ontology_flags = _pUserInput->get_user_input<std::vector<uint16>>(_pUserInput->INPUT_FLAG_ONTOLOGY);
-        state_queue    = _pUserInput->get_state_queue();    // Will NOT be empty, default is +
-        _databases     = _pUserInput->get_user_input<databases_t>(_pUserInput->INPUT_FLAG_DATABASE);
+        input_path     = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_TRANSCRIPTOME);
+        original_input = input_path;
+        blastp         = pUserInput->has_input(INPUT_FLAG_RUNPROTEIN);
+        state_queue    = pUserInput->get_state_queue();    // Will NOT be empty, default is +
+        databases     = pUserInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_DATABASE);
+        entap_graphing_path = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_GRAPH);
 
         // Find database type that will be used by the rest (use 0 index no matter what)
-        entap_database_types = _pUserInput->get_user_input<vect_uint16_t>(_pUserInput->INPUT_FLAG_DATABASE_TYPE);
+        entap_database_types = pUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_DATABASE_TYPE);
         entap_database_type = static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
 
         // Set/create outpaths
-        _outpath       = _pFileSystem->get_root_path();
-        final_out_dir  = _pFileSystem->get_final_outdir();
-        _entap_outpath = PATHS(_outpath, ENTAP_OUTPUT);     // transcriptome outpath, original will be copied
-        _pFileSystem->create_dir(_entap_outpath);
-        _pFileSystem->create_dir(_outpath);
-        _input_basename = _pUserInput->get_user_transc_basename();  // Returns filename (no extension) of transcriptome
+        final_out_dir  = pFileSystem->get_final_outdir();
+        pFileSystem->create_transcriptome_dir();        // Directory where filtered transcriptomes will be copied
+        transcrtipeom_out_filename = pFileSystem->get_filename(input_path, true);   // Pull filename from input transcriptome
+        transcriptome_outpath = PATHS(pFileSystem->get_trancriptome_dir(), transcrtipeom_out_filename);
 
         try {
             verify_state(state_queue, state_flag);         // Set state transition
 
             // Initialize Query Data
             pQUERY_DATA = new QueryData(
-                    _input_path,        // User transcriptome
-                    _entap_outpath,     // Transcriptome directory
-                    _pUserInput,        // User input map
-                    _pFileSystem);      // Filesystem object
+                    input_path,        // User transcriptome
+                    transcriptome_outpath,     // Transcriptome directory
+                    pUserInput,        // User input map
+                    pFileSystem);      // Filesystem object
 
             // Initialize Graphing Manager
-            pGraphingManager = new GraphingManager(GRAPHING_EXE);
+            pGraphing_Manager = new GraphingManager(entap_graphing_path, pFileSystem);
 
             // Initialize EnTAP database
-            pEntapDatabase = new EntapDatabase(filesystem);
-            if (!pEntapDatabase->set_database(entap_database_type)) {
+            pEntap_Database = new EntapDatabase(filesystem, pUserInput);
+            if (!pEntap_Database->set_database(entap_database_type)) {
                 throw ExceptionHandler("Unable to initialize EnTAP database\n" +
-                                       pEntapDatabase->print_error_log(), ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
+                                       pEntap_Database->print_error_log(), ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
             }
 
-            entap_data_ptrs._pEntapDatbase = pEntapDatabase;
-            entap_data_ptrs._pFileSystem   = filesystem;
-            entap_data_ptrs._pUserInput    = user_input;
-            entap_data_ptrs._pGraphingManager = pGraphingManager;
-            entap_data_ptrs._pQueryData    = pQUERY_DATA;
+            // Compile all data pointers needed during execution
+            entap_data_ptrs.mpEntapDatabase = pEntap_Database;
+            entap_data_ptrs.mpFileSystem   = filesystem;
+            entap_data_ptrs.mpUserInput    = user_input;
+            entap_data_ptrs.mpGraphingManager = pGraphing_Manager;
+            entap_data_ptrs.mpQueryData    = pQUERY_DATA;
 
             if (entap_data_ptrs.is_null()) {
                 throw ExceptionHandler("Unable to allocate memory", ERR_ENTAP_MEM_ALLOC);
@@ -153,95 +145,154 @@ namespace entapExecute {
 
             while (executeStates != EXIT) {
                 switch (executeStates) {
-                    case FRAME_SELECTION: {
-                        FS_dprint("STATE - FRAME SELECTION");
-                        if (_blastp && pQUERY_DATA->is_protein_data()) {
-                            FS_dprint("Protein sequences input, skipping frame selection");
-                        } else if (!_blastp) {
-                            FS_dprint("Blastx selected, skipping frame selection");
-                            pQUERY_DATA->header_set(ENTAP_HEADER_FRAME, false);
-                        } else {
-                            FS_dprint("Continuing with frame selection process...");
-                            std::unique_ptr<FrameSelection> frame_selection(new FrameSelection(
-                                    _input_path, entap_data_ptrs
-                            ));
-                            _input_path = frame_selection->execute(_input_path);
 
-                            // Set flags for query data
-                            pQUERY_DATA->set_is_protein_data(true);
-                            pQUERY_DATA->set_is_success_frame_selection(true);
-
-                            // Copy frame selected file to the trancriptome directory
-                            std::string transc_protein_filename = _input_basename + TRANSCRIPTOME_FRAME_TAG;
-                            std::string transc_protein_outpath  = PATHS(_entap_outpath, transc_protein_filename);
-                            _pFileSystem->copy_file(_input_path, transc_protein_outpath, true);
-                        }
-                    }
-                        break;
                     case EXPRESSION_FILTERING: {
                         FS_dprint("STATE - EXPRESSION FILTERING");
-                        if (!_pUserInput->has_input(_pUserInput->INPUT_FLAG_ALIGN)) {
+                        if (!user_input->run_expression_filtering()) {
                             FS_dprint("No alignment file specified, skipping expression analysis");
                             pQUERY_DATA->header_set(ENTAP_HEADER_EXP_FPKM, false);
+                            pQUERY_DATA->header_set(ENTAP_HEADER_EXP_TPM, false);
                         } else {
+                            FS_dprint("Continuing with Expression Analysis");
                             // Proceed with expression analysis
                             std::unique_ptr<ExpressionAnalysis> expression(new ExpressionAnalysis(
-                                original_input, entap_data_ptrs
+                                    original_input, entap_data_ptrs
                             ));
-                            _input_path = expression->execute(original_input);
-
-                            // Set flags for query data
-                            pQUERY_DATA->set_is_success_expression(true);
+                            // WARNING: set out next input path to the filtered one
+                            input_path = expression->execute(original_input);
 
                             // Copy filtered file to entap transcriptome directory
-                            std::string transc_filter_filename = _input_basename + TRANSCRIPTOME_FILTERED_TAG;
-                            std::string transc_filter_outpath  = PATHS(_entap_outpath, transc_filter_filename);
-                            _pFileSystem->copy_file(_input_path, transc_filter_outpath, true);
+                            std::string transc_filter_filename = pUserInput->get_user_transc_basename() + TRANSCRIPTOME_FILTERED_TAG;
+                            std::string transc_filter_outpath  = PATHS(transcriptome_outpath, transc_filter_filename);
+
+                            pFileSystem->delete_file(transc_filter_outpath);
+                            uint32 sequence_flags = 0;
+                            QueryData::SEQUENCE_TYPES sequence_type;
+                            sequence_flags |= QuerySequence::QUERY_EXPRESSION_KEPT;
+                            blastp ? sequence_type = QueryData::SEQUENCE_AMINO_ACID : sequence_type = QueryData::SEQUENCE_NUCLEOTIDE;
+                            if (pQUERY_DATA->print_transcriptome(sequence_flags, transc_filter_outpath, sequence_type)){
+                                FS_dprint("Expression filtered transcriptome generated to: " + transc_filter_outpath);
+                                // WARNING: Set our next input path to the frame selected version
+                                input_path = transc_filter_outpath;
+                            } else {
+                                throw ExceptionHandler("ERROR: unable to generate filtered transcriptome from frame selecttion results",
+                                                       ERR_ENTAP_GENERATE_TRANSCRIPTOME);
+                            }
                         }
+                        break;
                     }
+
+                    case FRAME_SELECTION: {
+                        FS_dprint("STATE - FRAME SELECTION");
+                        bool run_frame_selection;
+                        if (pUserInput->run_frame_selection(pQUERY_DATA, run_frame_selection)) {
+                            // We were able to determine if we want to run frame selection
+                            if (run_frame_selection) {
+
+                                FS_dprint("Continuing with frame selection process...");
+                                std::unique_ptr<FrameSelection> frame_selection(new FrameSelection(
+                                        input_path, entap_data_ptrs
+                                ));
+
+                                frame_selection->execute(input_path);
+
+                                // Copy frame selected file to the trancriptome directory
+                                std::string transc_protein_filename = pUserInput->get_user_transc_basename() + TRANSCRIPTOME_FRAME_TAG;
+                                std::string transc_protein_outpath  = PATHS(transcriptome_outpath, transc_protein_filename);
+                                uint32 sequence_flags=0;
+                                sequence_flags |= QuerySequence::QUERY_FRAME_KEPT;
+                                pFileSystem->delete_file(transc_protein_outpath);
+                                if (pQUERY_DATA->print_transcriptome(sequence_flags, transc_protein_outpath,
+                                                                     QueryData::SEQUENCE_AMINO_ACID)){
+                                    FS_dprint("Protein transcriptome generated to: " + transc_protein_outpath);
+                                    // WARNING: Set our next input path to the frame selected version
+                                    input_path = transc_protein_outpath;
+                                } else {
+                                    throw ExceptionHandler("ERROR: unable to generate protein transcriptome from frame selecttion results",
+                                                           ERR_ENTAP_GENERATE_TRANSCRIPTOME);
+                                }
+                            } else {
+                                // No, we are going to skip frame selection process
+                                pQUERY_DATA->header_set(ENTAP_HEADER_FRAME, false);
+                            }
+                        } else {
+                            // Should never happen
+                            throw ExceptionHandler("Unable to determine if we want to run Frame Selection",
+                                ERR_ENTAP_INPUT_PARSE);
+                        }
+
                         break;
-                    case COPY_FINAL_TRANSCRIPTOME:
-                        _input_path = copy_final_transcriptome(_input_path);  // Just copies final transcriptome
+                    }
+
+                    case COPY_FINAL_TRANSCRIPTOME: {
+                        // At this point, input_path is the final transcriptome we will be using
+                        // copy this final trancriptome and then set input_path to the copied trancriptome
+                        // absolute paths only!
+                        FS_dprint("Beginning to copy final transcriptome to be used...");
+
+                        std::string file_name = pUserInput->get_user_transc_basename() + TRANSCRIPTOME_FINAL_TAG;
+                        std::string out_path = PATHS(transcriptome_outpath, file_name);
+                        uint32 sequence_flags = 0;
+                        QueryData::SEQUENCE_TYPES sequence_type;
+                        sequence_flags |= QuerySequence::QUERY_FRAME_KEPT;
+                        sequence_flags |= QuerySequence::QUERY_EXPRESSION_KEPT;
+                        blastp ? sequence_type = QueryData::SEQUENCE_AMINO_ACID
+                               : sequence_type = QueryData::SEQUENCE_NUCLEOTIDE;
+                       pFileSystem->delete_file(out_path);
+                        if (pQUERY_DATA->print_transcriptome(sequence_flags, out_path, sequence_type)) {
+                            FS_dprint("FINAL transcriptome generated to: " + out_path);
+                            // WARNING: Set our next input path to the frame selected version
+                            input_path = out_path;
+                        } else {
+                            throw ExceptionHandler(
+                                    "ERROR: unable to generate final transcriptome from frame selecttion results",
+                                    ERR_ENTAP_GENERATE_TRANSCRIPTOME);
+                        }
                         break;
+                    }
+
                     case SIMILARITY_SEARCH: {
                         FS_dprint("STATE - SIMILARITY SEARCH");
                         // Spawn sim search object
                         std::unique_ptr<SimilaritySearch> sim_search(new SimilaritySearch(
-                                _databases,
-                                _input_path,
+                                databases,
+                                input_path,
                                 entap_data_ptrs
                         ));
                         sim_search->execute();
                         pQUERY_DATA->set_is_success_sim_search(true);
                         break;
                     }
+
                     case GENE_ONTOLOGY: {
                         FS_dprint("STATE - GENE ONTOLOGY");
                         std::unique_ptr<Ontology> ontology(new Ontology(
-                                _input_path,
+                                input_path,
                                 entap_data_ptrs
                         ));
                         ontology->execute();
-                        pQUERY_DATA->set_is_success_ontology(true);
                         break;
                     }
                     default:
                         executeStates = EXIT;
                         break;
-                }
+                }   // END SWITCH
+
+                // Transition "states" to the next
                 verify_state(state_queue, state_flag);
-            }
+
+            } // END WHILE
 
             // *************************** Exit Stuff ********************** //
-            pQUERY_DATA->final_statistics(final_out_dir, ontology_flags);
-           // _pFileSystem->directory_iterate(FileSystem::FILE_ITER_DELETE_EMPTY, _outpath);   // Delete empty files
+            pQUERY_DATA->final_statistics(final_out_dir);
+           // pFileSystem->directory_iterate(FileSystem::FILE_ITER_DELETE_EMPTY, mOutpath);   // Delete empty files
             delete pQUERY_DATA;
-            delete pGraphingManager;
-            delete pEntapDatabase;
+            delete pGraphing_Manager;
+            delete pEntap_Database;
         } catch (const ExceptionHandler &e) {
             delete pQUERY_DATA;
-            delete pGraphingManager;
-            delete pEntapDatabase;
+            delete pGraphing_Manager;
+            delete pEntap_Database;
             exit_error(executeStates);
             throw e;
         }
@@ -249,51 +300,22 @@ namespace entapExecute {
 
     /**
      * ======================================================================
-     * Function std::string filter_transcriptome(std::string    &input_path)
+     * Function verify_state(std::queue<char> &queue, bool &test)
      *
-     * Description          - Merely selects transcriptome that will
-     *                        continue in pipeline and copies it to entap_out directory
+     * Description          - Computes the next state that will be executed
+     *                        based upon --state flag (default: +)
+     *                      - User input not thoroughly checked and is experimental
+     *                      - Normal functionality just transitions between
+     *                        states as normal
      *
-     * Notes                - None
+     * Notes                - Only assuming between 0-9, no digit states
      *
-     * @param input_path    - Input transcriptome (expression and/or frame selected)
-     * @return              - Copied transcriptome
-     *
-     * =====================================================================
+     * @param queue         - State queue as inputted by user (or default '+')
+     * @param test          - Flag used if previous character was a '+'
+     * @return              - None
+     * ======================================================================
      */
-    std::string copy_final_transcriptome(std::string &input_path) {
-        FS_dprint("Beginning to copy final transcriptome to be used...");
-
-        std::string   file_name;
-        std::string   out_path;
-
-        file_name = _input_basename + TRANSCRIPTOME_FINAL_TAG;
-        out_path = PATHS(_entap_outpath, file_name);
-        _pFileSystem->copy_file(input_path,out_path,true);
-
-        FS_dprint("Success! Copied to: " + out_path);
-        return out_path;
-    }
-
-
-/**
- * ======================================================================
- * Function verify_state(std::queue<char> &queue, bool &test)
- *
- * Description          - Computes the next state that will be executed
- *                        based upon --state flag (default: +)
- *                      - User input not thoroughly checked and is experimental
- *                      - Normal functionality just transitions between
- *                        states as normal
- *
- * Notes                - Only assuming between 0-9, no digit states
- *
- * @param queue         - State queue as inputted by user (or default '+')
- * @param test          - Flag used if previous character was a '+'
- * @return              - None
- * ======================================================================
- */
-    void verify_state(std::queue<char> &queue, bool &test) {
+    void verify_state(std::queue<char> &queue, bool test) {
         FS_dprint("verifying state...");
         if (queue.empty()) {
             executeStates = static_cast<ExecuteStates>(executeStates + 1);
@@ -343,27 +365,27 @@ namespace entapExecute {
     }
 
 
-/**
- * ======================================================================
- * Function bool valid_state(ExecuteStates s)
- *
- * Description          - Ensures computed state from verify_state() func
- *                        is valid and within the range
- *
- * Notes                - None
- *
- * @param s             - State to verify
- * @return              - None
- * ======================================================================
- */
-    bool valid_state(ExecuteStates s) {
-        return (s >= EXPRESSION_FILTERING && s <= EXIT);
+    /**
+     * ======================================================================
+     * Function bool valid_state(ExecuteStates state)
+     *
+     * Description          - Ensures computed state from verify_state() func
+     *                        is valid and within the range
+     *
+     * Notes                - None
+     *
+     * @param state         - State to verify
+     * @return              - None
+     * ======================================================================
+     */
+    bool valid_state(ExecuteStates current_state) {
+        return (current_state > INIT && current_state <= EXIT);
     }
 
 
     /**
      * ======================================================================
-     * Function void exit_error(ExecuteStates s)
+     * Function void exit_error(ExecuteStates exiting_state)
      *
      * Description          - Prints a "summary" report for user during a
      *                        fatal error depending on stage
@@ -374,10 +396,10 @@ namespace entapExecute {
      * @return              - None
      * ======================================================================
      */
-    void exit_error(ExecuteStates s) {
+    void exit_error(ExecuteStates exiting_state) {
         std::stringstream ss;
 
-        ss << "------------------------------------\n";
+        ss << "----------------------------------------------------\n";
 #if 0
         switch (s) {
             case INIT:
@@ -414,11 +436,11 @@ namespace entapExecute {
            "Here are a few ways to help diagnose some general issues:\n"
                    "\t1. Check the (detailed) printed error message below\n"
                    "\t2. Review the .err files of the execution stage (they will\n"
-                   "\t\tbe in the directory for whatever stage you failed on\n"
+                   "\t\tbe in the directory for whatever stage you failed\n"
                    "\t3. Check the debug.txt file that is printed after execution\n"
-                   "\t4. Ensure your paths/inputs are correct in entap_config.txt\n"
+                   "\t4. Ensure your paths/inputs are correct in entap_config.ini\n"
                    "\t\tand log_file.txt (this will show your inputs)\n";
-        ss << "------------------------------------";
+        ss << "----------------------------------------------------";
         std::cerr<<ss.str()<<std::endl;
     }
 }

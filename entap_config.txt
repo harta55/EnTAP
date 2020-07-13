@@ -1,9 +1,0 @@
-diamond_exe_path=
-rsem_exe_path=
-genemarkst_exe_path=
-eggnog_sql_database=
-eggnog_dmnd_database=
-interpro_exe_path=
-entap_database_sql_path=
-entap_database_bin_path=
-entap_graphing_script=

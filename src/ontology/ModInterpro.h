@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -34,6 +34,22 @@
 #include "../UserInput.h"
 #include "../QuerySequence.h"
 
+/**
+ * ======================================================================
+ * @class ModInterpro
+ *
+ * Description          - This EnTAP module supports execution, parsing, and
+ *                        statistical analysis of the InterProScan software
+ *                        through terminal commands
+ *                      - Parsed data is added to QueryData class
+ *                      - Inherits from AbstractOntology and EntapModule classes
+ *
+ * Citation             - P. Jones et al., “InterProScan 5: genome-scale
+ *                        protein function classification,” (in eng),
+ *                        Bioinformatics, vol. 30, no. 9, pp. 1236-40, May 2014.
+ *
+ * ======================================================================
+ */
 class ModInterpro : public AbstractOntology{
 
     struct InterProData {
@@ -49,20 +65,15 @@ class ModInterpro : public AbstractOntology{
 
 public:
     ~ModInterpro();
-    ModInterpro(std::string &ont, std::string &in,
-                EntapDataPtrs& entap_data, std::string &exe, vect_str_t );
+    ModInterpro(std::string &ont, std::string &in, EntapDataPtrs& entap_data);
 
     virtual ModVerifyData verify_files() override ;
     virtual void execute() override ;
     virtual void parse() override ;
-    static bool is_executable();
+    static bool is_executable(std::string &exe);
+    virtual void get_version() override;
 
     static bool valid_input(UserInput* userinput);
-    static std::string get_default();
-
-    static const std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
-
-
 private:
     std::string NUCLEO_TAG                  = "n";
     std::string PROTEIN_TAG                 = "p";
@@ -76,7 +87,8 @@ private:
     std::string INTERPRO_EXT_XML            = ".xml";
     std::string INTERPRO_EXT_TSV            = ".tsv";
 
-    std::string _database_flag              = "interpro";   // TODO add full alignment support
+    std::string INTERPRO_DATABASE_FLAG              = "interpro";   // TODO add full alignment support
+    static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
     // Valid databases
     static const std::vector<std::string> INTERPRO_DATABASES;
@@ -97,15 +109,15 @@ private:
     std::string FLAG_PATHWAY  = " --pathways";
     std::string FLAG_TEMP     = " --tempdir";
 
-    std::vector<std::string> _databases;
-    std::string              _final_outpath;
-    std::string              _final_basepath;
+    vect_str_t               mDatabases;
+    std::string              mFinalOutpath;
+    std::string              mFinalBasepath;
 
 #if 0
     std::map<std::string,InterProData> parse_xml(void);
 #endif
-    std::map<std::string,InterProData> parse_tsv(void);
-    std::string format_interpro(void);
+    std::map<std::string,InterProData> parse_tsv();
+    std::string format_interpro();
 };
 
 

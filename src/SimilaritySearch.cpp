@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -57,23 +57,21 @@ SimilaritySearch::SimilaritySearch(vect_str_t &database_paths, std::string &inpu
     FS_dprint("Spawn Object - SimilaritySearch");
     std::string uninform_path;
 
-    _pUserInput     = entap_data._pUserInput;
-    _pFileSystem    = entap_data._pFileSystem;
-    _pEntap_data    = &entap_data;
-    _input_path     = input;
-    _diamond_exe    = DIAMOND_EXE;      // Set to extern set previously
-    _database_paths = database_paths;
+    mpUserInput     = entap_data.mpUserInput;
+    mpFileSystem    = entap_data.mpFileSystem;
+    mpEntapData    = &entap_data;
+    mInputFastaPath     = input;
+    mDatabasePaths = database_paths;
 
     // Set sim search paths/directories
-    _outpath = _pFileSystem->get_root_path();
-    _sim_search_dir  = PATHS(_outpath, SIM_SEARCH_DIR);
-    _overwrite = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
+    mSimSearchDir  = PATHS(mpFileSystem->get_root_path(), SIM_SEARCH_DIR);
+    mOverwrite = mpUserInput->has_input(INPUT_FLAG_OVERWRITE);
 
-    if (_overwrite) {
-        _pFileSystem->delete_dir(_sim_search_dir);
+    if (mOverwrite) {
+        mpFileSystem->delete_dir(mSimSearchDir);
     }
-    _pFileSystem->create_dir(_sim_search_dir);
-    _software_flag = SIM_DIAMOND;
+    mpFileSystem->create_dir(mSimSearchDir);
+    mSoftwareFlag = SIM_DIAMOND;
 }
 
 void SimilaritySearch::execute() {
@@ -87,6 +85,8 @@ void SimilaritySearch::execute() {
             ptr->execute();
         }
         ptr->parse();
+        ptr->set_success_flags();
+
         ptr.reset();
     } catch (const ExceptionHandler &e) {
         ptr.reset();
@@ -96,11 +96,12 @@ void SimilaritySearch::execute() {
 
 std::unique_ptr<AbstractSimilaritySearch> SimilaritySearch::spawn_object() {
 
-    switch (_software_flag) {
+    switch (mSoftwareFlag) {
+        // Fall through to default case (only 1 supported Sim Search module)
         case SIM_DIAMOND:
         default:
             return std::unique_ptr<AbstractSimilaritySearch>(new ModDiamond(
-                    _sim_search_dir, _input_path, *_pEntap_data, _diamond_exe, _database_paths
+                    mSimSearchDir, mInputFastaPath, *mpEntapData, mDatabasePaths
                     ));
     }
 }

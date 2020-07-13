@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -31,10 +31,11 @@
 #include "EntapGlobals.h"
 #include "FileSystem.h"
 
-enum entap_err {
+// TODO fix/update error code handling
+enum ENTAP_ERR {
 
-    ERR_ENTAP_INPUT_PARSE                 = 10u,
     ERR_ENTAP_SUCCESS                     = 0u,
+    ERR_ENTAP_INPUT_PARSE                 = 10u,
     ERR_ENTAP_CONFIG_PARSE                = 12u,
     ERR_ENTAP_CONFIG_CREATE               = 13u,
     ERR_ENTAP_CONFIG_CREATE_SUCCESS       = 14u,
@@ -49,6 +50,7 @@ enum entap_err {
     ERR_ENTAP_INIT_DOWN_SQL_DATA          = 34u,
     ERR_ENTAP_INIT_DOWN_SERIAL_DATA       = 35u,
     ERR_ENTAP_INIT_DATA_GENERIC           = 36u,
+    ERR_ENTAP_INIT_BUSCO_GENERIC          = 37u,
     ERR_ENTAP_INIT_EGGNOG                 = 40u,
 
     ERR_ENTAP_INIT_TAX_READ               = 55u,
@@ -59,13 +61,16 @@ enum entap_err {
     ERR_ENTAP_READ_ENTAP_SERIAL_DATA      = 70u,
     ERR_ENTAP_READ_ENTAP_SQL_DATA         = 71u,
     ERR_ENTAP_READ_ENTAP_DATA_GENERIC     = 72u,
+    ERR_ENTAP_GENERATE_TRANSCRIPTOME      = 80u,
 
-    ERR_ENTAP_RUN_EXECUTION_PATHS         = 105u,
-    ERR_ENTAP_RUN_VERIFY_DATABASES        = 106u,
     ERR_ENTAP_RUN_GENEMARK                = 100u,
     ERR_ENTAP_RUN_GENEMARK_PARSE          = 101u,
     ERR_ENTAP_RUN_GENEMARK_STATS          = 102u,
     ERR_ENTAP_RUN_GENEMARK_MOVE           = 103u,
+    ERR_ENTAP_RUN_TRANSDECODER            = 105u,
+    ERR_ENTAP_RUN_TRANSDECODER_PARSE      = 106u,
+    ERR_ENTAP_RUN_TRANSDECODER_STATS      = 107u,
+    ERR_ENTAP_RUN_TRANSDECODER_MOVE       = 108u,
     ERR_ENTAP_RUN_RSEM_VALIDATE           = 110u,
     ERR_ENTAP_RUN_RSEM_CONVERT            = 111u,
     ERR_ENTAP_RUN_RSEM_EXPRESSION         = 112u,
@@ -82,6 +87,9 @@ enum entap_err {
     ERR_ENTAP_RUN_INTERPRO                = 170u,
     ERR_ENTAP_PARSE_INTERPRO              = 171u,
     ERR_ENTAP_PARSE_EGGNOG_DMND           = 180u,
+    ERR_ENTAP_RUN_EGGNOG_DMND             = 181u,
+    ERR_ENTAP_RUN_BUSCO                   = 190u,
+    ERR_ENTAP_PARSE_BUSCO                 = 191u,
     ERR_ENTAP_FILE_IO                     = 200u,
     ERR_ENTAP_MEM_ALLOC                   = 201u,
     ERR_ENTAP_MAX                         = 201u
@@ -93,14 +101,14 @@ class ExceptionHandler: public std::exception{
 public:
     ExceptionHandler(const std::string&, int);
     const char* what();
-    int getErr_code() const;
+    uint16 getErr_code() const;
     void print_msg(FileSystem*);
 
 private:
-    int err_code;
-    std::string message;
+    uint16 mErrCode;
+    std::string mMessage;
 
-    static const std::string ERR_ENTAP_STR [ERR_ENTAP_MAX];
+//    static const std::string ERR_ENTAP_STR [ERR_ENTAP_MAX];
 };
 
 #endif //ENTAP_EXCEPTIONHANDLER_H

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,9 +30,9 @@
 #define ENTAP_ABSTRACTFRAME_H
 
 //*********************** Includes *****************************
-#include "../QuerySequence.h"
 #include "../QueryData.h"
 #include "../EntapModule.h"
+#include "../GraphingManager.h"
 //**************************************************************
 
 /**
@@ -54,39 +54,47 @@ class AbstractFrame : public EntapModule {
 
 public:
 
-/**
- * ======================================================================
- * Function AbstractFrame(std::string &exe, std::string &out,
- *                        std::string &in, std::string &proc,
-                          std::string &fig, std::string &frame,
-                          GraphingManager *graphing, QueryData *queryData)
- *
- * Description          - Constructor for Abstract frame selection class
- *                      - Initializes protected member variables for
- *                        expression modules
- *
- * Notes                - Constructor
- *
- * @param exe           - Path to execution directory (EnTAP, unused)
- * @param out           - Path to main outfiles directory (unused)
- * @param in            - Path to filtered transcriptome
- * @param proc          - Path to processed directory (within genemark for now)
- * @param frame         - Path to figure directory (within genemark for now)
- * @param graphing      - Ptr to graphing manager
- * @param query         - Ptr to query data
- *
- * @return              - None
- * ======================================================================
- */
     AbstractFrame(std::string &execution_stage_path, std::string &in_hits,
-                  EntapDataPtrs &entap_data, std::string module_name, std::string &exe);
+                  EntapDataPtrs &entap_data, std::string module_name,
+                  std::vector<ENTAP_HEADERS> &module_headers);
 
     virtual ~AbstractFrame() = default;
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
-    virtual std::string get_final_faa() = 0;
+    virtual void get_version() = 0;
 
+    virtual void set_success_flags() override ;
+
+    std::string get_final_faa();
+
+
+protected:
+    const std::string FRAME_SELECTION_FIVE_FLAG     = "Partial 5 Prime";
+    const std::string FRAME_SELECTION_THREE_FLAG    = "Partial 3 Prime";
+    const std::string FRAME_SELECTION_COMPLETE_FLAG = "Complete";
+    const std::string FRAME_SELECTION_INTERNAL_FLAG = "Internal";
+    const std::string FRAME_SELECTION_LOST_FLAG     = "Lost";
+    const std::string FRAME_SELECTION_FILENAME_PARTIAL   = "partial_genes";
+    const std::string FRAME_SELECTION_FILENAME_COMPLETE  = "complete_genes";
+    const std::string FRAME_SELECTION_FILENAME_INTERNAL  = "internal_genes";
+    const std::string FRAME_SELECTION_FILENAME_LOST      = "sequences_removed";
+
+    const std::string GRAPH_TITLE_FRAME_RESULTS     = "Frame_Selection_ORFs";
+    const std::string GRAPH_FILE_FRAME_RESUTS       = "frame_results_pie.png";
+    const std::string GRAPH_TEXT_FRAME_RESUTS       = "frame_results_pie.txt";
+    const std::string GRAPH_TITLE_REF_COMPAR        = "Frame_Selected_Sequences";
+    const std::string GRAPH_FILE_REF_COMPAR         = "removed_comparison_box.png";
+    const std::string GRAPH_TEXT_REF_COMPAR         = "removed_comparison_box.txt";
+    const std::string GRAPH_REJECTED_FLAG           = "Removed";
+    const std::string GRAPH_KEPT_FLAG               = "Selected";
+
+    const uint16 MINIMUM_KEPT_SEQUENCES = 0;        // Minimum required kept sequences before continuing pipeline
+
+    std::string mFinalFaaPath;      // Absolute path to FAA (protein) file produced from Frame Selection process
+
+
+    void frame_calculate_statistics();
 };
 
 

@@ -82,7 +82,6 @@ Usage - Preparing Your Reference Databases
 
 All source databases must be provided in FASTA format (protein) so that they can be indexed for use by DIAMOND.  This can be completed independent of EnTAP with DIAMOND (- - makedb flag) or as part of the Configuration phase of EnTAP. This section will focus on downloading and preparing some of the more common FASTA source databases. If you already have DIAMOND databases configured, you can skip to :ref:`Usage - Running Configuration<usage_config-label>`. Even if you have a DIAMOND database already configured, Configuration must still be ran!
 
-
 While any protein FASTA database can be used, it is recommended to use NCBI (Genbank) sourced databases such as RefSeq databases or NR.  In addition, EnTAP can easily accept EBI databases such as UniProt/SwissProt.  
 
 EnTAP can recognize the species information from these header formats ONLY (NCBI and UniProt):

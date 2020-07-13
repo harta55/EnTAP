@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,84 +30,7 @@
 #include "EntapGlobals.h"
 //**************************************************************
 
-// This table should match EntapGlobals.h ENTAP_HEADERS enum
-EntapHeader ENTAP_HEADER_INFO[] = {
-        {"Unused",              false},                         // 0
-        {"Query Sequence",      true},
-        {"Frame",               true},
-        {"FPKM",                true},
-
-        /* Similarity Search - General */
-        {"Subject Sequence",    true},
-        {"Percent Identical",   true},                          // 5
-        {"Alignment Length",    true},
-        {"Mismatches",          true},
-        {"Gap Openings",        true},
-        {"Query Start",         true},
-        {"Query End",           true},                          // 10
-        {"Subject Start",       true},
-        {"Subject End",         true},
-        {"E Value",             true},
-        {"Coverage",            true},
-        {"Description",         true},                          // 15
-        {"Species",             true},
-        {"Taxonomic Lineage",   true},
-        {"Origin Database",     true},
-        {"Contaminant",         true},
-        {"Informative",         true},
-
-        /* Similarity Search - UniProt */
-        {"UniProt Database Cross Reference",        true},      // 20
-        {"UniProt Additional Information",          true},
-        {"UniProt KEGG Terms",                      true},
-        {"UniProt GO Biological",                   true},
-        {"UniProt GO Cellular",                     true},
-        {"UniProt GO Molecular",                    true},
-
-        /* Ontology - EggNOG */
-        {"Seed Ortholog",                           true},
-        {"Seed E-Value",                            true},
-        {"Seed Score",                              true},
-        {"Predicted Gene",                          true},
-        {"Tax Scope",                               true},
-        {"Tax Scope Max",                           true},
-        {"Member OGs",                              true},
-        {"EggNOG Description",                      false},
-        {"BIGG Reaction",                           true},
-        {"KEGG Terms",                              true},
-        {"GO Biological",                           true},
-        {"GO Cellular",                             true},
-        {"GO Molecular" ,                           true},
-        {"Protein Domains",                         false},
-
-        /* Ontology - InterProScan */
-        {"IPScan GO Biological",                    true},
-        {"IPScan GO Cellular",                      true},
-        {"IPScan GO Molecular",                     true},
-        {"Pathways",                                true},
-        {"InterPro",                                true},
-        {"Protein Database",                        true},
-        {"Protein Description",                     true},
-        {"E-Value",                                 true},
-
-
-        {"Unused",                                  false}
-};
-
-namespace ENTAP_STATS {
-    const std::string SOFTWARE_BREAK = "------------------------------------------------------\n";
-}
-
-std::string generate_command(std::unordered_map<std::string,std::string> &map,std::string exe_path) {
-    std::stringstream ss;
-    std::string       out;
-
-    ss << exe_path << " ";
-    for (auto &pair : map)ss << pair.first << " " << pair.second << " ";
-    out = ss.str();
-    return out;
-}
-
+// For C++11 use std::to_string(arg)
 std::string float_to_string(fp64 val) {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2) << val;

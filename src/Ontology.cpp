@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -34,6 +34,7 @@
 #include "FileSystem.h"
 #include "ontology/ModEggnogDMND.h"
 #include "similarity_search/ModDiamond.h"
+#include "ontology/ModBUSCO.h"
 
 /**
  * ======================================================================
@@ -62,31 +63,26 @@
 Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
     FS_dprint("Spawn Object - Ontology");
 
-    _new_input          = input;
-    _pGraphingManager   = entap_data._pGraphingManager;
-    _pQueryData         = entap_data._pQueryData;
-    _pFileSystem        = entap_data._pFileSystem;
-    _pUserInput         = entap_data._pUserInput;
-    _pEntapDatabase     = entap_data._pEntapDatbase;
+    mNewInput           = input;
+    mpQueryData         = entap_data.mpQueryData;
+    mpFileSystem        = entap_data.mpFileSystem;
+    mpUserInput         = entap_data.mpUserInput;
 
-    _entap_data_ptrs = entap_data;
+    mEntapDataPtrs = entap_data;
 
-    _threads            = _pUserInput->get_supported_threads();
-    _outpath            = _pFileSystem->get_root_path();
-    _is_overwrite       = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
-    _software_flags     = _pUserInput->get_user_input<vect_uint16_t>(_pUserInput->INPUT_FLAG_ONTOLOGY);
-    _go_levels          = _pUserInput->get_user_input<vect_uint16_t>(_pUserInput->INPUT_FLAG_GO_LEVELS);
-    _blastp             = _pUserInput->has_input(_pUserInput->INPUT_FLAG_RUNPROTEIN);
-    _ontology_dir       = PATHS(_outpath, ONTOLOGY_OUT_PATH);
-    _final_outpath_dir  = _pFileSystem->get_final_outdir();
-    _eggnog_db_path     = EGG_SQL_DB_PATH;
-    _interpro_databases = _pUserInput->get_user_input<vect_str_t>(_pUserInput->INPUT_FLAG_INTERPRO);
-    _alignment_file_types = _pUserInput->get_user_output_types();
+    mOutpath            = mpFileSystem->get_root_path();
+    mIsOverwrite        = mpUserInput->has_input(INPUT_FLAG_OVERWRITE);
+    mSoftwareFlags      = mpUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_ONTOLOGY);
+    mGoLevels           = mpUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_GO_LEVELS);
+    mOntologyDir        = PATHS(mOutpath, ONTOLOGY_OUT_PATH);
+    mFinalOutputDir     = mpFileSystem->get_final_outdir();
+    mAlignmentFileTypes = mpUserInput->get_user_output_types();
+    mEntapHeaders       = mpUserInput->get_user_input<std::vector<ENTAP_HEADERS>>(INPUT_FLAG_ENTAP_HEADERS);
 
-    if (_is_overwrite) _pFileSystem->delete_dir(_ontology_dir);
-    _pFileSystem->create_dir(_ontology_dir);
-    _pFileSystem->delete_dir(_final_outpath_dir);
-    _pFileSystem->create_dir(_final_outpath_dir);
+    if (mIsOverwrite) mpFileSystem->delete_dir(mOntologyDir);
+    mpFileSystem->create_dir(mOntologyDir);
+    mpFileSystem->delete_dir(mFinalOutputDir);
+    mpFileSystem->create_dir(mFinalOutputDir);
 }
 
 
@@ -112,16 +108,18 @@ void Ontology::execute() {
     EntapModule::ModVerifyData verify_data;
     std::unique_ptr<EntapModule> ptr;
 
-    init_headers();
     try {
-        for (uint16 software : _software_flags) {
+        for (uint16 software : mSoftwareFlags) {
             ptr = spawn_object(software);
             verify_data = ptr->verify_files();
             if (!verify_data.files_exist) ptr->execute();
             ptr->parse();
+            ptr->set_success_flags();
             ptr.reset();
         }
-        print_eggnog(*_pQueryData->get_sequences_ptr());
+
+        // Print final annotations
+        print_eggnog();
     } catch (ExceptionHandler &e) {
         ptr.reset();
         throw e;
@@ -144,42 +142,43 @@ void Ontology::execute() {
  * =====================================================================
  */
 std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
+    ent_input_str_t exe_path;
     switch (software) {
 #ifdef EGGNOG_MAPPER
         case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
-                    _outpath,
-                    _new_input,
-                    _ontology_dir,
-                    _blastp,
-                    _go_levels,
-                    _entap_data_ptrs,
-                    _eggnog_db_path    // additional data
+                    mOutpath,
+                    mNewInput,
+                    mOntologyDir,
+                    mBlastp,
+                    mGoLevels,
+                    mEntapDataPtrs,
+                    mEggnogDbPath    // additional data
             ));
 #endif
         case ONT_INTERPRO_SCAN:
             return std::unique_ptr<AbstractOntology>(new ModInterpro(
-                    _ontology_dir,
-                    _new_input,
-                    _entap_data_ptrs,
-                    INTERPRO_EXE,
-                    _interpro_databases       // Additional data
+                    mOntologyDir,
+                    mNewInput,
+                    mEntapDataPtrs
             ));
         case ONT_EGGNOG_DMND:
             return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
-                    _ontology_dir,
-                    _new_input,
-                    _entap_data_ptrs,
-                    DIAMOND_EXE,
-                    _eggnog_db_path
+                    mOntologyDir,
+                    mNewInput,
+                    mEntapDataPtrs
             ));
+        case ONT_BUSCO:
+            return std::unique_ptr<AbstractOntology>(new ModBUSCO(
+                    mOntologyDir,
+                    mNewInput,
+                    mEntapDataPtrs
+             ));
         default:
             return std::unique_ptr<AbstractOntology>(new ModEggnogDMND(
-                    _ontology_dir,
-                    _new_input,
-                    _entap_data_ptrs,
-                    DIAMOND_EXE,
-                    _eggnog_db_path
+                    mOntologyDir,
+                    mNewInput,
+                    mEntapDataPtrs
             ));
     }
 }
@@ -187,7 +186,7 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
 
 /**
  * ======================================================================
- * Function void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES)
+ * Function void Ontology::print_eggnog()
  *
  * Description          - Handles printing of final annotation output
  *                      - Current prints tsv file for all go levels specified,
@@ -195,13 +194,12 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
  *
  * Notes                - None
  *
- * @param SEQUENCES     - Map of sequence data
  *
  * @return              - None
  *
  * =====================================================================
  */
-void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
+void Ontology::print_eggnog() {
     FS_dprint("Beginning to print final results...");
 
     std::string final_annotations_base;
@@ -210,93 +208,29 @@ void Ontology::print_eggnog(QUERY_MAP_T &SEQUENCES) {
 
     // TODO move to QueryData
     // Create output files for go levels (contaminants, no contam, all) and write headers
-    for (uint16 lvl : _go_levels) {
+    for (uint16 lvl : mGoLevels) {
 
-        final_annotations_base             = PATHS(_final_outpath_dir, FINAL_ANNOT_FILE);
-        final_annotations_contam_base      = PATHS(_final_outpath_dir, FINAL_ANNOT_FILE_CONTAM);
-        final_annotations_no_contam_base   = PATHS(_final_outpath_dir, FINAL_ANNOT_FILE_NO_CONTAM);
+        final_annotations_base             = PATHS(mFinalOutputDir, FINAL_ANNOT_FILE);
+        final_annotations_contam_base      = PATHS(mFinalOutputDir, FINAL_ANNOT_FILE_CONTAM);
+        final_annotations_no_contam_base   = PATHS(mFinalOutputDir, FINAL_ANNOT_FILE_NO_CONTAM);
 
-        _pQueryData->start_alignment_files(final_annotations_base, _HEADERS, (uint8)lvl, _alignment_file_types);
-        _pQueryData->start_alignment_files(final_annotations_contam_base, _HEADERS, (uint8)lvl, _alignment_file_types);
-        _pQueryData->start_alignment_files(final_annotations_no_contam_base, _HEADERS,(uint8) lvl, _alignment_file_types);
+        mpQueryData->start_alignment_files(final_annotations_base, mEntapHeaders, (uint8)lvl, mAlignmentFileTypes);
+        mpQueryData->start_alignment_files(final_annotations_contam_base, mEntapHeaders, (uint8)lvl, mAlignmentFileTypes);
+        mpQueryData->start_alignment_files(final_annotations_no_contam_base, mEntapHeaders,(uint8) lvl, mAlignmentFileTypes);
 
-        for (auto &pair : SEQUENCES) {
-            _pQueryData->add_alignment_data(final_annotations_base, pair.second, nullptr);
+        for (auto &pair : *mpQueryData->get_sequences_ptr()) {
+            mpQueryData->add_alignment_data(final_annotations_base, pair.second, nullptr);
 
-            if (pair.second->isContaminant()) {
-                _pQueryData->add_alignment_data(final_annotations_contam_base, pair.second, nullptr);
+            if (pair.second->is_contaminant()) {
+                mpQueryData->add_alignment_data(final_annotations_contam_base, pair.second, nullptr);
             } else {
-                _pQueryData->add_alignment_data(final_annotations_no_contam_base, pair.second, nullptr);
+                mpQueryData->add_alignment_data(final_annotations_no_contam_base, pair.second, nullptr);
             }
         }
 
-        _pQueryData->end_alignment_files(final_annotations_base);
-        _pQueryData->end_alignment_files(final_annotations_contam_base);
-        _pQueryData->end_alignment_files(final_annotations_no_contam_base);
+        mpQueryData->end_alignment_files(final_annotations_base);
+        mpQueryData->end_alignment_files(final_annotations_contam_base);
+        mpQueryData->end_alignment_files(final_annotations_no_contam_base);
     }
     FS_dprint("Success!");
-}
-
-
-/**
- * ======================================================================
- * Function void Ontology::init_headers()
- *
- * Description          - Initializes default headers that will be printed
- *                        to final tsv as well as extra headers for software
- *                        being ran
- *
- * Notes                - None
- *
- *
- * @return              - None
- *
- * =====================================================================
- */
-void Ontology::init_headers() {
-
-    std::vector<ENTAP_HEADERS>     out_header;
-    std::vector<ENTAP_HEADERS>     add_header;
-    // Add default sim search headers (pulled from SimilaritySearch.c, separate in case we want something else)
-    out_header = ModDiamond::DEFAULT_HEADERS;
-
-    // Add additional headers for ontology software
-    for (uint16 &flag : _software_flags) {
-        switch (flag) {
-#ifdef EGGNOG_MAPPER
-            case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-                add_header = {
-                        &ENTAP_EXECUTE::HEADER_SEED_ORTH,
-                        &ENTAP_EXECUTE::HEADER_SEED_EVAL,
-                        &ENTAP_EXECUTE::HEADER_SEED_SCORE,
-                        &ENTAP_EXECUTE::HEADER_PRED_GENE,
-                        &ENTAP_EXECUTE::HEADER_TAX_SCOPE,
-                        &ENTAP_EXECUTE::HEADER_EGG_OGS,
-                        &ENTAP_EXECUTE::HEADER_EGG_DESC,
-                        &ENTAP_EXECUTE::HEADER_EGG_KEGG,
-                        &ENTAP_EXECUTE::HEADER_EGG_PROTEIN,
-                        &ENTAP_EXECUTE::HEADER_EGG_GO_BIO,
-                        &ENTAP_EXECUTE::HEADER_EGG_GO_CELL,
-                        &ENTAP_EXECUTE::HEADER_EGG_GO_MOLE
-                };
-                break;
-#endif
-            case ONT_INTERPRO_SCAN:
-                add_header = {
-                        ModInterpro::DEFAULT_HEADERS
-                };
-                break;
-            case ONT_EGGNOG_DMND:
-                add_header = {
-                        ModEggnogDMND::DEFAULT_HEADERS
-                };
-                break;
-            default:
-                throw ExceptionHandler("ERROR: Unknown INT flag used during Ontology",
-                    ERR_ENTAP_MEM_ALLOC);
-        }
-        out_header.insert(out_header.end(), add_header.begin(), add_header.end());
-    }
-
-    _HEADERS = out_header;
 }

@@ -5,6 +5,7 @@
 .. _GeneMarkS-T: http://exon.gatech.edu/GeneMark/
 .. _TCLAP: http://tclap.sourceforge.net/
 .. _cereal: https://uscilab.github.io/cereal/
+.. _TransDecoder: https://github.com/TransDecoder/TransDecoder/releases
 
 
 
@@ -25,11 +26,11 @@ How to cite:
     * Hart AJ, Ginzburg S, Xu M, et al. EnTAP: Bringing faster and smarter functional annotation to non-model eukaryotic transcriptomes. Mol Ecol Resour. 2020;20:591–604. https://doi.org/10.1111/1755-0998.13106
 
 
-Pipeline Stages:
+Pipeline Stages
 ----------------
     * Transcriptome Filtering: designed to remove assembly artifacts and identify true CDS (complete and partial genes)
         1. Expression Filtering (RSEM)
-        2. Frame Selection (GeneMARKS-T)
+        2. Frame Selection (TransDecoder by default, or GeneMarkS-T)
 
     * Transcriptome Annotation: designed to assign functional information to sequences (homology, Gene Ontology, KEGG)
         3. Similarity Search: optimized search against user-selected databases (DIAMOND).  
@@ -46,7 +47,7 @@ The figure below represents the typical EnTAP pipeline. A more detailed version 
 	:align: center
 
 
-Citations:
+Citations
 ----------
 [1]   A. Mitchell, H.-Y. Chang, and L. Daugherty, "The InterPro protein families database: the
       classification resource after 15 years," Nucleid Acids Research, vol. 43, no. D1, 2015.
@@ -82,12 +83,15 @@ Citations:
 [9]   S. Tang, A. Lomsadze, and M. Borodovsky, "Identification of protein coding regions in
       RNA transcripts," Nucleic Acids Research, 2015
 
+[10]  https://github.com/TransDecoder/TransDecoder/releases
+
 Software contained or used within this pipeline:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 * `RSEM`_
 * `DIAMOND`_
 * `EggNOG`_
 * `GeneMarkS-T`_
+* `TransDecoder`_
 * `InterProScan`_
 * `TCLAP`_
 * `cereal`_

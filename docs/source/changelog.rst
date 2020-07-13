@@ -1,6 +1,18 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.9.1-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.1-beta
+
+EnTAP Beta v0.10.1-beta (July 13, 2020)
+------------------------------------------
+
+    * Added support for TransDecoder for Frame Selection
+    * Added TPM as an additional output from Expression Filtering
+    * Added an .ini file and moved many commands/paths from the command line to this
+    * Standardized/finalized output header namings for GFACs support
+    * Changed the default Frame Selection software to TransDecoder. GeneMarkS-T can still be selected through the .ini file
+    * Changed the default Gene Ontology level to 1. This can be easily changed through the ini file
+    * Fixed issue where some EggNOG descriptions were not printed to the final output
+    * Fixed a few issues with older GCC versions
 
 EnTAP Beta v0.9.2-beta (June 4, 2020)
 ------------------------------------------
@@ -11,8 +23,8 @@ EnTAP Beta v0.9.2-beta (June 4, 2020)
 EnTAP Beta v0.9.1-beta (January 12, 2020)
 -------------------------------------------
 
-    * Changed --trim flag to --no-trim. Trimming sequence headers to the first space is the default now. If you have executions from previous versions, you may need to use the --no-trim flag as needed for backwards compatibility (picking up where you left off). 
-    * Fixed a bug where the --single-end command was not properly recognized.
+    * Changed --trim flag to --no-trim. Trimming sequence headers to the first space is the default now. If you have executions from previous versions, you may need to use the --no-trim flag as needed for backwards compatibility (picking up where you left off)
+    * Fixed a bug where the --single-end command was not properly recognized
 
 
 EnTAP Beta v0.9.0-beta (May 12, 2019)

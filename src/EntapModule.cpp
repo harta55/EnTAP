@@ -91,6 +91,8 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mpFileSystem->create_dir(mFigureDir);
     mpFileSystem->create_dir(mProcDir);
 
+    mpFileSystem->set_working_dir(mModOutDir);
+
     enable_headers();
 }
 
@@ -115,5 +117,12 @@ go_format_t EntapModule::EM_parse_go_list(std::string list, EntapDatabase* datab
 void EntapModule::enable_headers() {
     for (auto &header : mModuleHeaders) {
         mpQueryData->header_set(header, true);
+    }
+}
+
+EntapModule::~EntapModule() {
+    if (mpFileSystem != nullptr) {
+        std::string root_dir = mpFileSystem->get_root_path();
+        mpFileSystem->set_working_dir(root_dir);
     }
 }

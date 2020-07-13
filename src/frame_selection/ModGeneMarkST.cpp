@@ -146,6 +146,8 @@ void ModGeneMarkST::execute() {
                                             "\nFNN File: " + temp_fnn_file+
                                             "\nLST File: " + temp_lst_file);
 
+    // No longer doing this, just changing CWD
+#if 0
     // Format genemarks-t output (remove blank lines for user)
     // Format FNN file
     FS_dprint("Formatting GeneMarkST files...");
@@ -178,6 +180,7 @@ void ModGeneMarkST::execute() {
     // Delete temporary files (ignore errors)
     mpFileSystem->delete_file(temp_fnn_file);
     mpFileSystem->delete_file(temp_faa_file);
+#endif
 
     // Move other output files to module directory
     if (!mpFileSystem->rename_file(temp_lst_file, mFinalLstPath)) {

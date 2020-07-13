@@ -395,7 +395,12 @@ void EggnogDatabase::get_eggnog_entry(QuerySequence::EggnogResults *eggnog_data)
 
     if (!orthologs.empty()) {
         get_annotations(orthologs, eggnog_data);    // Pull final annotations from database
-        get_additional_sql_data(eggnog_data);       // Pull any additional info from database
+        try {
+            get_additional_sql_data(eggnog_data);       // Pull any additional info from database
+        } catch (...) {
+            ; // Do not fatal error for this, it is not supported on all databases and info may not
+              // be needed by the user
+        }
     }
 }
 
@@ -453,6 +458,8 @@ void EggnogDatabase::get_additional_sql_data(QuerySequence::EggnogResults *eggno
     // Lookup description, KEGG, protein domain from SQL database
 
     if (mSQLVersion != EGGNOG_VERSION_EARLIER) return;  // Only supported for earlier versions of SQL database currently
+
+    get_og_query(eggnogResults);    // Will lookup og_key
 
     if (!eggnogResults->og_key.empty()) {
         std::vector<std::vector<std::string>>results;

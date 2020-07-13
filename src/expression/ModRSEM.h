@@ -66,7 +66,7 @@ public:
     ModRSEM(std::string &execution_stage_path, std::string &in_hits,
             EntapDataPtrs &entap_data, std::string &align);
 
-    ~ModRSEM() ;
+    ~ModRSEM();
 
     virtual ModVerifyData verify_files() override ;
     virtual void execute() override ;

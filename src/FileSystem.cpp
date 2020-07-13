@@ -87,7 +87,7 @@ FileSystem::FileSystem() {
 
     FS_dprint("Spawn Object - FileSystem");
     set_executable_dir();
-    mCurrentWDir = get_cur_dir();
+    mOriginalWorkingDir = get_cur_dir();
 }
 
 
@@ -502,6 +502,47 @@ std::string FileSystem::get_cur_dir() {
     return std::string(cwd);
 #endif
 
+}
+
+/**
+ * ======================================================================
+ * Function std::string set_working_dir(std::string &working_directory)
+ *
+ * Description          - Sets the current working directory
+ *
+ * Notes                - POSIX
+ *
+ * @param working_directory - Working directory we want to set
+ *
+ * @return              - True (successful), false (unsuccessful)
+ *
+ * =====================================================================
+ */
+bool FileSystem::set_working_dir(std::string &working_directory) {
+    int ret_code;
+
+    if (working_directory == mCurrentWorkingDir) {
+        FS_dprint("Directory is already working: " + working_directory);
+        return true;
+    }
+    if (!file_exists(working_directory)) {
+        FS_dprint("Working directory does not exist, creating...");
+        if (!create_dir(working_directory)) {
+            FS_dprint("ERROR unable to create working directory at: " + working_directory);
+            return false;
+        }
+    }
+    FS_dprint("Setting working directory to: " + working_directory);
+    ret_code = chdir(working_directory.c_str());
+
+    if (ret_code == 0) {
+        mCurrentWorkingDir = working_directory;
+        FS_dprint("Success! Working directory set");
+        return true;
+    } else {
+        FS_dprint("ERROR unable to set working directory");
+        return false;
+    }
 }
 
 void FileSystem::set_root_dir(std::string &root) {

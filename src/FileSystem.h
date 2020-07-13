@@ -95,6 +95,7 @@ public:
     FileSystem();
     ~FileSystem();
     void set_root_dir(std::string &root_dir);
+    bool set_working_dir(std::string &working_dir);
     //void open_out(std::string &, std::ofstream &);
     bool file_is_open(std::ofstream&);
     void close_file(std::ofstream&);
@@ -184,7 +185,8 @@ private:
     std::string mTempOutpath;     // Temp directory for EnTAP usage
     std::string mErrorMsg;        // String containing error mMessage from execution
     std::string mExeDirectory;    // Directory of the EnTAP executable
-    std::string mCurrentWDir;     // Current working directory;
+    std::string mOriginalWorkingDir;     // Original working directory;
+    std::string mCurrentWorkingDir;      // Current working directory
     //**********************************************************
 };
 

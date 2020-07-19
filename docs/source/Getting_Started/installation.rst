@@ -74,17 +74,19 @@ EnTAP leverages several software distributions within the pipeline to provide th
 Software:
     * RSEM_ (Expression Filtering with alignment file): version 1.3.0 packaged with EnTAP
 
-    * TransDecoder_ (Frame Selection): version 5.3.0 must be installed separately (if not using GeneMarkS-T)
+    * TransDecoder_ (Frame Selection): version 5.3.0 packaged with EnTAP
 
     * GeneMarkS-T_ (Frame Selection): version 5.1 must be installed separately (if not using TransDecoder)
 
     * DIAMOND_ (Similarity Search): version 0.9.9 packaged with EnTAP
+
         * Version 0.8.31
         * Version 0.9.19
+        * Version 0.9.9
 
     * InterProScan_ (Protein Databases): version 5.19 must be installed separately
 
-If you have downloaded the full repository from the GitLab page, each of these (with the exception of GeneMarkS-T and Transdecoder) are contained within the /libs directory. GeneMarkS-T must be acquired from the website linked previously due to licensing (free for academic use). 
+If you have downloaded the full repository from the GitLab page, each of these (with the exception of GeneMarkS-T and InterProScan) are contained within the /libs directory. GeneMarkS-T must be acquired from the website linked previously due to licensing (free for academic use). 
 
 
 RSEM and DIAMOND both require compilation from source code while GeneMarkS-T does not. To compile these, follow the directions below. These are also found on the respective GitHub pages and are subject to change depending on the version.

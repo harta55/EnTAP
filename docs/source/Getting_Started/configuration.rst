@@ -23,8 +23,8 @@ When a user is trying to execute EnTAP, they must specify the path to this ini f
     * rsem-prepare-reference=/EnTAP/libs/RSEM-1.3.0/rsem-prepare-reference
     * rsem-convert-sam-for-rsem=/EnTAP/libs/RSEM-1.3.0/convert-sam-for-rsem
     * genemarkst-exe=/EnTAP/libs/gmst_linux_64/gmst.pl
-    * transdecoder-long-exe=TransDecoder.LongOrfs
-    * transdecoder-predict-exe=TransDecoder.Predict
+    * transdecoder-long-exe=EnTAP/libs/TransDecoder-v5.3.0/TransDecoder.LongOrfs
+    * transdecoder-predict-exe=EnTAP/libs/TransDecoder-v5.3.0/TransDecoder.Predict
     * interpro_exe_path=interproscan.sh
 
 If something is globally installed, such as "interproscan-exe" above, put how you'd normally run the software after the '='. As an example, running DIAMOND through a global installation may simply be "diamond". The Ini File line for DIAMOND will simply read:

@@ -16,6 +16,7 @@
 .. _EggNOG: https://github.com/jhcepas/eggnog-mapper
 .. _DIAMOND: https://github.com/bbuchfink/diamond
 .. _GeneMarkS-T: http://exon.gatech.edu/GeneMark/
+.. _TransDecoder: https://github.com/TransDecoder/TransDecoder/wiki
 .. _GO: http://www.geneontology.org/
 
 
@@ -123,7 +124,7 @@ Gene ontology terms are normalized to levels based on the input flag from the us
 .. _log-label:
 
 Log File / Statistics
-----------------------
+-----------------------------
 
 The log file contains a statistical analysis of each stage of the pipeline that you ran. I'll give a brief outline of some of the stats performed:
 
@@ -170,7 +171,7 @@ The log file contains a statistical analysis of each stage of the pipeline that 
 .. _transc-label:
 
 Transcriptomes
----------------
+---------------------
 The |transc_dir| contains the original, processed, and final transcriptomes being used by EnTAP. The files are as follows with the 'transcriptome' tag based upon the name of your input transcriptome:
 
 * transcriptome.fasta
@@ -193,7 +194,7 @@ The |transc_dir| contains the original, processed, and final transcriptomes bein
 .. _exp-label:
 
 Expression Filtering (RSEM)
-----------------------------
+---------------------------------
 The |exp_dir| folder will contain all of the relevant information for this stage of the pipeline. This folder will contain the :ref:`main files<exp_main-label>` (results from expression analysis software), files :ref:`processed<exp_proc-label>` from EnTAP (including graphs). 
 
 
@@ -228,15 +229,36 @@ This directory will contain all of the files produced from EnTAP concerning expr
 
 .. _frame-label:
 
-Frame Selection (GeneMarkS-T)
-------------------------------
-The |frame_dir| folder will contain all of the relevant information for the frame selection stage of the pipeline. This folder will contain the :ref:`main files<f_main-label>` (results from frame selection software), files :ref:`processed<f_proc-label>` from EnTAP, and :ref:`figures<f_fig-label>` generated from EnTAP.
+Frame Selection (GeneMarkS-T or TransDecoder)
+-------------------------------------------------------
+The |frame_dir| folder will contain all of the relevant information for the frame selection stage of the pipeline. This folder will contain results from frame selection software, files :ref:`processed<f_proc-label>` from EnTAP, and :ref:`figures<f_fig-label>` generated from EnTAP.
 
+.. _f_trans-main-label:
 
-.. _f_main-label:
+TransDecoder Files: |frame_dir|
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The files within the root |frame_dir| directory contain the results from the frame selection portion of the pipeline. More information can be found at TransDecoder_ (the descriptions below are taken from there):
+
+* transcripts.fasta.transdecoder.pep
+
+    * Peptide sequences for the final candidate ORFs; all shorter candidates within longer ORFs were removed.
+
+* transcripts.fasta.transdecoder.gff3
+
+    * Positions within the target transcripts of the final selected ORFs
+
+* transcripts.fasta.transdecoder.cds
+
+    * Nucleotide sequences for coding regions of the final candidate ORFs
+
+* .err and .out file
+
+    * These files are will contain any error or general information produced from the TransDecoder run
+
+.. _f_gene-main-label:
 
 GeneMarkS-T Files: |frame_dir|
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The files within the root |frame_dir| directory contain the results from the frame selection portion of the pipeline. More information can be found at GeneMarkS-T_. With a generic transcriptome input of "Species.fasta", these files will have the following format:
 
 * Species.fasta.fnn

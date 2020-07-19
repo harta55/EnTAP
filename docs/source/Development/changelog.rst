@@ -2,7 +2,7 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.1-beta
 
-EnTAP Beta v0.10.1-beta (July 13, 2020)
+EnTAP Beta v0.10.1-beta (July 19, 2020)
 ------------------------------------------
 
     * Added support for TransDecoder for Frame Selection

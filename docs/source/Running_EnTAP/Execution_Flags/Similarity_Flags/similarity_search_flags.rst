@@ -30,9 +30,10 @@ These are the flags specific to Similarity Searching using DIAMOND.
 
 *-*-level [multi-integer]
 --------------------------------
-    * Specify Gene Ontology levels you would like to normalize to
+    * Specify Gene Ontology levels you would like to normalize to (ex: 0, 1, 2, 3, 4)
+    * A level of '0' indicates all levels will be printed
     * Any amount of these flags can be used
-    * Default: 0 (every level), 3, 4
+    * Default: 1
     * More information at: http://geneontology.org/page/ontology-structure
 
 -e [scientific]

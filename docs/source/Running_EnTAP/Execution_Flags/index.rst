@@ -1,7 +1,7 @@
 Execution Flags
 ============================
 
-These are the flags for the configuration process of EnTAP.
+These are the flags for the execution process of EnTAP. Flags will be repeated throughout these categories where relevant.
 
 .. toctree::
    :maxdepth: 3

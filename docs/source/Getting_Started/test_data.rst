@@ -19,13 +19,13 @@ To test EnTAP with frame selection, execute the following command:
 
 .. code-block:: bash
 
-    EnTAP --runP -i /test_data/trinity.fnn -d /test_data/bin/swiss_prot_test.dmnd
+    EnTAP --runP -i /test_data/trinity.fnn -d /test_data/bin/swiss_prot_test.dmnd --ini path/to/ini_file
 
 To test EnTAP without frame selection, execute the following command:
 
 .. code-block:: bash
 
-    EnTAP --runP -i /test_data/trinity.faa -d /test_data/swiss_prot_test.dmnd
+    EnTAP --runP -i /test_data/trinity.faa -d /test_data/swiss_prot_test.dmnd --ini path/to/ini_file
 
 These should run without error and you should have several files within the created |out_dir| directory. The final_annotations_lvl0.tsv file should resemble the test_data/final_annotations_test.tsv file. 
 

@@ -1,29 +1,29 @@
 Basic Flags
 =====================
 
-These are the general flags that can be used during Configuration.
+These are the general flags that can be used during Configuration. These will be used via the command line (denoted CMD) or ini file (denoted INI).
 
--d / *-*-database [string]
--------------------------------
+-d / *-*-database [string] [CMD]
+------------------------------------
 * Specify any number of FASTA formatted databases you would like to configure for EnTAP
 * Not necessary if you already have DIAMOND configured databases (.dmnd)
 
-*-*-out-dir [string]
-----------------
+*-*-out-dir [string] [CMD]
+-------------------------------
 * Specify an output directory for the databases to be sent to (recommended)
 * This will send the EnTAP database and DIAMOND databases to this location
 
--t / *-*-threads [number]
----------------------
+-t / *-*-threads [number] [CMD]
+-----------------------------------
 * Specify thread number for Configuration
 
-*-*-data-generate
+*-*-data-generate [CMD]
 ------------------------
 * Specify this flag is you would like to generate the EnTAP database rather than downloading from FTP (default)
 * I'd only use this if you're having issues with the FTP
 
-*-*-data-type [flag]
--------------------
+*-*-data-type [flag] [INI]
+-------------------------------
 * Specify which databases you'd like to generate/download
 
     * 0. Binary Database (default) - This will be much quicker and is recommended

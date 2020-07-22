@@ -1,12 +1,12 @@
 Ontology Flags
 =====================
 
-These are flags specific to the Ontolgoy portion of the pipeline using either EggNOG or InterProScan.
+These are flags specific to the Ontolgoy portion of the pipeline using either EggNOG or InterProScan. These will be used via the command line (denoted CMD) or ini file (denoted INI).
 
 General Flags
 ------------------
 
-*-*-level [multi-integer]
+*-*-level [multi-integer] [INI]
 --------------------------------
     * Specify Gene Ontology levels you would like to normalize to (ex: 0, 1, 2, 3, 4)
     * A level of '0' indicates all levels will be printed
@@ -14,7 +14,7 @@ General Flags
     * Default: 1
     * More information at: http://geneontology.org/page/ontology-structure
 
-*-*-ontology [multi-integer]
+*-*-ontology [multi-integer] [INI]
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     * Specify which ontology packages you would like to use
 
@@ -29,8 +29,8 @@ General Flags
 InterProScan Specific Flags
 ------------------------------------------
 
-*-*-protein [multi-string]
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+*-*-protein [multi-string] [INI]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     * Use this option if you would like to run InterProScan
     * Specify databases to run against (you must have them already installed)
       

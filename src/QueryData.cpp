@@ -904,36 +904,44 @@ bool QueryData::print_transcriptome(uint32 flags, std::string &outpath, SEQUENCE
     uint64 sequence_ct = 0;
 
     try {
-        for (auto& pair : *mpSequences) {
-            // If sequence flags match what we are looking for
-            if (pair.second->getMQueryFlags() & flags) {
-                // Yes, print to the file
-                switch (sequence_type) {
+        // Ensure that we were able to open file for reading
+        if (outfile.is_open()) {
+            for (auto& pair : *mpSequences) {
+                // If sequence flags match what we are looking for
+                if (pair.second->getMQueryFlags() & flags) {
+                    // Yes, print to the file
+                    switch (sequence_type) {
 
-                    case SEQUENCE_AMINO_ACID:
-                        if (pair.second->is_protein()) {
-                            outfile << pair.second->get_sequence_p() << std::endl;
-                            sequence_ct++;
-                        } else {
-                            ;
-                        }
-                        break;
+                        case SEQUENCE_AMINO_ACID:
+                            if (pair.second->is_protein()) {
+                                outfile << pair.second->get_sequence_p() << std::endl;
+                                sequence_ct++;
+                            } else {
+                                ;
+                            }
+                            break;
 
-                    case SEQUENCE_NUCLEOTIDE:
-                        if (pair.second->is_nucleotide()) {
-                            outfile << pair.second->get_sequence_n() << std::endl;
-                            sequence_ct++;
-                        } else {
-                            ;
-                        }
-                        break;
+                        case SEQUENCE_NUCLEOTIDE:
+                            if (pair.second->is_nucleotide()) {
+                                outfile << pair.second->get_sequence_n() << std::endl;
+                                sequence_ct++;
+                            } else {
+                                ;
+                            }
+                            break;
 
-                    default:
-                        FS_dprint("WARNING: QueryData print_transcriptome unrecognized case");
-                        break;
+                        default:
+                            FS_dprint("WARNING: QueryData print_transcriptome unrecognized case");
+                            break;
+                    }
                 }
             }
-        }
+        } else {
+            // NO could not open file
+            FS_dprint("ERROR unable to open file: " + outpath + " for writing");
+            ret = false;
+        };
+
     } catch (...) {
         ret = false;
     }

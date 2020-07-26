@@ -70,6 +70,7 @@ namespace entapExecute {
         std::string                             input_path;      // Absolute path to transciptome (WARNING changes depending on user selection)
         std::string                             final_out_dir;   // Absolute path to output directory for final stats
         std::string                             transcriptome_outpath;
+        std::string                             transcriptome_dir;
         std::string                             transcrtipeom_out_filename;
         std::string                             entap_graphing_path;
         ent_input_multi_str_t                   databases;       // NCBI+UNIPROT+Other
@@ -110,7 +111,8 @@ namespace entapExecute {
         final_out_dir  = pFileSystem->get_final_outdir();
         pFileSystem->create_transcriptome_dir();        // Directory where filtered transcriptomes will be copied
         transcrtipeom_out_filename = pFileSystem->get_filename(input_path, true);   // Pull filename from input transcriptome
-        transcriptome_outpath = PATHS(pFileSystem->get_trancriptome_dir(), transcrtipeom_out_filename);
+        transcriptome_dir     = pFileSystem->get_trancriptome_dir();
+        transcriptome_outpath = PATHS(transcriptome_dir, transcrtipeom_out_filename);
 
         try {
             verify_state(state_queue, state_flag);         // Set state transition
@@ -163,7 +165,7 @@ namespace entapExecute {
 
                             // Copy filtered file to entap transcriptome directory
                             std::string transc_filter_filename = pUserInput->get_user_transc_basename() + TRANSCRIPTOME_FILTERED_TAG;
-                            std::string transc_filter_outpath  = PATHS(transcriptome_outpath, transc_filter_filename);
+                            std::string transc_filter_outpath  = PATHS(transcriptome_dir, transc_filter_filename);
 
                             pFileSystem->delete_file(transc_filter_outpath);
                             uint32 sequence_flags = 0;
@@ -198,7 +200,7 @@ namespace entapExecute {
 
                                 // Copy frame selected file to the trancriptome directory
                                 std::string transc_protein_filename = pUserInput->get_user_transc_basename() + TRANSCRIPTOME_FRAME_TAG;
-                                std::string transc_protein_outpath  = PATHS(transcriptome_outpath, transc_protein_filename);
+                                std::string transc_protein_outpath  = PATHS(transcriptome_dir, transc_protein_filename);
                                 uint32 sequence_flags=0;
                                 sequence_flags |= QuerySequence::QUERY_FRAME_KEPT;
                                 pFileSystem->delete_file(transc_protein_outpath);
@@ -231,7 +233,7 @@ namespace entapExecute {
                         FS_dprint("Beginning to copy final transcriptome to be used...");
 
                         std::string file_name = pUserInput->get_user_transc_basename() + TRANSCRIPTOME_FINAL_TAG;
-                        std::string out_path = PATHS(transcriptome_outpath, file_name);
+                        std::string out_path = PATHS(transcriptome_dir, file_name);
                         uint32 sequence_flags = 0;
                         QueryData::SEQUENCE_TYPES sequence_type;
                         sequence_flags |= QuerySequence::QUERY_FRAME_KEPT;

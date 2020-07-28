@@ -438,7 +438,7 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
 
 /* Similarity Search Commands */
         {INI_SIM_SEARCH,CMD_DIAMOND_EXE          ,ENTAP_INI_NULL  ,DESC_DIAMOND_EXE           ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DIAMOND_DEFAULT_EXE    ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
-        {INI_SIM_SEARCH,CMD_TAXON                ,ENTAP_INI_NULL  ,DESC_TAXON                 ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_TAXON                ,ENTAP_INI_NULL  ,DESC_TAXON                 ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
         {INI_SIM_SEARCH,CMD_QCOVERAGE            ,ENTAP_INI_NULL  ,DESC_QCOVERAGE             ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_QCOVERAGE      ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
         {INI_SIM_SEARCH,CMD_TCOVERAGE            ,ENTAP_INI_NULL  ,DESC_TCOVERAGE             ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_TCOVERAGE      ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
         {INI_SIM_SEARCH,CMD_CONTAMINANT          ,CMD_SHORT_CONTAMINANT,DESC_CONTAMINANT      ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
@@ -616,6 +616,7 @@ void UserInput::parse_ini(std::string &ini_path) {
                                     std::stringstream ss(val);
                                     std::string token;
                                     while (std::getline(ss, token, INI_FILE_MULTI_DELIM)) {
+                                        trim(token);
                                         vect.push_back(std::stof(token));
                                     }
                                     ini_entry->parsed_value = vect;
@@ -626,6 +627,7 @@ void UserInput::parse_ini(std::string &ini_path) {
                                     std::stringstream ss(val);
                                     std::string token;
                                     while (std::getline(ss, token, INI_FILE_MULTI_DELIM)) {
+                                        trim(token);
                                         vect.push_back((ent_input_uint_t)std::stoi(token));
                                     }
                                     ini_entry->parsed_value = vect;
@@ -636,6 +638,7 @@ void UserInput::parse_ini(std::string &ini_path) {
                                     std::stringstream ss(val);
                                     std::string token;
                                     while (std::getline(ss, token, INI_FILE_MULTI_DELIM)) {
+                                        trim(token);
                                         vect.push_back(token);
                                     }
                                     ini_entry->parsed_value = vect;
@@ -1148,16 +1151,19 @@ bool UserInput::verify_user_input() {
 
             // Verify species for taxonomic relevance
             if (has_input(INPUT_FLAG_SPECIES)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_SPECIES].input);
                 verify_species(SPECIES, pEntap_database);
             }
 
             // Verify contaminant
             if (has_input(INPUT_FLAG_CONTAMINANT)) {
+                FS_dprint("Verifying input flag " + mUserInputs[CONTAMINANT].input);
                 verify_species(CONTAMINANT, pEntap_database);
             }
 
             // Verify path + extension for alignment file
             if (has_input(INPUT_FLAG_ALIGN)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_ALIGN].input);
                 ent_input_str_t align_file = get_user_input<ent_input_str_t>(INPUT_FLAG_ALIGN);
                 std::string align_ext = mpFileSystem->get_file_extension(align_file, false);
                 std::transform(align_ext.begin(), align_ext.end(), align_ext.begin(), ::tolower);
@@ -1173,6 +1179,7 @@ bool UserInput::verify_user_input() {
 
             // Verify FPKM
             if (has_input(INPUT_FLAG_FPKM)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_FPKM].input);
                 ent_input_fp_t fpkm = get_user_input<ent_input_fp_t>(INPUT_FLAG_FPKM);
                 if (fpkm > FPKM_MAX || fpkm < FPKM_MIN) {
                     throw ExceptionHandler("FPKM is out of range, but be between " + std::to_string(FPKM_MIN) +
@@ -1182,6 +1189,7 @@ bool UserInput::verify_user_input() {
 
             // Verify query coverage
             if (has_input(INPUT_FLAG_QCOVERAGE)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_QCOVERAGE].input);
                 ent_input_fp_t qcoverage = get_user_input<ent_input_fp_t>(INPUT_FLAG_QCOVERAGE);
                 if (qcoverage > COVERAGE_MAX || qcoverage < COVERAGE_MIN) {
                     throw ExceptionHandler("Query coverage is out of range, but be between " +
@@ -1192,6 +1200,7 @@ bool UserInput::verify_user_input() {
 
             // Verify target coverage
             if (has_input(INPUT_FLAG_TCOVERAGE)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_TCOVERAGE].input);
                 ent_input_fp_t qcoverage = get_user_input<ent_input_fp_t>(INPUT_FLAG_TCOVERAGE);
                 if (qcoverage > COVERAGE_MAX || qcoverage < COVERAGE_MIN) {
                     throw ExceptionHandler("Target coverage is out of range, but be between " +
@@ -1203,10 +1212,10 @@ bool UserInput::verify_user_input() {
             // Verify Ontology Flags
             is_interpro = false;
             if (has_input(INPUT_FLAG_ONTOLOGY)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_ONTOLOGY].input);
                 ont_flags = get_user_input<ent_input_multi_int_t>(INPUT_FLAG_ONTOLOGY);
                 for (ent_input_uint_t i = 0; i < ont_flags.size() ; i++) {
-                    if ((ont_flags[i] > ONT_SOFTWARE_COUNT) ||
-                         ont_flags[i] < 0) {
+                    if ((ont_flags[i] > ONT_SOFTWARE_COUNT) || ont_flags[i] < 0) {
                         throw ExceptionHandler("Invalid ontology flags being used",
                                                ERR_ENTAP_INPUT_PARSE);
                     }
@@ -1221,12 +1230,14 @@ bool UserInput::verify_user_input() {
 
             // Verify uninformative file list
             if (has_input(INPUT_FLAG_UNINFORMATIVE)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_UNINFORMATIVE].input);
                 std::string uninform_path = get_user_input<ent_input_str_t>(INPUT_FLAG_UNINFORMATIVE);
                 verify_uninformative(uninform_path);
             }
 
             // Verify Frame Selection flag
             if (has_input(INPUT_FLAG_FRAME_SELECTION)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_FRAME_SELECTION].input);
                 ent_input_uint_t frame_software = get_user_input<ent_input_uint_t >(INPUT_FLAG_FRAME_SELECTION);
                 if (frame_software <= FRAME_UNUSED || frame_software >= FRAME_SOFTWARE_COUNT) {
                     throw ExceptionHandler("Invalid Frame Selection software input!", ERR_ENTAP_INPUT_PARSE);
@@ -1235,6 +1246,7 @@ bool UserInput::verify_user_input() {
 
             // Verify minimum protein value
             if (has_input(INPUT_FLAG_TRANS_MIN_PROTEIN)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_TRANS_MIN_PROTEIN].input);
                 ent_input_uint_t  min_protein = get_user_input<ent_input_uint_t>(INPUT_FLAG_TRANS_MIN_PROTEIN);
                 if (min_protein < TRANS_MIN_PROTEIN_MIN) {
                     throw ExceptionHandler("Invalid TransDecoder minimum protein length value, minimum is: " +
@@ -1247,6 +1259,7 @@ bool UserInput::verify_user_input() {
 
             // Verify BUSCO database if the user has input it
             if (has_input(INPUT_FLAG_BUSCO_DATABASE)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_BUSCO_DATABASE].input);
                 ent_input_multi_str_t busco_db = get_user_input<ent_input_multi_str_t>(INPUT_FLAG_BUSCO_DATABASE);
                 BuscoDatabase buscoDatabase = BuscoDatabase(mpFileSystem);
                 for (std::string &database : busco_db) {
@@ -1483,7 +1496,6 @@ void UserInput::verify_species(SPECIES_FLAGS flag, EntapDatabase *database) {
                                     ERR_ENTAP_INPUT_PARSE);
         }
     }
-    FS_dprint("Taxonomic species verified");
 }
 
 /**
@@ -1882,7 +1894,7 @@ bool UserInput::run_expression_filtering() {
         FS_dprint("YES, alignment file input from user");
         return true;
     } else {
-        return false;
         FS_dprint("NO, no alignment file specified from user");
+        return false;
     }
 }

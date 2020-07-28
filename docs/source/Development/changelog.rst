@@ -1,9 +1,16 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.1-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.2-beta
+
+EnTAP Beta v0.10.2-beta (July 26, 2020)
+------------------------------------------
+
+    * Fixed a pathing issue when EnTAP generated frame selected transcriptomes
 
 EnTAP Beta v0.10.1-beta (July 19, 2020)
 ------------------------------------------
+
+Note: Please use v0.10.2-beta or later instead of this version
 
     * Added support for TransDecoder for Frame Selection
     * Added TPM as an additional output from Expression Filtering

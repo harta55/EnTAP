@@ -171,13 +171,13 @@ namespace entapExecute {
                             uint32 sequence_flags = 0;
                             QueryData::SEQUENCE_TYPES sequence_type;
                             sequence_flags |= QuerySequence::QUERY_EXPRESSION_KEPT;
-                            blastp ? sequence_type = QueryData::SEQUENCE_AMINO_ACID : sequence_type = QueryData::SEQUENCE_NUCLEOTIDE;
+                            pQUERY_DATA->is_protein_data() ? sequence_type = QueryData::SEQUENCE_AMINO_ACID : sequence_type = QueryData::SEQUENCE_NUCLEOTIDE;
                             if (pQUERY_DATA->print_transcriptome(sequence_flags, transc_filter_outpath, sequence_type)){
                                 FS_dprint("Expression filtered transcriptome generated to: " + transc_filter_outpath);
                                 // WARNING: Set our next input path to the frame selected version
                                 input_path = transc_filter_outpath;
                             } else {
-                                throw ExceptionHandler("ERROR: unable to generate filtered transcriptome from frame selecttion results",
+                                throw ExceptionHandler("ERROR: unable to generate filtered transcriptome from expression analysis results",
                                                        ERR_ENTAP_GENERATE_TRANSCRIPTOME);
                             }
                         }

@@ -1,7 +1,7 @@
 Ontology Flags
 =====================
 
-These are flags specific to the Ontolgoy portion of the pipeline using either EggNOG or InterProScan. These will be used via the command line (denoted CMD) or ini file (denoted INI).
+These are flags specific to the Ontology portion of the pipeline using either EggNOG or InterProScan. These will be used via the command line (denoted CMD) or ini file (denoted INI).
 
 General Flags
 ------------------

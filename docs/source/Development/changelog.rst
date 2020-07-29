@@ -1,6 +1,11 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.3-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.4-beta
+
+EnTAP Beta v0.10.4-beta (July 29, 2020)
+------------------------------------------
+
+    * Fixed an issue where expression analysis transcriptome generation would fail (error message presented to user as 'frame selection')
 
 EnTAP Beta v0.10.3-beta (July 28, 2020)
 ------------------------------------------

@@ -1157,7 +1157,7 @@ bool UserInput::verify_user_input() {
 
             // Verify contaminant
             if (has_input(INPUT_FLAG_CONTAMINANT)) {
-                FS_dprint("Verifying input flag " + mUserInputs[CONTAMINANT].input);
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_CONTAMINANT].input);
                 verify_species(CONTAMINANT, pEntap_database);
             }
 
@@ -1494,6 +1494,8 @@ void UserInput::verify_species(SPECIES_FLAGS flag, EntapDatabase *database) {
             throw ExceptionHandler("Error in one of your inputted taxons: " + s + " it is not located"
                                    " within the taxonomic database. You may remove it or select another",
                                     ERR_ENTAP_INPUT_PARSE);
+        } else {
+            FS_dprint("Verified species: " + s);
         }
     }
 }

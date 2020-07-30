@@ -629,8 +629,10 @@ bool QueryData::start_alignment_files(std::string &base_path, std::vector<ENTAP_
             }
         }
         ret = true;
+        FS_dprint("Alignment file started: " + base_path);
     } else {
         // File base path already exists!
+        FS_dprint("Alignment file skipped, already exists: " + base_path);
         ret = false;
     }
     return ret;
@@ -647,6 +649,7 @@ bool QueryData::end_alignment_files(std::string &base_path) {
         }
     }
     mAlignmentFiles.erase(base_path);
+    FS_dprint("Alignment file ended: " + base_path);
     return true;
 }
 

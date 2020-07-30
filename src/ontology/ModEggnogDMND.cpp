@@ -258,6 +258,10 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
             best_hit = pair.second->get_best_hit_alignment<EggnogDmndAlignment>
                     (GENE_ONTOLOGY, mSoftwareFlag, mEggnogDbDiamond);
 
+            if (best_hit == nullptr) {
+                FS_dprint("ERROR nullptr pulled ModEggnogDMND: " + pair.first);
+                continue;
+            }
             eggnog_results = best_hit->get_results();
             eggnogDatabase->get_eggnog_entry(eggnog_results);
             best_hit->refresh_headers();
@@ -301,6 +305,8 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     mpQueryData->end_alignment_files(out_hits_base);
     mpQueryData->end_alignment_files(out_no_hits_base);
     delete eggnogDatabase;
+
+    FS_dprint("EggNOG database closed, printing stats...");
 
     // Begin to print stats / files
     stream <<

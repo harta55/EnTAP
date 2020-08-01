@@ -72,7 +72,7 @@ public:
     virtual void execute() override ;
     virtual void parse() override;
     virtual std::string get_final_fasta() override ;
-    virtual void get_version() override;
+    virtual bool set_version() override;
 
 private:
 

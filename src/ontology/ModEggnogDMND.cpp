@@ -447,7 +447,7 @@ std::string ModEggnogDMND::get_output_dmnd_filepath(bool final) {
     return PATHS(mModOutDir, filename);
 }
 
-void ModEggnogDMND::get_version() {
-    return;
+bool ModEggnogDMND::set_version() {
+    return false;
 
 }

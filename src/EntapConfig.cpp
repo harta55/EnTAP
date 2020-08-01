@@ -106,7 +106,8 @@ namespace entapConfig {
 
             init_eggnog(threads, diamond_exe);
 
-            init_busco();
+            // Disable BUSCO config for now
+//            init_busco();
 
         } catch (ExceptionHandler &e){
             SAFE_DELETE(pEntapDatabase);

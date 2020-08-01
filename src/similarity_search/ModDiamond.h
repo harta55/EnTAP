@@ -62,7 +62,7 @@ public:
     virtual void execute() override ;
     virtual void parse() override ;
     static bool is_executable(std::string& exe);
-    virtual void get_version() override;
+    virtual bool set_version() override;
 
     // AbstractSimilaritySearch overrides
     bool run_blast(SimSearchCmd *cmd, bool use_defaults) override;

@@ -59,9 +59,9 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mModuleHeaders    = module_headers;
 
     // Initialize version numbers
-    mVersionMajor = 0;
-    mVersionMinor = 0;
-    mVersionRev   = 0;
+    mVersionMajor = VERSION_UNKNOWN;
+    mVersionMinor = VERSION_UNKNOWN;
+    mVersionRev   = VERSION_UNKNOWN;
 
     mThreads         = mpUserInput->get_supported_threads();
     mBlastp          = mpUserInput->has_input(INPUT_FLAG_RUNPROTEIN);

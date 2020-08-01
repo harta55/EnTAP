@@ -796,6 +796,6 @@ void ModDiamond::set_uniprot_headers() {
     mpQueryData->set_is_uniprot(true);
 }
 
-void ModDiamond::get_version() {
-    return;
+bool ModDiamond::set_version() {
+    return false;
 }

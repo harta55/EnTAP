@@ -418,8 +418,8 @@ ModGeneMarkST::ModGeneMarkST(std::string &execution_stage_path, std::string &in_
     mFinalHmmPath = PATHS(mModOutDir, GENEMARK_HMM_FILE);
 }
 
-void ModGeneMarkST::get_version() {
-    return;
+bool ModGeneMarkST::set_version() {
+    return false;
 }
 
 bool ModGeneMarkST::is_executable(std::string &exe) {

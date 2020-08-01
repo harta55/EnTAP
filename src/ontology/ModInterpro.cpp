@@ -501,6 +501,6 @@ ModInterpro::ModInterpro(std::string &ont, std::string &in, EntapDataPtrs& entap
     mExePath      = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_INTERPRO_EXE);
 }
 
-void ModInterpro::get_version() {
-    return;
+bool ModInterpro::set_version() {
+    return false;
 }

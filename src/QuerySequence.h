@@ -112,6 +112,15 @@ public:
         go_format_t             parsed_go;
     };
 
+    struct BuscoResults {
+        std::string status; // Either Complete or Missing
+        std::string busco_id;
+        std::string length_str;
+        uint64      length;
+        fp64        score;
+        std::string score_str;
+    };
+
     struct SimSearchResults {
         std::string                       length;
         std::string                       mismatch;

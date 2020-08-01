@@ -479,6 +479,6 @@ std::string ModRSEM::get_final_fasta() {
     return this->mFinalFasta;
 }
 
-void ModRSEM::get_version() {
-    return;
+bool ModRSEM::set_version() {
+    return false;
 }

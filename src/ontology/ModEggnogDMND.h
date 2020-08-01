@@ -61,7 +61,7 @@ public:
     virtual void execute() override ;
     virtual void parse() override;
     static bool is_executable(std::string &exe);
-    virtual void get_version() override;
+    virtual bool set_version() override;
 
 private:
     std::string get_output_dmnd_filepath(bool final);

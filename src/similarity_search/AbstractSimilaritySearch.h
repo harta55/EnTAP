@@ -64,7 +64,7 @@ public:
     virtual void execute() = 0;
     virtual void parse() = 0;
     virtual void set_success_flags() override ;
-    virtual void get_version() = 0;
+    virtual bool set_version() = 0;
 
     virtual bool run_blast(SimSearchCmd *cmd, bool use_defaults) = 0;
 

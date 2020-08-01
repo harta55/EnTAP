@@ -374,3 +374,35 @@ bool InterproAlignment::is_go_header(ENTAP_HEADERS header, std::vector<std::stri
     }
     return out_flag;
 }
+
+BuscoAlignment::BuscoAlignment(ExecuteStates state, uint16 software, std::string &database_path, QuerySequence *parent,
+                               QuerySequence::BuscoResults results)
+        : QueryAlignment(state, software, database_path, parent) {
+
+    mBuscoResults = results;
+
+    ALIGN_OUTPUT_MAP = {
+            {ENTAP_HEADER_ONT_BUSCO_SCORE, &mBuscoResults.score_str},
+            {ENTAP_HEADER_ONT_BUSCO_LENGTH, &mBuscoResults.length_str},
+            {ENTAP_HEADER_ONT_BUSCO_STATUS,&mBuscoResults.status},
+            {ENTAP_HEADER_ONT_BUSCO_ID    ,&mBuscoResults.busco_id},
+    };
+
+}
+
+// BUSCO does not produce any go info
+bool BuscoAlignment::is_go_header(ENTAP_HEADERS header, std::vector<std::string> &go_list) {
+    return false;
+}
+
+QuerySequence::BuscoResults *BuscoAlignment::get_results() {
+    return &this->mBuscoResults;
+}
+
+// BUSCO does not produce additional alignments but just in case this changes,
+//  use the best score
+bool BuscoAlignment::operator>(const QueryAlignment &alignment) {
+    const BuscoAlignment alignment_cast = dynamic_cast<const BuscoAlignment&>(alignment);
+
+    return this->mBuscoResults.score > alignment_cast.mBuscoResults.score;
+}

@@ -393,6 +393,12 @@ void ModTransdecoder::parse_transdecoder_fasta(std::string &fasta_path, FileSyst
                         sequence += line + "\n";
                     }
 
+                    // TransDecoder may add '*' at the end of a sequence. Delete this in order to prevent
+                    // incompatbility with other SW
+                    if (sequence.back() =='*') {
+                        sequence.pop_back();
+                    }
+
                     // Finished collecting sequence information, update QueryData
                     if (file_type == FileSystem::ENT_FILE_FASTA_FAA) {
                         pQuery_sequence->set_sequence_p(sequence);
@@ -513,6 +519,6 @@ void ModTransdecoder::parse_transdecoder_fasta_header(std::string &seq_id, std::
     }
 }
 
-void ModTransdecoder::get_version() {
-    return;
+bool ModTransdecoder::set_version() {
+    return false;
 }

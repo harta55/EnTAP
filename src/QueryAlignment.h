@@ -138,5 +138,28 @@ protected:
 
 };
 
+//**********************************************************************
+//**********************************************************************
+//                          BUSCOAlignment
+//**********************************************************************
+//**********************************************************************
+
+class BuscoAlignment : public QueryAlignment {
+
+public:
+    BuscoAlignment(ExecuteStates state, uint16 software, std::string &database_path, QuerySequence* parent,
+                      QuerySequence::BuscoResults results);
+    ~BuscoAlignment() override = default;
+    QuerySequence::BuscoResults* get_results();
+    bool operator>(const QueryAlignment&) override;
+
+
+private:
+    QuerySequence::BuscoResults mBuscoResults;
+
+protected:
+    bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list) override;
+
+};
 
 #endif //ENTAP_QUERYALIGNMENT_H

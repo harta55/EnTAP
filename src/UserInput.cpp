@@ -281,7 +281,8 @@
                             "multiple --ontology flags\n"                               \
                             "Specify flags as follows:\n"                               \
                             "    0. EggNOG (default)\n"                                 \
-                            "    1. InterProScan"
+                            "    1. InterProScan"                                       \
+                            "    2. BUSCO"
 #define CMD_GO_LEVELS      "level"
 #define DESC_ONT_LEVELS     "Specify the Gene Ontology levels you would like printed\n" \
                             "Default: 1\n"                                        \
@@ -457,9 +458,9 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_ONT_INTERPRO,CMD_INTER_DATA         ,ENTAP_INI_NULL  ,DESC_INTER_DATA            ,EX_INTER_DATA    ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
 
 /* Ontology - BUSCO Commands */
-        {INI_TRANSC_BUSCO,CMD_BUSCO_EXE          ,ENTAP_INI_NULL  ,DESC_BUSCO_EXE             ,EX_BUSCO_EXE     ,ENT_INI_VAR_STRING      ,DEFAULT_BUSCO_EXE      ,ENT_INPUT_FUTURE, ENTAP_INI_NULL_VAL},
-        {INI_TRANSC_BUSCO,CMD_BUSCO_DATABASE     ,ENTAP_INI_NULL  ,DESC_BUSCO_DATABASE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_INPUT_FUTURE, ENTAP_INI_NULL_VAL},
-        {INI_TRANSC_BUSCO,CMD_BUSCO_EVAL         ,ENTAP_INI_NULL  ,DESC_BUSCO_EVAL            ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_BUSCO_E_VALUE  ,ENT_INPUT_FUTURE, ENTAP_INI_NULL_VAL},
+        {INI_TRANSC_BUSCO,CMD_BUSCO_EXE          ,ENTAP_INI_NULL  ,DESC_BUSCO_EXE             ,EX_BUSCO_EXE     ,ENT_INI_VAR_STRING      ,DEFAULT_BUSCO_EXE      ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_TRANSC_BUSCO,CMD_BUSCO_DATABASE     ,ENTAP_INI_NULL  ,DESC_BUSCO_DATABASE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_TRANSC_BUSCO,CMD_BUSCO_EVAL         ,ENTAP_INI_NULL  ,DESC_BUSCO_EVAL            ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_BUSCO_E_VALUE  ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
 
 /* END COMMANDS */
         {ENTAP_INI_NULL,ENTAP_INI_NULL           ,ENTAP_INI_NULL  ,ENTAP_INI_NULL             , ENTAP_INI_NULL  ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL}
@@ -1672,13 +1673,7 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
                     case ONT_BUSCO:
                         FS_dprint("Verifying BUSCO inputs...");
                         if (ModBUSCO::is_executable(busco_exe)) {
-                            ent_input_multi_str_t busco_databases = get_user_input<ent_input_multi_str_t>(INPUT_FLAG_BUSCO_DATABASE);
-                            for (std::string &database : busco_databases) {
-                                if (!mpFileSystem->file_exists(database)) {
-                                    throw ExceptionHandler("Could not locate BUSCO database at: " + database, ERR_ENTAP_INPUT_PARSE);
-                                }
-                            }
-
+                            ;
                         } else {
                             throw ExceptionHandler("Could not execute test run of BUSCO with execution command: " +
                                 busco_exe, ERR_ENTAP_INPUT_PARSE);

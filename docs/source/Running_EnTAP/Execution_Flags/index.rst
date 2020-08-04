@@ -1,7 +1,7 @@
 Execution Flags
 ============================
 
-These are the flags for the execution process of EnTAP. Flags will be repeated throughout these categories where relevant.
+These are the flags for the execution process of EnTAP. Flags will be repeated throughout these categories where relevant. These will be used via the command line (denoted CMD) or ini file (denoted INI).
 
 .. toctree::
    :maxdepth: 3

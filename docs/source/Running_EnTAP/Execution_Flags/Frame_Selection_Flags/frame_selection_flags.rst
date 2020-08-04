@@ -1,7 +1,7 @@
 Frame Selection Flags
 =============================
 
-These are the flags specific to Frame Selection using either GeneMarkS-T or TransDecoder.
+These are the flags specific to Frame Selection using either GeneMarkS-T or TransDecoder. These will be used via the command line (denoted CMD) or ini file (denoted INI).
 
 General Flags
 ------------------
@@ -19,6 +19,6 @@ General Flags
 TransDecoder Specific Flags
 ----------------------------------
 
-*-*-transdecoder-m
+*-*-transdecoder-m [INI]
 ^^^^^^^^^^^^^^^^^^^^^^^^
 * Specify the minimum protein length

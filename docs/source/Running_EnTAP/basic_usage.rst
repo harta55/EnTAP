@@ -81,7 +81,7 @@ An example of flagging bacteria and fungi as contaminants can be seen below:
 
 .. code-block:: bash
 
-    EnTAP --runP -i path/to/transcriptome.fasta -d path/to/database.dmnd -c fungi -c bacteria
+    EnTAP --runP -i path/to/transcriptome.fasta -d path/to/database.dmnd -c fungi -c bacteria --ini path/to/ini_file
 
 
 **Taxonomic Favoring**
@@ -92,7 +92,7 @@ This feature can be utilized with the |flag_taxon| flag. An example command util
 
 .. code-block:: bash
 
-    EnTAP --runP -i path/to/transcriptome.fasta -d path/to/database.dmnd -c fungi -c bacteria --taxon sapiens
+    EnTAP --runP -i path/to/transcriptome.fasta -d path/to/database.dmnd -c fungi -c bacteria --taxon sapiens --ini path/to/ini_file
 
 Keep in mind, EnTAP will weigh the E-Value (within a database)and Coverage of the alignment before taxonomic weight in order to provide the most accurate result. If both the E-Value and Coverage are relatively similar, EnTAP will leverage taxonomic information.
 

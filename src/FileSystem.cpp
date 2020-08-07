@@ -1057,3 +1057,63 @@ void FileSystem::clear_error() {
 bool FileSystem::move_dir(std::string &original, std::string &final) {
     return rename_file(original, final);    // rename_file checks for directory existence
 }
+
+/**
+* ======================================================================
+* Function std::string ModInterpro::format_for_csv_parser(const std::string &input_path, std::string &output_path,
+*                                                      uint16 col_num)
+*
+* Description          - Formats tsv file to be read easier with current
+*                        lib (complains if tabs are not perfect)
+*                      - This will add in tabs to keep everything consistent
+*                     - Temporary...
+*
+*
+* Notes                - None
+*
+*
+* @param input_path    - Absolute path to file we want to format
+* @param output_path   - Path to temporary formatted file
+* @param col_num       - Number of columns in input/output
+*
+* @return              - FALSE if error occurred, TRUE if sucesful
+*
+* =====================================================================
+*/
+bool FileSystem::format_for_csv_parser(const std::string &input_path, std::string &output_path, uint16 col_num) {
+    std::string path_temp;
+    std::string line;
+    std::string input_filename;
+    uint16      tab_ct;
+    bool        ret = true;
+
+    path_temp = input_path;
+
+    input_filename = get_filename(path_temp, false) + "_temp";
+    path_temp      = PATHS(mTempOutpath, input_filename);
+    delete_file(path_temp);
+
+    try {
+        std::ifstream file_in(input_path);
+        std::ofstream file_temp(path_temp, std::ios::out | std::ios::app);
+        while(std::getline(file_in, line)) {
+            if (line.empty()) continue;
+            file_temp << line;
+            tab_ct = (uint16)std::count(line.begin(), line.end(), '\t');
+            while (tab_ct < col_num - 1) {
+                file_temp<<'\t';
+                tab_ct++;
+            }
+            file_temp << std::endl;
+        }
+        file_in.close();
+        file_temp.close();
+    } catch (std::exception &e) {
+        FS_dprint("ERROR format_for_csv_parser: " + std::string(e.what()));
+        ret = false;
+    }
+
+
+    output_path = path_temp;        // Set output
+    return ret;
+}

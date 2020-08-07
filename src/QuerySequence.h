@@ -75,6 +75,7 @@ public:
         QUERY_FAMILY_ONE_GO     = (1 << 14),        // Sequence contains at least one GO from EggNOG process
         QUERY_ONT_INTERPRO_GO   = (1 << 15),        // Sequence contains at least one GO from InterPro process
         QUERY_ONT_INTERPRO_PATHWAY = (1 << 16),     // Sequence contains at least one KEGG from InterPro process
+        QUERY_ONT_BUSCO         = (1 << 17),
 
         QUERY_MAX               = (1 << 31)
 
@@ -229,6 +230,7 @@ public:
     void add_alignment(ExecuteStates state, uint16 software, EggnogResults &results, std::string& database);
     void add_alignment(ExecuteStates state, uint16 software, SimSearchResults &results, std::string& database,std::string lineage);
     void add_alignment(ExecuteStates state, uint16 software, InterProResults &results, std::string& database);
+    void add_alignment(ExecuteStates state, uint16 software, BuscoResults &results, std::string& database);
     QuerySequence::align_database_hits_t* get_database_hits(std::string& database,ExecuteStates state, uint16 software);
 
     std::string format_go_info(std::vector<std::string> &go_list, uint8 lvl);

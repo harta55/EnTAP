@@ -25,7 +25,10 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <csv.h>
 #include "ModBUSCO.h"
+#include "../QuerySequence.h"
+#include "../QueryData.h"
 
 std::vector<ENTAP_HEADERS> ModBUSCO::DEFAULT_HEADERS = {
     ENTAP_HEADER_ONT_BUSCO_ID,
@@ -48,7 +51,7 @@ ModBUSCO::ModBUSCO(std::string &in_hits, std::string &ont_out, EntapDataPtrs &en
     mOutputDirectoryTag = "busco_" + mpFileSystem->get_filename(mBuscoDatabase, false);
     mOutputRunDir    = PATHS(FileSystem::get_cur_dir(), mOutputDirectoryTag);
 
-    set_version();
+    set_version();  // Set BUSCO software version
     mFinalTablePath = get_final_table_path(mOutputRunDir, mBuscoDatabase, mBuscoVersion);
 }
 
@@ -110,7 +113,11 @@ void ModBUSCO::execute() {
 
         switch (mBuscoVersion) {
 
+            case BUSCO_VERSION_3:
+                break;
+
             case BUSCO_VERSION_4:
+                FS_dprint("Executing BUSCO for version 4");
                 // WARNING version 4 has separate ini file for E-val
                 std_out = mpFileSystem->get_filename(mBuscoDatabase, false) + "_" + FileSystem::EXT_STD;
                 database_out_path = mpFileSystem->get_filename(mBuscoDatabase, false);
@@ -141,6 +148,7 @@ void ModBUSCO::execute() {
 
 void ModBUSCO::parse() {
     std::stringstream stats_stream;
+    std::string temp_reformatted;       // Temporary path to reformatted tsv file
     uint16 file_status=0;
 
     FS_dprint("Beginning to parse BUSCO file at: " + mFinalTablePath);
@@ -152,11 +160,59 @@ void ModBUSCO::parse() {
                                ERR_ENTAP_PARSE_BUSCO);
     }
 
+    // Need to reformat our TSV file since our parser does not like 'clean' tsv files...temporary need to change
+    if (!mpFileSystem->format_for_csv_parser(mFinalTablePath, temp_reformatted, BUSCO_COLUMN_NUM)) {
+        // ERROR unable to reformat file
+        throw ExceptionHandler("ERROR unable to reformat BUSCO file", ERR_ENTAP_PARSE_BUSCO);
+    }
 
     // File valid, continue
     mpFileSystem->format_stat_stream(stats_stream, "Annotation Completeness - BUSCO");
 
+    // Parse through library
+    std::string busco_id;
+    std::string seq_status;
+    std::string sequence_id;
+    fp64 busco_score;
+    uint32 seq_length;
+    vect_str_t missing_buscos;
+    QuerySequence::BuscoResults buscoResults;
+    QuerySequence  *querySequence;
 
+    io::CSVReader<BUSCO_COLUMN_NUM, io::trim_chars<' '>, io::no_quote_escape<'\t'>, io::throw_on_overflow,io::single_and_empty_line_comment<'#'>>
+            in(temp_reformatted);
+    while (in.read_row(busco_id, seq_status, sequence_id, busco_score, seq_length)) {
+
+        buscoResults = {};
+
+        // Check if this is a missing busco
+        if (sequence_id.empty()) {
+
+            // YES, record
+            missing_buscos.push_back(busco_id);
+
+        } else {
+            // NO, Check if we recognize this sequence ID
+            querySequence = mpQueryData->get_sequence(sequence_id);
+            if (querySequence == nullptr) {
+                throw ExceptionHandler("ERROR unable to find BUSCO sequence: " + sequence_id + " in user transcriptome",
+                                       ERR_ENTAP_PARSE_BUSCO);
+            }
+
+            // YES, sequence good. record data
+            buscoResults.status = seq_status;
+            buscoResults.length = seq_length;
+            buscoResults.length_str = std::to_string(seq_length);
+            buscoResults.score  = busco_score;
+            buscoResults.score_str = float_to_string(busco_score);
+            buscoResults.busco_id  = busco_id;
+
+            querySequence->add_alignment(GENE_ONTOLOGY, ONT_BUSCO, buscoResults, mBuscoDatabase);
+
+        }
+    } // END WHILE
+
+    FS_dprint("Success! Parsing complete");
 }
 
 bool ModBUSCO::set_version() {
@@ -222,7 +278,7 @@ bool ModBUSCO::set_version() {
             }
 
         } else {
-            FS_dprint("WARNING unable to execute BUSCO command");
+            FS_dprint("WARNING unable to execute BUSCO command to determine version");
             ret = false;
         }
 
@@ -240,7 +296,7 @@ bool ModBUSCO::set_version() {
         set_version_defaults();
     }
 
-    FS_dprint("Success! BUSCO version set");
+    FS_dprint("Success! BUSCO version set to: " + print_version());
     return ret;
 }
 
@@ -256,19 +312,23 @@ void ModBUSCO::set_version_defaults() {
 }
 
 bool ModBUSCO::is_version_supported(BUSCO_VERSION &version) {
+    FS_dprint("Checking BUSCO version support...");
 
     bool ret = true;
 
     switch (version) {
         case BUSCO_VERSION_UNKNOWN:
+            FS_dprint("WARNING Unknown version is NOT supported");
             ret = false;
             break;
 
         case BUSCO_VERSION_3:
+            FS_dprint("WARNING BUSCO version 3 is NOT supported");
             ret = false;
             break;
 
         case BUSCO_VERSION_4:
+            FS_dprint("BUSCO version 4 IS supported");
             break;
     }
     return ret;

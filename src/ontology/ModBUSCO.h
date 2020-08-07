@@ -74,15 +74,17 @@ private:
     const std::string BUSCO_INPUT_CPU      = "--cpu";       // Specify number of threads to BUSCO
     const std::string BUSCO_INPUT_EVAL     = "--evalue";
 
-    // BUSCO 3.0.2 prepends this tag before all directory creations (-o command)
-    // BUSCO 4.0.2 does not do this
-    const std::string BUSCO_PREPEND_TAG    = "run_";
-
-
     // BUSCO 4.0.2 commands
     const std::string BUSCO_RUN_TYPE_TRAN  = "transcriptome";
     const std::string BUSCO_RUN_TYPE_PROT  = "proteins";
+
+    // BUSCO 3.0.2 prepends this tag before all directory creations (-o command)
+    // BUSCO 4.0.2 does not do this
+    const std::string BUSCO_PREPEND_TAG    = "run_";
+    static constexpr uint16 BUSCO_COLUMN_NUM     = 5;         // full_table.tsv column number
     const std::string BUSCO_FULL_TABLE_FILENAME = "full_table.tsv";
+    const std::string BUSCO_STATUS_COMPLETE= "Complete";
+    const std::string BUSCO_STATUS_MISSING = "Missing";
 
     const BUSCO_VERSION              DEFAULT_VERSION    = BUSCO_VERSION_4;
     const std::vector<BUSCO_VERSION> SUPPORTED_VERSIONS = {BUSCO_VERSION_4};

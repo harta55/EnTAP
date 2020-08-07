@@ -454,6 +454,12 @@ void QuerySequence::set_header_data() {
     if (align_ptr != nullptr) {
         align_ptr->get_all_header_data(mHeaderInfo);
     }
+
+    // Ontology BUSCO data
+    align_ptr = this->mAlignmentData->get_best_align_ptr(GENE_ONTOLOGY, ONT_BUSCO, "");
+    if (align_ptr != nullptr) {
+        align_ptr->get_all_header_data(mHeaderInfo);
+    }
 }
 
 /**
@@ -607,6 +613,34 @@ void QuerySequence::add_alignment(ExecuteStates state, uint16 software, InterPro
                                   std::string &database) {
     QUERY_FLAG_SET(QUERY_INTERPRO);
     QueryAlignment *new_alignmet = new InterproAlignment(state, software, database, this, results);
+    mAlignmentData->update_best_hit(new_alignmet);
+}
+
+
+/**
+ * ======================================================================
+ * Function void QuerySequence::add_alignment(ExecuteStates state, uint16 software,
+ *                                      BuscoResults &results, std::string& database)
+ *
+ * Description          - Adds BuscoAlignment alignment to AlignmentData and updates
+ *                        pertinent data/best hits
+ *
+ * Notes                - None
+ *
+ * @param state         - State that alignment was created in
+ * @param software      - Software that alignment was created using (DIAMOND, EggNOG...)
+ * @param results       - BUSCO data
+ * @param database      - Absolute path to database associated with alignment
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
+void QuerySequence::add_alignment(ExecuteStates state, uint16 software, QuerySequence::BuscoResults &results,
+                                  std::string &database) {
+
+    QUERY_FLAG_SET(QUERY_ONT_BUSCO);
+    QueryAlignment *new_alignmet = new BuscoAlignment(state, software, database, this, results);
     mAlignmentData->update_best_hit(new_alignmet);
 }
 
@@ -779,6 +813,12 @@ void QuerySequence::update_query_flags(ExecuteStates state, uint16 software) {
 
                     break;
                 }
+
+                case ONT_BUSCO: {
+                    // Nothing special to do here
+                    break;
+                }
+
                 default:
                     return;
             }
@@ -840,6 +880,7 @@ uint32 QuerySequence::getMQueryFlags() const {
 bool QuerySequence::is_nucleotide() {
     return QUERY_FLAG_GET(QUERY_IS_NUCLEOTIDE);
 }
+
 
 QuerySequence::align_database_hits_t* QuerySequence::AlignmentData::get_database_ptr(ExecuteStates state, uint16 software, std::string& database) {
     if (database.empty()) return nullptr;

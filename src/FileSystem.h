@@ -128,6 +128,7 @@ public:
     std::string get_error();
     std::string get_extension(ENT_FILE_TYPES type);
     std::string get_trancriptome_dir();
+    bool format_for_csv_parser(const std::string &input_path, std::string &output_path, uint16 col_num);
 
     bool download_ftp_file(std::string,std::string&);
     bool decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES);

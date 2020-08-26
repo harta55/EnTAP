@@ -1,6 +1,13 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.5-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.6-beta
+
+EnTAP Beta v0.10.6-beta (August 26, 2020)
+------------------------------------------
+
+    * Added support to pipe the TransDecoder flag '--no_refine_starts' during Execution
+    * Fixed an issue where error messages during EggNOG searching would not get printed (seg fault)
+    * Contaminant information will not be printed to the log if there are none
 
 EnTAP Beta v0.10.5-beta (August 12, 2020)
 ------------------------------------------

@@ -22,3 +22,9 @@ TransDecoder Specific Flags
 *-*-transdecoder-m [INI]
 ^^^^^^^^^^^^^^^^^^^^^^^^
 * Specify the minimum protein length
+
+*-*-transdecoder-no-refine-starts [INI]
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+* Specify this flag if you would like to pipe the command, '--no_refine_starts' to TransDecoder. 
+* "This will 'start refinement identifies potential start codons for 5' partial ORFs using a PWM, process on by default". (From TransDecoder documentation)
+* Default: False

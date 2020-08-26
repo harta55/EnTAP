@@ -431,6 +431,12 @@ void ModTransdecoder::parse_transdecoder_fasta(std::string &fasta_path, FileSyst
 
             } else {
                 // No, must be a generic sequence line
+
+                // TransDecoder may add '*' at the end of a sequence. Delete this in order to prevent
+                // incompatibility with other SW
+                if (line.back() =='*') {
+                    line.pop_back();
+                }
                 sequence += line + "\n";
             }
         }

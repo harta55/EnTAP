@@ -59,7 +59,8 @@ ModTransdecoder::ModTransdecoder(std::string &execution_stage_path, std::string 
     FS_dprint("Spawn Object - ModTransdecoder");
 
     mTransdecoderLongOrfsExe = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_LONGORF_EXE);
-    mTransdecoderPredictExe = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_PREDICT_EXE);
+    mTransdecoderPredictExe  = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_PREDICT_EXE);
+    mIsNoRefineStarts        = mpUserInput->has_input(INPUT_FLAG_TRANS_NO_REFINE_STARTS);
     mExePath = mTransdecoderLongOrfsExe;
 
     mMinProteinLength = mpUserInput->get_user_input<ent_input_uint_t >(INPUT_FLAG_TRANS_MIN_PROTEIN);
@@ -292,6 +293,9 @@ int ModTransdecoder::predict_frame(std::string &err_msg) {
     tc_command_map.emplace(CMD_TRANSCRIPTOME_INPUT, mInputTranscriptome);    // Transcriptome
     tc_command_map.emplace(CMD_SINGLE_BEST_ONLY, TC_NULL_ARGUMENT); // retain only one best ORF per sequence
 //    tc_command_map.emplace(CMD_OUTPUT_DIR, mModOutDir); // Add output directory, DOESN't WORK!!! with latest version
+    if (mIsNoRefineStarts) {
+        tc_command_map.emplace(CMD_NO_REFINE_STARTS, TC_NULL_ARGUMENT);
+    }
 
     terminal_data.command = TC_generate_command(tc_command_map, mTransdecoderPredictExe);
     terminal_data.base_std_path = PATHS(mModOutDir, STD_OUTPUT_PREDICTION);

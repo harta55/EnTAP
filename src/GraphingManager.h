@@ -117,6 +117,7 @@ public:
     bool initialize_graph_data(GraphingData &graphingData);
     bool add_datapoint(std::string &path, std::list<std::string> list);
     void graph_data(std::string &path);
+    void close_graphing_file(std::string &path);
 
     class EntapGraphBase {
     public:

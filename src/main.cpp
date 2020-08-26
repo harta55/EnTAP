@@ -172,6 +172,6 @@ void exit_print(bool in_error) {
     pFileSystem->print_stats(out_msg);
 
     // CLEANUP
-    delete pFileSystem;
-    delete pUserInput;
+    SAFE_DELETE(pFileSystem);
+    SAFE_DELETE(pUserInput);
 }

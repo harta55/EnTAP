@@ -197,8 +197,11 @@
 #define CMD_COMPLETE_PROT   "complete"
 #define DESC_TRANS_MIN_FLAG "Transdecoder only. Specify the minimum protein length"
 #define CMD_TRANS_MIN_FLAG "transdecoder-m"
-
-
+#define CMD_TRANS_NO_REF_START "transdecoder-no-refine-starts"
+#define DESC_TRANS_NO_REF_START "Specify this flag if you would like to pipe the TransDecoder " \
+                                "command '--no_refine_starts' when it is executed. Default: False\n"           \
+                                "This will 'start refinement identifies potential start codons for " \
+                                "5' partial ORFs using a PWM, process on by default.' "
 /* ------------------ Similarity Search Commands -------------*/
 #define DESC_DIAMOND_EXE     "Method to execute DIAMOND. This can be a path to the executable "\
                             "or simple 'diamond'"
@@ -435,6 +438,7 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_FRAME_TRANSDECODER,CMD_TRANS_LONG_EXE,ENTAP_INI_NULL ,DESC_TRANS_LONG_EXE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,TRANSDECODER_LONG_DEFAULT_EXE, ENT_INI_FILE   ,ENTAP_INI_NULL_VAL},
         {INI_FRAME_TRANSDECODER,CMD_TRANS_PREDICT_EXE,ENTAP_INI_NULL,DESC_TRANS_PREDICT_EXE   ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,TRANSDECODER_PREDICT_DEFAULT_EXE, ENT_INI_FILE,ENTAP_INI_NULL_VAL},
         {INI_FRAME_TRANSDECODER,CMD_TRANS_MIN_FLAG,ENTAP_INI_NULL ,DESC_TRANS_MIN_FLAG        ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT         ,DEFAULT_TRANSDECODER_MIN_PROTEIN, ENT_INI_FILE,ENTAP_INI_NULL_VAL},
+        {INI_FRAME_TRANSDECODER,CMD_TRANS_NO_REF_START,ENTAP_INI_NULL, DESC_TRANS_NO_REF_START,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL       ,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
 
 /* Similarity Search Commands */
         {INI_SIM_SEARCH,CMD_DIAMOND_EXE          ,ENTAP_INI_NULL  ,DESC_DIAMOND_EXE           ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DIAMOND_DEFAULT_EXE    ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},

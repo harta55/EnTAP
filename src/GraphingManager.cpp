@@ -211,6 +211,25 @@ void GraphingManager::graph_data(std::string &path) {
     }
 }
 
+void GraphingManager::close_graphing_file(std::string &path) {
+
+    EntapGraphBase *graph_base=nullptr;
+
+    // If graphing enabled
+    if (mGraphingEnabled) {
+        // Yes, graphing is enabled
+        if (mGraphData.find(path) != mGraphData.end()) {
+            graph_base = mGraphData[path];
+        }
+
+        if (graph_base != nullptr) {
+            graph_base->close_graphing_file();
+            SAFE_DELETE(graph_base);
+            mGraphData.erase(path);
+        }
+    }
+}
+
 //**********************************************************************
 //**********************************************************************
 //                   EntapGraphBase Nested Class

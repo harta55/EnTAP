@@ -1,4 +1,4 @@
-/*
+/******************************************************************
  *
  * Developed by Alexander Hart
  * Plant Computational Genomics Lab
@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -23,14 +23,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ *******************************************************************/
 
 
 //*********************** Includes *****************************
 #include "UserInput.h"
 #include "ExceptionHandler.h"
 #include "GraphingManager.h"
-#include "SimilaritySearch.h"
 #include "common.h"
 #include "ontology/ModEggnog.h"
 #include "ontology/ModInterpro.h"
@@ -39,24 +38,227 @@
 #include "ontology/ModEggnogDMND.h"
 #include "config.h"
 #include "similarity_search/ModDiamond.h"
-
+#include "FrameSelection.h"
+#include "frame_selection/ModTransdecoder.h"
+#include "database/BuscoDatabase.h"
+#include "ontology/ModBUSCO.h"
+#include "frame_selection/ModGeneMarkST.h"
 //**************************************************************
 
 //*********************** Defines ******************************
+
+/* ----------------- General Input Commands ------------------*/
+#define CMD_HELP            "help"
+#define CMD_SHORT_HELP      "h"
 #define DESC_HELP           "Print all the help options for this version of EnTAP!"
+#define CMD_CONFIG          "config"
 #define DESC_CONFIG         "Configure EnTAP for execution later.\n"                    \
-                            "If this is your first time running EnTAP run this first!"  \
+                            "If this is your first time running EnTAP run this first! " \
                             "This will perform the following:\n"                        \
                             "    - Downloading EnTAP taxonomic database\n"              \
                             "    - Downloading Gene Ontology term database\n"           \
                             "    - Formatting any database you would like for diamond"
+#define CMD_RUN_PROTEIN     "runP"
 #define DESC_RUN_PROTEIN    "Execute EnTAP functionality through blastp\n"              \
                             "Note, if your input sequences are nucleotide, they will be"\
-                            "frame selected automatically."
+                            " frame selected automatically."
+#define CMD_RUN_NUCLEO      "runN"
 #define DESC_RUN_NUCLEO     "Execute EnTAP functionality through blastx\n"              \
                             "This will not frame select your sequences and will run them"\
-                            "through each stage of the pipeline as nucelotide sequences"
-#define DESC_INTER_DATA     "Select which databases you would like for InterProScan"    \
+                            " through each stage of the pipeline as nucelotide sequences"
+#define CMD_DATABASE        "database"
+#define CMD_SHORT_DATABASE  "d"
+#define DESC_DATABASE       "Provide the paths to the databases you would like to use\n"\
+                            "For running: ensure the databases selected are .dmnd"      \
+                            " formatted.\n"                                              \
+                            "For configuration: ensure the databases are FASTA format\n"\
+                            "Note: if your databases are not NCBI or Uniprot\n"         \
+                            "databases, taxonomic filtering might not be able to pull"  \
+                            " the species information!"
+
+#define DESC_INPUT_TRAN     "Path to the input transcriptome file"
+#define CMD_INPUT_TRAN      "input"
+#define CMD_SHORT_INPUT_TRAN "i"
+
+#define DESC_OUTPUT_DIR     "Specify the output directory you would like the data to"   \
+                            " be saved to."
+#define CMD_OUTPUT_DIR      "out-dir"
+
+#define CMD_OVERWRITE       "overwrite"
+#define DESC_OVERWRITE      "Select this option if you would like to overwrite previous "\
+                            "files\n"                                                   \
+                            "Note: do NOT use this if you would like to pickup from "    \
+                            "a previous run!"
+#define CMD_INI_FILE        "ini"
+#define DESC_INI_FILE      "Specify path to the entap_config.ini file that will "       \
+                            "be used to find all of the configuration data!"
+#define DESC_VERSION       "Print the version of EnTAP software you are running."
+#define CMD_VERSION        "version"
+#define CMD_SHORT_VERSION  "v"
+#define DESC_GRAPHING       "Check whether or not your system supports graphing.\n"     \
+                            "This option does not require any other flags and will"     \
+                            " just check whether the version of Python being used has"   \
+                            " MatPlotLib accessible."
+#define CMD_GRAPHING        "graph"
+#define DESC_NO_TRIM        "By default, EnTAP will trim the sequence ID to the nearest space \n"\
+                            "to help with compatibility across software. This command will instead remove \n"\
+                            "the spaces in a sequence ID rather than trimming."
+#define EX_NO_TRIM          ">TRINITY_231.1 Protein Information will become...\n>>TRINITY_231.1ProteinInformation \n"
+#define CMD_NO_TRIM         "no-trim"
+#define DESC_THREADS        "Specify the number of threads that will be used throughout\n"
+#define CMD_THREADS         "threads"
+#define CMD_SHORT_THREADS   "t"
+#define CMD_STATE           "state"
+#define DESC_STATE          "Specify the state of execution (EXPERIMENTAL)\n"           \
+                            "More information is available in the documentation\n"      \
+                            "This flag may have undesired affects and may not run properly!"
+#define DESC_NOCHECK        "Use this flag if you don't want your input to EnTAP verifed."\
+                            " This is not advised to use! Your run may fail later on "  \
+                            "if inputs are not checked"
+#define CMD_NOCHECK         "no-check"
+
+#define CMD_OUTPUT_FORMAT   "output-format"
+#define DESC_OUTPUT_FORMAT  "Specify the output format for the processed alignments."   \
+                            "Multiple flags can be specified.\n"                          \
+                            "    1. TSV Format (default)\n"                             \
+                            "    2. CSV Format\n"                                       \
+                            "    3. FASTA Amino Acid (default)\n"                       \
+                            "    4. FASTA Nucleotide (default)"
+
+
+/* -------------------- EnTAP Commands -----------------------*/
+#define CMD_ENTAP_DB_BIN    "entap-db-bin"
+#define DESC_ENTAP_DB_BIN   "Path to the EnTAP binary database"
+#define CMD_ENTAP_DB_SQL    "entap-db-sql"
+#define DESC_ENTAP_DB_SQL   "Path to the EnTAP SQL database (not needed if you are using the binary database)"
+#define CMD_ENTAP_GRAPH_PATH "entap-graph"
+#define DESC_ENTAP_GRAPH_PATH "Path to the EnTAP graphing script (entap_graphing.py)"
+
+/* ---------------- Configuration Commands -------------------*/
+#define CMD_DATA_GENERATE   "data-generate"
+#define DESC_DATA_GENERATE  "Specify whether you would like to generate EnTAP databases"\
+                            " instead of downloading them.\nDefault: Download\nIf you"  \
+                            " are encountering issues with the downloaded databases "   \
+                            "you can try this"
+#define CMD_DATABASE_TYPE   "data-type"
+#define DESC_DATABASE_TYPE  "Specify which EnTAP database you would like to download/"  \
+                            "generate.\n"                                               \
+                            "    0. Serialized Database (default)\n"                    \
+                            "    1. SQLITE Database\n"                                  \
+                            "Either or both can be selected with an additional flag. "  \
+                            "The serialized database will be faster although requires " \
+                            "more memory usage. The SQLITE database may be slightly "   \
+                            "slower."
+
+
+/* ---------------- Expression Analysis Commands -------------*/
+#define CMD_FPKM            "fpkm"
+#define DESC_FPKM           "Specify the FPKM threshold with expression analysis\n"     \
+                            "EnTAP will filter out transcripts below this value! (default: 0.5)"
+#define DESC_ALIGN_FILE     "Specify the path to the BAM/SAM file for expression analysis"
+#define CMD_ALIGN_FILE      "align"
+#define CMD_SHORT_ALIGN_FILE "a"
+#define CMD_SINGLE_END      "single-end"
+#define DESC_SINGLE_END     "Specify this flag if your BAM/SAM file was generated "    \
+                            "through single-end reads\n"                                \
+                            "Note: this is only required in expression analysis\n"      \
+                            "Default: paired-end"
+#define DESC_RSEM_CALC_EXP  "Execution method of RSEM Calculate Expression."
+#define EX_RSEM_CALC_EXP    "Example: rsem-calculate-expression"
+#define CMD_RSEM_CALC_EXP   "rsem-calculate-expression"
+#define DESC_RSEM_SAM_VALID "Execution method of RSEM SAM Validate."
+#define EX_RSEM_SAM_VALID   "Example: rsem-sam-validator"
+#define CMD_RSEM_SAM_VALID  "rsem-sam-validator"
+#define DESC_RSEM_PREP_REF  "Execution method of RSEM Prep Reference."
+#define EX_RSEM_PREP_REF    "Example: rsem-prepare-reference"
+#define CMD_RSEM_PREP_REF   "rsem-prepare-reference"
+#define DESC_RSEM_CONV_SAM  "Execution method of RSEM Convert SAM"
+#define EX_RSEM_CONV_SAM    "Example: convert-sam-for-rsem"
+#define CMD_RSEM_CONV_SAM   "convert-sam-for-rsem"
+
+/* ----------------- Frame Selection Commands ----------------*/
+#define CMD_GENEMARKST_EXE  "genemarkst-exe"
+#define DESC_GENEMARKST_EXE "Method to execute GeneMarkST. This may be the path to the executable."
+#define CMD_TRANS_LONG_EXE  "transdecoder-long-exe"
+#define DESC_TRANS_LONG_EXE "Method to execute TransDecoder.LongOrfs. This may be the path to "\
+                            "the executable or simply TransDecoder.LongOrfs"
+#define CMD_TRANS_PREDICT_EXE "transdecoder-predict-exe"
+#define DESC_TRANS_PREDICT_EXE "Method to execute TransDecoder.Predict. This may be the path to "\
+                            "the executable or simply TransDecoder.Predict"
+#define CMD_FRAME_SELECTION_FLAG "frame-selection"
+#define DESC_FRAME_SELECTION_FLAG "Specify the Frame Selection software you would like "\
+                            "to use. Only one flag can be specified.\n"                 \
+                            "Specify flags as follows:\n"                               \
+                            "    1. GeneMarkS-T\n"                            \
+                            "    2. Transdecoder (default)"
+#define DESC_COMPLETE_PROT  "Select this option if all of your sequences are complete " \
+                            "proteins.\n"                                               \
+                            "At this point, this option will merely flag the sequences in your output file"
+#define CMD_COMPLETE_PROT   "complete"
+#define DESC_TRANS_MIN_FLAG "Transdecoder only. Specify the minimum protein length"
+#define CMD_TRANS_MIN_FLAG "transdecoder-m"
+#define CMD_TRANS_NO_REF_START "transdecoder-no-refine-starts"
+#define DESC_TRANS_NO_REF_START "Specify this flag if you would like to pipe the TransDecoder " \
+                                "command '--no_refine_starts' when it is executed. Default: False\n"           \
+                                "This will 'start refinement identifies potential start codons for " \
+                                "5' partial ORFs using a PWM, process on by default.' "
+/* ------------------ Similarity Search Commands -------------*/
+#define DESC_DIAMOND_EXE     "Method to execute DIAMOND. This can be a path to the executable "\
+                            "or simple 'diamond'"
+#define CMD_DIAMOND_EXE     "diamond-exe"
+#define DESC_TAXON          "Specify the type of species/taxon you are analyzing and "   \
+                            "would like hits closer in taxonomic relevance to be "       \
+                            "favored (based on NCBI Taxonomic Database)\n"              \
+                            "Note: replace all spaces with underscores '_'"
+#define CMD_TAXON           "taxon"
+#define CMD_QCOVERAGE       "qcoverage"
+#define DESC_QCOVERAGE      "Select the minimum query coverage to be allowed during "    \
+                            "similarity searching (default: 50.0)"
+#define CMD_TCOVERAGE       "tcoverage"
+#define DESC_TCOVERAGE      "Select the minimum target coverage to be allowed during "   \
+                            "similarity searching (default: 50.0)"
+#define CMD_CONTAMINANT     "contam"
+#define CMD_SHORT_CONTAMINANT "c"
+#define DESC_CONTAMINANT    "Specify the contaminants you would like to filter out"     \
+                            " from similarity searching\n"                               \
+                            "Note: since hits are based upon a multitide of factors "    \
+                            "a contaminant might be the best hit for a query!\n"        \
+                            "Contaminants can be selected by species (homo_sapiens)"    \
+                            " or through a specific taxon (homo)\n"                      \
+                            "If your taxon is more than one word just replace the "      \
+                            "spaces with underscores (_)"
+#define CMD_EVAL            "e-value"
+#define CMD_SHORT_EVAL      "e"
+#define DESC_EVAL           "Specify the E-Value that will be used as a cutoff during"  \
+                            " similarity searching"
+#define CMD_UNINFORMATIVE   "uninformative"
+#define DESC_UNINFORMATIVE  "Path to a list of keywords that should be used to specify" \
+                            " uninformativeness of hits during similarity searching. "  \
+                            "Generally something along the lines of 'hypothetical' or " \
+                            "'unknown' are used. Each term should be on a new line of " \
+                            "the file being linked to. This can be used if you would like to tag certain descriptions."\
+                            "\nExample (defaults):\n"          \
+                            "    -conserved\n"                                          \
+                            "    -predicted\n"                                          \
+                            "    -unknown\n"                                            \
+                            "    -hypothetical\n"                                       \
+                            "    -putative\n"                                           \
+                            "    -unidentified\n"                                       \
+                            "    -uncultured\n"                                         \
+                            "    -uninformative\n"                                      \
+                            "Ensure each word is on a separate line in the file. EnTAP will take the " \
+                            "each line as a new uninformative word!"
+
+
+/* -------------------- Ontology Commands --------------------*/
+#define DESC_EGGNOG_DMND     "Path to EggNOG DIAMOND configured database that was generated during the Configuration stage."
+#define CMD_EGGNOG_DMND     "eggnog-dmnd"
+#define DESC_EGGNOG_SQL     "Absolute path to the EggNOG SQL database that was downloaded duirng the Configuration stage."
+#define CMD_EGGNOG_SQL      "eggnog-sql"
+#define DESC_INTERPRO_EXE   "Execution method of InterProScan."
+#define CMD_INTERPRO_EXE    "interproscan-exe"
+#define CMD_INTER_DATA      "protein"
+#define DESC_INTER_DATA     "Select which databases you would like for InterProScan. "    \
                             "Databases must be one of the following:\n"                 \
                             "    -tigrfam\n"                                            \
                             "    -sfld\n"                                               \
@@ -75,226 +277,558 @@
                             "    -coils\n"                                              \
                             "    -morbidblite\n"                                        \
                             "Make sure the database is downloaded, EnTAP will not check!"
-#define DESC_ONTOLOGY_FLAG  "Specify the ontology software you would like to use\n"     \
+#define EX_INTER_DATA       "--" CMD_INTER_DATA " tigrfam " "--" CMD_INTER_DATA " pfam"
+#define CMD_ONTOLOGY_FLAG   "ontology"
+#define DESC_ONTOLOGY_FLAG  " Specify the ontology software you would like to use\n"     \
                             "Note: it is possible to specify more than one! Just use"   \
                             "multiple --ontology flags\n"                               \
                             "Specify flags as follows:\n"                               \
                             "    0. EggNOG (default)\n"                                 \
                             "    1. InterProScan"
-#define DESC_GRAPHING       "Check whether or not your system supports graphing.\n"     \
-                            "This option does not require any other flags and will"     \
-                            "just check whether the version of Python being used has"   \
-                            "MatPlotLib accessible."
-#define DESC_OUT_FLAG       "Specify the output directory you would like the data to"   \
-                            " be saved to."
-#define DESC_DATABASE       "Provide the paths to the databases you would like to use\n"\
-                            "For running: ensure the databases selected are .dmnd"      \
-                            "formatted.\n"                                              \
-                            "For configuration: ensure the databases are FASTA format\n"\
-                            "Note: if your databases are not NCBI or Uniprot\n"         \
-                            "databases, taxonomic filtering might not be able to pull"  \
-                            "the species information!"
+#define CMD_GO_LEVELS      "level"
 #define DESC_ONT_LEVELS     "Specify the Gene Ontology levels you would like printed\n" \
-                            "Default: 0, 3, 4\n"                                        \
-                            "A level of 0 means that every term will be printed!"       \
+                            "Default: 1\n"                                        \
+                            "A level of 0 means that every term will be printed! "       \
                             "It is possible to specify multiple flags as well with\n"   \
                             "multiple --level flags\n"                                  \
                             "Example: --level 0 --level 3 --level 1"
-#define DESC_FPKM           "Specify the FPKM threshold with expression analysis\n"     \
-                            "EnTAP will filter out transcripts below this value!"
-#define DESC_EVAL           "Specify the E-Value that will be used as a cutoff during"  \
-                            "similarity searching"
-#define DESC_THREADS        "Specify the number of threads that will be used throughout\n"
-#define DESC_SINGLE_END     "Specify this flag if your BAM/SAM file was generated\n"    \
-                            "through single-end reads\n"                                \
-                            "Note: this is only required in expression analysis\n"      \
-                            "Default: paired-end"
-#define DESC_ALIGN_FILE     "Specify the path to the BAM/SAM file for expression analysis"
-#define DESC_CONTAMINANT    "Specify the contaminants you would like to filter out"     \
-                            "from similarity searching\n"                               \
-                            "Note: since hits are based upon a multitide of factors"    \
-                            "a contaminant might be the best hit for a query!\n"        \
-                            "Contaminants can be selected by species (homo_sapiens)"    \
-                            "or through a specific taxon (homo)\n"                      \
-                            "If your taxon is more than one word just replace the"      \
-                            "spaces with underscores (_)"
-#define DESC_NO_TRIM        "By default, EnTAP will trim the input sequences to the first space.\n"             \
-                            "This helps with compatibility across different software\n"  \
-                            "Example:\n"                                                \
-                            ">TRINITY_231.1 Protein Information\n"                      \
-                            "will become...\n"                                          \
-                            ">TRINITY_231.1\n"                                          \
-                            "Use this command if you would like to instead remove all\n"\
-                            "spaces in your sequence headers to retain information. \n" \
-                            "Warning: this may cause issues recognizing headers from your BAM or SAM files."
-#define DESC_QCOVERAGE      "Select the minimum query coverage to be allowed during"    \
-                            "similarity searching"
-#define DESC_TCOVERAGE      "Select the minimum target coverage to be allowed during"   \
-                            "similarity searching"
-#define DESC_EXE_PATHS      "Specify path to the entap_config.txt file that will"       \
-                            "be used to find all of the executables!"
-#define DESC_DATA_GENERATE  "Specify whether you would like to generate EnTAP databases"\
-                            " instead of downloading them.\nDefault: Download\nIf you"  \
-                            " are encountering issues with the downloaded databases "   \
-                            "you can try this"
-#define DESC_DATABASE_TYPE  "Specify which EnTAP database you would like to download/"  \
-                            "generate.\n"                                               \
-                            "    0. Serialized Database (default)\n"                    \
-                            "    1. SQLITE Database\n"                                  \
-                            "Either or both can be selected with an additional flag. "  \
-                            "The serialized database will be faster although requires " \
-                            "more memory usage. The SQLITE database may be slightly "   \
-                            "slower and does not require the Boost libraries if you "   \
-                            "are experiencing any incompatibility there."
-#define DESC_TAXON          "Specify the type of species/taxon you are analyzing and"   \
-                            "would like hits closer in taxonomic relevance to be"       \
-                            "favored (based on NCBI Taxonomic Database)\n"              \
-                            "Note: formatting works just like with the contaminants"
-#define DESC_STATE          "Specify the state of execution (EXPERIMENTAL)\n"           \
-                            "More information is available in the documentation\n"      \
-                            "This flag may have undesired affects and may not run properly!"
-#define DESC_INPUT_TRAN     "Path to the input transcriptome file"
-#define DESC_COMPLET_PROT   "Select this option if all of your sequences are complete"  \
-                            "proteins.\n"                                               \
-                            "At this point, this option will merely flag the sequences"
-#define DESC_OVERWRITE      "Select this option if you would like to overwrite previous"\
-                            "files\n"                                                   \
-                            "Note: do NOT use this if you would like to pickup from"    \
-                            "a previous run!"
-#define DESC_UNINFORMATIVE  "Path to a list of keywords that should be used to specify" \
-                            " uninformativeness of hits during similarity searching. "  \
-                            "Generally something along the lines of 'hypothetical' or " \
-                            "'unknown' are used. Each term should be on a new line of " \
-                            "the file being linked to.\nExample (defaults):\n"          \
-                            "    -conserved\n"                                          \
-                            "    -predicted\n"                                          \
-                            "    -unknown\n"                                            \
-                            "    -hypothetical\n"                                       \
-                            "    -putative\n"                                           \
-                            "    -unidentified\n"                                       \
-                            "    -uncultured\n"                                         \
-                            "    -uninformative\n"                                      \
-                            "Ensure each word is on a separate line in the file. EnTAP will take the " \
-                            "each line as a new uninformative word!"
-#define DESC_NOCHECK        "Use this flag if you don't want your input to EnTAP verifed."\
-                            " This is not advised to use! Your run may fail later on "  \
-                            "if inputs are not checked"
-#define DESC_OUTPUT_FORMAT  "Specify the output format for the processed alignments."   \
-                            "Multiple flags can be specified."                          \
-                            "    1. TSV Format (default)\n"                             \
-                            "    2. CSV Format\n"                                       \
-                            "    3. FASTA Amino Acid (default)\n"                       \
-                            "    4. FASTA Nucleotide (default)"
-//**************************************************************
-// Externs
-std::string RSEM_EXE_DIR;
-std::string GENEMARK_EXE;
-std::string DIAMOND_EXE;
-std::string EGG_SQL_DB_PATH;
-std::string EGG_DMND_PATH;
-std::string INTERPRO_EXE;
-std::string ENTAP_DATABASE_BIN_PATH;
-std::string ENTAP_DATABASE_SQL_PATH;
-std::string GRAPHING_EXE;
+
+/* BUSCO */
+#define CMD_BUSCO_EXE      "busco-exe"
+#define DESC_BUSCO_EXE     "Specify the execution method of BUSCO."
+#define EX_BUSCO_EXE       "Example: run_BUSCO.py"
+#define CMD_BUSCO_DATABASE "busco-database"
+#define DESC_BUSCO_DATABASE "Specify the BUSCO/OrthoDB databases you would like to download. They \n"  \
+                            "can be specified by their type (eukaryota) or through a direct link to \n"\
+                            "the database (http://www...)."
+#define CMD_BUSCO_EVAL     "busco-eval"
+#define DESC_BUSCO_EVAL    "Minimum E-Value for BUSCO related BLAST searches."
+
+
+#define INI_FRAME_GENEMARK "frame_selection-genemarks-t"
+#define INI_FRAME_TRANSDECODER "frame_selection-transdecoder"
+#define INI_GENERAL "general"
+#define INI_CONFIG "configuration"
+#define INI_EXPRESSION "expression_analysis"
+#define INI_EXP_RSEM "expression_analysis-rsem"
+#define INI_FRAME   "frame_selection"
+#define INI_SIM_SEARCH "similarity_search"
+#define INI_ONT_INTERPRO "ontology-interproscan"
+#define INI_ONTOLOGY "ontology"
+#define INI_ONT_EGGNOG "ontology-eggnog"
+#define INI_ENTAP "entap"
+#define INI_TRANSC_BUSCO "ontology-busco"
+
+#define ENTAP_INI_NULL_STR_VECT vect_str_t()
+#define ENTAP_INI_NULL_INT_VECT vect_uint16_t()
+#define ENTAP_INI_NULL_FLT_VECT vect_fp64_t()
+#define ENTAP_INI_NULL_INT (0u)
+#define ENTAP_INI_NULL_FLT (0.0f)
+#define ENTAP_INI_NULL std::string()
+#define ENTAP_INI_NULL_VAL boost::any()
 
 //**************************************************************
+const std::string UserInput::ENTAP_INI_FILENAME         = "entap_config.ini";
+const fp64   UserInput::DEFAULT_E_VALUE                 = 1e-5;
+const fp64   UserInput::DEFAULT_BUSCO_E_VALUE           = 1e-5;
+const uint16 UserInput::DEFAULT_THREADS                 = 1;
+const fp64   UserInput::RSEM_FPKM_DEFAULT               = 0.5;
+const fp64   UserInput::DEFAULT_QCOVERAGE               = 50.0;
+const fp64   UserInput::DEFAULT_TCOVERAGE               = 50.0;
+const vect_uint16_t UserInput::DEFAULT_DATA_TYPE        = vect_uint16_t{EntapDatabase::ENTAP_SERIALIZED};
+const std::string UserInput::DEFAULT_STATE              ="+";
+const uint16 UserInput::DEFAULT_FRAME_SELECTION         = FRAME_TRANSDECODER;
+const vect_uint16_t UserInput::DEFAULT_ONT_LEVELS       =vect_uint16_t{1};
+const vect_uint16_t UserInput::DEFAULT_ONTOLOGY         =vect_uint16_t{ONT_EGGNOG_DMND};
+const vect_uint16_t UserInput::DEFAULT_OUT_FORMAT       =vect_uint16_t{FileSystem::ENT_FILE_DELIM_TSV,
+                                                                       FileSystem::ENT_FILE_FASTA_FAA,
+                                                                       FileSystem::ENT_FILE_FASTA_FNN};
+const uint16      UserInput::DEFAULT_TRANSDECODER_MIN_PROTEIN = 100;
+
+const std::string UserInput::TRANSDECODER_LONG_DEFAULT_EXE    = "TransDecoder.LongOrfs";
+const std::string UserInput::TRANSDECODER_PREDICT_DEFAULT_EXE = "TransDecoder.Predict";
+const std::string UserInput::DIAMOND_DEFAULT_EXE              = PATHS(FileSystem::get_exe_dir(),"/libs/diamond-0.9.9/bin/diamond");
+const std::string UserInput::EGG_SQL_DB_FILENAME              = "eggnog.db";
+const std::string UserInput::EGG_DMND_FILENAME                = "eggnog_proteins.dmnd";
+const std::string UserInput::INTERPRO_DEF_EXE                 = "interproscan.sh";
+const std::string UserInput::GRAPH_SCRIPT_DEF                 = "/src/entap_graphing.py";
+const std::string UserInput::BIN_PATH_DEFAULT                 = "/bin";
+const std::string UserInput::DATABASE_DIR_DEFAULT             = "/databases";
+const std::string UserInput::ENTAP_DATABASE_SQL_FILENAME      = "entap_database.db";
+const std::string UserInput::ENTAP_DATABASE_SERIAL_FILENAME   = "entap_database.bin";
+const std::string UserInput::ENTAP_DATABASE_BIN_DEFAULT       = PATHS(BIN_PATH_DEFAULT, ENTAP_DATABASE_SERIAL_FILENAME);
+const std::string UserInput::ENTAP_DATABASE_SQL_DEFAULT       = PATHS(DATABASE_DIR_DEFAULT, ENTAP_DATABASE_SQL_FILENAME);
+const std::string UserInput::EGG_SQL_DB_DEFAULT               = PATHS(DATABASE_DIR_DEFAULT, EGG_SQL_DB_FILENAME);
+const std::string UserInput::EGG_DMND_DEFAULT                 = PATHS(BIN_PATH_DEFAULT, EGG_DMND_FILENAME);
+
+// INI file path defaults using static filesystem
+const std::string UserInput::RSEM_SAM_VALID        = "rsem-sam-validator";
+const std::string UserInput::RSEM_PREP_REF_EXE     = "rsem-prepare-reference";
+const std::string UserInput::RSEM_CALC_EXP_EXE     = "rsem-calculate-expression";
+const std::string UserInput::RSEM_CONV_SAM         = "convert-sam-for-rsem";
+const std::string UserInput::RSEM_DEFAULT_EXE_DIR  = PATHS(FileSystem::get_exe_dir(),"/libs/RSEM-1.3.0/");   // Directory
+const std::string UserInput::DEFAULT_RSEM_SAM_VALID= PATHS(RSEM_DEFAULT_EXE_DIR, RSEM_SAM_VALID);
+const std::string UserInput::DEFAULT_RSEM_PREP_REF = PATHS(RSEM_DEFAULT_EXE_DIR, RSEM_PREP_REF_EXE);
+const std::string UserInput::DEFAULT_RSEM_CALC_EXP = PATHS(RSEM_DEFAULT_EXE_DIR, RSEM_CALC_EXP_EXE);
+const std::string UserInput::DEFAULT_RSEM_CONV_SAM = PATHS(RSEM_DEFAULT_EXE_DIR, RSEM_CONV_SAM);
+
+const std::string UserInput::GENEMARK_DEFAULT_EXE        = PATHS(FileSystem::get_exe_dir(),"/libs/gmst_linux_64/gmst.pl");
+const std::string UserInput::DEFAULT_OUT_DIR             = PATHS(FileSystem::get_cur_dir(),"entap_outfiles");
+const std::string UserInput::DEFAULT_INI_PATH            = PATHS(FileSystem::get_cur_dir(), ENTAP_INI_FILENAME);
+const std::string UserInput::DEFAULT_ENTAP_DB_BIN_INI    = PATHS(FileSystem::get_exe_dir(), ENTAP_DATABASE_BIN_DEFAULT);
+const std::string UserInput::DEFAULT_ENTAP_DB_SQL_INI    = PATHS(FileSystem::get_exe_dir(), ENTAP_DATABASE_SQL_DEFAULT);
+const std::string UserInput::DEFAULT_EGG_SQL_DB_INI      = PATHS(FileSystem::get_exe_dir(), EGG_SQL_DB_DEFAULT);
+const std::string UserInput::DEFAULT_EGG_DMND_DB_INI     = PATHS(FileSystem::get_exe_dir(), EGG_DMND_DEFAULT);
+const std::string UserInput::DEFAULT_ENTAP_GRAPH_INI     = PATHS(FileSystem::get_exe_dir(), GRAPH_SCRIPT_DEF);
+const std::string UserInput::DEFAULT_BUSCO_EXE           = "run_BUSCO.py";
+
+// WARNING must match ENTAP_INPUT_FLAGS enum in UserInput.h
+// If no default value exists, must use boost::any()
+UserInput::EntapINIEntry UserInput::mUserInputs[] = {
+        // Category      Input Flag                Shortened Input Flag   Description               Example         Variable Type           Default Value           Input Type          Parsed value
+        {ENTAP_INI_NULL,ENTAP_INI_NULL           ,ENTAP_INI_NULL  ,ENTAP_INI_NULL             , ENTAP_INI_NULL  ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+
+/* General Input Commands */
+        {INI_GENERAL   ,CMD_OUTPUT_DIR           ,ENTAP_INI_NULL  ,DESC_OUTPUT_DIR            ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_OUT_DIR        ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_CONFIG               ,ENTAP_INI_NULL  ,DESC_CONFIG                ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_RUN_PROTEIN          ,ENTAP_INI_NULL  ,DESC_RUN_PROTEIN           ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_RUN_NUCLEO           ,ENTAP_INI_NULL  ,DESC_RUN_NUCLEO            ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_OVERWRITE            ,ENTAP_INI_NULL  ,DESC_OVERWRITE             ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_INI_FILE             ,ENTAP_INI_NULL  ,DESC_INI_FILE              ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_INI_PATH       ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+//        {INI_GENERAL   ,CMD_HELP                 ,CMD_SHORT_HELP       ,DESC_HELP             ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL   ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+//        {INI_GENERAL   ,CMD_VERSION              ,CMD_SHORT_VERSION    ,DESC_VERSION          ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL   ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_INPUT_TRAN           ,CMD_SHORT_INPUT_TRAN ,DESC_INPUT_TRAN       ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_DATABASE             ,CMD_SHORT_DATABASE   ,DESC_DATABASE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_GRAPHING             ,ENTAP_INI_NULL  ,DESC_GRAPHING              ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_NO_TRIM                 ,ENTAP_INI_NULL  ,DESC_NO_TRIM                  ,EX_NO_TRIM          ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_THREADS              ,CMD_SHORT_THREADS    ,DESC_THREADS          ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT         ,DEFAULT_THREADS        ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_STATE                ,ENTAP_INI_NULL  ,DESC_STATE                 ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_STATE          ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_NOCHECK              ,ENTAP_INI_NULL  ,DESC_NOCHECK               ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_OUTPUT_FORMAT        ,ENTAP_INI_NULL  ,DESC_OUTPUT_FORMAT         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_OUT_FORMAT     ,ENT_INI_FILE         ,ENTAP_INI_NULL_VAL},
+
+/* EnTAP Commands */
+        {INI_ENTAP     ,CMD_ENTAP_DB_BIN         ,ENTAP_INI_NULL  ,DESC_ENTAP_DB_BIN          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENTAP_DB_BIN_INI, ENT_INI_FILE        ,ENTAP_INI_NULL_VAL},
+        {INI_ENTAP     ,CMD_ENTAP_DB_SQL         ,ENTAP_INI_NULL  ,DESC_ENTAP_DB_SQL          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENTAP_DB_SQL_INI, ENT_INI_FILE        ,ENTAP_INI_NULL_VAL},
+        {INI_ENTAP     ,CMD_ENTAP_GRAPH_PATH     ,ENTAP_INI_NULL  ,DESC_ENTAP_GRAPH_PATH      ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENTAP_GRAPH_INI , ENT_INI_FILE        ,ENTAP_INI_NULL_VAL},
+        {INI_ENTAP     ,ENTAP_INI_NULL           ,ENTAP_INI_NULL  ,ENTAP_INI_NULL             ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT,ENTAP_INI_NULL_VAL      , ENT_INPUT_FUTURE    ,ENTAP_INI_NULL_VAL},
+
+/* Configuration Commands */
+        {INI_CONFIG    ,CMD_DATA_GENERATE        ,ENTAP_INI_NULL  ,DESC_DATA_GENERATE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_CONFIG    ,CMD_DATABASE_TYPE        ,ENTAP_INI_NULL  ,DESC_DATABASE_TYPE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_DATA_TYPE      ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+
+/* Expression Analysis Commands */
+        {INI_EXPRESSION,CMD_FPKM                 ,ENTAP_INI_NULL  ,DESC_FPKM                  ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,RSEM_FPKM_DEFAULT      ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+        {INI_EXPRESSION,CMD_ALIGN_FILE           ,CMD_SHORT_ALIGN_FILE ,DESC_ALIGN_FILE       ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_EXPRESSION,CMD_SINGLE_END           ,ENTAP_INI_NULL  ,DESC_SINGLE_END            ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+
+/* Expression Analysis - RSEM Commands */
+        {INI_EXP_RSEM  ,CMD_RSEM_CALC_EXP        ,ENTAP_INI_NULL  ,DESC_RSEM_CALC_EXP         ,EX_RSEM_CALC_EXP ,ENT_INI_VAR_STRING      ,DEFAULT_RSEM_CALC_EXP  ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+        {INI_EXP_RSEM  ,CMD_RSEM_SAM_VALID       ,ENTAP_INI_NULL  ,DESC_RSEM_SAM_VALID        ,EX_RSEM_SAM_VALID,ENT_INI_VAR_STRING      ,DEFAULT_RSEM_SAM_VALID ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+        {INI_EXP_RSEM  ,CMD_RSEM_PREP_REF        ,ENTAP_INI_NULL  ,DESC_RSEM_PREP_REF         ,EX_RSEM_PREP_REF ,ENT_INI_VAR_STRING      ,DEFAULT_RSEM_PREP_REF  ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+        {INI_EXP_RSEM  ,CMD_RSEM_CONV_SAM        ,ENTAP_INI_NULL  ,DESC_RSEM_CONV_SAM         ,EX_RSEM_CONV_SAM ,ENT_INI_VAR_STRING      ,DEFAULT_RSEM_CONV_SAM  ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+
+/* Frame Selection Commands */
+        {INI_FRAME     ,CMD_COMPLETE_PROT        ,ENTAP_INI_NULL  ,DESC_COMPLETE_PROT         ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+        {INI_FRAME     ,CMD_FRAME_SELECTION_FLAG ,ENTAP_INI_NULL  ,DESC_FRAME_SELECTION_FLAG  ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT         ,DEFAULT_FRAME_SELECTION,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+
+/* Frame Selection - GeneMarkST Commands */
+        {INI_FRAME_GENEMARK,CMD_GENEMARKST_EXE   ,ENTAP_INI_NULL  ,DESC_GENEMARKST_EXE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,GENEMARK_DEFAULT_EXE   ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+
+/* Frame Selection - TransDecoder Commands */
+        {INI_FRAME_TRANSDECODER,CMD_TRANS_LONG_EXE,ENTAP_INI_NULL ,DESC_TRANS_LONG_EXE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,TRANSDECODER_LONG_DEFAULT_EXE, ENT_INI_FILE   ,ENTAP_INI_NULL_VAL},
+        {INI_FRAME_TRANSDECODER,CMD_TRANS_PREDICT_EXE,ENTAP_INI_NULL,DESC_TRANS_PREDICT_EXE   ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,TRANSDECODER_PREDICT_DEFAULT_EXE, ENT_INI_FILE,ENTAP_INI_NULL_VAL},
+        {INI_FRAME_TRANSDECODER,CMD_TRANS_MIN_FLAG,ENTAP_INI_NULL ,DESC_TRANS_MIN_FLAG        ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT         ,DEFAULT_TRANSDECODER_MIN_PROTEIN, ENT_INI_FILE,ENTAP_INI_NULL_VAL},
+        {INI_FRAME_TRANSDECODER,CMD_TRANS_NO_REF_START,ENTAP_INI_NULL, DESC_TRANS_NO_REF_START,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL       ,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+
+/* Similarity Search Commands */
+        {INI_SIM_SEARCH,CMD_DIAMOND_EXE          ,ENTAP_INI_NULL  ,DESC_DIAMOND_EXE           ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DIAMOND_DEFAULT_EXE    ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_TAXON                ,ENTAP_INI_NULL  ,DESC_TAXON                 ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_QCOVERAGE            ,ENTAP_INI_NULL  ,DESC_QCOVERAGE             ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_QCOVERAGE      ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_TCOVERAGE            ,ENTAP_INI_NULL  ,DESC_TCOVERAGE             ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_TCOVERAGE      ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_CONTAMINANT          ,CMD_SHORT_CONTAMINANT,DESC_CONTAMINANT      ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_EVAL                 ,CMD_SHORT_EVAL       ,DESC_EVAL             ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_E_VALUE        ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_UNINFORMATIVE        ,ENTAP_INI_NULL  ,DESC_UNINFORMATIVE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+
+/* Ontology Commands */
+        {INI_ONTOLOGY  ,CMD_ONTOLOGY_FLAG        ,ENTAP_INI_NULL  ,DESC_ONTOLOGY_FLAG         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONTOLOGY       ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_ONTOLOGY  ,CMD_GO_LEVELS            ,ENTAP_INI_NULL  ,DESC_ONT_LEVELS            ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONT_LEVELS     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+
+/* Ontology - EggNOG Commands */
+        {INI_ONT_EGGNOG,CMD_EGGNOG_SQL           ,ENTAP_INI_NULL  ,DESC_EGGNOG_SQL            ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_EGG_SQL_DB_INI ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_ONT_EGGNOG,CMD_EGGNOG_DMND          ,ENTAP_INI_NULL  ,DESC_EGGNOG_DMND           ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_EGG_DMND_DB_INI,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+/* Ontology - InterPro Commands */
+        {INI_ONT_INTERPRO,CMD_INTERPRO_EXE       ,ENTAP_INI_NULL  ,DESC_INTERPRO_EXE          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,INTERPRO_DEF_EXE       ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_ONT_INTERPRO,CMD_INTER_DATA         ,ENTAP_INI_NULL  ,DESC_INTER_DATA            ,EX_INTER_DATA    ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+
+/* Ontology - BUSCO Commands */
+        {INI_TRANSC_BUSCO,CMD_BUSCO_EXE          ,ENTAP_INI_NULL  ,DESC_BUSCO_EXE             ,EX_BUSCO_EXE     ,ENT_INI_VAR_STRING      ,DEFAULT_BUSCO_EXE      ,ENT_INPUT_FUTURE, ENTAP_INI_NULL_VAL},
+        {INI_TRANSC_BUSCO,CMD_BUSCO_DATABASE     ,ENTAP_INI_NULL  ,DESC_BUSCO_DATABASE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_INPUT_FUTURE, ENTAP_INI_NULL_VAL},
+        {INI_TRANSC_BUSCO,CMD_BUSCO_EVAL         ,ENTAP_INI_NULL  ,DESC_BUSCO_EVAL            ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_BUSCO_E_VALUE  ,ENT_INPUT_FUTURE, ENTAP_INI_NULL_VAL},
+
+/* END COMMANDS */
+        {ENTAP_INI_NULL,ENTAP_INI_NULL           ,ENTAP_INI_NULL  ,ENTAP_INI_NULL             , ENTAP_INI_NULL  ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL}
+};
+
+UserInput::UserInput(int argc, const char** argv, FileSystem *fileSystem) {
+    std::string ini_file_path;
+    std::string root_dir;
+
+    FS_dprint("Spawn Object - UserInput");
+
+    mpFileSystem = fileSystem;
+
+    // Parse command line arguments
+    parse_arguments_tclap(argc, argv);
+
+    if (has_input(INPUT_FLAG_OUTPUT_DIR)) {
+        root_dir = get_user_input<ent_input_str_t>(INPUT_FLAG_OUTPUT_DIR);
+    } else {
+        root_dir = FileSystem::get_cur_dir();
+    }
+    mpFileSystem->set_root_dir(root_dir);
+
+    ini_file_path = get_user_input<ent_input_str_t>(INPUT_FLAG_INI_FILE);
+
+    // Ensure user has input the INI file path, EXIT otherwise
+    if (!mpFileSystem->file_exists(ini_file_path)) {
+        // INI file is required for EnTAP execution, generate one in the CWD
+        ini_file_path = PATHS(mpFileSystem->get_cur_dir(), ENTAP_INI_FILENAME);
+        generate_ini_file(ini_file_path);
+        throw ExceptionHandler("INI file was not found and is required for EnTAP execution, generated at: " + ini_file_path,
+                               ERR_ENTAP_CONFIG_CREATE_SUCCESS);
+    } else {
+        // Ini file exists and file path is valid
+        mIniFilePath = ini_file_path;
+        parse_ini(mIniFilePath);
+    }
+    parse_future_inputs();
+}
+
+UserInput::~UserInput() {
+    FS_dprint("Killing object - UserInput");
+}
 
 /**
  * ======================================================================
- * Function void parse_arguments_boost
- *                              (int            argc,
- *                               const char**   argv)
+ * Function void parse_future_inputs()
  *
- * Description          - Utilizes boost libraries to parse user input
- *                        arguments
+ * Description          - Manages parsing and verifying of future inputs
+ *                        that have defaults right now until they are used
+ *                        as an actual input
+ *                      - Will simply add these to user input database
  *
- * Notes                - None
+ * Notes                - Entry
  *
- * @param argc          - Pushed from main
- * @param argv          - Pushed from main
+ *
  * @return              - None
  * ======================================================================
  */
-#ifdef USE_BOOST
-void UserInput::parse_arguments_boost(int argc, const char** argv) {
-    try {
-        boostPO::options_description description("Options");
-        // TODO separate out into main options and additional config file with defaults
-        description.add_options()
-                ((INPUT_FLAG_HELP + ",h").c_str(), DESC_HELP)
-                (INPUT_FLAG_CONFIG.c_str(),DESC_CONFIG)
-                (INPUT_FLAG_RUNPROTEIN.c_str(),DESC_RUN_PROTEIN)
-                (INPUT_FLAG_RUNNUCLEOTIDE.c_str(),DESC_RUN_NUCLEO)
-                (INPUT_FLAG_UNINFORM.c_str(), boostPO::value<std::string>(),DESC_UNINFORMATIVE)
-                (INPUT_FLAG_INTERPRO.c_str(),
-                 boostPO::value<std::vector<std::string>>()->multitoken()
-                         ->default_value(std::vector<std::string>{ModInterpro::get_default()},""),DESC_INTER_DATA)
-                (INPUT_FLAG_ONTOLOGY.c_str(),
-                 boostPO::value<std::vector<uint16>>()->multitoken()
-                 ->default_value(std::vector<uint16>{ENTAP_EXECUTE::EGGNOG_DMND_INT_FLAG},""),DESC_ONTOLOGY_FLAG)
-                (INPUT_FLAG_GRAPH.c_str(),DESC_GRAPHING)
-                (INPUT_FLAG_TAG.c_str(),
-                 boostPO::value<std::string>()->default_value(OUTFILE_DEFAULT),DESC_OUT_FLAG)
-                ((INPUT_FLAG_DATABASE + ",d").c_str(),
-                 boostPO::value<std::vector<std::string>>()->multitoken(),DESC_DATABASE)
-                (INPUT_FLAG_GO_LEVELS.c_str(),
-                 boostPO::value<std::vector<uint16>>()->multitoken()
-                         ->default_value(std::vector<uint16>{0,3,4},""), DESC_ONT_LEVELS)
-                (INPUT_FLAG_FPKM.c_str(),
-                 boostPO::value<fp32>()->default_value(RSEM_FPKM_DEFAULT), DESC_FPKM)
-                (INPUT_FLAG_E_VAL.c_str(),
-                 boostPO::value<fp64>()->default_value(E_VALUE),DESC_EVAL)
-                ((INPUT_FLAG_VERSION + ",v").c_str(), "Display EnTAP release version")
-                (UserInput::INPUT_FLAG_SINGLE_END.c_str(), DESC_SINGLE_END)
-                ((INPUT_FLAG_THREADS + ",t").c_str(),
-                 boostPO::value<int>()->default_value(1),DESC_THREADS)
-                ((INPUT_FLAG_ALIGN + ",a").c_str(), boostPO::value<std::string>(),DESC_ALIGN_FILE)
-                ((INPUT_FLAG_CONTAM + ",c").c_str(),
-                 boostPO::value<std::vector<std::string>>()->multitoken(),DESC_CONTAMINANT)
-                (INPUT_FLAG_NO_TRIM.c_str(), DESC_NO_TRIM)
-                (INPUT_FLAG_QCOVERAGE.c_str(),
-                 boostPO::value<fp32>()->default_value(DEFAULT_QCOVERAGE), DESC_QCOVERAGE)
-                (INPUT_FLAG_EXE_PATH.c_str(), boostPO::value<std::string>(), DESC_EXE_PATHS)
-                (INPUT_FLAG_GENERATE.c_str(), DESC_DATA_GENERATE)
-                (INPUT_FLAG_DATABASE_TYPE.c_str(),
-                 boostPO::value<std::vector<uint16>>()->multitoken()
-                        ->default_value(std::vector<uint16>{EntapDatabase::ENTAP_SERIALIZED},""), DESC_DATABASE_TYPE)
-                (INPUT_FLAG_TCOVERAGE.c_str(),
-                 boostPO::value<fp32>()->default_value(DEFAULT_TCOVERAGE), DESC_TCOVERAGE)
-                (INPUT_FLAG_SPECIES.c_str(), boostPO::value<std::string>(),DESC_TAXON)
-                (INPUT_FLAG_STATE.c_str(),
-                 boostPO::value<std::string>()->default_value(DEFAULT_STATE), DESC_STATE)
-                ((INPUT_FLAG_TRANSCRIPTOME + ",i").c_str(), boostPO::value<std::string>(), DESC_INPUT_TRAN)
-                (INPUT_FLAG_COMPLETE.c_str(), DESC_COMPLET_PROT)
-                (INPUT_FLAG_NOCHECK.c_str(), DESC_NOCHECK)
-                (INPUT_FLAG_OUTPUT_FORMAT.c_str(),
-                 boostPO::value<std::vector<uint16>>()->multitoken()
-                        ->default_value(std::vector<uint16>{FileSystem::ENT_FILE_DELIM_TSV, FileSystem::ENT_FILE_FASTA_FAA, FileSystem::ENT_FILE_FASTA_FNN},""),DESC_OUTPUT_FORMAT)
-                (INPUT_FLAG_OVERWRITE.c_str(), DESC_OVERWRITE);
-        boostPO::variables_map vm;
-        try {
-            boostPO::store(boostPO::command_line_parser(argc,argv).options(description)
-                                   .run(),vm);
-            boostPO::notify(vm);
+void UserInput::parse_future_inputs() {
+    ENTAP_INPUT_FLAGS input_flag;
 
-            if (vm.count(INPUT_FLAG_HELP)) {
-                std::cout << description<<std::endl<<std::endl;
-                throw(ExceptionHandler("",ERR_ENTAP_SUCCESS));
+    for (uint16 i=INPUT_FLAG_UNUSED; i <INPUT_FLAG_MAX; i++) {
+        if (mUserInputs[i].input_type != ENT_INPUT_FUTURE) continue;
+
+        input_flag = static_cast<ENTAP_INPUT_FLAGS>(i);
+
+        switch (input_flag) {
+
+            case INPUT_FLAG_ENTAP_HEADERS: {
+                std::vector<ENTAP_HEADERS> header_vect(ENTAP_HEADER_COUNT-1);
+                uint32 n = ENTAP_HEADER_UNUSED;
+                std::generate(header_vect.begin(), header_vect.end(),
+                              [&] { return static_cast<ENTAP_HEADERS>(++n); });
+                mUserInputs[i].parsed_value = header_vect;
+                break;
             }
-            if (vm.count(INPUT_FLAG_VERSION)) {
-                std::cout<<"EnTAP version: "<<ENTAP_VERSION_STR<<std::endl;
-                throw(ExceptionHandler("",ERR_ENTAP_SUCCESS));
-            }
-            _user_inputs = vm;
-        } catch (boost::program_options::required_option& e) {
-            throw ExceptionHandler(e.what(),ERR_ENTAP_INPUT_PARSE);
+
+            default:
+                break;
         }
-    }catch (boost::program_options::error& e){
-        // Unknown input
-        throw ExceptionHandler(e.what(),ERR_ENTAP_INPUT_PARSE);
     }
 }
-#else // Use TCLAP for program argument parsing
+
+/**
+ * ======================================================================
+ * Function void parse_ini(std::string &ini_path)
+ *
+ * Description          - Manages parsing and verifying the EnTAP ini file
+ *                        provided by the user
+ *
+ * Notes                - Entry
+ *
+ * @param ini_path      - Path to the ini file
+ *
+ * @return              - None
+ * ======================================================================
+ */
+void UserInput::parse_ini(std::string &ini_path) {
+    FS_dprint("Parsing ini file at: " + ini_path);
+
+    EntapINIEntry                               *ini_entry;
+    std::string                                 line;
+    std::string                                 key;
+    std::string                                 val;
+
+    if (!mpFileSystem->file_exists(ini_path)){
+        throw ExceptionHandler("Ini file not found at: " + ini_path + " + exiting...", ERR_ENTAP_INPUT_PARSE);
+    }
+
+    // Parse ini file
+    std::ifstream in_file(ini_path);
+    while (std::getline(in_file,line)) {
+        if (line.front() == INI_FILE_COMMENT) continue; // Skip INI file comments
+
+        std::istringstream in_line(line);
+        if (std::getline(in_line,key,INI_FILE_ASSIGN)) {
+            // Ensure this INI file key is correct and user hasn't changed it EXIT otherwise
+            ini_entry = check_ini_key(key);
+            if (ini_entry == nullptr) {
+                throw ExceptionHandler("Incorrect format in config file at line: " + in_line.str(), ERR_ENTAP_CONFIG_PARSE);
+            } else {
+                // Key is valid, parse the value
+                if (std::getline(in_line,val)) {
+                    // If value is empty, use default
+                    if (val.empty()) {
+                        ini_entry->parsed_value = ini_entry->default_value;
+                    } else {
+                        // Value is NOT empty, update the final value
+                        try {
+                            switch (ini_entry->var_type) {
+
+                                case ENT_INI_VAR_INT:
+                                    ini_entry->parsed_value = (ent_input_uint_t)std::stoi(val);
+                                    break;
+                                case ENT_INI_VAR_FLOAT:
+                                    ini_entry->parsed_value = (ent_input_fp_t)std::stof(val);
+                                    break;
+                                case ENT_INI_VAR_STRING:
+                                    ini_entry->parsed_value = val;
+                                    break;
+                                case ENT_INI_VAR_BOOL:
+                                    if (val == INI_FILE_BOOL_TRUE) {
+                                        ini_entry->parsed_value = true;
+                                    } else if (val == INI_FILE_BOOL_FALSE){
+                                        ;
+                                    } else {
+                                        throw ExceptionHandler("INI file boolean input must be true or false at line: "+ line,
+                                            ERR_ENTAP_INPUT_PARSE);
+                                    }
+                                    break;
+                                case ENT_INI_VAR_MULTI_FLOAT: {
+                                    ent_input_multi_fp_t vect;
+                                    std::stringstream ss(val);
+                                    std::string token;
+                                    while (std::getline(ss, token, INI_FILE_MULTI_DELIM)) {
+                                        trim(token);
+                                        vect.push_back(std::stof(token));
+                                    }
+                                    ini_entry->parsed_value = vect;
+                                    break;
+                                }
+                                case ENT_INI_VAR_MULTI_INT: {
+                                    ent_input_multi_int_t vect;
+                                    std::stringstream ss(val);
+                                    std::string token;
+                                    while (std::getline(ss, token, INI_FILE_MULTI_DELIM)) {
+                                        trim(token);
+                                        vect.push_back((ent_input_uint_t)std::stoi(token));
+                                    }
+                                    ini_entry->parsed_value = vect;
+                                    break;
+                                }
+                                case ENT_INI_VAR_MULTI_STRING: {
+                                    ent_input_multi_str_t vect;
+                                    std::stringstream ss(val);
+                                    std::string token;
+                                    while (std::getline(ss, token, INI_FILE_MULTI_DELIM)) {
+                                        trim(token);
+                                        vect.push_back(token);
+                                    }
+                                    ini_entry->parsed_value = vect;
+                                    break;
+                                }
+
+                                default:
+                                    break;
+                            }
+                        } catch (...) {
+                            throw ExceptionHandler("Invalid INI file format at line: " + line, ERR_ENTAP_INPUT_PARSE);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    FS_dprint("Success!");
+}
+
+void UserInput::generate_ini_file(std::string &ini_path) {
+    std::map<std::string, std::vector<EntapINIEntry*>> printed_categories;
+    std::string line;
+
+    std::ofstream ini_file(ini_path, std::ios::out | std::ios::trunc);
+
+    for (EntapINIEntry& entry : mUserInputs) {
+        if ((entry.category == ENTAP_INI_NULL) || (entry.input_type == ENT_INPUT_FUTURE)) continue;
+        if (printed_categories.find(entry.category) != printed_categories.end()) {
+            printed_categories[entry.category].push_back(&entry);
+        } else {
+            printed_categories.emplace(entry.category, std::vector<EntapINIEntry*>{&entry});
+        }
+    }
+
+    try {
+
+        // Print instructions on how to use the ini file
+        ini_file << INI_FILE_COMMENT << "-------------------------------" << std::endl;
+        ini_file << INI_FILE_COMMENT << " [" << "ini_instructions]"       << std::endl;
+        ini_file << INI_FILE_COMMENT <<
+                 "When using this ini file keep the following in mind:\n"              << INI_FILE_COMMENT <<
+                  "\t1. Do not edit the input keys to the left side of the '=' sign\n" << INI_FILE_COMMENT <<
+                  "\t2. Be sure to use the proper value type (either a string, list, or number)\n" << INI_FILE_COMMENT <<
+                  "\t3. Do not add unecessary spaces to your input\n"                                         << INI_FILE_COMMENT <<
+                  "\t4. When inputting a list, only add a '" << INI_FILE_MULTI_DELIM << "' between each entry" << std::endl;
+
+        for (auto& pair : printed_categories) {
+
+            // If this category has no entries, skip
+            if (pair.second.empty()) {
+                continue;
+            }
+
+            ini_file << INI_FILE_COMMENT << "-------------------------------" << std::endl;
+            ini_file << INI_FILE_COMMENT << " [" << pair.first << "]" << std::endl;
+            ini_file << INI_FILE_COMMENT << "-------------------------------" << std::endl;
+
+            for (EntapINIEntry *entry : pair.second) {
+
+                if (entry->input_type != ENT_INI_FILE) continue;
+
+                // Print description
+                std::stringstream ss(entry->description);
+                while (std::getline(ss,line)) {
+                    ini_file << INI_FILE_COMMENT << line << std::endl;
+                }
+                ss.str(""); ss.clear();
+
+                // Print example
+                ss.str(entry->example);
+                while (std::getline(ss,line)) {
+                    ini_file << INI_FILE_COMMENT << line << std::endl;
+                }
+
+                // Print input type
+                ini_file << INI_FILE_COMMENT << "type:" << VAR_TYPE_STR[entry->var_type] << std::endl;
+
+                ini_file << entry->input << INI_FILE_ASSIGN;
+
+                switch (entry->var_type) {
+
+                    case ENT_INI_VAR_BOOL:
+                        if (entry->default_value.empty()) {
+                            ini_file << INI_FILE_BOOL_FALSE;
+                        } else {
+                            ini_file << INI_FILE_BOOL_TRUE;
+                        }
+                        break;
+
+                    case ENT_INI_VAR_STRING:
+                        if (!entry->default_value.empty()) {
+                            ini_file << boost::any_cast<ent_input_str_t>(entry->default_value);
+                        }
+                        break;
+                    case ENT_INI_VAR_FLOAT:
+                        if (!entry->default_value.empty()) {
+                            ini_file << boost::any_cast<ent_input_fp_t >(entry->default_value);
+                        }
+                        break;
+                    case ENT_INI_VAR_INT:
+                        if (!entry->default_value.empty()) {
+                            ini_file << boost::any_cast<ent_input_uint_t >(entry->default_value);
+                        }
+                        break;
+
+                    case ENT_INI_VAR_MULTI_STRING: {
+                        if (!entry->default_value.empty()) {
+                            ent_input_multi_str_t vect = boost::any_cast<ent_input_multi_str_t>(entry->default_value);
+                            if (vect.empty()) {
+                                break;
+                            } else {
+                                for (auto &val : boost::any_cast<ent_input_multi_str_t>(entry->default_value)) {
+                                    ini_file << val << INI_FILE_MULTI_DELIM;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                    case ENT_INI_VAR_MULTI_INT: {
+                        if (!entry->default_value.empty()) {
+                            ent_input_multi_int_t vect = boost::any_cast<ent_input_multi_int_t>(entry->default_value);
+                            if (vect.empty()) {
+                                break;
+                            } else {
+                                for (auto &val : boost::any_cast<ent_input_multi_int_t>(entry->default_value)) {
+                                    ini_file << std::to_string(val) << INI_FILE_MULTI_DELIM;
+                                }
+                            }
+                        }
+                        break;
+                    }
+                    case ENT_INI_VAR_MULTI_FLOAT: {
+                        if (!entry->default_value.empty()) {
+                            ent_input_multi_fp_t vect = boost::any_cast<ent_input_multi_fp_t>(entry->default_value);
+                            if (vect.empty()) {
+                                break;
+                            } else {
+                                for (auto &val : boost::any_cast<ent_input_multi_fp_t>(entry->default_value)) {
+                                    ini_file << std::to_string(val) << INI_FILE_MULTI_DELIM;
+                                }
+                            }
+                        }
+                        break;
+                    }
+
+                    default:
+                        continue;   // Continue if unrecognized VAR type
+                }
+                ini_file << std::endl;
+            }
+        }
+    } catch (const std::exception &err) {
+        ini_file.close();
+        throw ExceptionHandler("Unable to generate INI file: " + std::string(err.what()),
+                               ERR_ENTAP_CONFIG_CREATE);
+    }
+    ini_file.close();
+}
+
+/**
+ * ======================================================================
+ * Function bool check_ini_key(std::string&     key)
+ *
+ * Description          - Ensures EnTAP ini file has valid
+ *                        entries and has not been edited by user
+ *
+ * Notes                - None
+ *
+ * @param key           - Key from configuration file
+ * @return              - Flag if key is valid or not
+ * =====================================================================
+ */
+UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key) {
+    EntapINIEntry *ret = nullptr;
+
+    LOWERCASE(key);
+    for (EntapINIEntry &entry : mUserInputs) {
+        if ((entry.input == key) && (entry.input_type == ENT_INI_FILE)) {
+            ret = &entry;
+            break;
+        }
+    }
+    return ret;
+}
+
 /**
  * ======================================================================
  * Function void parse_arguments_tclap
@@ -306,139 +840,191 @@ void UserInput::parse_arguments_boost(int argc, const char** argv) {
  *
  * Notes                - None
  *
- * @param argc          - Pushed from main
- * @param argv          - Pushed from main
+ * @param argc          - User input size
+ * @param argv          - User input
+ *
  * @return              - None
  * ======================================================================
  */
 
  void UserInput::parse_arguments_tclap(int argc, const char ** argv) {
+    std::vector<TCLAP::Arg*> tclap_arguments(INPUT_FLAG_MAX);
+    TCLAP::Arg *arg = nullptr;
+    EntapINIEntry *entry = nullptr;
+    boost::any any_val;
+
     try {
-        TCLAP::CmdLine cmd("EnTAP\nAlexander Hart and Dr. Jill Wegrzyn\nUniversity of Connecticut\nCopyright 2017-2019", ' ', ENTAP_VERSION_STR);
+        TCLAP::CmdLine cmd("EnTAP\nAlexander Hart and Dr. Jill Wegrzyn\nUniversity of Connecticut\nCopyright 2017-2020",
+                           ' ', ENTAP_VERSION_STR);
 
-        // Switch Args
-        TCLAP::SwitchArg argConfig("",INPUT_FLAG_CONFIG, DESC_CONFIG, cmd, false);
-        TCLAP::SwitchArg argProtein("", INPUT_FLAG_RUNPROTEIN, DESC_RUN_PROTEIN, cmd, false);   // can xor these
-        TCLAP::SwitchArg argNucleo("", INPUT_FLAG_RUNNUCLEOTIDE, DESC_RUN_NUCLEO, cmd, false);
-        TCLAP::SwitchArg argGraph("", INPUT_FLAG_GRAPH, DESC_GRAPHING, cmd, false);
-        TCLAP::SwitchArg argTrim("", INPUT_FLAG_NO_TRIM, DESC_NO_TRIM, cmd, false);
-        TCLAP::SwitchArg argGenerate("", INPUT_FLAG_GENERATE, DESC_DATA_GENERATE, cmd, false);
-        TCLAP::SwitchArg argComplete("", INPUT_FLAG_COMPLETE, DESC_COMPLET_PROT, cmd, false);
-        TCLAP::SwitchArg argNoCheck("", INPUT_FLAG_NOCHECK, DESC_NOCHECK, cmd, false);
-        TCLAP::SwitchArg argOverwrite("", INPUT_FLAG_OVERWRITE, DESC_OVERWRITE, cmd, false);
-        TCLAP::SwitchArg argSingleEnd("", INPUT_FLAG_SINGLE_END, DESC_SINGLE_END, cmd, false);
+        // Generate Arguments and add them to CMD
+        for (uint32 i = 1; i < INPUT_FLAG_MAX; i++) {
 
-        // Value Args
-        TCLAP::ValueArg<std::string> argUninform("", INPUT_FLAG_UNINFORM, DESC_UNINFORMATIVE, false, "", "string", cmd);
-        TCLAP::ValueArg<std::string> argTag("", INPUT_FLAG_TAG, DESC_OUT_FLAG, false, OUTFILE_DEFAULT, "string", cmd);
-        TCLAP::ValueArg<fp32> argFPKM("", INPUT_FLAG_FPKM, DESC_FPKM, false, RSEM_FPKM_DEFAULT, "decimal", cmd);
-        TCLAP::ValueArg<fp64> argEval("", INPUT_FLAG_E_VAL, DESC_EVAL, false, E_VALUE, "decimal", cmd);
-        TCLAP::ValueArg<int> argThreads("t", INPUT_FLAG_THREADS, DESC_THREADS, false, DEFAULT_THREADS, "integer", cmd);
-        TCLAP::ValueArg<std::string> argAlign("a", INPUT_FLAG_ALIGN, DESC_ALIGN_FILE, false, "","string",cmd);
-        TCLAP::ValueArg<fp32> argQueryCov("", INPUT_FLAG_QCOVERAGE, DESC_QCOVERAGE, false, DEFAULT_QCOVERAGE, "decimal", cmd);
-        TCLAP::ValueArg<std::string> argExePath("", INPUT_FLAG_EXE_PATH, DESC_EXE_PATHS, false, "", "string", cmd);
-        TCLAP::ValueArg<fp32> argTCoverage("", INPUT_FLAG_TCOVERAGE, DESC_TCOVERAGE, false, DEFAULT_TCOVERAGE, "decimal", cmd);
-        TCLAP::ValueArg<std::string> argSpecies("", INPUT_FLAG_SPECIES, DESC_TAXON, false, "", "string", cmd);
-        TCLAP::ValueArg<std::string> argState("", INPUT_FLAG_STATE, DESC_STATE, false, DEFAULT_STATE, "string", cmd);
-        TCLAP::ValueArg<std::string> argTranscript("i", INPUT_FLAG_TRANSCRIPTOME, DESC_INPUT_TRAN, false, "", "string", cmd);
+            tclap_arguments[i] = nullptr;
+            entry = &mUserInputs[i];
+            // Continue if entry is NOT parsed through command line
+            if (entry->input_type != ENT_COMMAND_LINE) continue;    // CONTINUE
 
-        // Multi Args
-        TCLAP::MultiArg<std::string> argInterpro("", INPUT_FLAG_INTERPRO, DESC_INTER_DATA, false, "string list",cmd);
-        TCLAP::MultiArg<uint16> argOntology("", INPUT_FLAG_ONTOLOGY, DESC_ONTOLOGY_FLAG, false, "integer list", cmd);
-        TCLAP::MultiArg<std::string> argDatabase("d", INPUT_FLAG_DATABASE, DESC_DATABASE, false, "string list", cmd);
-        TCLAP::MultiArg<uint16> argGOLevels("", INPUT_FLAG_GO_LEVELS, DESC_ONT_LEVELS, false, "integer list", cmd);
-        TCLAP::MultiArg<std::string> argContam("c", INPUT_FLAG_CONTAM, DESC_CONTAMINANT, false, "string list", cmd  );
-        TCLAP::MultiArg<uint16> argDataType("", INPUT_FLAG_DATABASE_TYPE, DESC_DATABASE_TYPE, false, "integer list", cmd);
-        TCLAP::MultiArg<uint16> argOutputFormat("", INPUT_FLAG_OUTPUT_FORMAT, DESC_OUTPUT_FORMAT, false, "integer list", cmd);
+            if (!entry->default_value.empty()) {
+                any_val = entry->default_value;
+            }
 
+            switch (entry->var_type) {
+
+                // These are considered Switch Arguments
+                case ENT_INI_VAR_BOOL:
+                    arg = new TCLAP::SwitchArg(entry->short_input,entry->input, entry->description, cmd, false);
+                    break;
+
+                // These are considered Value Arguments
+                case ENT_INI_VAR_STRING:
+                    if (entry->default_value.empty()) {
+                        any_val = ENTAP_INI_NULL;
+                    }
+                    arg = new TCLAP::ValueArg<ent_input_str_t>(entry->short_input, entry->input, entry->description, false,
+                                                          boost::any_cast<ent_input_str_t>(any_val), "string",cmd);
+                    break;
+
+                case ENT_INI_VAR_INT:
+                    if (entry->default_value.empty()) {
+                        any_val = ENTAP_INI_NULL_INT;
+                    }
+                    arg = new TCLAP::ValueArg<ent_input_uint_t >(entry->short_input, entry->input, entry->description, false,
+                                                          boost::any_cast<ent_input_uint_t>(any_val), "integer", cmd);
+                    break;
+
+                case ENT_INI_VAR_FLOAT:
+                    if (entry->default_value.empty()) {
+                        any_val = ENTAP_INI_NULL_FLT;
+                    }
+                    arg = new TCLAP::ValueArg<ent_input_fp_t >(entry->short_input, entry->input, entry->description, false,
+                                                     boost::any_cast<ent_input_fp_t>(any_val), "decimal", cmd);
+                    break;
+
+                // These are considered Multi Arguments
+                case ENT_INI_VAR_MULTI_STRING:
+                    arg = new TCLAP::MultiArg<ent_input_str_t>(entry->short_input, entry->input, entry->description, false, "string list", cmd);
+                    break;
+
+                case ENT_INI_VAR_MULTI_INT:
+                    arg = new TCLAP::MultiArg<ent_input_uint_t> (entry->short_input, entry->input, entry->description, false, "integer list", cmd);
+                    break;
+
+                case ENT_INI_VAR_MULTI_FLOAT:
+                    arg = new TCLAP::MultiArg<ent_input_fp_t>(entry->short_input, entry->input, entry->description, false, "decimal list", cmd);
+                    break;
+
+                // Skip unhandled types
+                default:
+                    break;
+            }
+            tclap_arguments[i] = arg;
+        }
+
+        // Parse the command line
         cmd.parse( argc, argv );
 
         // if no inputs, print usage and exit
         if (argc == 1) {
             TCLAP::StdOutput out;
             out.usage(cmd);
-            throw ExceptionHandler("",0);
+
+            for (auto &argument : tclap_arguments) {
+                delete argument;
+            }
+
+            throw ExceptionHandler("",0);   // EXIT NO ARGUMENTS
         }
 
-        /* Add everything to the map that will be used throughout execution */
+        // Loop through arguments and populate our overall data
+        for (uint32 i = 0; i < tclap_arguments.size(); i++) {
+            arg = tclap_arguments[i];
+            entry = &mUserInputs[i];
 
-        // Add SwitchArgs
-        if (argConfig.isSet()) _user_inputs.emplace(INPUT_FLAG_CONFIG, true);
-        if (argProtein.isSet())_user_inputs.emplace(INPUT_FLAG_RUNPROTEIN, true);
-        if (argNucleo.isSet()) _user_inputs.emplace(INPUT_FLAG_RUNNUCLEOTIDE, true);
-        if (argGraph.isSet()) _user_inputs.emplace(INPUT_FLAG_GRAPH, true);
-        if (argTrim.isSet()) _user_inputs.emplace(INPUT_FLAG_NO_TRIM, true);
-        if (argGenerate.isSet()) _user_inputs.emplace(INPUT_FLAG_GENERATE, true);
-        if (argComplete.isSet()) _user_inputs.emplace(INPUT_FLAG_COMPLETE, true);
-        if (argNoCheck.isSet()) _user_inputs.emplace(INPUT_FLAG_NOCHECK, true);
-        if (argOverwrite.isSet()) _user_inputs.emplace(INPUT_FLAG_OVERWRITE, true);
-        if (argSingleEnd.isSet()) _user_inputs.emplace(INPUT_FLAG_SINGLE_END, true);
+            // Ensure it is a command line argument
+            if (entry->input_type == ENT_COMMAND_LINE) {
 
-        // Add ValueArgs
-        if (argUninform.isSet())_user_inputs.emplace(INPUT_FLAG_UNINFORM, argUninform.getValue());
-        _user_inputs.emplace(INPUT_FLAG_TAG, argTag.getValue());
-        _user_inputs.emplace(INPUT_FLAG_FPKM, argFPKM.getValue());
-        _user_inputs.emplace(INPUT_FLAG_E_VAL, argEval.getValue());
-        _user_inputs.emplace(INPUT_FLAG_THREADS, argThreads.getValue());
-        if (argAlign.isSet()) _user_inputs.emplace(INPUT_FLAG_ALIGN, argAlign.getValue());
-        _user_inputs.emplace(INPUT_FLAG_QCOVERAGE, argQueryCov.getValue());
-        if (argExePath.isSet()) _user_inputs.emplace(INPUT_FLAG_EXE_PATH, argExePath.getValue());
-        _user_inputs.emplace(INPUT_FLAG_TCOVERAGE, argTCoverage.getValue());
-        if (argSpecies.isSet()) _user_inputs.emplace(INPUT_FLAG_SPECIES, argSpecies.getValue());
-        _user_inputs.emplace(INPUT_FLAG_STATE, argState.getValue());
-        if (argTranscript.isSet())_user_inputs.emplace(INPUT_FLAG_TRANSCRIPTOME, argTranscript.getValue());
+                // If argument NULL or not set by the user
+                if (arg == nullptr || !arg->isSet()) {
+                    // Yes, set the final value to the default value
+                    entry->parsed_value = entry->default_value;
+                } else {
+                    // No, we want to update final value with the user input value
+                    switch (entry->var_type) {
 
-        // Add MultiArgs (defaults) Couldnt find a way to do defaults in constructor??!
-        if (argInterpro.isSet()) {
-            _user_inputs.emplace(INPUT_FLAG_INTERPRO, argInterpro.getValue());
-        } else {
-            _user_inputs.emplace(INPUT_FLAG_INTERPRO, vect_str_t{ModInterpro::get_default()});
-        }
-        if (argOntology.isSet()) {
-            _user_inputs.emplace(INPUT_FLAG_ONTOLOGY, argOntology.getValue());
-        } else {
-            _user_inputs.emplace(INPUT_FLAG_ONTOLOGY, std::vector<uint16>{ONT_EGGNOG_DMND});
-        }
-        if (argGOLevels.isSet()) {
-            _user_inputs.emplace(INPUT_FLAG_GO_LEVELS, argGOLevels.getValue());
-        } else {
-            _user_inputs.emplace(INPUT_FLAG_GO_LEVELS, std::vector<uint16>{0,3,4});
-        }
-        if (argDataType.isSet()) {
-            _user_inputs.emplace(INPUT_FLAG_DATABASE_TYPE, argDataType.getValue());
-        } else {
-            _user_inputs.emplace(INPUT_FLAG_DATABASE_TYPE, std::vector<uint16>{EntapDatabase::ENTAP_SERIALIZED});
-        }
+                        // If switch argument
+                        case ENT_INI_VAR_BOOL:
+                            entry->parsed_value = true;
+                            break;
 
-        if (argOutputFormat.isSet()) {
-            _user_inputs.emplace(INPUT_FLAG_OUTPUT_FORMAT, argOutputFormat.getValue());
-        } else {
-            _user_inputs.emplace(INPUT_FLAG_OUTPUT_FORMAT, vect_uint16_t{FileSystem::ENT_FILE_DELIM_TSV, FileSystem::ENT_FILE_FASTA_FNN, FileSystem::ENT_FILE_FASTA_FAA});
-        }
+                        // If value argument
+                        case ENT_INI_VAR_STRING: {
+                            auto *value_arg = dynamic_cast<TCLAP::ValueArg<ent_input_str_t>*>(arg);
+                            entry->parsed_value = value_arg->getValue();
+                            break;
+                        }
 
-        _user_inputs.emplace(INPUT_FLAG_DATABASE, argDatabase.getValue());
-        _user_inputs.emplace(INPUT_FLAG_CONTAM, argContam.getValue());
+                        case ENT_INI_VAR_INT: {
+                            auto *value_arg = dynamic_cast<TCLAP::ValueArg<ent_input_uint_t > *>(arg);
+                            entry->parsed_value = value_arg->getValue();
+                            break;
+                        }
+
+                        case ENT_INI_VAR_FLOAT: {
+                            auto *value_arg = dynamic_cast<TCLAP::ValueArg<ent_input_fp_t > *>(arg);
+                            entry->parsed_value = value_arg->getValue();
+                            break;
+                        }
+
+                        // If multi argument
+                        case ENT_INI_VAR_MULTI_STRING: {
+                            auto *multi_arg = dynamic_cast<TCLAP::MultiArg<ent_input_str_t> *>(arg);
+                            entry->parsed_value = multi_arg->getValue();
+                            break;
+                        }
+
+                        case ENT_INI_VAR_MULTI_INT: {
+                            auto *multi_arg = dynamic_cast<TCLAP::MultiArg<ent_input_uint_t> *>(arg);
+                            entry->parsed_value = multi_arg->getValue();
+                            break;
+                        }
+                        case ENT_INI_VAR_MULTI_FLOAT: {
+                            auto *multi_arg = dynamic_cast<TCLAP::MultiArg<ent_input_fp_t> *>(arg);
+                            entry->parsed_value = multi_arg->getValue();
+                            break;
+                        }
+
+                        default:
+                            break;
+                    }
+
+                }
+
+            } else {
+                ;
+            }
+
+        }
+        for (auto &argument : tclap_arguments) {
+            delete argument;
+        }
 
     } catch (TCLAP::ArgException &e) {
+        for (auto &argument : tclap_arguments) {
+            delete argument;
+        }
         throw ExceptionHandler(e.what(), ERR_ENTAP_INPUT_PARSE);
     }
  }
 
-
-
-
-#endif //USE_BOOST
-
 /**
  * ======================================================================
- * Function void verify_user_input(boostPO::variables_map&       vm)
+ * Function void verify_user_input(void)
  *
- * Description          - Mangages ensuring user input is valid and
- *                        will not cause issues downstream
+ * Description          - Performs sanity checks on user input
  *
  * Notes                - None
  *
- * @param vm            - User variable map of flags
  * @return              - None
  * =====================================================================
  */
@@ -452,16 +1038,17 @@ bool UserInput::verify_user_input() {
     std::string              species;
     std::string              input_tran_path;
     std::vector<uint16>      ont_flags;
-    EntapDatabase           *pEntapDatabase = nullptr;
-
+    EntapDatabase           *pEntap_database = nullptr;
+    std::unique_ptr<QueryData> pQuery_Data=nullptr;
 
     // If graphing flag, check if it is allowed then EXIT
-    if (has_input(UserInput::INPUT_FLAG_GRAPH)) {
-        if (!_pFileSystem->file_exists(GRAPHING_EXE)) {
+    if (has_input(INPUT_FLAG_GRAPH)) {
+        std::string graphing_exe = get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_GRAPH);
+        if (!mpFileSystem->file_exists(graphing_exe)) {
             std::cout<<"Graphing is NOT enabled on this system! Graphing script could not "
-                    "be found at: "<<GRAPHING_EXE << std::endl;
+                    "be found at: "<<graphing_exe << std::endl;
         }
-        GraphingManager gmanager = GraphingManager(GRAPHING_EXE);
+        GraphingManager gmanager = GraphingManager(graphing_exe, mpFileSystem);
         if (gmanager.is_graphing_enabled()) {
             std::cout<< "Graphing is enabled on this system!" << std::endl;
             throw ExceptionHandler("",ERR_ENTAP_SUCCESS);
@@ -479,7 +1066,7 @@ bool UserInput::verify_user_input() {
     is_protein    = has_input(INPUT_FLAG_RUNPROTEIN);
     is_nucleotide = has_input(INPUT_FLAG_RUNNUCLEOTIDE);
 
-    _is_config = is_config;
+    mIsConfig = is_config;
 
     if (is_protein && is_nucleotide) {
         throw ExceptionHandler("Cannot specify both protein and nucleotide input flags",
@@ -497,9 +1084,9 @@ bool UserInput::verify_user_input() {
     }
     print_user_input();
 
-    // If user wants to skip this check, EXIT
-    if (has_input(UserInput::INPUT_FLAG_NOCHECK)) {
-        FS_dprint("User is skipping input verification!! :(");
+    // If user wants to skip this check, EXIT (do this after we print the input for debugging purposes)
+    if (has_input(INPUT_FLAG_NOCHECK)) {
+        FS_dprint("WARNING User is skipping input verification!! :(");
         return is_config;
     }
 
@@ -508,9 +1095,9 @@ bool UserInput::verify_user_input() {
         verify_databases(is_run);
 
         // Handle generic flags
-        if (has_input(UserInput::INPUT_FLAG_OUTPUT_FORMAT)) {
-            vect_uint16_t output_formats = get_user_input<vect_uint16_t>(UserInput::INPUT_FLAG_OUTPUT_FORMAT);
-            for (uint16 flag : output_formats) {
+        if (has_input(INPUT_FLAG_OUTPUT_FORMAT)) {
+            ent_input_multi_int_t output_formats = get_user_input<ent_input_multi_int_t>(INPUT_FLAG_OUTPUT_FORMAT);
+            for (ent_input_uint_t flag : output_formats) {
                 if (flag <= FileSystem::ENT_FILE_UNUSED || flag >= FileSystem::ENT_FILE_OUTPUT_FORMAT_MAX) {
                     throw ExceptionHandler("Invalid flag for Output Format (" + std::to_string(flag) + ")",
                                            ERR_ENTAP_INPUT_PARSE);
@@ -523,70 +1110,81 @@ bool UserInput::verify_user_input() {
 
             // Verify EnTAP database can be generated
             FS_dprint("Verifying EnTAP database...");
-            pEntapDatabase = new EntapDatabase(_pFileSystem);
+            pEntap_database = new EntapDatabase(mpFileSystem, this);
             // Find database type that will be used by the rest (use 0 index no matter what)
-            vect_uint16_t entap_database_types =
-                    get_user_input<vect_uint16_t>(INPUT_FLAG_DATABASE_TYPE);
-            EntapDatabase::DATABASE_TYPE type =
-                    static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
-            if (!pEntapDatabase->set_database(type)) {
-                throw ExceptionHandler("Unable to open EnTAP database from paths given" + pEntapDatabase->print_error_log(),
+            ent_input_multi_int_t entap_database_types =
+                    get_user_input<ent_input_multi_int_t>(INPUT_FLAG_DATABASE_TYPE);
+            EntapDatabase::DATABASE_TYPE type = static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
+            if (!pEntap_database->set_database(type)) {
+                throw ExceptionHandler("Unable to open EnTAP database from paths given" + pEntap_database->print_error_log(),
                                        ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
             }
             // Verify database type
-            if (!pEntapDatabase->is_valid_version()) {
+            if (!pEntap_database->is_valid_version()) {
                 throw ExceptionHandler("EnTAP database version invalid with this version of software\nYou have: " +
-                                               pEntapDatabase->get_current_version_str() + "\nYou need: " +
-                                               pEntapDatabase->get_required_version_str(), ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
+                                               pEntap_database->get_current_version_str() + "\nYou need: " +
+                                               pEntap_database->get_required_version_str(), ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
             }
 
             FS_dprint("Success!");
 
             // Verify input transcriptome
-            if (!has_input(UserInput::INPUT_FLAG_TRANSCRIPTOME)) {
+            if (!has_input(INPUT_FLAG_TRANSCRIPTOME)) {
                 throw(ExceptionHandler("Must enter a valid transcriptome",ERR_ENTAP_INPUT_PARSE));
             } else {
-                input_tran_path = get_user_input<std::string>(INPUT_FLAG_TRANSCRIPTOME);
-                if (!_pFileSystem->file_exists(input_tran_path)) {
+                input_tran_path = get_user_input<ent_input_str_t>(INPUT_FLAG_TRANSCRIPTOME);
+                if (!mpFileSystem->file_exists(input_tran_path)) {
                     throw(ExceptionHandler("Transcriptome not found at: " + input_tran_path,
                                            ERR_ENTAP_INPUT_PARSE));
-                } else if (_pFileSystem->file_empty(input_tran_path)) {
+                } else if (mpFileSystem->file_empty(input_tran_path)) {
                     throw(ExceptionHandler("Transcriptome file empty: "+ input_tran_path,
                                            ERR_ENTAP_INPUT_PARSE));
-                } else if (!_pFileSystem->check_fasta(input_tran_path)) {
+                } else if (!mpFileSystem->check_fasta(input_tran_path)) {
                     throw(ExceptionHandler("File not in fasta format or corrupt! "+ input_tran_path,
                                            ERR_ENTAP_INPUT_PARSE));
+                } else {
+                    // File valid, verify that the transcriptome is in correct format
+                    try {
+                        pQuery_Data = std::unique_ptr<QueryData>(new QueryData(input_tran_path, this, mpFileSystem));
+                    } catch (const ExceptionHandler &e) {
+                        throw e;
+                    }
+
                 }
             }
 
             // Verify species for taxonomic relevance
             if (has_input(INPUT_FLAG_SPECIES)) {
-                verify_species(SPECIES, pEntapDatabase);
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_SPECIES].input);
+                verify_species(SPECIES, pEntap_database);
             }
 
             // Verify contaminant
-            if (has_input(INPUT_FLAG_CONTAM)) {
-                verify_species(CONTAMINANT, pEntapDatabase);
+            if (has_input(INPUT_FLAG_CONTAMINANT)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_CONTAMINANT].input);
+                verify_species(CONTAMINANT, pEntap_database);
             }
 
             // Verify path + extension for alignment file
             if (has_input(INPUT_FLAG_ALIGN)) {
-                std::string align_file = get_user_input<std::string>(INPUT_FLAG_ALIGN);
-                std::string align_ext = _pFileSystem->get_file_extension(align_file, false);
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_ALIGN].input);
+                ent_input_str_t align_file = get_user_input<ent_input_str_t>(INPUT_FLAG_ALIGN);
+                std::string align_ext = mpFileSystem->get_file_extension(align_file, false);
                 std::transform(align_ext.begin(), align_ext.end(), align_ext.begin(), ::tolower);
-                if (align_ext != FileSystem::EXT_SAM && align_ext != FileSystem::EXT_BAM) {
-                    throw ExceptionHandler("Alignment file must have a .bam or .sam extension",
+                if (!mpFileSystem->file_exists(align_file)) {
+                    throw ExceptionHandler("BAM/SAM file not found at: " + align_file + " exiting...",
                                            ERR_ENTAP_INPUT_PARSE);
                 }
-                if (!_pFileSystem->file_exists(align_file)) {
-                    throw ExceptionHandler("BAM/SAM file not found at: " + align_file + " exiting...",
+                if (align_ext != FileSystem::EXT_SAM && align_ext != FileSystem::EXT_BAM) {
+                    throw ExceptionHandler("Alignment file must have a .bam or .sam extension",
                                            ERR_ENTAP_INPUT_PARSE);
                 }
             }
 
             // Verify FPKM
-            if (has_input(UserInput::INPUT_FLAG_FPKM)) {
-                fp32 fpkm = get_user_input<fp32>(INPUT_FLAG_FPKM);
+            if (has_input(INPUT_FLAG_FPKM)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_FPKM].input);
+                ent_input_fp_t fpkm = get_user_input<ent_input_fp_t>(INPUT_FLAG_FPKM);
                 if (fpkm > FPKM_MAX || fpkm < FPKM_MIN) {
                     throw ExceptionHandler("FPKM is out of range, but be between " + std::to_string(FPKM_MIN) +
                                            " and " + std::to_string(FPKM_MAX), ERR_ENTAP_INPUT_PARSE);
@@ -595,7 +1193,8 @@ bool UserInput::verify_user_input() {
 
             // Verify query coverage
             if (has_input(INPUT_FLAG_QCOVERAGE)) {
-                fp32 qcoverage = get_user_input<fp32>(UserInput::INPUT_FLAG_QCOVERAGE);
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_QCOVERAGE].input);
+                ent_input_fp_t qcoverage = get_user_input<ent_input_fp_t>(INPUT_FLAG_QCOVERAGE);
                 if (qcoverage > COVERAGE_MAX || qcoverage < COVERAGE_MIN) {
                     throw ExceptionHandler("Query coverage is out of range, but be between " +
                                            std::to_string(COVERAGE_MIN) +
@@ -605,7 +1204,8 @@ bool UserInput::verify_user_input() {
 
             // Verify target coverage
             if (has_input(INPUT_FLAG_TCOVERAGE)) {
-                fp32 qcoverage = get_user_input<fp32>(INPUT_FLAG_TCOVERAGE);
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_TCOVERAGE].input);
+                ent_input_fp_t qcoverage = get_user_input<ent_input_fp_t>(INPUT_FLAG_TCOVERAGE);
                 if (qcoverage > COVERAGE_MAX || qcoverage < COVERAGE_MIN) {
                     throw ExceptionHandler("Target coverage is out of range, but be between " +
                                            std::to_string(COVERAGE_MIN) +
@@ -616,10 +1216,10 @@ bool UserInput::verify_user_input() {
             // Verify Ontology Flags
             is_interpro = false;
             if (has_input(INPUT_FLAG_ONTOLOGY)) {
-                ont_flags = get_user_input<std::vector<uint16>>(INPUT_FLAG_ONTOLOGY);
-                for (uint8 i = 0; i < ont_flags.size() ; i++) {
-                    if ((ont_flags[i] > ONT_SOFTWARE_COUNT) ||
-                         ont_flags[i] < 0) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_ONTOLOGY].input);
+                ont_flags = get_user_input<ent_input_multi_int_t>(INPUT_FLAG_ONTOLOGY);
+                for (ent_input_uint_t i = 0; i < ont_flags.size() ; i++) {
+                    if ((ont_flags[i] > ONT_SOFTWARE_COUNT) || ont_flags[i] < 0) {
                         throw ExceptionHandler("Invalid ontology flags being used",
                                                ERR_ENTAP_INPUT_PARSE);
                     }
@@ -629,71 +1229,91 @@ bool UserInput::verify_user_input() {
 
             // Verify InterPro databases
             if (is_interpro && !ModInterpro::valid_input(this)) {
-                throw ExceptionHandler("InterPro selected, but invalid databases input!", ERR_ENTAP_INPUT_PARSE);
+                throw ExceptionHandler("InterProScan selected, but invalid databases input!", ERR_ENTAP_INPUT_PARSE);
             }
 
             // Verify uninformative file list
-            if (has_input(INPUT_FLAG_UNINFORM)) {
-                std::string uninform_path = get_user_input<std::string>(UserInput::INPUT_FLAG_UNINFORM);
+            if (has_input(INPUT_FLAG_UNINFORMATIVE)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_UNINFORMATIVE].input);
+                std::string uninform_path = get_user_input<ent_input_str_t>(INPUT_FLAG_UNINFORMATIVE);
                 verify_uninformative(uninform_path);
             }
 
-            // Verify paths from state
-            if (get_user_input<std::string>(INPUT_FLAG_STATE) == DEFAULT_STATE) {
-                std::string state = DEFAULT_STATE;
-                // only handling default now
-                verify_state(state, is_protein, ont_flags);
+            // Verify Frame Selection flag
+            if (has_input(INPUT_FLAG_FRAME_SELECTION)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_FRAME_SELECTION].input);
+                ent_input_uint_t frame_software = get_user_input<ent_input_uint_t >(INPUT_FLAG_FRAME_SELECTION);
+                if (frame_software <= FRAME_UNUSED || frame_software >= FRAME_SOFTWARE_COUNT) {
+                    throw ExceptionHandler("Invalid Frame Selection software input!", ERR_ENTAP_INPUT_PARSE);
+                }
             }
+
+            // Verify minimum protein value
+            if (has_input(INPUT_FLAG_TRANS_MIN_PROTEIN)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_TRANS_MIN_PROTEIN].input);
+                ent_input_uint_t  min_protein = get_user_input<ent_input_uint_t>(INPUT_FLAG_TRANS_MIN_PROTEIN);
+                if (min_protein < TRANS_MIN_PROTEIN_MIN) {
+                    throw ExceptionHandler("Invalid TransDecoder minimum protein length value, minimum is: " +
+                        std::to_string(TRANS_MIN_PROTEIN_MIN), ERR_ENTAP_INPUT_PARSE);
+                }
+            }
+
         } else {
             // Must be config
 
-            // Check if EggNOG DIAMOND database exists, if not, check DIAMOND run
-            if (!_pFileSystem->file_exists(EGG_DMND_PATH)) {
-                if (!ModDiamond::is_executable(DIAMOND_EXE)) {
-                    throw ExceptionHandler("EggNOG DIAMOND database was not found at: " + EGG_DMND_PATH +
-                                           "\nThe DIAMOND test run failed.", ERR_ENTAP_INPUT_PARSE);
+            // Verify BUSCO database if the user has input it
+            if (has_input(INPUT_FLAG_BUSCO_DATABASE)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_BUSCO_DATABASE].input);
+                ent_input_multi_str_t busco_db = get_user_input<ent_input_multi_str_t>(INPUT_FLAG_BUSCO_DATABASE);
+                BuscoDatabase buscoDatabase = BuscoDatabase(mpFileSystem);
+                for (std::string &database : busco_db) {
+                    std::string temp;
+                    if (!buscoDatabase.valid_database(database, temp)) {
+                        throw ExceptionHandler("Invalid BUSCO database entered must be a URL or valid database name: " + database,
+                                               ERR_ENTAP_INPUT_PARSE);
+                    }
                 }
-            }
 
-            // Test run DIAMOND if user input databases
-            if (has_input(INPUT_FLAG_DATABASE)) {
-                if (!ModDiamond::is_executable(DIAMOND_EXE)) {
-                    throw ExceptionHandler("Databases have been selected for indexing. A test run of DIAMOND has failed!",
-                                           ERR_ENTAP_INPUT_PARSE);
-                }
             }
         }
 
+        // Verify software path for both CONFIG and EXECUTION
+        if (get_user_input<ent_input_str_t>(INPUT_FLAG_STATE) == DEFAULT_STATE) {
+            std::string state = DEFAULT_STATE;
+            // only handling default now
+            verify_software_paths(state, is_protein, is_run,pQuery_Data.get());
+        }
+
     }catch (const ExceptionHandler &e) {
-        delete pEntapDatabase;
+        delete pEntap_database;
         throw e;
     }
     FS_dprint("Success! Input verified");
-    delete pEntapDatabase;
+    delete pEntap_database;
     return is_config;
 }
 
 
 /**
  * ======================================================================
- * Function void verify_databases(boostPO::variables_map& vm)
+ * Function void verify_databases(bool is_run)
  *
  * Description          - Ensures the user is entering valid databases
- *                        and flags
+ *                        (paths exist, DIAMOND extension if needed)
  *
- * Notes                - Not really currently used, will be updated
+ * Notes                - None
  *
- * @param exe           - Boost variable map of user input
+ * @param is_run        - True is we are running, false if configuration
  * @return              - None
  * ======================================================================
  */
-void UserInput::verify_databases(bool isrun) {
+void UserInput::verify_databases(bool is_run) {
 
-    databases_t     other_data;
+    ent_input_multi_str_t     other_data;
 
     if (has_input(INPUT_FLAG_DATABASE)) {
-        other_data = get_user_input<databases_t>(INPUT_FLAG_DATABASE);
-    } else if (isrun){
+        other_data = get_user_input<ent_input_multi_str_t>(INPUT_FLAG_DATABASE);
+    } else if (is_run){
         // Must specify database when executing
         throw ExceptionHandler("Must select databases when executing main pipeline", ERR_ENTAP_INPUT_PARSE);
     }
@@ -704,139 +1324,23 @@ void UserInput::verify_databases(bool isrun) {
 
     // Check each database entered
     for (auto const& path: other_data) {
-        if (!_pFileSystem->file_exists(path) || _pFileSystem->file_empty(path)) {
+        if (!mpFileSystem->file_exists(path) || mpFileSystem->file_empty(path)) {
             throw ExceptionHandler("Database path invalid or empty: " + path, ERR_ENTAP_INPUT_PARSE);
         }
         FS_dprint("User has input a database at: " + path);
         // Is file extension diamond?
-        if (_pFileSystem->get_file_extension(path, false).compare(FileSystem::EXT_DMND) == 0) {
+        if (mpFileSystem->get_file_extension(path, false) == FileSystem::EXT_DMND) {
             // Yes, are we configuring?
-            if (!isrun) {
+            if (!is_run) {
                 throw ExceptionHandler("Cannot input DIAMOND (.dmnd) database when configuring!", ERR_ENTAP_INPUT_PARSE);
             }
         } else {
             // No, are we executing main pipeline?
-            if (isrun) {
+            if (is_run) {
                 throw ExceptionHandler("Must input DIAMOND (.dmnd) database when executing!", ERR_ENTAP_INPUT_PARSE);
             }
         }
-
     }
-}
-
-
-/**
- * ======================================================================
- * Function std::unordered_map<std::string,std::string> parse_config(std::string &exe)
- *
- * Description          - Manages parsing and verifying the EnTAP configuration
- *                        file provided by the user
- *                      - Calls verification of each key to ensure user
- *                        has not changed keys
- *                      - Generates configuration file if one is not found
- *
- * Notes                - Entry
- *
- * @param exe_paths     - First: path to config file, Second: current dir
- * @return              - Map of keys to user parameters
- * ======================================================================
- */
-std::unordered_map<std::string,std::string> UserInput::parse_config(pair_str_t &exe_paths) {
-    FS_dprint("Parsing configuration file...");
-
-    std::unordered_map<std::string,std::string> config_map;
-    std::string                                 new_config;
-    std::string                                 line;
-    std::string                                 key;
-    std::string                                 val;
-
-    if (!_pFileSystem->file_exists(exe_paths.first)){
-        FS_dprint("Config file not found, generating new file...");
-        new_config = CONFIG_FILE;
-        try {
-            generate_config(new_config);
-        } catch (std::exception &e){
-            throw ExceptionHandler(e.what(),ERR_ENTAP_CONFIG_CREATE);
-        }
-        FS_dprint("Config file successfully created");
-        throw ExceptionHandler("Configuration file generated at: " + exe_paths.first,
-            ERR_ENTAP_CONFIG_CREATE_SUCCESS);
-    }
-    FS_dprint("Config file found at: " + exe_paths.first);
-    std::ifstream in_file(exe_paths.first);
-    while (std::getline(in_file,line)) {
-        std::istringstream in_line(line);
-        if (std::getline(in_line,key,'=')) {
-            if (!check_key(key)) {
-                throw ExceptionHandler("Incorrect format in config file at line: " + in_line.str(),
-                                       ERR_ENTAP_CONFIG_PARSE);
-            }
-            if (std::getline(in_line,val)) {
-                if (val.size()<=1) val = "";
-                config_map.emplace(key,val);
-            }
-        }
-    }
-    FS_dprint("Success!");
-    init_exe_paths(config_map,exe_paths.second);
-    return config_map;
-}
-
-
-/**
- * ======================================================================
- * Function void generate_config(std::string        &path)
- *
- * Description          - Generates configuration file if it is not found
- *                        previously
- *
- * Notes                - Called from function parse_config()
- *
- * @param path          - Path to where the file should be written
- * @return              - None
- * =====================================================================
- */
-void UserInput::generate_config(std::string &path) {
-    std::ofstream config_file(path, std::ios::out | std::ios::app);
-    config_file <<
-                KEY_DIAMOND_EXE               <<"=\n"<<
-                KEY_RSEM_EXE                  <<"=\n"<<
-                KEY_GENEMARK_EXE              <<"=\n"<<
-                KEY_EGGNOG_SQL_DB             <<"=\n"<<
-                KEY_EGGNOG_DMND               <<"=\n"<<
-                KEY_INTERPRO_EXE              <<"=\n"<<
-                KEY_ENTAP_DATABASE_SQL        <<"=\n"<<
-                KEY_ENTAP_DATABASE_BIN        <<"=\n"<<
-                KEY_GRAPH_SCRIPT              <<"=\n"
-                << std::endl;
-    config_file.close();
-}
-
-
-/**
- * ======================================================================
- * Function bool check_key(std::string&     key)
- *
- * Description          - Ensures EnTAP configuration file has valid
- *                        entries and has not been edited by user
- *
- * Notes                - Called from function parse_config()
- *
- * @param key           - Key from configuration file
- * @return              - Flag if key is valid or not
- * =====================================================================
- */
-bool UserInput::check_key(std::string& key) {
-    LOWERCASE(key);
-    if (key == KEY_DIAMOND_EXE)      return true;
-    if (key == KEY_GENEMARK_EXE)     return true;
-    if (key == KEY_EGGNOG_SQL_DB)        return true;
-    if (key == KEY_EGGNOG_DMND)        return true;
-    if (key == KEY_INTERPRO_EXE)     return true;
-    if (key == KEY_ENTAP_DATABASE_BIN) return true;
-    if (key == KEY_ENTAP_DATABASE_SQL) return true;
-    if (key == KEY_GRAPH_SCRIPT)     return true;
-    return key == KEY_RSEM_EXE;
 }
 
 
@@ -846,8 +1350,10 @@ bool UserInput::check_key(std::string& key) {
  *
  * Description          - Handles printing of user selected flags to
  *                        EnTAP statistics/log file
+ *                      - All execution paths are NOT required
  *
- * Notes                - Called from main
+ * Notes                - Accesses global software execution paths from
+ *                        config file
  *
  * @return              - None
  *
@@ -855,77 +1361,109 @@ bool UserInput::check_key(std::string& key) {
  */
 void UserInput::print_user_input() {
 
+
     std::string         output;
     std::stringstream   ss;
     std::string         config_text;
+    std::string         key;
+    ENTAP_INPUT_FLAGS   input_flag;
     std::time_t         time;
     std::chrono::time_point<std::chrono::system_clock> start_time;
 
+    FS_dprint("Printing user input...");
     start_time = std::chrono::system_clock::now();
     time = std::chrono::system_clock::to_time_t(start_time);
-    _is_config ? config_text = "Configuration" : config_text = "Execution";
+    mIsConfig ? config_text = "Configuration" : config_text = "Execution";
 
-    _pFileSystem->format_stat_stream(ss, "EnTAP Run Information - " + config_text);
+    mpFileSystem->format_stat_stream(ss, "EnTAP Run Information - " + config_text);
 
     ss <<
        "Current EnTAP Version: "   << ENTAP_VERSION_STR            <<
        "\nStart time: "            << std::ctime(&time)            <<
-       "\nWorking directory has been set to: "  << _pFileSystem->get_root_path()<<
-       "\n\nExecution Paths/Commands:"
-       "\n\nRSEM Directory: "                  << RSEM_EXE_DIR      <<
-       "\nGeneMarkS-T: "                       << GENEMARK_EXE      <<
-       "\nDIAMOND: "                           << DIAMOND_EXE       <<
-       "\nInterPro: "                          << INTERPRO_EXE      <<
-       "\nEggNOG SQL Database: "               << EGG_SQL_DB_PATH   <<
-       "\nEggNOG DIAMOND Database: "           << EGG_DMND_PATH     <<
-       "\nEnTAP Database (binary): "           << ENTAP_DATABASE_BIN_PATH <<
-       "\nEnTAP Database (SQL): "              << ENTAP_DATABASE_SQL_PATH <<
-       "\nEnTAP Graphing Script: "             << GRAPHING_EXE      <<
-       "\n\nUser Inputs:\n";
+       "\nWorking directory has been set to: "  << mpFileSystem->get_root_path()<<
+       "\nUser Inputs:";
 
     // Print all user inputs (fairly raw right now)
 
-    for (const auto& it : _user_inputs) {
-        std::string key = it.first.c_str();
+    for (uint32 i=1; i < INPUT_FLAG_MAX; i++) {
+
+        const auto* it = &mUserInputs[i];
+
+        if (it == nullptr || (it->input_type == ENT_INPUT_FUTURE)) continue;
+
+        key = it->input;
+        input_flag = static_cast<ENTAP_INPUT_FLAGS>(i);
         ss << "\n" << key << ": ";
-#ifdef USE_BOOST
-        auto& value = it.second.value();
-#else
-        auto& value = it.second;
-#endif
-        if (auto v = boost::any_cast<std::string>(&value)) {
-            ss << *v;
-        } else if (auto v = boost::any_cast<std::vector<std::string>>(&value)) {
-            if (v->size()>0) {
-                for (auto const& val:*v) {
-                    ss << val << " ";
+
+        // Skip entering a value if it is NULL or BOOL (we want to print true or false here)
+        if (!has_input(input_flag) && it->var_type != ENT_INI_VAR_BOOL) {
+            continue;
+        }
+
+        switch (it->var_type) {
+
+            case ENT_INI_VAR_BOOL:
+                if (!has_input(input_flag)) {
+                    ss << INI_FILE_BOOL_FALSE;
+                } else {
+                    ss << INI_FILE_BOOL_TRUE;
                 }
-            } else ss << "null";
-        } else if (auto v = boost::any_cast<float>(&value)){
-            ss << *v;
-        } else if (auto v = boost::any_cast<double>(&value)) {
-            ss << float_to_sci(*v,2);
-        } else if (auto v = boost::any_cast<int>(&value)) {
-            ss << *v;
-        } else if (auto v = boost::any_cast<std::vector<short>>(&value)) {
-            for (auto const &val:*v) {
-                ss << val << " ";
+                break;
+
+            case ENT_INI_VAR_STRING:
+                ss << get_user_input<ent_input_str_t>(input_flag);
+                break;
+
+            case ENT_INI_VAR_INT: {
+                auto v = get_user_input<ent_input_uint_t>(input_flag);
+                ss << std::to_string(v);
+                break;
             }
-        } else if (auto v = boost::any_cast<vect_uint16_t>(&value)) {
-            for (auto const &val:*v) {
-                ss << val << " ";
+
+            case ENT_INI_VAR_FLOAT: {
+                auto v = get_user_input<ent_input_fp_t>(input_flag);
+                ss << std::to_string(v);
+                break;
             }
-        } else ss << "null";
+
+            case ENT_INI_VAR_MULTI_STRING: {
+                auto v = get_user_input<ent_input_multi_str_t>(input_flag);
+                for (auto &ii : v) {
+                    ss << ii << INI_FILE_MULTI_DELIM;
+                }
+                break;
+            }
+
+            case ENT_INI_VAR_MULTI_INT: {
+                auto v = get_user_input<ent_input_multi_int_t>(input_flag);
+                for (auto &ii : v) {
+                    ss << std::to_string(ii) << INI_FILE_MULTI_DELIM;
+                }
+                break;
+            }
+
+            case ENT_INI_VAR_MULTI_FLOAT: {
+                auto v = get_user_input<ent_input_multi_fp_t>(input_flag);
+                for (auto &ii : v) {
+                    ss << std::to_string(ii) << INI_FILE_MULTI_DELIM;
+                }
+                break;
+            }
+
+            default:
+                continue;
+        }
     }
+    // Print to log file and debug
     output = ss.str() + "\n";
-    _pFileSystem->print_stats(output);
+    mpFileSystem->print_stats(output);
     FS_dprint(output+"\n");
 }
 
 
 /**
  * ======================================================================
- * Function void verify_species(boostPO::variables_map &map)
+ * Function void verify_species(SPECIES_FLAGS flag, EntapDatabase *database)
  *
  * Description          - Verify species/tax level input by the user
  *                      - Ensure it can be found within the tax database
@@ -939,7 +1477,7 @@ void UserInput::print_user_input() {
  */
 void UserInput::verify_species(SPECIES_FLAGS flag, EntapDatabase *database) {
 
-    std::vector<std::string> species;
+    ent_input_multi_str_t    species;
     std::string              raw_species;
 
     if (database == nullptr) return;
@@ -948,7 +1486,7 @@ void UserInput::verify_species(SPECIES_FLAGS flag, EntapDatabase *database) {
         raw_species = get_target_species_str();
         species.push_back(raw_species);
     } else if (flag == CONTAMINANT) {
-        species = get_user_input<std::vector<std::string>>(INPUT_FLAG_CONTAM);
+        species = get_user_input<ent_input_multi_str_t>(INPUT_FLAG_CONTAMINANT);
         for (std::string &contam : species) {
             process_user_species(contam);
         }
@@ -960,105 +1498,11 @@ void UserInput::verify_species(SPECIES_FLAGS flag, EntapDatabase *database) {
             throw ExceptionHandler("Error in one of your inputted taxons: " + s + " it is not located"
                                    " within the taxonomic database. You may remove it or select another",
                                     ERR_ENTAP_INPUT_PARSE);
+        } else {
+            FS_dprint("Verified species: " + s);
         }
     }
-    FS_dprint("Taxonomic species verified");
 }
-
-
-
-/**
- * ======================================================================
- * Description      - Finds exe paths for each piece of pipeline. WARNING: does not
- *                    check for validity of exe paths (as some parts may not want to be
- *                    ran)
- *
- * @param map       - Map of entap_config file
- * @param exe       - EnTAP execution directory
- * @return          - DIAMOND .exe path ran by enTAP::Init
- * ======================================================================
- */
-void UserInput::init_exe_paths(std::unordered_map<std::string, std::string> &map, std::string exe) {
-    FS_dprint("Assigning execution paths. Note they are not checked for validity yet...");
-
-    std::stringstream                  ss;
-    std::string                        out_msg;
-    std::pair<std::string,std::string> outpair;
-    std::string temp_rsem              = map[KEY_RSEM_EXE];
-    std::string temp_diamond           = map[KEY_DIAMOND_EXE];
-    std::string temp_genemark          = map[KEY_GENEMARK_EXE];
-    std::string temp_interpro          = map[KEY_INTERPRO_EXE];
-    std::string temp_eggnog_sql_db     = map[KEY_EGGNOG_SQL_DB];
-    std::string temp_eggnog_dmnd_db    = map[KEY_EGGNOG_DMND];
-    std::string temp_entap_sql_db      = map[KEY_ENTAP_DATABASE_SQL];
-    std::string temp_entap_bin_db      = map[KEY_ENTAP_DATABASE_BIN];
-    std::string temp_graphing          = map[KEY_GRAPH_SCRIPT];
-
-    // Included software paths
-    if (temp_rsem.empty())    temp_rsem           = PATHS(exe,Defaults::RSEM_DEFAULT_EXE);
-    if (temp_diamond.empty()) temp_diamond        = PATHS(exe,Defaults::DIAMOND_DEFAULT_EXE);
-    if (temp_genemark.empty())temp_genemark       = PATHS(exe,Defaults::GENEMARK_DEFAULT_EXE);
-    if (temp_interpro.empty())   temp_interpro    = Defaults::INTERPRO_DEF_EXE;
-
-    // EggNOG paths
-    if (temp_eggnog_sql_db.empty())  temp_eggnog_sql_db   = PATHS(exe,Defaults::EGG_SQL_DB_DEFAULT);
-    if (temp_eggnog_dmnd_db.empty())  temp_eggnog_dmnd_db   = PATHS(exe,Defaults::EGG_DMND_DEFAULT);
-
-    // EnTAP paths
-    if (temp_entap_sql_db.empty()) temp_entap_sql_db = PATHS(exe, Defaults::ENTAP_DATABASE_SQL_DEFAULT);
-    if (temp_entap_bin_db.empty()) temp_entap_bin_db = PATHS(exe, Defaults::ENTAP_DATABASE_BIN_DEFAULT);
-    if (temp_graphing.empty()) temp_graphing = PATHS(exe, Defaults::GRAPH_SCRIPT_DEF);
-
-    DIAMOND_EXE      = temp_diamond;
-    GENEMARK_EXE     = temp_genemark;
-    RSEM_EXE_DIR     = temp_rsem;
-    EGG_SQL_DB_PATH  = temp_eggnog_sql_db;
-    EGG_DMND_PATH    = temp_eggnog_dmnd_db;
-    INTERPRO_EXE     = temp_interpro;
-    ENTAP_DATABASE_BIN_PATH = temp_entap_bin_db;
-    ENTAP_DATABASE_SQL_PATH = temp_entap_sql_db;
-    GRAPHING_EXE     = temp_graphing;
-
-    FS_dprint("Success! All exe paths set");
-}
-
-
-/**
- * ======================================================================
- * Function std::string get_config_path()
- *
- * Description          - Gets the configuration file path either from
- *                        user input or default
- *                      - Calls separate routine to pull execution directory
- *                        for defaults
- *
- *
- * @return              - Pair (first:config path, second:exe directory)
- * ======================================================================
- */
-pair_str_t UserInput::get_config_path() {
-    //TODO check different systems
-
-    pair_str_t output;      // first:config file, second:default for exe paths
-
-    if (has_input(INPUT_FLAG_EXE_PATH)) {
-        output.first = get_user_input<std::string>(INPUT_FLAG_EXE_PATH);
-        FS_dprint("User input config filepath at: " + output.first);
-    } else {
-        // if no config input, use default path found in cwd
-        output.first = PATHS(_pFileSystem->get_cur_dir(), CONFIG_FILE);
-        FS_dprint("No inputted config file, using default: " + output.first);
-    }
-    if (!_pFileSystem->file_exists(output.first)) {
-        FS_dprint("No configuration file with execution paths found at: " +
-                output.first);
-        // Will be printed later
-    }
-
-    output.second = get_executable_dir();
-    return output;
-}
-
 
 /**
  * ======================================================================
@@ -1092,8 +1536,8 @@ void UserInput::process_user_species(std::string &input) {
  * ======================================================================
  */
 void UserInput::verify_uninformative(std::string& path) {
-    if (!_pFileSystem->file_exists(path) || _pFileSystem->file_empty(path) ||
-            !_pFileSystem->file_test_open(path)) {
+    if (!mpFileSystem->file_exists(path) || mpFileSystem->file_empty(path) ||
+            !mpFileSystem->file_test_open(path)) {
         throw ExceptionHandler("Path to uninformative list invalid/empty!",ERR_ENTAP_INPUT_PARSE);
     }
 }
@@ -1101,115 +1545,180 @@ void UserInput::verify_uninformative(std::string& path) {
 
 /**
  * ======================================================================
- * Function void verify_state(std::string &state, bool runP,
+ * Function void verify_state(std::string &state, bool runP, bool is_execution
  *                            std::vector<uint16> &ontology)
  *
  * Description          - Entry to check execution paths for software based
  *                        on state
+ *                      - Sanity check on software specific commands
  *
  * Notes                - Throw error on failure
  *
  * @param state         - State inputted by user (or default)
  * @param runP          - Blastp flag (yes/no)
+ * @param is_execution  - If we are running execution or configuration
  * @param ontology      - Vector of ontology flags
  *
  * @return              - None
  * ======================================================================
  */
-void UserInput::verify_state(std::string &state, bool runP, std::vector<uint16> &ontology) {
+void UserInput::verify_software_paths(std::string &state, bool runP, bool is_execution, QueryData *pQuery_data) {
     uint8 execute = 0x0;
     std::pair<bool, std::string> out;
-    if (state.compare(DEFAULT_STATE) == 0) {
+    ent_input_str_t dmnd_exe;
+    ent_input_str_t egg_db_dmnd;
+    ent_input_str_t egg_db_sql;
+    ent_input_str_t interpro_exe;
+    ent_input_str_t busco_exe;
+    ent_input_str_t genemarkst_exe;
+    ent_input_str_t transdecoder_exe_predict;
+    ent_input_str_t transdecoder_exe_longorf;
+    ent_input_multi_int_t ontology_flags;
+    ent_input_uint_t frame_selection_software;
+
+    dmnd_exe     = get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
+    egg_db_dmnd  = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
+    egg_db_sql   = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
+    interpro_exe = get_user_input<ent_input_str_t>(INPUT_FLAG_INTERPRO_EXE);
+    busco_exe    = get_user_input<ent_input_str_t>(INPUT_FLAG_BUSCO_EXE);
+    genemarkst_exe = get_user_input<ent_input_str_t>(INPUT_FLAG_GENEMARKST_EXE);
+    transdecoder_exe_predict = get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_PREDICT_EXE);
+    transdecoder_exe_longorf = get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_LONGORF_EXE);
+
+    ontology_flags = get_user_input<ent_input_multi_int_t>(INPUT_FLAG_ONTOLOGY);
+    frame_selection_software = get_user_input<ent_input_uint_t>(INPUT_FLAG_FRAME_SELECTION);
+
+    if (state == DEFAULT_STATE) {
+        bool is_run_frame_select;
+
+        if (run_expression_filtering()) {
+            execute |= EXPRESSION_FILTERING;
+        }
+
+        if (run_frame_selection(pQuery_data, is_run_frame_select)) {
+            if (is_run_frame_select) {
+                execute |= FRAME_SELECTION;
+            }
+        }
         execute |= SIMILARITY_SEARCH;
         execute |= GENE_ONTOLOGY;
+
     }
-    out = verify_software(execute, ontology);
-    if (!out.first) throw ExceptionHandler(out.second, ERR_ENTAP_INPUT_PARSE);
-}
-
-
-/**
- * ======================================================================
- * Function std::pair<bool,std::string> verify_software(uint8 &states,
- *                                      std::vector<uint16> &ontology)
- *
- * Description          - Sanity check on software that will be used during
- *                        execution
- *
- * Notes                - None
- *
- * @param states        - State flags
- * @param ontology      - Vector of ontology flags
- *
- * @return              - Pair of yes/no failure and error msg string
- * ======================================================================
- */
-std::pair<bool,std::string> UserInput::verify_software(uint8 &states,std::vector<uint16> &ontology) {
     FS_dprint("Verifying software...");
 
-    if (states & SIMILARITY_SEARCH) {
-        if (!ModDiamond::is_executable(DIAMOND_EXE)) {
-            return std::make_pair(false, "Could not execute a test run of DIAMOND, be sure"
-                    " it's properly installed and the path is correct");
+    if (is_execution) {
+
+        // add expression filtering
+
+        // Check frame selection software
+        if (execute & FRAME_SELECTION) {
+            switch (frame_selection_software) {
+
+                case FRAME_GENEMARK_ST:
+                    FS_dprint("Verifying that GeneMarkS-T is executable...");
+                    if (!ModGeneMarkST::is_executable(genemarkst_exe)) {
+                        throw ExceptionHandler("Could not execute a test run of GeneMarkS-T, be sure "
+                                               "it's properly installed and the executable is correct",
+                                               ERR_ENTAP_INPUT_PARSE);
+                    }
+                    break;
+
+                case FRAME_TRANSDECODER:
+                    FS_dprint("Verifying that Transdecoder is executable");
+                    if (!ModTransdecoder::is_executable(transdecoder_exe_longorf, transdecoder_exe_predict)) {
+                        throw ExceptionHandler("Could not execute a test run of Transdecoder, be sure "
+                                               "it's properly installed and the executable is correct",
+                                               ERR_ENTAP_INPUT_PARSE);
+                    }
+                    break;
+            }
         }
-    }
-    if (states & GENE_ONTOLOGY) {
-        for (uint16 flag : ontology) {
-            switch (flag) {
+
+        // Check SIMLARITY SEARCH software
+        if (execute & SIMILARITY_SEARCH) {
+            if (!ModDiamond::is_executable(dmnd_exe)) {
+                throw ExceptionHandler("Could not execute a test run of DIAMOND, be sure it's properly "
+                                       "installed and the path is correct", ERR_ENTAP_INPUT_PARSE);
+            }
+        }
+        if (execute & GENE_ONTOLOGY) {
+            for (uint16 flag : ontology_flags) {
+                switch (flag) {
 #ifdef EGGNOG_MAPPER
-                case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-                    if (!_pFileSystem->file_exists(EGG_SQL_DB_PATH))
+                    case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
+                    if (!pFileSystem->file_exists(EGG_SQL_DB_PATH))
                         return std::make_pair(false, "Could not find EggNOG SQL database at: " + EGG_SQL_DB_PATH);
                     if (!ModEggnog::is_executable())
                         return std::make_pair(false, "Test of EggNOG Emapper failed, "
                                 "ensure python is properly installed and the paths are correct");
                     break;
 #endif
-                case ONT_INTERPRO_SCAN:
-                    // TODO
-                    break;
+                    case ONT_INTERPRO_SCAN:
+                        FS_dprint("Verifying InterProScan inputs...");
+                        if (!ModInterpro::is_executable(interpro_exe)) {
+                            throw ExceptionHandler("Could not execute test run of InterProScan with execution command: " +
+                                interpro_exe, ERR_ENTAP_INPUT_PARSE);
+                        }
+                        FS_dprint("Success!");
+                        break;
 
-                case ONT_EGGNOG_DMND:
-                    if (!_pFileSystem->file_exists(EGG_SQL_DB_PATH))
-                        return std::make_pair(false, "Could not find EggNOG SQL database at: " + EGG_SQL_DB_PATH);
-                    else if (!_pFileSystem->file_exists(EGG_DMND_PATH))
-                        return std::make_pair(false, "Could not find EggNOG Diamond Database at: " + EGG_DMND_PATH);
-                    else if (!ModEggnogDMND::is_executable(DIAMOND_EXE))
-                        return std::make_pair(false, "Test run of DIAMOND for EggNOG analysis has failed");
-                default:
-                    break;
+                    case ONT_EGGNOG_DMND:
+                        FS_dprint("Verifying EggNOG inputs...");
+                        if (!mpFileSystem->file_exists(egg_db_sql))
+                            throw ExceptionHandler("Could not find EggNOG SQL database at: " + egg_db_sql, ERR_ENTAP_INPUT_PARSE);
+                        else if (!mpFileSystem->file_exists(egg_db_dmnd))
+                            throw ExceptionHandler("Could not find EggNOG Diamond Database at: " + egg_db_dmnd, ERR_ENTAP_INPUT_PARSE);
+                        else if (!ModEggnogDMND::is_executable(dmnd_exe))
+                            throw ExceptionHandler("Could not execute a test run of DIAMOND for EggNOG analysis has failed", ERR_ENTAP_INPUT_PARSE);
+                        FS_dprint("Success!");
+                        break;
+
+                    case ONT_BUSCO:
+                        FS_dprint("Verifying BUSCO inputs...");
+                        if (ModBUSCO::is_executable(busco_exe)) {
+                            ent_input_multi_str_t busco_databases = get_user_input<ent_input_multi_str_t>(INPUT_FLAG_BUSCO_DATABASE);
+                            for (std::string &database : busco_databases) {
+                                if (!mpFileSystem->file_exists(database)) {
+                                    throw ExceptionHandler("Could not locate BUSCO database at: " + database, ERR_ENTAP_INPUT_PARSE);
+                                }
+                            }
+
+                        } else {
+                            throw ExceptionHandler("Could not execute test run of BUSCO with execution command: " +
+                                busco_exe, ERR_ENTAP_INPUT_PARSE);
+                        }
+                        FS_dprint("Success!");
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+        }
+    // No, using CONFIGURATION stage of pipeline
+    } else {
+
+        // Check if EggNOG DIAMOND database exists, if not, check DIAMOND run
+        if (!mpFileSystem->file_exists(get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB))) {
+            if (!ModDiamond::is_executable(dmnd_exe)) {
+                throw ExceptionHandler("EggNOG DIAMOND database was not found at: " + egg_db_dmnd +
+                                       "\nThe DIAMOND test run failed.", ERR_ENTAP_INPUT_PARSE);
+            }
+        }
+
+        // Test run DIAMOND if user input databases
+        if (has_input(INPUT_FLAG_DATABASE)) {
+            if (!ModDiamond::is_executable(dmnd_exe)) {
+                throw ExceptionHandler("Databases have been selected for indexing. The test run of DIAMOND has failed!",
+                                       ERR_ENTAP_INPUT_PARSE);
             }
         }
     }
-
     FS_dprint("Success!");
-    return std::make_pair(true, "");
 }
 
-UserInput::UserInput(int argc, const char** argv) {
-    FS_dprint("Spawn Object - UserInput");
-
-#ifdef USE_BOOST
-    parse_arguments_boost(argc, argv);
-#else
-    parse_arguments_tclap(argc, argv);
-#endif
-}
-
-UserInput::~UserInput() {
-    FS_dprint("Killing object - UserInput");
-}
-
-void UserInput::set_pFileSystem(FileSystem *_pFileSystem) {
-    UserInput::_pFileSystem = _pFileSystem;
-}
-
-bool UserInput::has_input(const std::string &key) {
-#ifdef USE_BOOST
-    return (bool)_user_inputs.count(key);
-#else
-    return _user_inputs.find(key) != _user_inputs.end();
-#endif
+bool UserInput::has_input(ENTAP_INPUT_FLAGS input) {
+     return !(mUserInputs[input].parsed_value).empty();
 }
 
 
@@ -1233,13 +1742,13 @@ int UserInput::get_supported_threads() {
 
     uint32       supported_threads;
     int          threads;
-    int          user_threads;
+    ent_input_uint_t          user_threads;
 
     supported_threads = std::thread::hardware_concurrency();
-    user_threads = get_user_input<int>(INPUT_FLAG_THREADS);
+    user_threads = get_user_input<ent_input_uint_t >(INPUT_FLAG_THREADS);
     // assuming positive
     if ((uint32) user_threads > supported_threads) {
-        FS_dprint("Specified thread number is larger than available threads,"
+        FS_dprint("WARNING specified thread number is larger than available threads,"
                                         "setting threads to " + std::to_string(supported_threads));
         threads = supported_threads;
     } else {
@@ -1249,11 +1758,11 @@ int UserInput::get_supported_threads() {
 }
 
 std::queue<char> UserInput::get_state_queue() {
-    std::string state_str;
+    ent_input_str_t state_str;
     std::queue<char> out_queue;
 
     if (has_input(INPUT_FLAG_STATE)) {
-        state_str = get_user_input<std::string>(UserInput::INPUT_FLAG_STATE);
+        state_str = get_user_input<ent_input_str_t>(INPUT_FLAG_STATE);
         for (char c : state_str) {
             out_queue.push(c);
         }
@@ -1262,20 +1771,20 @@ std::queue<char> UserInput::get_state_queue() {
 }
 
 std::string UserInput::get_target_species_str() {
-    std::string input_species;
+    ent_input_str_t input_species;
 
     if (has_input(INPUT_FLAG_SPECIES)) {
-        input_species = get_user_input<std::string>(UserInput::INPUT_FLAG_SPECIES);
+        input_species = get_user_input<ent_input_str_t>(INPUT_FLAG_SPECIES);
         process_user_species(input_species);
         return input_species;
     } else return "";
 }
 
 vect_str_t UserInput::get_contaminants() {
-    vect_str_t output_contams;
+    ent_input_multi_str_t output_contams;
 
-    if (has_input(INPUT_FLAG_CONTAM)) {
-        output_contams = get_user_input<vect_str_t>(UserInput::INPUT_FLAG_CONTAM);
+    if (has_input(INPUT_FLAG_CONTAMINANT)) {
+        output_contams = get_user_input<ent_input_multi_str_t>(INPUT_FLAG_CONTAMINANT);
         for (std::string &contam : output_contams) {
             if (contam.empty()) continue;
             process_user_species(contam);
@@ -1286,10 +1795,10 @@ vect_str_t UserInput::get_contaminants() {
 
 vect_str_t UserInput::get_uninformative_vect() {
     vect_str_t output_uninform;
-    std::string uninform_path;
+    ent_input_str_t uninform_path;
 
-    if (has_input(INPUT_FLAG_UNINFORM)) {
-        uninform_path = get_user_input<std::string>(UserInput::INPUT_FLAG_UNINFORM);
+    if (has_input(INPUT_FLAG_UNINFORMATIVE)) {
+        uninform_path = get_user_input<ent_input_str_t>(INPUT_FLAG_UNINFORMATIVE);
     } else {
         return INFORMATIVENESS;
     }
@@ -1308,44 +1817,90 @@ vect_str_t UserInput::get_uninformative_vect() {
 }
 
 std::string UserInput::get_user_transc_basename() {
-    std::string user_transcriptome;
+    ent_input_str_t user_transcriptome;
 
-    user_transcriptome = get_user_input<std::string>(INPUT_FLAG_TRANSCRIPTOME);
-    return _pFileSystem->get_filename(user_transcriptome, false);
-}
-
-
-/**
- * ======================================================================
- * Function std::string UserInput::get_executable_dir()
- *
- * Description          - Gets the directory that the executable was detected
- *                        in
- *
- * Notes                - Only implemented for UNIX systems now!
- *
- *
- * @return              - Path to directory that EnTAP exe was found
- * ======================================================================
- */
-std::string UserInput::get_executable_dir() {
-    char buff[1024];
-    ssize_t len = ::readlink("/proc/self/exe", buff, sizeof(buff)-1);
-    if (len != -1) {
-        buff[len] = '\0';
-        std::string path = std::string(buff);
-        return path.substr(0,path.find_last_of('/'));
-    }
-    FS_dprint("EnTAP execution path was NOT found!");
-    return "";
+    user_transcriptome = get_user_input<ent_input_str_t>(INPUT_FLAG_TRANSCRIPTOME);
+    return mpFileSystem->get_filename(user_transcriptome, false);
 }
 
 std::vector<FileSystem::ENT_FILE_TYPES> UserInput::get_user_output_types() {
     std::vector<FileSystem::ENT_FILE_TYPES> ret;
 
-    for (uint16 val :get_user_input<std::vector<uint16>>(INPUT_FLAG_OUTPUT_FORMAT)) {
+    for (ent_input_uint_t val :get_user_input<ent_input_multi_int_t >(INPUT_FLAG_OUTPUT_FORMAT)) {
         ret.push_back(static_cast<FileSystem::ENT_FILE_TYPES>(val));
     }
     return ret;
 }
 
+std::string UserInput::getBIN_PATH_DEFAULT() {
+    return BIN_PATH_DEFAULT;
+}
+
+std::string UserInput::getDATABASE_DIR_DEFAULT() {
+    return DATABASE_DIR_DEFAULT;
+}
+
+const std::string &UserInput::getEGG_SQL_DB_FILENAME() {
+    return EGG_SQL_DB_FILENAME;
+}
+
+const std::string &UserInput::getEGG_DMND_FILENAME() {
+    return EGG_DMND_FILENAME;
+}
+
+const std::string &UserInput::getEGG_SQL_DB_DEFAULT() {
+    return EGG_SQL_DB_DEFAULT;
+}
+
+const std::string &UserInput::getEGG_DMND_DEFAULT() {
+    return EGG_DMND_DEFAULT;
+}
+
+const std::string &UserInput::getENTAP_DATABASE_BIN_DEFAULT() {
+    return ENTAP_DATABASE_BIN_DEFAULT;
+}
+
+const std::string &UserInput::getENTAP_DATABASE_SQL_DEFAULT() {
+    return ENTAP_DATABASE_SQL_DEFAULT;
+}
+
+// Returns false if unable to determine whether we want to run frame selection
+bool UserInput::run_frame_selection(QueryData *queryData, bool &run_frame_selection) {
+    FS_dprint("Determining if we want to run frame selection...");
+    bool blastp;    // User input runP/blastp (TRUE) or runN (false) or config (false)
+    bool ret;
+
+    ret = true;
+    blastp = has_input(INPUT_FLAG_RUNPROTEIN);
+
+    if (queryData == nullptr) {
+        FS_dprint("ERROR Unable to determine, nullptr!");
+        ret = false;
+    } else{
+
+        if (blastp && queryData->is_protein_data()) {
+            FS_dprint("NO Protein sequences input AND runP, skipping frame selection");
+            run_frame_selection = false;
+        } else if (!blastp) {
+            FS_dprint("NO Blastx/runN selected, skipping frame selection");
+            run_frame_selection = false;
+        } else {
+            FS_dprint("YES, run frame selection");
+            run_frame_selection = true;
+        }
+    }
+
+    return ret;
+}
+
+bool UserInput::run_expression_filtering() {
+    FS_dprint("Determining if we want to run expression analysis");
+
+    if (has_input(INPUT_FLAG_ALIGN)) {
+        FS_dprint("YES, alignment file input from user");
+        return true;
+    } else {
+        FS_dprint("NO, no alignment file specified from user");
+        return false;
+    }
+}

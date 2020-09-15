@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -38,8 +38,7 @@
 class QueryAlignment {
 
 public:
-    QueryAlignment();
-    std::string print_delim(std::vector<ENTAP_HEADERS> &, uint8 lvl, char delim);
+    QueryAlignment(ExecuteStates state, uint16 software, std::string& database_path, QuerySequence* parent);
     bool operator<(const QueryAlignment&query) {return !(*this > query);};
     void set_compare_overall_alignment(bool val);
     virtual ~QueryAlignment() = default;;
@@ -47,24 +46,32 @@ public:
     void get_all_header_data(std::string[]);
     void get_header_data(ENTAP_HEADERS header, std::string &val, uint8 lvl);
 
+    uint16 getMSoftwareModule() const;
+    ExecuteStates getMExecutionState() const;
+    std::string &getMDatabasePath();
+
 protected:
     virtual bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list)=0;
 
     std::unordered_map<ENTAP_HEADERS , std::string*> ALIGN_OUTPUT_MAP;
-    bool _compare_overall_alignment; // May want to compare separate parameters for overall alignment across databases
-    QuerySequence* _parent;
+    bool mCompareOverallAlignment; // May want to compare separate parameters for overall alignment across databases
+    QuerySequence* mpParentSequence;
+    uint16 mSoftwareModule;
+    ExecuteStates mExecutionState;
+    std::string mDatabasePath;
 };
 
 //**********************************************************************
 //**********************************************************************
-//                 SimSearchAlignment Nested Class
+//                            SimSearchAlignment
 //**********************************************************************
 //**********************************************************************
 
 class SimSearchAlignment : public QueryAlignment{
 
 public:
-    SimSearchAlignment(QuerySequence::SimSearchResults, std::string&, QuerySequence*);
+    SimSearchAlignment(ExecuteStates state, uint16 software, std::string &database_path, QuerySequence* parent,
+                       QuerySequence::SimSearchResults d, std::string &lineage);
     ~SimSearchAlignment() override = default;
     QuerySequence::SimSearchResults* get_results();
     bool operator>(const QueryAlignment&) override;
@@ -85,21 +92,22 @@ protected:
 
 //**********************************************************************
 //**********************************************************************
-//                 EggnogDmndAlignment Nested Class
+//                      EggnogDmndAlignment
 //**********************************************************************
 //**********************************************************************
 
 class EggnogDmndAlignment : public QueryAlignment {
 
 public:
-    EggnogDmndAlignment(QuerySequence::EggnogResults eggnogResults, QuerySequence* parent);
+    EggnogDmndAlignment(ExecuteStates state, uint16 software, std::string &database_path, QuerySequence* parent,
+                        QuerySequence::EggnogResults eggnogResults);
     ~EggnogDmndAlignment() override = default;
     QuerySequence::EggnogResults* get_results();
     bool operator>(const QueryAlignment&) override;
     void refresh_headers();
 
 private:
-    QuerySequence::EggnogResults _eggnog_results;
+    QuerySequence::EggnogResults mEggnogResults;
 
 protected:
     bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list) override;
@@ -108,21 +116,22 @@ protected:
 
 //**********************************************************************
 //**********************************************************************
-//                 InterproAlignment Nested Class
+//                          InterproAlignment
 //**********************************************************************
 //**********************************************************************
 
 class InterproAlignment : public QueryAlignment {
 
 public:
-    InterproAlignment(QuerySequence::InterProResults results, QuerySequence *parent);
+    InterproAlignment(ExecuteStates state, uint16 software, std::string &database_path, QuerySequence* parent,
+                      QuerySequence::InterProResults results);
     ~InterproAlignment() override = default;
     QuerySequence::InterProResults* get_results();
     bool operator>(const QueryAlignment&) override;
 
 
 private:
-    QuerySequence::InterProResults _interpro_results;
+    QuerySequence::InterProResults mInterproResults;
 
 protected:
     bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list) override;

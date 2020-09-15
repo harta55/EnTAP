@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -293,7 +293,7 @@ public:
         TaxonomyNode(std::string id);
     };
 
-    explicit EntapDatabase(FileSystem*);
+    EntapDatabase(FileSystem* fileSystem, UserInput* userInput);
     ~EntapDatabase();
     bool set_database(DATABASE_TYPE type);
     DATABASE_ERR download_database(DATABASE_TYPE, std::string&);
@@ -302,9 +302,12 @@ public:
     go_format_t format_go_delim(std::string terms, char delim);
 
     // Database accession routines
+    // TODO change to const* return if SQL removed
     TaxEntry get_tax_entry(std::string& species);
     GoEntry get_go_entry(std::string& go_id);
     UniprotEntry get_uniprot_entry(std::string& accession);
+
+    bool is_uniprot_entry(std::string &sseqid, UniprotEntry &entry);
 
     // Database versioning
     bool is_valid_version();
@@ -329,6 +332,7 @@ private:
     bool add_uniprot_entry(DATABASE_TYPE type, UniprotEntry &entry);
     void set_err_msg(std::string msg, DATABASE_ERR code);
     bool set_database_versions(DATABASE_TYPE type);
+    std::string get_uniprot_accession(std::string& sseqid);
 
     DATABASE_ERR serialize_database_save(SERIALIZATION_TYPE, std::string&);
     DATABASE_ERR serialize_database_read(SERIALIZATION_TYPE, std::string&);
@@ -344,6 +348,9 @@ private:
             "https://treegenesdb.org/FTP/EnTAP/v0.9.0/databases/entap_database.bin.gz";
     const std::string FTP_UNIPROT_FLAT_FILE     =
             "ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.dat.gz";
+
+    const std::string ENTAP_DATABASE_SERIAL_GZ = "entap_database.bin.gz";
+    const std::string ENTAP_DATABASE_SQL_GZ            = "entap_database.db.gz";
 
     // NCBI Taxonomy filenames
     const std::string NCBI_TAX_ROOT          = "root[Subtree]"; // Unused
@@ -399,14 +406,15 @@ private:
 
     const uint8 STATUS_UPDATES = 5;     // Percentage of updates when downloading/configuring
 
-    EntapDatabaseStruct *_pSerializedDatabase;
-    FileSystem          *_pFilesystem;
-    SQLDatabaseHelper   *_pDatabaseHelper;
-    std::string          _temp_directory;
-    go_serial_map_t      _sql_go_helper;    // Using to increase speeds for now, change later
-    bool                 _use_serial;
-    std::string          _err_msg;
-    DATABASE_ERR         _err_code;
+    EntapDatabaseStruct *mpSerializedDatabase;
+    FileSystem          *mpFileSystem;
+    UserInput           *mpUserInput;
+    SQLDatabaseHelper   *mpDatabaseHelper;
+    std::string          mTempDirectory;
+    go_serial_map_t      mSqlGoHelper;    // Using to increase speeds for now, change later
+    bool                 mUseSerial;
+    std::string          mErrMsg;
+    DATABASE_ERR         mErrCode;
 
     const std::string ENTAP_DATABASE_TYPES_STR[ENTAP_MAX_TYPES-1] {
             "EnTAP Serialized Database",

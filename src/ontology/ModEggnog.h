@@ -9,7 +9,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -35,6 +35,31 @@
 #include "AbstractOntology.h"
 #include "../common.h"
 
+/**
+ * ======================================================================
+ * @class ModEggnog
+ *
+ * Description          - This EnTAP module supports execution, parsing, and
+ *                        statistical analysis of the Eggnog-mapper software
+ *                        through terminal commands
+ *                      - EggNOG assigns functional information to transcripts
+ *                        input from the user by accessing EggNOG gene family
+ *                        databases
+ *                      - Parsed data is added to QueryData class
+ *                      - Inherits from AbstractOntology and EntapModule classes
+ *
+ * Citation             - eggNOG 4.5: a hierarchical orthology framework with
+ *                        improved functional annotations for eukaryotic,
+ *                        prokaryotic and viral sequences. Jaime Huerta-Cepas,
+ *                        Damian Szklarczyk, Kristoffer Forslund, Helen Cook,
+ *                        Davide Heller, Mathias C. Walter, Thomas Rattei,
+ *                        Daniel R. Mende, Shinichi Sunagawa, Michael Kuhn,
+ *                        Lars Juhl Jensen, Christian von Mering, and Peer Bork.
+ *                        Nucl. Acids Res. (04 January 2016) 44 (D1): D286-D293.
+ *                        doi: 10.1093/nar/gkv1248
+ *
+ * ======================================================================
+ */
 class ModEggnog : public AbstractOntology{
 
 public:
@@ -66,11 +91,11 @@ private:
     const std::string EGG_ANNOT_STD           = "annotation_std";
     const std::string EGG_ANNOT_APPEND        = ".emapper.annotations";
 
-    std::string _figure_dir;
-    std::string _proc_dir;
+    std::string mFigureDir;
+    std::string mProcDir;
     std::string _egg_out_dir;
-    std::string _eggnog_db_path;
-    std::string _out_hits;
+    std::string mEggnogDbPath;
+    std::string mOutHIts;
 
     static std::string EGG_EMAPPER_EXE;
     std::string eggnog_format(std::string);

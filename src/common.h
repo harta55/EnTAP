@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -59,6 +59,7 @@
 #define STR_ERASE(x,y)      x.erase(std::remove(x.begin(), x.end(), y),x.end())
 #define FIND_VECT(x,y)      std::find(y.begin(), y.end(), x) != y.end() // find x in y
 #define SAFE_DELETE(x)      if (x) delete x; x = nullptr
+#define ENTAP_PERCENT       (100.0f)
 //**************************************************************
 
 
@@ -79,6 +80,7 @@ typedef std::pair<std::string,std::string>    pair_str_t;
 typedef std::vector<std::string>              vect_str_t;
 typedef std::vector<std::vector<std::string>> vect_vect_str_t;
 typedef std::vector<uint16>                   vect_uint16_t;
+typedef std::vector<fp64>                     vect_fp64_t;
 typedef std::set<std::string>                 set_str_t;
 //**************************************************************
 

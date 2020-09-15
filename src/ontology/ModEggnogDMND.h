@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,20 +30,38 @@
 
 
 #include "AbstractOntology.h"
-#include "../config.h"
 
+/**
+ * ======================================================================
+ * @class ModEggnogDMND
+ *
+ * Description          - This EnTAP module supports execution, parsing, and
+ *                        statistical analysis of the EggNOG gene family databases
+ *                        through execution of DIAMOND and SQL accession
+ *                      - EggNOG assigns functional information to transcripts
+ *                        according to their gene family
+ *                      - Parsed data is added to QueryData class
+ *                      - Inherits from AbstractOntology and EntapModule classes
+ *
+ * Citation             - Jensen, L. J., Julien, P., Kuhn, M., von Mering,
+ *                        C., Muller, J., Doerks, T., & Bork, P. (2008).
+ *                        eggNOG: automated construction and annotation of
+ *                        orthologous groups of genes. Nucleic acids research,
+ *                        36(Database issue), D250–D254. doi:10.1093/nar/gkm796
+ *
+ * ======================================================================
+ */
 class ModEggnogDMND : public AbstractOntology {
 
 public:
     ModEggnogDMND(std::string &ont_out, std::string &in_hits,
-                  EntapDataPtrs &entap_data, std::string &exe, std::string sql_db_path);
+                  EntapDataPtrs &entap_data);
     virtual ModVerifyData verify_files() override;
     ~ModEggnogDMND();
     virtual void execute() override ;
     virtual void parse() override;
     static bool is_executable(std::string &exe);
-
-    static const std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
+    virtual void get_version() override;
 
 private:
     std::string get_output_dmnd_filepath(bool final);
@@ -57,9 +75,11 @@ private:
     const std::string EGG_ANNOT_RESULTS       = "annotation_results";
     const std::string EGG_ANNOT_STD           = "annotation_std";
     static constexpr uint16 COUNT_TOP_TAX_SCOPE = 10;
+    static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
-    std::string _out_hits;
-    std::string _eggnog_db_path;
+    std::string mOutHIts;
+    std::string mEggnogDbDiamond;       // User input path to the EggNOG DMND database
+    std::string mEggnogDbSQL;           // User input path to the EggNOG SQL database
 };
 
 

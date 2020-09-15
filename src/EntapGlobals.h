@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -38,18 +38,9 @@
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #endif
-//******************** Defines/Macros **************************
-
-#ifdef USE_BOOST
-#define PATHS(x,y)      (boostFS::path(x) / boostFS::path(y)).string()
-#else
-#define PATHS(x,y)      ((x) + "/" + (y))
-#endif
-
-//**************************************************************
 
 
-class QuerySequence;
+
 class EntapDatabase;
 class FileSystem;
 class UserInput;
@@ -66,19 +57,18 @@ namespace boostAR = boost::archive;
 
 
 //***************** Global Prototype Functions *****************
-std::string generate_command(std::unordered_map<std::string,std::string>&,
-                             std::string);
 std::string float_to_string(fp64);
 std::string float_to_sci(fp64, int);
 vect_str_t  split_string(std::string, char);
 std::string get_cur_time();
+std::string &ltrim(std::string &s);
+std::string &rtrim(std::string &s);
+std::string &trim(std::string &s);
 //**************************************************************
 
 
 //**************** Global Structures/Typedefs ******************
-typedef std::unordered_map<std::string, QuerySequence*> QUERY_MAP_T;
 typedef std::map<std::string,std::vector<std::string>> go_format_t;
-typedef std::vector<std::string> databases_t;   // Standard database container
 
 
 template <typename T>
@@ -172,6 +162,7 @@ enum ExecuteStates {
 enum ONTOLOGY_SOFTWARE {
     ONT_EGGNOG_DMND,
     ONT_INTERPRO_SCAN,
+    ONT_BUSCO,
 #ifdef EGGNOG_MAPPER
     EGGNOG_INT_FLAG,
 #endif
@@ -183,16 +174,6 @@ enum SIMILARITY_SOFTWARE {
     SIM_SOFTWARE_COUNT
 };
 
-enum EXPRESSION_SOFTWARE {
-    EXP_RSEM,
-    EXP_COUNT
-};
-
-enum FRAME_SELECTION_SOFTWARE {
-    FRAME_GENEMARK_ST,
-    FRAME_SOFTWARE_COUNT
-};
-
 enum ENTAP_HEADERS {
     ENTAP_HEADER_UNUSED = 0,                // 0
     ENTAP_HEADER_QUERY,
@@ -202,6 +183,7 @@ enum ENTAP_HEADERS {
 
     /* Expression Filtering */
     ENTAP_HEADER_EXP_FPKM,
+    ENTAP_HEADER_EXP_TPM,
 
     /* Similarity Search - General */
     ENTAP_HEADER_SIM_SUBJECT,
@@ -210,7 +192,7 @@ enum ENTAP_HEADERS {
     ENTAP_HEADER_SIM_MISMATCH,
     ENTAP_HEADER_SIM_GAP_OPEN,
     ENTAP_HEADER_SIM_QUERY_S,
-    ENTAP_HEADER_SIM_QUERY_E,               // 10
+    ENTAP_HEADER_SIM_QUERY_E,                        // 10
     ENTAP_HEADER_SIM_SUBJ_S,
     ENTAP_HEADER_SIM_SUBJ_E,
     ENTAP_HEADER_SIM_E_VAL,
@@ -223,7 +205,7 @@ enum ENTAP_HEADERS {
     ENTAP_HEADER_SIM_INFORM,
 
     /* Similarity Search - UniProt*/
-    ENTAP_HEADER_SIM_UNI_DATA_XREF,         // 20
+    ENTAP_HEADER_SIM_UNI_DATA_XREF,                  // 20
     ENTAP_HEADER_SIM_UNI_COMMENTS,
     ENTAP_HEADER_SIM_UNI_KEGG,
     ENTAP_HEADER_SIM_UNI_GO_BIO,
@@ -247,7 +229,7 @@ enum ENTAP_HEADERS {
     ENTAP_HEADER_ONT_EGG_PROTEIN,
 
     /* Ontology - InterProScan */
-    ENTAP_HEADER_ONT_INTER_GO_BIO,
+    ENTAP_HEADER_ONT_INTER_GO_BIO,                  // 40
     ENTAP_HEADER_ONT_INTER_GO_CELL,
     ENTAP_HEADER_ONT_INTER_GO_MOLE,
     ENTAP_HEADER_ONT_INTER_PATHWAYS,
@@ -256,33 +238,35 @@ enum ENTAP_HEADERS {
     ENTAP_HEADER_ONT_INTER_DATA_TERM,
     ENTAP_HEADER_ONT_INTER_EVAL,
 
+    /* Ontology - BUSCO */
+    ENTAP_HEADER_ONT_BUSCO_ID,
+    ENTAP_HEADER_ONT_BUSCO_STATUS,
+    ENTAP_HEADER_ONT_BUSCO_LENGTH,                  // 50
+    ENTAP_HEADER_ONT_BUSCO_SCORE,
+
+
     ENTAP_HEADER_COUNT
 };
 
-struct EntapHeader {
-    const std::string title;
-    bool print_header;
-};
-
 struct EntapDataPtrs {
-    EntapDatabase* _pEntapDatbase;
-    FileSystem*    _pFileSystem;
-    UserInput*     _pUserInput;
-    GraphingManager* _pGraphingManager;
-    QueryData*     _pQueryData;
+    EntapDatabase*   mpEntapDatabase;
+    FileSystem*      mpFileSystem;
+    UserInput*       mpUserInput;
+    GraphingManager* mpGraphingManager;
+    QueryData*       mpQueryData;
 
     bool is_null() {
-        return _pEntapDatbase == nullptr || _pFileSystem == nullptr ||
-        _pUserInput == nullptr || _pGraphingManager == nullptr ||
-        _pQueryData == nullptr;
+        return mpEntapDatabase == nullptr || mpFileSystem == nullptr ||
+        mpUserInput == nullptr || mpGraphingManager == nullptr ||
+        mpQueryData == nullptr;
     }
 
     EntapDataPtrs() {
-        _pEntapDatbase = nullptr;
-        _pFileSystem   = nullptr;
-        _pUserInput    = nullptr;
-        _pGraphingManager = nullptr;
-        _pQueryData    = nullptr;
+        mpEntapDatabase = nullptr;
+        mpFileSystem   = nullptr;
+        mpUserInput    = nullptr;
+        mpGraphingManager = nullptr;
+        mpQueryData    = nullptr;
     }
 };
 
@@ -301,20 +285,6 @@ namespace std {
 //*********************** Externs *****************************
 
 extern std::string DEBUG_FILE_PATH;
-extern std::string LOG_FILE_PATH;
-extern std::string RSEM_EXE_DIR;
-extern std::string GENEMARK_EXE;
-extern std::string DIAMOND_EXE;
-extern std::string EGG_SQL_DB_PATH;
-extern std::string EGG_DMND_PATH;
-extern std::string INTERPRO_EXE;
-extern std::string ENTAP_DATABASE_BIN_PATH;
-extern std::string ENTAP_DATABASE_SQL_PATH;
-extern std::string GRAPHING_EXE;
-extern std::string EGG_EMAPPER_EXE;
-
-extern EntapHeader ENTAP_HEADER_INFO[];
-
 // ************************************************************
 
 static const std::string GO_MOLECULAR_FLAG     = "molecular_function";

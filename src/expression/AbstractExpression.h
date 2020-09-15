@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -85,21 +85,23 @@ public:
  * ======================================================================
  */
     AbstractExpression(std::string &execution_stage_path, std::string &in_hits,
-                       EntapDataPtrs &entap_data, std::string module_name, std::string &exe,
-                       std::string &align);
+                       EntapDataPtrs &entap_data, std::string module_name,
+                       std::vector<ENTAP_HEADERS> &module_headers);
 
     virtual ~AbstractExpression() = default;
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
-    virtual void set_data(int, fp32, bool)=0;
-
     virtual std::string get_final_fasta()=0;
+    virtual void get_version() = 0;
 
+    virtual void set_success_flags() override ;
 
 protected:
-    std::string     _alignpath;
-    std::string     _final_fasta;
+    std::string     mAlignPath;     // Absolute path to alignment file (BAM/SAM)
+    std::string     mFinalFasta;    // Absolute path to final filtered FASTA produced from this stage
+    fp64            mFPKM;          // FPKM threshold user would like to filter by
+    bool            mIsSingle;       // TRUE if use has non-paired data
 };
 
 #endif //ENTAP_ABSTRACTEXPRESSION_H

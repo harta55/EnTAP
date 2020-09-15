@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,60 +30,63 @@
 
 //**********************************************************************
 //**********************************************************************
-//                 QueryAlignment Nested Class
+//                 QueryAlignment Class
 //**********************************************************************
 //**********************************************************************
 
+QueryAlignment::QueryAlignment(ExecuteStates state, uint16 software, std::string &database_path, QuerySequence* parent) {
+    mExecutionState = state;
+    mSoftwareModule = software;
+    mDatabasePath   = database_path;
+    mpParentSequence= parent;
+    mCompareOverallAlignment = false;
 
-QueryAlignment::QueryAlignment() {
-    _compare_overall_alignment = false;
 }
 
 void QueryAlignment::set_compare_overall_alignment(bool val) {
-    _compare_overall_alignment = val;
-}
-
-std::string QueryAlignment::print_delim(std::vector<ENTAP_HEADERS> &headers, uint8 lvl, char delim)  {
-    std::stringstream stream;
-    std::string temp;
-
-    for (ENTAP_HEADERS header : headers) {
-        if (ENTAP_HEADER_INFO[header].print_header) {
-            if (ALIGN_OUTPUT_MAP.find(header) != ALIGN_OUTPUT_MAP.end()) {
-                // Header applies to this alignment
-                get_header_data(header, temp, lvl);
-                stream << temp << delim;
-
-            } else {
-                // Header does NOT apply to this alignment, get info from parent
-                _parent->get_header_data(temp, header, lvl);
-                stream << temp << delim;
-            }
-        }
-    }
-    return stream.str();
+    mCompareOverallAlignment = val;
 }
 
 void QueryAlignment::get_all_header_data(std::string *headers) {
     for (auto &pair : ALIGN_OUTPUT_MAP) {
-        headers[pair.first] = *pair.second;
+        if (pair.second != nullptr) {
+            headers[pair.first] = *pair.second;
+        }
     }
 }
 
 void QueryAlignment::get_header_data(ENTAP_HEADERS header, std::string &val, uint8 lvl) {
     std::vector<std::string> go_list;
 
-    if (is_go_header(header, go_list)) {
-        val = _parent->format_go_info(go_list, lvl);
+    if (ALIGN_OUTPUT_MAP.find(header) != ALIGN_OUTPUT_MAP.end()) {
+        if (is_go_header(header, go_list)) {
+            val = mpParentSequence->format_go_info(go_list, lvl);
+        } else {
+            val = *ALIGN_OUTPUT_MAP[header];
+        }
     } else {
-        val = *ALIGN_OUTPUT_MAP[header];
+        // Header does NOT apply to this alignment, get info from parent
+        mpParentSequence->get_header_data(val, header, lvl);
     }
+
+}
+
+uint16 QueryAlignment::getMSoftwareModule() const {
+    return mSoftwareModule;
+}
+
+ExecuteStates QueryAlignment::getMExecutionState() const {
+    return mExecutionState;
+}
+
+std::string &QueryAlignment::getMDatabasePath() {
+    return mDatabasePath;
 }
 
 
 //**********************************************************************
 //**********************************************************************
-//                 SimSearchAlignment Nested Class
+//                 SimSearchAlignment Class
 //**********************************************************************
 //**********************************************************************
 
@@ -125,10 +128,11 @@ void SimSearchAlignment::set_tax_score(std::string &input_lineage) {
 }
 
 
-SimSearchAlignment::SimSearchAlignment(QuerySequence::SimSearchResults d, std::string &lineage, QuerySequence* parent) {
+SimSearchAlignment::SimSearchAlignment(ExecuteStates state, uint16 software, std::string &database_path, QuerySequence* parent,
+                                       QuerySequence::SimSearchResults d, std::string &lineage)
+    : QueryAlignment(state, software, database_path, parent){
     _sim_search_results = d;
     set_tax_score(lineage);
-    _parent = parent;
 
     ALIGN_OUTPUT_MAP = {
             {ENTAP_HEADER_QUERY               , &_sim_search_results.qseqid},
@@ -151,9 +155,9 @@ SimSearchAlignment::SimSearchAlignment(QuerySequence::SimSearchResults d, std::s
             {ENTAP_HEADER_SIM_INFORM          , &_sim_search_results.yes_no_inform},
             {ENTAP_HEADER_SIM_UNI_DATA_XREF   , &_sim_search_results.uniprot_info.database_x_refs},
             {ENTAP_HEADER_SIM_UNI_COMMENTS    , &_sim_search_results.uniprot_info.comments},
-//            {ENTAP_HEADER_SIM_UNI_GO_CELL     , &_sim_search_results.uniprot_info.go_terms.at(GO_CELLULAR_FLAG)},
-//            {ENTAP_HEADER_SIM_UNI_GO_BIO      , &_sim_search_results.uniprot_info.go_terms.at(GO_BIOLOGICAL_FLAG)},
-//            {ENTAP_HEADER_SIM_UNI_GO_MOLE     , &_sim_search_results.uniprot_info.go_terms.at(GO_MOLECULAR_FLAG)}
+            {ENTAP_HEADER_SIM_UNI_GO_CELL     , nullptr},
+            {ENTAP_HEADER_SIM_UNI_GO_BIO      , nullptr},
+            {ENTAP_HEADER_SIM_UNI_GO_MOLE     , nullptr}
     };
 }
 
@@ -168,20 +172,26 @@ bool SimSearchAlignment::operator>(const QueryAlignment &alignment) {
 
     fp64 eval1 = this->_sim_search_results.e_val_raw;
     fp64 eval2 = alignment_cast._sim_search_results.e_val_raw;
-
+    // Avoid error on taking log
+    if (eval1 == 0) eval1 = 1E-300;
+    if (eval2 == 0) eval2 = 1E-300;
     fp64 cov1 = this->_sim_search_results.coverage_raw;
     fp64 cov2 = alignment_cast._sim_search_results.coverage_raw;
     fp64 coverage_dif = fabs(cov1 - cov2);
-    if (!this->_compare_overall_alignment) {
+    if (!this->mCompareOverallAlignment) {
         // For hits of the same database "better hit"
-		fp64 log1 = 0.0;
-		fp64 log2 = 0.0;
-		if (eval1 != 0.0) {
-			log1 = log10(eval1);
-		}
-		if (eval2 != 0.0) {
-			log2 = log10(eval2);
-		}
+
+        fp64 log1 = 0.0;
+        fp64 log2 = 0.0;
+
+        if (eval1 != 0.0) {
+            log1 = log10(eval1);
+        }
+
+        if (eval2 != 0.0) {
+            log2 = log10(eval2);
+        }
+
         if (fabs(log1 - log2) < E_VAL_DIF) {
             if (coverage_dif > COV_DIF) {
                 return cov1 > cov2;
@@ -239,26 +249,26 @@ bool SimSearchAlignment::is_go_header(ENTAP_HEADERS header, std::vector<std::str
 
 //**********************************************************************
 //**********************************************************************
-//                 EggnogDmndAlignment Struct
+//                 EggnogDmndAlignment Class
 //**********************************************************************
 //**********************************************************************
 
-EggnogDmndAlignment::EggnogDmndAlignment(QuerySequence::EggnogResults eggnogResults,
-                                                        QuerySequence *parent) {
-    _parent = parent;
-    _eggnog_results = eggnogResults;
+EggnogDmndAlignment::EggnogDmndAlignment(ExecuteStates state, uint16 software, std::string &database_path, QuerySequence* parent,
+                                         QuerySequence::EggnogResults eggnogResults)
+    : QueryAlignment (state, software, database_path, parent) {
+    mEggnogResults = eggnogResults;
     refresh_headers();
 }
 
 
 QuerySequence::EggnogResults *EggnogDmndAlignment::get_results() {
-    return &this->_eggnog_results;
+    return &this->mEggnogResults;
 }
 
 bool EggnogDmndAlignment::operator>(const QueryAlignment & alignment) {
     const EggnogDmndAlignment alignment_cast = dynamic_cast<const EggnogDmndAlignment&>(alignment);
 
-    return this->_eggnog_results.seed_eval_raw < alignment_cast._eggnog_results.seed_eval_raw;
+    return this->mEggnogResults.seed_eval_raw < alignment_cast.mEggnogResults.seed_eval_raw;
 }
 
 bool EggnogDmndAlignment::is_go_header(ENTAP_HEADERS header, std::vector<std::string> &go_list) {
@@ -267,15 +277,15 @@ bool EggnogDmndAlignment::is_go_header(ENTAP_HEADERS header, std::vector<std::st
     switch (header) {
 
         case ENTAP_HEADER_ONT_EGG_GO_CELL:
-            go_list = _eggnog_results.parsed_go[GO_CELLULAR_FLAG];
+            go_list = mEggnogResults.parsed_go[GO_CELLULAR_FLAG];
             out_flag = true;
             break;
         case ENTAP_HEADER_ONT_EGG_GO_MOLE:
-            go_list = _eggnog_results.parsed_go[GO_MOLECULAR_FLAG];
+            go_list = mEggnogResults.parsed_go[GO_MOLECULAR_FLAG];
             out_flag = true;
             break;
         case ENTAP_HEADER_ONT_EGG_GO_BIO:
-            go_list = _eggnog_results.parsed_go[GO_BIOLOGICAL_FLAG];
+            go_list = mEggnogResults.parsed_go[GO_BIOLOGICAL_FLAG];
             out_flag = true;
             break;
 
@@ -288,50 +298,57 @@ bool EggnogDmndAlignment::is_go_header(ENTAP_HEADERS header, std::vector<std::st
 void EggnogDmndAlignment::refresh_headers() {
 
     ALIGN_OUTPUT_MAP = {
-            {ENTAP_HEADER_ONT_EGG_SEED_ORTHO, &_eggnog_results.seed_ortholog},
-            {ENTAP_HEADER_ONT_EGG_SEED_EVAL,  &_eggnog_results.seed_evalue},
-            {ENTAP_HEADER_ONT_EGG_SEED_SCORE, &_eggnog_results.seed_score},
-            {ENTAP_HEADER_ONT_EGG_PRED_GENE,  &_eggnog_results.predicted_gene},
-            {ENTAP_HEADER_ONT_EGG_TAX_SCOPE_READABLE,  &_eggnog_results.tax_scope_readable},
-            {ENTAP_HEADER_ONT_EGG_TAX_SCOPE_MAX, &_eggnog_results.tax_scope_lvl_max},
-            {ENTAP_HEADER_ONT_EGG_MEMBER_OGS,&_eggnog_results.member_ogs},
-            {ENTAP_HEADER_ONT_EGG_DESC,       &_eggnog_results.description},
-            {ENTAP_HEADER_ONT_EGG_BIGG,       &_eggnog_results.bigg},
-            {ENTAP_HEADER_ONT_EGG_KEGG,       &_eggnog_results.kegg},
-            {ENTAP_HEADER_ONT_EGG_PROTEIN,    &_eggnog_results.protein_domains},
+            {ENTAP_HEADER_ONT_EGG_SEED_ORTHO, &mEggnogResults.seed_ortholog},
+            {ENTAP_HEADER_ONT_EGG_SEED_EVAL,  &mEggnogResults.seed_evalue},
+            {ENTAP_HEADER_ONT_EGG_SEED_SCORE, &mEggnogResults.seed_score},
+            {ENTAP_HEADER_ONT_EGG_PRED_GENE,  &mEggnogResults.predicted_gene},
+            {ENTAP_HEADER_ONT_EGG_TAX_SCOPE_READABLE,  &mEggnogResults.tax_scope_readable},
+            {ENTAP_HEADER_ONT_EGG_TAX_SCOPE_MAX, &mEggnogResults.tax_scope_lvl_max},
+            {ENTAP_HEADER_ONT_EGG_MEMBER_OGS,&mEggnogResults.member_ogs},
+            {ENTAP_HEADER_ONT_EGG_DESC,       &mEggnogResults.description},
+            {ENTAP_HEADER_ONT_EGG_BIGG,       &mEggnogResults.bigg},
+            {ENTAP_HEADER_ONT_EGG_KEGG,       &mEggnogResults.kegg},
+            {ENTAP_HEADER_ONT_EGG_PROTEIN,    &mEggnogResults.protein_domains},
+            {ENTAP_HEADER_ONT_EGG_GO_BIO ,    nullptr},
+            {ENTAP_HEADER_ONT_EGG_GO_CELL,    nullptr},
+            {ENTAP_HEADER_ONT_EGG_GO_MOLE,    nullptr}
     };
-    _parent->set_header_data();
-    _parent->update_query_flags(GENE_ONTOLOGY, ONT_EGGNOG_DMND);
+    mpParentSequence->set_header_data();
+    mpParentSequence->update_query_flags(GENE_ONTOLOGY, ONT_EGGNOG_DMND);
 }
 
 //**********************************************************************
 //**********************************************************************
-//                 InterproAlignment Struct
+//                 InterproAlignment Class
 //**********************************************************************
 //**********************************************************************
 
-InterproAlignment::InterproAlignment(QuerySequence::InterProResults results, QuerySequence *parent) {
+InterproAlignment::InterproAlignment(ExecuteStates state, uint16 software, std::string &database_path, QuerySequence* parent,
+                                     QuerySequence::InterProResults results)
+    : QueryAlignment(state, software, database_path, parent){
 
-    _interpro_results = results;
-    _parent = parent;
+    mInterproResults = results;
 
     ALIGN_OUTPUT_MAP = {
-            {ENTAP_HEADER_ONT_INTER_EVAL, &_interpro_results.e_value},
-            {ENTAP_HEADER_ONT_INTER_INTERPRO, &_interpro_results.interpro_desc_id},
-            {ENTAP_HEADER_ONT_INTER_DATA_TERM,&_interpro_results.database_desc_id},
-            {ENTAP_HEADER_ONT_INTER_DATA_TYPE,&_interpro_results.database_type},
-            {ENTAP_HEADER_ONT_INTER_PATHWAYS, &_interpro_results.pathways}
+            {ENTAP_HEADER_ONT_INTER_EVAL, &mInterproResults.e_value},
+            {ENTAP_HEADER_ONT_INTER_INTERPRO, &mInterproResults.interpro_desc_id},
+            {ENTAP_HEADER_ONT_INTER_DATA_TERM,&mInterproResults.database_desc_id},
+            {ENTAP_HEADER_ONT_INTER_DATA_TYPE,&mInterproResults.database_type},
+            {ENTAP_HEADER_ONT_INTER_PATHWAYS, &mInterproResults.pathways},
+            {ENTAP_HEADER_ONT_INTER_GO_MOLE,  nullptr},
+            {ENTAP_HEADER_ONT_INTER_GO_CELL,  nullptr},
+            {ENTAP_HEADER_ONT_INTER_GO_BIO,   nullptr}
     };
 }
 
 QuerySequence::InterProResults *InterproAlignment::get_results() {
-    return &this->_interpro_results;
+    return &this->mInterproResults;
 }
 
 bool InterproAlignment::operator>(const QueryAlignment &alignment) {
     const InterproAlignment alignment_cast = dynamic_cast<const InterproAlignment&>(alignment);
 
-    return this->_interpro_results.e_value_raw < alignment_cast._interpro_results.e_value_raw;
+    return this->mInterproResults.e_value_raw < alignment_cast.mInterproResults.e_value_raw;
 }
 
 bool InterproAlignment::is_go_header(ENTAP_HEADERS header, std::vector<std::string> &go_list) {
@@ -340,15 +357,15 @@ bool InterproAlignment::is_go_header(ENTAP_HEADERS header, std::vector<std::stri
     switch (header) {
 
         case ENTAP_HEADER_ONT_INTER_GO_CELL:
-            go_list = _interpro_results.parsed_go[GO_CELLULAR_FLAG];
+            go_list = mInterproResults.parsed_go[GO_CELLULAR_FLAG];
             out_flag = true;
             break;
         case ENTAP_HEADER_ONT_INTER_GO_MOLE:
-            go_list = _interpro_results.parsed_go[GO_MOLECULAR_FLAG];
+            go_list = mInterproResults.parsed_go[GO_MOLECULAR_FLAG];
             out_flag = true;
             break;
         case ENTAP_HEADER_ONT_INTER_GO_BIO:
-            go_list = _interpro_results.parsed_go[GO_BIOLOGICAL_FLAG];
+            go_list = mInterproResults.parsed_go[GO_BIOLOGICAL_FLAG];
             out_flag = true;
             break;
 

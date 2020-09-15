@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -31,36 +31,54 @@
 
 #include "AbstractSimilaritySearch.h"
 
+/**
+ * ======================================================================
+ * @class ModInterpro
+ *
+ * Description          - This EnTAP module supports execution, parsing, and
+ *                        statistical analysis of the DIAMOND software
+ *                        through terminal commands
+ *                      - DIAMOND will perform similarity searching against
+ *                        DIAMOND compatible databases provided by the user
+ *                      - Parsed data is added to QueryData class
+ *                      - Inherits from AbstractSimilaritySearch and
+ *                        EntapModule classes
+ *
+ * Citation             - P. Jones et al., “InterProScan 5: genome-scale
+ *                        protein function classification,” (in eng),
+ *                        Bioinformatics, vol. 30, no. 9, pp. 1236-40, May 2014.
+ *
+ * ======================================================================
+ */
 class ModDiamond : public AbstractSimilaritySearch {
 
 public:
-    ModDiamond(std::string &out, std::string &in_hits,EntapDataPtrs &entap_data,
-                std::string &exe, vect_str_t &databases);
-    ~ModDiamond() override = default;
+    //******************* Public Functions *********************
+    ModDiamond(std::string &out, std::string &fasta_path,EntapDataPtrs &entap_data, vect_str_t &databases);
+    ~ModDiamond() = default;
 
     // ModEntap overrides
     virtual ModVerifyData verify_files() override;
     virtual void execute() override ;
     virtual void parse() override ;
     static bool is_executable(std::string& exe);
+    virtual void get_version() override;
 
     // AbstractSimilaritySearch overrides
-    virtual bool run_blast(SimSearchCmd *cmd, bool use_defaults);
-
-    static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
-
+    bool run_blast(SimSearchCmd *cmd, bool use_defaults) override;
+    //**********************************************************
 
 private:
+    //****************** Private Functions *********************
+    void calculate_best_stats(bool is_final, std::string database_path="");
+    //**********************************************************
+
+    //**************** Private Const Variables *****************
     static constexpr int DMND_COL_NUMBER = 14;
-    const std::string SIM_SEARCH_DATABASE_BEST_HITS              = "best_hits";
-    const std::string SIM_SEARCH_DATABASE_BEST_HITS_CONTAM       = "best_hits_contam";
-    const std::string SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM    = "best_hits_no_contam";
-    const std::string SIM_SEARCH_DATABASE_NO_HITS                = "no_hits";
-    const std::string SIM_SEARCH_DATABASE_UNSELECTED             = "unselected";
+    static std::vector<ENTAP_HEADERS> UNIPROT_HEADERS;
+    static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
     // Graphing constants
-    const uint8 GRAPH_SOFTWARE_FLAG                              = 3;
-    const uint8 GRAPH_BAR_FLAG                                   = 1;
     const uint8 GRAPH_SUM_FLAG                                   = 2;
     const std::string GRAPH_DATABASE_SUM_TITLE                   = "_Summary";
     const std::string GRAPH_DATABASE_SUM_TXT                     = "_summary_bar.txt";
@@ -75,7 +93,26 @@ private:
     const std::string INFORMATIVE_FLAG                           = "Informative";
     const std::string NO_HIT_FLAG                                = "No Hits";
 
-    void calculate_best_stats(bool is_final, std::string database_path="");
+    // Terminal Command EntapDefaults
+    const uint16 CMD_DEFAULT_TOP_ALIGN  = 3;
+    const std::string CMD_DEFAULT_OUTPUT_FORMAT = "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp stitle";
+
+    // Terminal Commands (as of DIAMOND v0.9.9)
+    const std::string CMD_QUERY_COVERAGE   = "--query-cover";     // Specify minimum query coverage for alignment
+    const std::string CMD_SUBJECT_COVERAGE = "--subject-cover";   // Specify minimum target coverage for alignment
+    const std::string CMD_MORE_SENSITIVE   = "--more-sensitive";  // Specify 'more sensitive' run that will take longer
+    const std::string CMD_EVALUE           = "--evalue";          // Specify highest e-value to accept alignments for
+    const std::string CMD_BLASTX           = "blastx";
+    const std::string CMD_BLASTP           = "blastp";
+    const std::string CMD_DATABASE         = "-d";                // Target database to align against
+    const std::string CMD_QUERY_PATH       = "-q";                // Path to Query FASTA file
+    const std::string CMD_OUTPUT_PATH      = "-o";                // Path to output
+    const std::string CMD_THREADS          = "-p";                // Number of threads to use
+    const std::string CMD_TOP_ALIGNMENTS   = "--top";             // Only keep top alignments (integer)
+    const std::string CMD_OUTPUT_FORMAT    = "-f";
+    //**********************************************************
+
+    void set_uniprot_headers();
 };
 
 

@@ -14,6 +14,8 @@ http://entap.readthedocs.io/en/latest/
 For information/bug reports, contact Alexander Hart at entap.dev@gmail.com
 
 ---
-Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
 
 EnTAP is protected under the GNU General Public License Version 3
+
+Hart AJ, Ginzburg S, Xu M, et al. EnTAP: Bringing faster and smarter functional annotation to non-model eukaryotic transcriptomes. Mol Ecol Resour. 2020;20:591–604. https://doi.org/10.1111/1755-0998.13106

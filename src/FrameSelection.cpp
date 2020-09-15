@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -29,27 +29,23 @@
 //*********************** Includes *****************************
 #include "FrameSelection.h"
 #include "ExceptionHandler.h"
-#include "EntapGlobals.h"
 #include "frame_selection/ModGeneMarkST.h"
 #include "FileSystem.h"
+#include "frame_selection/ModTransdecoder.h"
 //**************************************************************
 
 
 /**
  * ======================================================================
- * Function FrameSelection(std::string &input, std::string &out,
- *                             boost::program_options::variables_map &user_flags,
- *                             GraphingManager *graphingManager)
+ * Function FrameSelection(std::string &input, EntapDataPtrs &entap_data)
  *
  * Description           - Initializes member variables of Frame Selection
  *                       - Sets software type
  *
- * Notes                 - Called from EntapExecute
+ * Notes                 - Called from EntapExecute, entry to Frame Selection
  *
  * @param input          - Input transcriptome (may have been from expression analysis)
- * @param out            - EnTAP main output directory
- * @param user_flag      - Boost map of user inputs
- * @param graphingManager- Pointer to graphing manager
+ * @param entap_data     - Pointers to data needed during frame selection
  *
  * @return               - FrameSelection object
  *
@@ -58,27 +54,24 @@
 FrameSelection::FrameSelection(std::string &input, EntapDataPtrs &entap_data) {
     FS_dprint("Spawn Object - FrameSelection");
 
-    _pGraphingManager = entap_data._pGraphingManager;
-    _QUERY_DATA       = entap_data._pQueryData;
-    _exe_path         = GENEMARK_EXE;
-    _inpath           = input;
-    _pFileSystem      = entap_data._pFileSystem;
-    _pUserInput       = entap_data._pUserInput;
+    mQueryData        = entap_data.mpQueryData;
+    mInPath           = input;
+    mpFileSystem      = entap_data.mpFileSystem;
+    mpUserInput       = entap_data.mpUserInput;
 
-    _entap_data_ptrs = entap_data;
+    mEntapDataPtrs = entap_data;
 
-    _outpath         = _pFileSystem->get_root_path();
-    _overwrite       = _pUserInput->has_input(_pUserInput->INPUT_FLAG_OVERWRITE);
-    _software_flag   = FRAME_GENEMARK_ST;
+    mOutpath         = mpFileSystem->get_root_path();
+    mOverwrite       = mpUserInput->has_input(INPUT_FLAG_OVERWRITE);
+    mSoftwareFlag    = mpUserInput->get_user_input<ent_input_uint_t >(INPUT_FLAG_FRAME_SELECTION);
 
-    _mod_out_dir   = PATHS(_outpath, FRAME_SELECTION_OUT_DIR);
+    mModOutDir   = PATHS(mOutpath, FRAME_SELECTION_OUT_DIR);
 }
 
 
 /**
- * ======================================================================
- * Function std::string FrameSelection::execute(std::string input,
- *                                              std::map<std::string,QuerySequence> &SEQUENCES)
+ * =======================================================================
+ * Function std::string FrameSelection::execute(std::string input)
  *
  * Description           - Handles overall Frame Selection process
  *                       - Runs software, parses and adds information to existing
@@ -87,31 +80,34 @@ FrameSelection::FrameSelection(std::string &input, EntapDataPtrs &entap_data) {
  * Notes                 - None
  *
  * @param input          - Input transcriptome (may have been from expression analysis)
- * @param SEQUENCES      - Sequence map of information thus far
  *
- * @return               - Path to new transcriptome
+ * @return               - Path to new, frame selected, transcriptome
  *
- * =====================================================================
+ * ======================================================================
  */
 std::string FrameSelection::execute(std::string input) {
 
-    std::string output;
-    EntapModule::ModVerifyData verify_data;
-    std::unique_ptr<AbstractFrame> ptr;
+    std::string output;                         // Absolute path to frame selected transcrtiptome
+    EntapModule::ModVerifyData verify_data;     // Contains execution callback information
+    std::unique_ptr<AbstractFrame> ptr;         // Pointer to frame selection object used during process
 
 
-    _inpath = input;
-    if (_overwrite) _pFileSystem->delete_dir(_mod_out_dir);
-    _pFileSystem->create_dir(_mod_out_dir);
+    mInPath = input;
+    if (mOverwrite) mpFileSystem->delete_dir(mModOutDir);
+    mpFileSystem->create_dir(mModOutDir);
     try {
         ptr = spawn_object();
         verify_data = ptr->verify_files();
         if (!verify_data.files_exist) {
             ptr->execute();
-            output = ptr->get_final_faa();
-        } else output = verify_data.output_paths[0];
+        }
+        output = ptr->get_final_faa();
         ptr->parse();
+        // If successful, set flags
+        ptr->set_success_flags();
+
         ptr.reset();
+
         return output;
     } catch (const ExceptionHandler &e) {
         ptr.reset();
@@ -126,7 +122,7 @@ std::string FrameSelection::execute(std::string input) {
  *
  * Description           - Spawns object for specified frame selection software
  *
- * Notes                 - Currently only GeneMarkS-T support
+ * Notes                 - Currently supports GeneMarkS-T and TransDecoder
  *
  *
  * @return               - Frame Selection module object
@@ -134,23 +130,28 @@ std::string FrameSelection::execute(std::string input) {
  * =====================================================================
  */
 std::unique_ptr<AbstractFrame> FrameSelection::spawn_object() {
-    // Handle any special conditions for each software
-
-    switch (_software_flag) {
-        case FRAME_GENEMARK_ST:
+    switch (mSoftwareFlag) {
+        case FRAME_GENEMARK_ST: {
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
-                    _mod_out_dir,
-                    _inpath,
-                    _entap_data_ptrs,
-                    _exe_path
+                    mModOutDir,
+                    mInPath,
+                    mEntapDataPtrs
             ));
-        default:
+        }
+        case FRAME_TRANSDECODER: {
+            return std::unique_ptr<AbstractFrame>(new ModTransdecoder(
+                    mModOutDir,
+                    mInPath,
+                    mEntapDataPtrs
+            ));
+        }
+        default: {
             return std::unique_ptr<AbstractFrame>(new ModGeneMarkST(
-                    _mod_out_dir,
-                    _inpath,
-                    _entap_data_ptrs,
-                    _exe_path
+                    mModOutDir,
+                    mInPath,
+                    mEntapDataPtrs
             ));
+        }
     }
 }
 

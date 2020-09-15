@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -44,12 +44,14 @@ public:
 
 
     EntapModule(std::string &execution_stage_path, std::string &in_hits,
-                EntapDataPtrs &entap_data, std::string module_name, std::string &exe);
-
-    virtual ~EntapModule() = default;
+                EntapDataPtrs &entap_data, std::string module_name,
+                std::vector<ENTAP_HEADERS> &module_headers);
+    ~EntapModule();
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;
+    virtual void set_success_flags() = 0;
+    virtual void get_version() = 0;
 
 protected:
 
@@ -73,28 +75,36 @@ protected:
     const uint16 COUNT_TOP_GO                  = 10;
     const uint16 COUNT_TOP_SPECIES             = 10;
 
-    bool               _blastp;
-    bool               _overwrite;
-    int                _threads;
-    uint16             _software_flag;
-    std::string        _outpath;
-    std::string        _in_hits;
-    std::string        _proc_dir;                   // "processed" directory, or data analyzed
-    std::string        _figure_dir;
-    std::string        _mod_out_dir;
-    std::string        _overall_results_dir;
-    std::string        _exe_path;
-    std::string        _transcript_shortname;       // filename of transcriptome file for file name purposes
-    ExecuteStates      _execution_state;
-    std::vector<uint16> _go_levels;
-    GraphingManager    *_pGraphingManager;
-    QueryData          *_pQUERY_DATA;
-    UserInput          *_pUserInput;
-    FileSystem         *_pFileSystem;
-    EntapDatabase      *_pEntapDatabase;
-    std::vector<FileSystem::ENT_FILE_TYPES> _alignment_file_types; // may be overriden by module
+    static std::vector<ENTAP_HEADERS>   mModuleHeaders;
+    bool               mBlastp;                 // TRUE/FALSE whether user has input blastp
+    bool               mOverwrite;              // Indicates whether user would like to delete previous execution files for module
+    int                mThreads;                // Number of threads specified for execution from user
+    uint16             mSoftwareFlag;           // Flag indicating software module being used
+    uint16             mVersionMajor;
+    uint16             mVersionMinor;
+    uint16             mVersionRev;
+    std::string        mOutpath;
+    ent_input_str_t    mInputTranscriptome;
+    std::string        mModuleName;                // Name of module
+    std::string        mProcDir;                   // "processed" directory, or data analyzed
+    std::string        mFigureDir;                 // "figure" directory to place any generated figures
+    std::string        mModOutDir;                 // Root out directory for the EnTAP module we are dealing with
+    std::string        mOverallResultsDir;
+    ent_input_str_t    mExePath;
+    std::string        mTranscriptomeShortname;       // filename of transcriptome file for file name purposes
+    ExecuteStates      mExecutionState;
+    std::vector<uint16> mGoLevels;
+    std::vector<ENTAP_HEADERS> mEntapHeaders;
+    GraphingManager    *mpGraphingManager;
+    QueryData          *mpQueryData;
+    UserInput          *mpUserInput;
+    FileSystem         *mpFileSystem;
+    EntapDatabase      *mpEntapDatabase;
+    std::vector<FileSystem::ENT_FILE_TYPES> mAlignmentFileTypes; // may be overriden by module
 
     go_format_t EM_parse_go_list(std::string list, EntapDatabase* database,char delim);
+    void enable_headers();
+    virtual std::vector<ENTAP_HEADERS>  &moduleHeaders() { return mModuleHeaders; }
 };
 
 

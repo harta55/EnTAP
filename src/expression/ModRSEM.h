@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2019, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -40,28 +40,42 @@
 
 //**************************************************************
 
+/**
+ * ======================================================================
+ * @class ModRSEM
+ *
+ * Description          - This EnTAP module supports execution, parsing, and
+ *                        statistical analysis of the RSEM software
+ *                        through terminal commands
+ *                      - RSEM performs Expression Analysis through processing
+ *                        reads from an alignment file input by the user
+ *                      - Parsed data is added to QueryData class
+ *                      - Transcriptome will be filtered based on FPKM value
+ *                      - Inherits from AbstractExpression and EntapModule classes
+ *
+ * Citation             - B. Li and C. N. Dewey, “RSEM: accurate transcript
+ *                        quantification from RNA-Seq data with or without
+ *                        a reference genome,” (in eng), BMC Bioinformatics,
+ *                        vol. 12, p. 323, Aug 2011.
+ *
+ * ======================================================================
+ */
 class ModRSEM : public AbstractExpression {
 
 public:
     ModRSEM(std::string &execution_stage_path, std::string &in_hits,
-            EntapDataPtrs &entap_data, std::string &exe,
-            std::string &align);
+            EntapDataPtrs &entap_data, std::string &align);
 
-    ~ModRSEM() ;
+    ~ModRSEM();
 
     virtual ModVerifyData verify_files() override ;
     virtual void execute() override ;
     virtual void parse() override;
-    virtual void set_data(int, float, bool) override    ;
-
     virtual std::string get_final_fasta() override ;
+    virtual void get_version() override;
 
 private:
-    
-    const std::string RSEM_SAM_VALID        = "rsem-sam-validator";
-    const std::string RSEM_PREP_REF_EXE     = "rsem-prepare-reference";
-    const std::string RSEM_CALC_EXP_EXE     = "rsem-calculate-expression";
-    const std::string RSEM_CONV_SAM         = "convert-sam-for-rsem";
+
     const std::string RSEM_OUT_KEPT         = "_kept.fasta";
     const std::string RSEM_OUT_REMOVED      = "_removed.fasta";
     const std::string RSEM_OUT_FILE         = ".genes.results";
@@ -76,16 +90,18 @@ private:
     const std::string GRAPH_KEPT_FLAG       = "Selected";
     const float REJECTED_ERROR_CUTOFF       = 75.0;
 
-    const unsigned char GRAPH_EXPRESSION_FLAG = 2;
-    const unsigned char GRAPH_BOX_FLAG        = 1;
     static constexpr int RSEM_COL_NUM = 7;
+    static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
-    std::string _filename;
-    std::string _rsem_out;
-    std::string _exp_out;
-    int         _threads;
-    float       _fpkm;
-    bool        _issingle;
+    std::string mFilename;
+    std::string mRsemOut;
+    std::string mExpressionOut;
+    std::string mCalcExpressionExe;     // User input to RSEM calc expression exe
+    std::string mSamValidExe;           // User input to RSEM sam validate exe
+    std::string mPrepReferenceExe;      // User input to RSEM prep reference exe
+    std::string mConvertSamExe;         // User input to RSEM convert SAM for RSEM exe
+    fp32        mFPKM;
+    bool        mIsSingle;
 
     bool rsem_validate_file(std::string);
 #if 0

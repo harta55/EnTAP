@@ -1,0 +1,97 @@
+# Base image.
+FROM ubuntu:18.04
+
+# Set noninteractive mode for apt-get.
+ENV DEBIAN_FRONTEND noninteractive
+
+
+# Update and install basic packages.
+RUN apt-get update -qq \
+  && apt-get install -qq -y curl git unzip wget gnupg
+
+
+# Install Oracle Java 8 which is used by InterProScan. Rather than use
+# the apt-add-repository program (which installs a lot of packages) we will
+# manually add the repository.
+RUN echo "deb http://ppa.launchpad.net/openjdk-r/ppa/ubuntu xenial main" >> /etc/apt/sources.list \
+  && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 86F44E2A
+
+RUN apt-get update \
+  && apt-get -y install openjdk-8-jdk \
+  && update-alternatives --config java
+
+# Install Python3
+RUN apt-get install -qq -y python3-pip \
+  && pip3 install -q numpy pandas xmltodict
+
+# Install R
+RUN apt-get -y install software-properties-common
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 \
+  && add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran40/' \
+  && apt-get update \
+  && apt-get -y install r-base
+
+# Install InterProScan
+RUN wget ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.36-75.0/alt/interproscan-core-5.36-75.0.tar.gz \
+  && tar -zxvf interproscan-core-5.36-75.0.tar.gz \
+  && mv interproscan-5.36-75.0 /usr/local/interproscan
+
+# Install IPRScan dependency
+RUN apt-get install -y elfutils
+
+# Install Diamond
+RUN wget https://github.com/bbuchfink/diamond/releases/download/v0.9.19/diamond-linux64.tar.gz \
+  && tar -zxvf diamond-linux64.tar.gz \
+  && mv diamond /usr/local/bin/diamond
+
+# Install RSEM
+RUN apt-get -y install zlib1g-dev
+RUN wget https://github.com/deweylab/RSEM/archive/v1.3.0.tar.gz \
+  && tar -zxvf v1.3.0.tar.gz \
+  && cd RSEM-1.3.0 \
+  && make \
+  && make ebseq \
+  && make install
+
+# Install GeneMark ST
+# Because GeneMark requires the user agree to the license agreement, the user
+# must have agreed to the software and downloaded it to this directory.
+COPY gmst_linux_64.tar.gz /usr/local/gmst_linux_64.tar.gz
+RUN cd /usr/local \
+  && mkdir GeneMark-ST \
+  && cd GeneMark-ST \
+  && tar -zxvf  ../gmst_linux_64.tar.gz
+
+# Install EnTAP
+RUN apt-get -y install cmake
+RUN git clone https://gitlab.com/enTAP/EnTAP.git \
+  && cd EnTAP \
+  && git checkout v1.9.2 \
+  && cmake CMakeLists.txt \
+  && make \
+  && make install
+
+COPY entap_config.txt /entap_config.txt
+
+
+# Tini for signal processing and zombie killing.
+ENV TINI_VERSION v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
+
+# Cleanup
+RUN rm -rf RSEM-1.3.0
+RUN rm diamond-linux64.tar.gz && rm diamond_manual.pdf
+RUN rm interproscan-core-5.36-75.0.tar.gz
+RUN rm v1.3.0.tar.gz
+RUN rm LICENSE
+
+# Add an EnTAP user and run all else as this user.
+RUN useradd -d /home/entap -m -s /bin/bash entap && echo "entap:entap"
+USER entap
+cd
+
+# Define the command and parameters that will be executed when this
+# container is first run.
+ENTRYPOINT ["/tini", "--"]

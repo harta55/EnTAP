@@ -77,22 +77,22 @@ Taxonomic contaminant filtering (as well as taxonomic favoring) is based upon th
 
 Contaminants can be introduced during collection or processing of a sample. A contaminant is essentially a species that is not of the target species you are collecting. Some common contaminants are bacteria and fungi that can sometimes be found within collected samples. If a query sequence from your transcriptome is found when matching against a similarity search database, it will be flagged as such (but NOT removed automatically). Oftentimes, researchers would like to remove these sequences from the dataset. 
 
-An example of flagging bacteria and fungi as contaminants can be seen below:
+One or more contaminants can be specified in the ini file (separated by a comma). An example of flagging bacteria and fungi as contaminants can be seen below:
 
 .. code-block:: bash
 
-    EnTAP --runP -i path/to/transcriptome.fasta -d path/to/database.dmnd -c fungi -c bacteria --ini path/to/ini_file
+    contam=fungi,bacteria
 
 
 **Taxonomic Favoring**
 
 During best hit selection of similarity searched results, taxonomic consideration can utilized. If a certain lineage (such as sapiens) is specified, hits closer in taxonomic lineage to this selection will be chosen. Any lineage such as species/kingdom/phylum can be utilized as long as it is contained within the Taxonomic Database. If it is not located within the database, EnTAP will stop the execution immediately and let you know! 
 
-This feature can be utilized with the |flag_taxon| flag. An example command utilizing both common contaminants and a species taxon can be seen below:
+This feature can be utilized via the ini file. An example can be seen below:
 
 .. code-block:: bash
 
-    EnTAP --runP -i path/to/transcriptome.fasta -d path/to/database.dmnd -c fungi -c bacteria --taxon sapiens --ini path/to/ini_file
+    taxon=sapiens
 
 Keep in mind, EnTAP will weigh the E-Value (within a database)and Coverage of the alignment before taxonomic weight in order to provide the most accurate result. If both the E-Value and Coverage are relatively similar, EnTAP will leverage taxonomic information.
 

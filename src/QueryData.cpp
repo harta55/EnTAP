@@ -550,8 +550,9 @@ std::string QueryData::trim_sequence_header(std::string &header, std::string lin
         sequence = line + "\n";
     } else {
         // Trim to first space
-        if (line.find(' ') != std::string::npos) {
-            header = line.substr(pos+1, line.find(' ')-(pos+1));
+        std::string::iterator it = std::find_if(line.begin(), line.end(), isspace);
+        if (it != line.end()) {
+            header = line.substr(pos+1, std::distance(line.begin(), it)-(pos+1));
         } else header = line.substr(pos+1);
         sequence = ">" + header + "\n";
     }

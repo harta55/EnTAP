@@ -1,5 +1,5 @@
 # Base image.
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 # Set noninteractive mode for apt-get.
 ENV DEBIAN_FRONTEND noninteractive
@@ -22,24 +22,21 @@ RUN apt-get update \
 
 # Install Python3
 RUN apt-get install -qq -y python3-pip \
-&& pip3 install -q numpy pandas xmltodict matplotlib \
-&& ln -s /usr/bin/python3 /usr/bin/python
+  && pip3 install -q numpy pandas xmltodict matplotlib \
+  && ln -s /usr/bin/python3 /usr/bin/python
 
 # Install R
 RUN apt-get -y install software-properties-common
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 \
-&& add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran40/' \
-&& apt-get update \
-&& apt-get -y install r-base \
-&& echo "install.packages('ggplot2',repos='https://ftp.osuosl.org/pub/cran/')" | R --vanilla \
-&& echo "install.packages('BiocManager',repos='https://ftp.osuosl.org/pub/cran/')" | R --vanilla \
-&& echo "BiocManager::install('seqLogo')" | R --vanilla
+RUN apt-get -y install r-base \
+  && echo "install.packages('ggplot2',repos='https://ftp.osuosl.org/pub/cran/')" | R --vanilla \
+  && echo "install.packages('BiocManager',repos='https://ftp.osuosl.org/pub/cran/')" | R --vanilla \
+  && echo "BiocManager::install('seqLogo')" | R --vanilla
 
 # TransDecoder
 RUN git clone https://github.com/TransDecoder/TransDecoder.git \
-&& cd TransDecoder \
-&& git checkout TransDecoder-v5.3.0 \
-&& cp -R . /usr/lib/TransDecoder-v5.3.0
+  && cd TransDecoder \
+  && git checkout TransDecoder-v5.3.0 \
+  && cp -R . /usr/lib/TransDecoder-v5.3.0
 
 # Install InterProScan
 RUN wget ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.36-75.0/alt/interproscan-core-5.36-75.0.tar.gz \
@@ -65,12 +62,12 @@ RUN wget https://github.com/deweylab/RSEM/archive/v1.3.0.tar.gz \
 
 # Install EnTAP
 RUN apt-get -y install cmake
-COPY . /tmp/entap
-RUN cd /tmp/entap \
+RUN git clone https://github.com/harta55/EnTAP \
+  && cd EnTAP \
+  && git checkout v0.10.7-beta \
   && cmake CMakeLists.txt \
   && make \
-  && make install \
-  && cp src/entap_graphing.py /usr/local/bin
+  && make install
 
 COPY entap_config.ini /entap_config.ini
 

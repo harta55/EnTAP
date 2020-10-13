@@ -22,14 +22,24 @@ RUN apt-get update \
 
 # Install Python3
 RUN apt-get install -qq -y python3-pip \
-  && pip3 install -q numpy pandas xmltodict
+&& pip3 install -q numpy pandas xmltodict matplotlib \
+&& ln -s /usr/bin/python3 /usr/bin/python
 
 # Install R
 RUN apt-get -y install software-properties-common
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9 \
-  && add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran40/' \
-  && apt-get update \
-  && apt-get -y install r-base
+&& add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran40/' \
+&& apt-get update \
+&& apt-get -y install r-base \
+&& echo "install.packages('ggplot2',repos='https://ftp.osuosl.org/pub/cran/')" | R --vanilla \
+&& echo "install.packages('BiocManager',repos='https://ftp.osuosl.org/pub/cran/')" | R --vanilla \
+&& echo "BiocManager::install('seqLogo')" | R --vanilla
+
+# TransDecoder
+RUN git clone https://github.com/TransDecoder/TransDecoder.git \
+&& cd TransDecoder \
+&& git checkout TransDecoder-v5.3.0 \
+&& cp -R . /usr/lib/TransDecoder-v5.3.0
 
 # Install InterProScan
 RUN wget ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.36-75.0/alt/interproscan-core-5.36-75.0.tar.gz \
@@ -53,25 +63,16 @@ RUN wget https://github.com/deweylab/RSEM/archive/v1.3.0.tar.gz \
   && make ebseq \
   && make install
 
-# Install GeneMark ST
-# Because GeneMark requires the user agree to the license agreement, the user
-# must have agreed to the software and downloaded it to this directory.
-COPY gmst_linux_64.tar.gz /usr/local/gmst_linux_64.tar.gz
-RUN cd /usr/local \
-  && mkdir GeneMark-ST \
-  && cd GeneMark-ST \
-  && tar -zxvf  ../gmst_linux_64.tar.gz
-
 # Install EnTAP
 RUN apt-get -y install cmake
-RUN git clone https://gitlab.com/enTAP/EnTAP.git \
-  && cd EnTAP \
-  && git checkout v1.9.2 \
+COPY . /tmp/entap
+RUN cd /tmp/entap \
   && cmake CMakeLists.txt \
   && make \
-  && make install
+  && make install \
+  && cp src/entap_graphing.py /usr/local/bin
 
-COPY entap_config.txt /entap_config.txt
+COPY entap_config.ini /entap_config.ini
 
 
 # Tini for signal processing and zombie killing.
@@ -82,15 +83,12 @@ RUN chmod +x /tini
 
 # Cleanup
 RUN rm -rf RSEM-1.3.0
+RUN rm -fr TransDecoder
 RUN rm diamond-linux64.tar.gz && rm diamond_manual.pdf
 RUN rm interproscan-core-5.36-75.0.tar.gz
 RUN rm v1.3.0.tar.gz
 RUN rm LICENSE
-
-# Add an EnTAP user and run all else as this user.
-RUN useradd -d /home/entap -m -s /bin/bash entap && echo "entap:entap"
-USER entap
-cd
+RUN rm -fr /tmp/entap
 
 # Define the command and parameters that will be executed when this
 # container is first run.

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Developed by Alexander Hart
 # Plant Computational Genomics Lab

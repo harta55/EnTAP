@@ -1,9 +1,0 @@
-diamond_exe_path=/usr/local/bin/diamond
-rsem_exe_path=/usr/local/bin
-genemarkst_exe_path=/usr/local/GeneMark-ST/gmst.pl
-interpro_exe_path=/usr/local/interproscan/interproscan.sh
-eggnog_dmnd_database=/entap_outfiles/bin/eggnog_proteins.dmnd
-entap_database_bin_path=/entap_outfiles/bin/entap_database.bin
-eggnog_sql_database=/entap_outfiles/databases/eggnog.db
-entap_database_sql_path=/entap_outfiles/databases/entap_database.db
-entap_graphing_script=/EnTAP/src/entap_graphing.py

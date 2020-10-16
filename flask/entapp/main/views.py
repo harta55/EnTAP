@@ -2,6 +2,7 @@
 Detailed description.
 """
 import flask
+from . import forms
 from . import main
 
 
@@ -32,4 +33,5 @@ def config():
     """
     Detailed description.
     """
-    return flask.render_template('config.html')
+    form = forms.BasicConfigForm()
+    return flask.render_template('config.html',form=form)

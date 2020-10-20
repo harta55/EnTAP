@@ -28,10 +28,16 @@ def run():
 
 
 
-@main.route('/config')
+@main.route('/config',methods=["GET","POST"])
 def config():
     """
     Detailed description.
     """
     form = forms.BasicConfigForm()
+    if flask.request.method == "POST":
+        if form.validate():
+            print(form.toJson())
+            form.save()
+    else:
+        form.load()
     return flask.render_template('config.html',form=form)

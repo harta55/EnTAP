@@ -1,9 +1,33 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
+{% block title %}{{ super() }} - Configuration{% endblock %}
+
 {% block content %}
 <div class="container">
-<h1>Configuration</h1>
+<h1 class="mt-4">Configuration</h1>
+<form action="" method="POST">
+{{ form.hidden_tag() }}
+{% for field in form %}
+    <div class="form-group">
+        {% if field.type == "BooleanField" %}
+            {{ field(class_="form-check-input") }}
+            <label for="{{ field.id }}">{{ field.label.text }}</label>
+        {% else %}
+            <label for="{{ field.id }}">{{ field.label.text }}</label>
+            {{ field(class_="form-control") }}
+        {% endif %}
+        {% if not field.errors %}
+            <small class="form-text text-muted">{{ field.description }}</small>
+        {% else %}
+            {% for error in field.errors %}
+                <div class="invalid-feedback">{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+    </div>
+{% endfor %}
+</form>
+<h1 class="mt-4">Configuration</h1>
 {{ wtf.quick_form(form) }}
 </div>
 {% endblock %}

@@ -3,9 +3,9 @@ Detailed description.
 """
 from decimal import Decimal
 import json
-import flask_wtf
 import wtforms as wtf
-from wtforms import validators as fvs
+
+from ._bootstrapform import BootstrapForm
 
 
 
@@ -14,17 +14,17 @@ from wtforms import validators as fvs
 
 
 
-class BasicConfigForm(flask_wtf.FlaskForm):
+class BasicConfigForm(BootstrapForm):
     """
     Detailed description.
     """
     JSON_PATH = "/workspace/flask/basic_config.json"
     dataType = wtf.SelectField(
         "Data Type"
-        ,choices=[(0,"Serialized Database"),(1,"SQLite Database")]
+        ,choices=[("0","Serialized Database"),("1","SQLite Database")]
         ,description="Specifies which database EnTAP will download/generate."
     )
-    fpkm = wtf.DecimalField(
+    fpkm = wtf.widgets.html5.DecimalField(
         "FPKM Threshold"
         ,description="Specifies the FPKM threshold with expression analysis. EnTAP will filter out "
                      "transcripts below this value!"
@@ -64,6 +64,7 @@ class BasicConfigForm(flask_wtf.FlaskForm):
     )
     eValue = wtf.DecimalField(
         "E-Value"
+        ,places=6
         ,description="Specify the E-Value that will be used as a cutoff during similarity "
                      "searching."
     )

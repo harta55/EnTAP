@@ -1,7 +1,16 @@
 {% extends "base.html" %}
 
+{% block title %}{{ super() }} - Status{% endblock %}
+
 {% block content %}
 <div class="container">
-<h1>Home</h1>
+    <h1 class="mt-4">Status</h1>
+    <p>This will show the current status of EnTAP. The possible states are:</p>
+    <ul>
+        <li>Idle</li>
+        <li>Error</li>
+        <li>Running configuration</li>
+        <li>Running</li>
+    </ul>
 </div>
 {% endblock %}

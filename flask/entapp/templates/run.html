@@ -6,20 +6,5 @@
 <div class="container">
     <h1 class="mt-4">Run</h1>
     <p>This will provide a form to begin execution of EnTAP.</p>
-    <form>
-        <div class="form-group">
-            <label for="dataType">Data Type</label>
-            <select class="form-control" id="dataType">
-                <option value="0">Serialized Database</option>
-                <option value="1">SQLite Database</option>
-            </select>
-            <small class="form-text text-muted">Specifies which database EnTAP will download/generate.</small>
-        </div>
-        <div class="form-group">
-            <input type="checkbox" class="form-check-input" id="singleEnd">
-            <label class="form-check-label" for="singleEnd">BAM/SAM files generated through single-end reads.</label>
-        </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
 </div>
 {% endblock %}

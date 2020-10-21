@@ -1,5 +1,4 @@
 {% extends "base.html" %}
-{% import "bootstrap/wtf.html" as wtf %}
 
 {% block title %}{{ super() }} - Configuration{% endblock %}
 
@@ -7,15 +6,28 @@
 <div class="container">
 <h1 class="mt-4">Configuration</h1>
 <form action="" method="POST">
+{% macro bsField(form,field,class_) %}
+{% if form.errors %}
+    {% if field.errors %}
+        {{ field(class_=class_+" is-invalid") }}
+    {% else %}
+        {{ field(class_=class_+" is-valid") }}
+    {% endif %}
+{% else %}
+    {{ field(class_=class_) }}
+{% endif %}
+{% endmacro %}
 {{ form.hidden_tag() }}
 {% for field in form %}
     <div class="form-group">
-        {% if field.type == "BooleanField" %}
-            {{ field(class_="form-check-input") }}
+        {% if field.type == "SubmitField" %}
+            {{ bsField(form,field,"btn btn-primary") }}
+        {% elif field.type == "BooleanField" %}
+            {{ bsField(form,field,"form-check-input") }}
             <label for="{{ field.id }}">{{ field.label.text }}</label>
-        {% else %}
+        {% elif field.type != "CSRFTokenField" %}
             <label for="{{ field.id }}">{{ field.label.text }}</label>
-            {{ field(class_="form-control") }}
+            {{ bsField(form,field,"form-control") }}
         {% endif %}
         {% if not field.errors %}
             <small class="form-text text-muted">{{ field.description }}</small>
@@ -27,7 +39,5 @@
     </div>
 {% endfor %}
 </form>
-<h1 class="mt-4">Configuration</h1>
-{{ wtf.quick_form(form) }}
 </div>
 {% endblock %}

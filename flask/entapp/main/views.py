@@ -36,8 +36,9 @@ def config():
     form = forms.BasicConfigForm()
     if flask.request.method == "POST":
         if form.validate():
-            print(form.toJson())
             form.save()
+            flask.flash("success","Configuration successfully updated.")
+            return flask.redirect(flask.url_for("main.config"))
     else:
         form.load()
     return flask.render_template('config.html',form=form)

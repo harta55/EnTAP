@@ -8,6 +8,36 @@ from . import main
 
 
 
+@main.route('/config/basic',methods=["GET","POST"])
+def basicConfig():
+    """
+    Detailed description.
+    """
+    form = forms.BasicConfigForm()
+    if flask.request.method == "POST":
+        if form.validate():
+            form.save()
+            flask.flash("Basic configuration successfully updated.","success")
+            return flask.redirect(flask.url_for("main.basicConfig"))
+    else:
+        form.load()
+    return flask.render_template('config/basic.html',form=form)
+
+
+
+
+@main.route('/config/contams',methods=["GET","POST"])
+def contamsConfig():
+    """
+    Detailed description.
+    """
+    rmForm = forms.ContamsConfigForm()
+    rmForm.contams.choices = [("one","one"),("two","two"),("three","three")]
+    return flask.render_template('config/contams.html',rmForm=rmForm)
+
+
+
+
 @main.route('/')
 def index():
     """
@@ -28,17 +58,9 @@ def run():
 
 
 
-@main.route('/config',methods=["GET","POST"])
-def config():
+@main.route('/config/uninforms',methods=["GET","POST"])
+def uninformsConfig():
     """
     Detailed description.
     """
-    form = forms.BasicConfigForm()
-    if flask.request.method == "POST":
-        if form.validate():
-            form.save()
-            flask.flash("success","Configuration successfully updated.")
-            return flask.redirect(flask.url_for("main.config"))
-    else:
-        form.load()
-    return flask.render_template('config.html',form=form)
+    return flask.render_template('config/uninforms.html')

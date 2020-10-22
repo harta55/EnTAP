@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% import "wtf.html" as wtf %}
+
+{% block title %}{{ super() }} - Basic Configuration{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4">Basic Configuration</h1>
+    {{ wtf.quick_form(form) }}
+</div>
+{% endblock %}

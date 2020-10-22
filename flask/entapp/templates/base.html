@@ -17,8 +17,13 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('main.run') }}">Run</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('main.config') }}">Configuration</a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="configDropDown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Configuration</a>
+                    <div class="dropdown-menu bg-dark" aria-labelledby="configDropDown">
+                        <a class="nav-link" href="{{ url_for('main.basicConfig') }}">Basic</a>
+                        <a class="nav-link" href="{{ url_for('main.contamsConfig') }}">Contaminants</a>
+                        <a class="nav-link" href="{{ url_for('main.uninformsConfig') }}">Uninformatives</a>
+                    </div>
                 </li>
             </ul>
         </div>
@@ -26,7 +31,7 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="container">
-                {% for (message,category) in messages %}
+                {% for (category,message) in messages %}
                     <div class="alert alert-{{ category }} mt-3">{{ message }}</div>
                 {% endfor %}
                 </div>

@@ -115,14 +115,14 @@ To run configuration with a FASTA database to output directory path/to/output (d
 
 .. code-block:: bash
 
-    EnTAP --config -d path/to/database.fasta -d path/to/database2.fasta --out-dir path/to/output -t 8
+    EnTAP --config -d path/to/database.fasta -d path/to/database2.fasta --out-dir path/to/output -t 8 --ini path/to/ini
 
 
 Configuration can be run without formatting a FASTA database for DIAMOND is as follows with 8 threads:
 
 .. code-block:: bash
 
-    EnTAP --config -t 8
+    EnTAP --config -t 8 --ini path/to/ini
 
 .. note:: This is the only stage that requires connection to the Internet.
 

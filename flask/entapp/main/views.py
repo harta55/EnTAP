@@ -31,9 +31,13 @@ def contamsConfig():
     """
     Detailed description.
     """
-    rmForm = forms.ContamsConfigForm()
-    rmForm.contams.choices = [("one","one"),("two","two"),("three","three")]
-    return flask.render_template('config/contams.html',rmForm=rmForm)
+    form = forms.ContamsConfigForm()
+    if flask.request.method == "POST":
+        if form.validate():
+            form.processContams()
+            form.save()
+            return flask.redirect(flask.url_for("main.contamsConfig"))
+    return flask.render_template('config/contams.html',form=form)
 
 
 
@@ -63,4 +67,10 @@ def uninformsConfig():
     """
     Detailed description.
     """
-    return flask.render_template('config/uninforms.html')
+    form = forms.UninformsConfigForm()
+    if flask.request.method == "POST":
+        if form.validate():
+            form.processContams()
+            form.save()
+            return flask.redirect(flask.url_for("main.uninformsConfig"))
+    return flask.render_template('config/uninforms.html',form=form)

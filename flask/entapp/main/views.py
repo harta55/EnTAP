@@ -74,3 +74,23 @@ def uninformsConfig():
             form.save()
             return flask.redirect(flask.url_for("main.uninformsConfig"))
     return flask.render_template('config/uninforms.html',form=form)
+
+
+
+
+@main.route('/upload/database')
+def uploadDatabases():
+    """
+    Detailed description.
+    """
+    return flask.render_template('upload/database.html')
+
+
+
+
+@main.route('/upload/input')
+def uploadInputs():
+    """
+    Detailed description.
+    """
+    return flask.render_template('upload/input.html')

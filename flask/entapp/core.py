@@ -5,6 +5,8 @@ import flask
 import json
 import os
 
+from ._taskmanager import TaskManager
+
 
 
 

@@ -54,6 +54,17 @@ def index():
 
 
 
+@main.route('/download/databases',methods=["GET","POST"])
+def remoteDatabases():
+    """
+    Detailed description.
+    """
+    form=forms.RemoteDatabaseUploadForm()
+    return flask.render_template('upload/remote_database.html',form=form)
+
+
+
+
 @main.route('/run')
 def run():
     """

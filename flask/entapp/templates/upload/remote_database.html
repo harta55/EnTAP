@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% import "wtf.html" as wtf %}
+
+{% block title %}{{ super() }} - Upload Remote Databases{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4">Upload Remote Databases</h1>
+    <p>Upload databases from remote custom URL or predefined list of common ones with name.</p>
+    {{ wtf.quick_form(form) }}
+</div>
+{% endblock %}

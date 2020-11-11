@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html>
+    {% block meta %}
+    {% endblock %}
     <head>
     <title>{% block title %}EnTAP{% endblock %}</title>
     </head>
@@ -22,6 +24,7 @@
                     <div class="dropdown-menu bg-dark" aria-labelledby="uploadsDropDown">
                         <a class="nav-link" href="{{ url_for('main.uploadInputs') }}">Inputs</a>
                         <a class="nav-link" href="{{ url_for('main.uploadDatabases') }}">Databases</a>
+                        <a class="nav-link" href="{{ url_for('main.remoteDatabases') }}">Remote Databases</a>
                     </div>
                 </li>
                 <li class="nav-item dropdown">

@@ -306,7 +306,6 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
                             "Specify flags as follows:\n"                               \
                             "    0. EggNOG (default)\n"                                 \
                             "    1. InterProScan"                                       \
-                            "    2. BUSCO"
 #define CMD_GO_LEVELS      "level"
 #define DESC_ONT_LEVELS     "Specify the Gene Ontology levels you would like printed\n" \
                             "Default: 1\n"                                        \

@@ -210,7 +210,7 @@ void ModEggnogDMND::parse() {
 
 
 void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
-    FS_dprint("Success! Calculating statistics and accessing database...");
+    FS_dprint("Success! Calculating statistics and accessing EggNOG database...");
 
     QuerySequence::EggnogResults                          *eggnog_results;
     EggnogDmndAlignment                                  *best_hit;
@@ -245,8 +245,8 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     std::string out_no_hits_base = PATHS(mProcDir, FILENAME_OUT_UNANNOTATED);
     std::string out_hits_base    = PATHS(mProcDir, FILENAME_OUT_ANNOTATED);
 
-    mpQueryData->start_alignment_files(out_no_hits_base, output_headers, 0, mAlignmentFileTypes);
-    mpQueryData->start_alignment_files(out_hits_base, output_headers, 0, mAlignmentFileTypes);
+    mpQueryData->start_alignment_files(out_no_hits_base, output_headers, mGoLevels, mAlignmentFileTypes);
+    mpQueryData->start_alignment_files(out_hits_base, output_headers, mGoLevels, mAlignmentFileTypes);
 
     // Parse through all query sequences
     for (auto &pair : *mpQueryData->get_sequences_ptr()) {
@@ -271,14 +271,10 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
             //  Analyze Gene Ontology Stats
             if (!eggnog_results->parsed_go.empty()) {
                 ct_total_go_hits++;
-                for (auto &pair2 : eggnog_results->parsed_go) {
+                for (auto &go_entry: eggnog_results->parsed_go) {
                     // pair - first: GO category, second; vector of terms
-                    for (std::string &term : pair2.second) {
-                        // Count the terms we've found for individual category
-                        go_combined_map[pair2.first].add_value(term);
-                        // Count the terms we've found overall (not category specific)
-                        go_combined_map[GO_OVERALL_FLAG].add_value(term);
-                    }
+                    go_combined_map[go_entry.category].add_value(go_entry.go_id);
+                    go_combined_map[GO_OVERALL_FLAG].add_value(go_entry.go_id);
                 }
             }
 

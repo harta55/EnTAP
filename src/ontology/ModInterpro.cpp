@@ -214,7 +214,7 @@ void ModInterpro::parse() {
             if (it != interpro_map.end()) {
                 count_hits++;
 
-                go_terms_parsed = EM_parse_go_list(it->second.go_terms,mpEntapDatabase,',');
+                go_terms_parsed = mpEntapDatabase->format_go_delim(it->second.go_terms, ',');
 
                 // Compile data TODO change...
                 interProResults.e_value = float_to_sci(it->second.eval,2);

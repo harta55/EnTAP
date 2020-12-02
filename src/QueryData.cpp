@@ -40,8 +40,9 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
         {"Frame",               false},
 
         /* Expression Filtering */
-        {"FPKM",                false},
-        {"TPM",                 false},
+        {"FPKM",                        false},
+        {"TPM",                         false},
+        {"Expression Effective Length", false},
 
         /* Similarity Search - General */
         {"Subject Sequence",    false},
@@ -550,8 +551,9 @@ std::string QueryData::trim_sequence_header(std::string &header, std::string lin
         sequence = line + "\n";
     } else {
         // Trim to first space
-        if (line.find(' ') != std::string::npos) {
-            header = line.substr(pos+1, line.find(' ')-(pos+1));
+        std::string::iterator it = std::find_if(line.begin(), line.end(), isspace);
+        if (it != line.end()) {
+            header = line.substr(pos+1, std::distance(line.begin(), it)-(pos+1));
         } else header = line.substr(pos+1);
         sequence = ">" + header + "\n";
     }
@@ -602,33 +604,81 @@ QuerySequence *QueryData::get_sequence(std::string &query_id) {
     }
 }
 
-bool QueryData::start_alignment_files(std::string &base_path, std::vector<ENTAP_HEADERS> &headers, uint8 lvl,
-                                        std::vector<FileSystem::ENT_FILE_TYPES> &types) {
+bool QueryData::start_alignment_files(const std::string &base_path, const std::vector<ENTAP_HEADERS> &headers, const vect_uint16_t &go_levels,
+                                      const std::vector<FileSystem::ENT_FILE_TYPES> &types) {
     bool ret;
+    bool is_fasta_generated;
+    std::string final_file_path; // Final path may change depending on go levels, etc...
+
     OutputFileData outputFileData = OutputFileData();
     outputFileData.headers = headers;
-    outputFileData.go_level = lvl;
+    outputFileData.go_levels = go_levels;
     outputFileData.file_types = types;
-
-    base_path = base_path + "_lvl" + std::to_string(lvl);
 
     // add this path to map if it does not exist, otherwise skip
     if (mAlignmentFiles.find(base_path) == mAlignmentFiles.end()) {
 
-        mAlignmentFiles.emplace(base_path, outputFileData);
         // Generate files for each data type
         for (FileSystem::ENT_FILE_TYPES type : types) {
-            if ((type == FileSystem::ENT_FILE_FASTA_FAA || type == FileSystem::ENT_FILE_FASTA_FNN) && lvl != 0) {
-                // Do NOT create files for anything other than 0 for FAA or FNN
-                continue;
-            } else {
-                mAlignmentFiles.at(base_path).file_streams[type] =
-                        new std::ofstream(base_path + mpFileSystem->get_extension(type), std::ios::out | std::ios::app);
-                // Initialize headers or any other generic stuff
-                initialize_file(mAlignmentFiles.at(base_path).file_streams[type], headers, type);
+            // Generate files for each go level
+            is_fasta_generated = false; // FASTA only has one file across go levels
+
+            // Just skip out of range for now (checked when verifying user input)
+            if (type >= FileSystem::ENT_FILE_OUTPUT_FORMAT_MAX) continue;
+
+            for (uint16 level : go_levels) {
+
+                // Just skip out of range for now (checked when verifying user input)
+                if (level >= UserInput::MAX_GO_LEVEL) continue;
+
+                switch (type) {
+
+                    // For TSV,CSV we want to create a new file for every go level
+                    case FileSystem::ENT_FILE_DELIM_TSV:
+                    case FileSystem::ENT_FILE_DELIM_CSV:
+                        final_file_path = base_path + APPEND_GO_LEVEL_STR +
+                                std::to_string(level) + mpFileSystem->get_extension(type);
+                        mAlignmentFiles.at(base_path).file_streams[type][level] =
+                                new std::ofstream(final_file_path, std::ios::out | std::ios::app);
+                        initialize_file(mAlignmentFiles.at(base_path).file_streams[type][level],
+                                        outputFileData.headers, type);
+                        break;
+
+                    // For FASTA, we do not want to create multiple for each go level
+                    case FileSystem::ENT_FILE_FASTA_FAA:
+                    case FileSystem::ENT_FILE_FASTA_FNN:
+                        if (!is_fasta_generated) {
+                            is_fasta_generated = true;
+                            mAlignmentFiles.at(base_path).file_streams[type][DEFAULT_GO_LEVEL] =
+                                    new std::ofstream(base_path, std::ios::out | std::ios::app);
+                            initialize_file(mAlignmentFiles.at(base_path).file_streams[type][DEFAULT_GO_LEVEL],
+                                            outputFileData.headers, type);
+                        }
+                        break;
+
+                    case FileSystem::ENT_FILE_GENE_ENRICH_EFF_LEN:
+                        final_file_path = base_path + APPEND_GO_LEVEL_STR +
+                                          std::to_string(level) + APPEND_ENRICH_GENE_ID_LEN +
+                                          mpFileSystem->get_extension(type);
+                        initialize_file(mAlignmentFiles.at(base_path).file_streams[type][level],
+                                        outputFileData.headers, type);
+                        break;
+
+                    case FileSystem::ENT_FILE_GENE_ENRICH_GO_TERM:
+                        final_file_path = base_path + APPEND_GO_LEVEL_STR +
+                                          std::to_string(level) + APPEND_ENRICH_GENE_ID_GO +
+                                          mpFileSystem->get_extension(type);
+                        initialize_file(mAlignmentFiles.at(base_path).file_streams[type][level],
+                                        outputFileData.headers, type);
+                        break;
+
+                    default:
+                        break;
+                }
             }
         }
         ret = true;
+        mAlignmentFiles.emplace(base_path, outputFileData);
         FS_dprint("Alignment file started: " + base_path);
     } else {
         // File base path already exists!
@@ -641,13 +691,20 @@ bool QueryData::start_alignment_files(std::string &base_path, std::vector<ENTAP_
 bool QueryData::end_alignment_files(std::string &base_path) {
     // Cleanup/close files
 
-    for (std::ofstream* file_ptr : mAlignmentFiles.at(base_path).file_streams) {
-        // some are unused such as 0
-        if (file_ptr != nullptr) {
-            file_ptr->close();
-            delete file_ptr;
+    auto file_data = mAlignmentFiles.find(base_path);
+
+    if (file_data == mAlignmentFiles.end()) return true;
+
+    for (FileSystem::ENT_FILE_TYPES type : file_data->second.file_types) {
+        for (std::ofstream* file_ptr : mAlignmentFiles.at(base_path).file_streams[type]) {
+            // some are unused such as 0
+            if (file_ptr != nullptr) {
+                file_ptr->close();
+                SAFE_DELETE(file_ptr);
+            }
         }
     }
+
     mAlignmentFiles.erase(base_path);
     FS_dprint("Alignment file ended: " + base_path);
     return true;
@@ -656,51 +713,109 @@ bool QueryData::end_alignment_files(std::string &base_path) {
 bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *querySequence, QueryAlignment *alignment) {
     bool ret = false;
 
+    auto file_data = mAlignmentFiles.find(base_path);
+
+    if (file_data == mAlignmentFiles.end()) return ret; // EXIT ERROR alignment files missing
+
     // Cycle through output file types for this path
-    for (FileSystem::ENT_FILE_TYPES type : mAlignmentFiles.at(base_path).file_types) {
+    for (FileSystem::ENT_FILE_TYPES type : file_data->second.file_types) {
 
-        if (mAlignmentFiles.at(base_path).file_streams[type] == nullptr) continue;
+        if (file_data->second.file_streams[type] == nullptr) continue;
 
-        switch (type) {
+        // loop through go levels
+        for (uint16 go_level : file_data->second.go_levels) {
+            switch (type) {
 
-            case FileSystem::ENT_FILE_DELIM_TSV:
-                if (alignment == nullptr) {
-                    *mAlignmentFiles.at(base_path).file_streams[type] <<
-                        get_delim_data_sequence(mAlignmentFiles.at(base_path).headers,FileSystem::DELIM_TSV,
-                        mAlignmentFiles.at(base_path).go_level, querySequence) << std::endl;
-                } else {
-                    *mAlignmentFiles.at(base_path).file_streams[type] <<
-                        get_delim_data_alignment(mAlignmentFiles.at(base_path).headers,FileSystem::DELIM_TSV,
-                        mAlignmentFiles.at(base_path).go_level, alignment) << std::endl;
+                case FileSystem::ENT_FILE_DELIM_TSV:
+                    if (file_data->second.file_streams[type][go_level] == nullptr) continue;
+                    if (alignment == nullptr) {
+                        *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
+                                                get_delim_data_sequence(file_data->second.headers,FileSystem::DELIM_TSV,
+                                                go_level, querySequence) << std::endl;
+                    } else {
+                        *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
+                                                get_delim_data_alignment(mAlignmentFiles.at(base_path).headers,FileSystem::DELIM_TSV,
+                                                go_level, alignment) << std::endl;
+                    }
+                    break;
+
+                case FileSystem::ENT_FILE_DELIM_CSV:
+                    if (file_data->second.file_streams[type][go_level] == nullptr) continue;
+                    if (alignment == nullptr) {
+                        *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
+                                                get_delim_data_sequence(file_data->second.headers, FileSystem::DELIM_CSV,
+                                                go_level, querySequence) << std::endl;
+                    } else {
+                        *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
+                                                get_delim_data_alignment(file_data->second.headers,FileSystem::DELIM_CSV,
+                                                go_level, alignment) << std::endl;
+                    }
+                    break;
+
+                // Skip FASTA files if QuerySequence has already been added for alignment?
+                case FileSystem::ENT_FILE_FASTA_FAA:
+                    if (file_data->second.file_streams[type][DEFAULT_GO_LEVEL] == nullptr) continue;
+                    if (!querySequence->get_sequence_p().empty())
+                        *mAlignmentFiles.at(base_path).file_streams[type][DEFAULT_GO_LEVEL] << querySequence->get_sequence_p() << std::endl;
+                    break;
+
+                case FileSystem::ENT_FILE_FASTA_FNN:
+                    if (file_data->second.file_streams[type][DEFAULT_GO_LEVEL] == nullptr) continue;
+                    if (!querySequence->get_sequence_n().empty())
+                        *mAlignmentFiles.at(base_path).file_streams[type][DEFAULT_GO_LEVEL] << querySequence->get_sequence_n() << std::endl;
+                    break;
+
+                /*
+                 * For Gene Enrichment with GO Terms, we want gene ID and Gene Ontology term
+                 *  on the same line, tab deliminated
+                 *
+                 * If there are multiple GO terms to a gene id, there will be a new line for each GO
+                 *  term.
+                 *
+                 * Example:
+                 *  Gene_01 GO:0921901
+                 *  Gene_01 GO:4321432
+                 *  Gene_01 GO:4433233
+                 *  Gene_02 GO:0000001
+                 *
+                 * */
+                case FileSystem::ENT_FILE_GENE_ENRICH_GO_TERM:
+                {
+                    if (file_data->second.file_streams[type][go_level] == nullptr) continue;
+                    if (!querySequence->is_kept()) continue;
+
+                    go_format_t go_terms = querySequence->get_go_terms();
+                    if (!go_terms.empty()) {
+                        for (GoEntry const &entry : go_terms) {
+                            *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
+                                    querySequence->getMSequenceID() <<
+                                    FileSystem::DELIM_TSV <<
+                                    entry.go_id <<
+                                    std::endl;
+                        }
+                    }
+                    break;
                 }
-                break;
 
-            case FileSystem::ENT_FILE_DELIM_CSV:
-                if (alignment == nullptr) {
-                    *mAlignmentFiles.at(base_path).file_streams[type] <<
-                        get_delim_data_sequence(mAlignmentFiles.at(base_path).headers, FileSystem::DELIM_CSV,
-                        mAlignmentFiles.at(base_path).go_level, querySequence) << std::endl;
-                } else {
-                    *mAlignmentFiles.at(base_path).file_streams[type] <<
-                        get_delim_data_alignment(mAlignmentFiles.at(base_path).headers,FileSystem::DELIM_CSV,
-                        mAlignmentFiles.at(base_path).go_level, alignment) << std::endl;
+                case FileSystem::ENT_FILE_GENE_ENRICH_EFF_LEN:
+                {
+                    if (file_data->second.file_streams[type][go_level] == nullptr) continue;
+                    if (!querySequence->is_kept()) continue;
+
+                    *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
+                            querySequence->getMSequenceID() <<
+                            FileSystem::DELIM_TSV <<
+                            querySequence->getMEffectiveLength() <<
+                            std::endl;
+                    break;
                 }
-                break;
 
-            case FileSystem::ENT_FILE_FASTA_FAA:
-                if (!querySequence->get_sequence_p().empty())
-                    *mAlignmentFiles.at(base_path).file_streams[type] << querySequence->get_sequence_p() << std::endl;
-                break;
-
-            case FileSystem::ENT_FILE_FASTA_FNN:
-                if (!querySequence->get_sequence_n().empty())
-                    *mAlignmentFiles.at(base_path).file_streams[type] << querySequence->get_sequence_n() << std::endl;
-                break;
-
-            default:
-                FS_dprint("ERROR unhandled file type (add_alignment_data): " + std::to_string(type));
-                break;
+                default:
+                    FS_dprint("ERROR unhandled file type (add_alignment_data): " + std::to_string(type));
+                    break;
+            }
         }
+
     }
     return ret;
 }
@@ -829,13 +944,14 @@ std::string QueryData::get_delim_data_alignment(std::vector<ENTAP_HEADERS> &head
  * @param headers       - EnTAP headers we are considering for this file (delim)
  * @param type          - Type of file we want to initialize
  *
- * @return              - None
+ * @return              - False if error
  *
  * =====================================================================
  */
 bool QueryData::initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HEADERS> &headers,
                                  FileSystem::ENT_FILE_TYPES type) {
     bool ret=true;
+    if (file_stream == nullptr) return false;
 
     switch (type) {
         case FileSystem::ENT_FILE_DELIM_TSV:
@@ -859,6 +975,16 @@ bool QueryData::initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HE
             // Fasta files do not need initialization
         case FileSystem::ENT_FILE_FASTA_FAA:
         case FileSystem::ENT_FILE_FASTA_FNN:
+            break;
+
+        case FileSystem::ENT_FILE_GENE_ENRICH_EFF_LEN:
+            *file_stream << HEADER_ENRICH_GENE_ID << FileSystem::DELIM_TSV
+                         << HEADER_ENRICH_LENGTH << std::endl;
+            break;
+
+        case FileSystem::ENT_FILE_GENE_ENRICH_GO_TERM:
+            *file_stream << HEADER_ENRICH_GENE_ID << FileSystem::DELIM_TSV
+                         << HEADER_ENRICH_GO << std::endl;
             break;
 
         default:

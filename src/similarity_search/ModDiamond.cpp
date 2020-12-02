@@ -497,20 +497,20 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
 
     // Open contam best hit tsv file and print headers
     std::string out_best_contams_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_CONTAM);
-    mpQueryData->start_alignment_files(out_best_contams_filepath, mEntapHeaders, 0, mAlignmentFileTypes);
+    mpQueryData->start_alignment_files(out_best_contams_filepath, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
 
     // Open best hits files
     std::string out_best_hits_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS);
-    mpQueryData->start_alignment_files(out_best_hits_filepath, mEntapHeaders, 0, mAlignmentFileTypes);
+    mpQueryData->start_alignment_files(out_best_hits_filepath, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
 
     // Open best hits files with no contaminants
     std::string out_best_hits_no_contams = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM);
-    mpQueryData->start_alignment_files(out_best_hits_no_contams, mEntapHeaders, 0, mAlignmentFileTypes);
+    mpQueryData->start_alignment_files(out_best_hits_no_contams, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
 
     // Open unselected hits, so every hit that was not the best hit (tsv)
     std::string out_unselected_tsv  = PATHS(base_path, SIM_SEARCH_DATABASE_UNSELECTED);
     std::vector<FileSystem::ENT_FILE_TYPES> unselected_files = {FileSystem::ENT_FILE_DELIM_TSV};
-    mpQueryData->start_alignment_files(out_unselected_tsv, mEntapHeaders, 0, unselected_files);
+    mpQueryData->start_alignment_files(out_unselected_tsv, mEntapHeaders, mGoLevels, unselected_files);
 
     // Open no hits file (fasta nucleotide)
     std::string out_no_hits_fa_nucl = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS + FileSystem::EXT_FNN);
@@ -645,16 +645,6 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     graph_species_bar.graph_type     = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
     mpGraphingManager->initialize_graph_data(graph_species_bar);
 
-    if (count_contam >= MIN_CONTAM_COUNT) {
-        graph_contaminants_bar.x_axis_label   = "Contaminant Species";
-        graph_contaminants_bar.y_axis_label   = "Count";
-        graph_contaminants_bar.text_file_path = PATHS(figure_base, GRAPH_CONTAM_BAR_TXT);
-        graph_contaminants_bar.fig_out_path   = PATHS(figure_base, GRAPH_CONTAM_BAR_PNG);
-        graph_contaminants_bar.graph_title    = database_shortname + GRAPH_CONTAM_TITLE;
-        graph_contaminants_bar.graph_type     = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
-        mpGraphingManager->initialize_graph_data(graph_contaminants_bar);
-    }
-
     GraphingManager::GraphingData graph_frame_inform_stack;
     graph_frame_inform_stack.x_axis_label = "Category";
     graph_frame_inform_stack.y_axis_label = "Count";
@@ -700,8 +690,6 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
         pair.second.sort(true);
     }
 
-    contam_percent = ((fp64) count_contam / count_filtered) * ENTAP_PERCENT;
-
     ss <<
        "\n\tTotal unique transcripts with an alignment: " << count_filtered <<
        "\n\t\tReference transcriptome sequences with an alignment (FASTA):\n\t\t\t" << out_best_hits_filepath <<
@@ -735,13 +723,27 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
         }
     }
 
-    ss <<
-       "\n\tTotal unique contaminants: " << count_contam <<
-       "(" << contam_percent << "%): " <<
-       "\n\t\tTranscriptome reference sequences labeled as a contaminant (FASTA):\n\t\t\t"
-       << out_best_contams_filepath <<
-       "\n\t\tTranscriptome reference sequences labeled as a contaminant (TSV):\n\t\t\t" << out_best_contams_filepath;
+    // ********** Contaminant Calculations ************** //
+    if (count_contam >= MIN_CONTAM_COUNT) {
+        // Only show contaminant information if we have contaminants
+        contam_percent = ((fp64) count_contam / count_filtered) * ENTAP_PERCENT;
 
+        graph_contaminants_bar.x_axis_label = "Contaminant Species";
+        graph_contaminants_bar.y_axis_label = "Count";
+        graph_contaminants_bar.text_file_path = PATHS(figure_base, GRAPH_CONTAM_BAR_TXT);
+        graph_contaminants_bar.fig_out_path = PATHS(figure_base, GRAPH_CONTAM_BAR_PNG);
+        graph_contaminants_bar.graph_title = database_shortname + GRAPH_CONTAM_TITLE;
+        graph_contaminants_bar.graph_type = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
+        mpGraphingManager->initialize_graph_data(graph_contaminants_bar);
+
+        ss <<
+           "\n\tTotal unique contaminants: " << count_contam <<
+           "(" << contam_percent << "%): " <<
+           "\n\t\tTranscriptome reference sequences labeled as a contaminant (FASTA):\n\t\t\t"
+           << out_best_contams_filepath <<
+           "\n\t\tTranscriptome reference sequences labeled as a contaminant (TSV):\n\t\t\t"
+           << out_best_contams_filepath;
+    }
 
     // ********** Contaminant Calculations ************** //
     if (count_contam >= MIN_CONTAM_COUNT) {
@@ -762,6 +764,8 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
             mpGraphingManager->add_datapoint(graph_contaminants_bar.text_file_path, {pair.first, std::to_string(pair.second)});
             ct++;
         }
+
+        mpGraphingManager->graph_data(graph_contaminants_bar.text_file_path);
     }
 
     ss << "\n\tTop " << COUNT_TOP_SPECIES << " alignments by species:";
@@ -782,9 +786,6 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
 
     // -------------------------- Graphing Handle ----------------------- //
     mpGraphingManager->graph_data(graph_species_bar.text_file_path);
-    if (count_contam >= MIN_CONTAM_COUNT) {
-        mpGraphingManager->graph_data(graph_contaminants_bar.text_file_path);
-    }
     mpGraphingManager->graph_data(graph_frame_inform_stack.text_file_path);
     // ------------------------------------------------------------------ //
 }

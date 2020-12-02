@@ -96,24 +96,6 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     enable_headers();
 }
 
-
-go_format_t EntapModule::EM_parse_go_list(std::string list, EntapDatabase* database,char delim) {
-
-    go_format_t output;
-    std::string temp;
-    std::vector<std::vector<std::string>>results;
-
-    if (list.empty()) return output;
-    std::istringstream ss(list);
-    while (std::getline(ss,temp,delim)) {
-        GoEntry term_info =
-                database->get_go_entry(temp);
-        output[term_info.category].push_back(temp + "-" + term_info.term +
-                                             "(L=" + term_info.level + ")");
-    }
-    return output;
-}
-
 void EntapModule::enable_headers() {
     for (auto &header : mModuleHeaders) {
         mpQueryData->header_set(header, true);

@@ -68,8 +68,6 @@ std::string &trim(std::string &s);
 
 
 //**************** Global Structures/Typedefs ******************
-typedef std::map<std::string,std::vector<std::string>> go_format_t;
-
 
 template <typename T>
 struct Compair {
@@ -184,6 +182,7 @@ enum ENTAP_HEADERS {
     /* Expression Filtering */
     ENTAP_HEADER_EXP_FPKM,
     ENTAP_HEADER_EXP_TPM,
+    ENTAP_HEADER_EXP_E_LENGTH,      // Effective length
 
     /* Similarity Search - General */
     ENTAP_HEADER_SIM_SUBJECT,
@@ -279,7 +278,6 @@ namespace std {
         }
     };
 }
-
 
 
 //*********************** Externs *****************************

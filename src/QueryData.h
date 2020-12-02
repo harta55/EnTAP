@@ -70,8 +70,8 @@ public:
     void final_statistics(std::string& outpath);
 
     // Output routines
-    bool start_alignment_files(std::string &base_path, std::vector<ENTAP_HEADERS> &headers, uint8 lvl,
-                                std::vector<FileSystem::ENT_FILE_TYPES> &types);
+    bool start_alignment_files(const std::string &base_path, const std::vector<ENTAP_HEADERS> &headers, const vect_uint16_t &go_levels,
+                                const std::vector<FileSystem::ENT_FILE_TYPES> &types);
     bool end_alignment_files(std::string &base_path);
     bool add_alignment_data(std::string &base_path, QuerySequence *querySequence, QueryAlignment *alignment);
     QuerySequence* get_sequence(std::string&);
@@ -93,7 +93,6 @@ public:
 
 
 private:
-
     struct EntapHeader {
         const std::string title;
         bool print_header;
@@ -101,9 +100,9 @@ private:
 
     struct OutputFileData {
         std::vector<FileSystem::ENT_FILE_TYPES> file_types;
-        uint8 go_level;
+        vect_uint16_t go_levels;
         std::vector<ENTAP_HEADERS> headers;
-        std::ofstream* file_streams[FileSystem::ENT_FILE_OUTPUT_FORMAT_MAX];
+        std::ofstream* file_streams[FileSystem::ENT_FILE_OUTPUT_FORMAT_MAX][UserInput::MAX_GO_LEVEL+1];
     };
 
     void set_input_type(std::string&);
@@ -123,6 +122,7 @@ private:
     const uint8         LINE_COUNT   = 20;
     const uint8         SEQ_DPRINT_CONUT = 10;
     const uint8         NUCLEO_DEV   = 2;
+    const uint16        DEFAULT_GO_LEVEL = 0;           // Used if specified file does not have alternatives for go levels
     const fp32          N_50_PERCENT = 0.5;
     const fp32          N_90_PERCENT = 0.9;
     const std::string   NUCLEO_FLAG  = "Nucleotide";
@@ -137,6 +137,12 @@ private:
     const std::string OUT_UNANNOTATED_PROT = "final_unannotated.faa";
     const std::string OUT_ANNOTATED_NUCL   = "final_annotated.fnn";
     const std::string OUT_ANNOTATED_PROT   = "final_annotated.faa";
+    const std::string APPEND_GO_LEVEL_STR  = "_lvl";
+    const std::string APPEND_ENRICH_GENE_ID_GO = "_enrich_geneid_go";
+    const std::string APPEND_ENRICH_GENE_ID_LEN = "_enrich_geneid_len";
+    const std::string HEADER_ENRICH_GENE_ID = "gene_id";
+    const std::string HEADER_ENRICH_GO      = "go_term";
+    const std::string HEADER_ENRICH_LENGTH  = "effective_length";
 
     QUERY_MAP_T  *mpSequences;
     bool         mNoTrim;

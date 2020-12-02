@@ -83,7 +83,6 @@ std::string &QueryAlignment::getMDatabasePath() {
     return mDatabasePath;
 }
 
-
 //**********************************************************************
 //**********************************************************************
 //                 SimSearchAlignment Class
@@ -222,26 +221,40 @@ bool SimSearchAlignment::operator>(const QueryAlignment &alignment) {
 bool SimSearchAlignment::is_go_header(ENTAP_HEADERS header, std::vector<std::string> &go_list) {
 
     bool out_flag;
+        for (GoEntry const &entry : _sim_search_results.uniprot_info.go_terms) {
+            switch (header) {
 
-    switch (header) {
+                case ENTAP_HEADER_SIM_UNI_GO_CELL:
+                    if (entry.category == GO_CELLULAR_FLAG) {
+                        go_list.push_back(entry.go_id);
+                        out_flag = true;
+                    }
+                    break;
 
-        case ENTAP_HEADER_SIM_UNI_GO_CELL:
-            go_list = _sim_search_results.uniprot_info.go_terms[GO_CELLULAR_FLAG];
-            out_flag = true;
-            break;
-        case ENTAP_HEADER_SIM_UNI_GO_MOLE:
-            go_list = _sim_search_results.uniprot_info.go_terms[GO_MOLECULAR_FLAG];
-            out_flag = true;
-            break;
-        case ENTAP_HEADER_SIM_UNI_GO_BIO:
-            go_list = _sim_search_results.uniprot_info.go_terms[GO_BIOLOGICAL_FLAG];
-            out_flag = true;
-            break;
+                case ENTAP_HEADER_SIM_UNI_GO_MOLE:
+                    if (entry.category == GO_MOLECULAR_FLAG) {
+                        go_list.push_back(entry.go_id);
+                        out_flag = true;
+                    }
+                    break;
 
-        default:
-            out_flag = false;
-    }
+                case ENTAP_HEADER_SIM_UNI_GO_BIO:
+                    if (entry.category == GO_BIOLOGICAL_FLAG) {
+                        go_list.push_back(entry.go_id);
+                        out_flag = true;
+                    }
+                    break;
+
+                default:
+                    out_flag = false;
+            }
+        }
+
     return out_flag;
+}
+
+const go_format_t &SimSearchAlignment::get_go_data() const {
+    return this->_sim_search_results.uniprot_info.go_terms;
 }
 
 
@@ -273,25 +286,35 @@ bool EggnogDmndAlignment::operator>(const QueryAlignment & alignment) {
 
 bool EggnogDmndAlignment::is_go_header(ENTAP_HEADERS header, std::vector<std::string> &go_list) {
     bool out_flag;
+    for (GoEntry const &entry : mEggnogResults.parsed_go) {
+        switch (header) {
 
-    switch (header) {
+            case ENTAP_HEADER_SIM_UNI_GO_CELL:
+                if (entry.category == GO_CELLULAR_FLAG) {
+                    go_list.push_back(entry.go_id);
+                    out_flag = true;
+                }
+                break;
 
-        case ENTAP_HEADER_ONT_EGG_GO_CELL:
-            go_list = mEggnogResults.parsed_go[GO_CELLULAR_FLAG];
-            out_flag = true;
-            break;
-        case ENTAP_HEADER_ONT_EGG_GO_MOLE:
-            go_list = mEggnogResults.parsed_go[GO_MOLECULAR_FLAG];
-            out_flag = true;
-            break;
-        case ENTAP_HEADER_ONT_EGG_GO_BIO:
-            go_list = mEggnogResults.parsed_go[GO_BIOLOGICAL_FLAG];
-            out_flag = true;
-            break;
+            case ENTAP_HEADER_SIM_UNI_GO_MOLE:
+                if (entry.category == GO_MOLECULAR_FLAG) {
+                    go_list.push_back(entry.go_id);
+                    out_flag = true;
+                }
+                break;
 
-        default:
-            out_flag = false;
+            case ENTAP_HEADER_SIM_UNI_GO_BIO:
+                if (entry.category == GO_BIOLOGICAL_FLAG) {
+                    go_list.push_back(entry.go_id);
+                    out_flag = true;
+                }
+                break;
+
+            default:
+                out_flag = false;
+        }
     }
+
     return out_flag;
 }
 
@@ -315,6 +338,10 @@ void EggnogDmndAlignment::refresh_headers() {
     };
     mpParentSequence->set_header_data();
     mpParentSequence->update_query_flags(GENE_ONTOLOGY, ONT_EGGNOG_DMND);
+}
+
+const go_format_t &EggnogDmndAlignment::get_go_data() const {
+    return this->mEggnogResults.parsed_go;
 }
 
 //**********************************************************************
@@ -353,26 +380,40 @@ bool InterproAlignment::operator>(const QueryAlignment &alignment) {
 
 bool InterproAlignment::is_go_header(ENTAP_HEADERS header, std::vector<std::string> &go_list) {
     bool out_flag;
+    for (GoEntry const &entry : mInterproResults.parsed_go) {
+        switch (header) {
 
-    switch (header) {
+            case ENTAP_HEADER_SIM_UNI_GO_CELL:
+                if (entry.category == GO_CELLULAR_FLAG) {
+                    go_list.push_back(entry.go_id);
+                    out_flag = true;
+                }
+                break;
 
-        case ENTAP_HEADER_ONT_INTER_GO_CELL:
-            go_list = mInterproResults.parsed_go[GO_CELLULAR_FLAG];
-            out_flag = true;
-            break;
-        case ENTAP_HEADER_ONT_INTER_GO_MOLE:
-            go_list = mInterproResults.parsed_go[GO_MOLECULAR_FLAG];
-            out_flag = true;
-            break;
-        case ENTAP_HEADER_ONT_INTER_GO_BIO:
-            go_list = mInterproResults.parsed_go[GO_BIOLOGICAL_FLAG];
-            out_flag = true;
-            break;
+            case ENTAP_HEADER_SIM_UNI_GO_MOLE:
+                if (entry.category == GO_MOLECULAR_FLAG) {
+                    go_list.push_back(entry.go_id);
+                    out_flag = true;
+                }
+                break;
 
-        default:
-            out_flag = false;
+            case ENTAP_HEADER_SIM_UNI_GO_BIO:
+                if (entry.category == GO_BIOLOGICAL_FLAG) {
+                    go_list.push_back(entry.go_id);
+                    out_flag = true;
+                }
+                break;
+
+            default:
+                out_flag = false;
+        }
     }
+
     return out_flag;
+}
+
+const go_format_t &InterproAlignment::get_go_data() const {
+    return this->mInterproResults.parsed_go;
 }
 
 BuscoAlignment::BuscoAlignment(ExecuteStates state, uint16 software, std::string &database_path, QuerySequence *parent,

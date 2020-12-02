@@ -208,29 +208,30 @@ void Ontology::print_eggnog() {
 
     // TODO move to QueryData
     // Create output files for go levels (contaminants, no contam, all) and write headers
-    for (uint16 lvl : mGoLevels) {
 
-        final_annotations_base             = PATHS(mFinalOutputDir, FINAL_ANNOT_FILE);
-        final_annotations_contam_base      = PATHS(mFinalOutputDir, FINAL_ANNOT_FILE_CONTAM);
-        final_annotations_no_contam_base   = PATHS(mFinalOutputDir, FINAL_ANNOT_FILE_NO_CONTAM);
+    final_annotations_base             = PATHS(mFinalOutputDir, FINAL_ANNOT_FILE);
+    mpQueryData->start_alignment_files(final_annotations_base, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
 
-        mpQueryData->start_alignment_files(final_annotations_base, mEntapHeaders, (uint8)lvl, mAlignmentFileTypes);
-        mpQueryData->start_alignment_files(final_annotations_contam_base, mEntapHeaders, (uint8)lvl, mAlignmentFileTypes);
-        mpQueryData->start_alignment_files(final_annotations_no_contam_base, mEntapHeaders,(uint8) lvl, mAlignmentFileTypes);
+    final_annotations_contam_base      = PATHS(mFinalOutputDir, FINAL_ANNOT_FILE_CONTAM);
+    mpQueryData->start_alignment_files(final_annotations_contam_base, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
 
-        for (auto &pair : *mpQueryData->get_sequences_ptr()) {
-            mpQueryData->add_alignment_data(final_annotations_base, pair.second, nullptr);
+    final_annotations_no_contam_base   = PATHS(mFinalOutputDir, FINAL_ANNOT_FILE_NO_CONTAM);
+    mpQueryData->start_alignment_files(final_annotations_no_contam_base, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
 
-            if (pair.second->is_contaminant()) {
-                mpQueryData->add_alignment_data(final_annotations_contam_base, pair.second, nullptr);
-            } else {
-                mpQueryData->add_alignment_data(final_annotations_no_contam_base, pair.second, nullptr);
-            }
+    // Add respective alignements
+    for (auto &pair : *mpQueryData->get_sequences_ptr()) {
+        mpQueryData->add_alignment_data(final_annotations_base, pair.second, nullptr);
+
+        if (pair.second->is_contaminant()) {
+            mpQueryData->add_alignment_data(final_annotations_contam_base, pair.second, nullptr);
+        } else {
+            mpQueryData->add_alignment_data(final_annotations_no_contam_base, pair.second, nullptr);
         }
-
-        mpQueryData->end_alignment_files(final_annotations_base);
-        mpQueryData->end_alignment_files(final_annotations_contam_base);
-        mpQueryData->end_alignment_files(final_annotations_no_contam_base);
     }
+
+    // Cleanup
+    mpQueryData->end_alignment_files(final_annotations_base);
+    mpQueryData->end_alignment_files(final_annotations_contam_base);
+    mpQueryData->end_alignment_files(final_annotations_no_contam_base);
     FS_dprint("Success!");
 }

@@ -48,12 +48,11 @@
 #include <cereal/types/map.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
-
+#include <cereal/types/set.hpp>
 
 #endif
 
 #include "../FileSystem.h"
-
 
 struct  GoEntry {
     std::string go_id;
@@ -90,6 +89,12 @@ struct  GoEntry {
     bool is_empty() {
         return term.empty();
     }
+
+    // Don't really care about order, just don't want duplicates
+    //  std::set helper
+    bool operator < (const GoEntry& rhs) const {
+        return this->go_id < rhs.go_id;
+    }
 };
 
 struct TaxEntry {
@@ -123,6 +128,8 @@ struct TaxEntry {
         tax_name = "";
     }
 };
+
+typedef std::set<GoEntry> go_format_t;
 
 struct UniprotEntry {
     std::string database_x_refs;        // DR   OrthoDB; VOG090000I8; -.
@@ -302,7 +309,6 @@ public:
     go_format_t format_go_delim(std::string terms, char delim);
 
     // Database accession routines
-    // TODO change to const* return if SQL removed
     TaxEntry get_tax_entry(std::string& species);
     GoEntry get_go_entry(std::string& go_id);
     UniprotEntry get_uniprot_entry(std::string& accession);
@@ -381,6 +387,8 @@ private:
     const std::string SQL_TABLE_UNIPROT_COL_COMM = "COMMENTS";
     const std::string SQL_TABLE_UNIPROT_COL_XREF = "DATAXREFS";
     const std::string SQL_TABLE_UNIPROT_COL_ID   = "UNIPROTID";
+    const std::string SQL_TABLE_UNIPROT_COL_KEGG = "KEGG";
+    const std::string SQL_TABLE_UNIPROT_COL_GO   = "GOTERMS";
     const std::string SQL_TABLE_VERSION_TITLE    = "VERSION";
     const std::string SQL_TABLE_VERSION_COL_VER  = "VERSION";
 
@@ -399,9 +407,9 @@ private:
 
     // EnTAP database consts
     const SERIALIZATION_TYPE SERIALIZE_DEFAULT    = CEREAL_BIN_ARCHIVE;
-    const uint8              SERIALIZE_MAJOR      = 1;
+    const uint8              SERIALIZE_MAJOR      = 2;
     const uint8              SERIALIZE_MINOR      = 0;
-    const uint8              SQL_MAJOR            = 1;
+    const uint8              SQL_MAJOR            = 2;
     const uint8              SQL_MINOR            = 0;
 
     const uint8 STATUS_UPDATES = 5;     // Percentage of updates when downloading/configuring

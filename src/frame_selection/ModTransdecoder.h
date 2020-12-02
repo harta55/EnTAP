@@ -90,6 +90,8 @@ private:
     const std::string CMD_OUTPUT_DIR          = "-O";                   // Specify output directory WARNING added in v5.5.0
                                                                         // and doesn't really work
     const std::string CMD_SINGLE_BEST_ONLY    = "--single_best_only";   // Only retain one best ORF per transcript
+    const std::string CMD_NO_REFINE_STARTS    = "--no_refine_starts";   // start refinement identifies potential start codons for 5' partial
+                                                                        // ORFs using a PWM, process on by default.
 
     const std::string STD_OUTPUT_TRAINING = "long_orfs_std";
     const std::string STD_OUTPUT_PREDICTION = "prediction_std";
@@ -116,6 +118,7 @@ private:
     std::string mTransdecoderLongOrfsExe;       // Method of execution for LongOrds (train) portion of Transdecoder from user
     std::string mTransdecoderPredictExe;        // Method of execution for Prediction portion of Transdecoder from user
     std::string mOutputCDSFilePath;             // Absolute path to CDS file output from TransDecoder (nucleo)
+    bool        mIsNoRefineStarts;              // User wants to pipe command '--no_refine_starts' to TransDecoder
     uint16 mMinProteinLength;
     //**********************************************************
 };

@@ -62,6 +62,10 @@ public:
         ENT_FILE_DELIM_CSV,
         ENT_FILE_FASTA_FAA,
         ENT_FILE_FASTA_FNN,
+        ENT_FILE_GENE_ENRICH_EFF_LEN,           // Gene enrichment format for gene ontology
+                                                // gene ID and effective length, tab delim
+        ENT_FILE_GENE_ENRICH_GO_TERM,           // Gene ID and Go terms, tab delim
+                                                // new row for every go term for each gene
         ENT_FILE_OUTPUT_FORMAT_MAX,     // File types above this are supported for data output
 
         ENT_FILE_XML,                   // Not yet supported for output format

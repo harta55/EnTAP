@@ -57,7 +57,11 @@ The following FTP sites contain common reference databases that EnTAP can recogn
 
    * Plant RefSeq: |ref_plant|
 
-   * Mammalian RefSeq: |ref_mamm|
+   * Mammalian Vertebrate RefSeq: |ref_mamm|
+   
+   * Other Vertebrate RefSeq: |ref_vert_other|
+   
+   * Invertebrate RefSeq: |ref_invert|
 
    * NR: |ref_nr|
 

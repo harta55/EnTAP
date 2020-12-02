@@ -112,7 +112,6 @@ protected:
     EntapDatabase      *mpEntapDatabase;
     std::vector<FileSystem::ENT_FILE_TYPES> mAlignmentFileTypes; // may be overriden by module
 
-    go_format_t EM_parse_go_list(std::string list, EntapDatabase* database,char delim);
     void enable_headers();
     virtual std::vector<ENTAP_HEADERS>  &moduleHeaders() { return mModuleHeaders; }
 };

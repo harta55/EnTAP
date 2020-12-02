@@ -41,7 +41,7 @@ public:
     QueryAlignment(ExecuteStates state, uint16 software, std::string& database_path, QuerySequence* parent);
     bool operator<(const QueryAlignment&query) {return !(*this > query);};
     void set_compare_overall_alignment(bool val);
-    virtual ~QueryAlignment() = default;;
+    virtual ~QueryAlignment() = default;
     virtual bool operator>(const QueryAlignment&)=0;
     void get_all_header_data(std::string[]);
     void get_header_data(ENTAP_HEADERS header, std::string &val, uint8 lvl);
@@ -75,6 +75,7 @@ public:
     ~SimSearchAlignment() override = default;
     QuerySequence::SimSearchResults* get_results();
     bool operator>(const QueryAlignment&) override;
+    const go_format_t &get_go_data() const;
 
 private:
     void set_tax_score(std::string&);
@@ -105,6 +106,7 @@ public:
     QuerySequence::EggnogResults* get_results();
     bool operator>(const QueryAlignment&) override;
     void refresh_headers();
+    const go_format_t &get_go_data() const;
 
 private:
     QuerySequence::EggnogResults mEggnogResults;
@@ -128,7 +130,7 @@ public:
     ~InterproAlignment() override = default;
     QuerySequence::InterProResults* get_results();
     bool operator>(const QueryAlignment&) override;
-
+    const go_format_t &get_go_data() const;
 
 private:
     QuerySequence::InterProResults mInterproResults;

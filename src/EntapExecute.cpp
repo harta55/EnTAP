@@ -288,13 +288,13 @@ namespace entapExecute {
             // *************************** Exit Stuff ********************** //
             pQUERY_DATA->final_statistics(final_out_dir);
            // pFileSystem->directory_iterate(FileSystem::FILE_ITER_DELETE_EMPTY, mOutpath);   // Delete empty files
-            delete pQUERY_DATA;
-            delete pGraphing_Manager;
-            delete pEntap_Database;
+            SAFE_DELETE(pQUERY_DATA);
+            SAFE_DELETE(pGraphing_Manager);
+            SAFE_DELETE(pEntap_Database);
         } catch (const ExceptionHandler &e) {
-            delete pQUERY_DATA;
-            delete pGraphing_Manager;
-            delete pEntap_Database;
+            SAFE_DELETE(pQUERY_DATA);
+            SAFE_DELETE(pGraphing_Manager);
+            SAFE_DELETE(pEntap_Database);
             exit_error(executeStates);
             throw e;
         }

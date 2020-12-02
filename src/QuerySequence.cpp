@@ -314,6 +314,7 @@ void QuerySequence::init_sequence() {
     mSequenceLength = 0;
     mFPKM = 0.0;
     mTPM = 0.0;
+    mEffectiveLength = 0.0;
 
     mAlignmentData = new AlignmentData(this);
     mEggnogResults = EggnogResults();
@@ -436,6 +437,7 @@ void QuerySequence::set_header_data() {
     // Expression Filtering data
     mHeaderInfo[ENTAP_HEADER_EXP_FPKM] = float_to_string(this->mFPKM);
     mHeaderInfo[ENTAP_HEADER_EXP_TPM] = float_to_string(this->mTPM);
+    mHeaderInfo[ENTAP_HEADER_EXP_E_LENGTH] = float_to_string(this->mEffectiveLength);
 
     // Similarity Search data
     align_ptr = this->mAlignmentData->get_best_align_ptr(SIMILARITY_SEARCH, SIM_DIAMOND, "");
@@ -879,6 +881,49 @@ uint32 QuerySequence::getMQueryFlags() const {
 
 bool QuerySequence::is_nucleotide() {
     return QUERY_FLAG_GET(QUERY_IS_NUCLEOTIDE);
+}
+
+void QuerySequence::setMEffectiveLength(fp32 mEffectiveLength) {
+    QuerySequence::mEffectiveLength = mEffectiveLength;
+}
+
+go_format_t QuerySequence::get_go_terms() {
+    go_format_t  ret = go_format_t();
+    go_format_t  align_data;
+
+    // Pull EggNOG GO Terms
+    auto *egg_alignment = get_best_hit_alignment<EggnogDmndAlignment>(GENE_ONTOLOGY, ONT_EGGNOG_DMND, "");
+    if (egg_alignment != nullptr) {
+        if (!egg_alignment->get_go_data().empty()) {
+            ret = egg_alignment->get_go_data();
+        }
+    }
+
+    // Pull UniProt GO Terms from Similarity Searching (overall best hit)
+    auto *sim_alignment = get_best_hit_alignment<SimSearchAlignment>(SIMILARITY_SEARCH, SIM_DIAMOND, "");
+    if (sim_alignment != nullptr) {
+        align_data = sim_alignment->get_go_data();
+        if (!align_data.empty()) {
+            std::merge(ret.begin(), ret.end(), align_data.begin(), align_data.end(),
+                       std::inserter(ret, ret.begin()));
+        }
+    }
+
+    // Pull InterPro GO Terms
+    auto *inter_alignment = get_best_hit_alignment<InterproAlignment>(GENE_ONTOLOGY, ONT_INTERPRO_SCAN, "");
+    if (inter_alignment != nullptr) {
+        align_data = inter_alignment->get_go_data();
+        if (!align_data.empty()) {
+            std::merge(ret.begin(), ret.end(), align_data.begin(), align_data.end(),
+                       std::inserter(ret, ret.begin()));
+        }
+    }
+
+    return ret;
+}
+
+fp32 QuerySequence::getMEffectiveLength() const {
+    return mEffectiveLength;
 }
 
 

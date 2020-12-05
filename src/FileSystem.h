@@ -160,8 +160,9 @@ public:
     static const char        DELIM_TSV;
     static const char        DELIM_CSV;
     static const char        FASTA_FLAG;
-
+#ifndef UNIT_TESTS
 private:
+#endif
     //****************** Private Functions *********************
     void init_log();
     void set_error(std::string err_msg);
@@ -173,7 +174,11 @@ private:
     const std::string LOG_FILENAME              = "log_file"; // Filename for EnTAP log file (statistics files)
     const std::string LOG_EXTENSION             = EXT_TXT; // Extension for EnTAP statistics file
     const std::string DEBUG_EXTENSION           = EXT_TXT; // Extension for EnTAP debug file
+#ifdef UNIT_TESTS
+    const std::string DEBUG_FILENAME            = "unit_testing";
+#else
     const std::string DEBUG_FILENAME            = "debug"; // Filename for EnTAP debug file
+#endif
     const std::string ENTAP_FINAL_OUTPUT        = "final_results/"; // Directory name for final output annotations directory
     const std::string ENTAP_TRANSCRIPTOME_DIR   = "transcriptomes/"; // Directory name for transcriptome directory (frame selected, expression analysis)
     const std::string TEMP_DIRECTORY            = "temp/"; // Directory name for 'temp' directory  (deleted once EnTAP exits)

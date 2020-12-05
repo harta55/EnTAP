@@ -114,7 +114,9 @@ const uint16 UserInput::DEFAULT_THREADS                 = 1;
                             "    1. TSV Format (default)\n"                             \
                             "    2. CSV Format\n"                                       \
                             "    3. FASTA Amino Acid (default)\n"                       \
-                            "    4. FASTA Nucleotide (default)"
+                            "    4. FASTA Nucleotide (default)\n"                       \
+                            "    5. Gene Enrichment Sequence ID vs. Effective Length TSV (default)\n"\
+                            "    6. Gene Enrichment Sequence ID vs. GO Term TSV (default)"
 const vect_uint16_t UserInput::DEFAULT_OUT_FORMAT       =vect_uint16_t{FileSystem::ENT_FILE_DELIM_TSV,
                                                                        FileSystem::ENT_FILE_FASTA_FAA,
                                                                        FileSystem::ENT_FILE_FASTA_FNN,
@@ -305,7 +307,7 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
                             "multiple --ontology flags\n"                               \
                             "Specify flags as follows:\n"                               \
                             "    0. EggNOG (default)\n"                                 \
-                            "    1. InterProScan"                                       \
+                            "    1. InterProScan"
 #define CMD_GO_LEVELS      "level"
 #define DESC_ONT_LEVELS     "Specify the Gene Ontology levels you would like printed\n" \
                             "Default: 1\n"                                        \
@@ -1127,12 +1129,12 @@ bool UserInput::verify_user_input() {
 
             // Verify EnTAP database can be generated
             FS_dprint("Verifying EnTAP database...");
-            pEntap_database = new EntapDatabase(mpFileSystem, this);
+            pEntap_database = new EntapDatabase(mpFileSystem);
             // Find database type that will be used by the rest (use 0 index no matter what)
             ent_input_multi_int_t entap_database_types =
                     get_user_input<ent_input_multi_int_t>(INPUT_FLAG_DATABASE_TYPE);
-            EntapDatabase::DATABASE_TYPE type = static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
-            if (!pEntap_database->set_database(type)) {
+            auto type = static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
+            if (!pEntap_database->set_database(type, get_entap_database_path(type))) {
                 throw ExceptionHandler("Unable to open EnTAP database from paths given" + pEntap_database->print_error_log(),
                                        ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
             }
@@ -1894,4 +1896,23 @@ bool UserInput::run_expression_filtering() {
         FS_dprint("NO, no alignment file specified from user");
         return false;
     }
+}
+
+ent_input_str_t UserInput::get_entap_database_path(EntapDatabase::DATABASE_TYPE type) {
+    ent_input_str_t ret;
+
+    switch (type) {
+        case EntapDatabase::ENTAP_SERIALIZED:
+            ret = get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_DB_BIN);
+            break;
+
+        case EntapDatabase::ENTAP_SQL:
+            ret = get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_DB_SQL);
+            break;
+
+        default:
+            // UNKNOWN database type
+            break;
+    }
+    return ret;
 }

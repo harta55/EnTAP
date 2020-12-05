@@ -29,6 +29,7 @@
 #include "ModBUSCO.h"
 #include "../QuerySequence.h"
 #include "../QueryData.h"
+#include "../ExceptionHandler.h"
 
 std::vector<ENTAP_HEADERS> ModBUSCO::DEFAULT_HEADERS = {
     ENTAP_HEADER_ONT_BUSCO_ID,

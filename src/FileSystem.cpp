@@ -80,7 +80,6 @@ FileSystem::FileSystem() {
     // This routine will eventually process entire root directory here and generate
     // hierarchy
     mExeDirectory = "";
-    mRootPath = "";
     mFinalOutpath = "";
     mTrancriptomeDir = "";
     mTempOutpath = "";
@@ -88,6 +87,7 @@ FileSystem::FileSystem() {
     FS_dprint("Spawn Object - FileSystem");
     set_executable_dir();
     mOriginalWorkingDir = get_cur_dir();
+    mRootPath = mOriginalWorkingDir;        // Set root to CWD by default, then change
 }
 
 
@@ -555,6 +555,7 @@ void FileSystem::set_root_dir(std::string &root) {
     // Make sure directories are created (or already created)
     create_dir(root);
     create_dir(mFinalOutpath);
+    delete_dir(mTempOutpath);
     create_dir(mTempOutpath);
 
     // generate log file

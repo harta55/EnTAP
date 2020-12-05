@@ -353,7 +353,7 @@ namespace entapConfig {
         FS_dprint("Initializing EnTAP database...");
         pFileSystem->format_stat_stream(log_msg, "EnTAP Database Configuration");
 
-        pEntapDatabase = new EntapDatabase(pFileSystem, pUserInput);
+        pEntapDatabase = new EntapDatabase(pFileSystem);
         if (pEntapDatabase == nullptr) {
             throw ExceptionHandler("Unable to allocate Entap Database memory", ERR_ENTAP_MEM_ALLOC);
         }

@@ -29,8 +29,8 @@
 #define ENTAP_ENTAPDATABASE_H
 
 #include "../EntapGlobals.h"
-#include "../EntapConfig.h"
 #include "SQLDatabaseHelper.h"
+#include "../FileSystem.h"
 
 #ifdef USE_BOOST    // Include boost serialization headers
 #include <boost/serialization/serialization.hpp>
@@ -51,8 +51,6 @@
 #include <cereal/types/set.hpp>
 
 #endif
-
-#include "../FileSystem.h"
 
 struct  GoEntry {
     std::string go_id;
@@ -194,10 +192,6 @@ public:
 
         ENTAP_SERIALIZED=0, // Serialized database
         ENTAP_SQL,          // SQL database (uniprot mapping, tax data)
-        ENTAP_TAXONOMY,     // NCBI tax database
-        ENTAP_GENE_ONTOLOGY,// GO database
-        ENTAP_UNIPROT,      // UniProt mapping database
-        ENTAP_VERSION,      // Version table used in SQL database only
 
         ENTAP_MAX_TYPES
 
@@ -240,6 +234,7 @@ public:
         ERR_DATA_SET,
         ERR_DATA_INCOMPATIBLE_VER,
         ERR_DATA_GET_VERSION,
+        ERR_DATA_DELETE_TABLE,
 
         ERR_DATA_MEM_ALLOC,
         ERR_DATA_UNHANDLED_TYPE,
@@ -300,9 +295,9 @@ public:
         TaxonomyNode(std::string id);
     };
 
-    EntapDatabase(FileSystem* fileSystem, UserInput* userInput);
+    EntapDatabase(FileSystem* fileSystem);
     ~EntapDatabase();
-    bool set_database(DATABASE_TYPE type);
+    bool set_database(DATABASE_TYPE type, std::string database_path);
     DATABASE_ERR download_database(DATABASE_TYPE, std::string&);
     DATABASE_ERR generate_database(DATABASE_TYPE, std::string&);
     std::string print_error_log();
@@ -320,8 +315,19 @@ public:
     std::string get_current_version_str();
     std::string get_required_version_str();
 
-
+#ifndef UNIT_TESTS
 private:
+#endif
+
+    typedef enum {
+        ENTAP_TAXONOMY,     // NCBI tax database
+        ENTAP_GENE_ONTOLOGY,// GO database
+        ENTAP_UNIPROT,      // UniProt mapping database
+        ENTAP_VERSION,      // Version table used in SQL database only
+
+        ENTAP_MAX_TABLES
+
+    } DATABASE_TABLES;
 
     // Generation/download database routines
     DATABASE_ERR download_entap_sql(std::string&);
@@ -332,9 +338,14 @@ private:
     DATABASE_ERR generate_entap_uniprot(DATABASE_TYPE);
     std::string  entap_tax_get_lineage(TaxonomyNode &,
                                        std::unordered_map<std::string, TaxonomyNode>&);
+
+    bool create_sql_table(DATABASE_TABLES database_table);
+    EntapDatabase::DATABASE_ERR create_database_type(DATABASE_TYPE type, std::string &path);
+    EntapDatabase::DATABASE_ERR delete_database_table(DATABASE_TYPE type, DATABASE_TABLES table);
+
+
     bool sql_add_tax_entry(TaxEntry&);
     bool sql_add_go_entry(GoEntry&);
-    bool create_sql_table(DATABASE_TYPE);
     bool add_uniprot_entry(DATABASE_TYPE type, UniprotEntry &entry);
     void set_err_msg(std::string msg, DATABASE_ERR code);
     bool set_database_versions(DATABASE_TYPE type);
@@ -416,7 +427,6 @@ private:
 
     EntapDatabaseStruct *mpSerializedDatabase;
     FileSystem          *mpFileSystem;
-    UserInput           *mpUserInput;
     SQLDatabaseHelper   *mpDatabaseHelper;
     std::string          mTempDirectory;
     go_serial_map_t      mSqlGoHelper;    // Using to increase speeds for now, change later
@@ -424,9 +434,12 @@ private:
     std::string          mErrMsg;
     DATABASE_ERR         mErrCode;
 
-    const std::string ENTAP_DATABASE_TYPES_STR[ENTAP_MAX_TYPES-1] {
+    const std::string ENTAP_DATABASE_TYPES_STR[ENTAP_MAX_TYPES] {
             "EnTAP Serialized Database",
-            "EnTAP SQL Database",
+            "EnTAP SQL Database"
+    };
+
+    const std::string ENTAP_DATABASE_TABLES[ENTAP_MAX_TABLES] {
             "EnTAP NCBI Taxonomy Database",
             "EnTAP Gene Ontology Database",
             "EnTAP UniProt Swiss-Prot Database"

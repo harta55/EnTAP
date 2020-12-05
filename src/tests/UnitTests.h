@@ -1,5 +1,4 @@
 /*
- *
  * Developed by Alexander Hart
  * Plant Computational Genomics Lab
  * University of Connecticut
@@ -25,39 +24,32 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef ENTAP_CONFIG_H
-#define ENTAP_CONFIG_H
+#ifndef ENTAP_UNITTESTS_H
+#define ENTAP_UNITTESTS_H
 
-// Compile with boost libraries? Currently this MUST be selected
-#ifndef USE_BOOST
-//#define USE_BOOST   1
+#include "../config.h"
+
+#ifdef UNIT_TESTS
+#include "../FileSystem.h"
+
+class UnitTests {
+
+public:
+    UnitTests();
+    ~UnitTests();
+
+    void execute_tests();
+
+protected:
+    FileSystem* mpFileSystem;
+    std::string mRootDirectory;
+
+    void TestEntapDatabase();
+    void UTEntapDatabase_00(EntapDatabase *entapDatabase);
+    void UTEntapDatabase_01(EntapDatabase *entapDatabase);
+    void UTEntapDatabase_02(EntapDatabase *entapDatabase);
+    void UTEntapDatabase_03(EntapDatabase *entapDatabase);
+};
+
+#endif //ENTAP_UNITTESTS_H
 #endif
-
-// Use EggNOG mapper (not supported, leaving for now)
-#ifndef EGGNOG_MAPPER
-//#define EGGNOG_MAPPER 1
-#endif
-
-// Compile with CURL? Will use wget command otherwise (not supported yet)
-#ifndef USE_CURL
-//#define USE_CURL    1
-#endif
-
-// Compile with using the Fast CSV Parser (required now)
-#ifndef USE_FAST_CSV
-#define USE_FAST_CSV  1
-#endif
-
-// Compile with ZLIB? Will use tar command otherwise (not supported yet)
-#ifndef USE_ZLIB
-//#define USE_ZLIB    1
-#endif
-
-//  Compile this in to run Unit tests
-//#define UNIT_TESTS 1
-
-// Comment this out if it is debug code
-#define RELEASE_BUILD
-
-
-#endif //ENTAP_CONFIG_H

@@ -32,6 +32,7 @@
 
 #include "QuerySequence.h"
 #include "common.h"
+#include "UserInput.h"
 
 // Forward Declarations
 class QueryAlignment;

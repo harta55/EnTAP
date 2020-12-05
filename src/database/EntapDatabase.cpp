@@ -29,7 +29,7 @@
 
 /**
  * ======================================================================
- * Function EntapDatabase::EntapDatabase(FileSystem* filesystem, UserInput* userInput)
+ * Function EntapDatabase::EntapDatabase(FileSystem* filesystem)
  *
  * Description          - EnTAP Database constructor
  *                      - Controls all database related operations
@@ -41,15 +41,13 @@
  * Notes                - None
  *
  * @param filesystem    - Pointer to filesystem handler
- * @param userInput     - Pointer to user input handler
  *
  * @return              - None
  * ======================================================================
  */
-EntapDatabase::EntapDatabase(FileSystem* filesystem, UserInput* userInput) {
+EntapDatabase::EntapDatabase(FileSystem* filesystem) {
     // Initialize
     mpFileSystem     = filesystem;
-    mpUserInput      = userInput;
     mTempDirectory  = filesystem->get_temp_outdir();    // created previously
     mpSerializedDatabase = nullptr;
     mpDatabaseHelper     = nullptr;
@@ -72,20 +70,15 @@ EntapDatabase::EntapDatabase(FileSystem* filesystem, UserInput* userInput) {
  * @return              - True/False is successful or not
  * ======================================================================
  */
-bool EntapDatabase::set_database(DATABASE_TYPE type) {
-    ent_input_str_t database_path;
-
-    if (mpUserInput == nullptr) return false;
+bool EntapDatabase::set_database(DATABASE_TYPE type, std::string database_path) {
 
     switch (type) {
         case ENTAP_SERIALIZED:
             // Filepath checked in routine
             mUseSerial = true;
-            database_path = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_DB_BIN);
             return serialize_database_read(SERIALIZE_DEFAULT, database_path) == ERR_DATA_OK;
         case ENTAP_SQL:
             mUseSerial = false;
-            database_path = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_DB_SQL);
             if (!mpFileSystem->file_exists(database_path)) {
                 set_err_msg("Database not found at: "+ database_path, ERR_DATA_SET);
                 return false;
@@ -150,8 +143,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::download_database(EntapDatabase::DATA
  * @return              - DATABASE_ERR type
  * ======================================================================
  */
-EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(
-                            EntapDatabase::DATABASE_TYPE type,
+EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(EntapDatabase::DATABASE_TYPE type,
                             std::string &path) {
     DATABASE_ERR err;
 
@@ -167,53 +159,9 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE type, std::string &outpath) {
     DATABASE_ERR err_code;
 
-    FS_dprint("Database type: " + ENTAP_DATABASE_TYPES_STR[type] + ", Outpath: " + outpath);
-    switch (type) {
+    err_code = create_database_type(type, outpath);
 
-        case ENTAP_SQL:
-            FS_dprint("Generating EnTAP SQL Database...");
-            mUseSerial = false;
-            if (mpDatabaseHelper != nullptr) {
-                // SQL should not already have been created
-                return ERR_DATA_SQL_DUPLICATE;
-            } else if (mpFileSystem->file_exists(outpath)) {
-                // Out file should NOT exist yet
-                set_err_msg("EnTAP SQL Database already exists at: " + outpath, ERR_DATA_FILE_EXISTS);
-                return ERR_DATA_OK;
-            }
-
-            // Create sql database (will create if doesn't exist)
-            mpDatabaseHelper = new SQLDatabaseHelper();
-            if (!mpDatabaseHelper->create(outpath)) {
-                // Return error if can't create
-                set_err_msg("Unable to create the EnTAP SQL database", ERR_DATA_SQL_CREATE_DATABASE);
-                return ERR_DATA_SQL_CREATE_DATABASE;
-            }
-            FS_dprint("Success!");
-            break;
-
-        case ENTAP_SERIALIZED:
-            FS_dprint("Generating EnTAP Serialized Database...");
-            mUseSerial = true;
-            if (mpSerializedDatabase != nullptr) {
-                // Database should not already have been created
-                set_err_msg("Serialized database already set!", ERR_DATA_SERIAL_DUPLICATE);
-                return ERR_DATA_SERIAL_DUPLICATE;
-            } else if (mpFileSystem->file_exists(outpath)) {
-                // Out file should NOT exist yet
-                set_err_msg("Serialized EnTAP database already exists at: " + outpath, ERR_DATA_FILE_EXISTS);
-                return ERR_DATA_OK;
-            }
-
-            // Create serialized database
-            mpSerializedDatabase = new EntapDatabaseStruct();
-            FS_dprint("Success!");
-            break;
-
-        default:
-            set_err_msg("ERROR: Unknown database type", ERR_DATA_UNHANDLED_TYPE);
-            return ERR_DATA_UNHANDLED_TYPE;
-    }
+    if (err_code != ERR_DATA_OK) return err_code;
 
     // ---------------------- Add Database Entries ---------------------- //
     FS_dprint("Adding entries to database...");
@@ -494,7 +442,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
             // Add to SQL database OR to overall map
             if (type == ENTAP_SQL) {
                 if (!sql_add_go_entry(goEntry)) {
-                    set_err_msg("Unable to add GO entry: " + goEntry.go_id, ERR_DATA_GO_ENTRY);
+                    set_err_msg("ERROR Unable to add GO entry: " + goEntry.go_id, ERR_DATA_GO_ENTRY);
                     return ERR_DATA_GO_ENTRY;
                 }
             } else {
@@ -507,8 +455,6 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
     }
 
     FS_dprint("Success! Gene Ontology data complete");
-    mpFileSystem->delete_file(go_graph_path);
-    mpFileSystem->delete_file(go_term_path);
     return ERR_DATA_OK;
 }
 
@@ -775,7 +721,7 @@ bool EntapDatabase::add_uniprot_entry(EntapDatabase::DATABASE_TYPE type, Uniprot
     return ret;
 }
 
-bool EntapDatabase::create_sql_table(DATABASE_TYPE type) {
+bool EntapDatabase::create_sql_table(DATABASE_TABLES type) {
     char *sql_cmd;
     bool success;
 
@@ -927,7 +873,7 @@ GoEntry EntapDatabase::get_go_entry(std::string &go_id) {
 
     if (mUseSerial) {
         // Using serialized database
-        go_serial_map_t::iterator it = mpSerializedDatabase->gene_ontology_data.find(go_id);
+        auto it = mpSerializedDatabase->gene_ontology_data.find(go_id);
         if (it == mpSerializedDatabase->gene_ontology_data.end()) {
 //            FS_dprint("Unable to find GO ID: " + go_id);
             return GoEntry();
@@ -937,7 +883,7 @@ GoEntry EntapDatabase::get_go_entry(std::string &go_id) {
         // Using SQL database
         std::vector<std::vector<std::string>> results;
         // Check temp if previously found (increase speeds)
-        go_serial_map_t::iterator it = mSqlGoHelper.find(go_id);
+        auto it = mSqlGoHelper.find(go_id);
         if (it != mSqlGoHelper.end()) return it->second;
         // Generate SQL query
         char *query = sqlite3_mprintf(
@@ -951,8 +897,8 @@ GoEntry EntapDatabase::get_go_entry(std::string &go_id) {
                 go_id.c_str()
         );
         try {
-            if (results.empty()) return GoEntry();
             results = mpDatabaseHelper->query(query);
+            if (results.empty()) return GoEntry();
             goEntry.go_id    = results[0][0];
             goEntry.term     = results[0][1];
             goEntry.category = results[0][2];
@@ -1011,6 +957,7 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
                         temp_species.c_str()
                 );
                 results = mpDatabaseHelper->query(query);
+                if (results.empty()) return TaxEntry();
                 if (results.empty()) {
                     index = temp_species.find_last_of(' ');
                     if (index == std::string::npos) return TaxEntry(); // couldn't find
@@ -1057,8 +1004,8 @@ UniprotEntry EntapDatabase::get_uniprot_entry(std::string& accession) {
                     SQL_TABLE_UNIPROT_COL_ID.c_str(),
                     accession.c_str()
             );
-            if (results.empty()) return UniprotEntry();
             results = mpDatabaseHelper->query(query);
+            if (results.empty()) return UniprotEntry();
             uniprotEntry.uniprot_id      = results[0][0];
             uniprotEntry.database_x_refs = results[0][1];
             uniprotEntry.comments        = results[0][2];
@@ -1332,4 +1279,126 @@ std::string EntapDatabase::get_uniprot_accession(std::string &sseqid) {
 
     accession = sseqid.substr(sseqid.rfind('|',sseqid.length())+1);     // Q9FJZ9
     return accession;
+}
+
+EntapDatabase::DATABASE_ERR EntapDatabase::create_database_type(EntapDatabase::DATABASE_TYPE type, std::string &path) {
+    FS_dprint("Database type: " + ENTAP_DATABASE_TYPES_STR[type] + ", Outpath: " + path);
+
+    EntapDatabase::DATABASE_ERR ret = ERR_DATA_OK;
+
+    switch (type) {
+
+        case ENTAP_SQL:
+            FS_dprint("Generating EnTAP SQL Database...");
+            mUseSerial = false;
+            if (mpDatabaseHelper != nullptr) {
+                // SQL should not already have been created
+                return ERR_DATA_SQL_DUPLICATE;
+            } else if (mpFileSystem->file_exists(path)) {
+                // Out file should NOT exist yet
+                set_err_msg("EnTAP SQL Database already exists at: " + path, ERR_DATA_FILE_EXISTS);
+                return ERR_DATA_OK;
+            }
+
+            // Create sql database (will create if doesn't exist)
+            mpDatabaseHelper = new SQLDatabaseHelper();
+            if (!mpDatabaseHelper->create(path)) {
+                // Return error if can't create
+                set_err_msg("Unable to create the EnTAP SQL database", ERR_DATA_SQL_CREATE_DATABASE);
+                return ERR_DATA_SQL_CREATE_DATABASE;
+            }
+            FS_dprint("Success!");
+            break;
+
+        case ENTAP_SERIALIZED:
+            FS_dprint("Generating EnTAP Serialized Database...");
+            mUseSerial = true;
+            if (mpSerializedDatabase != nullptr) {
+                // Database should not already have been created
+                set_err_msg("Serialized database already set!", ERR_DATA_SERIAL_DUPLICATE);
+                return ERR_DATA_SERIAL_DUPLICATE;
+            } else if (mpFileSystem->file_exists(path)) {
+                // Out file should NOT exist yet
+                set_err_msg("Serialized EnTAP database already exists at: " + path, ERR_DATA_FILE_EXISTS);
+                return ERR_DATA_OK;
+            }
+
+            // Create serialized database
+            mpSerializedDatabase = new EntapDatabaseStruct();
+            FS_dprint("Success!");
+            break;
+
+        default:
+            set_err_msg("ERROR: Unknown database type", ERR_DATA_UNHANDLED_TYPE);
+            return ERR_DATA_UNHANDLED_TYPE;
+    }
+
+    return ret;
+}
+
+EntapDatabase::DATABASE_ERR EntapDatabase::delete_database_table(EntapDatabase::DATABASE_TYPE type,
+                                                                 EntapDatabase::DATABASE_TABLES table) {
+    char *query;
+    switch (type) {
+
+        case ENTAP_SERIALIZED: {
+            if (mpSerializedDatabase == nullptr) return ERR_DATA_DELETE_TABLE;
+
+            switch (table) {
+                case ENTAP_TAXONOMY:
+                    mpSerializedDatabase->taxonomic_data.clear();
+                    break;
+
+                case ENTAP_GENE_ONTOLOGY:
+                    mpSerializedDatabase->gene_ontology_data.clear();
+                    break;
+
+                case ENTAP_UNIPROT:
+                    mpSerializedDatabase->uniprot_data.clear();
+                    break;
+
+                default:
+                    return ERR_DATA_DELETE_TABLE;
+                    break;
+            }
+            break;
+        }
+
+        case ENTAP_SQL: {
+            std::string table_name;
+            if (mpDatabaseHelper == nullptr) return ERR_DATA_DELETE_TABLE;
+
+            switch (table) {
+                case ENTAP_TAXONOMY:
+                    table_name = SQL_TABLE_NCBI_TAX_TITLE;
+                    break;
+
+                case ENTAP_GENE_ONTOLOGY:
+                    table_name = SQL_TABLE_GO_TITLE;
+                    break;
+
+                case ENTAP_UNIPROT:
+                    table_name = SQL_TABLE_UNIPROT_TITLE;
+                    break;
+
+                default:
+                    return ERR_DATA_DELETE_TABLE;
+                    break;
+            }
+            query = sqlite3_mprintf("DROP TABLE %Q;", table_name.c_str());
+            FS_dprint("Executing SQL cmd: " + std::string(query));
+            if (!mpDatabaseHelper->execute_cmd(query)) {
+                return ERR_DATA_DELETE_TABLE;
+            }
+            break;
+        }
+
+
+        default:
+            FS_dprint("delete_database_table: WARNING unhandled case");
+            return ERR_DATA_DELETE_TABLE;
+            break;
+    }
+
+    return ERR_DATA_OK;
 }

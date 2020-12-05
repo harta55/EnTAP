@@ -26,6 +26,7 @@
 */
 
 #include "ModTransdecoder.h"
+#include "../ExceptionHandler.h"
 
 std::vector<ENTAP_HEADERS> ModTransdecoder::DEFAULT_HEADERS = {
         ENTAP_HEADER_FRAME

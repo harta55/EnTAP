@@ -32,6 +32,7 @@
 #include "EntapGlobals.h"
 #include "FileSystem.h"
 #include "config.h"
+#include "database/EntapDatabase.h"
 
 #ifdef USE_BOOST
 #include <boost/filesystem/path.hpp>
@@ -167,6 +168,7 @@ public:
     vect_str_t get_contaminants();
     vect_str_t get_uninformative_vect();
     std::string get_user_transc_basename();
+    ent_input_str_t get_entap_database_path(EntapDatabase::DATABASE_TYPE type);
     std::vector<FileSystem::ENT_FILE_TYPES> get_user_output_types();
     bool run_frame_selection(QueryData *queryData, bool &run_frame_selection);
     bool run_expression_filtering();

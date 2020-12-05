@@ -32,6 +32,7 @@
 #include "../QueryAlignment.h"
 #include "../QueryData.h"
 #include "../GraphingManager.h"
+#include "../ExceptionHandler.h"
 
 
 std::vector<ENTAP_HEADERS> ModEggnogDMND::DEFAULT_HEADERS = {

@@ -79,6 +79,7 @@ namespace entapExecute {
         bool                                    blastp;                 // false for blastx, true for mBlastp
         vect_uint16_t                           entap_database_types;   // Database types from user
         EntapDatabase::DATABASE_TYPE            entap_database_type;    // First database type selected by user that will be used
+        std::string                             entap_database_path;    // Path to EnTAP database we are using
         EntapDataPtrs                           entap_data_ptrs;        // Struct of Execution pointers
         EntapDatabase*                          pEntap_Database=nullptr; // Pointer to the EnTAP database (binary / sql)
         QueryData*                              pQUERY_DATA=nullptr;    // Pointer to the trancsriptome data
@@ -105,7 +106,8 @@ namespace entapExecute {
 
         // Find database type that will be used by the rest (use 0 index no matter what)
         entap_database_types = pUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_DATABASE_TYPE);
-        entap_database_type = static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
+        entap_database_type  = static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
+        entap_database_path  = pUserInput->get_entap_database_path(entap_database_type);
 
         // Set/create outpaths
         final_out_dir  = pFileSystem->get_final_outdir();
@@ -128,8 +130,8 @@ namespace entapExecute {
             pGraphing_Manager = new GraphingManager(entap_graphing_path, pFileSystem);
 
             // Initialize EnTAP database
-            pEntap_Database = new EntapDatabase(filesystem, pUserInput);
-            if (!pEntap_Database->set_database(entap_database_type)) {
+            pEntap_Database = new EntapDatabase(filesystem);
+            if (!pEntap_Database->set_database(entap_database_type, entap_database_path)) {
                 throw ExceptionHandler("Unable to initialize EnTAP database\n" +
                                        pEntap_Database->print_error_log(), ERR_ENTAP_READ_ENTAP_DATA_GENERIC);
             }

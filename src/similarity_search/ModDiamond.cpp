@@ -31,6 +31,7 @@
 #include "../QueryAlignment.h"
 #include "../QueryData.h"
 #include "../GraphingManager.h"
+#include "../ExceptionHandler.h"
 
 #ifdef USE_BOOST
 #include <boost/regex.hpp>

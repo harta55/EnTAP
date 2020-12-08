@@ -54,17 +54,6 @@ def index():
 
 
 
-@main.route('/download/databases',methods=["GET","POST"])
-def remoteDatabases():
-    """
-    Detailed description.
-    """
-    form=forms.RemoteDatabaseUploadForm()
-    return flask.render_template('upload/remote_database.html',form=form)
-
-
-
-
 @main.route('/run')
 def run():
     """
@@ -140,12 +129,17 @@ def uploadDatabases():
     """
     Detailed description.
     """
-    form = forms.FileListForm("/workspace/flask/db")
+    remoteUploadForm = forms.RemoteDatabaseUploadForm()
+    fileListForm = forms.FileListForm("/workspace/flask/db")
     if flask.request.method == "POST":
-        if form.validate():
-            form.removeSelected()
+        if fileListForm.validate():
+            fileListForm.removeSelected()
             return flask.redirect(flask.url_for("main.uploadDatabases"))
-    return flask.render_template("upload/database.html",form=form)
+    return flask.render_template(
+        "upload/database.html"
+        ,fileListForm=fileListForm
+        ,remoteUploadForm=remoteUploadForm
+    )
 
 
 
@@ -171,3 +165,16 @@ def uploadInputs():
             form.removeSelected()
             return flask.redirect(flask.url_for("main.uploadInputs"))
     return flask.render_template("upload/input.html",form=form)
+
+
+
+
+@main.route('/upload/remote/database',methods=["POST"])
+def uploadRemoteDatabase():
+    """
+    Detailed description.
+    """
+    form = forms.RemoteDatabaseUploadForm()
+    if form.validate():
+        print(form.customURL.data)
+    return flask.redirect(flask.url_for("main.uploadDatabases"))

@@ -49,7 +49,6 @@ class FileListForm(flask_wtf.FlaskForm):
         Detailed description.
         """
         if self.fileList.data:
-            print(self.fileList.data)
             for path in self.fileList.data:
                 path = os.path.join(self.__workDir,path)
                 if os.path.isfile(path):

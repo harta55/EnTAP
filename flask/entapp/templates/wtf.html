@@ -9,8 +9,8 @@
     {{ field(class_=class_) }}
 {% endif %}
 {% endmacro %}
-{% macro quick_form(form) %}
-    <form action="" method="POST">
+{% macro quick_form(form,url="") %}
+    <form action="{{ url }}" method="POST">
     {{ form.hidden_tag() }}
     {% for field in form %}
         <div class="form-group">

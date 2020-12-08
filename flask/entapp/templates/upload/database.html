@@ -18,8 +18,10 @@
         </div>
     </form>
     <small class="text-secondary muted">Uploaded files will not show themselves on the below databases list unless this page is refreshed. Do not refresh the page until all files are finished uploading.</small>
+    <h2 class="mt-5">Remote Upload</h2>
+    {{ wtf.quick_form(remoteUploadForm,url_for('main.uploadRemoteDatabase')) }}
     <h2 class="mt-5">Databases</h2>
-    {{ wtf.quick_form(form) }}
+    {{ wtf.quick_form(fileListForm) }}
 </div>
 {% endblock %}
 

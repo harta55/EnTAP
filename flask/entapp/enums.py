@@ -1,6 +1,7 @@
 """
 Detailed description.
 """
+import enum
 
 
 
@@ -15,9 +16,7 @@ class TaskManagerState(enum.IntEnum):
     """
     Idle = enum.auto()
     Error = enum.auto()
-    RunningDownload = enum.auto()
-    RunningConfig = enum.auto()
-    RunningJob = enum.auto()
+    Running = enum.auto()
 
 
 
@@ -30,5 +29,6 @@ class TaskResult(enum.IntEnum):
     """
     Detailed description.
     """
+    Running = enum.auto()
     Finished = enum.auto()
     Error = enum.auto()

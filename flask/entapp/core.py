@@ -49,3 +49,12 @@ def create_app():
         with open("/workspace/flask/uninforms_config.json","w") as ofile:
             ofile.write(json.dumps([],indent=4))
     return app
+
+
+
+
+
+
+
+
+taskManager = TaskManager()

@@ -1,20 +1,37 @@
 {% extends "base.html" %}
 
 {% block meta %}
-<meta http-equiv="refresh" content="10">
+{% if taskManager.isRunning() %}
+    <meta http-equiv="refresh" content="2">
+{% endif %}
 {% endblock %}
 
 {% block title %}{{ super() }} - Status{% endblock %}
 
 {% block content %}
 <div class="container">
-    <h1 class="mt-4">Status</h1>
-    <p>This will show the current status of EnTAP. The possible states are:</p>
-    <ul>
-        <li>Idle</li>
-        <li>Error</li>
-        <li>Running configuration</li>
-        <li>Running</li>
-    </ul>
+    {% if taskManager.isIdle() %}
+        <h1 class="mt-4">Idle</h1>
+    {% else %}
+        {% with output = taskManager.output() %}
+            {% if taskManager.isRunning() %}
+                <h1 class="mt-4">Running</h1>
+            {% elif taskManager.isFinished() %}
+                <h1 class="mt-4">Finished</h1>
+            {% elif taskManager.hasError() %}
+                <h1 class="mt-4">Error</h1>
+            {% endif %}
+            <h2 class="mt-4">{{ output[0] }}</h2>
+            {% if taskManager.isRunning() %}
+                <div class="alert alert-info">
+            {% elif taskManager.isFinished() %}
+                <div class="alert alert-success">
+            {% elif taskManager.hasError() %}
+                <div class="alert alert-danger">
+            {% endif %}
+            {{ output[1].replace("\n","<br/>")|safe }}
+            </div>
+        {% endwith %}
+    {% endif %}
 </div>
 {% endblock %}

@@ -23,7 +23,35 @@ class TaskManager():
         Detailed description.
         """
         self.__task = None
+        self.__lastTask = None
         self.__result = enums.TaskResult.Finished
+
+
+    def hasError(
+        self
+        ):
+        """
+        Detailed description.
+        """
+        return self.state() == enums.TaskManagerState.Error
+
+
+    def isFinished(
+        self
+        ):
+        """
+        Detailed description.
+        """
+        return self.state() == enums.TaskManagerState.Idle and self.__lastTask is not None
+
+
+    def isIdle(
+        self
+        ):
+        """
+        Detailed description.
+        """
+        return self.state() == enums.TaskManagerState.Idle and self.__lastTask is None
 
 
     def isRunning(
@@ -43,6 +71,8 @@ class TaskManager():
         """
         if self.isRunning():
             return self.__task.output()
+        elif self.__lastTask:
+            return self.__lastTask.output()
         else:
             return (None,None)
 
@@ -88,4 +118,5 @@ class TaskManager():
         if self.isRunning():
             if not self.__task.is_alive():
                 self.__result = self.__task.result()
+                self.__lastTask = self.__task
                 self.__task = None

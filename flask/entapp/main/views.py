@@ -1,10 +1,12 @@
 """
 Detailed description.
 """
+from .. import core
 import flask
 from . import forms
 from . import main
 import os
+from .. import tasks
 from werkzeug import utils as wzutils
 
 
@@ -15,6 +17,8 @@ def basicConfig():
     """
     Detailed description.
     """
+    if core.taskManager.isRunning():
+        return flask.redirect(flask.url_for("main.index"))
     form = forms.BasicConfigForm()
     if flask.request.method == "POST":
         if form.validate():
@@ -33,6 +37,8 @@ def contamsConfig():
     """
     Detailed description.
     """
+    if core.taskManager.isRunning():
+        return flask.redirect(flask.url_for("main.index"))
     form = forms.ContamsConfigForm()
     if flask.request.method == "POST":
         if form.validate():
@@ -49,7 +55,8 @@ def index():
     """
     Detailed description.
     """
-    return flask.render_template('index.html')
+    core.taskManager.update()
+    return flask.render_template('index.html',taskManager=core.taskManager)
 
 
 
@@ -59,6 +66,8 @@ def run():
     """
     Detailed description.
     """
+    if core.taskManager.isRunning():
+        return flask.redirect(flask.url_for("main.index"))
     return flask.render_template('run.html')
 
 
@@ -69,6 +78,8 @@ def uninformsConfig():
     """
     Detailed description.
     """
+    if core.taskManager.isRunning():
+        return flask.redirect(flask.url_for("main.index"))
     form = forms.UninformsConfigForm()
     if flask.request.method == "POST":
         if form.validate():
@@ -129,6 +140,8 @@ def uploadDatabases():
     """
     Detailed description.
     """
+    if core.taskManager.isRunning():
+        return flask.redirect(flask.url_for("main.index"))
     remoteUploadForm = forms.RemoteDatabaseUploadForm()
     fileListForm = forms.FileListForm("/workspace/flask/db")
     if flask.request.method == "POST":
@@ -159,6 +172,8 @@ def uploadInputs():
     """
     Detailed description.
     """
+    if core.taskManager.isRunning():
+        return flask.redirect(flask.url_for("main.index"))
     form = forms.FileListForm("/workspace/entap/entap_infiles")
     if flask.request.method == "POST":
         if form.validate():
@@ -174,7 +189,11 @@ def uploadRemoteDatabase():
     """
     Detailed description.
     """
+    if core.taskManager.isRunning():
+        return flask.redirect(flask.url_for("main.index"))
     form = forms.RemoteDatabaseUploadForm()
     if form.validate():
         print(form.customURL.data)
+        task = tasks.DownloadTask(form.customURL.data)
+        core.taskManager.start(task)
     return flask.redirect(flask.url_for("main.uploadDatabases"))

@@ -20,8 +20,9 @@ class FileListForm(flask_wtf.FlaskForm):
     fileList = wtf.SelectMultipleField(
         "File List"
         ,choices=[]
-        ,description="Select any number of listed files to remove them."
+        ,description="Select any number of listed files."
     )
+    gzipSubmit = wtf.SubmitField("Gunzip Selected Files")
     rmSubmit = wtf.SubmitField("Remove Selected Files")
 
 
@@ -42,7 +43,28 @@ class FileListForm(flask_wtf.FlaskForm):
         self.fileList.choices = [(f,f) for f in os.listdir(workDir)]
 
 
-    def removeSelected(
+    def processAll(
+        self
+        ):
+        """
+        Detailed description.
+        """
+        if self.rmSubmit:
+            self.__removeSelected
+        elif self.gzipSubmit:
+            self.__gunzipSelected
+
+
+    def __gunzipSelected(
+        self
+        ):
+        """
+        Detailed description.
+        """
+        pass
+
+
+    def __removeSelected(
         self
         ):
         """

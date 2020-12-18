@@ -146,7 +146,7 @@ def uploadDatabases():
     fileListForm = forms.FileListForm(settings.DB_PATH)
     if flask.request.method == "POST":
         if fileListForm.validate():
-            fileListForm.removeSelected()
+            form.processAll()
             return flask.redirect(flask.url_for("main.uploadDatabases"))
     return flask.render_template(
         "upload/database.html"
@@ -177,8 +177,8 @@ def uploadInputs():
     form = forms.FileListForm("/workspace/entap/entap_infiles")
     if flask.request.method == "POST":
         if form.validate():
-            form.removeSelected()
-            return flask.redirect(flask.url_for("main.uploadInputs"))
+            form.processAll()
+            return flask.redirect(flask.url_for("main.uploadDatabases"))
     return flask.render_template("upload/input.html",form=form)
 
 

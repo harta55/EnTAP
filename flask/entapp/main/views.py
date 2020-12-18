@@ -6,6 +6,7 @@ import flask
 from . import forms
 from . import main
 import os
+from .. import settings
 from .. import tasks
 from werkzeug import utils as wzutils
 
@@ -105,6 +106,8 @@ def upload(
     ifile = flask.request.files["file"]
     savePath = os.path.join(workDir,wzutils.secure_filename(ifile.filename))
     chunkIndex = int(flask.request.form["dzchunkindex"])
+    if not ifile.endswith(".fa.gz") and not ifile.endswith(".fa"):
+        return flask.make_response(("Unknown file extension.",400))
     if os.path.exists(savePath) and chunkIndex == 0:
         return flask.make_response(("File already exists.",400))
     try:
@@ -117,9 +120,6 @@ def upload(
     if chunkIndex + 1 == chunkTotal:
         if os.path.getsize(savePath) != int(flask.request.form["dztotalfilesize"]):
             return flask.make_response(("System error occured.",500))
-        else:
-            #success
-            pass
     return flask.make_response(("Chunk upload successful.",200))
 
 
@@ -130,7 +130,7 @@ def uploadDatabase():
     """
     Detailed description.
     """
-    return upload("/workspace/flask/db")
+    return upload(settings.DB_PATH)
 
 
 
@@ -143,7 +143,7 @@ def uploadDatabases():
     if core.taskManager.isRunning():
         return flask.redirect(flask.url_for("main.index"))
     remoteUploadForm = forms.RemoteDatabaseUploadForm()
-    fileListForm = forms.FileListForm("/workspace/flask/db")
+    fileListForm = forms.FileListForm(settings.DB_PATH)
     if flask.request.method == "POST":
         if fileListForm.validate():
             fileListForm.removeSelected()
@@ -193,7 +193,6 @@ def uploadRemoteDatabase():
         return flask.redirect(flask.url_for("main.index"))
     form = forms.RemoteDatabaseUploadForm()
     if form.validate():
-        print(form.customURL.data)
         task = tasks.DownloadTask(form.customURL.data)
         core.taskManager.start(task)
     return flask.redirect(flask.url_for("main.uploadDatabases"))

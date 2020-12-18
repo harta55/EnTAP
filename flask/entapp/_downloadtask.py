@@ -2,8 +2,10 @@
 Contains the DownloadTask class.
 """
 from . import enums
+from . import interfaces
+import os
 import requests
-import threading
+from . import settings
 
 
 
@@ -12,7 +14,7 @@ import threading
 
 
 
-class DownloadTask(threading.Thread):
+class DownloadTask(interfaces.AbstractTask):
     """
     Detailed description.
     """
@@ -37,6 +39,25 @@ class DownloadTask(threading.Thread):
         self.__progress = 0
         self.__result = enums.TaskResult.Running
         self.__finalOutput = None
+        self.__error = ""
+
+
+    def errorOutput(
+        self
+        ):
+        """
+        Detailed description.
+        """
+        return self.__error
+
+
+    def finalOutput(
+        self
+        ):
+        """
+        Detailed description.
+        """
+        return self.__finalOutput
 
 
     def output(
@@ -45,16 +66,13 @@ class DownloadTask(threading.Thread):
         """
         Detailed description.
         """
-        if self.__finalOutput:
-            return ("Remote Database Download",self.__finalOutput)
+        ret1 = "Downloading "+self.__fileName+"\n"
+        ret2 = None
+        if not self.__total:
+            ret2 = self.__reportBySize_()+" Downloaded"
         else:
-            ret1 = "Downloading "+self.__fileName+"\n"
-            ret2 = None
-            if not self.__total:
-                ret2 = self.__reportBySize_()+" Downloaded"
-            else:
-                ret2 = ""
-            return ("Remote Database Download",ret1+ret2)
+            ret2 = ""
+        return ret1+ret2
 
 
     def result(
@@ -75,15 +93,41 @@ class DownloadTask(threading.Thread):
         self.__progress = 0
         try:
             rq = requests.get(self.__url,stream=True)
-            print(rq.headers)
             self.__total = int(rq.headers.get("Content-length",0))
-            for chunk in rq.iter_content(chunk_size=1024):
-                if chunk:
-                    self.__progress += 1024
+            path = os.path.join(settings.DB_PATH,self.__fileName)
+            if not path.endswith(".fa.gz"):
+                self.__error = "Unknown file extension, remote file must end in '.fa.gz'."
+                self.__result = enums.TaskResult.Error
+                return
+            elif os.path.exists(path) or os.path.exists(path[:-3]):
+                self.__error = (
+                    "'"
+                    + self.__fileName[:-6]
+                    + "' already exists as a database. Please remove it first if you wish to"
+                      " overwrite it."
+                )
+                self.__result = enums.TaskResult.Error
+                return
+            with open(path,"wb") as ofile:
+                for chunk in rq.iter_content(chunk_size=1024):
+                    if chunk:
+                        ofile.write(chunk)
+                        self.__progress += 1024
+            # GUNZIP...
             self.__result = enums.TaskResult.Finished
-            self.__finalOutput = "Finished downloading "+self.__finalName
-        except:
+            self.__finalOutput = "Finished downloading "+self.__fileName
+        except requests.exceptions.RequestException as e:
+            self.__error = str(e)
             self.__result = enums.TaskResult.Error
+
+
+    def title(
+        self
+        ):
+        """
+        Detailed description.
+        """
+        return "Remote Database Download"
 
 
     def __reportBySize_(

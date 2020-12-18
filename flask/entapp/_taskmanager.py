@@ -2,6 +2,7 @@
 Contains the TaskManager class.
 """
 from . import enums
+from . import interfaces
 
 
 
@@ -70,9 +71,11 @@ class TaskManager():
         Detailed description.
         """
         if self.isRunning():
-            return self.__task.output()
-        elif self.__lastTask:
-            return self.__lastTask.output()
+            return (self.__task.title(),self.__task.output())
+        elif self.isFinished():
+            return (self.__lastTask.title(),self.__lastTask.finalOutput())
+        elif self.hasError():
+            return (self.__lastTask.title(),self.__lastTask.errorOutput())
         else:
             return (None,None)
 
@@ -89,6 +92,7 @@ class TaskManager():
         task : object
                Detailed description.
         """
+        assert(isinstance(task,interfaces.AbstractTask))
         if not self.isRunning():
             self.__task = task
             self.__task.start()

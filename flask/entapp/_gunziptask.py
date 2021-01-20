@@ -1,7 +1,7 @@
 """
 Contains the GunzipTask class.
 """
-
+from . import interfaces
 
 
 
@@ -84,14 +84,14 @@ class GunzipTask(interfaces.AbstractTask):
         """
         for name in self.__names:
             self.__i += 1
-            if name.endswith(".gz")
-            path = os.path.join(self.__workDir,name)
-            if os.path.isfile(path):
-                cmd = ["gunzip",path]
-                if subprocess.run(cmd).returncode != 0:
-                    self.__error = "Failed gunzipping '" + name + "'."
-                    self.__result = enums.TaskResult.Error
-                    return
+            if name.endswith(".gz"):
+                path = os.path.join(self.__workDir,name)
+                if os.path.isfile(path):
+                    cmd = ["gunzip",path]
+                    if subprocess.run(cmd).returncode != 0:
+                        self.__error = "Failed gunzipping '" + name + "'."
+                        self.__result = enums.TaskResult.Error
+                        return
         self.__result = enums.TaskResult.Finished
 
 

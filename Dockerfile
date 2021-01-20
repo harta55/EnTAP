@@ -106,7 +106,7 @@ RUN cd /tmp/entap \
 
 
 # Install flask
-RUN pip3 install requests flask flask-bootstrap flask-wtf
+RUN pip3 install requests flask flask-bootstrap flask-wtf flask-classful
 
 
 

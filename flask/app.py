@@ -1,13 +1,7 @@
 """
 Detailed description.
 """
-import entapp
+from entapp import createApp
 
 
-
-
-
-
-
-
-app = entapp.create_app()
+app = createApp()

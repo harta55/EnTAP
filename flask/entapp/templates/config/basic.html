@@ -6,6 +6,6 @@
 {% block content %}
 <div class="container">
     <h1 class="mt-4">Basic Configuration</h1>
-    {{ wtf.quick_form(form) }}
+    {{ wtf.quick_form(form,url_for('ConfigView:update')) }}
 </div>
 {% endblock %}

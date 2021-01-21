@@ -1,42 +1,44 @@
 """
-Contains the BasicConfigForm class.
+Contains the ConfigForm class.
 """
 from decimal import Decimal
-import flask_wtf
-import json
-import wtforms as wtf
-import wtforms.fields.html5 as wtf5
+from flask_wtf import FlaskForm
+from json import loads
+from json import dumps
+from wtforms import BooleanField
+from wtforms import SelectField
+from wtforms import SelectMultipleField
+from wtforms import StringField
+from wtforms import SubmitField
+from wtforms.fields.html5 import DecimalField
+from wtforms.fields.html5 import IntegerField
 
 
 
 
-
-
-
-
-class BasicConfigForm(flask_wtf.FlaskForm):
+class ConfigForm(FlaskForm):
     """
     Detailed description.
     """
     JSON_PATH = "/workspace/flask/basic_config.json"
-    dataType = wtf.SelectField(
+    dataType = SelectField(
         "Data Type"
         ,choices=[("0","Serialized Database"),("1","SQLite Database")]
         ,description="Specifies which database EnTAP will download/generate."
     )
-    fpkm = wtf5.DecimalField(
+    fpkm = DecimalField(
         "FPKM Threshold"
         ,description="Specifies the FPKM threshold with expression analysis. EnTAP will filter out "
                      "transcripts below this value!"
     )
-    singleEnd = wtf.BooleanField("BAM/SAM files generated through single-end reads.")
-    seqComplete = wtf.BooleanField("All sequences are complete proteins.")
-    minProteinLength = wtf5.IntegerField(
+    singleEnd = BooleanField("BAM/SAM files generated through single-end reads.")
+    seqComplete = BooleanField("All sequences are complete proteins.")
+    minProteinLength = IntegerField(
         "Minimum Protein Length"
         ,description="Specifies the minimum protein length."
     )
-    refineStarts = wtf.BooleanField("Do NOT add '--no_refine_starts' as option to TransDecoder.")
-    outputFormat = wtf.SelectMultipleField(
+    refineStarts = BooleanField("Do NOT add '--no_refine_starts' as option to TransDecoder.")
+    outputFormat = SelectMultipleField(
         "Output Format"
         ,choices=[
             ("1","TSV Format")
@@ -47,43 +49,42 @@ class BasicConfigForm(flask_wtf.FlaskForm):
         ,description="Specify the output format for the processed alignments. Multiple formats can "
                      "be selected."
     )
-    taxonomy = wtf.StringField(
+    taxonomy = StringField(
         "Taxonomy"
         ,description="Specify the type of species/taxonomy you are analyzing and would like hits "
                      "closer in taxonomic relevance to be favored (based on NCBI Taxonomic "
                      "Database)."
     )
-    queryCoverage = wtf5.DecimalField(
+    queryCoverage = DecimalField(
         "Query Coverage"
         ,description="Specify the minimum query coverage to be allowed during similarity searching."
     )
-    targetCoverage = wtf5.DecimalField(
+    targetCoverage = DecimalField(
         "Target Coverage"
         ,description="Specify the minimum target coverage to be allowed during similarity "
                      "searching."
     )
-    eValue = wtf5.DecimalField(
+    eValue = DecimalField(
         "E-Value"
         ,places=6
         ,description="Specify the E-Value that will be used as a cutoff during similarity "
                      "searching."
     )
-    submit = wtf.SubmitField("Update")
+    submit = SubmitField("Update")
 
 
     def fromJson(
         self
         ,data
-        ):
+    ):
         """
         Detailed description.
 
         Parameters
         ----------
-        data : object
-               Detailed description.
+        data : 
         """
-        data = json.loads(data)
+        data = loads(data)
         self.dataType.data = data["dataType"]
         self.fpkm.data = Decimal(data["fpkm"])
         self.singleEnd.data = data["singleEnd"]
@@ -99,7 +100,7 @@ class BasicConfigForm(flask_wtf.FlaskForm):
 
     def load(
         self
-        ):
+    ):
         """
         Detailed description.
         """
@@ -109,7 +110,7 @@ class BasicConfigForm(flask_wtf.FlaskForm):
 
     def save(
         self
-        ):
+    ):
         """
         Detailed description.
         """
@@ -119,7 +120,7 @@ class BasicConfigForm(flask_wtf.FlaskForm):
 
     def toJson(
         self
-        ):
+    ):
         """
         Detailed description.
         """
@@ -136,4 +137,4 @@ class BasicConfigForm(flask_wtf.FlaskForm):
             ,"targetCoverage": str(self.targetCoverage.data)
             ,"eValue": str(self.eValue.data)
         }
-        return json.dumps(data,indent=4)
+        return dumps(data,indent=4)

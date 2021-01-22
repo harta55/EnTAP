@@ -1,6 +1,7 @@
 """
 Contains the ConfigForm class.
 """
+from .. import CONFIG_PATH
 from decimal import Decimal
 from flask_wtf import FlaskForm
 from json import loads
@@ -20,7 +21,6 @@ class ConfigForm(FlaskForm):
     """
     Detailed description.
     """
-    JSON_PATH = "/workspace/flask/basic_config.json"
     dataType = SelectField(
         "Data Type"
         ,choices=[("0","Serialized Database"),("1","SQLite Database")]
@@ -104,7 +104,7 @@ class ConfigForm(FlaskForm):
         """
         Detailed description.
         """
-        with open(self.JSON_PATH,"r") as ifile:
+        with open(CONFIG_PATH,"r") as ifile:
             self.fromJson(ifile.read())
 
 
@@ -114,7 +114,7 @@ class ConfigForm(FlaskForm):
         """
         Detailed description.
         """
-        with open(self.JSON_PATH,"w") as ofile:
+        with open(CONFIG_PATH,"w") as ofile:
             ofile.write(self.toJson()+"\n")
 
 

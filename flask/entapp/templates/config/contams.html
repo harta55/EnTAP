@@ -1,11 +1,16 @@
 {% extends "base.html" %}
 {% import "wtf.html" as wtf %}
 
-{% block title %}{{ super() }} - Contaminants Configuration{% endblock %}
+{% block title %}{{ super() }} - Contaminants{% endblock %}
 
 {% block content %}
 <div class="container">
-    <h1 class="mt-4">Contaminants Configuration</h1>
-    {{ wtf.quick_form(form) }}
+    <h1 class="mt-4">Contaminants</h1>
+<ul>
+{% for contam in contams %}
+<li><a href="{{ url_for('ContamsView:remove',name=contam) }}">{{ contam }}</a></li>
+{% endfor %}
+</ul>
+    {{ wtf.quick_form(form,url_for('ContamsView:add')) }}
 </div>
 {% endblock %}

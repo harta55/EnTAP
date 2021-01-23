@@ -2,6 +2,7 @@
 Contains the Application class.
 """
 from . import CONFIG_PATH
+from .Model.ContamsModel import *
 from flask import Flask
 from json import dumps
 from os.path import dirname
@@ -31,6 +32,7 @@ class Application(Flask):
         """
         super().__init__(*args,**kwargs)
         self.__initConfig_()
+        ContamsModel.initialize()
 
 
     def __initConfig_(

@@ -73,19 +73,13 @@ class ContamsConfigForm(flask_wtf.FlaskForm):
         """
         Detailed description.
         """
-        if self.addSubmit and self.newContam.data:
-            c = self.newContam.data
-            c = (c,c)
-            if not c in self.contams.choices:
-                self.contams.choices.append(c)
-                flask.flash("New Contaminant successfully added.","success")
+        if self.submit:
+            name = self.name.data
+            if name in self.__contams:
+                flash("New Contaminant already exists.","danger")
             else:
-                flask.flash("New Contaminant already exists.","danger")
-        elif self.rmSubmit and self.contams.data:
-            for r in self.contams.data:
-                self.contams.choices.remove((r,r))
-            self.contams.data.clear()
-            flask.flash("Selected Contaminants successfully removed.","success")
+                self.__contams.add(name)
+                flash("New Contaminant successfully added.","success")
 
 
     def save(

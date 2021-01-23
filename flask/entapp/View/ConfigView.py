@@ -30,7 +30,7 @@ class ConfigView(FlaskView):
         return render_template('config/basic.html',form=form)
 
 
-    @route('/update/',methods=["POST"])
+    @route("/update/",methods=["POST"])
     def update(
         self
     ):
@@ -41,7 +41,6 @@ class ConfigView(FlaskView):
         if form.validate():
             form.save()
             flash("Configuration successfully updated.","success")
-            return redirect(url_for("ConfigView:index"))
         else:
             flash("Configuration failed to update.","danger")
-            return redirect(url_for("ConfigView:index"))
+        return redirect(url_for("ConfigView:index"))

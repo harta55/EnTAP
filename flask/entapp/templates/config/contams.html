@@ -6,11 +6,22 @@
 {% block content %}
 <div class="container">
     <h1 class="mt-4">Contaminants</h1>
-<ul>
-{% for contam in contams %}
-<li><a href="{{ url_for('ContamsView:remove',name=contam) }}">{{ contam }}</a></li>
-{% endfor %}
-</ul>
+    <table class="table table-striped ml-0">
+    <thead>
+        <tr class="d-flex">
+            <th class="col-1"></th>
+            <th class="col-11">Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for contam in contams %}
+            <tr class="d-flex">
+                <td class="col-1"><a href="{{ url_for('ContamsView:remove',name=contam) }}">Remove</a></td>
+                <td class="col-11">{{ contam }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
     {{ wtf.quick_form(form,url_for('ContamsView:add')) }}
 </div>
 {% endblock %}

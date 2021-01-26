@@ -2,6 +2,7 @@
 Contains the ConfigView class.
 """
 from ..Form.ConfigForm import *
+from ..Model.ConfigModel import *
 from flask import flash
 from flask import redirect
 from flask import render_template
@@ -26,7 +27,8 @@ class ConfigView(FlaskView):
         Detailed description.
         """
         form = ConfigForm()
-        form.load()
+        config = ConfigModel()
+        config.populate(form)
         return render_template('config/basic.html',form=form)
 
 
@@ -39,7 +41,9 @@ class ConfigView(FlaskView):
         """
         form = ConfigForm()
         if form.validate():
-            form.save()
+            config = ConfigModel()
+            config.update(form)
+            config.save()
             flash("Configuration successfully updated.","success")
         else:
             flash("Configuration failed to update.","danger")

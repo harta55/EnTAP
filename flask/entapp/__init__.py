@@ -1,6 +1,11 @@
 """
 Detailed description.
 """
+from .Application import *
+from .View.ConfigView import *
+from .View.ContamsView import *
+from .View.RootView import *
+from flask import Flask
 
 
 def createApp():
@@ -13,13 +18,3 @@ def createApp():
     ContamsView.register(app)
     RootView.register(app)
     return app
-
-
-CONFIG_PATH = "/workspace/flask/config.json"
-
-
-from .Application import *
-from .View.ConfigView import *
-from .View.ContamsView import *
-from .View.RootView import *
-from flask import Flask

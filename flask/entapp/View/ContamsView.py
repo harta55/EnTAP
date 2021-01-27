@@ -36,7 +36,7 @@ class ContamsView(FlaskView):
             else:
                 contams.add(name)
                 contams.save()
-                flash("New Contaminant successfully added.","success")
+                flash("New contaminant successfully added.","success")
         else:
             flash("Failed adding new contaminant.","danger")
         return redirect(url_for("ContamsView:index"))
@@ -51,7 +51,7 @@ class ContamsView(FlaskView):
         form = ContamsForm()
         contams = list(ContamsModel())
         contams.sort()
-        return render_template("config/contams.html",contams=contams,form=form)
+        return render_template("contams.html",contams=contams,form=form)
 
 
     def remove(

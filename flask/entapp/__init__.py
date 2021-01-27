@@ -5,6 +5,7 @@ from .Application import *
 from .View.ConfigView import *
 from .View.ContamsView import *
 from .View.RootView import *
+from .View.UninformsView import *
 from flask import Flask
 
 
@@ -17,4 +18,5 @@ def createApp():
     ConfigView.register(app)
     ContamsView.register(app)
     RootView.register(app)
+    UninformsView.register(app)
     return app

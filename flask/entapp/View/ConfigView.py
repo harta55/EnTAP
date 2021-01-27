@@ -29,7 +29,7 @@ class ConfigView(FlaskView):
         form = ConfigForm()
         config = ConfigModel()
         config.populate(form)
-        return render_template('config/basic.html',form=form)
+        return render_template("config.html",form=form)
 
 
     @route("/update/",methods=["POST"])

@@ -3,6 +3,7 @@ Contains the Application class.
 """
 from .Model.ConfigModel import *
 from .Model.ContamsModel import *
+from .Model.UninformsModel import *
 from flask import Flask
 from json import dumps
 from os.path import dirname
@@ -33,3 +34,4 @@ class Application(Flask):
         super().__init__(*args,**kwargs)
         ConfigModel.initialize()
         ContamsModel.initialize()
+        UninformsModel.initialize()

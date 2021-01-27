@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% import "wtf.html" as wtf %}
+
+{% block title %}{{ super() }} - Uninformatives{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4">Uninformatives</h1>
+    <table class="table table-striped ml-0">
+    <thead>
+        <tr class="d-flex">
+            <th class="col-1"></th>
+            <th class="col-11">Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for uninform in uninforms %}
+            <tr class="d-flex">
+                <td class="col-1"><a href="{{ url_for('UninformsView:remove',name=uninform) }}">Remove</a></td>
+                <td class="col-11">{{ uninform }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+    {{ wtf.quick_form(form,url_for('UninformsView:add')) }}
+</div>
+{% endblock %}

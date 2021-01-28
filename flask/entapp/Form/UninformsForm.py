@@ -1,5 +1,5 @@
 """
-Contains the ContamsForm class.
+Contains the UninformsForm class.
 """
 from flask_wtf import FlaskForm
 from wtforms import StringField

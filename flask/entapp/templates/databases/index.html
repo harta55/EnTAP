@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}{{ super() }} - Databases{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4">Databases</h1>
+    <table class="table table-striped">
+    <thead>
+        <tr class="d-flex">
+            <th class="col-2">Operations</th>
+            <th class="col-7">Name</th>
+            <th class="col-2">Extension</th>
+            <th class="col-1">Indexed</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for i in databases %}
+            <tr class="d-flex">
+                <td class="col-2">TODO</td>
+                <td class="col-7">{{ databases.name(i) }}</td>
+                <td class="col-2">{{ databases.extName(i) }}</td>
+                <td class="col-1">{{ "Yes" if databases.isIndexed(i) else "No" }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+</div>
+{% endblock %}

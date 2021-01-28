@@ -4,6 +4,7 @@ Contains the ConfigModel class.
 from decimal import Decimal
 from json import dumps
 from json import loads
+from os import makedirs
 from os.path import dirname
 from os.path import exists as pathExists
 

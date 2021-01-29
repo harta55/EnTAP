@@ -16,7 +16,7 @@
     <tbody>
         {% for contam in contams %}
             <tr class="d-flex">
-                <td class="col-1"><a href="{{ url_for('ContamsView:remove',name=contam) }}">Remove</a></td>
+                <td class="col-1"><a class="btn btn-danger btn-sm" href="{{ url_for('ContamsView:remove',name=contam) }}">Remove</a></td>
                 <td class="col-11">{{ contam }}</td>
             </tr>
         {% endfor %}

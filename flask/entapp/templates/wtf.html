@@ -1,35 +1,18 @@
-{% macro bsField(form,field,class_) %}
-{% if form.errors %}
-    {% if field.errors %}
-        {{ field(class_=class_+" is-invalid") }}
-    {% else %}
-        {{ field(class_=class_+" is-valid") }}
-    {% endif %}
-{% else %}
-    {{ field(class_=class_) }}
-{% endif %}
-{% endmacro %}
 {% macro quick_form(form,url="") %}
     <form action="{{ url }}" method="POST">
     {{ form.hidden_tag() }}
     {% for field in form %}
-        <div class="form-group">
+        <div class="mt-3">
             {% if field.type == "SubmitField" %}
-                {{ bsField(form,field,"btn btn-primary") }}
+                {{ field(class_='btn btn-primary') }}
             {% elif field.type == "BooleanField" %}
-                {{ bsField(form,field,"form-check-input") }}
-                <label for="{{ field.id }}">{{ field.label.text }}</label>
+                {{ field(class_='form-check-input') }}
+                <label for="{{ field.id }}" class="form-label">{{ field.label.text }}</label>
             {% elif field.type != "CSRFTokenField" %}
-                <label for="{{ field.id }}">{{ field.label.text }}</label>
-                {{ bsField(form,field,"form-control") }}
+                <label for="{{ field.id }}" class="form-label">{{ field.label.text }}</label>
+                {{ field(class_='form-control') }}
             {% endif %}
-            {% if not field.errors %}
-                <small class="form-text text-muted">{{ field.description }}</small>
-            {% else %}
-                {% for error in field.errors %}
-                    <div class="invalid-feedback">{{ error }}</div>
-                {% endfor %}
-            {% endif %}
+            <div class="form-text">{{ field.description }}</div>
         </div>
     {% endfor %}
     </form>

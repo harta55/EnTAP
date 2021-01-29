@@ -1,6 +1,8 @@
 # Base image.
 FROM ubuntu:20.04
 
+ARG ENTAP_VERSION="v0.10.7"
+
 # Set noninteractive mode for apt-get.
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -65,25 +67,32 @@ RUN wget https://github.com/deweylab/RSEM/archive/v1.3.0.tar.gz \
 
 # Install EnTAP
 RUN apt-get -y install cmake
-RUN git clone https://github.com/harta55/EnTAP \
-  && cd EnTAP \
-  && git checkout v0.10.7-beta \
-  && cmake CMakeLists.txt \
-  && make \
-  && make install \
-  && rm -fr /tmp/entap
+RUN if echo "${KINC_REVISION}" | grep -q 'local' ; then \
+    cmake CMakeLists.txt \
+    && make \
+    && make install; \
+else \
+    git clone https://github.com/harta55/EnTAP \
+      && cd EnTAP \
+      && git checkout ${ENTAP_VERSION} \
+      && cmake CMakeLists.txt \
+      && make \
+      && make install; \
+fi
+
+# Create some needed directories
+RUN rm -fr /tmp/entap \
+   && mkdir /entap_config \
+   && mkdir /entap_outfiles
+
+COPY entap_config.ini /entap_config/entap_config.ini
+
+WORKDIR /entap_outfiles
 
 # Tini for signal processing and zombie killing.
 ENV TINI_VERSION v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
-
-# Add an EnTAP user and run all else as this user.
-RUN useradd -d /home/entap -m -s /bin/bash entap && echo "entap:entap"
-USER entap
-WORKDIR /home/entap
-
-COPY entap_config.ini /home/entap/entap_config.ini
 
 # Define the command and parameters that will be executed when this
 # container is first run.

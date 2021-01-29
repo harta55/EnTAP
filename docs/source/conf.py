@@ -168,6 +168,8 @@ rst_prolog = """
 .. |ref_plant| replace:: ftp://ftp.ncbi.nlm.nih.gov/refseq/release/plant/
 .. |ref_mamm| replace:: ftp://ftp.ncbi.nlm.nih.gov/refseq/release/vertebrate_mammalian/
 .. |ref_nr| replace:: ftp://ftp.ncbi.nlm.nih.gov/blast/db/
+.. |ref_vert_other| replace:: https://ftp.ncbi.nih.gov/refseq/release/vertebrate_other/
+.. |ref_invert| replace:: https://ftp.ncbi.nih.gov/refseq/release/invertebrate/
 .. |uni_swiss| replace:: ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
 .. |uni_trembl| replace:: ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz
 .. |entap_bin_ftp| replace:: https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.bin.gz

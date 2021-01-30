@@ -1,7 +1,31 @@
 {% extends "base.html" %}
 
+{% block meta %}
+{% if task.isRunning() %}
+    <meta http-equiv="refresh" content="2">
+{% endif %}
+{% endblock %}
+
+{% block title %}{{ super() }} - Status{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <p>This is the front status page.</p>
+<div class="container">
+    {% if task.hadError() %}
+        <h1 class="mt-4">Error</h1>
+    {% elif task.isRunning() %}
+        <h1 class="mt-4">Running</h1>
+    {% else %}
+        <h1 class="mt-4">Idle</h1>
+    {% endif %}
+    <h2 class="mt-3">{{ task.title() }}</h2>
+    {% if task.isRunning() %}
+        <div class="alert alert-info">
+    {% elif task.hadError() %}
+        <div class="alert alert-danger">
+    {% else %}
+        <div class="alert alert-success">
+    {% endif %}
+    {{ task.output().replace("\n","<br/>")|safe }}
+    </div>
 </div>
 {% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% import "wtf.html" as wtf %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.0/min/dropzone.min.css">
+{% endblock %}
+
+{% block title %}{{ super() }} - Remote Database Upload{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4">Remote Database Upload</h1>
+    {{ wtf.quick_form(form,url_for('DatabasesView:uploadRemoteStart')) }}
+</div>
+{% endblock %}

@@ -1,10 +1,16 @@
 """
 Contains the DatabasesView class.
 """
+from ..Controller import taskController
+from ..Form.DatabaseUploadForm import *
 from ..Model.DatabasesModel import *
+from ..Task.RemoteUploadTask import *
 import flask
+from flask import flash
 from flask import make_response
+from flask import redirect
 from flask import render_template
+from flask import url_for
 from flask_classful import FlaskView
 from flask_classful import route
 from os.path import join as pathJoin
@@ -32,7 +38,7 @@ class DatabasesView(FlaskView):
         return render_template("databases/index.html",databases=databases)
 
 
-    @route("/upload/chunk",methods=["POST"])
+    @route("/upload/chunk/",methods=["POST"])
     def uploadChunk(
         self
     ):
@@ -57,7 +63,7 @@ class DatabasesView(FlaskView):
         return make_response(("Chunk upload successful.",200))
 
 
-    @route("/upload/local")
+    @route("/upload/local/")
     def uploadLocal(
         self
     ):
@@ -65,3 +71,31 @@ class DatabasesView(FlaskView):
         Detailed description.
         """
         return render_template("databases/uploadLocal.html")
+
+
+    @route("/upload/remote/")
+    def uploadRemote(
+        self
+    ):
+        """
+        Detailed description.
+        """
+        form = DatabaseUploadForm()
+        return render_template("databases/uploadRemote.html",form=form)
+
+
+    @route("/upload/remote/start/",methods=["POST"])
+    def uploadRemoteStart(
+        self
+    ):
+        """
+        Detailed description.
+        """
+        form = DatabaseUploadForm()
+        if form.validate():
+            if form.submit.data:
+                taskController.start(RemoteUploadTask(form.url.data))
+                return redirect(url_for("RootView:index"))
+        else:
+            flash("Failed starting remote upload task.","danger")
+        return redirect(url_for("DatabasesView:index"))

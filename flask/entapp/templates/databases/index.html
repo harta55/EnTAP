@@ -18,7 +18,7 @@
         {% for i in databases %}
             <tr class="d-flex">
                 <td class="col-2">TODO</td>
-                <td class="col-7">{{ databases.name(i) }}</td>
+                <td class="col-7 text-break">{{ databases.name(i) }}</td>
                 <td class="col-2">{{ databases.extName(i) }}</td>
                 <td class="col-1">{{ "Yes" if databases.isIndexed(i) else "No" }}</td>
             </tr>
@@ -29,6 +29,7 @@
         <button class="btn btn-secondary dropdown-toggle" type="button" id="uploadMenu" data-bs-toggle="dropdown" aria-expanded="false">Upload</button>
         <ul class="dropdown-menu" aria-labelledby="uploadMenu">
             <li><a class="dropdown-item" href="{{ url_for('DatabasesView:uploadLocal') }}">Local</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('DatabasesView:uploadRemote') }}">Remote</a></li>
         </ul>
     </div>
 </div>

@@ -1,7 +1,4 @@
 """
 Detailed description.
 """
-from entapp import createApp
-
-
-app = createApp()
+from entapp import application as app

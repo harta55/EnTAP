@@ -1,6 +1,7 @@
 """
 Contains the RootView class.
 """
+from ..Controller import taskController
 from flask import render_template
 from flask_classful import FlaskView
 
@@ -20,7 +21,7 @@ class RootView(FlaskView):
         """
         Detailed description.
         """
-        return render_template("index.html")
+        return render_template("index.html",task=taskController)
 
 
     def run(

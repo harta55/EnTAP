@@ -3,7 +3,9 @@ Contains the DatabasesModel class.
 """
 from os import listdir
 from os import makedirs
+from os import remove as rmFile
 from os.path import exists as pathExists
+from os.path import join as pathJoin
 
 
 
@@ -22,6 +24,20 @@ class DatabasesModel():
         Detailed description.
         """
         self.__files = listdir(self.PATH)
+
+
+    def __contains__(
+        self
+        ,name
+    ):
+        """
+        Detailed description.
+
+        Parameters
+        ----------
+        name : 
+        """
+        return name in self.__files
 
 
     def __len__(
@@ -101,3 +117,21 @@ class DatabasesModel():
         index : 
         """
         return self.__files[index]
+
+
+    def remove(
+        self
+        ,name
+    ):
+        """
+        Detailed description.
+
+        Parameters
+        ----------
+        name : 
+        """
+        if name not in self.__files:
+            return False
+        rmFile(pathJoin(self.PATH,name))
+        #TODO if indexed remove that
+        return True

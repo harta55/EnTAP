@@ -7,20 +7,30 @@
     <h1 class="mt-4">Databases</h1>
     <table class="table table-striped">
     <thead>
-        <tr class="d-flex">
-            <th class="col-2">Operations</th>
-            <th class="col-7">Name</th>
-            <th class="col-2">Extension</th>
-            <th class="col-1">Indexed</th>
+        <tr>
+            <th style="width:5em;"></th>
+            <th>Name</th>
+            <th style="width:5em;">Extension</th>
+            <th style="width:5em;">Indexed</th>
         </tr>
     </thead>
     <tbody>
         {% for i in databases %}
-            <tr class="d-flex">
-                <td class="col-2">TODO</td>
-                <td class="col-7 text-break">{{ databases.name(i) }}</td>
-                <td class="col-2">{{ databases.extName(i) }}</td>
-                <td class="col-1">{{ "Yes" if databases.isIndexed(i) else "No" }}</td>
+            <tr>
+                <td style="width:5em;">
+                    <div class="dropdown">
+                        <button class="btn btn-secondary dropdown-toggle btn-sm" type="button" id="{{ 'op%iMenu'%(i,) }}" data-bs-toggle="dropdown" aria-expanded="false">Operation</button>
+                        <ul class="dropdown-menu" aria-labelledby="{{ 'op%iMenu'%(i,) }}">
+                            {% if databases.extName(i) == 'GUNZIP' %}
+                                <li><a class="dropdown-item" href="{{ url_for('DatabasesView:gunzip',name=databases.name(i)) }}">Gunzip</a></li>
+                            {% endif %}
+                            <li><a class="dropdown-item" href="{{ url_for('DatabasesView:remove',name=databases.name(i)) }}">Remove</a></li>
+                        </ul>
+                    </div>
+                </td>
+                <td class="text-break">{{ databases.name(i) }}</td>
+                <td style="width:5em;">{{ databases.extName(i) }}</td>
+                <td style="width:5em;">{{ "Yes" if databases.isIndexed(i) else "No" }}</td>
             </tr>
         {% endfor %}
     </tbody>

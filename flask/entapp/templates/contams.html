@@ -8,16 +8,16 @@
     <h1 class="mt-4">Contaminants</h1>
     <table class="table table-striped">
     <thead>
-        <tr class="d-flex">
-            <th class="col-1"></th>
-            <th class="col-11">Name</th>
+        <tr>
+            <th style="width:5em;"></th>
+            <th>Name</th>
         </tr>
     </thead>
     <tbody>
         {% for contam in contams %}
-            <tr class="d-flex">
-                <td class="col-1"><a class="btn btn-danger btn-sm" href="{{ url_for('ContamsView:remove',name=contam) }}">Remove</a></td>
-                <td class="col-11">{{ contam }}</td>
+            <tr>
+                <td style="width:5em;"><a class="btn btn-danger btn-sm" href="{{ url_for('ContamsView:remove',name=contam) }}">Remove</a></td>
+                <td>{{ contam }}</td>
             </tr>
         {% endfor %}
     </tbody>

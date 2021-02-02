@@ -4,6 +4,7 @@ Contains the DatabasesView class.
 from ..Controller import taskController
 from ..Form.DatabaseUploadForm import *
 from ..Model.DatabasesModel import *
+from ..Task.GunzipTask import *
 from ..Task.RemoteUploadTask import *
 import flask
 from flask import flash
@@ -28,6 +29,27 @@ class DatabasesView(FlaskView):
     route_base = "/databases/"
 
 
+    def gunzip(
+        self
+        ,name
+    ):
+        """
+        Detailed description.
+
+        Parameters
+        ----------
+        name : 
+        """
+        databases = DatabasesModel()
+        if name in databases:
+            taskController.start(GunzipTask(name))
+            flash("Started gunzip task.","success")
+            return redirect(url_for("RootView:index"))
+        else:
+            flash("No such database by given name to gunzip.","danger")
+        return redirect(url_for("DatabasesView:index"))
+
+
     def index(
         self
     ):
@@ -36,6 +58,25 @@ class DatabasesView(FlaskView):
         """
         databases = DatabasesModel()
         return render_template("databases/index.html",databases=databases)
+
+
+    def remove(
+        self
+        ,name
+    ):
+        """
+        Detailed description.
+
+        Parameters
+        ----------
+        name : 
+        """
+        databases = DatabasesModel()
+        if databases.remove(name):
+            flash("Successfully removed database.","success")
+        else:
+            flash("Failed to remove database.","danger")
+        return redirect(url_for("DatabasesView:index"))
 
 
     @route("/upload/chunk/",methods=["POST"])
@@ -95,6 +136,7 @@ class DatabasesView(FlaskView):
         if form.validate():
             if form.submit.data:
                 taskController.start(RemoteUploadTask(form.url.data))
+                flash("Started remote upload task.","success")
                 return redirect(url_for("RootView:index"))
         else:
             flash("Failed starting remote upload task.","danger")

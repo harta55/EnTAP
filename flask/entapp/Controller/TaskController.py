@@ -70,6 +70,7 @@ class TaskController():
         """
         assert(not self.isRunning())
         assert(isinstance(task,AbstractTask))
+        self.__hadError = False
         self.__thread = Thread(target=self.__run_)
         self.__task = task
         self.__thread.start()

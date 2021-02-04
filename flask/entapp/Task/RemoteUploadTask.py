@@ -4,6 +4,7 @@ Contains the RemoteUploadTask class.
 from ..Abstract.AbstractTask import *
 from ..Model.DatabasesModel import *
 from flask import render_template
+from ftplib import FTP
 from requests import get as reqGet
 from os.path import exists as pathExists
 from os.path import join as pathJoin
@@ -30,6 +31,13 @@ class RemoteUploadTask(AbstractTask):
         """
         super().__init__()
         self.__urls = urls
+        self.__url = ""
+        self.__fileName = ""
+        self.__path = ""
+        self.__fi = 0
+        self.__ft = len(urls)
+        self.__finished = []
+        self.__failed = []
         self._setRenderVars_(running=True,fileName="",current=0,total=0,progress=0,totalSize=True)
 
 
@@ -53,49 +61,40 @@ class RemoteUploadTask(AbstractTask):
         """
         Detailed description.
         """
-        finished = []
-        failed = []
-        fi = 1
-        ft = len(self.__urls)
+        self.__finished = []
+        self.__failed = []
+        self.__fi = 1
         for url in self.__urls:
+            self.__url = url
+            self.__fileName = url[url.rfind("/")+1:]
+            self._setRenderVars_(
+                running=True
+                ,fileName=self.__fileName
+                ,current=self.__fi
+                ,total=self.__ft
+                ,progress=0
+                ,totalSize=True
+            )
             try:
-                fileName = url[url.rfind("/")+1:]
-                progress = 0
-                rq = reqGet(url,stream=True)
-                total = int(rq.headers.get("Content-length",0))
-                path = pathJoin(DatabasesModel.PATH,fileName)
-                if pathExists(path):
-                    failed.append(
+                self.__path = pathJoin(DatabasesModel.PATH,self.__fileName)
+                if pathExists(self.__path):
+                    self.__failed.append(
                         (
-                            fileName
+                            self.__fileName
                             ,"File already exists. Please remove it first if you wish to overwrite"
-                             " it."
+                                " it."
                         )
                     )
                     continue
-                with open(path,"wb") as ofile:
-                    for chunk in rq.iter_content(chunk_size=1024):
-                        if chunk:
-                            ofile.write(chunk)
-                            progress += 1024
-                            p = (
-                                int(min(100,progress*100/total)) if total
-                                else self.__reportBySize_(progress)
-                            )
-                            self._setRenderVars_(
-                                running=True
-                                ,fileName=fileName
-                                ,current=fi
-                                ,total=ft
-                                ,progress=p
-                                ,totalSize=bool(total)
-                            )
-                fi += 1
-                finished.append(fileName)
+                if url.lower().startswith("ftp://"):
+                    self.__ftp_()
+                else:
+                    self.__query_()
+                self.__fi += 1
             except Exception as e:
-                failed.append((fileName,str(e)))
-        self._setRenderVars_(running=False,finished=finished,failed=failed)
-        return not failed
+                self.__failed.append((self.__fileName,str(e)))
+        self._setRenderVars_(running=False,finished=self.__finished,failed=self.__failed)
+        return not self.__failed
 
 
     def title(
@@ -105,6 +104,73 @@ class RemoteUploadTask(AbstractTask):
         Detailed description.
         """
         return "Remote Upload"
+
+
+    def __ftp_(
+        self
+    ):
+        """
+        Detailed description.
+        """
+        u = self.__url[6:]
+        host = u[:u.find("/")]
+        d = u[u.find("/"):u.rfind("/")+1]
+        print(d)
+        ftp = FTP(host)
+        ftp.login()
+        ftp.cwd(d)
+        total = ftp.size(self.__fileName)
+        if total is None:
+            total = 0
+        progress = 0
+        with open(self.__path,"wb") as ofile:
+            def write(chunk):
+                nonlocal progress
+                ofile.write(chunk)
+                progress += len(chunk)
+                p = (
+                    int(min(100,progress*100/total)) if total
+                    else self.__reportBySize_(progress)
+                )
+                self._setRenderVars_(
+                    running=True
+                    ,fileName=self.__fileName
+                    ,current=self.__fi
+                    ,total=self.__ft
+                    ,progress=p
+                    ,totalSize=bool(total)
+                )
+            ftp.retrbinary("RETR "+self.__fileName,write)
+        self.__finished.append(self.__fileName)
+
+
+    def __query_(
+        self
+    ):
+        """
+        Detailed description.
+        """
+        progress = 0
+        rq = reqGet(self.__url,stream=True)
+        total = int(rq.headers.get("Content-length",0))
+        with open(self.__path,"wb") as ofile:
+            for chunk in rq.iter_content(chunk_size=1024):
+                if chunk:
+                    ofile.write(chunk)
+                    progress += 1024
+                    p = (
+                        int(min(100,progress*100/total)) if total
+                        else self.__reportBySize_(progress)
+                    )
+                    self._setRenderVars_(
+                        running=True
+                        ,fileName=self.__fileName
+                        ,current=self.__fi
+                        ,total=self.__ft
+                        ,progress=p
+                        ,totalSize=bool(total)
+                    )
+        self.__finished.append(self.__fileName)
 
 
     @staticmethod

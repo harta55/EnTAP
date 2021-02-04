@@ -16,7 +16,9 @@
         </div>
     </form>
     <small class="text-secondary muted">Do not click continue until all uploads are complete. Moving off this page before completion of all uploads will cause said uploads to fail.</small>
-    <a class="btn btn-primary mt-3" href="{{ url_for('DatabasesView:index') }}" role="button">Finish</a>
+    <div class="container mt-3 p-0">
+        <a class="btn btn-primary m-0" href="{{ url_for('DatabasesView:index') }}" role="button">Finish</a>
+    </div>
 </div>
 {% endblock %}
 

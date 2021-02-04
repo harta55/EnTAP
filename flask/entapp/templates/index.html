@@ -1,31 +1,18 @@
 {% extends "base.html" %}
 
-{% block meta %}
-{% if task.isRunning() %}
-    <meta http-equiv="refresh" content="2">
-{% endif %}
-{% endblock %}
-
-{% block title %}{{ super() }} - Status{% endblock %}
+{% block title %}{{ super() }} - Home{% endblock %}
 
 {% block content %}
 <div class="container">
-    {% if task.hadError() %}
-        <h1 class="mt-4">Error</h1>
-    {% elif task.isRunning() %}
-        <h1 class="mt-4">Running</h1>
-    {% else %}
-        <h1 class="mt-4">Idle</h1>
-    {% endif %}
-    <h2 class="mt-3">{{ task.title() }}</h2>
-    {% if task.isRunning() %}
-        <div class="alert alert-info">
-    {% elif task.hadError() %}
-        <div class="alert alert-danger">
-    {% else %}
-        <div class="alert alert-success">
-    {% endif %}
-    {{ task.output().replace("\n","<br/>")|safe }}
+    <div class="row">
+        <div class="col-4 p-4">
+            <img src="/static/logo.jpg" class="img-fluid"/>
+        </div>
+        <div class="col-8">
+            <h1 class="my-4">EnTAP Version ??</h1>
+            <p>EnTAP is a tool for  eukaryotic non-model functional annotation of whole and partial genomes designed to improve accuracy, speed and flexibility.</p>
+            <p>How to cite:  Hart AJ, Ginzburg S, Xu M, et al. EnTAP: Bringing faster and smarter functional annotation to non-model eukaryotic transcriptomes. Mol Ecol Resour. 2020;20:591–604. https://doi.org/10.1111/1755-0998.13106</p>
+        </div>
     </div>
 </div>
 {% endblock %}

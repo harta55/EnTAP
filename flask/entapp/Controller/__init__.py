@@ -14,8 +14,8 @@ def update():
     Detailed description.
     """
     taskController.update()
-    if taskController.isRunning() and flask.request.endpoint != "RootView:index":
-        return redirect(url_for("RootView:index"))
+    if taskController.isRunning() and flask.request.endpoint != "RootView:status":
+        return redirect(url_for("RootView:status"))
 
 
 taskController = TaskController()

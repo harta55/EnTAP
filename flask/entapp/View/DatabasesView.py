@@ -29,27 +29,6 @@ class DatabasesView(FlaskView):
     route_base = "/databases/"
 
 
-    def gunzip(
-        self
-        ,name
-    ):
-        """
-        Detailed description.
-
-        Parameters
-        ----------
-        name : 
-        """
-        databases = DatabasesModel()
-        if name in databases:
-            taskController.start(GunzipTask(name))
-            flash("Started gunzip task.","success")
-            return redirect(url_for("RootView:index"))
-        else:
-            flash("No such database by given name to gunzip.","danger")
-        return redirect(url_for("DatabasesView:index"))
-
-
     def index(
         self
     ):
@@ -135,9 +114,10 @@ class DatabasesView(FlaskView):
         form = DatabaseUploadForm()
         if form.validate():
             if form.submit.data:
-                taskController.start(RemoteUploadTask(form.url.data))
+                urls = [u.strip() for u in form.url.data.split("\n") if u]
+                taskController.start(RemoteUploadTask(urls))
                 flash("Started remote upload task.","success")
-                return redirect(url_for("RootView:index"))
+                return redirect(url_for("RootView:status"))
         else:
             flash("Failed starting remote upload task.","danger")
         return redirect(url_for("DatabasesView:index"))

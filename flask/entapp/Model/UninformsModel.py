@@ -79,7 +79,20 @@ class UninformsModel():
             makedirs(dirname(cls.PATH))
         if not pathExists(cls.PATH):
             with open(cls.PATH,"w") as ofile:
-                ofile.write(dumps([]))
+                ofile.write(
+                    dumps(
+                        [
+                            "conserved"
+                            ,"predicted"
+                            ,"unknown"
+                            ,"hypothetical"
+                            ,"putative"
+                            ,"unidentified"
+                            ,"uncultured"
+                            ,"uninformative"
+                        ]
+                    )
+                )
 
 
     def remove(

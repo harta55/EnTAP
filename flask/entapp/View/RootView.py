@@ -21,7 +21,7 @@ class RootView(FlaskView):
         """
         Detailed description.
         """
-        return render_template("index.html",task=taskController)
+        return render_template("index.html")
 
 
     def run(
@@ -31,3 +31,12 @@ class RootView(FlaskView):
         Detailed description.
         """
         return render_template("run.html")
+
+
+    def status(
+        self
+    ):
+        """
+        Detailed description.
+        """
+        return render_template("status.html",task=taskController)

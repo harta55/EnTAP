@@ -3,6 +3,7 @@ Contains the TaskController class.
 """
 from ..Abstract.AbstractTask import *
 from threading import Thread
+from traceback import print_exc
 
 
 
@@ -21,7 +22,7 @@ class TaskController():
         """
         self.__thread = None
         self.__task = None
-        self.__lastTitle = "Idle"
+        self.__lastTitle = "No History"
         self.__lastOutput = "No task has been started."
         self.__hadError = False
 
@@ -106,4 +107,8 @@ class TaskController():
         """
         Detailed description.
         """
-        self.__hadError = not self.__task.run()
+        try:
+            self.__hadError = not self.__task.run()
+        except Exception:
+            print_exc()
+            self.__hadError = True

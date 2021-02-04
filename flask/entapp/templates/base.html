@@ -17,20 +17,23 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNavDropdown">
                     <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link active" aria-current="page" href="{{ url_for('RootView:run') }}">Run</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('DatabasesView:index') }}">Downloads</a>
-                    </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">Configuration</a>
-                        <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDropdownMenuLink">
-                            <li><a class="dropdown-item" href="{{ url_for('ConfigView:index') }}">Config</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('ContamsView:index') }}">Contaminants</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('UninformsView:index') }}">Uninformatives</a></li>
-                        </ul>
-                    </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('RootView:status') }}">Status</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('RootView:run') }}">Run</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('DatabasesView:index') }}">Databases</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">Configuration</a>
+                            <ul class="dropdown-menu dropdown-menu-dark" aria-labelledby="navbarDropdownMenuLink">
+                                <li><a class="dropdown-item" href="{{ url_for('ConfigView:index') }}">Config</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('ContamsView:index') }}">Contaminants</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('UninformsView:index') }}">Uninformatives</a></li>
+                            </ul>
+                        </li>
                     </ul>
                 </div>
             </div>

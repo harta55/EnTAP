@@ -73,7 +73,14 @@ class DatabasesModel():
         ext = name[name.rfind(".")+1:]
         if ext == "gz":
             return "GUNZIP"
-        elif ext == "fa" or ext == "faa" or ext == "fasta":
+        elif (
+            ext == "fasta"
+            or ext == "fna"
+            or ext == "ffn"
+            or ext == "faa"
+            or ext == "fa"
+            or ext == "frn"
+        ):
             return "FASTA"
         else:
             return "UNKNOWN"

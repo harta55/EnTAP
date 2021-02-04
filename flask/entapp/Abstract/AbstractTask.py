@@ -21,8 +21,7 @@ class AbstractTask(ABC):
         Detailed description.
         """
         super().__init__()
-        self.__output = []
-        self.__finalOutput = ""
+        self.__renderVars = {}
         self.__lock = Lock()
 
 
@@ -33,9 +32,24 @@ class AbstractTask(ABC):
         Detailed description.
         """
         self.__lock.acquire()
-        ret = self.__finalOutput
+        ret = self.render(**self.__renderVars)
         self.__lock.release()
         return ret
+
+
+    @abstractmethod
+    def render(
+        self
+        ,**kwargs
+    ):
+        """
+        Detailed description.
+
+        Parameters
+        ----------
+        **kwargs : 
+        """
+        pass
 
 
     @abstractmethod
@@ -58,35 +72,17 @@ class AbstractTask(ABC):
         pass
 
 
-    def _clear_(
+    def _setRenderVars_(
         self
-    ):
-        """
-        Detailed description.
-        """
-        self.__output = []
-
-
-    def _print_(
-        self
-        ,text
+        ,**kwargs
     ):
         """
         Detailed description.
 
         Parameters
         ----------
-        text : 
-        """
-        self.__output.append(text)
-
-
-    def _flush_(
-        self
-    ):
-        """
-        Detailed description.
+        **kwargs : 
         """
         self.__lock.acquire()
-        self.__finalOutput = "".join(self.__output)
+        self.__renderVars = kwargs
         self.__lock.release()

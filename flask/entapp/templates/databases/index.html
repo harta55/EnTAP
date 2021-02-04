@@ -5,42 +5,56 @@
 {% block content %}
 <div class="container">
     <h1 class="mt-4">Databases</h1>
-    <table class="table table-striped">
-    <thead>
-        <tr>
-            <th style="width:5em;"></th>
-            <th>Name</th>
-            <th style="width:5em;">Extension</th>
-            <th style="width:5em;">Indexed</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for i in databases %}
-            <tr>
-                <td style="width:5em;">
-                    <div class="dropdown">
-                        <button class="btn btn-secondary dropdown-toggle btn-sm" type="button" id="{{ 'op%iMenu'%(i,) }}" data-bs-toggle="dropdown" aria-expanded="false">Operation</button>
-                        <ul class="dropdown-menu" aria-labelledby="{{ 'op%iMenu'%(i,) }}">
-                            {% if databases.extName(i) == 'GUNZIP' %}
-                                <li><a class="dropdown-item" href="{{ url_for('DatabasesView:gunzip',name=databases.name(i)) }}">Gunzip</a></li>
-                            {% endif %}
-                            <li><a class="dropdown-item" href="{{ url_for('DatabasesView:remove',name=databases.name(i)) }}">Remove</a></li>
-                        </ul>
-                    </div>
-                </td>
-                <td class="text-break">{{ databases.name(i) }}</td>
-                <td style="width:5em;">{{ databases.extName(i) }}</td>
-                <td style="width:5em;">{{ "Yes" if databases.isIndexed(i) else "No" }}</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-    </table>
-    <div class="dropdown">
+    <p>
+        EnTAP performs sequence similarity comparisons with known proteins. Use the interface below to provide a list of protein files in FASTA format. <a data-bs-toggle="collapse" href="#learnMore" role="button" aria-expanded="false" aria-controls="learnMore">Learn more.</a>
+    </p>
+    <div class="collapse" id="learnMore">
+        <div class="card card-body">
+            <p>EnTAP requires <a href="https://en.wikipedia.org/wiki/FASTA_format">FASTA formatted</a> files containing protein amino acid sequences. These are often referred to as "databases" of protein database files. For best performance use protein files created by NCBI (Genbank) such as <a href="https://www.ncbi.nlm.nih.gov/refseq/">RefSeq</a> or the non-redundant (NR) RefSeq files or from the <a href="https://www.uniprot.org/">UniProt</a> <a href="https://web.expasy.org/docs/swiss-prot_guideline.html">Swiss-Prot</a> database.  Files from these sources are easily available for your EnTAP run by selecting them in the EnTAP interface on this page.</p>
+            <p>Alternatively, you can provide your own protein files as long as they are in proper FASTA format and have the organism to which a protein belongs indicated in the definition line of each sequence. The organism must be specified in one of two ways:</p>
+            <p>Method1:  [homo sapiens]<br/>Method 2: OS=homo sapiens</p>
+        </div>
+    </div>
+    <div class="dropdown mt-3">
         <button class="btn btn-secondary dropdown-toggle" type="button" id="uploadMenu" data-bs-toggle="dropdown" aria-expanded="false">Upload</button>
         <ul class="dropdown-menu" aria-labelledby="uploadMenu">
             <li><a class="dropdown-item" href="{{ url_for('DatabasesView:uploadLocal') }}">Local</a></li>
             <li><a class="dropdown-item" href="{{ url_for('DatabasesView:uploadRemote') }}">Remote</a></li>
         </ul>
+    </div>
+    <div class="card card-body bg-light mt-3">
+        <label>List of Databases</label>
+        <table class="table table-striped">
+        <thead>
+            <tr>
+                <th style="width:5em;"></th>
+                <th>Name</th>
+                <th style="width:5em;">Extension</th>
+                <th style="width:5em;">Indexed</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in databases %}
+                <tr>
+                    <td style="width:5em;">
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle btn-sm" type="button" id="{{ 'op%iMenu'%(i,) }}" data-bs-toggle="dropdown" aria-expanded="false">Operation</button>
+                            <ul class="dropdown-menu" aria-labelledby="{{ 'op%iMenu'%(i,) }}">
+                                <li><a class="dropdown-item" href="{{ url_for('DatabasesView:remove',name=databases.name(i)) }}">Remove</a></li>
+                            </ul>
+                        </div>
+                    </td>
+                    <td class="text-break">{{ databases.name(i) }}</td>
+                    <td style="width:5em;">{{ databases.extName(i) }}</td>
+                        {% if databases.isIndexed(i) %}
+                            <td style="width:5em;" class="text-success fw-bold">Yes</td>
+                        {% else %}
+                            <td style="width:5em;" class="text-danger fw-bold">No</td>
+                        {% endif %}
+                </tr>
+            {% endfor %}
+        </tbody>
+        </table>
     </div>
 </div>
 {% endblock %}

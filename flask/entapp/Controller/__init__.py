@@ -1,14 +1,13 @@
 """
 Detailed description.
 """
-from .. import application as app
+from .ConfigController import *
 from .TaskController import *
 import flask
 from flask import redirect
 from flask import url_for
 
 
-@app.before_request
 def update():
     """
     Detailed description.
@@ -19,3 +18,4 @@ def update():
 
 
 taskController = TaskController()
+configController = ConfigController()

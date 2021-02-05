@@ -68,6 +68,15 @@ class ContamsModel():
         return True
 
 
+    def configLines(
+        self
+    ):
+        """
+        Detailed description.
+        """
+        return ["contam=" + ",".join([c.replace(" ","_") for c in self.__contams])]
+
+
     @classmethod
     def initialize(
         cls

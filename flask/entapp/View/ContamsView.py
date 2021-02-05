@@ -1,6 +1,7 @@
 """
 Contains the ContamsView class.
 """
+from ..Controller import configController
 from ..Form.ContamsForm import *
 from ..Model.ContamsModel import *
 from flask import flash
@@ -36,6 +37,7 @@ class ContamsView(FlaskView):
             else:
                 contams.add(name)
                 contams.save()
+                configController.update()
                 flash("New contaminant successfully added.","success")
         else:
             flash("Failed adding new contaminant.","danger")
@@ -69,6 +71,7 @@ class ContamsView(FlaskView):
         if name in contams:
             contams.remove(name)
             contams.save()
+            configController.update()
             flash("Contaminant successfully removed.","success")
         else:
             flash("Contaminant with given name does not exist.","danger")

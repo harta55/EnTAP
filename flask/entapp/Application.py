@@ -1,6 +1,7 @@
 """
 Contains the Application class.
 """
+from .Controller import configController
 from .Model.ConfigModel import *
 from .Model.ContamsModel import *
 from .Model.DatabasesModel import *
@@ -35,3 +36,4 @@ class Application(Flask):
         ContamsModel.initialize()
         DatabasesModel.initialize()
         UninformsModel.initialize()
+        configController.update()

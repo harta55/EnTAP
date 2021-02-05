@@ -25,7 +25,7 @@ class UninformsModel():
         """
         with open(self.PATH,"r") as ifile:
             data = loads(ifile.read())
-            self.__contams = set(data)
+            self.__uninforms = set(data)
 
 
     def __contains__(
@@ -39,7 +39,7 @@ class UninformsModel():
         ----------
         name : 
         """
-        return name in self.__contams
+        return name in self.__uninforms
 
 
     def __iter__(
@@ -48,7 +48,7 @@ class UninformsModel():
         """
         Detailed description.
         """
-        return self.__contams.__iter__()
+        return self.__uninforms.__iter__()
 
 
     def add(
@@ -62,10 +62,19 @@ class UninformsModel():
         ----------
         name : 
         """
-        if name in self.__contams:
+        if name in self.__uninforms:
             return False
-        self.__contams.add(name)
+        self.__uninforms.add(name)
         return True
+
+
+    def configLines(
+        self
+    ):
+        """
+        Detailed description.
+        """
+        return ["uninformative="+u for u in self.__uninforms]
 
 
     @classmethod
@@ -106,7 +115,7 @@ class UninformsModel():
         ----------
         name : 
         """
-        self.__contams.remove(name)
+        self.__uninforms.remove(name)
 
 
     def save(
@@ -116,4 +125,4 @@ class UninformsModel():
         Detailed description.
         """
         with open(self.PATH,"w") as ofile:
-            ofile.write(dumps(list(self.__contams)))
+            ofile.write(dumps(list(self.__uninforms)))

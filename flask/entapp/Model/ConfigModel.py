@@ -28,6 +28,27 @@ class ConfigModel():
             self.__data = loads(ifile.read())
 
 
+    def configLines(
+        self
+    ):
+        """
+        Detailed description.
+        """
+        return [
+            "data-type="+self.__data["dataType"]
+            ,"fpkm="+self.__data["fpkm"]
+            ,"single-end="+("true" if self.__data["singleEnd"] else "false")
+            ,"complete="+("true" if self.__data["seqComplete"] else "false")
+            ,"transdecoder-m="+str(self.__data["minProteinLength"])
+            ,"transdecoder-no-refine-starts="+("true" if self.__data["refineStarts"] else "false")
+            ,"output-format="+",".join(self.__data["outputFormat"])
+            ,"taxon="+self.__data["taxonomy"].replace(" ","_")
+            ,"qcoverage="+self.__data["queryCoverage"]
+            ,"tcoverage="+self.__data["targetCoverage"]
+            ,"e-value="+self.__data["eValue"]
+        ]
+
+
     @classmethod
     def initialize(
         cls

@@ -1,6 +1,7 @@
 """
 Contains the ConfigView class.
 """
+from ..Controller import configController
 from ..Form.ConfigForm import *
 from ..Model.ConfigModel import *
 from flask import flash
@@ -44,6 +45,7 @@ class ConfigView(FlaskView):
             config = ConfigModel()
             config.update(form)
             config.save()
+            configController.update()
             flash("Configuration successfully updated.","success")
         else:
             flash("Configuration failed to update.","danger")

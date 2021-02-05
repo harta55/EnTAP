@@ -23,3 +23,8 @@ UninformsView.register(application)
 
 
 from . import Controller
+
+
+@application.before_request
+def update():
+    Controller.update()

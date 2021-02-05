@@ -1,6 +1,7 @@
 """
 Contains the UninformsView class.
 """
+from ..Controller import configController
 from ..Form.UninformsForm import *
 from ..Model.UninformsModel import *
 from flask import flash
@@ -36,6 +37,7 @@ class UninformsView(FlaskView):
             else:
                 uninforms.add(name)
                 uninforms.save()
+                configController.update()
                 flash("New uninformative successfully added.","success")
         else:
             flash("Failed adding new uninformative.","danger")
@@ -69,6 +71,7 @@ class UninformsView(FlaskView):
         if name in uninforms:
             uninforms.remove(name)
             uninforms.save()
+            configController.update()
             flash("Uninformative successfully removed.","success")
         else:
             flash("Uninformative with given name does not exist.","danger")

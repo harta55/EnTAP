@@ -1,0 +1,29 @@
+{% if stage == "init" %}
+    <p>Init</p>
+{% elif stage == "gunzip" %}
+    <p>Gunzipping {{ fileName }}({{ current }} of {{ total }}).</p>
+{% elif stage == "index" %}
+    <p>Indexing {{ fileName }}({{ current }} of {{ total }}).</p>
+{% elif stage == "fin" %}
+    <p>Fin</p>
+    {% if indexed %}
+        <p><b>Finished Indexing</b></p>
+        <ul>
+        {% for fileName in indexed %}
+            <li>{{ fileName }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+    {% if failed %}
+        <p><b>Failures</b></p>
+        <ul>
+        {% for (fileName,error) in failed %}
+            <li><b>{{ fileName }}:</b> {{ error }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+{% elif stage == "error" %}
+    <p>{{ error }}</p>
+{% else %}
+    <p>Unknown.</p>
+{% endif %}

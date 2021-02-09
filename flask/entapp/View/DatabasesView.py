@@ -4,13 +4,14 @@ Contains the DatabasesView class.
 from ..Controller import taskController
 from ..Form.DatabaseUploadForm import *
 from ..Model.DatabasesModel import *
-from ..Task.GunzipTask import *
+from ..Task.IndexTask import *
 from ..Task.RemoteUploadTask import *
 import flask
 from flask import flash
 from flask import make_response
 from flask import redirect
 from flask import render_template
+from flask import request
 from flask import url_for
 from flask_classful import FlaskView
 from flask_classful import route
@@ -18,7 +19,6 @@ from os.path import join as pathJoin
 from os.path import exists as pathExists
 from os.path import getsize
 from werkzeug.utils import secure_filename
-from flask import request
 
 
 
@@ -36,28 +36,35 @@ class DatabasesView(FlaskView):
         """
         Detailed description.
         """
-        print(request.args.getlist("names"))
         databases = DatabasesModel()
         return render_template("databases/index.html",databases=databases)
 
 
-    def remove(
+    @route("/oper/",methods=["POST"])
+    def operation(
         self
-        ,name
     ):
         """
         Detailed description.
-
-        Parameters
-        ----------
-        name : 
         """
-        databases = DatabasesModel()
-        if databases.remove(name):
-            flash("Successfully removed database.","success")
+        action = request.form.get("action")
+        names = request.form.getlist("names")
+        if not names:
+            return redirect(url_for("DatabasesView:index"))
+        if action == "remove":
+            databases = DatabasesModel()
+            if databases.remove(names):
+                flash("Successfully removed database(s).","success")
+            else:
+                flash("Failed removing one or more databases.","danger")
+            return redirect(url_for("DatabasesView:index"))
+        elif action == "index":
+            taskController.start(IndexTask(names))
+            flash("Started index task.","success")
+            return redirect(url_for("RootView:status"))
         else:
-            flash("Failed to remove database.","danger")
-        return redirect(url_for("DatabasesView:index"))
+            flash("Unknown operation given.","danger")
+            return redirect(url_for("DatabasesView:index"))
 
 
     @route("/upload/chunk/",methods=["POST"])

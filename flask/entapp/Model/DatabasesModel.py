@@ -15,6 +15,7 @@ class DatabasesModel():
     Detailed description.
     """
     PATH = "/workspace/flask/db"
+    OUT_PATH = "/workspace/entap/outfiles"
 
 
     def __init__(
@@ -108,8 +109,7 @@ class DatabasesModel():
         ----------
         index : 
         """
-        # TODO
-        return False
+        return pathExists(self.__indexPath_(self.__files[index]))
 
 
     def name(
@@ -128,6 +128,27 @@ class DatabasesModel():
 
     def remove(
         self
+        ,names
+    ):
+        """
+        Detailed description.
+
+        Parameters
+        ----------
+        names : 
+        """
+        for name in names:
+            if name not in self.__files:
+                return False
+            rmFile(pathJoin(self.PATH,name))
+            indexPath = self.__indexPath_(name)
+            if pathExists(indexPath):
+                rmFile(indexPath)
+        return True
+
+
+    def __indexPath_(
+        self
         ,name
     ):
         """
@@ -137,8 +158,4 @@ class DatabasesModel():
         ----------
         name : 
         """
-        if name not in self.__files:
-            return False
-        rmFile(pathJoin(self.PATH,name))
-        #TODO if indexed remove that
-        return True
+        return pathJoin(self.OUT_PATH,"bin",name[:name.rfind(".")]+".dmnd")

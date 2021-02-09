@@ -23,7 +23,7 @@
         </ul>
     </div>
     <div class="card card-body bg-light mt-3">
-        <form>
+        <form action="{{ url_for('DatabasesView:operation') }}" method="POST">
         <label>List of Databases</label>
         <table class="table table-striped">
         <thead>
@@ -54,8 +54,8 @@
         <div class="dropdown">
             <button class="btn btn-secondary dropdown-toggle" type="button" id="testMenu" data-bs-toggle="dropdown" aria-expanded="false">Operation</button>
             <ul class="dropdown-menu" aria-labelledby="testMenu">
-                <li><button type="submit" name="test" value="ok" class="dropdown-item">Ok</button></li>
-                <li><button type="submit" name="test" value="ni" class="dropdown-item">Ni</button></li>
+                <li><button type="submit" name="action" value="index" class="dropdown-item">Index</button></li>
+                <li><button type="submit" name="action" value="remove" class="dropdown-item">Remove</button></li>
             </ul>
         </div>
         </form>

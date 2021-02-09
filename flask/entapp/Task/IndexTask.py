@@ -2,6 +2,7 @@
 Contains the IndexTask class.
 """
 from ..Abstract.AbstractTask import *
+from ..Controller.ConfigController import *
 from ..Model.DatabasesModel import *
 from flask import render_template
 from os.path import join as pathJoin
@@ -27,8 +28,9 @@ class IndexTask(AbstractTask):
         ----------
         fileNames : 
         """
+        super().__init__()
         self.__fileNames = fileNames
-        self.__gErrors = []
+        self.__failed = []
         self._setRenderVars_(stage="init")
 
 
@@ -61,14 +63,13 @@ class IndexTask(AbstractTask):
                 else:
                     fileNames.append(fileName)
             fileNames += self.__gunzip_(gFileNames)
-            indexSuccess = self.__index_(fileNames)
+            indexed = self.__index_(fileNames)
             self._setRenderVars_(
                 stage="fin"
-                ,indexSuccess=indexSuccess
-                ,indexedNames=fileNames
-                ,gunzipErrors=self.__gErrors
+                ,indexed=indexed
+                ,failed=self.__failed
             )
-            return indexSuccess and not self.__gErrors
+            return not self.__failed
         except Exception as e:
             self._setRenderVars_(stage="error",error=str(e))
             return False
@@ -101,10 +102,10 @@ class IndexTask(AbstractTask):
             path = pathJoin(DatabasesModel.PATH,fileName)
             cmd = ["gunzip",path]
             self._setRenderVars_(stage="gunzip",fileName=fileName,current=i,total=t)
-            if pRun(cmd).returncode != 0:
+            if pRun(cmd).returncode == 0:
                 ret.append(fileName[:-3])
             else:
-                self.__gErrors = (fileName,"Failed running gunzip on file.")
+                self.__failed.append((fileName,"Failed running gunzip on file."))
             i += 1
         return ret
 
@@ -120,4 +121,27 @@ class IndexTask(AbstractTask):
         ----------
         fileNames : 
         """
-        return True
+        ret = []
+        i = 0
+        t = len(fileNames)
+        for fileName in fileNames:
+            path = pathJoin(DatabasesModel.PATH,fileName)
+            cmd = [
+                "EnTAP"
+                ,"--config"
+                ,"-d"
+                ,path
+                ,"--out-dir"
+                ,DatabasesModel.OUT_PATH
+                ,"-t"
+                ,"8"
+                ,"--ini"
+                ,ConfigController.PATH
+            ]
+            self._setRenderVars_(stage="index",fileName=fileName,current=i,total=t)
+            if pRun(cmd).returncode == 0:
+                ret.append(fileName)
+            else:
+                self.__failed.append((fileName,"Failed indexing database."))
+            i += 1
+        return ret

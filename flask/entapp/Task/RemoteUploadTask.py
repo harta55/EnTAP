@@ -38,7 +38,7 @@ class RemoteUploadTask(AbstractTask):
         self.__ft = len(urls)
         self.__finished = []
         self.__failed = []
-        self._setRenderVars_(running=True,fileName="",current=0,total=0,progress=0,totalSize=True)
+        self._setRenderVars_(stage="init")
 
 
     def render(
@@ -68,12 +68,10 @@ class RemoteUploadTask(AbstractTask):
             self.__url = url
             self.__fileName = url[url.rfind("/")+1:]
             self._setRenderVars_(
-                running=True
+                stage="prep"
                 ,fileName=self.__fileName
                 ,current=self.__fi
                 ,total=self.__ft
-                ,progress=0
-                ,totalSize=True
             )
             try:
                 self.__path = pathJoin(DatabasesModel.PATH,self.__fileName)
@@ -93,7 +91,7 @@ class RemoteUploadTask(AbstractTask):
                 self.__fi += 1
             except Exception as e:
                 self.__failed.append((self.__fileName,str(e)))
-        self._setRenderVars_(running=False,finished=self.__finished,failed=self.__failed)
+        self._setRenderVars_(stage="fin",finished=self.__finished,failed=self.__failed)
         return not self.__failed
 
 
@@ -133,12 +131,12 @@ class RemoteUploadTask(AbstractTask):
                     else self.__reportBySize_(progress)
                 )
                 self._setRenderVars_(
-                    running=True
+                    stage="down"
                     ,fileName=self.__fileName
                     ,current=self.__fi
                     ,total=self.__ft
                     ,progress=p
-                    ,totalSize=bool(total)
+                    ,hasPercent=bool(total)
                 )
             ftp.retrbinary("RETR "+self.__fileName,write)
         self.__finished.append(self.__fileName)
@@ -163,12 +161,12 @@ class RemoteUploadTask(AbstractTask):
                         else self.__reportBySize_(progress)
                     )
                     self._setRenderVars_(
-                        running=True
+                        stage="down"
                         ,fileName=self.__fileName
                         ,current=self.__fi
                         ,total=self.__ft
                         ,progress=p
-                        ,totalSize=bool(total)
+                        ,hasPercent=bool(total)
                     )
         self.__finished.append(self.__fileName)
 

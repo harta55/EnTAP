@@ -1,17 +1,17 @@
-{% if running %}
-    {% if not fileName %}
-        <p>Preparing for download...</p>
+{% if stage == "init" %}
+    <p>Initializing downloads...</p>
+{% elif stage == "prep" %}
+    <p>Preparing download for {{ fileName }}({{ current }} of {{ total }})...</p>
+{% elif stage == "down" %}
+    <p>Downloading {{ fileName }}({{ current }} of {{ total }}).</p>
+    {% if hasPercent %}
+        <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">{{ progress }}%</div>
+        </div>
     {% else %}
-        <p>Downloading {{ fileName }}({{ current }} of {{ total }}).</p>
-        {% if totalSize %}
-            <div class="progress">
-                <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">{{ progress }}%</div>
-            </div>
-        {% else %}
-            <p>{{ progress }} Downloaded.</p>
-        {% endif %}
+        <p>{{ progress }} Downloaded.</p>
     {% endif %}
-{% else %}
+{% elif stage == "fin" %}
     {% if finished %}
         <p><b>Finished Downloads</b></p>
         <ul>
@@ -28,4 +28,6 @@
         {% endfor %}
         </ul>
     {% endif %}
+{% else %}
+    <p>Unknown.</p>
 {% endif %}

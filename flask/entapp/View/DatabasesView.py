@@ -18,6 +18,7 @@ from os.path import join as pathJoin
 from os.path import exists as pathExists
 from os.path import getsize
 from werkzeug.utils import secure_filename
+from flask import request
 
 
 
@@ -35,6 +36,7 @@ class DatabasesView(FlaskView):
         """
         Detailed description.
         """
+        print(request.args.getlist("names"))
         databases = DatabasesModel()
         return render_template("databases/index.html",databases=databases)
 

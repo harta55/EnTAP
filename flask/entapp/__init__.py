@@ -27,4 +27,6 @@ from . import Controller
 
 @application.before_request
 def update():
-    Controller.update()
+    ret = Controller.update()
+    if ret:
+        return ret

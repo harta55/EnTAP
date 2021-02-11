@@ -66,4 +66,8 @@ class ConfigForm(FlaskForm):
         ,description="Specify the E-Value that will be used as a cutoff during similarity "
                      "searching."
     )
+    threadNum = IntegerField(
+        "Thread Count"
+        ,description="The number of threads EnTAP uses when running."
+    )
     submit = SubmitField("Update")

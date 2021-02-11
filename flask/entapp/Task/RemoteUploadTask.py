@@ -113,7 +113,6 @@ class RemoteUploadTask(AbstractTask):
         u = self.__url[6:]
         host = u[:u.find("/")]
         d = u[u.find("/"):u.rfind("/")+1]
-        print(d)
         ftp = FTP(host)
         ftp.login()
         ftp.cwd(d)

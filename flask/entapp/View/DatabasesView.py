@@ -123,7 +123,8 @@ class DatabasesView(FlaskView):
         form = DatabaseUploadForm()
         if form.validate():
             if form.submit.data:
-                urls = [u.strip() for u in form.url.data.split("\n") if u]
+                urls = [u.strip() for u in form.urls.data.split("\n") if u]
+                urls += form.defUrls.data
                 taskController.start(RemoteUploadTask(urls))
                 flash("Started remote upload task.","success")
                 return redirect(url_for("RootView:status"))

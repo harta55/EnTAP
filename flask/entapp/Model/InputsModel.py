@@ -1,21 +1,15 @@
 """
-Contains the DatabasesModel class.
+Contains the InputsModel class.
 """
-from os import listdir
-from os import makedirs
-from os import remove as rmFile
-from os.path import exists as pathExists
-from os.path import join as pathJoin
 
 
 
 
-class DatabasesModel():
+class InputsModel():
     """
     Detailed description.
     """
-    PATH = "/workspace/flask/db"
-    OUT_PATH = "/workspace/entap/outfiles"
+    PATH = "/workspace/entap/infiles"
 
 
     def __init__(
@@ -98,20 +92,6 @@ class DatabasesModel():
             makedirs(cls.PATH)
 
 
-    def isIndexed(
-        self
-        ,index
-    ):
-        """
-        Detailed description.
-
-        Parameters
-        ----------
-        index : 
-        """
-        return pathExists(self.__indexPath_(self.__files[index]))
-
-
     def name(
         self
         ,index
@@ -141,22 +121,4 @@ class DatabasesModel():
             if name not in self.__files:
                 return False
             rmFile(pathJoin(self.PATH,name))
-            indexPath = self.__indexPath_(name)
-            if pathExists(indexPath):
-                rmFile(indexPath)
         return True
-
-
-    @classmethod
-    def __indexPath_(
-        cls
-        ,name
-    ):
-        """
-        Detailed description.
-
-        Parameters
-        ----------
-        name : 
-        """
-        return pathJoin(cls.OUT_PATH,"bin",name[:name.rfind(".")]+".dmnd")

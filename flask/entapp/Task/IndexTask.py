@@ -3,10 +3,12 @@ Contains the IndexTask class.
 """
 from ..Abstract.AbstractTask import *
 from ..Controller.ConfigController import *
+from ..Model.ConfigModel import *
 from ..Model.DatabasesModel import *
 from flask import render_template
 from os.path import join as pathJoin
 from subprocess import run as pRun
+from traceback import print_exc
 
 
 
@@ -71,6 +73,7 @@ class IndexTask(AbstractTask):
             )
             return not self.__failed
         except Exception as e:
+            print_exc()
             self._setRenderVars_(stage="error",error=str(e))
             return False
 
@@ -96,10 +99,15 @@ class IndexTask(AbstractTask):
         fileNames : 
         """
         ret = []
-        i = 0
+        i = 1
         t = len(fileNames)
         for fileName in fileNames:
             path = pathJoin(DatabasesModel.PATH,fileName)
+            if pathExists(path[:-3]):
+                self.__failed.append(
+                    (fileName,"Unzipped version of file already exists, please remove it first.")
+                )
+                continue
             cmd = ["gunzip",path]
             self._setRenderVars_(stage="gunzip",fileName=fileName,current=i,total=t)
             if pRun(cmd).returncode == 0:
@@ -122,9 +130,10 @@ class IndexTask(AbstractTask):
         fileNames : 
         """
         ret = []
-        i = 0
+        i = 1
         t = len(fileNames)
         for fileName in fileNames:
+            config = ConfigModel()
             path = pathJoin(DatabasesModel.PATH,fileName)
             cmd = [
                 "EnTAP"
@@ -134,7 +143,7 @@ class IndexTask(AbstractTask):
                 ,"--out-dir"
                 ,DatabasesModel.OUT_PATH
                 ,"-t"
-                ,"8"
+                ,str(config.threadNum())
                 ,"--ini"
                 ,ConfigController.PATH
             ]

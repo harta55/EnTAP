@@ -4,6 +4,7 @@ Contains the ConfigModel class.
 from decimal import Decimal
 from json import dumps
 from json import loads
+from os import cpu_count
 from os import makedirs
 from os.path import dirname
 from os.path import exists as pathExists
@@ -78,6 +79,7 @@ class ConfigModel():
                             ,"queryCoverage": "50.00"
                             ,"targetCoverage": "50.00"
                             ,"eValue": "0.000001"
+                            ,"threadNum": cpu_count()
                         }
                             ,indent=4
                     )
@@ -106,6 +108,7 @@ class ConfigModel():
         form.queryCoverage.data = Decimal(self.__data["queryCoverage"])
         form.targetCoverage.data = Decimal(self.__data["targetCoverage"])
         form.eValue.data = Decimal(self.__data["eValue"])
+        form.threadNum.data = self.__data["threadNum"]
 
 
     def save(
@@ -116,6 +119,15 @@ class ConfigModel():
         """
         with open(self.PATH,"w") as ofile:
             ofile.write(dumps(self.__data))
+
+
+    def threadNum(
+        self
+    ):
+        """
+        Detailed description.
+        """
+        return self.__data["threadNum"]
 
 
     def update(
@@ -141,4 +153,5 @@ class ConfigModel():
             ,"queryCoverage": str(form.queryCoverage.data)
             ,"targetCoverage": str(form.targetCoverage.data)
             ,"eValue": str(form.eValue.data)
+            ,"threadNum": form.threadNum.data
         }

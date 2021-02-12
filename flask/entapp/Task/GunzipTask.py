@@ -2,7 +2,8 @@
 Contains the GunzipTask class.
 """
 from ..Abstract.AbstractTask import *
-from ..Model.DatabasesModel import *
+from ..Model.InputsModel import *
+from flask import render_template
 from os.path import join as pathJoin
 from subprocess import run as pRun
 
@@ -17,17 +18,32 @@ class GunzipTask(AbstractTask):
 
     def __init__(
         self
-        ,fileName
+        ,fileNames
     ):
         """
         Detailed description.
 
         Parameters
         ----------
-        fileName : 
+        fileNames : 
         """
         super().__init__()
-        self.__fileName = fileName
+        self.__fileNames = fileNames
+        self._setRenderVars_(stage="init")
+
+
+    def render(
+        self
+        ,**kwargs
+    ):
+        """
+        Detailed description.
+
+        Parameters
+        ----------
+        **kwargs : 
+        """
+        return render_template("task/gunzip.html",**kwargs)
 
 
     def run(
@@ -37,20 +53,23 @@ class GunzipTask(AbstractTask):
         Detailed description.
         """
         try:
-            path = pathJoin(DatabasesModel.PATH,self.__fileName)
-            cmd = ["gunzip",path]
-            self._clear_()
-            self._print_("Gunzipping database '"+self.__fileName+"'.")
-            self._flush_()
-            assert(pRun(cmd).returncode==0)
-            self._clear_()
-            self._print_("Gunzipped database '"+self.__fileName+"'.")
-            self._flush_()
-            return True
+            worked = []
+            failed = []
+            i = 1
+            t = len(self.__fileNames)
+            for fileName in self.__fileNames:
+                self._setRenderVars_(stage="gunzip",fileName=fileName,current=i,total=t)
+                path = pathJoin(InputsModel.PATH,fileName)
+                cmd = ["gunzip",path]
+                if pRun(cmd).returncode == 0:
+                    worked.append(fileName)
+                else:
+                    failed.append(fileName)
+                i += 1
+            self._setRenderVars_(stage="fin",worked=worked,failed=failed)
+            return not failed
         except Exception as e:
-            self._clear_()
-            self._print_(str(e))
-            self._flush_()
+            self._setRenderVars_(stage="error",error=str(e))
             return False
 
 

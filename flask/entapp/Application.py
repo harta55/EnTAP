@@ -5,6 +5,7 @@ from .Controller import configController
 from .Model.ConfigModel import *
 from .Model.ContamsModel import *
 from .Model.DatabasesModel import *
+from .Model.InputsModel import *
 from .Model.UninformsModel import *
 from flask import Flask
 from json import dumps
@@ -35,5 +36,6 @@ class Application(Flask):
         ConfigModel.initialize()
         ContamsModel.initialize()
         DatabasesModel.initialize()
+        InputsModel.initialize()
         UninformsModel.initialize()
         configController.update()

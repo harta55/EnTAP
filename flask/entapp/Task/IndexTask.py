@@ -8,7 +8,6 @@ from ..Model.DatabasesModel import *
 from flask import render_template
 from os.path import join as pathJoin
 from subprocess import run as pRun
-from traceback import print_exc
 
 
 
@@ -73,7 +72,6 @@ class IndexTask(AbstractTask):
             )
             return not self.__failed
         except Exception as e:
-            print_exc()
             self._setRenderVars_(stage="error",error=str(e))
             return False
 

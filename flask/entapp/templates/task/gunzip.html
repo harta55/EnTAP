@@ -1,0 +1,26 @@
+{% if stage == "init" %}
+    <p>Initializing gunzip job...</p>
+{% elif stage == "gunzip" %}
+    <p>Gunzipping {{ fileName }}({{ current }} of {{ total }}).</p>
+{% elif stage == "fin" %}
+    {% if worked %}
+        <p><b>Gunzipped</b></p>
+        <ul>
+        {% for fileName in worked %}
+            <li>{{ fileName }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+    {% if failed %}
+        <p><b>Failures</b></p>
+        <ul>
+        {% for (fileName,error) in failed %}
+            <li><b>{{ fileName }}:</b> {{ error }}</li>
+        {% endfor %}
+        </ul>
+    {% endif %}
+{% elif stage == "error" %}
+    <p>{{ error }}</p>
+{% else %}
+    <p>Unknown.</p>
+{% endif %}

@@ -11,6 +11,7 @@ application.config["SECRET_KEY"] = "hard to guess phrase DO NOT USE IN PRODUCTIO
 from .View.ConfigView import *
 from .View.ContamsView import *
 from .View.DatabasesView import *
+from .View.InputsView import *
 from .View.RootView import *
 from .View.UninformsView import *
 
@@ -18,6 +19,7 @@ from .View.UninformsView import *
 ConfigView.register(application)
 ContamsView.register(application)
 DatabasesView.register(application)
+InputsView.register(application)
 RootView.register(application)
 UninformsView.register(application)
 

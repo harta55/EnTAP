@@ -1,6 +1,11 @@
 """
 Contains the InputsModel class.
 """
+from os import listdir
+from os import makedirs
+from os import remove as rmFile
+from os.path import exists as pathExists
+from os.path import join as pathJoin
 
 
 

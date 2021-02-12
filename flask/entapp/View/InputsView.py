@@ -1,11 +1,9 @@
 """
-Contains the DatabasesView class.
+Contains the InputsView class.
 """
 from ..Controller import taskController
-from ..Form.DatabaseUploadForm import *
-from ..Model.DatabasesModel import *
-from ..Task.IndexTask import *
-from ..Task.RemoteUploadTask import *
+from ..Model.InputsModel import *
+from ..Task.GunzipTask import *
 from flask import flash
 from flask import make_response
 from flask import redirect
@@ -22,11 +20,11 @@ from werkzeug.utils import secure_filename
 
 
 
-class DatabasesView(FlaskView):
+class InputsView(FlaskView):
     """
     Detailed description.
     """
-    route_base = "/databases/"
+    route_base = "/inputs/"
 
 
     def index(
@@ -35,8 +33,8 @@ class DatabasesView(FlaskView):
         """
         Detailed description.
         """
-        databases = DatabasesModel()
-        return render_template("databases/index.html",databases=databases)
+        inputs = InputsModel()
+        return render_template("inputs/index.html",inputs=inputs)
 
 
     @route("/operation/",methods=["POST"])
@@ -49,21 +47,21 @@ class DatabasesView(FlaskView):
         action = request.form.get("action")
         names = request.form.getlist("names")
         if not names:
-            return redirect(url_for("DatabasesView:index"))
+            return redirect(url_for("InputsView:index"))
         if action == "remove":
-            databases = DatabasesModel()
-            if databases.remove(names):
-                flash("Successfully removed database(s).","success")
+            inputs = InputsModel()
+            if inputs.remove(names):
+                flash("Successfully removed inputs.","success")
             else:
-                flash("Failed removing one or more databases.","danger")
-            return redirect(url_for("DatabasesView:index"))
-        elif action == "index":
-            taskController.start(IndexTask(names))
-            flash("Started index task.","success")
+                flash("Failed removing one or more inputs.","danger")
+            return redirect(url_for("InputsView:index"))
+        elif action == "gunzip":
+            taskController.start(GunzipTask(names))
+            flash("Started gunzip task.","success")
             return redirect(url_for("RootView:status"))
         else:
             flash("Unknown operation given.","danger")
-            return redirect(url_for("DatabasesView:index"))
+            return redirect(url_for("InputsView:index"))
 
 
     @route("/upload/chunk/",methods=["POST"])
@@ -74,7 +72,7 @@ class DatabasesView(FlaskView):
         Detailed description.
         """
         ifile = request.files["file"]
-        savePath = pathJoin(DatabasesModel.PATH,secure_filename(ifile.filename))
+        savePath = pathJoin(InputsModel.PATH,secure_filename(ifile.filename))
         chunkIndex = int(request.form["dzchunkindex"])
         if pathExists(savePath) and chunkIndex == 0:
             return make_response(("File already exists.",400))
@@ -98,35 +96,4 @@ class DatabasesView(FlaskView):
         """
         Detailed description.
         """
-        return render_template("databases/uploadLocal.html")
-
-
-    @route("/upload/remote/")
-    def uploadRemote(
-        self
-    ):
-        """
-        Detailed description.
-        """
-        form = DatabaseUploadForm()
-        return render_template("databases/uploadRemote.html",form=form)
-
-
-    @route("/upload/remote/start/",methods=["POST"])
-    def uploadRemoteStart(
-        self
-    ):
-        """
-        Detailed description.
-        """
-        form = DatabaseUploadForm()
-        if form.validate():
-            if form.submit.data:
-                urls = [u.strip() for u in form.urls.data.split("\n") if u]
-                urls += form.defUrls.data
-                taskController.start(RemoteUploadTask(urls))
-                flash("Started remote upload task.","success")
-                return redirect(url_for("RootView:status"))
-        else:
-            flash("Failed starting remote upload task.","danger")
-        return redirect(url_for("DatabasesView:index"))
+        return render_template("inputs/uploadLocal.html")

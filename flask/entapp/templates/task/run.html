@@ -1,0 +1,9 @@
+{% if stage == "init" %}
+    <p>Initializing...</p>
+{% elif stage == "success" %}
+    <p>Success. Refer to the <a href="">results page</a> for results or the <a herf="">logs page</a> for detailed output of this and all other runs.</p>
+{% elif stage == "failed" %}
+    <p>Failure. Refer to the <a href="">logs page</a> for detailed output of this and all other runs.</p>
+{% else %}
+    <p>Unknown.</p>
+{% endif %}

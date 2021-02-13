@@ -50,17 +50,31 @@ class DatabasesView(FlaskView):
         names = request.form.getlist("names")
         if not names:
             return redirect(url_for("DatabasesView:index"))
-        if action == "remove":
+        if action == "index":
+            taskController.start(IndexTask(names))
+            flash("Started index task.","success")
+            return redirect(url_for("RootView:status"))
+        elif action == "enable":
+            databases = DatabasesModel()
+            for name in names:
+                databases.enable(name)
+            databases.save()
+            flash("Successfully enabled database(s).","success")
+            return redirect(url_for("DatabasesView:index"))
+        elif action == "disable":
+            databases = DatabasesModel()
+            for name in names:
+                databases.disable(name)
+            databases.save()
+            flash("Successfully disabled database(s).","success")
+            return redirect(url_for("DatabasesView:index"))
+        elif action == "remove":
             databases = DatabasesModel()
             if databases.remove(names):
                 flash("Successfully removed database(s).","success")
             else:
                 flash("Failed removing one or more databases.","danger")
             return redirect(url_for("DatabasesView:index"))
-        elif action == "index":
-            taskController.start(IndexTask(names))
-            flash("Started index task.","success")
-            return redirect(url_for("RootView:status"))
         else:
             flash("Unknown operation given.","danger")
             return redirect(url_for("DatabasesView:index"))

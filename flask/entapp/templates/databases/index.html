@@ -32,6 +32,7 @@
                 <th>Name</th>
                 <th style="width:5em;">Extension</th>
                 <th style="width:5em;">Indexed</th>
+                <th style="width:5em;">Enabled</th>
             </tr>
         </thead>
         <tbody>
@@ -42,11 +43,16 @@
                     </td>
                     <td class="text-break">{{ databases.name(i) }}</td>
                     <td style="width:5em;">{{ databases.extName(i) }}</td>
-                        {% if databases.isIndexed(i) %}
-                            <td style="width:5em;" class="text-success fw-bold">Yes</td>
-                        {% else %}
-                            <td style="width:5em;" class="text-danger fw-bold">No</td>
-                        {% endif %}
+                    {% if databases.isIndexed(i) %}
+                        <td style="width:5em;" class="text-success fw-bold">Yes</td>
+                    {% else %}
+                        <td style="width:5em;" class="text-danger fw-bold">No</td>
+                    {% endif %}
+                    {% if databases.isEnabled(i) %}
+                        <td style="width:5em;" class="text-success fw-bold">Yes</td>
+                    {% else %}
+                        <td style="width:5em;" class="text-danger fw-bold">No</td>
+                    {% endif %}
                 </tr>
             {% endfor %}
         </tbody>
@@ -55,6 +61,8 @@
             <button class="btn btn-secondary dropdown-toggle" type="button" id="testMenu" data-bs-toggle="dropdown" aria-expanded="false">Operation</button>
             <ul class="dropdown-menu" aria-labelledby="testMenu">
                 <li><button type="submit" name="action" value="index" class="dropdown-item">Index</button></li>
+                <li><button type="submit" name="action" value="enable" class="dropdown-item">Enable</button></li>
+                <li><button type="submit" name="action" value="disable" class="dropdown-item">Disable</button></li>
                 <li><button type="submit" name="action" value="remove" class="dropdown-item">Remove</button></li>
             </ul>
         </div>

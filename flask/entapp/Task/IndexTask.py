@@ -130,8 +130,9 @@ class IndexTask(AbstractTask):
         ret = []
         i = 1
         t = len(fileNames)
+        config = ConfigModel()
+        databases = DatabasesModel()
         for fileName in fileNames:
-            config = ConfigModel()
             path = pathJoin(DatabasesModel.PATH,fileName)
             cmd = [
                 "EnTAP"
@@ -147,6 +148,8 @@ class IndexTask(AbstractTask):
             ]
             self._setRenderVars_(stage="index",fileName=fileName,current=i,total=t)
             if pRun(cmd).returncode == 0:
+                databases.enable(fileName)
+                databases.save()
                 ret.append(fileName)
             else:
                 self.__failed.append((fileName,"Failed indexing database."))

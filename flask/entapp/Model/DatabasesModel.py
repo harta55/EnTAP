@@ -1,9 +1,12 @@
 """
 Contains the DatabasesModel class.
 """
+from json import dumps
+from json import loads
 from os import listdir
 from os import makedirs
 from os import remove as rmFile
+from os.path import dirname
 from os.path import exists as pathExists
 from os.path import join as pathJoin
 
@@ -16,6 +19,7 @@ class DatabasesModel():
     """
     PATH = "/workspace/flask/db"
     OUT_PATH = "/workspace/entap/outfiles"
+    ENABLED_PATH = "/workspace/flask/databases.json"
 
 
     def __init__(
@@ -25,6 +29,8 @@ class DatabasesModel():
         Detailed description.
         """
         self.__files = listdir(self.PATH)
+        with open(self.ENABLED_PATH,"r") as ifile:
+            self.__enabled = loads(ifile.read())
 
 
     def __contains__(
@@ -57,6 +63,54 @@ class DatabasesModel():
         Detailed description.
         """
         return range(len(self.__files)).__iter__()
+
+
+    def disable(
+        self
+        ,name
+    ):
+        """
+        Detailed description.
+
+        Parameters
+        ----------
+        name : 
+        """
+        if name in self.__enabled:
+            self.__enabled.remove(name)
+
+
+    def enable(
+        self
+        ,name
+    ):
+        """
+        Detailed description.
+
+        Parameters
+        ----------
+        name : 
+        """
+        if name not in self.__enabled:
+            self.__enabled.append(name)
+
+
+    def enabledNames(
+        self
+    ):
+        """
+        Detailed description.
+        """
+        return self.__enabled
+
+
+    def enabledPaths(
+        self
+    ):
+        """
+        Detailed description.
+        """
+        return [self.__indexPath_(f) for f in self.__enabled]
 
 
     def extName(
@@ -96,6 +150,25 @@ class DatabasesModel():
         """
         if not pathExists(cls.PATH):
             makedirs(cls.PATH)
+        if not pathExists(dirname(cls.ENABLED_PATH)):
+            makedirs(dirname(cls.ENABLED_PATH))
+        if not pathExists(cls.ENABLED_PATH):
+            with open(cls.ENABLED_PATH,"w") as ofile:
+                ofile.write(dumps([]))
+
+
+    def isEnabled(
+        self
+        ,index
+    ):
+        """
+        Detailed description.
+
+        Parameters
+        ----------
+        index : 
+        """
+        return self.__files[index] in self.__enabled
 
 
     def isIndexed(
@@ -145,6 +218,16 @@ class DatabasesModel():
             if pathExists(indexPath):
                 rmFile(indexPath)
         return True
+
+
+    def save(
+        self
+    ):
+        """
+        Detailed description.
+        """
+        with open(self.ENABLED_PATH,"w") as ofile:
+            ofile.write(dumps(self.__enabled))
 
 
     @classmethod

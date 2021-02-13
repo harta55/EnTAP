@@ -13,6 +13,7 @@ from .View.ContamsView import *
 from .View.DatabasesView import *
 from .View.InputsView import *
 from .View.RootView import *
+from .View.RunView import *
 from .View.UninformsView import *
 
 
@@ -21,6 +22,7 @@ ContamsView.register(application)
 DatabasesView.register(application)
 InputsView.register(application)
 RootView.register(application)
+RunView.register(application)
 UninformsView.register(application)
 
 

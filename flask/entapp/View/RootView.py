@@ -24,15 +24,6 @@ class RootView(FlaskView):
         return render_template("index.html")
 
 
-    def run(
-        self
-    ):
-        """
-        Detailed description.
-        """
-        return render_template("run.html")
-
-
     def status(
         self
     ):

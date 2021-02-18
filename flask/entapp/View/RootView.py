@@ -15,6 +15,15 @@ class RootView(FlaskView):
     route_base = "/"
 
 
+    def about(
+        self
+    ):
+        """
+        Detailed description.
+        """
+        return render_template("about.html")
+
+
     def index(
         self
     ):

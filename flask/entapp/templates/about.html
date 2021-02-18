@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block title %}{{ super() }} - About{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">About</h1>
+    <p>Full documentation is available <a href="https://entap.readthedocs.io/en/v0.8.0-beta/introduction.html">here</a>.</p>
+    <p>Source code is available <a href="https://github.com/harta55/EnTAP">here</a>.</p>
+    <p>EnTAP is made available under the GNU General Public License Version 3.</p>
+    <p>EnTAP was developed by the <a href="http://plantcompgenomics.com/">Plant Computational Genomics Lab at the University of Connecticut</a>. This Dockerized web interface was contributed by the <a href="http://ficklinlab.cahnrs.wsu.edu/">Ficklin Computational Lab at Washington State University</a>.</p>
+</div>
+{% endblock %}

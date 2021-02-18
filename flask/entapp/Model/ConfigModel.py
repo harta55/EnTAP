@@ -61,6 +61,9 @@ class ConfigModel():
             makedirs(dirname(cls.PATH))
         if not pathExists(cls.PATH):
             with open(cls.PATH,"w") as ofile:
+                n = cpu_count()-1
+                if n is None or n < 1:
+                    n = 1
                 ofile.write(
                     dumps(
                         {
@@ -79,7 +82,7 @@ class ConfigModel():
                             ,"queryCoverage": "50.00"
                             ,"targetCoverage": "50.00"
                             ,"eValue": "0.000001"
-                            ,"threadNum": cpu_count()
+                            ,"threadNum": n
                         }
                             ,indent=4
                     )

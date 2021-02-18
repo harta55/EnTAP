@@ -23,7 +23,7 @@
             {% for uninform in uninforms %}
                 <tr>
                     <td style="width:5em;"><a class="btn btn-danger btn-sm" href="{{ url_for('UninformsView:remove',name=uninform) }}">Remove</a></td>
-                    <td>{{ uninform }}</td>
+                    <td class="align-middle">{{ uninform }}</td>
                 </tr>
             {% endfor %}
         </tbody>

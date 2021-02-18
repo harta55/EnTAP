@@ -12,6 +12,7 @@ from .View.ConfigView import *
 from .View.ContamsView import *
 from .View.DatabasesView import *
 from .View.InputsView import *
+from .View.LogsView import *
 from .View.RootView import *
 from .View.RunView import *
 from .View.UninformsView import *
@@ -21,6 +22,7 @@ ConfigView.register(application)
 ContamsView.register(application)
 DatabasesView.register(application)
 InputsView.register(application)
+LogsView.register(application)
 RootView.register(application)
 RunView.register(application)
 UninformsView.register(application)

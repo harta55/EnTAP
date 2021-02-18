@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}{{ super() }} - Logs{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4">Logs</h1>
+    <div class="card card-body bg-light mt-3">
+        <label>List of Logs</label>
+        <table class="table table-striped">
+        <thead>
+            <tr>
+                <th class="text-center" style="width:15em;">Date</th>
+                <th style="width:1em;"></th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in logs %}
+                <tr>
+                    <td class="align-middle text-end" style="width:15em;">{{ logs[i].dt().strftime("%c") }}</td>
+                    <td style="width:1em;">
+                        <a class="btn btn-info btn-sm" href="{{ url_for('LogsView:read',index=i) }}">View&nbsp;Log</a>
+                    </td>
+                    <td>
+                        <a class="btn btn-info btn-sm" href="{{ url_for('LogsView:debug',index=i) }}">View&nbsp;Debug</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

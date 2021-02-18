@@ -23,7 +23,7 @@
             {% for contam in contams %}
                 <tr>
                     <td style="width:5em;"><a class="btn btn-danger btn-sm" href="{{ url_for('ContamsView:remove',name=contam) }}">Remove</a></td>
-                    <td>{{ contam }}</td>
+                    <td class="align-middle">{{ contam }}</td>
                 </tr>
             {% endfor %}
         </tbody>

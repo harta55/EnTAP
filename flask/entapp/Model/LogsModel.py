@@ -2,8 +2,8 @@
 Contains the LogsModel class.
 """
 from .LogItem import *
+from datetime import datetime
 from os import listdir
-from os.path import join as pathJoin
 from re import compile as reCompile
 
 
@@ -26,8 +26,14 @@ class LogsModel():
         self.__logs = []
         for name in listdir(self.PATH):
             if name.startswith("log_file_") and name.endswith(".txt"):
-                self.__logs.append(LogItem(pathJoin(self.PATH,datetime(*dateRE.findall(name)))))
+                self.__logs.append(
+                    LogItem(
+                        self.PATH
+                        ,datetime(*[int(n) for n in self.dateRE.findall(name)])
+                    )
+                )
         self.__logs.sort()
+        self.__logs.reverse()
 
 
     def __iter__(
@@ -36,7 +42,7 @@ class LogsModel():
         """
         Detailed description.
         """
-        return self.__logs.__iter__()
+        return range(len(self.__logs)).__iter__()
 
 
     def __getitem__(

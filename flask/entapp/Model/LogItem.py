@@ -1,6 +1,7 @@
 """
 Contains the LogItem class.
 """
+from os.path import join as pathJoin
 
 
 
@@ -48,9 +49,10 @@ class LogItem():
         """
         Detailed description.
         """
+        x = self.__dt
         path = pathJoin(
             self.__workDir
-            ,"debug_%iY%iM%iD-%id%ih%im.txt"%(x.year,x.month,x.day,x.hour,x.minute,x.second)
+            ,"debug_%iY%iM%iD-%ih%im%is.txt"%(x.year,x.month,x.day,x.hour,x.minute,x.second)
         )
         with open(path,"r") as ifile:
             return ifile.read()
@@ -71,9 +73,10 @@ class LogItem():
         """
         Detailed description.
         """
+        x = self.__dt
         path = pathJoin(
             self.__workDir
-            ,"log_file_%iY%iM%iD-%id%ih%im.txt"%(x.year,x.month,x.day,x.hour,x.minute,x.second)
+            ,"log_file_%iY%iM%iD-%ih%im%is.txt"%(x.year,x.month,x.day,x.hour,x.minute,x.second)
         )
         with open(path,"r") as ifile:
             return ifile.read()
@@ -85,9 +88,10 @@ class LogItem():
         """
         Detailed description.
         """
+        x = self.__dt
         path = pathJoin(
             self.__workDir
-            ,"log_file_%iY%iM%iD-%id%ih%im.txt"%(x.year,x.month,x.day,x.hour,x.minute,x.second)
+            ,"log_file_%iY%iM%iD-%ih%im%is.txt"%(x.year,x.month,x.day,x.hour,x.minute,x.second)
         )
         with open(path,"r") as ifile:
             lines = ifile.read().split("\n")

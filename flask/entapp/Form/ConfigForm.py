@@ -15,7 +15,9 @@ from wtforms.fields.html5 import IntegerField
 
 class ConfigForm(FlaskForm):
     """
-    Detailed description.
+    This is the configuration flask form. It provides all basic configuration
+    options for EnTAP. More advanced configuration options that are lists of
+    words are excluded from this form, namely contaminants and uninformatives.
     """
     dataType = SelectField(
         "Data Type"

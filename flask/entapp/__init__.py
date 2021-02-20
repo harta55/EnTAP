@@ -1,5 +1,6 @@
 """
-Detailed description.
+Contains the EnTAP flask application package. This package creates the flask app
+in its root namespace with the name 'application'.
 """
 from .Application import *
 

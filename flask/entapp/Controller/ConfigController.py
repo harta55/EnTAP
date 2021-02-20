@@ -13,7 +13,9 @@ from os.path import getmtime
 
 class ConfigController():
     """
-    Detailed description.
+    This is the singleton configuration controller. It checks to see if any of
+    the internal JSON configuration files have been updated, updating the EnTAP
+    INI configuration file if any have been updated.
     """
     PATH = "/workspace/entap/config.ini"
     HEADER_LINES = [
@@ -42,7 +44,8 @@ class ConfigController():
         self
     ):
         """
-        Detailed description.
+        Updates EnTAP's INI configuration file if any of the internal JSON
+        configuration files have been updated.
         """
         if not pathExists(dirname(self.PATH)):
             makedirs(dirname(self.PATH))
@@ -61,7 +64,8 @@ class ConfigController():
         self
     ):
         """
-        Detailed description.
+        Writes a new EnTAP INI configuration file using the current values in
+        the internal JSON configuration files.
         """
         configModel = ConfigModel()
         contamsModel = ContamsModel()

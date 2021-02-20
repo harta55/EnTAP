@@ -1,5 +1,5 @@
 """
-Detailed description.
+Contains controller classes and functions.
 """
 from .ConfigController import *
 from .TaskController import *
@@ -10,7 +10,13 @@ from flask import url_for
 
 def update():
     """
-    Detailed description.
+    Updates the singleton task controller.
+
+    Returns
+    -------
+    result : object
+             A redirect to the status page if a task is currently running or
+             else none.
     """
     taskController.update()
     if taskController.isRunning() and flask.request.endpoint != "RootView:status":

@@ -10,16 +10,15 @@ from traceback import print_exc
 
 class TaskController():
     """
-    Detailed description.
+    This is the singleton task controller. It manages tasks for this flask
+    application, starting new tasks and providing information about the current
+    state of any running task.
     """
 
 
     def __init__(
         self
     ):
-        """
-        Detailed description.
-        """
         self.__thread = None
         self.__task = None
         self.__lastTitle = "No History"
@@ -31,7 +30,13 @@ class TaskController():
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : bool
+                 True if the last task ran failed or false otherwise. If no task
+                 has been ran yet then false is returned.
         """
         return self.__hadError
 
@@ -40,7 +45,12 @@ class TaskController():
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : bool
+                 True if this controller is running a task or false otherwise.
         """
         return self.__thread and self.__thread.is_alive()
 
@@ -49,7 +59,14 @@ class TaskController():
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : string
+                 The rendered output of this controller's currently running task
+                 or the last task ran if no task is running. If no task has ever
+                 been run a default output stating so is returned.
         """
         if self.isRunning():
             return self.__task.output()
@@ -62,11 +79,13 @@ class TaskController():
         ,task
     ):
         """
-        Detailed description.
+        Starts a new task for this controller in its separate task thread. This
+        controller must not be running a task.
 
         Parameters
         ----------
-        task : 
+        task : entapp.Abstract.AbstractTask
+               New task that this controller will start running.
         """
         assert(not self.isRunning())
         assert(isinstance(task,AbstractTask))
@@ -80,7 +99,14 @@ class TaskController():
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : string
+                 The title of this controller's currently running task or the
+                 last task ran if no task is running. If no task has ever been
+                 run a default title stating so is returned.
         """
         if self.isRunning():
             return self.__task.title()
@@ -92,7 +118,8 @@ class TaskController():
         self
     ):
         """
-        Detailed description.
+        Updates this task controller, checking if any currently running task is
+        finished.
         """
         if self.__thread is not None:
             if not self.__thread.is_alive():
@@ -106,7 +133,8 @@ class TaskController():
         self
     ):
         """
-        Detailed description.
+        Runs this controller's current task on its separate task thread,
+        catching any thrown exception and marking the task had an error.
         """
         try:
             self.__hadError = not self.__task.run()

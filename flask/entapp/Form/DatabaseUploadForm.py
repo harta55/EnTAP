@@ -11,7 +11,8 @@ from wtforms import SubmitField
 
 class DatabaseUploadForm(FlaskForm):
     """
-    Detailed description.
+    This is the database upload form. It provides input for remotely uploading
+    databases from predetermined URLs and custom URLs.
     """
     defUrls = SelectMultipleField(
         "Databases"

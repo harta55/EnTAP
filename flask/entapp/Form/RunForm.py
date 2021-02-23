@@ -10,7 +10,8 @@ from wtforms import SubmitField
 
 class RunForm(FlaskForm):
     """
-    Detailed description.
+    This is the run form. It provides all necessary and optional options for
+    starting a EnTAP run job.
     """
     inputSelect = SelectField(
         "Select Input"

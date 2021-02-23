@@ -15,7 +15,15 @@ from os.path import join as pathJoin
 
 class DatabasesModel():
     """
-    Detailed description.
+    This is the databases model class. It provides a model for all FASTA
+    databases contained in this flask application's local environment. It also
+    keeps track of important properties for each database. These properties are
+    file extension, if it is indexed by EnTAP, and if it is enabled for use when
+    running EnTAP.
+
+    This database keeps track of enabled/disabled databases through its own
+    custom JSON data file. Because of this the model must be saved when changes
+    are made to this property.
     """
     PATH = "/workspace/flask/db"
     OUT_PATH = "/workspace/entap/outfiles"
@@ -25,9 +33,6 @@ class DatabasesModel():
     def __init__(
         self
     ):
-        """
-        Detailed description.
-        """
         self.__files = listdir(self.PATH)
         with open(self.ENABLED_PATH,"r") as ifile:
             self.__enabled = loads(ifile.read())
@@ -37,22 +42,12 @@ class DatabasesModel():
         self
         ,name
     ):
-        """
-        Detailed description.
-
-        Parameters
-        ----------
-        name : 
-        """
         return name in self.__files
 
 
     def __len__(
         self
     ):
-        """
-        Detailed description.
-        """
         return len(self.__files)
 
 
@@ -60,7 +55,14 @@ class DatabasesModel():
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : range_iterator
+                 A ranged iterator that will iterate through every valid integer
+                 index for all databases of this model, starting at 0 and ending
+                 at the last database in the list.
         """
         return range(len(self.__files)).__iter__()
 
@@ -70,11 +72,13 @@ class DatabasesModel():
         ,name
     ):
         """
-        Detailed description.
+        Disables the given database for use when running EnTAP. The model must
+        be saved for this to be persistent.
 
         Parameters
         ----------
-        name : 
+        name : string
+               The file name of the database that is disabled.
         """
         if name in self.__enabled:
             self.__enabled.remove(name)
@@ -85,11 +89,13 @@ class DatabasesModel():
         ,name
     ):
         """
-        Detailed description.
+        Enables the given database for use when running EnTAP. The model must be
+        saved for this to be persistent.
 
         Parameters
         ----------
-        name : 
+        name : string
+               The file name of the database that is enabled.
         """
         if name not in self.__enabled:
             self.__enabled.append(name)
@@ -99,7 +105,12 @@ class DatabasesModel():
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : list
+                 File names of all databases enabled in this model.
         """
         return self.__enabled
 
@@ -108,7 +119,12 @@ class DatabasesModel():
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : list
+                 Absolute paths of all databases enabled in this model's list.
         """
         return [self.__indexPath_(f) for f in self.__enabled]
 
@@ -118,11 +134,18 @@ class DatabasesModel():
         ,index
     ):
         """
-        Detailed description.
+        Getter method.
 
         Parameters
         ----------
-        index : 
+        index : int
+                Index of the database whose extension name is returned.
+
+        Returns
+        -------
+        result : string
+                 Name of the extension of this model's database at the given
+                 index.
         """
         name = self.__files[index]
         ext = name[name.rfind(".")+1:]
@@ -146,7 +169,9 @@ class DatabasesModel():
         cls
     ):
         """
-        Detailed description.
+        Initializes this model's JSON configuration file that is used to store
+        enabled properties of this model's databases. If the file does not exist
+        it is created with an empty list of enabled databases.
         """
         if not pathExists(cls.PATH):
             makedirs(cls.PATH)
@@ -162,11 +187,17 @@ class DatabasesModel():
         ,index
     ):
         """
-        Detailed description.
+        Getter method.
 
         Parameters
         ----------
-        index : 
+        index : int
+                Index of the database whose enabled state is returned.
+
+        Returns
+        -------
+        result : bool
+                 True if the given database is enabled or false otherwise.
         """
         return self.__files[index] in self.__enabled
 
@@ -176,11 +207,17 @@ class DatabasesModel():
         ,index
     ):
         """
-        Detailed description.
+        Getter method.
 
         Parameters
         ----------
-        index : 
+        index : int
+                Index of the database whose indexed state is returned.
+
+        Returns
+        -------
+        result : bool
+                 True if the given database is indexed or false otherwise.
         """
         return pathExists(self.__indexPath_(self.__files[index]))
 
@@ -190,11 +227,17 @@ class DatabasesModel():
         ,index
     ):
         """
-        Detailed description.
+        Getter method.
 
         Parameters
         ----------
-        index : 
+        index : int
+                Index of the database whose filename is returned.
+
+        Returns
+        -------
+        result : string
+                 Filename of this model's database at the given index.
         """
         return self.__files[index]
 
@@ -204,11 +247,15 @@ class DatabasesModel():
         ,names
     ):
         """
-        Detailed description.
+        Removes the given list of databases from this model's list, including
+        any diamond files of the given databases that are indexed. Saving this
+        model is not required because the relevant database files themselves are
+        removed.
 
         Parameters
         ----------
-        names : 
+        names : list
+                Filenames of databases that are removed from this model.
         """
         for name in names:
             if name not in self.__files:
@@ -224,7 +271,7 @@ class DatabasesModel():
         self
     ):
         """
-        Detailed description.
+        Saves this model's enabled databases properties to its JSON file.
         """
         with open(self.ENABLED_PATH,"w") as ofile:
             ofile.write(dumps(self.__enabled))
@@ -236,10 +283,17 @@ class DatabasesModel():
         ,name
     ):
         """
-        Detailed description.
+        Getter method.
 
         Parameters
         ----------
-        name : 
+        name : string
+               Filename of the database whose diamond index path is returned.
+
+        Returns
+        -------
+        result : string
+                 Full path of where the given database's diamond file would be
+                 located. The diamond file may or may not exist.
         """
         return pathJoin(cls.OUT_PATH,"bin",name[:name.rfind(".")]+".dmnd")

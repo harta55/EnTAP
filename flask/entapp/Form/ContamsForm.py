@@ -10,7 +10,8 @@ from wtforms import SubmitField
 
 class ContamsForm(FlaskForm):
     """
-    Detailed description.
+    This is the contaminants configuration form. It provides input for adding a
+    new contaminant to its respective list.
     """
     name = StringField(
         "New Contaminant"

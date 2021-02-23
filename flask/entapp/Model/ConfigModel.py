@@ -14,7 +14,11 @@ from os.path import exists as pathExists
 
 class ConfigModel():
     """
-    Detailed description.
+    This is the configuration model class. It provides a model for all basic
+    EnTAP configuration options. This class interfaces with the form class to
+    populate it with the current configuration values or update the model with
+    new values from a submitted form. This class can generate its portion of
+    EnTAP INI configuration output.
     """
     PATH = "/workspace/flask/config.json"
 
@@ -22,9 +26,6 @@ class ConfigModel():
     def __init__(
         self
     ):
-        """
-        Detailed description.
-        """
         with open(self.PATH,"r") as ifile:
             self.__data = loads(ifile.read())
 
@@ -33,7 +34,14 @@ class ConfigModel():
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : list
+                 All basic configuration for the EnTAP INI file generated from
+                 the current settings of this model. Each string represents a
+                 line of output.
         """
         return [
             "data-type="+self.__data["dataType"]
@@ -55,7 +63,9 @@ class ConfigModel():
         cls
     ):
         """
-        Detailed description.
+        Initializes this model's JSON configuration file that is used to store
+        the values of this configuration model. If the file does not exist it is
+        created with default values.
         """
         if not pathExists(dirname(cls.PATH)):
             makedirs(dirname(cls.PATH))
@@ -94,11 +104,14 @@ class ConfigModel():
         ,form
     ):
         """
-        Detailed description.
+        Populates the given configuration form with the current values of this
+        model.
 
         Parameters
         ----------
-        form : 
+        form : entapp.Form.ConfigForm
+               Form whose field values are populated with this model's current
+               values.
         """
         form.dataType.data = self.__data["dataType"]
         form.fpkm.data = Decimal(self.__data["fpkm"])
@@ -118,7 +131,7 @@ class ConfigModel():
         self
     ):
         """
-        Detailed description.
+        Saves this model's current values to its JSON file.
         """
         with open(self.PATH,"w") as ofile:
             ofile.write(dumps(self.__data))
@@ -128,7 +141,12 @@ class ConfigModel():
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : int
+                 The number of threads to have EnTAP use when running it.
         """
         return self.__data["threadNum"]
 
@@ -138,11 +156,14 @@ class ConfigModel():
         ,form
     ):
         """
-        Detailed description.
+        Updates this model's current values with the field values from the given
+        configuration form.
 
         Parameters
         ----------
-        form : 
+        form : entapp.Form.ConfigForm
+               The form whose field values are used to update this model's
+               current values.
         """
         self.__data = {
             "dataType": form.dataType.data

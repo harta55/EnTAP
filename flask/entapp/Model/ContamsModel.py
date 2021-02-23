@@ -12,7 +12,10 @@ from os.path import exists as pathExists
 
 class ContamsModel():
     """
-    Detailed description.
+    This is the contaminants model class. It provides a model for the
+    contaminants list configuration of EnTAP. It interfaces with its respective
+    form class to populate the form or update values from the form. This class
+    can generate its portion of EnTAP INI configuration output.
     """
     PATH = "/workspace/flask/contams_config.json"
 
@@ -20,9 +23,6 @@ class ContamsModel():
     def __init__(
         self
     ):
-        """
-        Detailed description.
-        """
         with open(self.PATH,"r") as ifile:
             data = loads(ifile.read())
             self.__contams = set(data)
@@ -32,22 +32,12 @@ class ContamsModel():
         self
         ,name
     ):
-        """
-        Detailed description.
-
-        Parameters
-        ----------
-        name : 
-        """
         return name in self.__contams
 
 
     def __iter__(
         self
     ):
-        """
-        Detailed description.
-        """
         return self.__contams.__iter__()
 
 
@@ -56,11 +46,12 @@ class ContamsModel():
         ,name
     ):
         """
-        Detailed description.
+        Adds a new contaminant to this model's list with the given name.
 
         Parameters
         ----------
-        name : 
+        name : string
+               Name of the new contaminant.
         """
         if name in self.__contams:
             return False
@@ -72,7 +63,14 @@ class ContamsModel():
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : list
+                 Contaminants configuration for the EnTAP INI file generated
+                 from the current settings of this model. Each string represents
+                 a line of output.
         """
         return ["contam=" + ",".join([c.replace(" ","_") for c in self.__contams])]
 
@@ -82,7 +80,9 @@ class ContamsModel():
         cls
     ):
         """
-        Detailed description.
+        Initializes this model's JSON configuration file that is used to store
+        the values of this configuration model. If the file does not exist it is
+        created with default values.
         """
         if not pathExists(dirname(cls.PATH)):
             makedirs(dirname(cls.PATH))
@@ -96,11 +96,13 @@ class ContamsModel():
         ,name
     ):
         """
-        Detailed description.
+        Removes the given contaminant name from this model's list. The given
+        contaminant name must exist in this model's list.
 
         Parameters
         ----------
-        name : 
+        name : string
+               Name of the contaminant that is removed.
         """
         self.__contams.remove(name)
 
@@ -109,7 +111,7 @@ class ContamsModel():
         self
     ):
         """
-        Detailed description.
+        Saves this model's current values to its JSON file.
         """
         with open(self.PATH,"w") as ofile:
             ofile.write(dumps(list(self.__contams)))

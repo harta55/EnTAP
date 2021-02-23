@@ -10,7 +10,8 @@ from wtforms import SubmitField
 
 class UninformsForm(FlaskForm):
     """
-    Detailed description.
+    This is the uninformative configuration form. It provides input for adding a
+    new uninformative to its respective list.
     """
     name = StringField(
         "New Uninformative"

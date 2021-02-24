@@ -11,7 +11,8 @@ from re import compile as reCompile
 
 class LogsModel():
     """
-    Detailed description.
+    This is the logs model class. It provides a read only model for all EnTAP
+    logs as a list of log item class instances.
     """
     PATH = "/workspace/entap/outfiles"
     dateRE = reCompile("\d+")
@@ -20,9 +21,6 @@ class LogsModel():
     def __init__(
         self
     ):
-        """
-        Detailed description.
-        """
         self.__logs = []
         for name in listdir(self.PATH):
             if name.startswith("log_file_") and name.endswith(".txt"):
@@ -39,9 +37,6 @@ class LogsModel():
     def __iter__(
         self
     ):
-        """
-        Detailed description.
-        """
         return range(len(self.__logs)).__iter__()
 
 
@@ -49,20 +44,10 @@ class LogsModel():
         self
         ,index
     ):
-        """
-        Detailed description.
-
-        Parameters
-        ----------
-        index : 
-        """
         return self.__logs[index]
 
 
     def __len__(
         self
     ):
-        """
-        Detailed description.
-        """
         return len(self.__logs)

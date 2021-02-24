@@ -12,7 +12,10 @@ from subprocess import run as pRun
 
 class GunzipTask(AbstractTask):
     """
-    Detailed description.
+    This is the gunzip task class. It provides a task for running gunzip on a
+    list of input files. It will use the path attribute from the inputs model to
+    determine the full path of each file gunzipped, and therefore can only be
+    used on input files.
     """
 
 
@@ -21,11 +24,12 @@ class GunzipTask(AbstractTask):
         ,fileNames
     ):
         """
-        Detailed description.
+        Initializes this new gunzip task with the given list of input files.
 
         Parameters
         ----------
-        fileNames : 
+        fileNames : list
+                    Filenames of input files that this task will run gunzip on.
         """
         super().__init__()
         self.__fileNames = fileNames
@@ -36,22 +40,12 @@ class GunzipTask(AbstractTask):
         self
         ,**kwargs
     ):
-        """
-        Detailed description.
-
-        Parameters
-        ----------
-        **kwargs : 
-        """
         return render_template("task/gunzip.html",**kwargs)
 
 
     def run(
         self
     ):
-        """
-        Detailed description.
-        """
         try:
             worked = []
             failed = []
@@ -76,7 +70,4 @@ class GunzipTask(AbstractTask):
     def title(
         self
     ):
-        """
-        Detailed description.
-        """
         return "Gunzip"

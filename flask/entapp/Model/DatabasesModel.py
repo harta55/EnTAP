@@ -171,7 +171,8 @@ class DatabasesModel():
         """
         Initializes this model's JSON configuration file that is used to store
         enabled properties of this model's databases. If the file does not exist
-        it is created with an empty list of enabled databases.
+        it is created with an empty list of enabled databases. This also creates
+        the directory where database files are stored if it does not exist.
         """
         if not pathExists(cls.PATH):
             makedirs(cls.PATH)
@@ -247,9 +248,9 @@ class DatabasesModel():
         ,names
     ):
         """
-        Removes the given list of databases from this model's list, including
-        any diamond files of the given databases that are indexed. Saving this
-        model is not required because the relevant database files themselves are
+        Removes the given list of databases from this model, including any
+        diamond files of the given databases that are indexed. Saving this model
+        is not required because the relevant database files themselves are
         removed.
 
         Parameters

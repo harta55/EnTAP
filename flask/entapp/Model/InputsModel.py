@@ -12,7 +12,8 @@ from os.path import join as pathJoin
 
 class InputsModel():
     """
-    Detailed description.
+    This is the inputs model class. It provides a model for all input FASTA
+    files contained in this flask application's local environment.
     """
     PATH = "/workspace/entap/infiles"
 
@@ -20,9 +21,6 @@ class InputsModel():
     def __init__(
         self
     ):
-        """
-        Detailed description.
-        """
         self.__files = listdir(self.PATH)
 
 
@@ -30,22 +28,12 @@ class InputsModel():
         self
         ,name
     ):
-        """
-        Detailed description.
-
-        Parameters
-        ----------
-        name : 
-        """
         return name in self.__files
 
 
     def __len__(
         self
     ):
-        """
-        Detailed description.
-        """
         return len(self.__files)
 
 
@@ -53,7 +41,14 @@ class InputsModel():
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : range_iterator
+                 A ranged iterator that will iterate through every valid integer
+                 index for all input files of this model, starting at 0 and
+                 ending at the last input file in the list.
         """
         return range(len(self.__files)).__iter__()
 
@@ -63,11 +58,18 @@ class InputsModel():
         ,index
     ):
         """
-        Detailed description.
+        Getter method.
 
         Parameters
         ----------
-        index : 
+        index : int
+                Index of the input file whose extension name is returned.
+
+        Returns
+        -------
+        result : string
+                 Name of the extension of this model's input file at the given
+                 index.
         """
         name = self.__files[index]
         ext = name[name.rfind(".")+1:]
@@ -91,7 +93,7 @@ class InputsModel():
         cls
     ):
         """
-        Detailed description.
+        Creates the directory where input files are stored if it does not exist.
         """
         if not pathExists(cls.PATH):
             makedirs(cls.PATH)
@@ -102,11 +104,17 @@ class InputsModel():
         ,index
     ):
         """
-        Detailed description.
+        Getter method.
 
         Parameters
         ----------
-        index : 
+        index : int
+                Index of the input file whose filename is returned.
+
+        Returns
+        -------
+        result : string
+                 Filename of this model's input file at the given index.
         """
         return self.__files[index]
 
@@ -116,11 +124,12 @@ class InputsModel():
         ,names
     ):
         """
-        Detailed description.
+        Removes the given list of input files from this model.
 
         Parameters
         ----------
-        names : 
+        names : list
+                Filenames of input files that are removed from this model.
         """
         for name in names:
             if name not in self.__files:

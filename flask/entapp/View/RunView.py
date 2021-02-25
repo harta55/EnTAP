@@ -19,7 +19,7 @@ from os.path import join as pathJoin
 
 class RunView(FlaskView):
     """
-    Detailed description.
+    This is the run view. It provides a flask view for running EnTAP itself.
     """
     route_base = "/run/"
 
@@ -28,7 +28,12 @@ class RunView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : object
+                 Index page of this view.
         """
         databases = DatabasesModel()
         inputs = InputsModel()
@@ -41,7 +46,14 @@ class RunView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Starts a new run task of EnTAP with the submitted form's values if it
+        passes validation.
+
+        Returns
+        -------
+        result : object
+                 Flask redirect to to the root view's status route if EnTAP was
+                 successfully started otherwise this view's index page.
         """
         inputs = InputsModel()
         form = RunForm([inputs.name(i) for i in inputs])

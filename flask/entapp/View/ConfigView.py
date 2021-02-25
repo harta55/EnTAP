@@ -16,7 +16,8 @@ from flask_classful import route
 
 class ConfigView(FlaskView):
     """
-    Detailed description.
+    This is the configuration view class. It provides a flask view for the basic
+    configuration of EnTAP.
     """
     route_base = "/config/"
 
@@ -25,7 +26,12 @@ class ConfigView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : object
+                 Index page of this view.
         """
         form = ConfigForm()
         config = ConfigModel()
@@ -38,7 +44,13 @@ class ConfigView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Updates basic configuration with the values from the submitted form if
+        they pass form validation.
+
+        Returns
+        -------
+        result : object
+                 Flask redirect back to this view's index page.
         """
         form = ConfigForm()
         if form.validate():

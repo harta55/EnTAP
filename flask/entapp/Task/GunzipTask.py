@@ -13,7 +13,7 @@ from subprocess import run as pRun
 class GunzipTask(AbstractTask):
     """
     This is the gunzip task class. It provides a task for running gunzip on a
-    list of input files. It will use the path attribute from the inputs model to
+    list of input files. It uses the path attribute from the inputs model to
     determine the full path of each file gunzipped, and therefore can only be
     used on input files.
     """

@@ -14,7 +14,10 @@ from subprocess import run as pRun
 
 class IndexTask(AbstractTask):
     """
-    Detailed description.
+    This is the index task class. It provides a task for running an EnTAP config
+    command to index a list of databases, gunzipping any that have a gunzip
+    extension. It uses the path attribute from the databases model to determine
+    the full path of each database.
     """
 
 
@@ -23,11 +26,13 @@ class IndexTask(AbstractTask):
         ,fileNames
     ):
         """
-        Detailed description.
+        Initializes this new index task with the given list of databases.
 
         Parameters
         ----------
-        fileNames : 
+        fileNames : list
+                    Filenames of databases that this task will index, and gunzip
+                    if necessary.
         """
         super().__init__()
         self.__fileNames = fileNames
@@ -39,22 +44,12 @@ class IndexTask(AbstractTask):
         self
         ,**kwargs
     ):
-        """
-        Detailed description.
-
-        Parameters
-        ----------
-        **kwargs : 
-        """
         return render_template("task/index.html",**kwargs)
 
 
     def run(
         self
     ):
-        """
-        Detailed description.
-        """
         try:
             fileNames = []
             gFileNames = []
@@ -79,9 +74,6 @@ class IndexTask(AbstractTask):
     def title(
         self
     ):
-        """
-        Detailed description.
-        """
         return "Index"
 
 
@@ -90,11 +82,18 @@ class IndexTask(AbstractTask):
         ,fileNames
     ):
         """
-        Detailed description.
+        Runs gunzip on the list of given databases.
 
         Parameters
         ----------
-        fileNames : 
+        fileNames : list
+                    Filenames of databases that are gunzipped.
+
+        Returns
+        -------
+        result : list
+                 Filenames of databases that were successfully gunzipped. The
+                 filenames are the new names without the gunzip extension.
         """
         ret = []
         i = 1
@@ -121,11 +120,17 @@ class IndexTask(AbstractTask):
         ,fileNames
     ):
         """
-        Detailed description.
+        Runs EnTAP configuration on given list of databases one at a time.
 
         Parameters
         ----------
-        fileNames : 
+        fileNames : list
+                    Filenames of databases that are indexed.
+
+        Returns
+        -------
+        result : list
+                 Filenames of databases that were successfully indexed by EnTAP.
         """
         ret = []
         i = 1

@@ -13,7 +13,8 @@ from subprocess import run as pRun
 
 class RunTask(AbstractTask):
     """
-    Detailed description.
+    This is the remote run task. It provides a task for running EnTAP from a
+    given input FASTA file.
     """
 
 
@@ -22,11 +23,12 @@ class RunTask(AbstractTask):
         ,path
     ):
         """
-        Detailed description.
+        Initializes this new run task with the given input FASTA file.
 
         Parameters
         ----------
-        path : 
+        path : string
+               Full absolute path of the input FASTA file.
         """
         super().__init__()
         self.__path = path
@@ -37,22 +39,12 @@ class RunTask(AbstractTask):
         self
         ,**kwargs
     ):
-        """
-        Detailed description.
-
-        Parameters
-        ----------
-        **kwargs : 
-        """
         return render_template("task/run.html",**kwargs)
 
 
     def run(
         self
     ):
-        """
-        Detailed description.
-        """
         config = ConfigModel()
         databases = DatabasesModel()
         cmd = ["EnTAP","--runP","-i",self.__path]
@@ -78,7 +70,4 @@ class RunTask(AbstractTask):
     def title(
         self
     ):
-        """
-        Detailed description.
-        """
         return "Run"

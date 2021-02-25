@@ -14,7 +14,10 @@ from os.path import join as pathJoin
 
 class RemoteUploadTask(AbstractTask):
     """
-    Detailed description.
+    This is the remote upload task class. It provides a task for this flask
+    application to download databases from a list of provided URLs. It uses the
+    path attribute from the databases model as the location where the databases
+    are downloaded. The supported protocols are HTTP and FTP.
     """
 
 
@@ -23,11 +26,12 @@ class RemoteUploadTask(AbstractTask):
         ,urls
     ):
         """
-        Detailed description.
+        Initializes this new remote upload task with the given list of URLs.
 
         Parameters
         ----------
-        urls : 
+        urls : list
+               URLs of remote database locations that will be downloaded.
         """
         super().__init__()
         self.__urls = urls
@@ -45,22 +49,12 @@ class RemoteUploadTask(AbstractTask):
         self
         ,**kwargs
     ):
-        """
-        Detailed description.
-
-        Parameters
-        ----------
-        **kwargs : 
-        """
         return render_template("task/remoteUpload.html",**kwargs)
 
 
     def run(
         self
     ):
-        """
-        Detailed description.
-        """
         self.__finished = []
         self.__failed = []
         self.__fi = 1
@@ -98,9 +92,6 @@ class RemoteUploadTask(AbstractTask):
     def title(
         self
     ):
-        """
-        Detailed description.
-        """
         return "Remote Upload"
 
 
@@ -108,7 +99,8 @@ class RemoteUploadTask(AbstractTask):
         self
     ):
         """
-        Detailed description.
+        Downloads this task's currently active URL. The currently active URL
+        must be a FTP protocol URL.
         """
         u = self.__url[6:]
         host = u[:u.find("/")]
@@ -145,7 +137,8 @@ class RemoteUploadTask(AbstractTask):
         self
     ):
         """
-        Detailed description.
+        Downloads this task's currently active URL. The currently active URL
+        must be a HTTP protocol URL.
         """
         progress = 0
         rq = reqGet(self.__url,stream=True)
@@ -175,11 +168,19 @@ class RemoteUploadTask(AbstractTask):
         size
     ):
         """
-        Detailed description.
+        Getter method.
 
         Parameters
         ----------
-        size : 
+        size : int
+               The raw size in bytes.
+
+        Returns
+        -------
+        result : string
+                 The size of the given number in proper units to keep the number
+                 below 1024. These units are either bytes, kilobytes, megabytes,
+                 gigabytes, or terabytes.
         """
         scale = ("B","KB","MB","GB","TB")
         i = 0

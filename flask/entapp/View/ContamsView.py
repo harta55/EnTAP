@@ -16,7 +16,8 @@ from flask_classful import route
 
 class ContamsView(FlaskView):
     """
-    Detailed description.
+    This is the contaminants view. It provides a flask view for the contaminants
+    list configuration of EnTAP.
     """
     route_base = "/contams/"
 
@@ -26,7 +27,13 @@ class ContamsView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Adds the new contaminant provided in the submitted form if the form
+        passes all validation.
+
+        Returns
+        -------
+        result : object
+                 Flask redirect to this view's index page.
         """
         form = ContamsForm()
         if form.validate():
@@ -48,7 +55,12 @@ class ContamsView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : object
+                 Index page of this view.
         """
         form = ContamsForm()
         contams = list(ContamsModel())
@@ -61,11 +73,17 @@ class ContamsView(FlaskView):
         ,name
     ):
         """
-        Detailed description.
+        Removes the given contaminant.
 
         Parameters
         ----------
-        name : 
+        name : string
+               Name of removed contaminant.
+
+        Returns
+        -------
+        result : object
+                 Flask redirect to this view's index page.
         """
         contams = ContamsModel()
         if name in contams:

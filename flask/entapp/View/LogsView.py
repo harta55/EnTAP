@@ -10,7 +10,8 @@ from flask_classful import FlaskView
 
 class LogsView(FlaskView):
     """
-    Detailed description.
+    This is the logs view. It provides a flask view for listing all EnTAP logs
+    and viewing individual logs.
     """
     route_base = "/logs/"
 
@@ -20,11 +21,18 @@ class LogsView(FlaskView):
         ,index
     ):
         """
-        Detailed description.
+        Getter method.
 
         Parameters
         ----------
-        index : 
+        index : int
+                The index of the log whose full debug log is displayed.
+
+        Returns
+        -------
+        result : object
+                 This view's debug page, displaying the full debug log of the
+                 EnTAP run at the given index.
         """
         index = int(index)
         logs = LogsModel()
@@ -35,7 +43,12 @@ class LogsView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : object
+                 This view's index page, listing all EnTAP logs.
         """
         logs = LogsModel()
         return render_template("logs/index.html",logs=logs)
@@ -50,7 +63,14 @@ class LogsView(FlaskView):
 
         Parameters
         ----------
-        index : 
+        index : int
+                The index of the log whose full log is displayed.
+
+        Returns
+        -------
+        result : object
+                 This view's read page, displaying the full log of the EnTAP run
+                 at the given index.
         """
         index = int(index)
         logs = LogsModel()

@@ -24,7 +24,11 @@ from werkzeug.utils import secure_filename
 
 class DatabasesView(FlaskView):
     """
-    Detailed description.
+    This is the databases view. It provides a flask view for the databases
+    interface of this flask application. Because EnTAP databases are complex
+    this class provides more than a few trivial routes. Services provided
+    include local uploads, remote uploads, and various operations on contained
+    databases.
     """
     route_base = "/databases/"
 
@@ -33,7 +37,12 @@ class DatabasesView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : object
+                 Index page of this view.
         """
         databases = DatabasesModel()
         return render_template("databases/index.html",databases=databases)
@@ -44,7 +53,16 @@ class DatabasesView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Runs an operation on one or more databases this flask application
+        contains in its local container. The action and list of databases to do
+        it on is provided by the submitted form. The possible actions are index,
+        enable, disable, and remove.
+
+        Returns
+        -------
+        result : object
+                 Flask redirect to the root view's status page if the action is
+                 to index otherwise this view's index page.
         """
         action = request.form.get("action")
         names = request.form.getlist("names")
@@ -85,7 +103,13 @@ class DatabasesView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Processes a single chunk upload of a database file using the local
+        upload interface.
+
+        Returns
+        -------
+        result : object
+                 Flask response of success or failure.
         """
         ifile = request.files["file"]
         savePath = pathJoin(DatabasesModel.PATH,secure_filename(ifile.filename))
@@ -110,7 +134,12 @@ class DatabasesView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : object
+                 This view's local upload page.
         """
         return render_template("databases/uploadLocal.html")
 
@@ -120,7 +149,12 @@ class DatabasesView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : object
+                 This view's remote upload page.
         """
         form = DatabaseUploadForm()
         return render_template("databases/uploadRemote.html",form=form)
@@ -131,7 +165,15 @@ class DatabasesView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Starts a new remote upload task with the submitted form's list of URLs
+        is it passes validation.
+
+        Returns
+        -------
+        result : object
+                 Flask redirect to the root view's status page if the remote
+                 upload was successfully started otherwise this view's index
+                 page.
         """
         form = DatabaseUploadForm()
         if form.validate():

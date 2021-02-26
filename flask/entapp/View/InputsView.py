@@ -22,7 +22,9 @@ from werkzeug.utils import secure_filename
 
 class InputsView(FlaskView):
     """
-    Detailed description.
+    This is the inputs view. It provides a flask view for the inputs interface
+    for this flask application. Services provided include local uploads and
+    operations on uploaded input files.
     """
     route_base = "/inputs/"
 
@@ -31,7 +33,12 @@ class InputsView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : object
+                 This view's index page.
         """
         inputs = InputsModel()
         return render_template("inputs/index.html",inputs=inputs)
@@ -42,7 +49,15 @@ class InputsView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Runs an operation on one or more input files this flask application
+        contains in its local container. The action and list of inputs to do it
+        on is provided by the submitted form. Possible actions are remove and
+        gunzip.
+
+        Returns
+        -------
+        result : object
+                 Flask redirect to this view's index page.
         """
         action = request.form.get("action")
         names = request.form.getlist("names")
@@ -69,7 +84,13 @@ class InputsView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Processes a single chunk upload of an input file using the local upload
+        interface.
+
+        Returns
+        -------
+        result : object
+                 Flask response of success or failure.
         """
         ifile = request.files["file"]
         savePath = pathJoin(InputsModel.PATH,secure_filename(ifile.filename))
@@ -94,6 +115,11 @@ class InputsView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : object
+                 This view's local upload page.
         """
         return render_template("inputs/uploadLocal.html")

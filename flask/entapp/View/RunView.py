@@ -19,7 +19,8 @@ from os.path import join as pathJoin
 
 class RunView(FlaskView):
     """
-    This is the run view. It provides a flask view for running EnTAP itself.
+    This is the run view class. It provides a flask view for running EnTAP
+    itself.
     """
     route_base = "/run/"
 

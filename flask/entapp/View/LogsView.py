@@ -10,8 +10,8 @@ from flask_classful import FlaskView
 
 class LogsView(FlaskView):
     """
-    This is the logs view. It provides a flask view for listing all EnTAP logs
-    and viewing individual logs.
+    This is the logs view class. It provides a flask view for listing all EnTAP
+    logs and viewing individual logs.
     """
     route_base = "/logs/"
 

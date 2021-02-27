@@ -15,7 +15,9 @@ from json import dumps
 
 class Application(Flask):
     """
-    Detailed description.
+    This is the EnTAP flask application class. It extends the flask application
+    class, providing some custom initialization code this this specific
+    application.
     """
 
 
@@ -25,12 +27,15 @@ class Application(Flask):
         ,**kwargs
     ):
         """
-        Detailed description.
+        Initializes this new EnTAP flask application, padding all arguments onto
+        the flask application's initialization.
 
         Parameters
         ----------
-        *args : 
-        **kwargs : 
+        *args : list
+                All positional arguments.
+        **kwargs : dictionary
+                   All keyword arguments.
         """
         super().__init__(*args,**kwargs)
         ConfigModel.initialize()

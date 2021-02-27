@@ -24,7 +24,7 @@ from werkzeug.utils import secure_filename
 
 class DatabasesView(FlaskView):
     """
-    This is the databases view. It provides a flask view for the databases
+    This is the databases view class. It provides a flask view for the databases
     interface of this flask application. Because EnTAP databases are complex
     this class provides more than a few trivial routes. Services provided
     include local uploads, remote uploads, and various operations on contained

@@ -16,8 +16,8 @@ from flask_classful import route
 
 class ContamsView(FlaskView):
     """
-    This is the contaminants view. It provides a flask view for the contaminants
-    list configuration of EnTAP.
+    This is the contaminants view class. It provides a flask view for the
+    contaminants list configuration of EnTAP.
     """
     route_base = "/contams/"
 

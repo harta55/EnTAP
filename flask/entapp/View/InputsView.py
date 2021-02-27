@@ -22,9 +22,9 @@ from werkzeug.utils import secure_filename
 
 class InputsView(FlaskView):
     """
-    This is the inputs view. It provides a flask view for the inputs interface
-    for this flask application. Services provided include local uploads and
-    operations on uploaded input files.
+    This is the inputs view class. It provides a flask view for the inputs
+    interface for this flask application. Services provided include local
+    uploads and operations on uploaded input files.
     """
     route_base = "/inputs/"
 

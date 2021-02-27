@@ -16,7 +16,8 @@ from flask_classful import route
 
 class UninformsView(FlaskView):
     """
-    Detailed description.
+    This is the contaminants view class. It provides a flask view for the
+    uninformative list configuration of EnTAP.
     """
     route_base = "/uninforms/"
 
@@ -26,7 +27,13 @@ class UninformsView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Adds the new uninformative provided in the submitted form if the form
+        passes all validation.
+
+        Returns
+        -------
+        result : object
+                 Flask redirect to this view's index page.
         """
         form = UninformsForm()
         if form.validate():
@@ -48,7 +55,12 @@ class UninformsView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : object
+                 Index page of this view.
         """
         form = UninformsForm()
         uninforms = list(UninformsModel())
@@ -61,11 +73,17 @@ class UninformsView(FlaskView):
         ,name
     ):
         """
-        Detailed description.
+        Removes the given uninformative.
 
         Parameters
         ----------
-        name : 
+        name : string
+               Name of removed uninformative.
+
+        Returns
+        -------
+        result : object
+                 Flask redirect to this view's index page.
         """
         uninforms = UninformsModel()
         if name in uninforms:

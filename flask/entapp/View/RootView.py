@@ -10,7 +10,8 @@ from flask_classful import FlaskView
 
 class RootView(FlaskView):
     """
-    Detailed description.
+    This is the root view class. It provides a flask view for basic the root
+    pages of home, status, and about.
     """
     route_base = "/"
 
@@ -19,7 +20,12 @@ class RootView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : object
+                 This view's about page.
         """
         return render_template("about.html")
 
@@ -28,7 +34,12 @@ class RootView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : object
+                 This view's index home page.
         """
         return render_template("index.html")
 
@@ -37,6 +48,11 @@ class RootView(FlaskView):
         self
     ):
         """
-        Detailed description.
+        Getter method.
+
+        Returns
+        -------
+        result : object
+                 This view's status page.
         """
         return render_template("status.html",task=taskController)

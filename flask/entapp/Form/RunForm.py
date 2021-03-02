@@ -2,6 +2,7 @@
 Contains the RunForm class.
 """
 from flask_wtf import FlaskForm
+from wtforms import BooleanField
 from wtforms import SelectField
 from wtforms import SubmitField
 
@@ -18,20 +19,34 @@ class RunForm(FlaskForm):
         ,choices=[]
         ,description="Select an input for processing from the list of inputs provided."
     )
+    frameSelection = BooleanField("Enable frame selection.")
+    bamSelect = SelectField(
+        "Select BAM"
+        ,choices=[]
+        ,description="Select a BAM file for processing from the list provided."
+    )
     run = SubmitField("Start")
 
 
     def __init__(
         self
-        ,names
+        ,inputs
+        ,bams
     ):
         """
-        Detailed description.
+        Initializes this new run form with the given list of input and bam
+        files.
 
         Parameters
         ----------
-        names : 
+        inputs : list
+                 Filenames of all valid input FASTA files.
+        bams : list
+               Filenames of all valid input BAM files.
         """
         super().__init__()
-        for name in names:
-            self.inputSelect.choices.append((name,name))
+        for i in inputs:
+            self.inputSelect.choices.append((i,i))
+        self.bamSelect.choices.append(("","None"))
+        for bam in bams:
+            self.bamSelect.choices.append((bam,bam))

@@ -19,11 +19,6 @@ class ConfigForm(FlaskForm):
     options for EnTAP. More advanced configuration options that are lists of
     words are excluded from this form, namely contaminants and uninformatives.
     """
-    dataType = SelectField(
-        "Data Type"
-        ,choices=[("0","Serialized Database"),("1","SQLite Database")]
-        ,description="Specifies which database EnTAP will download/generate."
-    )
     fpkm = DecimalField(
         "FPKM Threshold"
         ,description="Specifies the FPKM threshold with expression analysis. EnTAP will filter out "

@@ -22,6 +22,15 @@ class InputsModel():
         self
     ):
         self.__files = listdir(self.PATH)
+        self.__fasta = []
+        self.__bams = []
+        for i in self:
+            name = self.__files[i]
+            ext = self.extName(i)
+            if ext == "FASTA":
+                self.__fasta.append(name)
+            elif ext == "BAM":
+                self.__bams.append(name)
 
 
     def __contains__(
@@ -51,6 +60,20 @@ class InputsModel():
                  ending at the last input file in the list.
         """
         return range(len(self.__files)).__iter__()
+
+
+    def bams(
+        self
+    ):
+        """
+        Getter method.
+
+        Returns
+        -------
+        result : list
+                 Every input BAM file's filename.
+        """
+        return self.__bams
 
 
     def extName(
@@ -84,8 +107,24 @@ class InputsModel():
             or ext == "frn"
         ):
             return "FASTA"
+        elif ext == "bam":
+            return "BAM"
         else:
             return "UNKNOWN"
+
+
+    def fasta(
+        self
+    ):
+        """
+        Getter method.
+
+        Returns
+        -------
+        result : list
+                 Every input FASTA file's filename.
+        """
+        return self.__fasta
 
 
     @classmethod

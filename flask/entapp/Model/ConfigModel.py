@@ -44,8 +44,7 @@ class ConfigModel():
                  line of output.
         """
         return [
-            "data-type="+self.__data["dataType"]
-            ,"fpkm="+self.__data["fpkm"]
+            "fpkm="+self.__data["fpkm"]
             ,"single-end="+("true" if self.__data["singleEnd"] else "false")
             ,"complete="+("true" if self.__data["seqComplete"] else "false")
             ,"transdecoder-m="+str(self.__data["minProteinLength"])
@@ -77,8 +76,7 @@ class ConfigModel():
                 ofile.write(
                     dumps(
                         {
-                            "dataType": "1"
-                            ,"fpkm": "0.50"
+                            "fpkm": "0.50"
                             ,"singleEnd": True
                             ,"seqComplete": True
                             ,"minProteinLength": 100
@@ -113,7 +111,6 @@ class ConfigModel():
                Form whose field values are populated with this model's current
                values.
         """
-        form.dataType.data = self.__data["dataType"]
         form.fpkm.data = Decimal(self.__data["fpkm"])
         form.singleEnd.data = self.__data["singleEnd"]
         form.seqComplete.data = self.__data["seqComplete"]
@@ -166,8 +163,7 @@ class ConfigModel():
                current values.
         """
         self.__data = {
-            "dataType": form.dataType.data
-            ,"fpkm": str(form.fpkm.data)
+            "fpkm": str(form.fpkm.data)
             ,"singleEnd": form.singleEnd.data
             ,"seqComplete": form.seqComplete.data
             ,"minProteinLength": form.minProteinLength.data

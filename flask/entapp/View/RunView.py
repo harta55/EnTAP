@@ -38,7 +38,7 @@ class RunView(FlaskView):
         """
         databases = DatabasesModel()
         inputs = InputsModel()
-        form = RunForm([inputs.name(i) for i in inputs])
+        form = RunForm(inputs.fasta(),inputs.bams())
         return render_template("run.html",form=form,databases=databases.enabledNames())
 
 
@@ -57,7 +57,7 @@ class RunView(FlaskView):
                  successfully started otherwise this view's index page.
         """
         inputs = InputsModel()
-        form = RunForm([inputs.name(i) for i in inputs])
+        form = RunForm(inputs.fasta(),inputs.bams())
         if form.validate():
             taskController.start(RunTask(pathJoin(InputsModel.PATH,form.inputSelect.data)))
             flash("Started run task.","success")

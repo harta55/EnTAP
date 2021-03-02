@@ -14,6 +14,25 @@
             <p>Configuration is divided into three sections, all available through the Configuration menu above.  On this page you can specify parameter settings for EnTAP and its processes. Click the 'Configuration' > 'Databases' menu item to provide a list of protein FASTA files (databases) to which you want to use for comparison. Click the 'Configuration' > 'Uninformatives' menu item to specify functional phrases to avoid. See the EnTAP documentation for detailed information about these settings.</p>
         </div>
     </div>
-    {{ wtf.quick_form(form,url_for('ConfigView:update')) }}
+    <form action="{{ url_for('ConfigView:update') }}" method="POST">
+    {{ form.hidden_tag() }}
+    {{ wtf.quick_field(form.submit) }}
+    <h4 class="mt-3">General</h4>
+    {{ wtf.quick_field(form.outputFormat) }}
+    {{ wtf.quick_field(form.threadNum) }}
+    <h4 class="mt-3">Expression Analysis</h4>
+    {{ wtf.quick_field(form.fpkm) }}
+    {{ wtf.quick_field(form.singleEnd) }}
+    <h4 class="mt-3">Frame Selection</h4>
+    {{ wtf.quick_field(form.seqComplete) }}
+    {{ wtf.quick_field(form.minProteinLength) }}
+    {{ wtf.quick_field(form.refineStarts) }}
+    <h4 class="mt-3">Similarity Search</h4>
+    {{ wtf.quick_field(form.taxonomy) }}
+    {{ wtf.quick_field(form.queryCoverage) }}
+    {{ wtf.quick_field(form.targetCoverage) }}
+    {{ wtf.quick_field(form.eValue) }}
+    </form>
+    <br/>
 </div>
 {% endblock %}

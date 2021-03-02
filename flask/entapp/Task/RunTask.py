@@ -58,7 +58,6 @@ class RunTask(AbstractTask):
             ,"--out-dir"
             ,DatabasesModel.OUT_PATH
         ]
-        print(cmd)
         if pRun(cmd).returncode == 0:
             self._setRenderVars_(stage="success")
             return True

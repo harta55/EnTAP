@@ -19,7 +19,7 @@ class ConfigController():
     """
     PATH = "/workspace/entap/config.ini"
     HEADER_LINES = [
-        "data-type=1"
+        "data-type=0"
         ,"entap-db-bin=/workspace/entap/outfiles/bin/entap_database.bin"
         ,"entap-db-sql=/workspace/entap/outfiles/databases/entap_database.db"
         ,"entap-graph=/usr/local/bin/entap_graphing.py"

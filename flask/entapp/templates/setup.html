@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}{{ super() }} - Setup{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Setup</h1>
+    <p>Initial configuration has not yet been executed. Please start setup in order to use EnTAP.</p>
+    <div class="alert alert-warning mt-3">Running setup requires an internet connection and will take a substantial amount of time.</div>
+    <a class="btn btn-primary" href="">Start Setup</a>
+</div>
+{% endblock %}

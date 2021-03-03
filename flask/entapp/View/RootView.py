@@ -4,6 +4,7 @@ Contains the RootView class.
 from ..Controller import taskController
 from flask import render_template
 from flask_classful import FlaskView
+from flask_classful import route
 
 
 
@@ -42,6 +43,35 @@ class RootView(FlaskView):
                  This view's index home page.
         """
         return render_template("index.html")
+
+
+    def setup(
+        self
+    ):
+        """
+        Getter method.
+
+        Returns
+        -------
+        result : object
+                 This view's setup page.
+        """
+        return render_template("setup.html")
+
+
+    @route("/setup/start/")
+    def startSetup(
+        self
+    ):
+        """
+        Runs the setup task for EnTAP.
+
+        Returns
+        -------
+        result : object
+                 Flask redirect to this view's status page.
+        """
+        pass
 
 
     def status(

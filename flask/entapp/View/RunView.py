@@ -59,7 +59,13 @@ class RunView(FlaskView):
         inputs = InputsModel()
         form = RunForm(inputs.fasta(),inputs.bams())
         if form.validate():
-            taskController.start(RunTask(pathJoin(InputsModel.PATH,form.inputSelect.data)))
+            taskController.start(
+                RunTask(
+                    pathJoin(InputsModel.PATH,form.inputSelect.data)
+                    ,form.frameSelection.data
+                    ,pathJoin(InputsModel.PATH,form.bamSelect.data)
+                )
+            )
             flash("Started run task.","success")
             return redirect(url_for("RootView:status"))
         else:

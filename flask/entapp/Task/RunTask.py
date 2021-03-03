@@ -14,24 +14,34 @@ from subprocess import run as pRun
 class RunTask(AbstractTask):
     """
     This is the remote run task. It provides a task for running EnTAP from a
-    given input FASTA file.
+    given input FASTA file and optional BAM file if frame selection is enabled.
     """
 
 
     def __init__(
         self
-        ,path
+        ,inputPath
+        ,frameSelect=False
+        ,bamPath=""
     ):
         """
-        Initializes this new run task with the given input FASTA file.
+        Initializes this new run task with the given input FASTA file, frame
+        selection state, and BAM file if frame selection is enabled.
 
         Parameters
         ----------
-        path : string
-               Full absolute path of the input FASTA file.
+        inputPath : string
+                    Full absolute path of the input FASTA file.
+        frameSelect : bool
+                      True to enable frame selection or false otherwise.
+        bamPath : string
+                  Full absolute path of the input BAM file. Frame selection must
+                  be enabled for this to be used.
         """
         super().__init__()
-        self.__path = path
+        self.__input = inputPath
+        self.__fs = frameSelect
+        self.__bam = bamPath
         self._setRenderVars_(stage="init")
 
 
@@ -47,9 +57,13 @@ class RunTask(AbstractTask):
     ):
         config = ConfigModel()
         databases = DatabasesModel()
-        cmd = ["EnTAP","--runP","-i",self.__path]
+        cmd = ["EnTAP"]
+        cmd.append("--runP" if self.__fs else "--runN")
+        cmd += ["-i",self.__input]
         for dp in databases.enabledPaths():
             cmd += ["-d",dp]
+        if self.__fs:
+            cmd += ["-a",self.__bam]
         cmd += [
             "--ini"
             ,ConfigController.PATH

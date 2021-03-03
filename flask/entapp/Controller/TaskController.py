@@ -2,6 +2,7 @@
 Contains the TaskController class.
 """
 from ..Abstract.AbstractTask import *
+from os.path import isfile
 from threading import Thread
 from traceback import print_exc
 
@@ -14,6 +15,7 @@ class TaskController():
     application, starting new tasks and providing information about the current
     state of any running task.
     """
+    DB_PATH = "/workspace/entap/outfiles/bin/entap_database.bin"
 
 
     def __init__(
@@ -53,6 +55,21 @@ class TaskController():
                  True if this controller is running a task or false otherwise.
         """
         return self.__thread and self.__thread.is_alive()
+
+
+    def isSetup(
+        self
+    ):
+        """
+        Getter method.
+
+        Returns
+        -------
+        result : bool
+                 True if EnTAP configuration has been initially ran with a valid
+                 eggnog database or false otherwise.
+        """
+        return isfile(self.DB_PATH)
 
 
     def output(

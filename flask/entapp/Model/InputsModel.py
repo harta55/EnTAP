@@ -29,7 +29,7 @@ class InputsModel():
             ext = self.extName(i)
             if ext == "FASTA":
                 self.__fasta.append(name)
-            elif ext == "BAM":
+            elif ext == "SAM/BAM":
                 self.__bams.append(name)
 
 
@@ -107,8 +107,8 @@ class InputsModel():
             or ext == "frn"
         ):
             return "FASTA"
-        elif ext == "bam":
-            return "BAM"
+        elif ext == "bam" or ext == "sam":
+            return "SAM/BAM"
         else:
             return "UNKNOWN"
 

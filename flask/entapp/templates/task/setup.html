@@ -1,13 +1,10 @@
 {% if stage == "init" %}
     <p>Initializing...</p>
 {% elif stage == "running" %}
-    <p><b>Running...</b></p>
-    {% if frameSelect %}
-        <p>Frame Selection Enabled.</p>
-    {% endif %}
+    <p><b>Running...</b><p>
     <p>{{ output.replace('<','&lt;').replace('\n','<br/>')|safe }}</p>
 {% elif stage == "success" %}
-    <p>Success. Refer to the <a href="">results page</a> for results or the <a herf="">logs page</a> for detailed output of this and all other runs.</p>
+    <p>Success. EnTAP is now ready to use.</p>
 {% elif stage == "failed" %}
     <p>Failure. Refer to the <a href="{{ url_for('LogsView:index') }}">logs page</a> for detailed output of this and all other runs.</p>
 {% else %}

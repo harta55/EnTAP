@@ -2,7 +2,11 @@
 Contains the RootView class.
 """
 from ..Controller import taskController
+from ..Task.SetupTask import *
+from flask import flash
+from flask import redirect
 from flask import render_template
+from flask import url_for
 from flask_classful import FlaskView
 from flask_classful import route
 
@@ -71,7 +75,9 @@ class RootView(FlaskView):
         result : object
                  Flask redirect to this view's status page.
         """
-        pass
+        taskController.start(SetupTask())
+        flash("Started setup task.","success")
+        return redirect(url_for("RootView:status"))
 
 
     def status(

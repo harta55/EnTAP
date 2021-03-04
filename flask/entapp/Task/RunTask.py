@@ -5,6 +5,7 @@ from ..Abstract.AbstractTask import *
 from ..Controller.ConfigController import *
 from ..Model.ConfigModel import *
 from ..Model.DatabasesModel import *
+from ..Model.LogsModel import *
 from flask import render_template
 from subprocess import run as pRun
 
@@ -13,8 +14,8 @@ from subprocess import run as pRun
 
 class RunTask(AbstractTask):
     """
-    This is the remote run task. It provides a task for running EnTAP from a
-    given input FASTA file and optional BAM file if frame selection is enabled.
+    This is the run task. It provides a task for running EnTAP from a given
+    input FASTA file and optional BAM file if frame selection is enabled.
     """
 
 
@@ -55,6 +56,8 @@ class RunTask(AbstractTask):
     def run(
         self
     ):
+        logs = LogsModel()
+        self._setRenderVars_(stage="running",frameSelect=self.__fs,output=logs.newest().tail())
         config = ConfigModel()
         databases = DatabasesModel()
         cmd = ["EnTAP"]

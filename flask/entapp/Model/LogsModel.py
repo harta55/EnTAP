@@ -51,3 +51,17 @@ class LogsModel():
         self
     ):
         return len(self.__logs)
+
+
+    def newest(
+        self
+    ):
+        """
+        Getter method.
+
+        Returns
+        -------
+        result : entapp.Model.LogItem
+                 The newest EnTAP log that exists or none if there are no logs.
+        """
+        return self.__logs[0] if self.__logs else None

@@ -4,6 +4,8 @@ Contains the LogsModel class.
 from .LogItem import *
 from datetime import datetime
 from os import listdir
+from os import makedirs
+from os.path import exists as pathExists
 from re import compile as reCompile
 
 
@@ -51,6 +53,18 @@ class LogsModel():
         self
     ):
         return len(self.__logs)
+
+
+    @classmethod
+    def initialize(
+        cls
+    ):
+        """
+        Initializes this model by creating the directory where log files are
+        stored if it does not exist.
+        """
+        if not pathExists(cls.PATH):
+            makedirs(cls.PATH)
 
 
     def newest(

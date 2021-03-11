@@ -30,14 +30,21 @@ class SetupTask(AbstractTask):
         self
         ,**kwargs
     ):
-        return render_template("task/setup.html",**kwargs)
+        if kwargs["stage"] == "running":
+            output = ""
+            logs = LogsModel()
+            log = logs.newest()
+            if log:
+                output = log.tail()
+            return render_template("task/setup.html",output=output,**kwargs)
+        else:
+            return render_template("task/setup.html",**kwargs)
 
 
     def run(
         self
     ):
-        logs = LogsModel()
-        self._setRenderVars_(stage="running",output=logs.newest().tail())
+        self._setRenderVars_(stage="running")
         config = ConfigModel()
         cmd = [
             "EnTAP"

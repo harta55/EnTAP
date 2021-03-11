@@ -50,14 +50,21 @@ class RunTask(AbstractTask):
         self
         ,**kwargs
     ):
-        return render_template("task/run.html",**kwargs)
+        if kwargs["stage"] == "running":
+            output = ""
+            logs = LogsModel()
+            log = logs.newest()
+            if log:
+                output = log.tail()
+            return render_template("task/setup.html",output=output,**kwargs)
+        else:
+            return render_template("task/setup.html",**kwargs)
 
 
     def run(
         self
     ):
-        logs = LogsModel()
-        self._setRenderVars_(stage="running",frameSelect=self.__fs,output=logs.newest().tail())
+        self._setRenderVars_(stage="running",frameSelect=self.__fs)
         config = ConfigModel()
         databases = DatabasesModel()
         cmd = ["EnTAP"]

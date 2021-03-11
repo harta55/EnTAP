@@ -19,11 +19,11 @@ class RunForm(FlaskForm):
         ,choices=[]
         ,description="Select an input for processing from the list of inputs provided."
     )
-    frameSelection = BooleanField("Enable frame selection.")
+    frameSelection = BooleanField("Enable frame selection (only applicable to nucleotide sequences).")
     bamSelect = SelectField(
-        "Select BAM"
+        "Select SAM/BAM"
         ,choices=[]
-        ,description="Select a BAM file for processing from the list provided."
+        ,description="Select a SAM/BAM file for processing from the list provided."
     )
     run = SubmitField("Start")
 

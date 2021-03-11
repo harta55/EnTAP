@@ -18,6 +18,8 @@ def update():
              A redirect to the status page if a task is currently running or
              else none.
     """
+    if flask.request.endpoint is None:
+        return
     if (
         not taskController.isSetup()
         and (

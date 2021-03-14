@@ -28,7 +28,7 @@
 #ifndef ENTAP_CONFIG_H
 #define ENTAP_CONFIG_H
 
-// Compile with boost libraries? Currently this MUST be selected
+// Compile with boost libraries?
 #ifndef USE_BOOST
 //#define USE_BOOST   1
 #endif
@@ -57,7 +57,7 @@
 //#define UNIT_TESTS 1
 
 // Comment this out if it is debug code
-#define RELEASE_BUILD
+//#define RELEASE_BUILD
 
 
 #endif //ENTAP_CONFIG_H

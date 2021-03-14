@@ -31,6 +31,7 @@
 
 #ifdef UNIT_TESTS
 #include "../FileSystem.h"
+#include "../database/EntapDatabase.h"
 
 class UnitTests {
 
@@ -45,10 +46,15 @@ protected:
     std::string mRootDirectory;
 
     void TestEntapDatabase();
-    void UTEntapDatabase_00(EntapDatabase *entapDatabase);
-    void UTEntapDatabase_01(EntapDatabase *entapDatabase);
-    void UTEntapDatabase_02(EntapDatabase *entapDatabase);
-    void UTEntapDatabase_03(EntapDatabase *entapDatabase);
+    void UTEntapDatabase_00(EntapDatabase *entapDatabase, EntapDatabase::DATABASE_TYPE type);
+    void UTEntapDatabase_01(EntapDatabase *entapDatabase, EntapDatabase::DATABASE_TYPE type);
+    void UTEntapDatabase_02(EntapDatabase *entapDatabase, EntapDatabase::DATABASE_TYPE type);
+    void UTEntapDatabase_03(EntapDatabase *entapDatabase, EntapDatabase::DATABASE_TYPE type);
+
+    void TestQueryData();
+
+    void TestEggnogDatabase();
+
 };
 
 #endif //ENTAP_UNITTESTS_H

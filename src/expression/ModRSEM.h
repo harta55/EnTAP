@@ -100,7 +100,6 @@ private:
     std::string mSamValidExe;           // User input to RSEM sam validate exe
     std::string mPrepReferenceExe;      // User input to RSEM prep reference exe
     std::string mConvertSamExe;         // User input to RSEM convert SAM for RSEM exe
-    fp32        mFPKM;
     bool        mIsSingle;
 
     bool rsem_validate_file(std::string);

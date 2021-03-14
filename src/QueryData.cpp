@@ -301,7 +301,6 @@ void QueryData::generate_transcriptome(std::string &input_path, bool print_outpu
 
 void QueryData::init_params(FileSystem *fileSystem, UserInput *userInput) {
     mTotalSequences = 0;
-    mPipelineFlags  = 0;
     mDataFlags      = 0;
     mpSequences      = new QUERY_MAP_T;
 
@@ -567,10 +566,13 @@ QUERY_MAP_T* QueryData::get_sequences_ptr() {
 QueryData::~QueryData() {
     std::string path;
     FS_dprint("Killing Object - QueryData");
-    for (auto &mpSequence : *mpSequences) {
-        delete mpSequence.second;
-        mpSequence.second = nullptr;
+    if (mpSequences != nullptr) {
+        for (auto &mpSequence : *mpSequences) {
+            delete mpSequence.second;
+            mpSequence.second = nullptr;
+        }
     }
+
     FS_dprint("QuerySequence data freed");
     delete mpSequences;
 
@@ -617,7 +619,7 @@ bool QueryData::start_alignment_files(const std::string &base_path, const std::v
 
     // add this path to map if it does not exist, otherwise skip
     if (mAlignmentFiles.find(base_path) == mAlignmentFiles.end()) {
-
+        mAlignmentFiles.emplace(base_path, outputFileData);
         // Generate files for each data type
         for (FileSystem::ENT_FILE_TYPES type : types) {
             // Generate files for each go level
@@ -648,9 +650,10 @@ bool QueryData::start_alignment_files(const std::string &base_path, const std::v
                     case FileSystem::ENT_FILE_FASTA_FAA:
                     case FileSystem::ENT_FILE_FASTA_FNN:
                         if (!is_fasta_generated) {
+                            final_file_path = base_path + mpFileSystem->get_extension(type);
                             is_fasta_generated = true;
                             mAlignmentFiles.at(base_path).file_streams[type][DEFAULT_GO_LEVEL] =
-                                    new std::ofstream(base_path, std::ios::out | std::ios::app);
+                                    new std::ofstream(final_file_path, std::ios::out | std::ios::app);
                             initialize_file(mAlignmentFiles.at(base_path).file_streams[type][DEFAULT_GO_LEVEL],
                                             outputFileData.headers, type);
                         }
@@ -660,6 +663,8 @@ bool QueryData::start_alignment_files(const std::string &base_path, const std::v
                         final_file_path = base_path + APPEND_GO_LEVEL_STR +
                                           std::to_string(level) + APPEND_ENRICH_GENE_ID_LEN +
                                           mpFileSystem->get_extension(type);
+                        mAlignmentFiles.at(base_path).file_streams[type][level] =
+                                new std::ofstream(final_file_path, std::ios::out | std::ios::app);
                         initialize_file(mAlignmentFiles.at(base_path).file_streams[type][level],
                                         outputFileData.headers, type);
                         break;
@@ -668,6 +673,8 @@ bool QueryData::start_alignment_files(const std::string &base_path, const std::v
                         final_file_path = base_path + APPEND_GO_LEVEL_STR +
                                           std::to_string(level) + APPEND_ENRICH_GENE_ID_GO +
                                           mpFileSystem->get_extension(type);
+                        mAlignmentFiles.at(base_path).file_streams[type][level] =
+                                new std::ofstream(final_file_path, std::ios::out | std::ios::app);
                         initialize_file(mAlignmentFiles.at(base_path).file_streams[type][level],
                                         outputFileData.headers, type);
                         break;
@@ -787,11 +794,16 @@ bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *queryS
                     go_format_t go_terms = querySequence->get_go_terms();
                     if (!go_terms.empty()) {
                         for (GoEntry const &entry : go_terms) {
-                            *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
-                                    querySequence->getMSequenceID() <<
-                                    FileSystem::DELIM_TSV <<
-                                    entry.go_id <<
-                                    std::endl;
+                            if (!entry.go_id.empty()) {
+                                if ((entry.level_int >= go_level && entry.level_int != GoEntry::UNKNOWN_LVL) ||
+                                    go_level == 0) {
+                                    *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
+                                            querySequence->getMSequenceID() <<
+                                            FileSystem::DELIM_TSV <<
+                                            entry.go_id <<
+                                            std::endl;
+                                }
+                            }
                         }
                     }
                     break;
@@ -802,11 +814,13 @@ bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *queryS
                     if (file_data->second.file_streams[type][go_level] == nullptr) continue;
                     if (!querySequence->is_kept()) continue;
 
-                    *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
-                            querySequence->getMSequenceID() <<
-                            FileSystem::DELIM_TSV <<
-                            querySequence->getMEffectiveLength() <<
-                            std::endl;
+                    if (querySequence->contains_go_level(go_level) || querySequence->contains_go_level(GoEntry::UNKNOWN_LVL)) {
+                        *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
+                                querySequence->getMSequenceID() <<
+                                FileSystem::DELIM_TSV <<
+                                querySequence->getMEffectiveLength() <<
+                                std::endl;
+                    }
                     break;
                 }
 

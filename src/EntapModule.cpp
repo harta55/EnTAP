@@ -80,6 +80,7 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mOverallResultsDir = PATHS(mModOutDir, OVERALL_RESULTS_DIR);    // generated at app level (some don't need this directory)
 
     // If overwriting data, remove entire execution stage directory
+    // otherwise, only remove the figure/processed directories
     if (mOverwrite) {
         mpFileSystem->delete_dir(mModOutDir);
     } else {
@@ -91,9 +92,8 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mpFileSystem->create_dir(mFigureDir);
     mpFileSystem->create_dir(mProcDir);
 
-    mpFileSystem->set_working_dir(mModOutDir);
-
-    enable_headers();
+    enable_headers();   // Enable all headers by default,
+                        //   module will disable from here
 }
 
 void EntapModule::enable_headers() {
@@ -102,9 +102,11 @@ void EntapModule::enable_headers() {
     }
 }
 
+// Set directory back to original
+// DIAMOND will sometimes have issues wirh execution without this
 EntapModule::~EntapModule() {
     if (mpFileSystem != nullptr) {
-        std::string root_dir = mpFileSystem->get_root_path();
+        std::string root_dir = mpFileSystem->getMOriginalWorkingDir();
         mpFileSystem->set_working_dir(root_dir);
     }
 }

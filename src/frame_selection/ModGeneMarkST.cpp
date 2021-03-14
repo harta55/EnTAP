@@ -416,6 +416,8 @@ ModGeneMarkST::ModGeneMarkST(std::string &execution_stage_path, std::string &in_
     mFinalLstPath = PATHS(mModOutDir, mTranscriptomeFilename + FileSystem::EXT_LST);
     mFinalGmstLogPath = PATHS(mModOutDir, GENEMARK_LOG_FILE);
     mFinalHmmPath = PATHS(mModOutDir, GENEMARK_HMM_FILE);
+
+    mpFileSystem->set_working_dir(mModOutDir);
 }
 
 bool ModGeneMarkST::set_version() {

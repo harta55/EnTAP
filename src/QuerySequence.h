@@ -235,7 +235,7 @@ public:
     void add_alignment(ExecuteStates state, uint16 software, BuscoResults &results, std::string& database);
     QuerySequence::align_database_hits_t* get_database_hits(std::string& database,ExecuteStates state, uint16 software);
 
-    std::string format_go_info(std::vector<std::string> &go_list, uint8 lvl);
+    std::string format_go_info(go_format_t &go_list, uint8 lvl);
 
     // Returns recast alignment pointer
     template<class T>
@@ -249,6 +249,7 @@ public:
     void get_header_data(std::string& data, ENTAP_HEADERS header, uint8 lvl);
     void set_header_data();
     go_format_t get_go_terms();
+    bool contains_go_level(int16 level);
 
 private:
     //****************** Private Functions *********************
@@ -277,7 +278,9 @@ private:
     std::string                       mSequenceProtein; // Protein sequence
     std::string                       mSequenceNucleo;  // Nucleotide sequence
     std::string                       mFrameType;       // Frame type from Frame Selection
+#ifdef EGGNOG_MAPPER
     EggnogResults                     mEggnogResults;   // EggNOG mapper results
+#endif
     AlignmentData                     *mAlignmentData;  // Alignment information
     std::string                       mHeaderInfo[ENTAP_HEADER_COUNT];  // Header mappings
     //**********************************************************

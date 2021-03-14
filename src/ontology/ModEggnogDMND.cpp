@@ -267,7 +267,7 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
             eggnogDatabase->get_eggnog_entry(eggnog_results);
             best_hit->refresh_headers();
 
-            mpQueryData->add_alignment_data(out_hits_base, pair.second, nullptr);
+            mpQueryData->add_alignment_data(out_hits_base, pair.second, best_hit);
 
             //  Analyze Gene Ontology Stats
             if (!eggnog_results->parsed_go.empty()) {

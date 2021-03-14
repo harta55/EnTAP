@@ -87,6 +87,8 @@ public:
 
     } ENT_FILE_STATUS;
 
+    const std::string &getMOriginalWorkingDir() const;
+
     typedef enum {
 
         FILE_ITER_DELETE=0,

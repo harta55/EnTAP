@@ -51,7 +51,7 @@ public:
     std::string &getMDatabasePath();
 
 protected:
-    virtual bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list)=0;
+    virtual bool is_go_header(ENTAP_HEADERS header, go_format_t & go_list)=0;
 
     std::unordered_map<ENTAP_HEADERS , std::string*> ALIGN_OUTPUT_MAP;
     bool mCompareOverallAlignment; // May want to compare separate parameters for overall alignment across databases
@@ -83,7 +83,7 @@ private:
     QuerySequence::SimSearchResults    _sim_search_results;
 
 protected:
-    bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list) override;
+    bool is_go_header(ENTAP_HEADERS header, go_format_t & go_list) override;
 
     static constexpr uint8 E_VAL_DIF     = 8;
     static constexpr uint8 COV_DIF       = 5;
@@ -112,7 +112,7 @@ private:
     QuerySequence::EggnogResults mEggnogResults;
 
 protected:
-    bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list) override;
+    bool is_go_header(ENTAP_HEADERS header, go_format_t & go_list) override;
 
 };
 
@@ -136,7 +136,7 @@ private:
     QuerySequence::InterProResults mInterproResults;
 
 protected:
-    bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list) override;
+    bool is_go_header(ENTAP_HEADERS header, go_format_t& go_list) override;
 
 };
 
@@ -160,7 +160,7 @@ private:
     QuerySequence::BuscoResults mBuscoResults;
 
 protected:
-    bool is_go_header(ENTAP_HEADERS header, std::vector<std::string>& go_list) override;
+    bool is_go_header(ENTAP_HEADERS header, go_format_t  &go_list) override;
 
 };
 

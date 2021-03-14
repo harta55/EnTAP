@@ -97,6 +97,7 @@ ModDiamond::ModDiamond(std::string &execution_stage_path, std::string &fasta_pat
     FS_dprint("Spawn Object - ModDiamond");
     mSoftwareFlag = SIM_DIAMOND;
     mExePath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
+    mpFileSystem->delete_dir(mFigureDir);   // Don't need for DIAMOND, may change
 }
 
 /**
@@ -434,9 +435,6 @@ void ModDiamond::parse() {
     FS_dprint("Success!");
 }
 
-typedef std::map<std::string,std::map<std::string,uint32>> graph_sum_t;
-
-
 /**
  * ======================================================================
  * Function void ModDiamond::calculate_best_stats(bool is_final, std::string database_path)
@@ -470,9 +468,9 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     uint64                      count_no_hit=0;
     uint64                      count_contam=0;
     uint64                      count_filtered=0;
-    uint64                      count_informative=0;
-    uint64                      count_uninformative=0;
-    uint64                      count_unselected=0;
+    uint64                      count_informative=0;    // Number of informative alignments
+    uint64                      count_uninformative=0;  // Number of uninformative alignments
+    uint64                      count_unselected=0;     // Number of unselected alignments (those that are not best hits)
     uint64                      count_TOTAL_alignments=0;
     uint32                      ct;
     fp64                        percent;

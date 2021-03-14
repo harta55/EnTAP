@@ -356,7 +356,7 @@ const std::string UserInput::ENTAP_INI_FILENAME         = "entap_config.ini";
 const vect_uint16_t UserInput::DEFAULT_DATA_TYPE        = vect_uint16_t{EntapDatabase::ENTAP_SERIALIZED};
 const std::string UserInput::DEFAULT_STATE              ="+";
 const uint16 UserInput::DEFAULT_FRAME_SELECTION         = FRAME_TRANSDECODER;
-const vect_uint16_t UserInput::DEFAULT_ONT_LEVELS       =vect_uint16_t{1};
+const vect_uint16_t UserInput::DEFAULT_ONT_LEVELS       =vect_uint16_t{0,1};
 const vect_uint16_t UserInput::DEFAULT_ONTOLOGY         =vect_uint16_t{ONT_EGGNOG_DMND};
 
 const uint16      UserInput::DEFAULT_TRANSDECODER_MIN_PROTEIN = 100;
@@ -1205,7 +1205,7 @@ bool UserInput::verify_user_input() {
                 FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_FPKM].input);
                 ent_input_fp_t fpkm = get_user_input<ent_input_fp_t>(INPUT_FLAG_FPKM);
                 if (fpkm > FPKM_MAX || fpkm < FPKM_MIN) {
-                    throw ExceptionHandler("FPKM is out of range, but be between " + std::to_string(FPKM_MIN) +
+                    throw ExceptionHandler("Selected FPKM threshold is out of range, must be between " + std::to_string(FPKM_MIN) +
                                            " and " + std::to_string(FPKM_MAX), ERR_ENTAP_INPUT_PARSE);
                 }
             }

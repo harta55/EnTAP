@@ -374,15 +374,16 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
     std::string go_database_dir;    // Directory that will contain go files
 
     go_database_targz = PATHS(mTempDirectory, GO_TERMDB_FILE);
+    go_database_targz = "/home/alex/CLionProjects/EnTAP/cmake-build-debug/Testing/go_monthly-termdb-tables.tar.gz";
 
-
+/*
     // download Gene Ontology database file
     if (!mpFileSystem->download_ftp_file(FTP_GO_DATABASE, go_database_targz)) {
         // failed to download from ftp
         set_err_msg("Unable to download GO data from FTP address " + FTP_GO_DATABASE, ERR_DATA_GO_DOWNLOAD);
         return ERR_DATA_GO_DOWNLOAD;
     }
-
+*/
     // decompress database file
     if (!mpFileSystem->decompress_file(go_database_targz, mTempDirectory, FileSystem::ENT_FILE_TAR_GZ)) {
         // failed to decompress
@@ -435,7 +436,14 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
         while (in2.read_row(num,term,cat,go,ex,ex1,ex2)) {
             goEntry = {};
             goEntry.category = cat;
-            goEntry.level = distance_map[num];
+            if (!distance_map[num].empty()) {
+                try {
+                    goEntry.level = distance_map[num];
+                    goEntry.level_int = std::stoi(goEntry.level);
+                } catch(...) {
+                    ;
+                }
+            }
             goEntry.term = term;
             goEntry.go_id = go;
 
@@ -461,12 +469,12 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
 
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase::DATABASE_TYPE type) {
 
+    std::unordered_map<std::string, std::string> unknown_go_ids;
     std::string uniprot_flat_gz;
     std::string uniprot_flat;       // Decompressed path (this is parsed)
     std::string line;
     std::string dat_tag;
     std::string database;
-    std::string go_list;            // Will be turned into go_format when indexed (comma delim)
     std::string kegg_list;
     std::string go_id;              // GO ID< format of GO:0011101
     uint16      file_status;
@@ -496,7 +504,6 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
     // Set output path for FTP file
     uniprot_flat_gz = PATHS(mTempDirectory, UNIPROT_DAT_FILE_GZ);
     uniprot_flat    = PATHS(mTempDirectory, UNIPROT_DAT_FILE);
-
 
     // download UniProt flat file
     if (!mpFileSystem->download_ftp_file(FTP_UNIPROT_FLAT_FILE, uniprot_flat_gz)) {
@@ -566,6 +573,16 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
                     goEntry = get_go_entry(go_id);
                     if (!goEntry.is_empty()) {
                         uniprotEntry.go_terms.emplace(goEntry);
+                    } else {
+                        // Could not find GO entry in database, may not exist?
+                        goEntry.go_id = go_id;
+                        uniprotEntry.go_terms.emplace(goEntry);
+//                        set_err_msg("ERROR: Unable to find Gene Ontology data from " + go_id, ERR_DATA_UNIPROT_ENTRY);
+                        if (unknown_go_ids.find(go_id) == unknown_go_ids.end()) {
+                            FS_dprint("Unable to find Gene Ontology data from " + go_id);
+                            unknown_go_ids.emplace(go_id, "");
+                        }
+//                        return ERR_DATA_UNIPROT_ENTRY;
                     }
 
                 } else if (database == UNIPROT_DAT_TAG_DATABASE_KEGG) {
@@ -582,7 +599,6 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
                 uniprotEntry.comments += "|" + data;
             } else if (dat_tag == UNIPROT_DAT_TAG_NEXT_ENTRY){
                 // We've hit the next entry, add previous to the database
-                if (go_list.length() > 0) go_list.pop_back();   // remove trailing ','
 
                 uniprotEntry.kegg_terms = kegg_list;
 
@@ -593,7 +609,6 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
                 }
                 uniprotEntry = {};
                 same_entry = false;
-                go_list = "";
                 kegg_list = "";
 
             } else {
@@ -648,17 +663,19 @@ bool EntapDatabase::sql_add_go_entry(GoEntry &goEntry) {
     if (mpDatabaseHelper == nullptr) return false;
 
     sql_cmd = sqlite3_mprintf(
-            "INSERT INTO %Q (%Q,%Q,%Q,%Q) "\
-            "VALUES (%Q, %Q, %Q, %Q);",
+            "INSERT INTO %Q (%Q,%Q,%Q,%Q,%Q) "\
+            "VALUES (%Q, %Q, %Q, %d, %Q);",
 
             SQL_TABLE_GO_TITLE.c_str(),
             SQL_TABLE_GO_COL_ID.c_str(),
             SQL_TABLE_GO_COL_DESC.c_str(),
             SQL_TABLE_GO_COL_CATEGORY.c_str(),
             SQL_TABLE_GO_COL_LEVEL.c_str(),
+            SQL_TABLE_GO_COL_LEVEL_STR.c_str(),
             goEntry.go_id.c_str(),
             goEntry.term.c_str(),
             goEntry.category.c_str(),
+            goEntry.level_int,
             goEntry.level.c_str()
     );
     return mpDatabaseHelper->execute_cmd(sql_cmd);
@@ -752,13 +769,15 @@ bool EntapDatabase::create_sql_table(DATABASE_TABLES type) {
                     "%Q        TEXT                      NOT NULL," \
                     "%Q        TEXT                      NOT NULL," \
                     "%Q        TEXT                      NOT NULL," \
+                    "%Q        INTEGER                   NOT NULL DEFAULT -1," \
                     "%Q        TEXT                      NOT NULL);",
 
                     SQL_TABLE_GO_TITLE.c_str(),
                     SQL_TABLE_GO_COL_ID.c_str(),
                     SQL_TABLE_GO_COL_DESC.c_str(),
                     SQL_TABLE_GO_COL_CATEGORY.c_str(),
-                    SQL_TABLE_GO_COL_LEVEL.c_str()
+                    SQL_TABLE_GO_COL_LEVEL.c_str(),
+                    SQL_TABLE_GO_COL_LEVEL_STR.c_str()
             );
             break;
 
@@ -767,6 +786,8 @@ bool EntapDatabase::create_sql_table(DATABASE_TABLES type) {
             sql_cmd = sqlite3_mprintf(
                     "CREATE TABLE %Q ("                 \
                     "ID    INTEGER PRIMARY KEY     NOT NULL," \
+                    "%Q    TEXT                    NOT NULL," \
+                    "%Q    TEXT                    NOT NULL," \
                     "%Q    TEXT                    NOT NULL," \
                     "%Q    TEXT                    NOT NULL," \
                     "%Q    TEXT                    NOT NULL);",
@@ -801,7 +822,9 @@ bool EntapDatabase::create_sql_table(DATABASE_TABLES type) {
         FS_dprint("Success!");
     } else {
         std::string temp = sql_cmd;
-        FS_dprint("ERROR: Unable to create table with command: \n" + temp);
+        std::string err_msg = "ERROR: Unable to create table with command: \n" + temp;
+        FS_dprint(err_msg);
+        set_err_msg(err_msg, ERR_DATA_CREATE_TABLE);
     }
     return success;
 }
@@ -887,11 +910,12 @@ GoEntry EntapDatabase::get_go_entry(std::string &go_id) {
         if (it != mSqlGoHelper.end()) return it->second;
         // Generate SQL query
         char *query = sqlite3_mprintf(
-                "SELECT %q, %q, %q, %q FROM %q WHERE %q=%Q",
+                "SELECT %q, %q, %q, %q, %q FROM %q WHERE %q=%Q",
                 SQL_TABLE_GO_COL_ID.c_str(),
                 SQL_TABLE_GO_COL_DESC.c_str(),
                 SQL_TABLE_GO_COL_CATEGORY.c_str(),
                 SQL_TABLE_GO_COL_LEVEL.c_str(),
+                SQL_TABLE_GO_COL_LEVEL_STR.c_str(),
                 SQL_TABLE_GO_TITLE.c_str(),
                 SQL_TABLE_GO_COL_ID.c_str(),
                 go_id.c_str()
@@ -902,7 +926,8 @@ GoEntry EntapDatabase::get_go_entry(std::string &go_id) {
             goEntry.go_id    = results[0][0];
             goEntry.term     = results[0][1];
             goEntry.category = results[0][2];
-            goEntry.level    = results[0][3];
+            goEntry.level_int = std::stoi(results[0][3]);
+            goEntry.level = results[0][4];
             mSqlGoHelper[go_id] = goEntry;
             return goEntry;
         } catch (std::exception &e) {
@@ -924,7 +949,7 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
 
     if (mUseSerial) {
         // Using serialized database
-        tax_serial_map_t::iterator it = mpSerializedDatabase->taxonomic_data.find(species);
+        auto it = mpSerializedDatabase->taxonomic_data.find(species);
         if (it == mpSerializedDatabase->taxonomic_data.end()) {
             // If we can't find species, keep trying by making it more broad
             temp_species = species;
@@ -986,8 +1011,7 @@ UniprotEntry EntapDatabase::get_uniprot_entry(std::string& accession) {
     try {
         if (mUseSerial) {
             // Using serialized database
-            uniprot_serial_map_t::iterator it =
-                    mpSerializedDatabase->uniprot_data.find(accession);
+            auto it = mpSerializedDatabase->uniprot_data.find(accession);
             if (it == mpSerializedDatabase->uniprot_data.end()) {
                 // FS_dprint("Unable to find Uniprot Entry: " + accession);
                 return UniprotEntry();
@@ -996,10 +1020,13 @@ UniprotEntry EntapDatabase::get_uniprot_entry(std::string& accession) {
             // Using SQL database
             std::vector<std::vector<std::string>> results;
             char *query = sqlite3_mprintf(
-                    "SELECT %q, %q, %q FROM %q WHERE %q=%Q",
+                    "SELECT %q, %q, %q, %q, %q FROM %q WHERE %q=%Q",
                     SQL_TABLE_UNIPROT_COL_ID.c_str(),
                     SQL_TABLE_UNIPROT_COL_XREF.c_str(),
                     SQL_TABLE_UNIPROT_COL_COMM.c_str(),
+                    SQL_TABLE_UNIPROT_COL_KEGG.c_str(),
+                    SQL_TABLE_UNIPROT_COL_GO.c_str(),
+
                     SQL_TABLE_UNIPROT_TITLE.c_str(),
                     SQL_TABLE_UNIPROT_COL_ID.c_str(),
                     accession.c_str()
@@ -1009,6 +1036,8 @@ UniprotEntry EntapDatabase::get_uniprot_entry(std::string& accession) {
             uniprotEntry.uniprot_id      = results[0][0];
             uniprotEntry.database_x_refs = results[0][1];
             uniprotEntry.comments        = results[0][2];
+            uniprotEntry.kegg_terms      = results[0][3];
+            uniprotEntry.go_terms        = format_go_delim(results[0][4],',');
             return uniprotEntry;
         }
     } catch (const std::exception &e) {
@@ -1275,9 +1304,10 @@ bool EntapDatabase::is_uniprot_entry(std::string &sseqid, UniprotEntry &entry) {
 }
 
 std::string EntapDatabase::get_uniprot_accession(std::string &sseqid) {
-    std::string accession;  // UniPro accession number
+    std::string accession;  // UniProt accession number
 
-    accession = sseqid.substr(sseqid.rfind('|',sseqid.length())+1);     // Q9FJZ9
+    // From 'sp|Q3SZM1|MK67I_BOVIN' we want 'MK67I_BOVIN'
+    accession = sseqid.substr(sseqid.rfind('|',sseqid.length())+1);
     return accession;
 }
 
@@ -1392,8 +1422,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::delete_database_table(EntapDatabase::
             }
             break;
         }
-
-
+        
         default:
             FS_dprint("delete_database_table: WARNING unhandled case");
             return ERR_DATA_DELETE_TABLE;
@@ -1402,3 +1431,6 @@ EntapDatabase::DATABASE_ERR EntapDatabase::delete_database_table(EntapDatabase::
 
     return ERR_DATA_OK;
 }
+
+const int16 GoEntry::UNKNOWN_LVL = -1;
+const std::string GoEntry::UNKNOWN_LVL_STR = "UNKNOWN";

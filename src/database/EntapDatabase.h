@@ -57,6 +57,10 @@ struct  GoEntry {
     std::string level;
     std::string category;
     std::string term;
+    int16       level_int;
+
+    static const std::string UNKNOWN_LVL_STR;
+    static const int16 UNKNOWN_LVL;
 
 #ifdef USE_BOOST
     friend class boost::serialization::access;
@@ -73,19 +77,21 @@ struct  GoEntry {
     void serialize(Archive & archive)
     {
         archive(
-                go_id, level, category, term);
+                go_id, level_int, level, category, term);
     }
 #endif
 
     GoEntry() {
+        // Set as defaults if we cannot find information for it
         go_id = "";
-        level = "";
-        category = "";
+        level = UNKNOWN_LVL_STR;
+        level_int = UNKNOWN_LVL;
+        category = UNKNOWN_LVL_STR;
         term = "";
     }
 
     bool is_empty() {
-        return term.empty();
+        return (term.empty() || term == UNKNOWN_LVL_STR);
     }
 
     // Don't really care about order, just don't want duplicates
@@ -235,6 +241,7 @@ public:
         ERR_DATA_INCOMPATIBLE_VER,
         ERR_DATA_GET_VERSION,
         ERR_DATA_DELETE_TABLE,
+        ERR_DATA_CREATE_TABLE,
 
         ERR_DATA_MEM_ALLOC,
         ERR_DATA_UNHANDLED_TYPE,
@@ -357,6 +364,8 @@ private:
     // FTP Paths
     const std::string FTP_GO_DATABASE =
             "http://archive.geneontology.org/latest-full/go_monthly-termdb-tables.tar.gz";
+//    const std::string FTP_GO_DATABASE =
+//            "http://archive.geneontology.org/latest-termdb/go_daily-termdb-tables.tar.gz";
     const std::string FTP_NCBI_TAX_DUMP_TARGZ =
             "ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz";
     const std::string FTP_ENTAP_DATABASE_SQL    =
@@ -389,17 +398,21 @@ private:
     const std::string SQL_COL_NCBI_TAX_TAXID     = "TAXID";
     const std::string SQL_COL_NCBI_TAX_LINEAGE   = "LINEAGE";
     const std::string SQL_COL_NCBI_TAX_NAME      = "TAXNAME"; // ex: homo sapiens
+
     const std::string SQL_TABLE_GO_TITLE         = "GENEONTOLOGY";
     const std::string SQL_TABLE_GO_COL_ID        = "GOID";
     const std::string SQL_TABLE_GO_COL_DESC      = "DESCRIPTION";
     const std::string SQL_TABLE_GO_COL_CATEGORY  = "CATEGORY";
-    const std::string SQL_TABLE_GO_COL_LEVEL     = "LEVEL";
+    const std::string SQL_TABLE_GO_COL_LEVEL     = "LEVEL_INT"; // INTEGER
+    const std::string SQL_TABLE_GO_COL_LEVEL_STR = "LEVEL_STR";
+
     const std::string SQL_TABLE_UNIPROT_TITLE    = "UNIPROT";
     const std::string SQL_TABLE_UNIPROT_COL_COMM = "COMMENTS";
     const std::string SQL_TABLE_UNIPROT_COL_XREF = "DATAXREFS";
     const std::string SQL_TABLE_UNIPROT_COL_ID   = "UNIPROTID";
     const std::string SQL_TABLE_UNIPROT_COL_KEGG = "KEGG";
     const std::string SQL_TABLE_UNIPROT_COL_GO   = "GOTERMS";
+
     const std::string SQL_TABLE_VERSION_TITLE    = "VERSION";
     const std::string SQL_TABLE_VERSION_COL_VER  = "VERSION";
 
@@ -409,7 +422,9 @@ private:
     const std::string GO_CELLULAR_LVL   = "311";
     const std::string GO_TERM_FILE      = "term.txt";
     const std::string GO_GRAPH_FILE     = "graph_path.txt";
+//    const std::string GO_TERMDB_FILE    = "go_daily-termdb-tables.tar.gz";
     const std::string GO_TERMDB_FILE    = "go_monthly-termdb-tables.tar.gz";
+//    const std::string GO_TERMDB_DIR     = "go_daily-termdb-tables/";
     const std::string GO_TERMDB_DIR     = "go_monthly-termdb-tables/";
 
     // UniProt mapping constants

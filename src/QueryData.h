@@ -43,6 +43,10 @@ class QueryData {
 
 public:
 
+#ifdef UNIT_TESTS
+    QueryData() = default;
+#endif
+
     typedef enum {
         SUCCESS_EXPRESSION = (1 << 0),
         SUCCESS_FRAME_SEL  = (1 << 1),
@@ -92,8 +96,9 @@ public:
     // Header routines
     void header_set(ENTAP_HEADERS header, bool val);
 
-
+#ifndef UNIT_TESTS
 private:
+#endif
     struct EntapHeader {
         const std::string title;
         bool print_header;
@@ -152,7 +157,6 @@ private:
     uint32       mDataFlags;
     uint64       mNucleoLengthStart;       // Starting total len (nucleotide)
     uint64       mProteinLengthStart;      // Starting total len (protein)
-    uint32       mPipelineFlags;           // Success flags
     FileSystem  *mpFileSystem;
     UserInput   *mpUserInput;
     std::string mTranscriptTypeStr;

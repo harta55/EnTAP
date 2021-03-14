@@ -1120,3 +1120,7 @@ bool FileSystem::format_for_csv_parser(const std::string &input_path, std::strin
     output_path = path_temp;        // Set output
     return ret;
 }
+
+const std::string &FileSystem::getMOriginalWorkingDir() const {
+    return mOriginalWorkingDir;
+}

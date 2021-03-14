@@ -317,7 +317,9 @@ void QuerySequence::init_sequence() {
     mEffectiveLength = 0.0;
 
     mAlignmentData = new AlignmentData(this);
+#ifdef EGGNOG_MAPPER
     mEggnogResults = EggnogResults();
+#endif
 
     mFrameType = "";
     mSequenceProtein = "";
@@ -836,12 +838,16 @@ QuerySequence::get_database_hits(std::string &database, ExecuteStates state, uin
     return this->mAlignmentData->get_database_ptr(state, software, database);
 }
 
-std::string QuerySequence::format_go_info(std::vector<std::string> &go_list, uint8 lvl) {
+std::string QuerySequence::format_go_info(go_format_t &go_list, uint8 lvl) {
     std::stringstream out;
+    std::string temp;
 
-    for (std::string &val : go_list)  {
-        if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
-            out<<val<<",";
+    for (GoEntry const &val : go_list)  {
+        // Only return unknown levels when asking for '0' GO level
+        // CLEANUP!
+        if (lvl == 0 || (val.level_int >= lvl && val.level_int != GoEntry::UNKNOWN_LVL)) {
+            temp = val.go_id + "(L=" + std::to_string(val.level_int) + ")";
+            out << temp << ",";
         }
     }
     return out.str();
@@ -924,6 +930,20 @@ go_format_t QuerySequence::get_go_terms() {
 
 fp32 QuerySequence::getMEffectiveLength() const {
     return mEffectiveLength;
+}
+
+bool QuerySequence::contains_go_level(int16 level) {
+    go_format_t go_terms = get_go_terms();
+    if (!go_terms.empty()) {
+        if (level == 0) return true;
+        for (GoEntry const &entry : go_terms) {
+            if (entry.level_int == level) return true;
+        }
+    } else {
+        return false;
+    }
+
+    return false;
 }
 
 

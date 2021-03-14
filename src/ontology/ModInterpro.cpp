@@ -71,7 +71,7 @@ const std::vector<std::string> ModInterpro::INTERPRO_DATABASES ({
             "gene3d",
             "pirsf",
             "coils",
-            "morbidlite"
+            "mobidlite"
 });
 
 const std::string ModInterpro::INTERPRO_DEFAULT = "pfam";

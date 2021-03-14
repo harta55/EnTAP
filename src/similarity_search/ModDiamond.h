@@ -73,6 +73,10 @@ private:
     void calculate_best_stats(bool is_final, std::string database_path="");
     //**********************************************************
 
+    //************** Private Member Variables ******************
+    bool mParsedFile;   // TRUE if any alignment file had alignments and was parsed
+    //**********************************************************
+
     //**************** Private Const Variables *****************
     static constexpr int DMND_COL_NUMBER = 14;
     static std::vector<ENTAP_HEADERS> UNIPROT_HEADERS;

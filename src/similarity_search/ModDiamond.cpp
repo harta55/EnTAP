@@ -95,6 +95,7 @@ ModDiamond::ModDiamond(std::string &execution_stage_path, std::string &fasta_pat
 : AbstractSimilaritySearch(execution_stage_path, fasta_path, entap_data, "DIAMOND", DEFAULT_HEADERS, databases){
 
     FS_dprint("Spawn Object - ModDiamond");
+    mParsedFile = false;
     mSoftwareFlag = SIM_DIAMOND;
     mExePath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
     mpFileSystem->delete_dir(mFigureDir);   // Don't need for DIAMOND, may change
@@ -319,6 +320,7 @@ void ModDiamond::parse() {
     QuerySequence::SimSearchResults simSearchResults;   // Compiled similarity search results
     TaxEntry            taxEntry;                       // Entry from Tarxonomic database
     std::pair<bool, std::string> contam_info;           // Contaminate information
+    std::stringstream   ss;                             // Output string stream
 
     // ------------------ Read from DIAMOND output ----------------------- //
     std::string qseqid;             // Sequence ID of query sequence
@@ -347,10 +349,21 @@ void ModDiamond::parse() {
         is_uniprot = false;
         uniprot_attempts = 0;
         simSearchResults = {};
+        ss.str("");
+        ss.clear();
 
         // ensure file exists
         file_status = mpFileSystem->get_file_status(output_path);
-        if (file_status != 0) {
+        if (file_status & FileSystem::FILE_STATUS_EMPTY) {
+            // Empty file, skip this file and let user know
+            mpFileSystem->format_stat_stream(ss, "Compiled Similarity Search - DIAMOND - Best Overall");
+            FS_dprint("WARNING: empty DIAMOND file found, skipping: " + output_path);
+            ss << "DIAMOND file is empty. This will be skipped but pipeline will continue with other files";
+            std::string out_msg = ss.str() + "\n";
+            mpFileSystem->print_stats(out_msg);
+            continue;   // WARNING CONTINUE if alignment file is empty
+
+        } else if (file_status != 0) {
             throw ExceptionHandler("File not found or empty: " + output_path, ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
         }
 
@@ -430,9 +443,14 @@ void ModDiamond::parse() {
         FS_dprint("Success!");
     } // END FOR LOOP
 
-    FS_dprint("Calculating overall Similarity Searching statistics...");
-    calculate_best_stats(true);
-    FS_dprint("Success!");
+    if (mParsedFile) {
+        FS_dprint("Calculating overall Similarity Searching statistics...");
+        calculate_best_stats(true);
+        FS_dprint("Success!");
+    } else {
+        throw ExceptionHandler("No alignments found during Similarity Searching!",
+                               ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
+    }
 }
 
 /**
@@ -680,6 +698,8 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
         std::string out_msg = ss.str() + "\n";
         mpFileSystem->print_stats(out_msg);
         return; // RETURN we do not have any alignments
+    } else {
+        mParsedFile = true;
     }
 
     // Sort counters

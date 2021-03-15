@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% import "wtf.html" as wtf %}
+
+{% block title %}{{ super() }} - Contaminants{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4">Contaminants</h1>
+    <p>
+        During sequence comparisons of known proteins, the best match may be to a protein from a species that is unwanted. Use the interface below to specify one or more genus or species names for which matches should be ignored.
+    </p>
+    {{ wtf.quick_form(form,url_for('ContamsView:add')) }}
+    <div class="card card-body bg-light mt-3">
+        <label>List of Contaminants</label>
+        <table class="table table-striped">
+        <thead>
+            <tr>
+                <th style="width:5em;"></th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for contam in contams %}
+                <tr>
+                    <td style="width:5em;"><a class="btn btn-danger btn-sm" href="{{ url_for('ContamsView:remove',name=contam) }}">Remove</a></td>
+                    <td class="align-middle">{{ contam }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

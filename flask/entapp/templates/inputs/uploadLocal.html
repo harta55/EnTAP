@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.0/min/dropzone.min.css">
+{% endblock %}
+
+{% block title %}{{ super() }} - Local Inputs Upload{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4">Local Inputs Upload</h1>
+    <form action="{{ url_for('InputsView:uploadChunk') }}" method="POST" class="dropzone border border-primary mt-3" id="dropper">
+        <div class="dz-message needsclick">
+            <button type="button" class="dz-button font-italic">Drop files here or click to upload.</button>
+        </div>
+    </form>
+    <small class="text-secondary muted">Do not click continue until all uploads are complete. Moving off this page before completion of all uploads will cause said uploads to fail.</small>
+    <div class="container mt-3 p-0">
+        <a class="btn btn-primary m-0" href="{{ url_for('InputsView:index') }}" role="button">Finish</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.0/min/dropzone.min.js"></script>
+<script type="application/javascript">
+    Dropzone.options.dropper = {
+        paramName: 'file'
+        ,chunking: true
+        ,forceChunking: true
+        ,maxFilesize: 100000
+        ,chunkSize: 1000000
+    }
+</script>
+{% endblock %}

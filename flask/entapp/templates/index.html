@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}{{ super() }} - Home{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mt-4">
+        <div class="col-4 p-4">
+            <img src="/static/logo.jpg" class="img-fluid"/>
+        </div>
+        <div class="col-8">
+            <h1 class="my-4">EnTAP Version ??</h1>
+            <p>EnTAP is a tool for  eukaryotic non-model functional annotation of whole and partial genomes designed to improve accuracy, speed and flexibility.</p>
+            <p>If you use EnTAP for results used in a publication please cite EnTAP with the following:  Hart AJ, Ginzburg S, Xu M, et al. EnTAP: Bringing faster and smarter functional annotation to non-model eukaryotic transcriptomes. Mol Ecol Resour. 2020;20:591–604. https://doi.org/10.1111/1755-0998.13106</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}{{ super() }} - Inputs{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4">Inputs</h1>
+    <div class="dropdown mt-3">
+        <button class="btn btn-secondary dropdown-toggle" type="button" id="uploadMenu" data-bs-toggle="dropdown" aria-expanded="false">Upload</button>
+        <ul class="dropdown-menu" aria-labelledby="uploadMenu">
+            <li><a class="dropdown-item" href="{{ url_for('InputsView:uploadLocal') }}">Local</a></li>
+        </ul>
+    </div>
+    <div class="card card-body bg-light mt-3">
+        <form action="{{ url_for('InputsView:operation') }}" method="POST">
+        <label>List of Inputs</label>
+        <table class="table table-striped">
+        <thead>
+            <tr>
+                <th style="width:1em;"></th>
+                <th>Name</th>
+                <th style="width:5em;">Extension</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for i in inputs %}
+                <tr>
+                    <td style="width:1em;">
+                        <input type="checkbox" name="names" value="{{ inputs.name(i) }}">
+                    </td>
+                    <td class="text-break">{{ inputs.name(i) }}</td>
+                    <td style="width:5em;">{{ inputs.extName(i) }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+        <div class="dropdown">
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="testMenu" data-bs-toggle="dropdown" aria-expanded="false">Operation</button>
+            <ul class="dropdown-menu" aria-labelledby="testMenu">
+                <li><button type="submit" name="action" value="gunzip" class="dropdown-item">Gunzip</button></li>
+                <li><button type="submit" name="action" value="remove" class="dropdown-item">Remove</button></li>
+            </ul>
+        </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

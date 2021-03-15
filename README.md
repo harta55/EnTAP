@@ -14,7 +14,8 @@ http://entap.readthedocs.io/en/latest/
 For information/bug reports, contact Alexander Hart at entap.dev@gmail.com
 
 ---
-Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+Copyright 2017-2021
+Alexander Hart, Dr. Jill Wegrzyn, Dr. Stephen Ficklin, Josh Burns
 
 EnTAP is protected under the GNU General Public License Version 3
 

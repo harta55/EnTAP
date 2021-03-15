@@ -1,6 +1,11 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.6-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.7-beta
+
+EnTAP Beta v0.10.7-beta (October 6, 2020)
+------------------------------------------
+
+    * Fixed an issue where certain sequence headers may not have been parsed properly resulting in unrecognized sequence errors during Similarity Searching
 
 EnTAP Beta v0.10.6-beta (August 26, 2020)
 ------------------------------------------

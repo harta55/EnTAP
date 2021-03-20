@@ -92,6 +92,8 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mpFileSystem->create_dir(mFigureDir);
     mpFileSystem->create_dir(mProcDir);
 
+    mpFileSystem->set_working_dir(mModOutDir);
+
     enable_headers();   // Enable all headers by default,
                         //   module will disable from here
 }

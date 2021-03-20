@@ -54,8 +54,6 @@ ModBUSCO::ModBUSCO(std::string &in_hits, std::string &ont_out, EntapDataPtrs &en
 
     set_version();  // Set BUSCO software version
     mFinalTablePath = get_final_table_path(mOutputRunDir, mBuscoDatabase, mBuscoVersion);
-
-    mpFileSystem->set_working_dir(mModOutDir);
 }
 
 ModBUSCO::~ModBUSCO() {

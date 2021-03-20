@@ -374,16 +374,14 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
     std::string go_database_dir;    // Directory that will contain go files
 
     go_database_targz = PATHS(mTempDirectory, GO_TERMDB_FILE);
-    go_database_targz = "/home/alex/CLionProjects/EnTAP/cmake-build-debug/Testing/go_monthly-termdb-tables.tar.gz";
 
-/*
     // download Gene Ontology database file
     if (!mpFileSystem->download_ftp_file(FTP_GO_DATABASE, go_database_targz)) {
         // failed to download from ftp
         set_err_msg("Unable to download GO data from FTP address " + FTP_GO_DATABASE, ERR_DATA_GO_DOWNLOAD);
         return ERR_DATA_GO_DOWNLOAD;
     }
-*/
+
     // decompress database file
     if (!mpFileSystem->decompress_file(go_database_targz, mTempDirectory, FileSystem::ENT_FILE_TAR_GZ)) {
         // failed to decompress

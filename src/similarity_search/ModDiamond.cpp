@@ -39,6 +39,9 @@
 #include <regex>
 #endif
 
+// Test defines
+//#define TEST_SIM_PARSE_01
+
 std::vector<ENTAP_HEADERS> ModDiamond::DEFAULT_HEADERS = {
         ENTAP_HEADER_SIM_SUBJECT,
         ENTAP_HEADER_SIM_PERCENT,
@@ -339,6 +342,11 @@ void ModDiamond::parse() {
     fp64 coverage;                  // Coverage
     // ------------------------------------------------------------------ //
 
+#ifdef TEST_SIM_PARSE_01
+    uint16 test_ct = 0;
+    const uint16 TEST_COUNT_MAX = 100;       // Parse 100 lines only of each file
+#endif
+
     FS_dprint("Beginning to filter individual DIAMOND files...");
 
     // disable UniProt headers until we know we have a hit
@@ -351,6 +359,10 @@ void ModDiamond::parse() {
         simSearchResults = {};
         ss.str("");
         ss.clear();
+
+#ifdef TEST_SIM_PARSE_01
+        test_ct = 0;
+#endif
 
         // ensure file exists
         file_status = mpFileSystem->get_file_status(output_path);
@@ -435,6 +447,12 @@ void ModDiamond::parse() {
 
             query->add_alignment(mExecutionState, mSoftwareFlag,
                     simSearchResults, output_path, mInputLineage);
+
+#ifdef TEST_SIM_PARSE_01
+            if (++test_ct >= TEST_COUNT_MAX) {
+                break;
+            }
+#endif
         } // END WHILE LOOP
 
         // Finished parsing and adding to alignment data, being to calc stats

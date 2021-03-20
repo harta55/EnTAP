@@ -72,8 +72,6 @@ ModTransdecoder::ModTransdecoder(std::string &execution_stage_path, std::string 
 
     temp_filename = mpFileSystem->get_filename(in_hits, true) + FILE_TRANSDECODER_SUFFIX + FileSystem::EXT_PEP;
     mFinalFaaPath = PATHS(mModOutDir, temp_filename);   // PEP path
-
-    mpFileSystem->set_working_dir(mModOutDir);
 }
 
 /**

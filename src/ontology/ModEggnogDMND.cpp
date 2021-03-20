@@ -216,7 +216,7 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     QuerySequence::EggnogResults                          *eggnog_results;
     EggnogDmndAlignment                                  *best_hit;
     Compair<std::string>                                  tax_scope_counter;
-    std::unordered_map<std::string,Compair<std::string>>  go_combined_map;
+    std::unordered_map<std::string,Compair<GoEntry>>  go_combined_map;
     EggnogDatabase                                       *eggnogDatabase;
     std::vector<ENTAP_HEADERS>                            output_headers;
     GraphingManager::GraphingData                         graphing_data_temp;
@@ -267,15 +267,15 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
             eggnogDatabase->get_eggnog_entry(eggnog_results);
             best_hit->refresh_headers();
 
-            mpQueryData->add_alignment_data(out_hits_base, pair.second, best_hit);
+            mpQueryData->add_alignment_data(out_hits_base, pair.second, nullptr);
 
             //  Analyze Gene Ontology Stats
             if (!eggnog_results->parsed_go.empty()) {
                 ct_total_go_hits++;
                 for (auto &go_entry: eggnog_results->parsed_go) {
                     // pair - first: GO category, second; vector of terms
-                    go_combined_map[go_entry.category].add_value(go_entry.go_id);
-                    go_combined_map[GO_OVERALL_FLAG].add_value(go_entry.go_id);
+                    go_combined_map[go_entry.category].add_value(go_entry);
+                    go_combined_map[GO_OVERALL_FLAG].add_value(go_entry);
                 }
             }
 
@@ -356,7 +356,7 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
 
         for (uint16 lvl : mGoLevels) {
             for (auto &pair : go_combined_map) {
-                if (pair.first.empty()) continue;
+                if (pair.first.empty() || pair.second.empty()) continue;
                 // Count maps (biological/molecular/cellular/overall)
                 graphing_data_temp = GraphingManager::GraphingData();
                 graphing_data_temp.x_axis_label = "Gene Ontology Term";
@@ -375,28 +375,30 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
                 // Sort count maps
                 pair.second.sort(true);
 
-                // get total count for each level...change, didn't feel like making another
+                // get total count for each level
                 uint32 lvl_ct = 0;   // Use for percentages, total terms for each lvl
                 ct = 0;              // Use for unique count
+                // pair2 = unique go entry : number of that GoEntry
                 for (auto &pair2 : pair.second._sorted) {
-                    if (pair2.first.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
+                    if (pair2.first.level_int >= lvl || lvl == 0) {
                         ct++;
                         lvl_ct += pair2.second;
                     }
                 }
-                stream << "\nTotal "        << pair.first <<" terms (lvl="          << lvl << "): " << lvl_ct;
-                stream << "\nTotal unique " << pair.first <<" terms (lvl="          << lvl << "): " << ct;
-                stream << "\nTop " << COUNT_TOP_GO << " " << pair.first <<" terms assigned (lvl=" << lvl << "): ";
+                stream << "\nTotal "        << pair.first <<" terms (lvl>="          << lvl << "): " << lvl_ct;
+                stream << "\nTotal unique " << pair.first <<" terms (lvl>="          << lvl << "): " << ct;
+                stream << "\nTop " << COUNT_TOP_GO << " " << pair.first <<" terms assigned (lvl>=" << lvl << "): ";
 
+                // Get the TOP x go terms and print out based on occurance
                 ct = 1;
                 for (auto &pair2 : pair.second._sorted) {
                     if (ct > COUNT_TOP_GO) break;
-                    if (pair2.first.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
+                    if (pair2.first.level_int >= lvl || lvl == 0) {
                         percent = ((fp32)pair2.second / lvl_ct) * 100;
                         stream <<
-                               "\n\t" << ct << ")" << pair2.first << ": " << pair2.second <<
+                               "\n\t" << ct << ")" << pair2.first.go_id << ": " << pair2.second <<
                                "(" << percent << "%)";
-                        mpGraphingManager->add_datapoint(graphing_data_temp.text_file_path, {pair2.first, std::to_string(pair2.second)});
+                        mpGraphingManager->add_datapoint(graphing_data_temp.text_file_path, {pair2.first.go_id, std::to_string(pair2.second)});
                         ct++;
                     }
                 }

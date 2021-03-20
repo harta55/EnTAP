@@ -99,7 +99,21 @@ struct  GoEntry {
     bool operator < (const GoEntry& rhs) const {
         return this->go_id < rhs.go_id;
     }
+
+    bool operator == (const GoEntry& rhs) const {
+        return this->go_id == rhs.go_id;
+    }
 };
+
+namespace std {
+    template<>
+    struct hash<GoEntry> {
+        std::size_t operator()(const GoEntry &x) const {
+            return std::hash<std::string>()(x.go_id);
+        }
+    };
+}
+
 
 struct TaxEntry {
     std::string tax_id;

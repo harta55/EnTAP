@@ -1,6 +1,15 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.7-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.8-beta
+
+EnTAP Beta v0.10.8 (March 21, 2021)
+------------------------------------------
+    * Added Gene Enrichment files as an output option(gene ID + effective length and geneID + GO term). These can be seen with the output-type flag in the ini file
+    * Changed Gene Ontology level printing. 0 will continue to print every term. Other levels will now print that level AND higher. So a level of 1 will print 1, 2, 3, etc. Previous a level of 1 would only print GO Terms with a level of 1
+    * Changed 'uninformative' input from a file to a list of terms in the ini file. Much more straightforward this way
+    * If no alignments are found against a database during DIAMOND, the pipeline will no longer exit, it will continue to the next database. If no alignments are found against any databases, it will stop at that point
+    * Fixed a bug where TransDecoder output may not have been parsed correctly for some users. This presented itself as a parsing error and halted EnTAP at that stage of the pipeline
+    * Fixed bug where InterProScan Mobidlite database was giving an error for some users (and halting execution)
 
 EnTAP Beta v0.10.7-beta (October 6, 2020)
 ------------------------------------------

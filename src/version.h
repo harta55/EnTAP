@@ -30,12 +30,12 @@
 #include "config.h"
 
 #define LICENSE_YEAR_START      "2017"
-#define LICENSE_YEAR_END        "2020"
+#define LICENSE_YEAR_END        "2021"
 
 // When changing Version ensure the EnTAP Database version/FTP is up-to-date (EntapDatabase.h)
 #define MAJOR_VERSION     0
 #define MINOR_VERSION     10
-#define BUILD_VERSION     7
+#define BUILD_VERSION     8
 
 #define TO_STR2(x)             #x
 #define TO_STR(x)              TO_STR2(x)

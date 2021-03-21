@@ -31,9 +31,10 @@ These are the flags specific to Similarity Searching using DIAMOND. These will b
 *-*-level [multi-integer] [INI]
 --------------------------------
     * Specify Gene Ontology levels you would like to normalize to (ex: 0, 1, 2, 3, 4)
-    * A level of '0' indicates all levels will be printed
+    * This should only be used as a rough idea, some of the levels can vary slightly
+    * A level of '0' indicates all levels will be printed while a level of 2 will indicate that all levels of 2 or higher will be printed.
     * Any amount of these flags can be used
-    * Default: 1
+    * Default: 0, 1
     * More information at: http://geneontology.org/page/ontology-structure
 
 -e [scientific] [INI]
@@ -53,17 +54,5 @@ These are the flags specific to Similarity Searching using DIAMOND. These will b
 
 *-*-uninformative [string] [INI]
 ----------------------------------
-    * Path to a list of terms you would like to be deemed "uninformative"
-    * The file **must** be formatted with one term on each line of the file
-    * Example (defaults):
-    
-        * conserved
-        * predicted
-        * unnamed
-        * hypothetical
-        * putative
-        * unidentified
-        * uncharacterized
-        * unknown
-        * uncultured
-        * uninformative
+    * Comma-deliminated list of terms you would like to be deemed "uninformative". Any alignments during Similarity Searching tagged as uninformative will be ranked lower.
+    * Default: conserved, predicted, unnamed, hypothetical, putative, unidentified, uncharacterized, unknown, uncultured, uninformative

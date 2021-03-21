@@ -56,8 +56,10 @@ Frame Selection Header Information (optional)
 
 Expression Analysis Header Information (optional)
     * FPKM
+    * TPM
+    * Effective Length
 
-Similarity Search Header Information)
+Similarity Search Header Information
     * Subject sequence ID
     * Percentage of identical matches
     * Alignment length
@@ -108,21 +110,40 @@ Ontology InterProScan Header Information
     * Protein Description (description of database entry)
     * E Value (E-value of hit against protein database)
 
-Gene ontology terms are normalized to levels based on the input flag from the user (or the default of 0,3,4). A level of 0 within the filename indicates that ALL GO terms will be printed to the annotation file. FASTA files are always printed as lvl 0 0 and will not be printed otherwise. Normalization of GO terms to levels is generally done before enrichment analysis and is based upon the hierarchical setup of the Gene Ontology database. More information can be found at GO_. 
+Gene ontology terms are normalized to levels based on the input flag from the user (or the default of 0,1). A level of 0 within the filename indicates that ALL GO terms will be printed to the annotation file. Any other level will print that level and anything higher than it. Normalization of GO terms to levels is generally done before enrichment analysis and is based upon the hierarchical setup of the Gene Ontology database. More information can be found at GO_. 
 
     * final_annotations_lvlX.tsv
 
-        * As mentioned above, the 'X' represents the normalized GO terms for the annotation
+        * As mentioned above, the 'X' represents the normalized GO terms for the annotation (GO terms of X level and higher will be printed)
         * This .tsv file will have the headers as mentioned previously as a summary of the entire pipeline
 
-    * final_annotated)lvl0.faa / .fnn
+    * final_annotated.faa / .fnn
 
         * Nucleotide and protein fasta files containing all sequences that either hit databases through similarity searching or through the ontology stage
 
-    * final_unannotated_lvl0.aa / .fnn
+    * final_unannotated.faa / .fnn
 
         * Nucleotide and protein fasta files containing all sequences that did not hit either through similarity searching nor through the ontology stage
 
+    * final_annotations_contam.faa / .fnn / .tsv
+
+        * Nucleotide, protein, and tab-deliminated files containing all annotated sequences that were flagged as a contaminant
+
+    * final_annotations_no_contam.faa / .fnn / .tsv
+
+        * Nucleotide, protein, and tab-deliminated files containing all annotated sequences that were not flagged as a contaminant
+
+    * final_annotations_lvlX_enrich_geneid_go.tsv
+
+        * Tab-deliminated file that can be used for Gene Enrichment, normalized to gene ontology level
+        * First column contains the gene ID and second column contains the Gene Ontology term corresponding to the gene ID
+        * A level of 0 will print all GO terms assigned, while any other level will prnit that level and anything higher. Ex: 1 will print all terms of 1 and higher
+
+    * final_annotations_lvlX_enrich_geneid_len.tsv
+
+        * Tab-deliminated file that can be used for Gene Enrichment, normalized to gene ontology levels
+        * First column contains the gene ID and second columns contains the effective length from Expression Analysis. This file will not be printed if Expression Analysis has not been ran
+        * A level of 0 will print all GO terms assigned, while any other level will prnit that level and anything higher. Ex: 1 will print all terms of 1 and higher
 
 .. _log-label:
 

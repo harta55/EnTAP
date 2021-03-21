@@ -2,16 +2,11 @@ Future Features / Roadmap
 ===============================
 This page contains future features that have been requested by users with an accompanying rough roadmap for implementation. The dates outlined below are subject to change depending on resources/time. If you would like to request support for additional features please email Alexander Hart at entap.dev@gmail.com
 
-November 2020
------------------
-
-    * ExN50/ExN90 statistics
-    * BUSCO statistics
-
-December 2020
+Middle 2021
 -----------------------
     * Galaxy integration
     * Support for Docker packaging
+    * Flask application
 
 Future Release
 --------------------

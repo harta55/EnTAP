@@ -19,9 +19,9 @@ When a user is trying to execute EnTAP, they must specify the path to this ini f
 
     * diamond-exe=/EnTAP/libs/diamond-0.9.9/bin/diamond
     * rsem-sam-validator=/EnTAP/libs/RSEM-1.3.0/rsem-sam-validator
-    * rsem-calculate-expression=/EnTAP/libs/RSEM-1.3.0/rsem-calculate-expression
-    * rsem-prepare-reference=/EnTAP/libs/RSEM-1.3.0/rsem-prepare-reference
-    * rsem-convert-sam-for-rsem=/EnTAP/libs/RSEM-1.3.0/convert-sam-for-rsem
+    * rsem-calculate-expression=/EnTAP/libs/RSEM-1.3.3/rsem-calculate-expression
+    * rsem-prepare-reference=/EnTAP/libs/RSEM-1.3.3/rsem-prepare-reference
+    * rsem-convert-sam-for-rsem=/EnTAP/libs/RSEM-1.3.3/convert-sam-for-rsem
     * genemarkst-exe=/EnTAP/libs/gmst_linux_64/gmst.pl
     * transdecoder-long-exe=EnTAP/libs/TransDecoder-v5.3.0/TransDecoder.LongOrfs
     * transdecoder-predict-exe=EnTAP/libs/TransDecoder-v5.3.0/TransDecoder.Predict

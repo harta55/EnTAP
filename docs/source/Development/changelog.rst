@@ -4,6 +4,7 @@ This page contains (mostly) all of the changes that were made between each versi
 
 EnTAP Beta v0.10.8 (March 21, 2021)
 ------------------------------------------
+    * This version requires a new version of the EnTAP database to be downloaded
     * Added Gene Enrichment files as an output option(gene ID + effective length and geneID + GO term). These can be seen with the output-type flag in the ini file
     * Changed Gene Ontology level printing. 0 will continue to print every term. Other levels will now print that level AND higher. So a level of 1 will print 1, 2, 3, etc. Previous a level of 1 would only print GO Terms with a level of 1
     * Changed 'uninformative' input from a file to a list of terms in the ini file. Much more straightforward this way

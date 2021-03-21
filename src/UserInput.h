@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -32,6 +32,7 @@
 #include "EntapGlobals.h"
 #include "FileSystem.h"
 #include "config.h"
+#include "database/EntapDatabase.h"
 
 #ifdef USE_BOOST
 #include <boost/filesystem/path.hpp>
@@ -145,6 +146,10 @@ public:
     UserInput(int argc, const char** argv, FileSystem*fileSystem);
     ~UserInput();
 
+
+    static constexpr uint16 MAX_GO_LEVEL = 12;
+    static constexpr uint16 MIN_GO_LEVEL = 0;
+
     static std::string getBIN_PATH_DEFAULT();
     static const std::string &getENTAP_DATABASE_BIN_DEFAULT();
     static const std::string &getENTAP_DATABASE_SQL_DEFAULT();
@@ -163,6 +168,7 @@ public:
     vect_str_t get_contaminants();
     vect_str_t get_uninformative_vect();
     std::string get_user_transc_basename();
+    ent_input_str_t get_entap_database_path(EntapDatabase::DATABASE_TYPE type);
     std::vector<FileSystem::ENT_FILE_TYPES> get_user_output_types();
     bool run_frame_selection(QueryData *queryData, bool &run_frame_selection);
     bool run_expression_filtering();
@@ -236,30 +242,16 @@ private:
     void verify_databases(bool);
     void verify_species (SPECIES_FLAGS, EntapDatabase*);
     void process_user_species(std::string&);
-    void verify_uninformative(std::string&);
     void verify_software_paths(std::string &state, bool is_protein, bool is_execution, QueryData *pQuery_data);
     void generate_ini_file(std::string& ini_path);
 
+    const uint16 MAX_GO_LEVELS_SELECTED        = 5; // Max number of GO levels user can select to output
     const uint16 TRANS_MIN_PROTEIN_MIN         = 0;
     const fp32 COVERAGE_MIN                    = 0.0;
     const fp32 COVERAGE_MAX                    = 100.0;
     const fp32 FPKM_MIN                        = 0.0;
     const fp32 FPKM_MAX                        = 100.0;
     const uint8 MAX_DATABASE_SIZE              = 5;         // Maximum number of databases allowed from user
-
-    // Enter as lowercase
-    const std::vector<std::string> INFORMATIVENESS {
-            "conserved",
-            "predicted",
-            "unnamed",
-            "hypothetical",
-            "putative",
-            "unidentified",
-            "uncharacterized",
-            "unknown",
-            "uncultured",
-            "uninformative"
-    };
 
     static const std::string RSEM_DEFAULT_EXE_DIR                  ;
     static const std::string RSEM_SAM_VALID    ;
@@ -299,6 +291,7 @@ private:
     static const fp64          RSEM_FPKM_DEFAULT;
     static const fp64          DEFAULT_QCOVERAGE;
     static const fp64          DEFAULT_TCOVERAGE;
+    static const vect_str_t    DEFAULT_UNINFORMATIVE;
     static const vect_uint16_t DEFAULT_DATA_TYPE;
     static const std::string   DEFAULT_OUT_DIR;
     static const std::string   DEFAULT_STATE;

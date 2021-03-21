@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -75,6 +75,7 @@ public:
         QUERY_FAMILY_ONE_GO     = (1 << 14),        // Sequence contains at least one GO from EggNOG process
         QUERY_ONT_INTERPRO_GO   = (1 << 15),        // Sequence contains at least one GO from InterPro process
         QUERY_ONT_INTERPRO_PATHWAY = (1 << 16),     // Sequence contains at least one KEGG from InterPro process
+        QUERY_ONT_BUSCO         = (1 << 17),
 
         QUERY_MAX               = (1 << 31)
 
@@ -110,6 +111,15 @@ public:
         std::string             pathways;
         fp64                    e_value_raw;
         go_format_t             parsed_go;
+    };
+
+    struct BuscoResults {
+        std::string status; // Either Complete or Missing
+        std::string busco_id;
+        std::string length_str;
+        uint64      length;
+        fp64        score;
+        std::string score_str;
     };
 
     struct SimSearchResults {
@@ -201,6 +211,8 @@ public:
     const std::string &getMSequenceID() const;
     void setMTPM(fp64 mTPM);
 
+    fp32 getMEffectiveLength() const;
+
     uint32 getMQueryFlags() const;
 
     void set_blasted();
@@ -220,9 +232,10 @@ public:
     void add_alignment(ExecuteStates state, uint16 software, EggnogResults &results, std::string& database);
     void add_alignment(ExecuteStates state, uint16 software, SimSearchResults &results, std::string& database,std::string lineage);
     void add_alignment(ExecuteStates state, uint16 software, InterProResults &results, std::string& database);
+    void add_alignment(ExecuteStates state, uint16 software, BuscoResults &results, std::string& database);
     QuerySequence::align_database_hits_t* get_database_hits(std::string& database,ExecuteStates state, uint16 software);
 
-    std::string format_go_info(std::vector<std::string> &go_list, uint8 lvl);
+    std::string format_go_info(go_format_t &go_list, uint8 lvl);
 
     // Returns recast alignment pointer
     template<class T>
@@ -235,6 +248,14 @@ public:
     void update_query_flags(ExecuteStates state, uint16 software);
     void get_header_data(std::string& data, ENTAP_HEADERS header, uint8 lvl);
     void set_header_data();
+    go_format_t get_go_terms();
+    bool contains_go_level(int16 level);
+
+    fp32 getMFrameScore() const;
+
+    void setMFrameScore(fp32 mFrameScore);
+
+    void setMEffectiveLength(fp32 mEffectiveLength);
 
 private:
     //****************** Private Functions *********************
@@ -251,13 +272,17 @@ private:
     //****************** Private Variables *********************
     fp32                              mFPKM;            // FPKM value from Expression Filtering
     fp64                              mTPM;             // TPM value from Expression Filtering
-    uint32                            mQueryFlags;      // Status flags for sequence
+    fp32                              mEffectiveLength; // Effective length from expression filtering
+    uint32                            mQueryFlags;      // Status flags for the sequence
     std::string                       mSequenceID;      // Sequence ID
     uint64                            mSequenceLength;  // Sequence length (nucleotide bp)
     std::string                       mSequenceProtein; // Protein sequence
     std::string                       mSequenceNucleo;  // Nucleotide sequence
     std::string                       mFrameType;       // Frame type from Frame Selection
+    fp32                              mFrameScore;      // Frame selection score
+#ifdef EGGNOG_MAPPER
     EggnogResults                     mEggnogResults;   // EggNOG mapper results
+#endif
     AlignmentData                     *mAlignmentData;  // Alignment information
     std::string                       mHeaderInfo[ENTAP_HEADER_COUNT];  // Header mappings
     //**********************************************************

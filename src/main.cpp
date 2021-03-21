@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -44,7 +44,10 @@
 #include "EntapExecute.h"
 #include "UserInput.h"
 #include "EntapConfig.h"
-//**************************************************************
+#ifdef UNIT_TESTS
+#include "tests/UnitTests.h"
+#endif
+//********************************************1******************
 
 
 //******************** Local Variables *************************
@@ -82,6 +85,10 @@ void exit_print(bool in_error);
  */
 int main(int argc, const char** argv) {
     try {
+#ifdef UNIT_TESTS
+        UnitTests unitTests = UnitTests();
+        unitTests.execute_tests();
+#else
         init_entap(argc, argv);     // set up logging/user input
         if (isConfig) {
             entapConfig::execute_main(pUserInput, pFileSystem);
@@ -89,6 +96,8 @@ int main(int argc, const char** argv) {
             entapExecute::execute_main(pUserInput, pFileSystem);
         }
         exit_print(false);
+#endif
+
     } catch (ExceptionHandler &e) {
         if (e.getErr_code()==ERR_ENTAP_SUCCESS) return 0;
         e.print_msg(pFileSystem);
@@ -116,9 +125,6 @@ int main(int argc, const char** argv) {
  * ======================================================================
  */
 void init_entap(int argc, const char** argv) {
-
-    pair_str_t  config_default;     // first:config file path, second: default exes
-    std::string root_outfiles;      // Absolute path to EnTAP output directory
 
     // Begin timing
     startTime = std::chrono::system_clock::now();

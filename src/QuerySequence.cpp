@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -314,9 +314,13 @@ void QuerySequence::init_sequence() {
     mSequenceLength = 0;
     mFPKM = 0.0;
     mTPM = 0.0;
+    mEffectiveLength = 0.0;
+    mFrameScore = 0.0;
 
     mAlignmentData = new AlignmentData(this);
+#ifdef EGGNOG_MAPPER
     mEggnogResults = EggnogResults();
+#endif
 
     mFrameType = "";
     mSequenceProtein = "";
@@ -436,6 +440,7 @@ void QuerySequence::set_header_data() {
     // Expression Filtering data
     mHeaderInfo[ENTAP_HEADER_EXP_FPKM] = float_to_string(this->mFPKM);
     mHeaderInfo[ENTAP_HEADER_EXP_TPM] = float_to_string(this->mTPM);
+    mHeaderInfo[ENTAP_HEADER_EXP_E_LENGTH] = float_to_string(this->mEffectiveLength);
 
     // Similarity Search data
     align_ptr = this->mAlignmentData->get_best_align_ptr(SIMILARITY_SEARCH, SIM_DIAMOND, "");
@@ -451,6 +456,12 @@ void QuerySequence::set_header_data() {
 
     // Ontology InterProScan data
     align_ptr = this->mAlignmentData->get_best_align_ptr(GENE_ONTOLOGY, ONT_INTERPRO_SCAN, "");
+    if (align_ptr != nullptr) {
+        align_ptr->get_all_header_data(mHeaderInfo);
+    }
+
+    // Ontology BUSCO data
+    align_ptr = this->mAlignmentData->get_best_align_ptr(GENE_ONTOLOGY, ONT_BUSCO, "");
     if (align_ptr != nullptr) {
         align_ptr->get_all_header_data(mHeaderInfo);
     }
@@ -607,6 +618,34 @@ void QuerySequence::add_alignment(ExecuteStates state, uint16 software, InterPro
                                   std::string &database) {
     QUERY_FLAG_SET(QUERY_INTERPRO);
     QueryAlignment *new_alignmet = new InterproAlignment(state, software, database, this, results);
+    mAlignmentData->update_best_hit(new_alignmet);
+}
+
+
+/**
+ * ======================================================================
+ * Function void QuerySequence::add_alignment(ExecuteStates state, uint16 software,
+ *                                      BuscoResults &results, std::string& database)
+ *
+ * Description          - Adds BuscoAlignment alignment to AlignmentData and updates
+ *                        pertinent data/best hits
+ *
+ * Notes                - None
+ *
+ * @param state         - State that alignment was created in
+ * @param software      - Software that alignment was created using (DIAMOND, EggNOG...)
+ * @param results       - BUSCO data
+ * @param database      - Absolute path to database associated with alignment
+ *
+ * @return              - None
+ *
+ * =====================================================================
+ */
+void QuerySequence::add_alignment(ExecuteStates state, uint16 software, QuerySequence::BuscoResults &results,
+                                  std::string &database) {
+
+    QUERY_FLAG_SET(QUERY_ONT_BUSCO);
+    QueryAlignment *new_alignmet = new BuscoAlignment(state, software, database, this, results);
     mAlignmentData->update_best_hit(new_alignmet);
 }
 
@@ -779,6 +818,12 @@ void QuerySequence::update_query_flags(ExecuteStates state, uint16 software) {
 
                     break;
                 }
+
+                case ONT_BUSCO: {
+                    // Nothing special to do here
+                    break;
+                }
+
                 default:
                     return;
             }
@@ -794,12 +839,16 @@ QuerySequence::get_database_hits(std::string &database, ExecuteStates state, uin
     return this->mAlignmentData->get_database_ptr(state, software, database);
 }
 
-std::string QuerySequence::format_go_info(std::vector<std::string> &go_list, uint8 lvl) {
+std::string QuerySequence::format_go_info(go_format_t &go_list, uint8 lvl) {
     std::stringstream out;
+    std::string temp;
 
-    for (std::string &val : go_list)  {
-        if (val.find("(L=" + std::to_string(lvl))!=std::string::npos || lvl == 0) {
-            out<<val<<",";
+    for (GoEntry const &val : go_list)  {
+        // Only return unknown levels when asking for '0' GO level
+        // CLEANUP!
+        if (lvl == 0 || (val.level_int >= lvl && val.level_int != GoEntry::UNKNOWN_LVL)) {
+            temp = val.go_id + "(L=" + std::to_string(val.level_int) + ")";
+            out << temp << ",";
         }
     }
     return out.str();
@@ -840,6 +889,72 @@ uint32 QuerySequence::getMQueryFlags() const {
 bool QuerySequence::is_nucleotide() {
     return QUERY_FLAG_GET(QUERY_IS_NUCLEOTIDE);
 }
+
+void QuerySequence::setMEffectiveLength(fp32 mEffectiveLength) {
+    QuerySequence::mEffectiveLength = mEffectiveLength;
+}
+
+go_format_t QuerySequence::get_go_terms() {
+    go_format_t  ret = go_format_t();
+    go_format_t  align_data;
+
+    // Pull EggNOG GO Terms
+    auto *egg_alignment = get_best_hit_alignment<EggnogDmndAlignment>(GENE_ONTOLOGY, ONT_EGGNOG_DMND, "");
+    if (egg_alignment != nullptr) {
+        if (!egg_alignment->get_go_data().empty()) {
+            ret = egg_alignment->get_go_data();
+        }
+    }
+
+    // Pull UniProt GO Terms from Similarity Searching (overall best hit)
+    auto *sim_alignment = get_best_hit_alignment<SimSearchAlignment>(SIMILARITY_SEARCH, SIM_DIAMOND, "");
+    if (sim_alignment != nullptr) {
+        align_data = sim_alignment->get_go_data();
+        if (!align_data.empty()) {
+            std::merge(ret.begin(), ret.end(), align_data.begin(), align_data.end(),
+                       std::inserter(ret, ret.begin()));
+        }
+    }
+
+    // Pull InterPro GO Terms
+    auto *inter_alignment = get_best_hit_alignment<InterproAlignment>(GENE_ONTOLOGY, ONT_INTERPRO_SCAN, "");
+    if (inter_alignment != nullptr) {
+        align_data = inter_alignment->get_go_data();
+        if (!align_data.empty()) {
+            std::merge(ret.begin(), ret.end(), align_data.begin(), align_data.end(),
+                       std::inserter(ret, ret.begin()));
+        }
+    }
+
+    return ret;
+}
+
+fp32 QuerySequence::getMEffectiveLength() const {
+    return mEffectiveLength;
+}
+
+bool QuerySequence::contains_go_level(int16 level) {
+    go_format_t go_terms = get_go_terms();
+    if (!go_terms.empty()) {
+        if (level == 0) return true;
+        for (GoEntry const &entry : go_terms) {
+            if (entry.level_int == level) return true;
+        }
+    } else {
+        return false;
+    }
+
+    return false;
+}
+
+fp32 QuerySequence::getMFrameScore() const {
+    return mFrameScore;
+}
+
+void QuerySequence::setMFrameScore(fp32 mFrameScore) {
+    QuerySequence::mFrameScore = mFrameScore;
+}
+
 
 QuerySequence::align_database_hits_t* QuerySequence::AlignmentData::get_database_ptr(ExecuteStates state, uint16 software, std::string& database) {
     if (database.empty()) return nullptr;

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -29,8 +29,8 @@
 #define ENTAP_ENTAPDATABASE_H
 
 #include "../EntapGlobals.h"
-#include "../EntapConfig.h"
 #include "SQLDatabaseHelper.h"
+#include "../FileSystem.h"
 
 #ifdef USE_BOOST    // Include boost serialization headers
 #include <boost/serialization/serialization.hpp>
@@ -48,18 +48,19 @@
 #include <cereal/types/map.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
-
+#include <cereal/types/set.hpp>
 
 #endif
-
-#include "../FileSystem.h"
-
 
 struct  GoEntry {
     std::string go_id;
     std::string level;
     std::string category;
     std::string term;
+    int16       level_int;
+
+    static const std::string UNKNOWN_LVL_STR;
+    static const int16 UNKNOWN_LVL;
 
 #ifdef USE_BOOST
     friend class boost::serialization::access;
@@ -76,21 +77,43 @@ struct  GoEntry {
     void serialize(Archive & archive)
     {
         archive(
-                go_id, level, category, term);
+                go_id, level_int, level, category, term);
     }
 #endif
 
     GoEntry() {
+        // Set as defaults if we cannot find information for it
         go_id = "";
-        level = "";
-        category = "";
+        level = UNKNOWN_LVL_STR;
+        level_int = UNKNOWN_LVL;
+        category = UNKNOWN_LVL_STR;
         term = "";
     }
 
     bool is_empty() {
-        return term.empty();
+        return (term.empty() || term == UNKNOWN_LVL_STR);
+    }
+
+    // Don't really care about order, just don't want duplicates
+    //  std::set helper
+    bool operator < (const GoEntry& rhs) const {
+        return this->go_id < rhs.go_id;
+    }
+
+    bool operator == (const GoEntry& rhs) const {
+        return this->go_id == rhs.go_id;
     }
 };
+
+namespace std {
+    template<>
+    struct hash<GoEntry> {
+        std::size_t operator()(const GoEntry &x) const {
+            return std::hash<std::string>()(x.go_id);
+        }
+    };
+}
+
 
 struct TaxEntry {
     std::string tax_id;
@@ -123,6 +146,8 @@ struct TaxEntry {
         tax_name = "";
     }
 };
+
+typedef std::set<GoEntry> go_format_t;
 
 struct UniprotEntry {
     std::string database_x_refs;        // DR   OrthoDB; VOG090000I8; -.
@@ -187,10 +212,6 @@ public:
 
         ENTAP_SERIALIZED=0, // Serialized database
         ENTAP_SQL,          // SQL database (uniprot mapping, tax data)
-        ENTAP_TAXONOMY,     // NCBI tax database
-        ENTAP_GENE_ONTOLOGY,// GO database
-        ENTAP_UNIPROT,      // UniProt mapping database
-        ENTAP_VERSION,      // Version table used in SQL database only
 
         ENTAP_MAX_TYPES
 
@@ -233,6 +254,8 @@ public:
         ERR_DATA_SET,
         ERR_DATA_INCOMPATIBLE_VER,
         ERR_DATA_GET_VERSION,
+        ERR_DATA_DELETE_TABLE,
+        ERR_DATA_CREATE_TABLE,
 
         ERR_DATA_MEM_ALLOC,
         ERR_DATA_UNHANDLED_TYPE,
@@ -293,16 +316,15 @@ public:
         TaxonomyNode(std::string id);
     };
 
-    EntapDatabase(FileSystem* fileSystem, UserInput* userInput);
+    EntapDatabase(FileSystem* fileSystem);
     ~EntapDatabase();
-    bool set_database(DATABASE_TYPE type);
+    bool set_database(DATABASE_TYPE type, std::string database_path);
     DATABASE_ERR download_database(DATABASE_TYPE, std::string&);
     DATABASE_ERR generate_database(DATABASE_TYPE, std::string&);
     std::string print_error_log();
     go_format_t format_go_delim(std::string terms, char delim);
 
     // Database accession routines
-    // TODO change to const* return if SQL removed
     TaxEntry get_tax_entry(std::string& species);
     GoEntry get_go_entry(std::string& go_id);
     UniprotEntry get_uniprot_entry(std::string& accession);
@@ -314,8 +336,19 @@ public:
     std::string get_current_version_str();
     std::string get_required_version_str();
 
-
+#ifndef UNIT_TESTS
 private:
+#endif
+
+    typedef enum {
+        ENTAP_TAXONOMY,     // NCBI tax database
+        ENTAP_GENE_ONTOLOGY,// GO database
+        ENTAP_UNIPROT,      // UniProt mapping database
+        ENTAP_VERSION,      // Version table used in SQL database only
+
+        ENTAP_MAX_TABLES
+
+    } DATABASE_TABLES;
 
     // Generation/download database routines
     DATABASE_ERR download_entap_sql(std::string&);
@@ -326,9 +359,14 @@ private:
     DATABASE_ERR generate_entap_uniprot(DATABASE_TYPE);
     std::string  entap_tax_get_lineage(TaxonomyNode &,
                                        std::unordered_map<std::string, TaxonomyNode>&);
+
+    bool create_sql_table(DATABASE_TABLES database_table);
+    EntapDatabase::DATABASE_ERR create_database_type(DATABASE_TYPE type, std::string &path);
+    EntapDatabase::DATABASE_ERR delete_database_table(DATABASE_TYPE type, DATABASE_TABLES table);
+
+
     bool sql_add_tax_entry(TaxEntry&);
     bool sql_add_go_entry(GoEntry&);
-    bool create_sql_table(DATABASE_TYPE);
     bool add_uniprot_entry(DATABASE_TYPE type, UniprotEntry &entry);
     void set_err_msg(std::string msg, DATABASE_ERR code);
     bool set_database_versions(DATABASE_TYPE type);
@@ -340,6 +378,8 @@ private:
     // FTP Paths
     const std::string FTP_GO_DATABASE =
             "http://archive.geneontology.org/latest-full/go_monthly-termdb-tables.tar.gz";
+//    const std::string FTP_GO_DATABASE =
+//            "http://archive.geneontology.org/latest-termdb/go_daily-termdb-tables.tar.gz";
     const std::string FTP_NCBI_TAX_DUMP_TARGZ =
             "ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz";
     const std::string FTP_ENTAP_DATABASE_SQL    =
@@ -372,15 +412,21 @@ private:
     const std::string SQL_COL_NCBI_TAX_TAXID     = "TAXID";
     const std::string SQL_COL_NCBI_TAX_LINEAGE   = "LINEAGE";
     const std::string SQL_COL_NCBI_TAX_NAME      = "TAXNAME"; // ex: homo sapiens
+
     const std::string SQL_TABLE_GO_TITLE         = "GENEONTOLOGY";
     const std::string SQL_TABLE_GO_COL_ID        = "GOID";
     const std::string SQL_TABLE_GO_COL_DESC      = "DESCRIPTION";
     const std::string SQL_TABLE_GO_COL_CATEGORY  = "CATEGORY";
-    const std::string SQL_TABLE_GO_COL_LEVEL     = "LEVEL";
+    const std::string SQL_TABLE_GO_COL_LEVEL     = "LEVEL_INT"; // INTEGER
+    const std::string SQL_TABLE_GO_COL_LEVEL_STR = "LEVEL_STR";
+
     const std::string SQL_TABLE_UNIPROT_TITLE    = "UNIPROT";
     const std::string SQL_TABLE_UNIPROT_COL_COMM = "COMMENTS";
     const std::string SQL_TABLE_UNIPROT_COL_XREF = "DATAXREFS";
     const std::string SQL_TABLE_UNIPROT_COL_ID   = "UNIPROTID";
+    const std::string SQL_TABLE_UNIPROT_COL_KEGG = "KEGG";
+    const std::string SQL_TABLE_UNIPROT_COL_GO   = "GOTERMS";
+
     const std::string SQL_TABLE_VERSION_TITLE    = "VERSION";
     const std::string SQL_TABLE_VERSION_COL_VER  = "VERSION";
 
@@ -390,7 +436,9 @@ private:
     const std::string GO_CELLULAR_LVL   = "311";
     const std::string GO_TERM_FILE      = "term.txt";
     const std::string GO_GRAPH_FILE     = "graph_path.txt";
+//    const std::string GO_TERMDB_FILE    = "go_daily-termdb-tables.tar.gz";
     const std::string GO_TERMDB_FILE    = "go_monthly-termdb-tables.tar.gz";
+//    const std::string GO_TERMDB_DIR     = "go_daily-termdb-tables/";
     const std::string GO_TERMDB_DIR     = "go_monthly-termdb-tables/";
 
     // UniProt mapping constants
@@ -399,16 +447,15 @@ private:
 
     // EnTAP database consts
     const SERIALIZATION_TYPE SERIALIZE_DEFAULT    = CEREAL_BIN_ARCHIVE;
-    const uint8              SERIALIZE_MAJOR      = 1;
+    const uint8              SERIALIZE_MAJOR      = 2;
     const uint8              SERIALIZE_MINOR      = 0;
-    const uint8              SQL_MAJOR            = 1;
+    const uint8              SQL_MAJOR            = 2;
     const uint8              SQL_MINOR            = 0;
 
     const uint8 STATUS_UPDATES = 5;     // Percentage of updates when downloading/configuring
 
     EntapDatabaseStruct *mpSerializedDatabase;
     FileSystem          *mpFileSystem;
-    UserInput           *mpUserInput;
     SQLDatabaseHelper   *mpDatabaseHelper;
     std::string          mTempDirectory;
     go_serial_map_t      mSqlGoHelper;    // Using to increase speeds for now, change later
@@ -416,9 +463,12 @@ private:
     std::string          mErrMsg;
     DATABASE_ERR         mErrCode;
 
-    const std::string ENTAP_DATABASE_TYPES_STR[ENTAP_MAX_TYPES-1] {
+    const std::string ENTAP_DATABASE_TYPES_STR[ENTAP_MAX_TYPES] {
             "EnTAP Serialized Database",
-            "EnTAP SQL Database",
+            "EnTAP SQL Database"
+    };
+
+    const std::string ENTAP_DATABASE_TABLES[ENTAP_MAX_TABLES] {
             "EnTAP NCBI Taxonomy Database",
             "EnTAP Gene Ontology Database",
             "EnTAP UniProt Swiss-Prot Database"

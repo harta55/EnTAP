@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -26,6 +26,7 @@
 */
 
 #include "AbstractFrame.h"
+#include "../ExceptionHandler.h"
 
 /**
  * ======================================================================
@@ -179,8 +180,8 @@ void AbstractFrame::frame_calculate_statistics() {
                 mpGraphingManager->add_datapoint(graph_box_comparison.text_file_path, {GRAPH_KEPT_FLAG, std::to_string(length)});
 
                 // Print nucleotide + protein sequences to files
-                std::map<std::string, std::ofstream*>::iterator file_it = file_map_faa.find(pair.second->getFrame());
-                std::map<std::string, std::ofstream*>::iterator file_it_n = file_map_fnn.find(pair.second->getFrame());
+                auto file_it = file_map_faa.find(pair.second->getFrame());
+                auto file_it_n = file_map_fnn.find(pair.second->getFrame());
                 if (file_it != file_map_faa.end() && file_it_n != file_map_faa.end()) {
                     *file_it->second << pair.second->get_sequence_p() << std::endl;
                     *file_it_n->second << pair.second->get_sequence_n() << std::endl;

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -71,7 +71,7 @@ const std::vector<std::string> ModInterpro::INTERPRO_DATABASES ({
             "gene3d",
             "pirsf",
             "coils",
-            "morbidlite"
+            "mobidlite"
 });
 
 const std::string ModInterpro::INTERPRO_DEFAULT = "pfam";
@@ -214,7 +214,7 @@ void ModInterpro::parse() {
             if (it != interpro_map.end()) {
                 count_hits++;
 
-                go_terms_parsed = EM_parse_go_list(it->second.go_terms,mpEntapDatabase,',');
+                go_terms_parsed = mpEntapDatabase->format_go_delim(it->second.go_terms, ',');
 
                 // Compile data TODO change...
                 interProResults.e_value = float_to_sci(it->second.eval,2);
@@ -501,6 +501,6 @@ ModInterpro::ModInterpro(std::string &ont, std::string &in, EntapDataPtrs& entap
     mExePath      = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_INTERPRO_EXE);
 }
 
-void ModInterpro::get_version() {
-    return;
+bool ModInterpro::set_version() {
+    return false;
 }

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -62,6 +62,10 @@ public:
         ENT_FILE_DELIM_CSV,
         ENT_FILE_FASTA_FAA,
         ENT_FILE_FASTA_FNN,
+        ENT_FILE_GENE_ENRICH_EFF_LEN,           // Gene enrichment format for gene ontology
+                                                // gene ID and effective length, tab delim
+        ENT_FILE_GENE_ENRICH_GO_TERM,           // Gene ID and Go terms, tab delim
+                                                // new row for every go term for each gene
         ENT_FILE_OUTPUT_FORMAT_MAX,     // File types above this are supported for data output
 
         ENT_FILE_XML,                   // Not yet supported for output format
@@ -82,6 +86,8 @@ public:
         FILE_STATUS_MAX        = (1 << 15)
 
     } ENT_FILE_STATUS;
+
+    const std::string &getMOriginalWorkingDir() const;
 
     typedef enum {
 
@@ -128,6 +134,7 @@ public:
     std::string get_error();
     std::string get_extension(ENT_FILE_TYPES type);
     std::string get_trancriptome_dir();
+    bool format_for_csv_parser(const std::string &input_path, std::string &output_path, uint16 col_num);
 
     bool download_ftp_file(std::string,std::string&);
     bool decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES);
@@ -155,8 +162,9 @@ public:
     static const char        DELIM_TSV;
     static const char        DELIM_CSV;
     static const char        FASTA_FLAG;
-
+#ifndef UNIT_TESTS
 private:
+#endif
     //****************** Private Functions *********************
     void init_log();
     void set_error(std::string err_msg);
@@ -168,7 +176,11 @@ private:
     const std::string LOG_FILENAME              = "log_file"; // Filename for EnTAP log file (statistics files)
     const std::string LOG_EXTENSION             = EXT_TXT; // Extension for EnTAP statistics file
     const std::string DEBUG_EXTENSION           = EXT_TXT; // Extension for EnTAP debug file
+#ifdef UNIT_TESTS
+    const std::string DEBUG_FILENAME            = "unit_testing";
+#else
     const std::string DEBUG_FILENAME            = "debug"; // Filename for EnTAP debug file
+#endif
     const std::string ENTAP_FINAL_OUTPUT        = "final_results/"; // Directory name for final output annotations directory
     const std::string ENTAP_TRANSCRIPTOME_DIR   = "transcriptomes/"; // Directory name for transcriptome directory (frame selected, expression analysis)
     const std::string TEMP_DIRECTORY            = "temp/"; // Directory name for 'temp' directory  (deleted once EnTAP exits)

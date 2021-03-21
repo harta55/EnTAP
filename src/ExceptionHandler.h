@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -90,6 +90,7 @@ enum ENTAP_ERR {
     ERR_ENTAP_RUN_EGGNOG_DMND             = 181u,
     ERR_ENTAP_RUN_BUSCO                   = 190u,
     ERR_ENTAP_PARSE_BUSCO                 = 191u,
+    ERR_ENTAP_VERSION_UNSUPPORTED_BUSCO   = 192u,
     ERR_ENTAP_FILE_IO                     = 200u,
     ERR_ENTAP_MEM_ALLOC                   = 201u,
     ERR_ENTAP_MAX                         = 201u

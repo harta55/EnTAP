@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -73,7 +73,7 @@ public:
     virtual ModVerifyData verify_files() override ;
     virtual void execute() override ;
     virtual void parse() override ;
-    virtual void get_version() override;
+    virtual bool set_version() override;
     static bool is_executable(std::string& exe);
     //**********************************************************
 

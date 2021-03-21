@@ -315,6 +315,7 @@ void QuerySequence::init_sequence() {
     mFPKM = 0.0;
     mTPM = 0.0;
     mEffectiveLength = 0.0;
+    mFrameScore = 0.0;
 
     mAlignmentData = new AlignmentData(this);
 #ifdef EGGNOG_MAPPER
@@ -944,6 +945,14 @@ bool QuerySequence::contains_go_level(int16 level) {
     }
 
     return false;
+}
+
+fp32 QuerySequence::getMFrameScore() const {
+    return mFrameScore;
+}
+
+void QuerySequence::setMFrameScore(fp32 mFrameScore) {
+    QuerySequence::mFrameScore = mFrameScore;
 }
 
 

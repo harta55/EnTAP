@@ -239,21 +239,12 @@ const fp64   UserInput::DEFAULT_E_VALUE                 = 1e-5;
 
 #define CMD_UNINFORMATIVE   "uninformative"
 #define DESC_UNINFORMATIVE  "List of keywords that should be used to specify uninformativeness of hits during similarity searching. "  \
-                            "Generally something along the lines of 'hypothetical' or 'unknown' are used. Each term should be on a new line of " \
-                            "the file being linked to. This can be used if you would like to tag certain descriptions or "\
+                            "Generally something along the lines of 'hypothetical' or 'unknown' are used. Each term should be separated by a comma (,) " \
+                            "This can be used if you would like to tag certain descriptions or "\
                             "would like to weigh certain alignments differently (see full documentation)"\
                             "\nExample (defaults):\n"          \
-                            "    -conserved\n"                                          \
-                            "    -predicted\n"                                          \
-                            "    -unknown\n"                                            \
-                            "    -hypothetical\n"                                       \
-                            "    -putative\n"                                           \
-                            "    -unidentified\n"                                       \
-                            "    -uncultured\n"                                         \
-                            "    -uninformative\n"                                      \
-                            "    -unnamed\n"                                                                                                        \
-                            "Ensure each word is on a separate line in the file. EnTAP will take the " \
-                            "each line as a new uninformative word!"
+                            "conserved, predicted, unknown, hypothetical, putative, unidentified, uncultured, uninformative, unnamed"
+
 // Enter as lowercase
 const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
         "conserved",
@@ -310,11 +301,10 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
                             "    1. InterProScan"
 #define CMD_GO_LEVELS      "level"
 #define DESC_ONT_LEVELS     "Specify the Gene Ontology levels you would like printed\n" \
-                            "Default: 1\n"                                        \
-                            "A level of 0 means that every term will be printed! "       \
-                            "It is possible to specify multiple flags as well with\n"   \
-                            "multiple --level flags\n"                                  \
-                            "Example: --level 0 --level 3 --level 1"
+                            "A level of 0 means that every term will be printed, while a level of 1 or higher\n"       \
+                            "means that that level and anything higher than it will be printed\n"   \
+                            "It is possible to specify multiple flags as well\n"                     \
+                            "Example/Defaults: --level 0 --level 1"
 
 /* BUSCO */
 #define CMD_BUSCO_EXE      "busco-exe"
@@ -382,7 +372,7 @@ const std::string UserInput::RSEM_SAM_VALID        = "rsem-sam-validator";
 const std::string UserInput::RSEM_PREP_REF_EXE     = "rsem-prepare-reference";
 const std::string UserInput::RSEM_CALC_EXP_EXE     = "rsem-calculate-expression";
 const std::string UserInput::RSEM_CONV_SAM         = "convert-sam-for-rsem";
-const std::string UserInput::RSEM_DEFAULT_EXE_DIR  = PATHS(FileSystem::get_exe_dir(),"/libs/RSEM-1.3.0/");   // Directory
+const std::string UserInput::RSEM_DEFAULT_EXE_DIR  = PATHS(FileSystem::get_exe_dir(),"/libs/RSEM-1.3.3/");   // Directory
 const std::string UserInput::DEFAULT_RSEM_SAM_VALID= PATHS(RSEM_DEFAULT_EXE_DIR, RSEM_SAM_VALID);
 const std::string UserInput::DEFAULT_RSEM_PREP_REF = PATHS(RSEM_DEFAULT_EXE_DIR, RSEM_PREP_REF_EXE);
 const std::string UserInput::DEFAULT_RSEM_CALC_EXP = PATHS(RSEM_DEFAULT_EXE_DIR, RSEM_CALC_EXP_EXE);

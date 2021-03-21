@@ -77,7 +77,7 @@ private:
     int train_data(std::string &err_msg);
     int predict_frame(std::string &err_msg);
     void parse_transdecoder_fasta(std::string &file_path, FileSystem::ENT_FILE_TYPES file_type);
-    void parse_transdecoder_fasta_header(std::string &seq_id, std::string &line, std::string &header);
+    void parse_transdecoder_fasta_header(std::string &seq_id, std::string &line, std::string &header, fp32 &score);
     bool verify_ORF(std::string& frame);
     //**********************************************************
 
@@ -99,6 +99,8 @@ private:
     // String flags in cds/pep output files to indicate FRAME
     const std::string FLAG_FRAME_BEGIN = "type:";                   // Marks beginning of frame type in output files
     const char        FLAG_FRAME_END   = ' ';
+    const std::string FLAG_SCORE_BEGIN = "score=";
+    const char        FLAG_SCORE_END   = ' ';
     const std::string TRANSDECODER_FLAG_COMPLETE_FRAME = "complete";
     const std::string TRANSDECODER_FLAG_INTERNAL_FRAME = "internal";
     const std::string TRANSDECODER_FLAG_5PRIME_FRAME = "5prime_partial";
@@ -107,6 +109,11 @@ private:
     // (ex: >MSTRG.1001.1.p1 GENE.MSTRG.1001.1~~MSTRG.1001.1.p1)
     const std::string FLAG_QUERYID_BEGIN = "GENE.";
     const std::string FLAG_QUERYID_END   = "~~";
+    // Sometimes, TransDecoder can report the following:
+    //  >TRINITY_DN0_c1_g1_i3.p1 TRINITY_DN0_c1_g1~~TRINITY_DN0_c1_g1_i3.p1
+    //  ORF type:internal len:121 (-),score=46.75 TRINITY_DN0_c1_g1_i3:3-362(-)
+    const char FLAG_QUERYID_V2_BEGIN = ' ';  // Space after 'score:'
+    const char FLAG_QUERYID_V2_END = ':';   // some risk in this if the user has '.p' in sequence
     // Transdecoder file naming conventions
     const std::string FILE_TRANSDECODER_SUFFIX = ".transdecoder";
 

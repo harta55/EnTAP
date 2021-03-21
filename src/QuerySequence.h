@@ -251,6 +251,12 @@ public:
     go_format_t get_go_terms();
     bool contains_go_level(int16 level);
 
+    fp32 getMFrameScore() const;
+
+    void setMFrameScore(fp32 mFrameScore);
+
+    void setMEffectiveLength(fp32 mEffectiveLength);
+
 private:
     //****************** Private Functions *********************
     void init_sequence();
@@ -267,17 +273,13 @@ private:
     fp32                              mFPKM;            // FPKM value from Expression Filtering
     fp64                              mTPM;             // TPM value from Expression Filtering
     fp32                              mEffectiveLength; // Effective length from expression filtering
-    uint32                            mQueryFlags;
-public:
-    void setMEffectiveLength(fp32 mEffectiveLength);
-
-private:
-    // Status flags for sequence
+    uint32                            mQueryFlags;      // Status flags for the sequence
     std::string                       mSequenceID;      // Sequence ID
     uint64                            mSequenceLength;  // Sequence length (nucleotide bp)
     std::string                       mSequenceProtein; // Protein sequence
     std::string                       mSequenceNucleo;  // Nucleotide sequence
     std::string                       mFrameType;       // Frame type from Frame Selection
+    fp32                              mFrameScore;      // Frame selection score
 #ifdef EGGNOG_MAPPER
     EggnogResults                     mEggnogResults;   // EggNOG mapper results
 #endif

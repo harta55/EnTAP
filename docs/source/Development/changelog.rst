@@ -1,6 +1,23 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.4-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.7-beta
+
+EnTAP Beta v0.10.7-beta (October 6, 2020)
+------------------------------------------
+
+    * Fixed an issue where certain sequence headers may not have been parsed properly resulting in unrecognized sequence errors during Similarity Searching
+
+EnTAP Beta v0.10.6-beta (August 26, 2020)
+------------------------------------------
+
+    * Added support to pipe the TransDecoder flag '--no_refine_starts' during Execution
+    * Fixed an issue where error messages during EggNOG searching would not get printed (seg fault)
+    * Contaminant information will not be printed to the log if there are none
+
+EnTAP Beta v0.10.5-beta (August 12, 2020)
+------------------------------------------
+
+    * Added a step to remove the stop codon ('*') sometimes printed at the end of the TransDecoder FASTA output. This may have caused an issue when running TransDecoder and InterProScan together
 
 EnTAP Beta v0.10.4-beta (July 29, 2020)
 ------------------------------------------

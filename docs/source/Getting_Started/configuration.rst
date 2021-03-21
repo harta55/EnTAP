@@ -58,9 +58,9 @@ The following FTP sites contain common reference databases that EnTAP can recogn
    * Plant RefSeq: |ref_plant|
 
    * Mammalian Vertebrate RefSeq: |ref_mamm|
-   
+
    * Other Vertebrate RefSeq: |ref_vert_other|
-   
+
    * Invertebrate RefSeq: |ref_invert|
 
    * NR: |ref_nr|
@@ -119,14 +119,14 @@ To run configuration with a FASTA database to output directory path/to/output (d
 
 .. code-block:: bash
 
-    EnTAP --config -d path/to/database.fasta -d path/to/database2.fasta --out-dir path/to/output -t 8
+    EnTAP --config -d path/to/database.fasta -d path/to/database2.fasta --out-dir path/to/output -t 8 --ini path/to/ini
 
 
-Configuration can be run without formatting a FASTA database for DIAMOND is as follows with 8 threads:
+If your databases are already indexed for DIAMOND, you can simply provide the paths in the .ini file and run the following command with 8 threads:
 
 .. code-block:: bash
 
-    EnTAP --config -t 8
+    EnTAP --config -t 8 --ini path/to/ini
 
 .. note:: This is the only stage that requires connection to the Internet.
 

@@ -765,12 +765,12 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
         // Only show contaminant information if we have contaminants
         contam_percent = ((fp64) count_contam / count_filtered) * ENTAP_PERCENT;
 
-        graph_contaminants_bar.x_axis_label = "Contaminant Species";
-        graph_contaminants_bar.y_axis_label = "Count";
+        graph_contaminants_bar.x_axis_label   = "Contaminant Species";
+        graph_contaminants_bar.y_axis_label   = "Count";
         graph_contaminants_bar.text_file_path = PATHS(figure_base, GRAPH_CONTAM_BAR_TXT);
-        graph_contaminants_bar.fig_out_path = PATHS(figure_base, GRAPH_CONTAM_BAR_PNG);
-        graph_contaminants_bar.graph_title = database_shortname + GRAPH_CONTAM_TITLE;
-        graph_contaminants_bar.graph_type = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
+        graph_contaminants_bar.fig_out_path   = PATHS(figure_base, GRAPH_CONTAM_BAR_PNG);
+        graph_contaminants_bar.graph_title    = database_shortname + GRAPH_CONTAM_TITLE;
+        graph_contaminants_bar.graph_type     = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
         mpGraphingManager->initialize_graph_data(graph_contaminants_bar);
 
         ss <<
@@ -778,12 +778,8 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
            "(" << contam_percent << "%): " <<
            "\n\t\tTranscriptome reference sequences labeled as a contaminant (FASTA):\n\t\t\t"
            << out_best_contams_filepath <<
-           "\n\t\tTranscriptome reference sequences labeled as a contaminant (TSV):\n\t\t\t"
-           << out_best_contams_filepath;
-    }
+           "\n\t\tTranscriptome reference sequences labeled as a contaminant (TSV):\n\t\t\t" << out_best_contams_filepath;
 
-    // ********** Contaminant Calculations ************** //
-    if (count_contam >= MIN_CONTAM_COUNT) {
         ss << "\n\t\tFlagged contaminants (all % based on total contaminants):";
         for (auto &pair : contam_counter._data) {
             percent = ((fp64) pair.second / count_contam) * 100;

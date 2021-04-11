@@ -78,7 +78,10 @@ include_directories(libs/cereal-1.2.2/include)
 include_directories(libs/tclap-1.2.2/include)
 include_directories(libs/boost-1.68.0/include)
 
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+add_subdirectory(libs)
+
 add_executable(EnTAP ${SOURCE_FILES})
 
-target_link_libraries(EnTAP dl pthread)
+target_link_libraries(EnTAP dl pthread nlohmann_json::nlohmann_json)
 install(TARGETS EnTAP DESTINATION bin)

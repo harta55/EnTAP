@@ -54,7 +54,7 @@
 std::chrono::time_point<std::chrono::system_clock> startTime;       // EnTAP starting time
 UserInput *pUserInput;                                              // Pointer to user input flags
 FileSystem *pFileSystem;                                            // Pointer to EnTAP filesystem
-bool isConfig;                                                      // Yes - config, No - execution
+UserInput::EXECUTION_TYPE EXECUTE_TYPE;                             // Config/Execute/API
 //**************************************************************
 
 //******************** Global Variables ************************
@@ -64,7 +64,7 @@ std::string LOG_FILE_PATH;          // Extern
 
 //******************** Local Prototype Functions ***************
 void init_entap(int argc, const char** argv);
-void exit_print(bool in_error);
+void exit_print(bool in_error, UserInput::EXECUTION_TYPE);
 //**************************************************************
 
 
@@ -90,18 +90,24 @@ int main(int argc, const char** argv) {
         unitTests.execute_tests();
 #else
         init_entap(argc, argv);     // set up logging/user input
-        if (isConfig) {
+        if (EXECUTE_TYPE == UserInput::EXECUTE_CONFIG) {
             entapConfig::execute_main(pUserInput, pFileSystem);
-        } else {
+        } else if (EXECUTE_TYPE == UserInput::EXECUTE_EXECUTE) {
             entapExecute::execute_main(pUserInput, pFileSystem);
+        } else if (EXECUTE_TYPE == UserInput::EXECUTE_API) {
+            ;
+        } else {
+            ;
         }
-        exit_print(false);
+        exit_print(false, EXECUTE_TYPE);
+        SAFE_DELETE(pFileSystem);
+        SAFE_DELETE(pUserInput);
 #endif
 
     } catch (ExceptionHandler &e) {
         if (e.getErr_code()==ERR_ENTAP_SUCCESS) return 0;
         e.print_msg(pFileSystem);
-        exit_print(true);
+        exit_print(true, EXECUTE_TYPE);
         return e.getErr_code();
     }
     return 0;
@@ -136,7 +142,7 @@ void init_entap(int argc, const char** argv) {
     pUserInput = new UserInput(argc, argv, pFileSystem);
 
     // Verify and print user input (marks begining of log file), sets if user selected config or execute
-    isConfig = pUserInput->verify_user_input();
+    EXECUTE_TYPE = pUserInput->verify_user_input();
 }
 
 
@@ -155,29 +161,45 @@ void init_entap(int argc, const char** argv) {
  * @return              - None
  * ======================================================================
  */
-void exit_print(bool in_error) {
-    std::stringstream  out_stream;  // Stream to print to EnTAP log file
-    std::string        out_msg;     // Temp string of outstream
-    int64              min_dif;     // start time to end time difference
-    std::chrono::time_point<std::chrono::system_clock> end_time;    // EnTAP end time
+void exit_print(bool in_error, UserInput::EXECUTION_TYPE execute_type) {
 
-    end_time = std::chrono::system_clock::now();
-    FS_dprint("End - EnTAP");
-    min_dif = std::chrono::duration_cast<std::chrono::minutes>(end_time - startTime).count();
+    switch (execute_type) {
+        // FALL THROUGH for EXECUTE_EXECUTE
+        case UserInput::EXECUTE_EXECUTE:
+        case UserInput::EXECUTE_CONFIG: {
+            std::stringstream out_stream;  // Stream to print to EnTAP log file
+            std::string out_msg;     // Temp string of outstream
+            int64 min_dif;     // start time to end time difference
+            std::chrono::time_point<std::chrono::system_clock> end_time;    // EnTAP end time
 
-    if (in_error) {
-        out_stream <<
-                   "\nEnTAP has failed! ";
-    } else {
-        out_stream <<
-                   "\nEnTAP has completed!";
+            end_time = std::chrono::system_clock::now();
+            FS_dprint("End - EnTAP");
+            min_dif = std::chrono::duration_cast<std::chrono::minutes>(end_time - startTime).count();
+
+            if (in_error) {
+                out_stream <<
+                           "\nEnTAP has failed! ";
+            } else {
+                out_stream <<
+                           "\nEnTAP has completed!";
+            }
+            out_stream <<
+                       "\nTotal runtime (minutes): " << min_dif;
+            out_msg = out_stream.str();
+            pFileSystem->print_stats(out_msg);
+            break;
+        }
+
+        case UserInput::EXECUTE_API:
+        {
+            std::string out_msg;
+            out_msg = pUserInput->get_json_output();
+            std::cout << out_msg << std::endl;
+            break;
+        }
+
+        default:
+            break;
     }
-    out_stream <<
-               "\nTotal runtime (minutes): "       << min_dif;
-    out_msg = out_stream.str();
-    pFileSystem->print_stats(out_msg);
 
-    // CLEANUP
-    SAFE_DELETE(pFileSystem);
-    SAFE_DELETE(pUserInput);
 }

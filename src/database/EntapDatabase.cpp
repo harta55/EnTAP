@@ -51,6 +51,7 @@ EntapDatabase::EntapDatabase(FileSystem* filesystem) {
     mTempDirectory  = filesystem->get_temp_outdir();    // created previously
     mpSerializedDatabase = nullptr;
     mpDatabaseHelper     = nullptr;
+    mpNCBIEntrez         = new NCBIEntrez(filesystem);
     mUseSerial          = true;                         // default
     mErrMsg             = "";
     mErrCode            = ERR_DATA_OK;
@@ -215,6 +216,7 @@ EntapDatabase::~EntapDatabase() {
         SAFE_DELETE(mpDatabaseHelper);
     }
     SAFE_DELETE(mpSerializedDatabase);
+    SAFE_DELETE(mpNCBIEntrez);
 }
 
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DATABASE_TYPE type) {
@@ -1428,6 +1430,19 @@ EntapDatabase::DATABASE_ERR EntapDatabase::delete_database_table(EntapDatabase::
     }
 
     return ERR_DATA_OK;
+}
+
+// False no hits, true has hits
+bool EntapDatabase::is_ncbi_tax_entry(std::string &species) {
+    NCBIEntrez::EntrezResults entrezResults;
+    NCBIEntrez::EntrezInput entrezInput;
+    TaxEntry ret = TaxEntry();
+
+    entrezInput.term = species;
+    entrezInput.database = NCBIEntrez::NCBI_DATABASE_TAXONOMY;
+
+    // Query for the species
+    return mpNCBIEntrez->entrez_has_hits(entrezInput);
 }
 
 const int16 GoEntry::UNKNOWN_LVL = -1;

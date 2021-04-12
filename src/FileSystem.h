@@ -137,6 +137,7 @@ public:
     bool format_for_csv_parser(const std::string &input_path, std::string &output_path, uint16 col_num);
 
     bool download_ftp_file(std::string,std::string&);
+    bool download_url_data(std::string &url, std::string &file);
     bool decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES);
     bool is_url(std::string &url);
 
@@ -170,11 +171,15 @@ private:
     void set_error(std::string err_msg);
     void set_executable_dir();
     void clear_error();
+    std::string get_temp_file();
+    std::string get_timestamp();
     //**********************************************************
 
     //**************** Private Const Variables *****************
     const std::string LOG_FILENAME              = "log_file"; // Filename for EnTAP log file (statistics files)
-    const std::string LOG_EXTENSION             = EXT_TXT; // Extension for EnTAP statistics file
+    const std::string LOG_EXTENSION             = EXT_TXT;    // Extension for EnTAP statistics file
+    const std::string TEMP_FILENAME             = "temp";     // Beginning of temporary filename
+    const std::string TEMP_EXTENSION            = EXT_TXT;
     const std::string DEBUG_EXTENSION           = EXT_TXT; // Extension for EnTAP debug file
 #ifdef UNIT_TESTS
     const std::string DEBUG_FILENAME            = "unit_testing";

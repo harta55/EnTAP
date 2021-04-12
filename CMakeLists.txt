@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(EnTAP VERSION 0.10.1 LANGUAGES CXX C)
+project(EnTAP VERSION 0.10.9 LANGUAGES CXX C)
 include(CheckCXXCompilerFlag)
 include(GNUInstallDirs)
 
@@ -69,7 +69,8 @@ set(SOURCE_FILES
         src/frame_selection/ModTransdecoder.cpp src/frame_selection/ModTransdecoder.h
         src/database/BuscoDatabase.cpp src/database/BuscoDatabase.h
         src/ontology/ModBUSCO.cpp src/ontology/ModBUSCO.h
-        src/tests/UnitTests.cpp src/tests/UnitTests.h)
+        src/tests/UnitTests.cpp src/tests/UnitTests.h
+        src/database/NCBIEntrez.cpp src/database/NCBIEntrez.h)
 
 # Include libraries
 include_directories(libs/pstream)

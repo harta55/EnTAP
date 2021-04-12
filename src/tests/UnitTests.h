@@ -50,6 +50,8 @@ protected:
     void UTEntapDatabase_01(EntapDatabase *entapDatabase, EntapDatabase::DATABASE_TYPE type);
     void UTEntapDatabase_02(EntapDatabase *entapDatabase, EntapDatabase::DATABASE_TYPE type);
     void UTEntapDatabase_03(EntapDatabase *entapDatabase, EntapDatabase::DATABASE_TYPE type);
+    void UTEntapDatabase_04(EntapDatabase *entapDatabase);
+
 
     void TestQueryData();
 

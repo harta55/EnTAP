@@ -590,6 +590,7 @@ void FileSystem::init_log() {
        local.time_of_day().hours()     << "h"   <<
        local.time_of_day().minutes()   << "m" <<
        local.time_of_day().seconds()   << "s";
+    time_date = ss.str();
 #else
 
     // Will not work on older GCC compilers with a known bug in put_time
@@ -603,19 +604,9 @@ void FileSystem::init_log() {
     ss << std::put_time(&now_tm, "_%YY%mM%dD-%Hh%Mm%Ss");
      */
 
-    time_t theTime = time(nullptr);
-    struct tm *aTime = localtime(&theTime);
+    time_date       = get_timestamp();
 
-    ss << "_" << aTime->tm_year+1900 << "Y"
-              << aTime->tm_mon+1  << "M"
-              << aTime->tm_mday << "D-"
-              << aTime->tm_hour << "h"
-              << aTime->tm_min  << "m"
-              << aTime->tm_sec  << "s";
 #endif
-
-
-    time_date       = ss.str();
     log_file_name   = LOG_FILENAME   + time_date + LOG_EXTENSION;
     debug_file_name = DEBUG_FILENAME + time_date + DEBUG_EXTENSION;
 
@@ -809,7 +800,7 @@ bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) 
     FS_dprint("Using wget terminal command...");
 
     std::string terminal_cmd =
-        "wget -O " + out_path + " " + ftp_path;
+        "wget -O " + out_path + " " + '"' + ftp_path + '"';
 
     terminalData.command = terminal_cmd;
 
@@ -821,6 +812,12 @@ bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) 
         return false;
     }
 #endif
+}
+
+bool FileSystem::download_url_data(std::string &url, std::string &file) {
+    if (url.empty()) return false;
+    file = get_temp_file();
+    return download_ftp_file(url, file);
 }
 
 bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES type) {
@@ -1124,3 +1121,27 @@ bool FileSystem::format_for_csv_parser(const std::string &input_path, std::strin
 const std::string &FileSystem::getMOriginalWorkingDir() const {
     return mOriginalWorkingDir;
 }
+
+std::string FileSystem::get_temp_file() {
+
+    std::string timestamp = get_timestamp();
+    std::string filename  = TEMP_FILENAME + timestamp + TEMP_EXTENSION;
+    std::string full_path = PATHS(mTempOutpath, filename);
+    delete_file(full_path);
+    return full_path;
+}
+
+std::string FileSystem::get_timestamp() {
+    std::stringstream ss;
+    time_t theTime = time(nullptr);
+    struct tm *aTime = localtime(&theTime);
+
+    ss << "_" << aTime->tm_year+1900 << "Y"
+       << aTime->tm_mon+1  << "M"
+       << aTime->tm_mday << "D-"
+       << aTime->tm_hour << "h"
+       << aTime->tm_min  << "m"
+       << aTime->tm_sec  << "s";
+    return ss.str();
+}
+

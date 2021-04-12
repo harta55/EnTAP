@@ -1131,6 +1131,7 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
                     "valid": true
                 }
             )"_json;
+                SAFE_DELETE(pEntap_database);
                 return ret_execution;
             } else {
                 mJsonOutput = R"(
@@ -1139,10 +1140,27 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
                     "valid": false
                 }
             )"_json;
+                SAFE_DELETE(pEntap_database);
                 return ret_execution;
             }
         } else {
-            // TODO Query NCBI database
+            // INVALID entap database
+            if (pEntap_database->is_ncbi_tax_entry(taxon_input)) {
+                mJsonOutput = R"(
+                {
+                    "error": false,
+                    "valid": true
+                }
+            )"_json;
+            } else {
+                mJsonOutput = R"(
+                {
+                    "error": false,
+                    "valid": false
+                }
+            )"_json;
+            }
+            SAFE_DELETE(pEntap_database);
             return ret_execution;
         }
     }

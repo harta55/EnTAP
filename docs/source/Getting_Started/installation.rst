@@ -72,7 +72,9 @@ EnTAP leverages several software distributions within the pipeline to provide th
 .. note:: If the software is already installed on your system, this stage can be skipped
 
 Software:
-    * RSEM_ (Expression Filtering with alignment file): version 1.3.0 packaged with EnTAP
+    * RSEM_ (Expression Filtering with alignment file): version 1.3.3 packaged with EnTAP
+
+        * Version 1.3.0
 
     * TransDecoder_ (Frame Selection): version 5.3.0 packaged with EnTAP
 

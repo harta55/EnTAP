@@ -6,7 +6,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -29,7 +29,7 @@
 
 /**
  * ======================================================================
- * Function EntapDatabase::EntapDatabase(FileSystem* filesystem, UserInput* userInput)
+ * Function EntapDatabase::EntapDatabase(FileSystem* filesystem)
  *
  * Description          - EnTAP Database constructor
  *                      - Controls all database related operations
@@ -41,18 +41,17 @@
  * Notes                - None
  *
  * @param filesystem    - Pointer to filesystem handler
- * @param userInput     - Pointer to user input handler
  *
  * @return              - None
  * ======================================================================
  */
-EntapDatabase::EntapDatabase(FileSystem* filesystem, UserInput* userInput) {
+EntapDatabase::EntapDatabase(FileSystem* filesystem) {
     // Initialize
     mpFileSystem     = filesystem;
-    mpUserInput      = userInput;
     mTempDirectory  = filesystem->get_temp_outdir();    // created previously
     mpSerializedDatabase = nullptr;
     mpDatabaseHelper     = nullptr;
+    mpNCBIEntrez         = new NCBIEntrez(filesystem);
     mUseSerial          = true;                         // default
     mErrMsg             = "";
     mErrCode            = ERR_DATA_OK;
@@ -72,20 +71,15 @@ EntapDatabase::EntapDatabase(FileSystem* filesystem, UserInput* userInput) {
  * @return              - True/False is successful or not
  * ======================================================================
  */
-bool EntapDatabase::set_database(DATABASE_TYPE type) {
-    ent_input_str_t database_path;
-
-    if (mpUserInput == nullptr) return false;
+bool EntapDatabase::set_database(DATABASE_TYPE type, std::string database_path) {
 
     switch (type) {
         case ENTAP_SERIALIZED:
             // Filepath checked in routine
             mUseSerial = true;
-            database_path = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_DB_BIN);
             return serialize_database_read(SERIALIZE_DEFAULT, database_path) == ERR_DATA_OK;
         case ENTAP_SQL:
             mUseSerial = false;
-            database_path = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_DB_SQL);
             if (!mpFileSystem->file_exists(database_path)) {
                 set_err_msg("Database not found at: "+ database_path, ERR_DATA_SET);
                 return false;
@@ -150,8 +144,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::download_database(EntapDatabase::DATA
  * @return              - DATABASE_ERR type
  * ======================================================================
  */
-EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(
-                            EntapDatabase::DATABASE_TYPE type,
+EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(EntapDatabase::DATABASE_TYPE type,
                             std::string &path) {
     DATABASE_ERR err;
 
@@ -167,53 +160,9 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_database(
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE type, std::string &outpath) {
     DATABASE_ERR err_code;
 
-    FS_dprint("Database type: " + ENTAP_DATABASE_TYPES_STR[type] + ", Outpath: " + outpath);
-    switch (type) {
+    err_code = create_database_type(type, outpath);
 
-        case ENTAP_SQL:
-            FS_dprint("Generating EnTAP SQL Database...");
-            mUseSerial = false;
-            if (mpDatabaseHelper != nullptr) {
-                // SQL should not already have been created
-                return ERR_DATA_SQL_DUPLICATE;
-            } else if (mpFileSystem->file_exists(outpath)) {
-                // Out file should NOT exist yet
-                set_err_msg("EnTAP SQL Database already exists at: " + outpath, ERR_DATA_FILE_EXISTS);
-                return ERR_DATA_OK;
-            }
-
-            // Create sql database (will create if doesn't exist)
-            mpDatabaseHelper = new SQLDatabaseHelper();
-            if (!mpDatabaseHelper->create(outpath)) {
-                // Return error if can't create
-                set_err_msg("Unable to create the EnTAP SQL database", ERR_DATA_SQL_CREATE_DATABASE);
-                return ERR_DATA_SQL_CREATE_DATABASE;
-            }
-            FS_dprint("Success!");
-            break;
-
-        case ENTAP_SERIALIZED:
-            FS_dprint("Generating EnTAP Serialized Database...");
-            mUseSerial = true;
-            if (mpSerializedDatabase != nullptr) {
-                // Database should not already have been created
-                set_err_msg("Serialized database already set!", ERR_DATA_SERIAL_DUPLICATE);
-                return ERR_DATA_SERIAL_DUPLICATE;
-            } else if (mpFileSystem->file_exists(outpath)) {
-                // Out file should NOT exist yet
-                set_err_msg("Serialized EnTAP database already exists at: " + outpath, ERR_DATA_FILE_EXISTS);
-                return ERR_DATA_OK;
-            }
-
-            // Create serialized database
-            mpSerializedDatabase = new EntapDatabaseStruct();
-            FS_dprint("Success!");
-            break;
-
-        default:
-            set_err_msg("ERROR: Unknown database type", ERR_DATA_UNHANDLED_TYPE);
-            return ERR_DATA_UNHANDLED_TYPE;
-    }
+    if (err_code != ERR_DATA_OK) return err_code;
 
     // ---------------------- Add Database Entries ---------------------- //
     FS_dprint("Adding entries to database...");
@@ -229,7 +178,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
         return err_code;
     }
 
-    // Generate UniProt entries (this references GO database, must be done after)
+    // Generate UniProt entries (this references GO database, MUST be done after)
     err_code = generate_entap_uniprot(type);
     if (err_code != ERR_DATA_OK) {
         return err_code;
@@ -267,6 +216,7 @@ EntapDatabase::~EntapDatabase() {
         SAFE_DELETE(mpDatabaseHelper);
     }
     SAFE_DELETE(mpSerializedDatabase);
+    SAFE_DELETE(mpNCBIEntrez);
 }
 
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DATABASE_TYPE type) {
@@ -328,7 +278,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DAT
         // parse through names of taxonomy ID's and add to map
         std::ifstream infile(ncbi_names_path);
         while (std::getline(infile, line)) {
-            if (line == "") continue;
+            if (line.empty()) continue;
             total_entries++;
             // Split line by tabs, lazy..fix :(
             split_line = split_string(line, NCBI_TAX_DUMP_DELIM);
@@ -341,7 +291,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DAT
                 taxonomy_nodes.emplace(tax_id, TaxonomyNode(tax_id));
             }
 
-            std::unordered_map<std::string, TaxonomyNode>::iterator it = taxonomy_nodes.find(tax_id);
+            auto it = taxonomy_nodes.find(tax_id);
 
             // We'll want to use scientific names when displaying lineage
             if (split_line[NCBI_TAX_DUMP_COL_NAME_CLASS].compare(NCBI_TAX_DUMP_SCIENTIFIC) ==0) {
@@ -355,7 +305,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DAT
         // parse through nodes file
         std::ifstream infile_node(ncbi_nodes_path);
         while (std::getline(infile_node, line)) {
-            if (line == "") continue;
+            if (line.empty()) continue;
 
             // split line by tabs
             split_line = split_string(line, NCBI_TAX_DUMP_DELIM);
@@ -363,7 +313,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DAT
             tax_id = split_line[NCBI_TAX_DUMP_COL_ID];
 
             // Ensure node has name associated with it
-            std::unordered_map<std::string, TaxonomyNode>::iterator it = taxonomy_nodes.find(tax_id);
+            auto it = taxonomy_nodes.find(tax_id);
 
             // Node with no names, skip we don't want this
             if (it == taxonomy_nodes.end()) continue;
@@ -427,7 +377,6 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
 
     go_database_targz = PATHS(mTempDirectory, GO_TERMDB_FILE);
 
-
     // download Gene Ontology database file
     if (!mpFileSystem->download_ftp_file(FTP_GO_DATABASE, go_database_targz)) {
         // failed to download from ftp
@@ -487,14 +436,21 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
         while (in2.read_row(num,term,cat,go,ex,ex1,ex2)) {
             goEntry = {};
             goEntry.category = cat;
-            goEntry.level = distance_map[num];
+            if (!distance_map[num].empty()) {
+                try {
+                    goEntry.level = distance_map[num];
+                    goEntry.level_int = std::stoi(goEntry.level);
+                } catch(...) {
+                    ;
+                }
+            }
             goEntry.term = term;
             goEntry.go_id = go;
 
             // Add to SQL database OR to overall map
             if (type == ENTAP_SQL) {
                 if (!sql_add_go_entry(goEntry)) {
-                    set_err_msg("Unable to add GO entry: " + goEntry.go_id, ERR_DATA_GO_ENTRY);
+                    set_err_msg("ERROR Unable to add GO entry: " + goEntry.go_id, ERR_DATA_GO_ENTRY);
                     return ERR_DATA_GO_ENTRY;
                 }
             } else {
@@ -507,21 +463,20 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
     }
 
     FS_dprint("Success! Gene Ontology data complete");
-    mpFileSystem->delete_file(go_graph_path);
-    mpFileSystem->delete_file(go_term_path);
     return ERR_DATA_OK;
 }
 
 
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase::DATABASE_TYPE type) {
 
+    std::unordered_map<std::string, std::string> unknown_go_ids;
     std::string uniprot_flat_gz;
     std::string uniprot_flat;       // Decompressed path (this is parsed)
     std::string line;
     std::string dat_tag;
     std::string database;
-    std::string go_list;            // Will be turned into go_format when indexed (comma delim)
     std::string kegg_list;
+    std::string go_id;              // GO ID< format of GO:0011101
     uint16      file_status;
     uint16      index_go;
     uint16      index_term;
@@ -549,7 +504,6 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
     // Set output path for FTP file
     uniprot_flat_gz = PATHS(mTempDirectory, UNIPROT_DAT_FILE_GZ);
     uniprot_flat    = PATHS(mTempDirectory, UNIPROT_DAT_FILE);
-
 
     // download UniProt flat file
     if (!mpFileSystem->download_ftp_file(FTP_UNIPROT_FLAT_FILE, uniprot_flat_gz)) {
@@ -587,6 +541,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
     // File valid, continue to parse
     try {
         UniprotEntry uniprotEntry;
+        GoEntry goEntry;
         std::ifstream infile(uniprot_flat);
         while (std::getline(infile, line)) {
             if (line.empty() || line.length() < UNIPROT_DAT_TAG_LEN) continue;
@@ -613,14 +568,29 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
                 if (database == UNIPROT_DAT_TAG_DATABASE_GO) {
                     index_go = (uint16) data.find("GO:");
                     index_term = (uint16) data.find(';', index_go);
-                    go_list += data.substr(index_go, index_term - index_go) + ',';
+
+                    go_id = data.substr(index_go, index_term - index_go);
+                    goEntry = get_go_entry(go_id);
+                    if (!goEntry.is_empty()) {
+                        uniprotEntry.go_terms.emplace(goEntry);
+                    } else {
+                        // Could not find GO entry in database, may not exist?
+                        goEntry.go_id = go_id;
+                        uniprotEntry.go_terms.emplace(goEntry);
+//                        set_err_msg("ERROR: Unable to find Gene Ontology data from " + go_id, ERR_DATA_UNIPROT_ENTRY);
+                        if (unknown_go_ids.find(go_id) == unknown_go_ids.end()) {
+                            FS_dprint("Unable to find Gene Ontology data from " + go_id);
+                            unknown_go_ids.emplace(go_id, "");
+                        }
+//                        return ERR_DATA_UNIPROT_ENTRY;
+                    }
 
                 } else if (database == UNIPROT_DAT_TAG_DATABASE_KEGG) {
                     index_go = (uint16) (data.find(':') + 1);
                     index_term = (uint16) data.find(';', index_go);
                     kegg_list += data.substr(index_go, index_term - index_go) + ',';
                 } else {
-                    // Neither GO nor KEGG, add to x refs
+                    // Neither GO nor KEGG, add to generic x refs
                     uniprotEntry.database_x_refs += "|" + data;
                 }
 
@@ -629,8 +599,7 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
                 uniprotEntry.comments += "|" + data;
             } else if (dat_tag == UNIPROT_DAT_TAG_NEXT_ENTRY){
                 // We've hit the next entry, add previous to the database
-                if (go_list.length() > 0) go_list.pop_back();   // remove trailing ','
-                uniprotEntry.go_terms = format_go_delim(go_list, ',');
+
                 uniprotEntry.kegg_terms = kegg_list;
 
                 if (!add_uniprot_entry(type, uniprotEntry)) {
@@ -640,7 +609,6 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
                 }
                 uniprotEntry = {};
                 same_entry = false;
-                go_list = "";
                 kegg_list = "";
 
             } else {
@@ -695,17 +663,19 @@ bool EntapDatabase::sql_add_go_entry(GoEntry &goEntry) {
     if (mpDatabaseHelper == nullptr) return false;
 
     sql_cmd = sqlite3_mprintf(
-            "INSERT INTO %Q (%Q,%Q,%Q,%Q) "\
-            "VALUES (%Q, %Q, %Q, %Q);",
+            "INSERT INTO %Q (%Q,%Q,%Q,%Q,%Q) "\
+            "VALUES (%Q, %Q, %Q, %d, %Q);",
 
             SQL_TABLE_GO_TITLE.c_str(),
             SQL_TABLE_GO_COL_ID.c_str(),
             SQL_TABLE_GO_COL_DESC.c_str(),
             SQL_TABLE_GO_COL_CATEGORY.c_str(),
             SQL_TABLE_GO_COL_LEVEL.c_str(),
+            SQL_TABLE_GO_COL_LEVEL_STR.c_str(),
             goEntry.go_id.c_str(),
             goEntry.term.c_str(),
             goEntry.category.c_str(),
+            goEntry.level_int,
             goEntry.level.c_str()
     );
     return mpDatabaseHelper->execute_cmd(sql_cmd);
@@ -725,27 +695,42 @@ bool EntapDatabase::add_uniprot_entry(EntapDatabase::DATABASE_TYPE type, Uniprot
             mpSerializedDatabase->uniprot_data[entry.uniprot_id] = entry;
             break;
 
-        case ENTAP_SQL:
+        case ENTAP_SQL: {
             if (mpDatabaseHelper == nullptr) {
                 FS_dprint("ERROR: SQL database NULL");
                 ret = false;
                 break;
             }
 
+            // SQL converts the GO terms from a Uniprot entry to string (comma delim)
+            std::string go_list;    // string of: GO:01010101,GO:1232890
+            if (!entry.go_terms.empty()) {
+                for (GoEntry const &go_entry : entry.go_terms) {
+                    go_list += go_entry.go_id + ",";
+                }
+                go_list.pop_back();
+            }
+
             sql_cmd = sqlite3_mprintf(
-                    "INSERT INTO %Q (%Q,%Q,%Q) " \
-                    "VALUES (%Q,%Q,%Q);",
+                    "INSERT INTO %Q (%Q,%Q,%Q,%Q,%Q) " \
+                    "VALUES (%Q,%Q,%Q,%Q,%Q);",
 
                     SQL_TABLE_UNIPROT_TITLE.c_str(),
                     SQL_TABLE_UNIPROT_COL_ID.c_str(),
                     SQL_TABLE_UNIPROT_COL_XREF.c_str(),
                     SQL_TABLE_UNIPROT_COL_COMM.c_str(),
+                    SQL_TABLE_UNIPROT_COL_KEGG.c_str(),
+                    SQL_TABLE_UNIPROT_COL_GO.c_str(),
+
                     entry.uniprot_id.c_str(),
                     entry.database_x_refs.c_str(),
-                    entry.comments.c_str()
+                    entry.comments.c_str(),
+                    entry.kegg_terms.c_str(),
+                    go_list.c_str()
             );
             ret = mpDatabaseHelper->execute_cmd(sql_cmd);
             break;
+        }
 
         default:
             break;
@@ -753,7 +738,7 @@ bool EntapDatabase::add_uniprot_entry(EntapDatabase::DATABASE_TYPE type, Uniprot
     return ret;
 }
 
-bool EntapDatabase::create_sql_table(DATABASE_TYPE type) {
+bool EntapDatabase::create_sql_table(DATABASE_TABLES type) {
     char *sql_cmd;
     bool success;
 
@@ -784,13 +769,15 @@ bool EntapDatabase::create_sql_table(DATABASE_TYPE type) {
                     "%Q        TEXT                      NOT NULL," \
                     "%Q        TEXT                      NOT NULL," \
                     "%Q        TEXT                      NOT NULL," \
+                    "%Q        INTEGER                   NOT NULL DEFAULT -1," \
                     "%Q        TEXT                      NOT NULL);",
 
                     SQL_TABLE_GO_TITLE.c_str(),
                     SQL_TABLE_GO_COL_ID.c_str(),
                     SQL_TABLE_GO_COL_DESC.c_str(),
                     SQL_TABLE_GO_COL_CATEGORY.c_str(),
-                    SQL_TABLE_GO_COL_LEVEL.c_str()
+                    SQL_TABLE_GO_COL_LEVEL.c_str(),
+                    SQL_TABLE_GO_COL_LEVEL_STR.c_str()
             );
             break;
 
@@ -801,12 +788,16 @@ bool EntapDatabase::create_sql_table(DATABASE_TYPE type) {
                     "ID    INTEGER PRIMARY KEY     NOT NULL," \
                     "%Q    TEXT                    NOT NULL," \
                     "%Q    TEXT                    NOT NULL," \
+                    "%Q    TEXT                    NOT NULL," \
+                    "%Q    TEXT                    NOT NULL," \
                     "%Q    TEXT                    NOT NULL);",
 
                     SQL_TABLE_UNIPROT_TITLE.c_str(),
                     SQL_TABLE_UNIPROT_COL_ID.c_str(),
                     SQL_TABLE_UNIPROT_COL_XREF.c_str(),
-                    SQL_TABLE_UNIPROT_COL_COMM.c_str()
+                    SQL_TABLE_UNIPROT_COL_COMM.c_str(),
+                    SQL_TABLE_UNIPROT_COL_KEGG.c_str(),
+                    SQL_TABLE_UNIPROT_COL_GO.c_str()
             );
             break;
 
@@ -831,7 +822,9 @@ bool EntapDatabase::create_sql_table(DATABASE_TYPE type) {
         FS_dprint("Success!");
     } else {
         std::string temp = sql_cmd;
-        FS_dprint("ERROR: Unable to create table with command: \n" + temp);
+        std::string err_msg = "ERROR: Unable to create table with command: \n" + temp;
+        FS_dprint(err_msg);
+        set_err_msg(err_msg, ERR_DATA_CREATE_TABLE);
     }
     return success;
 }
@@ -903,7 +896,7 @@ GoEntry EntapDatabase::get_go_entry(std::string &go_id) {
 
     if (mUseSerial) {
         // Using serialized database
-        go_serial_map_t::iterator it = mpSerializedDatabase->gene_ontology_data.find(go_id);
+        auto it = mpSerializedDatabase->gene_ontology_data.find(go_id);
         if (it == mpSerializedDatabase->gene_ontology_data.end()) {
 //            FS_dprint("Unable to find GO ID: " + go_id);
             return GoEntry();
@@ -913,26 +906,28 @@ GoEntry EntapDatabase::get_go_entry(std::string &go_id) {
         // Using SQL database
         std::vector<std::vector<std::string>> results;
         // Check temp if previously found (increase speeds)
-        go_serial_map_t::iterator it = mSqlGoHelper.find(go_id);
+        auto it = mSqlGoHelper.find(go_id);
         if (it != mSqlGoHelper.end()) return it->second;
         // Generate SQL query
         char *query = sqlite3_mprintf(
-                "SELECT %q, %q, %q, %q FROM %q WHERE %q=%Q",
+                "SELECT %q, %q, %q, %q, %q FROM %q WHERE %q=%Q",
                 SQL_TABLE_GO_COL_ID.c_str(),
                 SQL_TABLE_GO_COL_DESC.c_str(),
                 SQL_TABLE_GO_COL_CATEGORY.c_str(),
                 SQL_TABLE_GO_COL_LEVEL.c_str(),
+                SQL_TABLE_GO_COL_LEVEL_STR.c_str(),
                 SQL_TABLE_GO_TITLE.c_str(),
                 SQL_TABLE_GO_COL_ID.c_str(),
                 go_id.c_str()
         );
         try {
-            if (results.empty()) return GoEntry();
             results = mpDatabaseHelper->query(query);
+            if (results.empty()) return GoEntry();
             goEntry.go_id    = results[0][0];
             goEntry.term     = results[0][1];
             goEntry.category = results[0][2];
-            goEntry.level    = results[0][3];
+            goEntry.level_int = std::stoi(results[0][3]);
+            goEntry.level = results[0][4];
             mSqlGoHelper[go_id] = goEntry;
             return goEntry;
         } catch (std::exception &e) {
@@ -954,7 +949,7 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
 
     if (mUseSerial) {
         // Using serialized database
-        tax_serial_map_t::iterator it = mpSerializedDatabase->taxonomic_data.find(species);
+        auto it = mpSerializedDatabase->taxonomic_data.find(species);
         if (it == mpSerializedDatabase->taxonomic_data.end()) {
             // If we can't find species, keep trying by making it more broad
             temp_species = species;
@@ -987,6 +982,7 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
                         temp_species.c_str()
                 );
                 results = mpDatabaseHelper->query(query);
+                if (results.empty()) return TaxEntry();
                 if (results.empty()) {
                     index = temp_species.find_last_of(' ');
                     if (index == std::string::npos) return TaxEntry(); // couldn't find
@@ -1015,8 +1011,7 @@ UniprotEntry EntapDatabase::get_uniprot_entry(std::string& accession) {
     try {
         if (mUseSerial) {
             // Using serialized database
-            uniprot_serial_map_t::iterator it =
-                    mpSerializedDatabase->uniprot_data.find(accession);
+            auto it = mpSerializedDatabase->uniprot_data.find(accession);
             if (it == mpSerializedDatabase->uniprot_data.end()) {
                 // FS_dprint("Unable to find Uniprot Entry: " + accession);
                 return UniprotEntry();
@@ -1025,19 +1020,24 @@ UniprotEntry EntapDatabase::get_uniprot_entry(std::string& accession) {
             // Using SQL database
             std::vector<std::vector<std::string>> results;
             char *query = sqlite3_mprintf(
-                    "SELECT %q, %q, %q FROM %q WHERE %q=%Q",
+                    "SELECT %q, %q, %q, %q, %q FROM %q WHERE %q=%Q",
                     SQL_TABLE_UNIPROT_COL_ID.c_str(),
                     SQL_TABLE_UNIPROT_COL_XREF.c_str(),
                     SQL_TABLE_UNIPROT_COL_COMM.c_str(),
+                    SQL_TABLE_UNIPROT_COL_KEGG.c_str(),
+                    SQL_TABLE_UNIPROT_COL_GO.c_str(),
+
                     SQL_TABLE_UNIPROT_TITLE.c_str(),
                     SQL_TABLE_UNIPROT_COL_ID.c_str(),
                     accession.c_str()
             );
-            if (results.empty()) return UniprotEntry();
             results = mpDatabaseHelper->query(query);
+            if (results.empty()) return UniprotEntry();
             uniprotEntry.uniprot_id      = results[0][0];
             uniprotEntry.database_x_refs = results[0][1];
             uniprotEntry.comments        = results[0][2];
+            uniprotEntry.kegg_terms      = results[0][3];
+            uniprotEntry.go_terms        = format_go_delim(results[0][4],',');
             return uniprotEntry;
         }
     } catch (const std::exception &e) {
@@ -1181,15 +1181,13 @@ EntapDatabase::TaxonomyNode::TaxonomyNode(std::string id) {
 go_format_t EntapDatabase::format_go_delim(std::string terms, char delim) {
     go_format_t output;
     std::string temp;
-    std::vector<std::vector<std::string>>results;
 
     if (terms.empty()) return output;
     std::istringstream ss(terms);
     while (std::getline(ss,temp,delim)) {
         GoEntry term_info = get_go_entry(temp);
         if (!term_info.is_empty()) {
-            output[term_info.category].push_back(temp + "-" + term_info.term +
-                                                 "(L=" + term_info.level + ")");
+            output.emplace(term_info);
         }
     }
     return output;
@@ -1217,14 +1215,13 @@ std::string EntapDatabase::get_current_version_str() {
 
         if (mpDatabaseHelper != nullptr) {
             query = sqlite3_mprintf(
-                    "SELECT %Q FROM %Q",
-                    SQL_TABLE_VERSION_TITLE.c_str(),
-                    SQL_TABLE_VERSION_COL_VER.c_str()
+                    "SELECT * FROM %Q",
+                    SQL_TABLE_VERSION_TITLE.c_str()
             );
 
             try {
                 FS_dprint("Executing sql cmd: " + std::string(query));
-                version_str = mpDatabaseHelper->query(query)[0][0];
+                version_str = mpDatabaseHelper->query(query)[0][1];
                 FS_dprint("Success! Returned version: " + version_str);
 
             } catch (...) {
@@ -1307,8 +1304,146 @@ bool EntapDatabase::is_uniprot_entry(std::string &sseqid, UniprotEntry &entry) {
 }
 
 std::string EntapDatabase::get_uniprot_accession(std::string &sseqid) {
-    std::string accession;  // UniPro accession number
+    std::string accession;  // UniProt accession number
 
-    accession = sseqid.substr(sseqid.rfind('|',sseqid.length())+1);     // Q9FJZ9
+    // From 'sp|Q3SZM1|MK67I_BOVIN' we want 'MK67I_BOVIN'
+    accession = sseqid.substr(sseqid.rfind('|',sseqid.length())+1);
     return accession;
 }
+
+EntapDatabase::DATABASE_ERR EntapDatabase::create_database_type(EntapDatabase::DATABASE_TYPE type, std::string &path) {
+    FS_dprint("Database type: " + ENTAP_DATABASE_TYPES_STR[type] + ", Outpath: " + path);
+
+    EntapDatabase::DATABASE_ERR ret = ERR_DATA_OK;
+
+    switch (type) {
+
+        case ENTAP_SQL:
+            FS_dprint("Generating EnTAP SQL Database...");
+            mUseSerial = false;
+            if (mpDatabaseHelper != nullptr) {
+                // SQL should not already have been created
+                return ERR_DATA_SQL_DUPLICATE;
+            } else if (mpFileSystem->file_exists(path)) {
+                // Out file should NOT exist yet
+                set_err_msg("EnTAP SQL Database already exists at: " + path, ERR_DATA_FILE_EXISTS);
+                return ERR_DATA_OK;
+            }
+
+            // Create sql database (will create if doesn't exist)
+            mpDatabaseHelper = new SQLDatabaseHelper();
+            if (!mpDatabaseHelper->create(path)) {
+                // Return error if can't create
+                set_err_msg("Unable to create the EnTAP SQL database", ERR_DATA_SQL_CREATE_DATABASE);
+                return ERR_DATA_SQL_CREATE_DATABASE;
+            }
+            FS_dprint("Success!");
+            break;
+
+        case ENTAP_SERIALIZED:
+            FS_dprint("Generating EnTAP Serialized Database...");
+            mUseSerial = true;
+            if (mpSerializedDatabase != nullptr) {
+                // Database should not already have been created
+                set_err_msg("Serialized database already set!", ERR_DATA_SERIAL_DUPLICATE);
+                return ERR_DATA_SERIAL_DUPLICATE;
+            } else if (mpFileSystem->file_exists(path)) {
+                // Out file should NOT exist yet
+                set_err_msg("Serialized EnTAP database already exists at: " + path, ERR_DATA_FILE_EXISTS);
+                return ERR_DATA_OK;
+            }
+
+            // Create serialized database
+            mpSerializedDatabase = new EntapDatabaseStruct();
+            FS_dprint("Success!");
+            break;
+
+        default:
+            set_err_msg("ERROR: Unknown database type", ERR_DATA_UNHANDLED_TYPE);
+            return ERR_DATA_UNHANDLED_TYPE;
+    }
+
+    return ret;
+}
+
+EntapDatabase::DATABASE_ERR EntapDatabase::delete_database_table(EntapDatabase::DATABASE_TYPE type,
+                                                                 EntapDatabase::DATABASE_TABLES table) {
+    char *query;
+    switch (type) {
+
+        case ENTAP_SERIALIZED: {
+            if (mpSerializedDatabase == nullptr) return ERR_DATA_DELETE_TABLE;
+
+            switch (table) {
+                case ENTAP_TAXONOMY:
+                    mpSerializedDatabase->taxonomic_data.clear();
+                    break;
+
+                case ENTAP_GENE_ONTOLOGY:
+                    mpSerializedDatabase->gene_ontology_data.clear();
+                    break;
+
+                case ENTAP_UNIPROT:
+                    mpSerializedDatabase->uniprot_data.clear();
+                    break;
+
+                default:
+                    return ERR_DATA_DELETE_TABLE;
+                    break;
+            }
+            break;
+        }
+
+        case ENTAP_SQL: {
+            std::string table_name;
+            if (mpDatabaseHelper == nullptr) return ERR_DATA_DELETE_TABLE;
+
+            switch (table) {
+                case ENTAP_TAXONOMY:
+                    table_name = SQL_TABLE_NCBI_TAX_TITLE;
+                    break;
+
+                case ENTAP_GENE_ONTOLOGY:
+                    table_name = SQL_TABLE_GO_TITLE;
+                    break;
+
+                case ENTAP_UNIPROT:
+                    table_name = SQL_TABLE_UNIPROT_TITLE;
+                    break;
+
+                default:
+                    return ERR_DATA_DELETE_TABLE;
+                    break;
+            }
+            query = sqlite3_mprintf("DROP TABLE %Q;", table_name.c_str());
+            FS_dprint("Executing SQL cmd: " + std::string(query));
+            if (!mpDatabaseHelper->execute_cmd(query)) {
+                return ERR_DATA_DELETE_TABLE;
+            }
+            break;
+        }
+        
+        default:
+            FS_dprint("delete_database_table: WARNING unhandled case");
+            return ERR_DATA_DELETE_TABLE;
+            break;
+    }
+
+    return ERR_DATA_OK;
+}
+
+// False no hits, true has hits
+bool EntapDatabase::is_ncbi_tax_entry(std::string &species) {
+    NCBIEntrez::EntrezResults entrezResults;
+    NCBIEntrez::EntrezInput entrezInput;
+    TaxEntry ret = TaxEntry();
+
+    entrezInput.term = species;
+    entrezInput.database = NCBIEntrez::NCBI_DATABASE_TAXONOMY;
+
+    // Query for the species
+    return mpNCBIEntrez->entrez_has_hits(entrezInput);
+}
+
+const int16 GoEntry::UNKNOWN_LVL = -1;
+const std::string GoEntry::UNKNOWN_LVL_STR = "UNKNOWN";

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -35,7 +35,8 @@
 
 std::vector<ENTAP_HEADERS> ModRSEM::DEFAULT_HEADERS = {
         ENTAP_HEADER_EXP_FPKM,
-        ENTAP_HEADER_EXP_TPM
+        ENTAP_HEADER_EXP_TPM,
+        ENTAP_HEADER_EXP_E_LENGTH
 };
 
 
@@ -173,8 +174,8 @@ void ModRSEM::parse() {
     uint64              total_removed_len=0;
     uint64              total_kept_len=0;
     uint16              length;
-    fp32                in_len;
-    fp32                e_leng;
+    fp32                in_len; // Length
+    fp32                e_leng; // Effective length
     fp32                e_count;
     fp64                tpm;
     fp32                fpkm_val;
@@ -239,6 +240,7 @@ void ModRSEM::parse() {
         }
         querySequence->set_fpkm(fpkm_val);
         querySequence->setMTPM(tpm);
+        querySequence->setMEffectiveLength(e_leng);
         length = (uint16) querySequence->get_sequence_length();
         if (fpkm_val > mFPKM) {
             // Kept sequence
@@ -479,6 +481,6 @@ std::string ModRSEM::get_final_fasta() {
     return this->mFinalFasta;
 }
 
-void ModRSEM::get_version() {
-    return;
+bool ModRSEM::set_version() {
+    return false;
 }

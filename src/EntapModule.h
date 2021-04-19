@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -51,9 +51,16 @@ public:
     virtual void execute() = 0;
     virtual void parse() = 0;
     virtual void set_success_flags() = 0;
-    virtual void get_version() = 0;
+    virtual bool set_version() = 0;
 
 protected:
+
+    typedef enum {
+        ERR_ENTAP_MOD_OK=0,
+        ERR_ENTAP_MOD_EXECUTE_CMD,
+        ERR_ENTAP_MOD_VERSION_PARSE
+
+    } ERR_ENTAP_MODULE;
 
     const std::string PROCESSED_OUT_DIR     = "processed/";
     const std::string FIGURE_DIR            = "figures/";
@@ -75,6 +82,8 @@ protected:
     const uint16 COUNT_TOP_GO                  = 10;
     const uint16 COUNT_TOP_SPECIES             = 10;
 
+    const uint16 VERSION_UNKNOWN               = 0xFFFF;
+
     static std::vector<ENTAP_HEADERS>   mModuleHeaders;
     bool               mBlastp;                 // TRUE/FALSE whether user has input blastp
     bool               mOverwrite;              // Indicates whether user would like to delete previous execution files for module
@@ -93,6 +102,7 @@ protected:
     ent_input_str_t    mExePath;
     std::string        mTranscriptomeShortname;       // filename of transcriptome file for file name purposes
     ExecuteStates      mExecutionState;
+    ERR_ENTAP_MODULE   mErrEntapModule;
     std::vector<uint16> mGoLevels;
     std::vector<ENTAP_HEADERS> mEntapHeaders;
     GraphingManager    *mpGraphingManager;
@@ -102,7 +112,6 @@ protected:
     EntapDatabase      *mpEntapDatabase;
     std::vector<FileSystem::ENT_FILE_TYPES> mAlignmentFileTypes; // may be overriden by module
 
-    go_format_t EM_parse_go_list(std::string list, EntapDatabase* database,char delim);
     void enable_headers();
     virtual std::vector<ENTAP_HEADERS>  &moduleHeaders() { return mModuleHeaders; }
 };

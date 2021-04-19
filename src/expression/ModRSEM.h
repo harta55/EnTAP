@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -72,7 +72,7 @@ public:
     virtual void execute() override ;
     virtual void parse() override;
     virtual std::string get_final_fasta() override ;
-    virtual void get_version() override;
+    virtual bool set_version() override;
 
 private:
 
@@ -100,7 +100,6 @@ private:
     std::string mSamValidExe;           // User input to RSEM sam validate exe
     std::string mPrepReferenceExe;      // User input to RSEM prep reference exe
     std::string mConvertSamExe;         // User input to RSEM convert SAM for RSEM exe
-    fp32        mFPKM;
     bool        mIsSingle;
 
     bool rsem_validate_file(std::string);

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -59,9 +59,9 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mModuleHeaders    = module_headers;
 
     // Initialize version numbers
-    mVersionMajor = 0;
-    mVersionMinor = 0;
-    mVersionRev   = 0;
+    mVersionMajor = VERSION_UNKNOWN;
+    mVersionMinor = VERSION_UNKNOWN;
+    mVersionRev   = VERSION_UNKNOWN;
 
     mThreads         = mpUserInput->get_supported_threads();
     mBlastp          = mpUserInput->has_input(INPUT_FLAG_RUNPROTEIN);
@@ -80,6 +80,7 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mOverallResultsDir = PATHS(mModOutDir, OVERALL_RESULTS_DIR);    // generated at app level (some don't need this directory)
 
     // If overwriting data, remove entire execution stage directory
+    // otherwise, only remove the figure/processed directories
     if (mOverwrite) {
         mpFileSystem->delete_dir(mModOutDir);
     } else {
@@ -93,25 +94,8 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
 
     mpFileSystem->set_working_dir(mModOutDir);
 
-    enable_headers();
-}
-
-
-go_format_t EntapModule::EM_parse_go_list(std::string list, EntapDatabase* database,char delim) {
-
-    go_format_t output;
-    std::string temp;
-    std::vector<std::vector<std::string>>results;
-
-    if (list.empty()) return output;
-    std::istringstream ss(list);
-    while (std::getline(ss,temp,delim)) {
-        GoEntry term_info =
-                database->get_go_entry(temp);
-        output[term_info.category].push_back(temp + "-" + term_info.term +
-                                             "(L=" + term_info.level + ")");
-    }
-    return output;
+    enable_headers();   // Enable all headers by default,
+                        //   module will disable from here
 }
 
 void EntapModule::enable_headers() {
@@ -120,9 +104,11 @@ void EntapModule::enable_headers() {
     }
 }
 
+// Set directory back to original
+// DIAMOND will sometimes have issues wirh execution without this
 EntapModule::~EntapModule() {
     if (mpFileSystem != nullptr) {
-        std::string root_dir = mpFileSystem->get_root_path();
+        std::string root_dir = mpFileSystem->getMOriginalWorkingDir();
         mpFileSystem->set_working_dir(root_dir);
     }
 }

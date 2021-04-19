@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -80,7 +80,6 @@ FileSystem::FileSystem() {
     // This routine will eventually process entire root directory here and generate
     // hierarchy
     mExeDirectory = "";
-    mRootPath = "";
     mFinalOutpath = "";
     mTrancriptomeDir = "";
     mTempOutpath = "";
@@ -88,6 +87,7 @@ FileSystem::FileSystem() {
     FS_dprint("Spawn Object - FileSystem");
     set_executable_dir();
     mOriginalWorkingDir = get_cur_dir();
+    mRootPath = mOriginalWorkingDir;        // Set root to CWD by default, then change
 }
 
 
@@ -555,6 +555,7 @@ void FileSystem::set_root_dir(std::string &root) {
     // Make sure directories are created (or already created)
     create_dir(root);
     create_dir(mFinalOutpath);
+    delete_dir(mTempOutpath);
     create_dir(mTempOutpath);
 
     // generate log file
@@ -589,6 +590,7 @@ void FileSystem::init_log() {
        local.time_of_day().hours()     << "h"   <<
        local.time_of_day().minutes()   << "m" <<
        local.time_of_day().seconds()   << "s";
+    time_date = ss.str();
 #else
 
     // Will not work on older GCC compilers with a known bug in put_time
@@ -602,19 +604,9 @@ void FileSystem::init_log() {
     ss << std::put_time(&now_tm, "_%YY%mM%dD-%Hh%Mm%Ss");
      */
 
-    time_t theTime = time(nullptr);
-    struct tm *aTime = localtime(&theTime);
+    time_date       = get_timestamp();
 
-    ss << "_" << aTime->tm_year+1900 << "Y"
-              << aTime->tm_mon+1  << "M"
-              << aTime->tm_mday << "D-"
-              << aTime->tm_hour << "h"
-              << aTime->tm_min  << "m"
-              << aTime->tm_sec  << "s";
 #endif
-
-
-    time_date       = ss.str();
     log_file_name   = LOG_FILENAME   + time_date + LOG_EXTENSION;
     debug_file_name = DEBUG_FILENAME + time_date + DEBUG_EXTENSION;
 
@@ -808,7 +800,7 @@ bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) 
     FS_dprint("Using wget terminal command...");
 
     std::string terminal_cmd =
-        "wget -O " + out_path + " " + ftp_path;
+        "wget -O " + out_path + " " + '"' + ftp_path + '"';
 
     terminalData.command = terminal_cmd;
 
@@ -820,6 +812,12 @@ bool FileSystem::download_ftp_file(std::string ftp_path, std::string& out_path) 
         return false;
     }
 #endif
+}
+
+bool FileSystem::download_url_data(std::string &url, std::string &file) {
+    if (url.empty()) return false;
+    file = get_temp_file();
+    return download_ftp_file(url, file);
 }
 
 bool FileSystem::decompress_file(std::string &in_path, std::string &out_dir, ENT_FILE_TYPES type) {
@@ -970,6 +968,8 @@ std::string FileSystem::get_extension(FileSystem::ENT_FILE_TYPES type) {
     switch (type) {
 
         case ENT_FILE_DELIM_TSV:
+        case ENT_FILE_GENE_ENRICH_GO_TERM:
+        case ENT_FILE_GENE_ENRICH_EFF_LEN:
             return EXT_TSV;
 
         case ENT_FILE_DELIM_CSV:
@@ -1057,3 +1057,91 @@ void FileSystem::clear_error() {
 bool FileSystem::move_dir(std::string &original, std::string &final) {
     return rename_file(original, final);    // rename_file checks for directory existence
 }
+
+/**
+* ======================================================================
+* Function std::string ModInterpro::format_for_csv_parser(const std::string &input_path, std::string &output_path,
+*                                                      uint16 col_num)
+*
+* Description          - Formats tsv file to be read easier with current
+*                        lib (complains if tabs are not perfect)
+*                      - This will add in tabs to keep everything consistent
+*                     - Temporary...
+*
+*
+* Notes                - None
+*
+*
+* @param input_path    - Absolute path to file we want to format
+* @param output_path   - Path to temporary formatted file
+* @param col_num       - Number of columns in input/output
+*
+* @return              - FALSE if error occurred, TRUE if sucesful
+*
+* =====================================================================
+*/
+bool FileSystem::format_for_csv_parser(const std::string &input_path, std::string &output_path, uint16 col_num) {
+    std::string path_temp;
+    std::string line;
+    std::string input_filename;
+    uint16      tab_ct;
+    bool        ret = true;
+
+    path_temp = input_path;
+
+    input_filename = get_filename(path_temp, false) + "_temp";
+    path_temp      = PATHS(mTempOutpath, input_filename);
+    delete_file(path_temp);
+
+    try {
+        std::ifstream file_in(input_path);
+        std::ofstream file_temp(path_temp, std::ios::out | std::ios::app);
+        while(std::getline(file_in, line)) {
+            if (line.empty()) continue;
+            file_temp << line;
+            tab_ct = (uint16)std::count(line.begin(), line.end(), '\t');
+            while (tab_ct < col_num - 1) {
+                file_temp<<'\t';
+                tab_ct++;
+            }
+            file_temp << std::endl;
+        }
+        file_in.close();
+        file_temp.close();
+    } catch (std::exception &e) {
+        FS_dprint("ERROR format_for_csv_parser: " + std::string(e.what()));
+        ret = false;
+    }
+
+
+    output_path = path_temp;        // Set output
+    return ret;
+}
+
+const std::string &FileSystem::getMOriginalWorkingDir() const {
+    return mOriginalWorkingDir;
+}
+
+std::string FileSystem::get_temp_file() {
+
+    std::string timestamp = get_timestamp();
+    std::string filename  = TEMP_FILENAME + timestamp + TEMP_EXTENSION;
+    std::string full_path = PATHS(mTempOutpath, filename);
+    delete_file(full_path);
+    return full_path;
+}
+
+std::string FileSystem::get_timestamp() {
+    std::stringstream ss;
+    time_t theTime = time(nullptr);
+    struct tm *aTime = localtime(&theTime);
+
+    ss << "_" << aTime->tm_year+1900 << "Y"
+       << aTime->tm_mon+1  << "M"
+       << aTime->tm_mday << "D-"
+       << aTime->tm_hour << "h"
+       << aTime->tm_min  << "m"
+       << aTime->tm_sec  << "s";
+    return ss.str();
+}
+

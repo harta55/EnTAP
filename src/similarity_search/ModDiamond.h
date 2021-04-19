@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -62,7 +62,7 @@ public:
     virtual void execute() override ;
     virtual void parse() override ;
     static bool is_executable(std::string& exe);
-    virtual void get_version() override;
+    virtual bool set_version() override;
 
     // AbstractSimilaritySearch overrides
     bool run_blast(SimSearchCmd *cmd, bool use_defaults) override;
@@ -71,6 +71,10 @@ public:
 private:
     //****************** Private Functions *********************
     void calculate_best_stats(bool is_final, std::string database_path="");
+    //**********************************************************
+
+    //************** Private Member Variables ******************
+    bool mParsedFile;   // TRUE if any alignment file had alignments and was parsed
     //**********************************************************
 
     //**************** Private Const Variables *****************

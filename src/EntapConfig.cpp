@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -106,7 +106,8 @@ namespace entapConfig {
 
             init_eggnog(threads, diamond_exe);
 
-            init_busco();
+            // Disable BUSCO config for now
+//            init_busco();
 
         } catch (ExceptionHandler &e){
             SAFE_DELETE(pEntapDatabase);
@@ -352,7 +353,7 @@ namespace entapConfig {
         FS_dprint("Initializing EnTAP database...");
         pFileSystem->format_stat_stream(log_msg, "EnTAP Database Configuration");
 
-        pEntapDatabase = new EntapDatabase(pFileSystem, pUserInput);
+        pEntapDatabase = new EntapDatabase(pFileSystem);
         if (pEntapDatabase == nullptr) {
             throw ExceptionHandler("Unable to allocate Entap Database memory", ERR_ENTAP_MEM_ALLOC);
         }

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -418,8 +418,8 @@ ModGeneMarkST::ModGeneMarkST(std::string &execution_stage_path, std::string &in_
     mFinalHmmPath = PATHS(mModOutDir, GENEMARK_HMM_FILE);
 }
 
-void ModGeneMarkST::get_version() {
-    return;
+bool ModGeneMarkST::set_version() {
+    return false;
 }
 
 bool ModGeneMarkST::is_executable(std::string &exe) {

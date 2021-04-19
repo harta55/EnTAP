@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -31,12 +31,16 @@
 #include "../QueryAlignment.h"
 #include "../QueryData.h"
 #include "../GraphingManager.h"
+#include "../ExceptionHandler.h"
 
 #ifdef USE_BOOST
 #include <boost/regex.hpp>
 #else   // C++ libs
 #include <regex>
 #endif
+
+// Test defines
+//#define TEST_SIM_PARSE_01
 
 std::vector<ENTAP_HEADERS> ModDiamond::DEFAULT_HEADERS = {
         ENTAP_HEADER_SIM_SUBJECT,
@@ -94,8 +98,10 @@ ModDiamond::ModDiamond(std::string &execution_stage_path, std::string &fasta_pat
 : AbstractSimilaritySearch(execution_stage_path, fasta_path, entap_data, "DIAMOND", DEFAULT_HEADERS, databases){
 
     FS_dprint("Spawn Object - ModDiamond");
+    mParsedFile = false;
     mSoftwareFlag = SIM_DIAMOND;
     mExePath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
+    mpFileSystem->delete_dir(mFigureDir);   // Don't need for DIAMOND, may change
 }
 
 /**
@@ -317,6 +323,7 @@ void ModDiamond::parse() {
     QuerySequence::SimSearchResults simSearchResults;   // Compiled similarity search results
     TaxEntry            taxEntry;                       // Entry from Tarxonomic database
     std::pair<bool, std::string> contam_info;           // Contaminate information
+    std::stringstream   ss;                             // Output string stream
 
     // ------------------ Read from DIAMOND output ----------------------- //
     std::string qseqid;             // Sequence ID of query sequence
@@ -335,6 +342,11 @@ void ModDiamond::parse() {
     fp64 coverage;                  // Coverage
     // ------------------------------------------------------------------ //
 
+#ifdef TEST_SIM_PARSE_01
+    uint16 test_ct = 0;
+    const uint16 TEST_COUNT_MAX = 100;       // Parse 100 lines only of each file
+#endif
+
     FS_dprint("Beginning to filter individual DIAMOND files...");
 
     // disable UniProt headers until we know we have a hit
@@ -345,10 +357,25 @@ void ModDiamond::parse() {
         is_uniprot = false;
         uniprot_attempts = 0;
         simSearchResults = {};
+        ss.str("");
+        ss.clear();
+
+#ifdef TEST_SIM_PARSE_01
+        test_ct = 0;
+#endif
 
         // ensure file exists
         file_status = mpFileSystem->get_file_status(output_path);
-        if (file_status != 0) {
+        if (file_status & FileSystem::FILE_STATUS_EMPTY) {
+            // Empty file, skip this file and let user know
+            mpFileSystem->format_stat_stream(ss, "Compiled Similarity Search - DIAMOND - Best Overall");
+            FS_dprint("WARNING: empty DIAMOND file found, skipping: " + output_path);
+            ss << "DIAMOND file is empty. This will be skipped but pipeline will continue with other files";
+            std::string out_msg = ss.str() + "\n";
+            mpFileSystem->print_stats(out_msg);
+            continue;   // WARNING CONTINUE if alignment file is empty
+
+        } else if (file_status != 0) {
             throw ExceptionHandler("File not found or empty: " + output_path, ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
         }
 
@@ -420,6 +447,12 @@ void ModDiamond::parse() {
 
             query->add_alignment(mExecutionState, mSoftwareFlag,
                     simSearchResults, output_path, mInputLineage);
+
+#ifdef TEST_SIM_PARSE_01
+            if (++test_ct >= TEST_COUNT_MAX) {
+                break;
+            }
+#endif
         } // END WHILE LOOP
 
         // Finished parsing and adding to alignment data, being to calc stats
@@ -428,13 +461,15 @@ void ModDiamond::parse() {
         FS_dprint("Success!");
     } // END FOR LOOP
 
-    FS_dprint("Calculating overall Similarity Searching statistics...");
-    calculate_best_stats(true);
-    FS_dprint("Success!");
+    if (mParsedFile) {
+        FS_dprint("Calculating overall Similarity Searching statistics...");
+        calculate_best_stats(true);
+        FS_dprint("Success!");
+    } else {
+        throw ExceptionHandler("No alignments found during Similarity Searching!",
+                               ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
+    }
 }
-
-typedef std::map<std::string,std::map<std::string,uint32>> graph_sum_t;
-
 
 /**
  * ======================================================================
@@ -469,9 +504,9 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     uint64                      count_no_hit=0;
     uint64                      count_contam=0;
     uint64                      count_filtered=0;
-    uint64                      count_informative=0;
-    uint64                      count_uninformative=0;
-    uint64                      count_unselected=0;
+    uint64                      count_informative=0;    // Number of informative alignments
+    uint64                      count_uninformative=0;  // Number of uninformative alignments
+    uint64                      count_unselected=0;     // Number of unselected alignments (those that are not best hits)
     uint64                      count_TOTAL_alignments=0;
     uint32                      ct;
     fp64                        percent;
@@ -497,20 +532,20 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
 
     // Open contam best hit tsv file and print headers
     std::string out_best_contams_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_CONTAM);
-    mpQueryData->start_alignment_files(out_best_contams_filepath, mEntapHeaders, 0, mAlignmentFileTypes);
+    mpQueryData->start_alignment_files(out_best_contams_filepath, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
 
     // Open best hits files
     std::string out_best_hits_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS);
-    mpQueryData->start_alignment_files(out_best_hits_filepath, mEntapHeaders, 0, mAlignmentFileTypes);
+    mpQueryData->start_alignment_files(out_best_hits_filepath, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
 
     // Open best hits files with no contaminants
     std::string out_best_hits_no_contams = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM);
-    mpQueryData->start_alignment_files(out_best_hits_no_contams, mEntapHeaders, 0, mAlignmentFileTypes);
+    mpQueryData->start_alignment_files(out_best_hits_no_contams, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
 
     // Open unselected hits, so every hit that was not the best hit (tsv)
     std::string out_unselected_tsv  = PATHS(base_path, SIM_SEARCH_DATABASE_UNSELECTED);
     std::vector<FileSystem::ENT_FILE_TYPES> unselected_files = {FileSystem::ENT_FILE_DELIM_TSV};
-    mpQueryData->start_alignment_files(out_unselected_tsv, mEntapHeaders, 0, unselected_files);
+    mpQueryData->start_alignment_files(out_unselected_tsv, mEntapHeaders, mGoLevels, unselected_files);
 
     // Open no hits file (fasta nucleotide)
     std::string out_no_hits_fa_nucl = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS + FileSystem::EXT_FNN);
@@ -681,6 +716,8 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
         std::string out_msg = ss.str() + "\n";
         mpFileSystem->print_stats(out_msg);
         return; // RETURN we do not have any alignments
+    } else {
+        mParsedFile = true;
     }
 
     // Sort counters
@@ -793,6 +830,6 @@ void ModDiamond::set_uniprot_headers() {
     mpQueryData->set_is_uniprot(true);
 }
 
-void ModDiamond::get_version() {
-    return;
+bool ModDiamond::set_version() {
+    return false;
 }

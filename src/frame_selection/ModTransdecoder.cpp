@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2020, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -26,6 +26,7 @@
 */
 
 #include "ModTransdecoder.h"
+#include "../ExceptionHandler.h"
 
 std::vector<ENTAP_HEADERS> ModTransdecoder::DEFAULT_HEADERS = {
         ENTAP_HEADER_FRAME
@@ -381,6 +382,7 @@ void ModTransdecoder::parse_transdecoder_fasta(std::string &fasta_path, FileSyst
     std::string                              sequence;
     std::string                              seq_id;
     std::string                              frame;
+    fp32                                     score;
     QuerySequence                            *pQuery_sequence=nullptr;
 
     std::ifstream in_file(fasta_path);
@@ -398,13 +400,16 @@ void ModTransdecoder::parse_transdecoder_fasta(std::string &fasta_path, FileSyst
                     }
 
                     // Finished collecting sequence information, update QueryData
-                    if (file_type == FileSystem::ENT_FILE_FASTA_FAA) {
-                        pQuery_sequence->set_sequence_p(sequence);
-                    } else if (file_type == FileSystem::ENT_FILE_FASTA_FNN) {
-                        pQuery_sequence->set_sequence_n(sequence);
+                    // In the event that there are multiple frames, ensure we have the best one
+                    if (score >= pQuery_sequence->getMFrameScore()) {
+                        if (file_type == FileSystem::ENT_FILE_FASTA_FAA) {
+                            pQuery_sequence->set_sequence_p(sequence);
+                        } else if (file_type == FileSystem::ENT_FILE_FASTA_FNN) {
+                            pQuery_sequence->set_sequence_n(sequence);
+                        }
+                        pQuery_sequence->setMFrameScore(score);
+                        pQuery_sequence->setFrame(frame);
                     }
-
-                    pQuery_sequence->setFrame(frame);
                 }
 
                 if (in_file.eof()) {
@@ -412,7 +417,7 @@ void ModTransdecoder::parse_transdecoder_fasta(std::string &fasta_path, FileSyst
                     break;
                 } else {
                     // Set the beginning of this new sequence to the Sequence ID/Header
-                    parse_transdecoder_fasta_header(seq_id, line, frame);
+                    parse_transdecoder_fasta_header(seq_id, line, frame, score);
                     pQuery_sequence = mpQueryData->get_sequence(seq_id);
                     if (pQuery_sequence == nullptr) {
                         throw ExceptionHandler("Unable to find correct sequence ID from TransDecoder line: " + line,
@@ -494,21 +499,39 @@ bool ModTransdecoder::verify_ORF(std::string &frame) {
 * @param seq_id        - This value is set to the sequence ID from the parsed header
 * @param line          - Entire header line (starting with '>')
 * @param frame         - This value is set to the ORF type pulled from the header
+* @param score         - This value is set ot the score parsed from the header
 *
-* @return              - None
+* @return              - Sets seq_id and frame
 *
 * =====================================================================
 */
-void ModTransdecoder::parse_transdecoder_fasta_header(std::string &seq_id, std::string &line, std::string &frame) {
+void ModTransdecoder::parse_transdecoder_fasta_header(std::string &seq_id, std::string &line, std::string &frame, fp32 &score) {
     uint64 ind1;
     uint64 ind2;
     std::string ret;
 
     // Find sequence ID from entire header
+    // Typically, this is the format we are looking for in one line:
+    //      >TR.ECb10001|c0_g1_i1.p1 GENE.TR.ECb10001|c0_g1_i1~~TR.ECb10001|c0_g1_i1.p1
+    //      ORF type:internal len:110 (+),score=0.03 TR.ECb10001|c0_g1_i1:1-327(+)
     ind1 = line.find(FLAG_QUERYID_BEGIN);
     ind2 = line.find(FLAG_QUERYID_END);
     if (ind1 == std::string::npos || ind2 == std::string::npos) {
-        throw ExceptionHandler("Unable to find sequence id from header: " + line, ERR_ENTAP_RUN_TRANSDECODER_PARSE);
+        // WARNING there is some interaction between Transdecoder and certain transcriptomes that report the following
+        //  format in the .pep file, this must be parsed differently:
+        //      >TRINITY_DN0_c1_g1_i3.p1 TRINITY_DN0_c1_g1~~TRINITY_DN0_c1_g1_i3.p1
+        //      ORF type:internal len:121 (-),score=46.75 TRINITY_DN0_c1_g1_i3:3-362(-)
+        uint64 temp = line.find(FLAG_SCORE_BEGIN);
+        ind1 = line.find(FLAG_QUERYID_V2_BEGIN, temp);
+        ind2 = line.find(FLAG_QUERYID_V2_END, ind1);
+        if (ind1 == std::string::npos || ind2 == std::string::npos) {
+            // If even this doesnt work, throw error
+            FS_dprint("Unable to find sequence id from header: " + line);
+            throw ExceptionHandler("Unable to find sequence id from header: " + line, ERR_ENTAP_RUN_TRANSDECODER_PARSE);
+        } else {
+            seq_id = line.substr(ind1 + 1, ind2 - ind1 - 1);
+        }
+
     } else {
         seq_id = line.substr(ind1 + FLAG_QUERYID_BEGIN.size(), ind2 - ind1 - FLAG_QUERYID_BEGIN.size());
     }
@@ -521,8 +544,19 @@ void ModTransdecoder::parse_transdecoder_fasta_header(std::string &seq_id, std::
     } else {
         frame = line.substr(ind1 + FLAG_FRAME_BEGIN.size(), ind2 - ind1 - FLAG_FRAME_BEGIN.size());
     }
+
+    // Find score from entire header
+    ind1 = line.find(FLAG_SCORE_BEGIN);
+    ind2 = line.find(FLAG_SCORE_END, ind1);
+    if (ind1 == std::string::npos || ind2 == std::string::npos) {
+        // Do not error out for this
+        score = 0.0;
+    } else {
+        std::string score_str = line.substr(ind1 + FLAG_SCORE_BEGIN.size(), ind2 - ind1 - FLAG_SCORE_BEGIN.size());
+        score = std::stof(score_str);
+    }
 }
 
-void ModTransdecoder::get_version() {
-    return;
+bool ModTransdecoder::set_version() {
+    return false;
 }

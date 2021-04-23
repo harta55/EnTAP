@@ -2,6 +2,8 @@
 Contains the ConfigView class.
 """
 from ..Controller import configController
+from ..Controller.ConfigController import *
+from ..Model.DatabasesModel import *
 from ..Form.ConfigForm import *
 from ..Model.ConfigModel import *
 from flask import flash
@@ -10,6 +12,9 @@ from flask import render_template
 from flask import url_for
 from flask_classful import FlaskView
 from flask_classful import route
+from json import dumps
+from json import loads
+from subprocess import check_output as cRun
 
 
 
@@ -37,6 +42,43 @@ class ConfigView(FlaskView):
         config = ConfigModel()
         config.populate(form)
         return render_template("config.html",form=form)
+
+
+    @route("/taxonomy/<tax>")
+    def isTaxValid(
+        self
+        ,tax
+    ):
+        """
+        Getter method.
+
+        Parameters
+        ----------
+        tax : string
+              A taxonomy field that is checked for its validity.
+
+        Returns
+        -------
+        result : object
+                 JSON encoded RESTful reply informing if the given taxonomy
+                 string is valid. The JSON contains an object with the key
+                 "isvalid" with a boolean value.
+        """
+        data = loads(
+            cRun(
+                [
+                    "EnTAP"
+                    ,"--api-taxon"
+                    ,tax
+                    ,"--out-dir"
+                    ,DatabasesModel.OUT_PATH
+                    ,"--ini"
+                    ,ConfigController.PATH
+                ]
+            )
+        )
+        isValid = True if (data["error"] == False and data["valid"] == True) else False
+        return dumps({"valid": isValid})
 
 
     @route("/update/",methods=["POST"])

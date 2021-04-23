@@ -39,7 +39,9 @@ class UninformsView(FlaskView):
         if form.validate():
             uninforms = UninformsModel()
             name = form.name.data
-            if name in uninforms:
+            if not name:
+                flash("Uninformative cannot be blank string.","danger")
+            elif name in uninforms:
                 flash("Uninformative with given name already exists.","danger")
             else:
                 uninforms.add(name)

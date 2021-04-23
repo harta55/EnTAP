@@ -59,7 +59,7 @@ class LogsView(FlaskView):
         ,index
     ):
         """
-        Detailed description.
+        Getter method.
 
         Parameters
         ----------

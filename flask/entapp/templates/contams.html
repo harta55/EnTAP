@@ -9,7 +9,20 @@
     <p>
         During sequence comparisons of known proteins, the best match may be to a protein from a species that is unwanted. Use the interface below to specify one or more genus or species names for which matches should be ignored.
     </p>
-    {{ wtf.quick_form(form,url_for('ContamsView:add')) }}
+    <form id="addForm" action="{{ url_for('ContamsView:add') }}" method="POST">
+    {{ form.hidden_tag() }}
+    <div class="mt-3">
+        <label for="{{ form.name.id }}" class="form-label">{{ form.name.label.text }}</label>
+        {{ form.name(class_='form-control') }}
+        <div id="nameworking" class="mt-2 d-none text-warning">
+            <div class="spinner-border" role="status"></div>
+            <span>Checking taxonomy, please wait...</span>
+        </div>
+        <div id="namefeedback" class="invalid-feedback d-none">The taxonomy contaminant entered is invalid.</div>
+        <div class="form-text">{{ form.name.description }}</div>
+    </div>
+    {{ wtf.quick_field(form.submit) }}
+    </form>
     <div class="card card-body bg-light mt-3">
         <label>List of Contaminants</label>
         <table class="table table-striped">
@@ -30,4 +43,36 @@
         </table>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+    $("#name").change(function(){
+        $("#name").removeClass("is-invalid");
+        $("#nameworking").removeClass("d-none");
+        $("#namefeedback").addClass("d-none");
+        val = $("#name").val();
+        if (!val)
+        {
+            $("#nameworking").addClass("d-none");
+            return;
+        }
+        $.get("/config/taxonomy/"+encodeURIComponent(val),function(data){
+            obj = JSON.parse(data);
+            $("#nameworking").addClass("d-none");
+            if (!obj.valid)
+            {
+                $("#name").addClass("is-invalid");
+                $("#namefeedback").removeClass("d-none");
+            }
+        });
+    });
+    $("#addForm").submit(function(){
+        return (!$("#name").hasClass("is-invalid") && $("#nameworking").hasClass("d-none"));
+    });
+});
+</script>
 {% endblock %}

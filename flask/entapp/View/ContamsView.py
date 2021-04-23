@@ -39,7 +39,9 @@ class ContamsView(FlaskView):
         if form.validate():
             contams = ContamsModel()
             name = form.name.data
-            if name in contams:
+            if not name:
+                flash("Contaminant cannot be blank string.","danger")
+            elif name in contams:
                 flash("Contaminant with given name already exists.","danger")
             else:
                 contams.add(name)

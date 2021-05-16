@@ -95,6 +95,7 @@ std::string ExpressionAnalysis::execute(std::string input) {
     mInFastaPath = input;
     if (mOverwrite) mpFileSystem->delete_dir(mExpressionDir);
     mpFileSystem->create_dir(mExpressionDir);
+    TC_print(TC_PRINT_COUT, "Beginning Expression Analysis...");
 
     try {
         ptr = spawn_object();
@@ -106,11 +107,11 @@ std::string ExpressionAnalysis::execute(std::string input) {
         // If successful, set flags
         ptr->set_success_flags();
         ptr.reset();
-
     } catch (const ExceptionHandler &e) {
         ptr.reset();
         throw e;
     }
+    TC_print(TC_PRINT_COUT, "Expression Analysis complete");
     return output;
 }
 

@@ -41,9 +41,15 @@ struct TerminalData{
     std::string base_std_path;
 };
 
+typedef enum {
+    TC_PRINT_COUT,
+    TC_PRINT_CERR
+} TC_PRINT_TYPES;
+
 typedef std::unordered_map<std::string, std::string> command_map_t;
 
 int TC_execute_cmd(TerminalData &terminalData);
+void TC_print(TC_PRINT_TYPES printTypes, std::string msg);
 std::string TC_generate_command(command_map_t& command_map, std::string& exe_path);
 
 #endif //ENTAP_TERMINALCOMMANDS_H

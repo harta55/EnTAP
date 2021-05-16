@@ -121,3 +121,18 @@ std::string TC_generate_command(command_map_t &map, std::string &exe_path) {
     out = ss.str();
     return out;
 }
+
+void TC_print(TC_PRINT_TYPES printTypes, std::string msg) {
+    switch (printTypes) {
+        case TC_PRINT_COUT:
+            std::cout << msg << std::endl;
+            break;
+
+        case TC_PRINT_CERR:
+            std::cerr << msg << std::endl;
+            break;
+
+        default:
+            break;
+    }
+}

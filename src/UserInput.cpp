@@ -1074,16 +1074,16 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
     if (has_input(INPUT_FLAG_GRAPH)) {
         std::string graphing_exe = get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_GRAPH);
         if (!mpFileSystem->file_exists(graphing_exe)) {
-            std::cout<<"Graphing is NOT enabled on this system! Graphing script could not "
-                    "be found at: "<<graphing_exe << std::endl;
+            TC_print(TC_PRINT_COUT, "Graphing is NOT enabled on this system! Graphing script could not "
+                    "be found at: " + graphing_exe);
         }
         GraphingManager gmanager = GraphingManager(graphing_exe, mpFileSystem);
         if (gmanager.is_graphing_enabled()) {
-            std::cout<< "Graphing is enabled on this system!" << std::endl;
+            TC_print(TC_PRINT_COUT, "Graphing is enabled on this system!");
             throw ExceptionHandler("",ERR_ENTAP_SUCCESS);
         } else {
-            std::cout<<"Graphing is NOT enabled on this system!,"
-                    " ensure that you have python with the Matplotlib module installed."<<std::endl;
+            TC_print(TC_PRINT_COUT, "Graphing is NOT enabled on this system!,"
+                    " ensure that you have python with the Matplotlib module installed.");
             throw ExceptionHandler("",ERR_ENTAP_SUCCESS);
         }
     }

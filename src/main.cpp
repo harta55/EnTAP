@@ -194,7 +194,7 @@ void exit_print(bool in_error, UserInput::EXECUTION_TYPE execute_type) {
         {
             std::string out_msg;
             out_msg = pUserInput->get_json_output();
-            std::cout << out_msg << std::endl;
+            TC_print(TC_PRINT_COUT, out_msg);
             break;
         }
 

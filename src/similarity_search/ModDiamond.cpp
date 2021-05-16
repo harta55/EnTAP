@@ -203,6 +203,7 @@ void ModDiamond::execute() {
     SimSearchCmd simSearchCmd;  // DIAMOND commands
 
     FS_dprint("Executing DIAMOND for necessary files....");
+    TC_print(TC_PRINT_COUT, "Running DIAMOND Similarity Search...");
 
     for (std::string &database_path : mDatabasePaths) {
         output_path = get_database_output_path(database_path);
@@ -233,6 +234,7 @@ void ModDiamond::execute() {
             FS_dprint("Success! Results written to: " + output_path);
         }
     }
+    TC_print(TC_PRINT_COUT, "Success");
 }
 
 /**
@@ -348,6 +350,7 @@ void ModDiamond::parse() {
 #endif
 
     FS_dprint("Beginning to filter individual DIAMOND files...");
+    TC_print(TC_PRINT_COUT, "Parsing DIAMOND Similarity Search...");
 
     // disable UniProt headers until we know we have a hit
     for (std::string &output_path : mOutputPaths) {
@@ -469,6 +472,7 @@ void ModDiamond::parse() {
         throw ExceptionHandler("No alignments found during Similarity Searching!",
                                ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
     }
+    TC_print(TC_PRINT_COUT, "Success");
 }
 
 /**

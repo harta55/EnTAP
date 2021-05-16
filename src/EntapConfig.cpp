@@ -76,6 +76,7 @@ namespace entapConfig {
         ent_input_multi_str_t              compiled_databases;  // databases input from user
 
         FS_dprint("Entering EnTAP Config");
+        TC_print(TC_PRINT_COUT, "Running EnTAP configuration…");
 
         pUserInput = input;
         pFileSystem = filesystem;
@@ -115,6 +116,7 @@ namespace entapConfig {
         }
         SAFE_DELETE(pEntapDatabase);
         FS_dprint("Configuration complete!");
+        TC_print(TC_PRINT_COUT, "EnTAP configuration complete");
     }
 
     /**
@@ -151,6 +153,7 @@ namespace entapConfig {
 
         pFileSystem->format_stat_stream(log_msg, "DIAMOND Database Configuration");
 
+        TC_print(TC_PRINT_COUT, "Configuring DIAMOND databases...");
         for (std::string &fasta_path: compiled_databases) {
             TerminalData terminalData = TerminalData();
 
@@ -192,6 +195,7 @@ namespace entapConfig {
 
         std::string temp = log_msg.str();
         pFileSystem->print_stats(temp);
+        TC_print(TC_PRINT_COUT, "Success");
     }
 
 
@@ -224,6 +228,7 @@ namespace entapConfig {
         std::stringstream log_msg;              // Message to print to EnTAP log file
 
         FS_dprint("Ensuring EggNOG databases exist...");
+        TC_print(TC_PRINT_COUT, "Checking EggNOG database..,");
 
         pFileSystem->format_stat_stream(log_msg, "EggNOG Database Configuration");
 
@@ -257,6 +262,7 @@ namespace entapConfig {
         // Check if SQL database already exists
         if (!pFileSystem->file_exists(user_egg_sql) && !pFileSystem->file_exists(sql_outpath)) {
             // No, path does not. Download it
+            TC_print(TC_PRINT_COUT, "Configuring EggNOG database...");
             if (eggnogDatabase.download(EggnogDatabase::EGGNOG_SQL, sql_outpath) != EggnogDatabase::ERR_EGG_OK) {
                 // Error in download
                 err_msg = "Unable to download EggNOG sql database from FTP to: " +
@@ -319,6 +325,7 @@ namespace entapConfig {
             if (pFileSystem->file_exists(dmnd_outpath)) path = dmnd_outpath;
             FS_dprint("EggNOG DIAMOND database already exists at: " + path);
             log_msg << "EggNOG DIAMOND database skipped, exists at: " << path << std::endl;
+            TC_print(TC_PRINT_COUT, "EggNOG database already exist, skipping...");
         }
         // Print to log/debug
         FS_dprint("Success! All EggNOG files verified");
@@ -350,7 +357,8 @@ namespace entapConfig {
         EntapDatabase::DATABASE_TYPE database_type; // Type of database to configure/download (EntapDatabase.h)
         EntapDatabase::DATABASE_ERR database_err;   // Database error (EntapDatabase.h)
 
-        FS_dprint("Initializing EnTAP database...");
+        FS_dprint("Checking EnTAP database...");
+        TC_print(TC_PRINT_COUT, "Downloading EnTAP database…");
         pFileSystem->format_stat_stream(log_msg, "EnTAP Database Configuration");
 
         pEntapDatabase = new EntapDatabase(pFileSystem);
@@ -395,11 +403,13 @@ namespace entapConfig {
                 if (pFileSystem->file_exists(config_outpath)) path = config_outpath;
                 if (pFileSystem->file_exists(database_outpath)) path = database_outpath;
                 FS_dprint("File already exists at: " + path);
+                TC_print(TC_PRINT_COUT, "EnTAP database already exists, skipping...");
                 log_msg << "Database skipped, already exists at: " << path << std::endl;
                 continue; // Don't redownload
             }
 
             // Need to generate/download file!
+            TC_print(TC_PRINT_COUT, "Configuring EnTAP database...");
             if (generate_databases) {
                 FS_dprint("EntapConfig: Generating database to: " + database_outpath + "...");
                 database_err = pEntapDatabase->generate_database(database_type, database_outpath);
@@ -422,6 +432,7 @@ namespace entapConfig {
         std::string temp = log_msg.str();
         pFileSystem->print_stats(temp);
         SAFE_DELETE(pEntapDatabase);
+        TC_print(TC_PRINT_COUT, "Success");
     }
 
     /**

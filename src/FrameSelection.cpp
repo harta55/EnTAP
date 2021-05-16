@@ -95,6 +95,7 @@ std::string FrameSelection::execute(std::string input) {
     mInPath = input;
     if (mOverwrite) mpFileSystem->delete_dir(mModOutDir);
     mpFileSystem->create_dir(mModOutDir);
+    TC_print(TC_PRINT_COUT, "Beginning Frame Selection...");
     try {
         ptr = spawn_object();
         verify_data = ptr->verify_files();
@@ -108,6 +109,7 @@ std::string FrameSelection::execute(std::string input) {
 
         ptr.reset();
 
+        TC_print(TC_PRINT_COUT, "Frame Selection complete");
         return output;
     } catch (const ExceptionHandler &e) {
         ptr.reset();

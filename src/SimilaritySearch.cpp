@@ -77,6 +77,7 @@ SimilaritySearch::SimilaritySearch(vect_str_t &database_paths, std::string &inpu
 void SimilaritySearch::execute() {
     EntapModule::ModVerifyData verifyData;
     std::unique_ptr<AbstractSimilaritySearch> ptr;
+    TC_print(TC_PRINT_COUT, "Beginning Similarity Search...");
 
     try {
         ptr = spawn_object();
@@ -92,6 +93,7 @@ void SimilaritySearch::execute() {
         ptr.reset();
         throw e;
     }
+    TC_print(TC_PRINT_COUT, "Similarity Search complete");
 }
 
 std::unique_ptr<AbstractSimilaritySearch> SimilaritySearch::spawn_object() {

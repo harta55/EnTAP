@@ -88,7 +88,12 @@ Software:
 
     * InterProScan_ (Protein Databases): version 5.19 must be installed separately
 
-If you have downloaded the full repository from the GitLab page, each of these (with the exception of GeneMarkS-T and InterProScan) are contained within the /libs directory. GeneMarkS-T must be acquired from the website linked previously due to licensing (free for academic use). 
+EnTAP Download
+-----------------------------
+First, download and extract the latest release(tagged) version from GitLab:
+https://gitlab.com/EnTAP/EnTAP/tags
+
+Each of the pipeline software mentioned above (with the exception of GeneMarkS-T and InterProScan) are contained within the /libs directory of the EnTAP repo. GeneMarkS-T must be acquired from the website linked previously due to licensing (free for academic use). 
 
 
 RSEM and DIAMOND both require compilation from source code while GeneMarkS-T does not. To compile these, follow the directions below. These are also found on the respective GitHub pages and are subject to change depending on the version.
@@ -148,9 +153,6 @@ EnTAP Installation
 ----------------------------
 
 Once dependencies and pipeline software have been installed, you can now continue to install EnTAP! 
-
-First, download and extract the latest release(tagged) version from GitLab:
-https://gitlab.com/EnTAP/EnTAP/tags
 
 Within the main directory, execute the following command:
 

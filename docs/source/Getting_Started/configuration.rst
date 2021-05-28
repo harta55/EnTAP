@@ -34,6 +34,10 @@ If something is globally installed, such as "interproscan-exe" above, put how yo
 
 .. warning:: Be sure to at least set the DIAMOND path before moving on 
 
+Below is a sample ini file with all of the defaults that should be included in the EnTAP repository.
+
+.. literalinclude:: ../../../entap_config.ini
+
 
 .. _usage-label:
 

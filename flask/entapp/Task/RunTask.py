@@ -5,9 +5,10 @@ from ..Abstract.AbstractTask import *
 from ..Controller.ConfigController import *
 from ..Model.ConfigModel import *
 from ..Model.DatabasesModel import *
-from ..Model.LogsModel import *
 from flask import render_template
-from subprocess import run as pRun
+from subprocess import PIPE
+from subprocess import Popen
+from subprocess import STDOUT
 
 
 
@@ -50,21 +51,13 @@ class RunTask(AbstractTask):
         self
         ,**kwargs
     ):
-        if kwargs["stage"] == "running":
-            output = ""
-            logs = LogsModel()
-            log = logs.newest()
-            if log:
-                output = log.tail()
-            return render_template("task/setup.html",output=output,**kwargs)
-        else:
-            return render_template("task/setup.html",**kwargs)
+        return render_template("task/setup.html",**kwargs)
 
 
     def run(
         self
     ):
-        self._setRenderVars_(stage="running",frameSelect=self.__fs)
+        self._setRenderVars_(stage="running",frameSelect=self.__fs,output="")
         config = ConfigModel()
         databases = DatabasesModel()
         cmd = ["EnTAP"]
@@ -82,7 +75,13 @@ class RunTask(AbstractTask):
             ,"--out-dir"
             ,DatabasesModel.OUT_PATH
         ]
-        if pRun(cmd).returncode == 0:
+        run = Popen(cmd,stdout=PIPE,stderr=STDOUT)
+        out = ""
+        while run.poll() is None:
+            out += run.stdout.readline().decode()
+            run.stdout.flush()
+            self._setRenderVars_(stage="running",frameSelect=self.__fs,output=out)
+        if run.returncode is None:
             self._setRenderVars_(stage="success")
             return True
         else:

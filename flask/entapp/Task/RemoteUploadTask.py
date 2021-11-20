@@ -5,6 +5,7 @@ from ..Abstract.AbstractTask import *
 from ..Model.DatabasesModel import *
 from flask import render_template
 from ftplib import FTP
+import ftplib
 from requests import get as reqGet
 from os.path import exists as pathExists
 from os.path import join as pathJoin
@@ -68,7 +69,7 @@ class RemoteUploadTask(AbstractTask):
                 ,total=self.__ft
             )
             try:
-                self.__path = pathJoin(DatabasesModel.PATH,self.__fileName)
+                self.__path = pathJoin(DatabasesModel.PATH,self.__fileName.replace(".*",""))
                 if pathExists(self.__path):
                     self.__failed.append(
                         (
@@ -108,7 +109,9 @@ class RemoteUploadTask(AbstractTask):
         ftp = FTP(host)
         ftp.login()
         ftp.cwd(d)
-        total = ftp.size(self.__fileName)
+        total = None
+        if "*" not in self.__fileName:
+            total = ftp.size(self.__fileName)
         if total is None:
             total = 0
         progress = 0
@@ -129,7 +132,26 @@ class RemoteUploadTask(AbstractTask):
                     ,progress=p
                     ,hasPercent=bool(total)
                 )
-            ftp.retrbinary("RETR "+self.__fileName,write)
+            if "*" in self.__fileName:
+                i = 1
+                missed = 0
+                while True:
+                    try:
+                        ftp.retrbinary("RETR "+self.__fileName.replace("*",str(i)),write)
+                    except ftplib.error_perm as reason:
+                        print(reason,missed)
+                        if str(reason)[:3] != "550":
+                            raise
+                        else:
+                            missed += 1
+                            if missed > 10:
+                                break
+                    else:
+                        missed = 0
+                    finally:
+                        i += 1
+            else:
+                ftp.retrbinary("RETR "+self.__fileName,write)
         self.__finished.append(self.__fileName)
 
 

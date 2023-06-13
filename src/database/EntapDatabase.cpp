@@ -974,7 +974,7 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
             while (true) {
                 // Generate SQL query
                 char *query = sqlite3_mprintf(
-                        "SELECT %q, %q FROM %q WHERE %q=%Q",
+                        "SELECT %q, %q FROM %q WHERE %q=%Q LIMIT 1",
                         SQL_COL_NCBI_TAX_TAXID.c_str(),
                         SQL_COL_NCBI_TAX_LINEAGE.c_str(),
                         SQL_TABLE_NCBI_TAX_TITLE.c_str(),

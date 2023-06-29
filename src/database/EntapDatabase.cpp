@@ -954,7 +954,8 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
             // If we can't find species, keep trying by making it more broad
             temp_species = species;
             while (true) {
-                index = temp_species.find_last_of(" ");
+                // Progressively get more broad with taxonomy lookup
+                index = temp_species.find_last_of(' ');
                 if (index == std::string::npos) break;
                 temp_species = temp_species.substr(0, index);
                 it = mpSerializedDatabase->taxonomic_data.find(temp_species);
@@ -982,8 +983,8 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
                         temp_species.c_str()
                 );
                 results = mpDatabaseHelper->query(query);
-                if (results.empty()) return TaxEntry();
                 if (results.empty()) {
+                    // Progressively get more broad with taxonomy lookup
                     index = temp_species.find_last_of(' ');
                     if (index == std::string::npos) return TaxEntry(); // couldn't find
                     temp_species = temp_species.substr(0, index);

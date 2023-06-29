@@ -13,3 +13,4 @@ These are the flags for the execution process of EnTAP. Flags will be repeated t
    Frame_Selection_Flags/frame_selection_flags.rst
    Similarity_Flags/similarity_search_flags.rst
    Ontology_Flags/ontology_flags.rst
+   API_Flags/api_flags.rst

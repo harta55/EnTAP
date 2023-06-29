@@ -2,7 +2,16 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.8-beta
 
-EnTAP Beta v0.10.8 (March 21, 2021)
+EnTAP Beta v0.10.9-beta (June 29, 2023)
+------------------------------------------
+    * Optimizations made to similarity searching using the EnTAP SQL database. Should improve speed
+	* Added 'api-taxon' command that will verify whether an input taxon can be found in the taxonomy database. It will return json formatted text
+	* Added additional messaging throughout EnTAP execution to stdout
+	* Removed Test Data from repository, it is no longer compatible with latest version of software within EnTAP. Will add back an updated dataset next version
+	* Changed DIAMOND command to use '--max-target-seqs' instead of '--top' command
+	* Fixed an issue where duplicate sequences were printed to the final_annotations files
+
+EnTAP Beta v0.10.8-beta (March 21, 2021)
 ------------------------------------------
     * This version requires a new version of the EnTAP database to be downloaded
     * Added Gene Enrichment files as an output option(gene ID + effective length and geneID + GO term). These can be seen with the output-type flag in the ini file

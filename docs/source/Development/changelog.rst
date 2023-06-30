@@ -10,6 +10,7 @@ EnTAP Beta v0.10.9-beta (June 29, 2023)
 	* Removed Test Data from repository, it is no longer compatible with latest version of software within EnTAP. Will add back an updated dataset next version
 	* Changed DIAMOND command to use '--max-target-seqs' instead of '--top' command
 	* Fixed an issue where duplicate sequences were printed to the final_annotations files
+    * Fixed an issue where the taxanomic species may not have been found when searching against the SQL EnTAP database
 
 EnTAP Beta v0.10.8-beta (March 21, 2021)
 ------------------------------------------

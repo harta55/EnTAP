@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -122,6 +122,11 @@ const vect_uint16_t UserInput::DEFAULT_OUT_FORMAT       =vect_uint16_t{FileSyste
                                                                        FileSystem::ENT_FILE_FASTA_FNN,
                                                                        FileSystem::ENT_FILE_GENE_ENRICH_EFF_LEN,
                                                                        FileSystem::ENT_FILE_GENE_ENRICH_GO_TERM};
+
+/* -------------------- EnTAP API Commands -----------------------*/
+#define CMD_ENTAP_API_TAXON "api-taxon"
+#define DESC_ENTAP_API_TAXON "[ENTAP-API] Check if input species exists in the taxonomic database. Species/taxon must be input by replacing " \
+                             "spaces with underscores ('_'). Program will exit after this."
 
 /* -------------------- EnTAP Commands -----------------------*/
 #define CMD_ENTAP_DB_BIN    "entap-db-bin"
@@ -321,6 +326,7 @@ const fp64   UserInput::DEFAULT_BUSCO_E_VALUE           = 1e-5;
 #define INI_FRAME_GENEMARK "frame_selection-genemarks-t"
 #define INI_FRAME_TRANSDECODER "frame_selection-transdecoder"
 #define INI_GENERAL "general"
+#define INI_ENTAP_API "entap-api"
 #define INI_CONFIG "configuration"
 #define INI_EXPRESSION "expression_analysis"
 #define INI_EXP_RSEM "expression_analysis-rsem"
@@ -406,11 +412,14 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_GENERAL   ,CMD_INPUT_TRAN           ,CMD_SHORT_INPUT_TRAN ,DESC_INPUT_TRAN       ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_DATABASE             ,CMD_SHORT_DATABASE   ,DESC_DATABASE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_GRAPHING             ,ENTAP_INI_NULL  ,DESC_GRAPHING              ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
-        {INI_GENERAL   ,CMD_NO_TRIM              ,ENTAP_INI_NULL  ,DESC_NO_TRIM                  ,EX_NO_TRIM          ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_NO_TRIM              ,ENTAP_INI_NULL  ,DESC_NO_TRIM               ,EX_NO_TRIM       ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_THREADS              ,CMD_SHORT_THREADS    ,DESC_THREADS          ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT         ,DEFAULT_THREADS        ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_STATE                ,ENTAP_INI_NULL  ,DESC_STATE                 ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_STATE          ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_NOCHECK              ,ENTAP_INI_NULL  ,DESC_NOCHECK               ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_OUTPUT_FORMAT        ,ENTAP_INI_NULL  ,DESC_OUTPUT_FORMAT         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_OUT_FORMAT     ,ENT_INI_FILE         ,ENTAP_INI_NULL_VAL},
+
+/* EnTAP API Commands */
+        {INI_ENTAP_API,CMD_ENTAP_API_TAXON      ,ENTAP_INI_NULL  ,DESC_ENTAP_API_TAXON       ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
 
 /* EnTAP Commands */
         {INI_ENTAP     ,CMD_ENTAP_DB_BIN         ,ENTAP_INI_NULL  ,DESC_ENTAP_DB_BIN          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENTAP_DB_BIN_INI, ENT_INI_FILE        ,ENTAP_INI_NULL_VAL},
@@ -498,11 +507,18 @@ UserInput::UserInput(int argc, const char** argv, FileSystem *fileSystem) {
 
     // Ensure user has input the INI file path, EXIT otherwise
     if (!mpFileSystem->file_exists(ini_file_path)) {
-        // INI file is required for EnTAP execution, generate one in the CWD
-        ini_file_path = PATHS(mpFileSystem->get_cur_dir(), ENTAP_INI_FILENAME);
-        generate_ini_file(ini_file_path);
-        throw ExceptionHandler("INI file was not found and is required for EnTAP execution, generated at: " + ini_file_path,
-                               ERR_ENTAP_CONFIG_CREATE_SUCCESS);
+
+        if (!mHasAPICmd) {
+            // INI file is required for EnTAP execution, generate one in the CWD
+            ini_file_path = PATHS(mpFileSystem->get_cur_dir(), ENTAP_INI_FILENAME);
+            generate_ini_file(ini_file_path);
+            throw ExceptionHandler("INI file was not found and is required for EnTAP execution, generated at: " + ini_file_path,
+                                   ERR_ENTAP_CONFIG_CREATE_SUCCESS);
+        } else {
+            // WARNING skip parsing ini file with API commands!!!
+            ;
+        }
+
     } else {
         // Ini file exists and file path is valid
         mIniFilePath = ini_file_path;
@@ -862,7 +878,7 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key) {
     boost::any any_val;
 
     try {
-        TCLAP::CmdLine cmd("EnTAP\nAlexander Hart and Dr. Jill Wegrzyn\nUniversity of Connecticut\nCopyright 2017-2021",
+        TCLAP::CmdLine cmd("EnTAP\nAlexander Hart and Dr. Jill Wegrzyn\nUniversity of Connecticut\nCopyright 2017-2023",
                            ' ', ENTAP_VERSION_STR);
 
         // Generate Arguments and add them to CMD
@@ -952,6 +968,10 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key) {
             // Ensure it is a command line argument
             if (entry->input_type == ENT_COMMAND_LINE) {
 
+                if (entry->category == INI_ENTAP_API) {
+                    mHasAPICmd = true;
+                }
+
                 // If argument NULL or not set by the user
                 if (arg == nullptr || !arg->isSet()) {
                     // Yes, set the final value to the default value
@@ -1001,17 +1021,14 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key) {
                             entry->parsed_value = multi_arg->getValue();
                             break;
                         }
-
                         default:
                             break;
                     }
-
                 }
 
             } else {
                 ;
             }
-
         }
         for (auto &argument : tclap_arguments) {
             delete argument;
@@ -1027,16 +1044,16 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key) {
 
 /**
  * ======================================================================
- * Function void verify_user_input(void)
+ * Function UserInput::EXECUTION_TYPE verify_user_input(void)
  *
  * Description          - Performs sanity checks on user input
  *
  * Notes                - None
  *
- * @return              - None
+ * @return              - Execution type
  * =====================================================================
  */
-bool UserInput::verify_user_input() {
+UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
 
     bool                     is_interpro;
     bool                     is_protein;
@@ -1049,33 +1066,115 @@ bool UserInput::verify_user_input() {
     ent_input_multi_int_t    GO_levels;
     EntapDatabase           *pEntap_database = nullptr;
     std::unique_ptr<QueryData> pQuery_Data=nullptr;
+    EXECUTION_TYPE           ret_execution;
+
+    // ------------ Process 'API' commands first ---------------- //
 
     // If graphing flag, check if it is allowed then EXIT
     if (has_input(INPUT_FLAG_GRAPH)) {
         std::string graphing_exe = get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_GRAPH);
         if (!mpFileSystem->file_exists(graphing_exe)) {
-            std::cout<<"Graphing is NOT enabled on this system! Graphing script could not "
-                    "be found at: "<<graphing_exe << std::endl;
+            TC_print(TC_PRINT_COUT, "Graphing is NOT enabled on this system! Graphing script could not "
+                    "be found at: " + graphing_exe);
         }
         GraphingManager gmanager = GraphingManager(graphing_exe, mpFileSystem);
         if (gmanager.is_graphing_enabled()) {
-            std::cout<< "Graphing is enabled on this system!" << std::endl;
+            TC_print(TC_PRINT_COUT, "Graphing is enabled on this system!");
             throw ExceptionHandler("",ERR_ENTAP_SUCCESS);
         } else {
-            std::cout<<"Graphing is NOT enabled on this system!,"
-                    " ensure that you have python with the Matplotlib module installed."<<std::endl;
+            TC_print(TC_PRINT_COUT, "Graphing is NOT enabled on this system!,"
+                    " ensure that you have python with the Matplotlib module installed.");
             throw ExceptionHandler("",ERR_ENTAP_SUCCESS);
         }
     }
 
+    // If API command for Taxon, check local database first, then if that does not exist - query the NCBI
+    //      taxonomic database
+    if (has_input(INPUT_FLAG_ENTAP_API_TAXON)) {
+        ret_execution = EXECUTE_API;
+        std::string taxon_input = get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_API_TAXON);
+        if (taxon_input.empty()) {
+            std::cerr << "ERROR input taxon is empty" << std::endl;
+            mJsonOutput = R"(
+                {
+                    "error": true,
+                    "valid": false,
+                    "errMsg":ERROR input taxon is empty
+                }
+            )"_json;
+            return ret_execution;
+        } else {
+            process_user_species(taxon_input);
+        };
+
+        pEntap_database = new EntapDatabase(mpFileSystem);
+        ent_input_multi_int_t entap_database_types = get_user_input<ent_input_multi_int_t>(INPUT_FLAG_DATABASE_TYPE);
+        auto type = static_cast<EntapDatabase::DATABASE_TYPE>(entap_database_types[0]);
+        bool valid_database = false;
+        if (pEntap_database->set_database(type, get_entap_database_path(type))) {
+            if (pEntap_database->is_valid_version()) {
+                valid_database = true;
+            } else {
+                ;
+            }
+        } else {
+            ;
+        }
+
+        // If we have a valid EnTAP database, use the local. otherwise check NCBI if valid species/taxon
+        if (valid_database) {
+            TaxEntry taxEntry = pEntap_database->get_tax_entry(taxon_input);
+            if (!taxEntry.is_empty()) {
+                mJsonOutput = R"(
+                {
+                    "error": false,
+                    "valid": true
+                }
+            )"_json;
+                SAFE_DELETE(pEntap_database);
+                return ret_execution;
+            } else {
+                mJsonOutput = R"(
+                {
+                    "error": false,
+                    "valid": false
+                }
+            )"_json;
+                SAFE_DELETE(pEntap_database);
+                return ret_execution;
+            }
+        } else {
+            // INVALID entap database
+            if (pEntap_database->is_ncbi_tax_entry(taxon_input)) {
+                mJsonOutput = R"(
+                {
+                    "error": false,
+                    "valid": true
+                }
+            )"_json;
+            } else {
+                mJsonOutput = R"(
+                {
+                    "error": false,
+                    "valid": false
+                }
+            )"_json;
+            }
+            SAFE_DELETE(pEntap_database);
+            return ret_execution;
+        }
+    }
+
+    // --------------------------------------------------------------------- //
+
 
     // ------------ Config / Run Required beyond this point ---------------- //
-
     is_config     = has_input(INPUT_FLAG_CONFIG);     // ignore 'config config'
     is_protein    = has_input(INPUT_FLAG_RUNPROTEIN);
     is_nucleotide = has_input(INPUT_FLAG_RUNNUCLEOTIDE);
 
     mIsConfig = is_config;
+    mIsConfig ? ret_execution = EXECUTE_CONFIG : ret_execution = EXECUTE_EXECUTE;
 
     if (is_protein && is_nucleotide) {
         throw ExceptionHandler("Cannot specify both protein and nucleotide input flags",
@@ -1096,7 +1195,7 @@ bool UserInput::verify_user_input() {
     // If user wants to skip this check, EXIT (do this after we print the input for debugging purposes)
     if (has_input(INPUT_FLAG_NOCHECK)) {
         FS_dprint("WARNING User is skipping input verification!! :(");
-        return is_config;
+        return ret_execution;
     }
 
     try {
@@ -1309,7 +1408,7 @@ bool UserInput::verify_user_input() {
     }
     FS_dprint("Success! Input verified");
     SAFE_DELETE(pEntap_database);
-    return is_config;
+    return ret_execution;
 }
 
 
@@ -1905,4 +2004,12 @@ ent_input_str_t UserInput::get_entap_database_path(EntapDatabase::DATABASE_TYPE 
             break;
     }
     return ret;
+}
+
+std::string UserInput::get_json_output() {
+    if (!mJsonOutput.empty()) {
+        return mJsonOutput.dump(4);
+    } else {
+        return "";
+    }
 }

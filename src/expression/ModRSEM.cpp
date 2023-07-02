@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -110,6 +110,7 @@ EntapModule::ModVerifyData ModRSEM::verify_files() {
 void ModRSEM::execute() {
     // return path
     FS_dprint("Running RSEM...");
+    TC_print(TC_PRINT_COUT, "Running RSEM Expression Analysis...");
 
     std::string                     bam;
     std::string                     rsem_arg;
@@ -142,6 +143,7 @@ void ModRSEM::execute() {
     } else {
         throw ExceptionHandler("Error in running expression analysis",ERR_ENTAP_RUN_RSEM_EXPRESSION);
     }
+    TC_print(TC_PRINT_COUT, "Success");
 }
 
 
@@ -163,6 +165,7 @@ void ModRSEM::execute() {
  */
 void ModRSEM::parse() {
     FS_dprint("Beginning to filter transcriptome...");
+    TC_print(TC_PRINT_COUT, "Parsing RSEM Expression Analysis...");
 
     uint32              count_removed=0;
     uint32              count_kept=0;
@@ -341,6 +344,7 @@ void ModRSEM::parse() {
     //--------------------------------------------------------//
 
     mFinalFasta = out_kept;
+    TC_print(TC_PRINT_COUT, "Success");
 }
 
 

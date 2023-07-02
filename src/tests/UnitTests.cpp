@@ -6,7 +6,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -64,6 +64,8 @@ void UnitTests::TestEntapDatabase() {
         UTEntapDatabase_01(entapDatabase, EntapDatabase::ENTAP_SERIALIZED);      // Serialized Gene Ontology
         UTEntapDatabase_02(entapDatabase, EntapDatabase::ENTAP_SERIALIZED);      // Serialized Taxonomy
         UTEntapDatabase_03(entapDatabase, EntapDatabase::ENTAP_SERIALIZED);      // Serialized UniProt
+
+        UTEntapDatabase_04(entapDatabase);      // Check NCBI accession routines
 
     } catch (...) {
         delete entapDatabase;
@@ -188,8 +190,24 @@ void UnitTests::UTEntapDatabase_03(EntapDatabase *entapDatabase, EntapDatabase::
 //    databaseErr = entapDatabase->delete_database_table(EntapDatabase::ENTAP_SQL, EntapDatabase::ENTAP_GENE_ONTOLOGY);
 //    assert(databaseErr == EntapDatabase::ERR_DATA_OK);
 
-    FS_dprint("UT_EntapDatabase_01 COMPLETE");
-    std::cout << "UT_EntapDatabase_01 COMPLETE:  - Type: " + std::to_string(type) << std::endl;
+    FS_dprint("UT_EntapDatabase_03 COMPLETE");
+    std::cout << "UT_EntapDatabase_03 COMPLETE:  - Type: " + std::to_string(type) << std::endl;
+}
+
+void UnitTests::UTEntapDatabase_04(EntapDatabase *entapDatabase) {
+    std::string taxon;
+
+    taxon = "homo sapiens";
+    assert(entapDatabase->is_ncbi_tax_entry(taxon) == true);
+
+    taxon = "homo_sapiens";
+    assert(entapDatabase->is_ncbi_tax_entry(taxon) == true);
+
+    taxon = "hfdasfa";
+    assert(entapDatabase->is_ncbi_tax_entry(taxon) == false);
+
+    FS_dprint("UT_EntapDatabase_04 COMPLETE");
+    std::cout << "UT_EntapDatabase_04 COMPLETE" << std::endl;
 }
 
 void UnitTests::TestQueryData() {
@@ -222,8 +240,12 @@ void UnitTests::TestQueryData() {
     queryData.end_alignment_files(base_path);
 }
 
+
+
 void UnitTests::TestEggnogDatabase() {
 
 }
+
+
 
 #endif

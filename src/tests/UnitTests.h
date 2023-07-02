@@ -6,7 +6,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -50,6 +50,8 @@ protected:
     void UTEntapDatabase_01(EntapDatabase *entapDatabase, EntapDatabase::DATABASE_TYPE type);
     void UTEntapDatabase_02(EntapDatabase *entapDatabase, EntapDatabase::DATABASE_TYPE type);
     void UTEntapDatabase_03(EntapDatabase *entapDatabase, EntapDatabase::DATABASE_TYPE type);
+    void UTEntapDatabase_04(EntapDatabase *entapDatabase);
+
 
     void TestQueryData();
 

@@ -6,7 +6,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -51,6 +51,7 @@ EntapDatabase::EntapDatabase(FileSystem* filesystem) {
     mTempDirectory  = filesystem->get_temp_outdir();    // created previously
     mpSerializedDatabase = nullptr;
     mpDatabaseHelper     = nullptr;
+    mpNCBIEntrez         = new NCBIEntrez(filesystem);
     mUseSerial          = true;                         // default
     mErrMsg             = "";
     mErrCode            = ERR_DATA_OK;
@@ -215,6 +216,7 @@ EntapDatabase::~EntapDatabase() {
         SAFE_DELETE(mpDatabaseHelper);
     }
     SAFE_DELETE(mpSerializedDatabase);
+    SAFE_DELETE(mpNCBIEntrez);
 }
 
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DATABASE_TYPE type) {
@@ -952,7 +954,8 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
             // If we can't find species, keep trying by making it more broad
             temp_species = species;
             while (true) {
-                index = temp_species.find_last_of(" ");
+                // Progressively get more broad with taxonomy lookup
+                index = temp_species.find_last_of(' ');
                 if (index == std::string::npos) break;
                 temp_species = temp_species.substr(0, index);
                 it = mpSerializedDatabase->taxonomic_data.find(temp_species);
@@ -972,7 +975,7 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
             while (true) {
                 // Generate SQL query
                 char *query = sqlite3_mprintf(
-                        "SELECT %q, %q FROM %q WHERE %q=%Q",
+                        "SELECT %q, %q FROM %q WHERE %q=%Q LIMIT 1",
                         SQL_COL_NCBI_TAX_TAXID.c_str(),
                         SQL_COL_NCBI_TAX_LINEAGE.c_str(),
                         SQL_TABLE_NCBI_TAX_TITLE.c_str(),
@@ -980,8 +983,8 @@ TaxEntry EntapDatabase::get_tax_entry(std::string &species) {
                         temp_species.c_str()
                 );
                 results = mpDatabaseHelper->query(query);
-                if (results.empty()) return TaxEntry();
                 if (results.empty()) {
+                    // Progressively get more broad with taxonomy lookup
                     index = temp_species.find_last_of(' ');
                     if (index == std::string::npos) return TaxEntry(); // couldn't find
                     temp_species = temp_species.substr(0, index);
@@ -1428,6 +1431,19 @@ EntapDatabase::DATABASE_ERR EntapDatabase::delete_database_table(EntapDatabase::
     }
 
     return ERR_DATA_OK;
+}
+
+// False no hits, true has hits
+bool EntapDatabase::is_ncbi_tax_entry(std::string &species) {
+    NCBIEntrez::EntrezResults entrezResults;
+    NCBIEntrez::EntrezInput entrezInput;
+    TaxEntry ret = TaxEntry();
+
+    entrezInput.term = species;
+    entrezInput.database = NCBIEntrez::NCBI_DATABASE_TAXONOMY;
+
+    // Query for the species
+    return mpNCBIEntrez->entrez_has_hits(entrezInput);
 }
 
 const int16 GoEntry::UNKNOWN_LVL = -1;

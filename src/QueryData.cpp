@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -719,6 +719,7 @@ bool QueryData::end_alignment_files(std::string &base_path) {
 
 bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *querySequence, QueryAlignment *alignment) {
     bool ret = false;
+    bool ignore_go_levels = false; // Only want the query sequence and ignore multiple go levels to prevent duplication
 
     auto file_data = mAlignmentFiles.find(base_path);
 
@@ -764,12 +765,14 @@ bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *queryS
                     if (file_data->second.file_streams[type][DEFAULT_GO_LEVEL] == nullptr) continue;
                     if (!querySequence->get_sequence_p().empty())
                         *mAlignmentFiles.at(base_path).file_streams[type][DEFAULT_GO_LEVEL] << querySequence->get_sequence_p() << std::endl;
+                    ignore_go_levels = true;
                     break;
 
                 case FileSystem::ENT_FILE_FASTA_FNN:
                     if (file_data->second.file_streams[type][DEFAULT_GO_LEVEL] == nullptr) continue;
                     if (!querySequence->get_sequence_n().empty())
                         *mAlignmentFiles.at(base_path).file_streams[type][DEFAULT_GO_LEVEL] << querySequence->get_sequence_n() << std::endl;
+                    ignore_go_levels = true;
                     break;
 
                 /*
@@ -828,8 +831,13 @@ bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *queryS
                     FS_dprint("ERROR unhandled file type (add_alignment_data): " + std::to_string(type));
                     break;
             }
-        }
 
+            // Certain file types do not care about multiple GO levels so we are going to ignore duplicate printing
+            //  will restructure file printing later to not have this issue
+            if (ignore_go_levels) {
+                break;
+            }
+        }
     }
     return ret;
 }

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -65,6 +65,7 @@ namespace entapExecute {
  */
     void execute_main(UserInput *user_input, FileSystem *filesystem) {
         FS_dprint("EnTAP Executing...");
+        TC_print(TC_PRINT_COUT, "Running EnTAP execution...");
 
         std::string                             original_input;  // Absolute path to ORIGINAL transcriptome (ALWAYS use for Expression)
         std::string                             input_path;      // Absolute path to transciptome (WARNING changes depending on user selection)

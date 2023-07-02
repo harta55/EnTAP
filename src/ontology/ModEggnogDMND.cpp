@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -90,6 +90,7 @@ void ModEggnogDMND::execute() {
     TerminalData                       terminalData;
 
     FS_dprint("Running EggNOG against Diamond database...");
+    TC_print(TC_PRINT_COUT, "Running EggNOG Analysis...");
 
     // Ensure both input path and EggNOG DMND database exist before continuing
     if (!mpFileSystem->file_exists(mEggnogDbDiamond)) {
@@ -129,6 +130,7 @@ void ModEggnogDMND::execute() {
         throw ExceptionHandler("Error in running DIAMOND against EggNOG database at: " +
                                mEggnogDbDiamond + "\nDIAMOND Error:\n" + terminalData.err_stream, ERR_ENTAP_RUN_EGGNOG_DMND);
     }
+    TC_print(TC_PRINT_COUT, "Success");
 }
 
 void ModEggnogDMND::parse() {
@@ -137,6 +139,7 @@ void ModEggnogDMND::parse() {
     std::stringstream stats_stream;
 
     FS_dprint("Parsing EggNOG DMND file located at: " + mOutHIts);
+    TC_print(TC_PRINT_COUT, "Parsing EggNOG Analysis...");
 
     // Ensure file is valid
     file_status = mpFileSystem->get_file_status(mOutHIts);
@@ -205,6 +208,7 @@ void ModEggnogDMND::parse() {
     } catch (const std::exception &e) {
         throw ExceptionHandler(e.what(), ERR_ENTAP_PARSE_EGGNOG_DMND);
     }
+    TC_print(TC_PRINT_COUT, "Success");
 #endif
 }
 

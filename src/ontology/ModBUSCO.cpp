@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -99,6 +99,8 @@ void ModBUSCO::execute() {
     std::string  cmd;
     TerminalData terminalData;
 
+    TC_print(TC_PRINT_COUT, "Running BUSCO analysis...");
+
     // first we want to set the version
     set_version();
 
@@ -145,6 +147,7 @@ void ModBUSCO::execute() {
                 break;
         }
     }
+    TC_print(TC_PRINT_COUT, "Success");
 }
 
 void ModBUSCO::parse() {
@@ -153,6 +156,7 @@ void ModBUSCO::parse() {
     uint16 file_status=0;
 
     FS_dprint("Beginning to parse BUSCO file at: " + mFinalTablePath);
+    TC_print(TC_PRINT_COUT, "Parsing BUSCO Analysis...");
 
     // Ensure file is valid
     file_status = mpFileSystem->get_file_status(mFinalTablePath);
@@ -214,6 +218,7 @@ void ModBUSCO::parse() {
     } // END WHILE
 
     FS_dprint("Success! Parsing complete");
+    TC_print(TC_PRINT_COUT, "Success");
 }
 
 bool ModBUSCO::set_version() {

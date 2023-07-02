@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -33,6 +33,7 @@
 #include "FileSystem.h"
 #include "config.h"
 #include "database/EntapDatabase.h"
+#include <nlohmann/json.hpp>
 
 #ifdef USE_BOOST
 #include <boost/filesystem/path.hpp>
@@ -73,6 +74,9 @@ typedef enum {
     INPUT_FLAG_STATE,
     INPUT_FLAG_NOCHECK,
     INPUT_FLAG_OUTPUT_FORMAT,
+
+    /* EnTAP API Commands */
+    INPUT_FLAG_ENTAP_API_TAXON, // Checks if taxon is valid, then exits
 
     /* EnTAP Commands */
     INPUT_FLAG_ENTAP_DB_BIN,
@@ -146,6 +150,12 @@ public:
     UserInput(int argc, const char** argv, FileSystem*fileSystem);
     ~UserInput();
 
+    typedef enum {
+        EXECUTE_CONFIG,
+        EXECUTE_EXECUTE,
+        EXECUTE_API
+
+    } EXECUTION_TYPE;
 
     static constexpr uint16 MAX_GO_LEVEL = 12;
     static constexpr uint16 MIN_GO_LEVEL = 0;
@@ -161,7 +171,7 @@ public:
 
     bool has_input(ENTAP_INPUT_FLAGS input);
     void parse_ini(std::string &ini_path);
-    bool verify_user_input();
+    EXECUTION_TYPE verify_user_input();
     int get_supported_threads();
     std::queue<char> get_state_queue();
     std::string get_target_species_str();
@@ -172,7 +182,7 @@ public:
     std::vector<FileSystem::ENT_FILE_TYPES> get_user_output_types();
     bool run_frame_selection(QueryData *queryData, bool &run_frame_selection);
     bool run_expression_filtering();
-
+    std::string get_json_output();
 
     template<class T>
     T get_user_input(ENTAP_INPUT_FLAGS key) {
@@ -309,9 +319,11 @@ private:
     const char INI_FILE_COMMENT   = '#';
     const char INI_FILE_ASSIGN    = '=';        // Assignment char for INI file
 
+    nlohmann::json mJsonOutput;                 // Output for API commands
     FileSystem *mpFileSystem;
     std::string mIniFilePath;
     bool        mIsConfig;
+    bool        mHasAPICmd;                     // User has selected API command
     static EntapINIEntry mUserInputs[];
 };
 

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -112,6 +112,8 @@ void ModInterpro::execute() {
     int32       err_code;
     TerminalData      terminalData;
 
+    TC_print(TC_PRINT_COUT, "Running InterProScan...");
+
     mBlastp ? blast = PROTEIN_TAG : blast = NUCLEO_TAG;
     temp_dir = PATHS(mModOutDir, INTERPRO_TEMP);
 
@@ -148,6 +150,7 @@ void ModInterpro::execute() {
     } else {
         mpFileSystem->delete_dir(temp_dir);
     }
+    TC_print(TC_PRINT_COUT, "Success");
 }
 
 
@@ -179,6 +182,8 @@ void ModInterpro::parse() {
     uint32                                count_no_hits=0;
 
     FS_dprint("Beginning to parse InterProScan data...");
+    TC_print(TC_PRINT_COUT, "Parsing InterProScan...");
+
     if (mpFileSystem->file_exists(mFinalOutpath)) {
         FS_dprint("File found at: " + mFinalOutpath + " parsing...");
     } else {
@@ -255,6 +260,7 @@ void ModInterpro::parse() {
     stats_out = stats_stream.str();
     mpFileSystem->print_stats(stats_out);
     FS_dprint("Success! InterProScan finished");
+    TC_print(TC_PRINT_COUT, "Success");
 }
 
 

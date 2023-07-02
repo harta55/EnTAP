@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -107,6 +107,7 @@ void Ontology::execute() {
 
     EntapModule::ModVerifyData verify_data;
     std::unique_ptr<EntapModule> ptr;
+    TC_print(TC_PRINT_COUT, "Beginning Ontology Analysis...");
 
     try {
         for (uint16 software : mSoftwareFlags) {
@@ -124,6 +125,7 @@ void Ontology::execute() {
         ptr.reset();
         throw e;
     }
+    TC_print(TC_PRINT_COUT, "Ontology Analysis complete");
 }
 
 

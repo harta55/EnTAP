@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -152,6 +152,8 @@ void ModTransdecoder::execute() {
     std::string temp_filepath;
     std::string temp_filename;
 
+    TC_print(TC_PRINT_COUT, "Running TransDecoder Frame Selection...");
+
     // Train data through Transdecoder.LongOrfs executable
     FS_dprint("Training TransDecoder data...");
     if (train_data(err_msg) != 0) {
@@ -182,6 +184,7 @@ void ModTransdecoder::execute() {
     } catch (const std::exception &err) {
         throw ExceptionHandler(err.what(), ERR_ENTAP_RUN_TRANSDECODER_MOVE);
     }
+    TC_print(TC_PRINT_COUT, "Success");
 }
 
 /**
@@ -202,6 +205,7 @@ void ModTransdecoder::parse() {
     uint16 file_status;
 
     FS_dprint("Beginning to parse TransDecoder output...");
+    TC_print(TC_PRINT_COUT, "Parsing TransDecoder Frame Selection...");
 
     // Ensure the files we need exist and are valid
     file_status = mpFileSystem->get_file_status(mFinalFaaPath);
@@ -230,6 +234,7 @@ void ModTransdecoder::parse() {
     }
 
     FS_dprint("Success! TransDecoder data parsed and stats calculated");
+    TC_print(TC_PRINT_COUT, "Success");
 }
 
 /**

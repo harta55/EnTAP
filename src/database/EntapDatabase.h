@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -31,6 +31,7 @@
 #include "../EntapGlobals.h"
 #include "SQLDatabaseHelper.h"
 #include "../FileSystem.h"
+#include "NCBIEntrez.h"
 
 #ifdef USE_BOOST    // Include boost serialization headers
 #include <boost/serialization/serialization.hpp>
@@ -329,6 +330,9 @@ public:
     GoEntry get_go_entry(std::string& go_id);
     UniprotEntry get_uniprot_entry(std::string& accession);
 
+    // NCBI database accession routines
+    bool is_ncbi_tax_entry(std::string &species);
+
     bool is_uniprot_entry(std::string &sseqid, UniprotEntry &entry);
 
     // Database versioning
@@ -374,6 +378,8 @@ private:
 
     DATABASE_ERR serialize_database_save(SERIALIZATION_TYPE, std::string&);
     DATABASE_ERR serialize_database_read(SERIALIZATION_TYPE, std::string&);
+
+    // NCBI
 
     // FTP Paths
     const std::string FTP_GO_DATABASE =
@@ -454,6 +460,7 @@ private:
 
     const uint8 STATUS_UPDATES = 5;     // Percentage of updates when downloading/configuring
 
+    NCBIEntrez          *mpNCBIEntrez;          // NCBI Entrez interface
     EntapDatabaseStruct *mpSerializedDatabase;
     FileSystem          *mpFileSystem;
     SQLDatabaseHelper   *mpDatabaseHelper;

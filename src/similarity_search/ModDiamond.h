@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -112,7 +112,7 @@ private:
     const std::string CMD_QUERY_PATH       = "-q";                // Path to Query FASTA file
     const std::string CMD_OUTPUT_PATH      = "-o";                // Path to output
     const std::string CMD_THREADS          = "-p";                // Number of threads to use
-    const std::string CMD_TOP_ALIGNMENTS   = "--top";             // Only keep top alignments (integer)
+    const std::string CMD_TOP_ALIGNMENTS   = "--max-target-seqs"; // Only keep top alignments (integer)
     const std::string CMD_OUTPUT_FORMAT    = "-f";
     //**********************************************************
 

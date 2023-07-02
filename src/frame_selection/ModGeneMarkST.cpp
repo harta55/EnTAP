@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2021, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -106,6 +106,8 @@ void ModGeneMarkST::execute() {
     int32           err_code;           // Terminal command error code
     TerminalData    terminalData;       // Terminal command structure (Defined in TerminalCommands.h)
 
+    TC_print(TC_PRINT_COUT, "Running GeneMarkST Frame Selection...");
+
     // Set temporary outputs (these will be moved to FINAL outpaths
     temp_faa_file     = PATHS(mpFileSystem->get_cur_dir(), mTranscriptomeFilename + FileSystem::EXT_FAA);
     temp_fnn_file     = PATHS(mpFileSystem->get_cur_dir(), mTranscriptomeFilename + FileSystem::EXT_FNN);
@@ -193,6 +195,7 @@ void ModGeneMarkST::execute() {
     // Does not always exist, not needed for final calculation so ignore errors
     mpFileSystem->rename_file(temp_hmm_file,mFinalHmmPath);
     FS_dprint("Success!");
+    TC_print(TC_PRINT_COUT, "Success");
 }
 
 
@@ -216,6 +219,7 @@ void ModGeneMarkST::execute() {
 void ModGeneMarkST::parse() {
     // generate maps, query->sequence
     FS_dprint("Beginning to calculate Genemark statistics...");
+    TC_print(TC_PRINT_COUT, "Parsing GeneMarkST Frame Selection...");
 
     // Ensure paths we need exist
     if (!mpFileSystem->file_exists(mFinalFaaPath)) {
@@ -245,6 +249,7 @@ void ModGeneMarkST::parse() {
 
     } catch (const ExceptionHandler &e) {throw e;}
     FS_dprint("Success! Parsing complete");
+    TC_print(TC_PRINT_COUT, "Success");
 }
 
 

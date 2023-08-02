@@ -463,6 +463,10 @@ void QueryData::final_statistics(std::string &outpath) {
         if (is_hit && !is_ontology) count_sim_only++;
         if (!is_hit && is_ontology) count_ontology_only++;
 
+        if (is_exp_kept && is_frame_kept) {
+            count_total_kept_sequences++;
+        }
+
         if (is_hit || is_ontology) {
             // Is annotated
             count_TOTAL_ann++;

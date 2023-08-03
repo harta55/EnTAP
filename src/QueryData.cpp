@@ -518,7 +518,7 @@ void QueryData::final_statistics(std::string &outpath) {
            "\n\tTotal unique sequences with an alignment: "    << count_sim_hits << " (" <<
                  (((fp64) count_sim_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
            "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits << " (" <<
-                 (((fp64) count_sim_no_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+                 (((fp64) count_sim_no_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
     }
     if (DATA_FLAG_GET(SUCCESS_ONTOLOGY)) {
         for (uint16 flag : ontology_flags) {

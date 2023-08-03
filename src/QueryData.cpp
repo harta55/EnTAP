@@ -498,7 +498,7 @@ void QueryData::final_statistics(std::string &outpath) {
 
     mpFileSystem->format_stat_stream(ss, "Final Annotation Statistics");
     ss <<
-       "Total Sequences: "                  << count_total_sequences;
+       "Total Input Sequences: "                  << count_total_sequences;
 
     if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
         ss <<
@@ -515,8 +515,10 @@ void QueryData::final_statistics(std::string &outpath) {
     if (DATA_FLAG_GET(SUCCESS_SIM_SEARCH)) {
         ss <<
            "\nSimilarity Search"                               <<
-           "\n\tTotal unique sequences with an alignment: "    << count_sim_hits <<
-           "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits;
+           "\n\tTotal unique sequences with an alignment: "    << count_sim_hits << " (" <<
+                 (((fp64) count_sim_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+           "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits << " (" <<
+                 (((fp64) count_sim_no_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
     }
     if (DATA_FLAG_GET(SUCCESS_ONTOLOGY)) {
         for (uint16 flag : ontology_flags) {
@@ -524,10 +526,14 @@ void QueryData::final_statistics(std::string &outpath) {
                 case ONT_EGGNOG_DMND:
                     ss <<
                        "\nGene Families"        <<
-                       "\n\tTotal unique sequences with family assignment: "    << count_ontology   <<
-                       "\n\tTotal unique sequences without family assignment: " << count_no_ontology<<
-                       "\n\tTotal unique sequences with at least one GO term: " << count_one_go     <<
-                       "\n\tTotal unique sequences with at least one pathway (KEGG) assignment: "   << count_one_kegg;
+                       "\n\tTotal unique sequences with family assignment: "    << count_ontology   << " (" <<
+                            (((fp64) count_ontology / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+                       "\n\tTotal unique sequences without family assignment: " << count_no_ontology<< " (" <<
+                            (((fp64) count_no_ontology / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+                       "\n\tTotal unique sequences with at least one GO term: " << count_one_go     << " (" <<
+                            (((fp64) count_one_go / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+                       "\n\tTotal unique sequences with at least one pathway (KEGG) assignment: "   << count_one_kegg << " (" <<
+                           (((fp64) count_one_kegg / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
                     break;
                 case ONT_INTERPRO_SCAN:
                     ss <<

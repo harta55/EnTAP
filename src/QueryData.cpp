@@ -503,14 +503,18 @@ void QueryData::final_statistics(std::string &outpath) {
     if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
         ss <<
            "\nExpression Analysis" <<
-           "\n\tKept sequences: "  << count_exp_kept    <<
-           "\n\tLost sequences: "  << count_exp_reject;
+           "\n\tKept sequences: "  << count_exp_kept    << " (" <<
+                (((fp64) count_exp_kept / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+           "\n\tLost sequences: "  << count_exp_reject << " (" <<
+                (((fp64) count_exp_reject / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
     }
     if (DATA_FLAG_GET(SUCCESS_FRAME_SEL)) {
         ss <<
            "\nFrame Selection"              <<
-           "\n\tTotal sequences retained: " << count_frame_kept     <<
-           "\n\tTotal sequences removed: "  << count_frame_rejected;
+           "\n\tTotal sequences retained: " << count_frame_kept     << " (" <<
+                (((fp64) count_frame_kept / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+           "\n\tTotal sequences removed: "  << count_frame_rejected << " (" <<
+                (((fp64) count_frame_rejected / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
     }
     if (DATA_FLAG_GET(SUCCESS_SIM_SEARCH)) {
         ss <<

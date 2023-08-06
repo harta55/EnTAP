@@ -395,6 +395,7 @@ void QueryData::final_statistics(std::string &outpath) {
 
     std::stringstream      ss;
     uint32                 count_total_sequences=0;
+    uint32                 count_total_kept_sequences=0;
     uint32                 count_exp_kept=0;
     uint32                 count_exp_reject=0;
     uint32                 count_frame_kept=0;
@@ -409,6 +410,7 @@ void QueryData::final_statistics(std::string &outpath) {
     uint32                 count_ontology_only=0;
     uint32                 count_TOTAL_ann=0;
     uint32                 count_TOTAL_unann=0;
+    uint32                 count_TOTAL_unann_kept=0;    // Total sequences unannotated if kept after expression/frame selection
     std::string            out_unannotated_nucl_path;
     std::string            out_unannotated_prot_path;
     std::string            out_annotated_nucl_path;
@@ -416,6 +418,7 @@ void QueryData::final_statistics(std::string &outpath) {
     std::string            out_msg;
     bool                   is_exp_kept;
     bool                   is_prot;
+    bool                   is_frame_kept;
     bool                   is_hit;
     bool                   is_ontology;
     bool                   is_one_go;
@@ -443,6 +446,7 @@ void QueryData::final_statistics(std::string &outpath) {
     for (auto &pair : *mpSequences) {
         count_total_sequences++;
         is_exp_kept = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_EXPRESSION_KEPT);
+        is_frame_kept = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FRAME_KEPT);
         is_prot = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN);
         is_hit = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_BLAST_HIT);
         is_ontology = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ASSIGNED); // TODO Fix for interpro
@@ -459,6 +463,10 @@ void QueryData::final_statistics(std::string &outpath) {
         if (is_hit && !is_ontology) count_sim_only++;
         if (!is_hit && is_ontology) count_ontology_only++;
 
+        if (is_exp_kept && is_frame_kept) {
+            count_total_kept_sequences++;
+        }
+
         if (is_hit || is_ontology) {
             // Is annotated
             count_TOTAL_ann++;
@@ -474,7 +482,12 @@ void QueryData::final_statistics(std::string &outpath) {
             if (!pair.second->get_sequence_p().empty()) {
                 file_unannotated_prot<<pair.second->get_sequence_p()<<std::endl;
             }
-            count_TOTAL_unann++;
+            if (is_exp_kept && is_frame_kept) {
+                count_TOTAL_unann_kept++;
+            }
+            else {
+                count_TOTAL_unann++;
+            }
         }
     }
 
@@ -485,25 +498,31 @@ void QueryData::final_statistics(std::string &outpath) {
 
     mpFileSystem->format_stat_stream(ss, "Final Annotation Statistics");
     ss <<
-       "Total Sequences: "                  << count_total_sequences;
+       "Total Input Sequences: "                  << count_total_sequences;
 
     if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
         ss <<
            "\nExpression Analysis" <<
-           "\n\tKept sequences: "  << count_exp_kept    <<
-           "\n\tLost sequences: "  << count_exp_reject;
+           "\n\tKept sequences: "  << count_exp_kept    << " (" <<
+                (((fp64) count_exp_kept / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+           "\n\tLost sequences: "  << count_exp_reject << " (" <<
+                (((fp64) count_exp_reject / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
     }
     if (DATA_FLAG_GET(SUCCESS_FRAME_SEL)) {
         ss <<
            "\nFrame Selection"              <<
-           "\n\tTotal sequences retained: " << count_frame_kept     <<
-           "\n\tTotal sequences removed: "  << count_frame_rejected;
+           "\n\tTotal sequences retained: " << count_frame_kept     << " (" <<
+                (((fp64) count_frame_kept / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+           "\n\tTotal sequences removed: "  << count_frame_rejected << " (" <<
+                (((fp64) count_frame_rejected / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
     }
     if (DATA_FLAG_GET(SUCCESS_SIM_SEARCH)) {
         ss <<
            "\nSimilarity Search"                               <<
-           "\n\tTotal unique sequences with an alignment: "    << count_sim_hits <<
-           "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits;
+           "\n\tTotal unique sequences with an alignment: "    << count_sim_hits << " (" <<
+                 (((fp64) count_sim_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+           "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits << " (" <<
+                 (((fp64) count_sim_no_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
     }
     if (DATA_FLAG_GET(SUCCESS_ONTOLOGY)) {
         for (uint16 flag : ontology_flags) {
@@ -511,10 +530,14 @@ void QueryData::final_statistics(std::string &outpath) {
                 case ONT_EGGNOG_DMND:
                     ss <<
                        "\nGene Families"        <<
-                       "\n\tTotal unique sequences with family assignment: "    << count_ontology   <<
-                       "\n\tTotal unique sequences without family assignment: " << count_no_ontology<<
-                       "\n\tTotal unique sequences with at least one GO term: " << count_one_go     <<
-                       "\n\tTotal unique sequences with at least one pathway (KEGG) assignment: "   << count_one_kegg;
+                       "\n\tTotal unique sequences with family assignment: "    << count_ontology   << " (" <<
+                            (((fp64) count_ontology / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+                       "\n\tTotal unique sequences without family assignment: " << count_no_ontology<< " (" <<
+                            (((fp64) count_no_ontology / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+                       "\n\tTotal unique sequences with at least one GO term: " << count_one_go     << " (" <<
+                            (((fp64) count_one_go / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+                       "\n\tTotal unique sequences with at least one pathway (KEGG) assignment: "   << count_one_kegg << " (" <<
+                           (((fp64) count_one_kegg / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
                     break;
                 case ONT_INTERPRO_SCAN:
                     ss <<
@@ -527,10 +550,15 @@ void QueryData::final_statistics(std::string &outpath) {
     }
     ss <<
        "\nTotals"   <<
-       "\n\tTotal unique sequences annotated (similarity search alignments only): "      << count_sim_only      <<
-       "\n\tTotal unique sequences annotated (gene family assignment only): "            << count_ontology_only <<
-       "\n\tTotal unique sequences annotated (gene family and/or similarity search): "   << count_TOTAL_ann     <<
-       "\n\tTotal unique sequences unannotated (gene family and/or similarity search): " << count_TOTAL_unann;
+       "\n\tTotal Kept Sequences (After Filtering And/Or Frame Selection): " << count_total_kept_sequences <<
+       "\n\tTotal unique sequences annotated (similarity search alignments only): "      << count_sim_only      << " (" <<
+            (((fp64) count_sim_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total kept)" <<
+       "\n\tTotal unique sequences annotated (gene family assignment only): "            << count_ontology_only << " (" <<
+            (((fp64) count_ontology_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total kept)" <<
+       "\n\tTotal unique sequences annotated (gene family and/or similarity search): "   << count_TOTAL_ann     << " (" <<
+            (((fp64) count_TOTAL_ann / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total kept)" <<
+       "\n\tTotal unique sequences unannotated (gene family and/or similarity search): " << count_TOTAL_unann_kept << " ("
+            << (((fp64) count_TOTAL_unann_kept / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total kept)";
 
     out_msg = ss.str();
     mpFileSystem->print_stats(out_msg);

@@ -46,7 +46,7 @@ Final Annotations
 
 The final EnTAP annotations are contained within the |final_dir| directory. These files are the summation of each stage of the pipeline and contain the combined information. So these can be considered the most important files! 
 
-All .tsv files in this section may have the following header information (from left to right) separated by each portion of the pipeline. Some headers will not be shown if that part of the pipeline was skipped or the information was not found for any of the input sequences.
+All .tsv files in this section may have the following header information (from left to right) separated by each portion of the pipeline. Some headers will not be shown if that part of the pipeline was skipped or the information was not found for any of the input sequences. TSV formatted files support Tidyverse format (including 'NA' being used for empty data cells).
 
 General Header Information
     * Query sequence ID

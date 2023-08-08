@@ -2,6 +2,12 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.8-beta
 
+EnTAP v1.1.1 (X X, 2023)
+------------------------------------------
+    * Updated RSEM (v1.3.3), TransDecoder (v5.7.1), and DIAMOND (v2.1.8) libraries in EnTAP repository. EnTAP is now compatible with these versions
+    * Added additional statistics/percentages at the end of the Log File
+    * Added support for Tidyverse format (TSV's will now print 'NA' for empty data)
+
 EnTAP Beta v0.10.9-beta (June 29, 2023)
 ------------------------------------------
     * Optimizations made to similarity searching using the EnTAP SQL database. Should improve speed

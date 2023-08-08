@@ -159,6 +159,7 @@ public:
     static const std::string EXT_LST;
     static const std::string EXT_PEP;
     static const std::string EXT_CDS;
+    static const std::string TIDYVERSE_TSV_NULL;    // String to print in TSV when data is not present to support Tidyverse format
 
     static const char        DELIM_TSV;
     static const char        DELIM_CSV;

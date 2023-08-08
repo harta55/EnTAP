@@ -938,7 +938,13 @@ std::string QueryData::get_delim_data_sequence(std::vector<ENTAP_HEADERS> &heade
     for (ENTAP_HEADERS header : headers) {
         if (ENTAP_HEADER_INFO[header].print_header) {
             sequence->get_header_data(val, header, lvl);
-            ret << val << delim;
+            // TO support tidyverse format we want empty data in TSV format to print 'NA'
+            if (val.empty() && delim == FileSystem::DELIM_TSV) {
+                    ret << FileSystem::TIDYVERSE_TSV_NULL << delim;
+            }
+            else {
+                ret << val << delim;
+            }
         }
     }
     return ret.str();

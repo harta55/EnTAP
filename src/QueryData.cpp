@@ -552,13 +552,13 @@ void QueryData::final_statistics(std::string &outpath) {
        "\nTotals"   <<
        "\n\tTotal Kept Sequences (After Filtering And/Or Frame Selection): " << count_total_kept_sequences <<
        "\n\tTotal unique sequences annotated (similarity search alignments only): "      << count_sim_only      << " (" <<
-            (((fp64) count_sim_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total kept)" <<
+            (((fp64) count_sim_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
        "\n\tTotal unique sequences annotated (gene family assignment only): "            << count_ontology_only << " (" <<
-            (((fp64) count_ontology_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total kept)" <<
+            (((fp64) count_ontology_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
        "\n\tTotal unique sequences annotated (gene family and/or similarity search): "   << count_TOTAL_ann     << " (" <<
-            (((fp64) count_TOTAL_ann / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total kept)" <<
+            (((fp64) count_TOTAL_ann / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
        "\n\tTotal unique sequences unannotated (gene family and/or similarity search): " << count_TOTAL_unann_kept << " ("
-            << (((fp64) count_TOTAL_unann_kept / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total kept)";
+            << (((fp64) count_TOTAL_unann_kept / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)";
 
     out_msg = ss.str();
     mpFileSystem->print_stats(out_msg);

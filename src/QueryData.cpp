@@ -335,8 +335,11 @@ void QueryData::set_input_type(std::string &in) {
     FS_dprint("Transcriptome Lines - END");
     if (deviations > NUCLEO_DEV) {
         DATA_FLAG_SET(IS_PROTEIN);
+        mTranscriptTypeStr = PROTEIN_FLAG;
+    } else{
+        DATA_FLAG_SET(IS_NUCLEOTIDE);
+        mTranscriptTypeStr = NUCLEO_FLAG;
     }
-    DATA_FLAG_GET(IS_PROTEIN) ? mTranscriptTypeStr = PROTEIN_FLAG : mTranscriptTypeStr = NUCLEO_FLAG;
     in_file.close();
 }
 

@@ -247,8 +247,8 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     }
 
     // Output files
-    std::string out_no_hits_base = PATHS(mProcDir, FILENAME_OUT_UNANNOTATED);
-    std::string out_hits_base    = PATHS(mProcDir, FILENAME_OUT_ANNOTATED);
+    std::string out_no_hits_base = PATHS(mProcDir, EGGNOG_DIAMOND_PREFIX + EGGNOG_OUT_UNANNOTATED);
+    std::string out_hits_base    = PATHS(mProcDir, EGGNOG_DIAMOND_PREFIX + EGGNOG_OUT_ANNOTATED);
 
     mpQueryData->start_alignment_files(out_no_hits_base, output_headers, mGoLevels, mAlignmentFileTypes);
     mpQueryData->start_alignment_files(out_hits_base, output_headers, mGoLevels, mAlignmentFileTypes);

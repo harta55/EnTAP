@@ -139,10 +139,10 @@ private:
     const std::vector<char> NUCLEO_MAP {
             'A', 'G', 'C', 'T', 'N'
     };
-    const std::string OUT_UNANNOTATED_NUCL = "final_unannotated.fnn";
-    const std::string OUT_UNANNOTATED_PROT = "final_unannotated.faa";
-    const std::string OUT_ANNOTATED_NUCL   = "final_annotated.fnn";
-    const std::string OUT_ANNOTATED_PROT   = "final_annotated.faa";
+    const std::string OUT_UNANNOTATED_NUCL = "unannotated.fnn";
+    const std::string OUT_UNANNOTATED_PROT = "unannotated.faa";
+    const std::string OUT_ANNOTATED_NUCL   = "annotated.fnn";
+    const std::string OUT_ANNOTATED_PROT   = "annotated.faa";
     const std::string APPEND_GO_LEVEL_STR  = "_lvl";
     const std::string APPEND_ENRICH_GENE_ID_GO = "_enrich_geneid_go";
     const std::string APPEND_ENRICH_GENE_ID_LEN = "_enrich_geneid_len";

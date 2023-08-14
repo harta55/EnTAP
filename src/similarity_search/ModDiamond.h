@@ -82,6 +82,9 @@ private:
     static std::vector<ENTAP_HEADERS> UNIPROT_HEADERS;
     static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
+    // Prefix
+    const std::string DIAMOND_PREFIX                             = "diamond_";
+
     // Graphing constants
     const uint8 GRAPH_SUM_FLAG                                   = 2;
     const std::string GRAPH_DATABASE_SUM_TITLE                   = "_Summary";

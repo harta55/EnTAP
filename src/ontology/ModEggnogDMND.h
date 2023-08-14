@@ -77,6 +77,10 @@ private:
     static constexpr uint16 COUNT_TOP_TAX_SCOPE = 10;
     static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 
+    const std::string EGGNOG_OUT_UNANNOTATED    = "unannotated";
+    const std::string EGGNOG_OUT_ANNOTATED      = "annotated";
+    const std::string EGGNOG_DIAMOND_PREFIX     = "eggnog_";
+
     std::string mOutHIts;
     std::string mEggnogDbDiamond;       // User input path to the EggNOG DMND database
     std::string mEggnogDbSQL;           // User input path to the EggNOG SQL database

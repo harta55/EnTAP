@@ -200,10 +200,10 @@ void ModEggnog::parse() {
     EGGNOG_DATABASE.close();
 
     // Prepare output files
-    out_no_hits_nucl = PATHS(mProcDir, OUT_UNANNOTATED_NUCL);
-    out_no_hits_prot = PATHS(mProcDir, OUT_UNANNOTATED_PROT);
-    out_hit_nucl     = PATHS(mProcDir, OUT_ANNOTATED_NUCL);
-    out_hit_prot     = PATHS(mProcDir, OUT_ANNOTATED_PROT);
+    out_no_hits_nucl = PATHS(mProcDir, EGG_PREFIX + EGG_UNANNOTATED_NUCL);
+    out_no_hits_prot = PATHS(mProcDir, EGG_PREFIX + EGG_UNANNOTATED_PROTEIN);
+    out_hit_nucl     = PATHS(mProcDir, EGG_PREFIX + EGG_ANNOTATED_NUCL);
+    out_hit_prot     = PATHS(mProcDir, EGG_PREFIX + EGG_ANNOTATED_PROTEIN);
     std::ofstream file_no_hits_nucl(out_no_hits_nucl, std::ios::out | std::ios::app);
     std::ofstream file_no_hits_prot(out_no_hits_prot, std::ios::out | std::ios::app);
     std::ofstream file_hits_nucl(out_hit_nucl, std::ios::out | std::ios::app);

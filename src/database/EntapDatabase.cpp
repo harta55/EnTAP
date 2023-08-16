@@ -369,94 +369,101 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_tax(EntapDatabase::DAT
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATABASE_TYPE type) {
     FS_dprint("Generating EnTAP Gene Ontology entries...");
 
-    std::string go_db_path;
-    std::string go_term_path;
-    std::string go_graph_path;
-    std::string go_database_targz;  // Outpath to downloaded tar.gz file
-    std::string go_database_dir;    // Directory that will contain go files
+    std::string go_database_path;  // Outpath to downloaded tar.gz file
+    std::string line;
 
-    go_database_targz = PATHS(mTempDirectory, GO_TERMDB_FILE);
+    go_database_path = PATHS(mTempDirectory, GO_TERMDB_FILE);
 
-    // download Gene Ontology database file
-    if (!mpFileSystem->download_ftp_file(FTP_GO_DATABASE, go_database_targz)) {
+    // Looks like Gene Ontology database changed their formatting sometime after 2018,
+    //  EnTAP is now downloading the 'go.obo' file from their database and parsing that
+
+    // Download GO database
+    if (!mpFileSystem->download_ftp_file(FTP_GO_DATABASE, go_database_path)) {
         // failed to download from ftp
         set_err_msg("Unable to download GO data from FTP address " + FTP_GO_DATABASE, ERR_DATA_GO_DOWNLOAD);
         return ERR_DATA_GO_DOWNLOAD;
     }
 
-    // decompress database file
-    if (!mpFileSystem->decompress_file(go_database_targz, mTempDirectory, FileSystem::ENT_FILE_TAR_GZ)) {
-        // failed to decompress
-        set_err_msg("Unable to decompress GO database file " + mpFileSystem->get_error(), ERR_DATA_GO_DECOMPRESS);
-        return ERR_DATA_GO_DECOMPRESS;
-    }
-    mpFileSystem->delete_file(go_database_targz);
+    /* !!! Below is the new Gene Ontology format as of >2018. This is version '1.2'. There is some data before
+     *      the [Term] string that can be ignored
+     * --------------------------------------------------------------------------------------------------------
+     * [Term]
+     *  id: GO:0018801
+     *  name: glutaconyl-CoA decarboxylase activity
+     *  namespace: molecular_function
+     *  def: "Catalysis of the reaction: trans-glutaconyl-CoA + H+ = but-2-enoyl-CoA + CO2." [PMID:11248185, RHEA:23972]
+     *  synonym: "4-carboxybut-2-enoyl-CoA carboxy-lyase (but-2-enoyl-CoA-forming)" EXACT []
+     *  synonym: "4-carboxybut-2-enoyl-CoA carboxy-lyase activity" RELATED [EC:7.2.4.5]
+     *  synonym: "glutaconyl coenzyme A decarboxylase activity" RELATED [EC:7.2.4.5]
+     *  synonym: "pent-2-enoyl-CoA carboxy-lyase activity" RELATED [EC:7.2.4.5]
+     *  xref: EC:7.2.4.5
+     *  xref: KEGG_REACTION:R03028
+     *  xref: MetaCyc:GLUTACONYL-COA-DECARBOXYLASE-RXN
+     *  xref: RHEA:23972
+     *  xref: UM-BBD_reactionID:r0199
+     *  is_a: GO:0015451 ! decarboxylation-driven active transmembrane transporter activity
+     *  is_a: GO:0016831 ! carboxy-lyase activity
+     *  --------------------------------------------------------------------------------------------------------
+     */
 
-    // Files are packaged within a directory. Set paths
-    go_database_dir = PATHS(mTempDirectory, GO_TERMDB_DIR);
-    go_term_path    = PATHS(go_database_dir, GO_TERM_FILE);
-    go_graph_path   = PATHS(go_database_dir, GO_GRAPH_FILE);
-
-    if (!mpFileSystem->file_exists(go_term_path) || !mpFileSystem->file_exists(go_graph_path)) {
-        set_err_msg("Necessary Gene Ontology files do not exist at:\n" + go_term_path +
-                   "\n" + go_graph_path, ERR_DATA_GO_DOWNLOAD);
-        return ERR_DATA_GO_DOWNLOAD;
-    }
-
-    // If we are creating SQL database, add GO table
-    if (type == ENTAP_SQL) {
-        if (!create_sql_table(ENTAP_GENE_ONTOLOGY)) {
-            // error creating table
-            return ERR_DATA_SQL_GO_CREATE_TABLE;
-        }
-    }
-
+    // Begin parsing Gene Ontology file
+    std::ifstream infile_go(go_database_path);  // Open go file
+    bool begin_parse = false;
+    std::string parse_key, parse_value;
+    std::string::size_type pos;
+    GoEntry goEntry = GoEntry{};
     try {
-        // Parse through graph file
-        io::CSVReader<6, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(go_graph_path);
-        std::string index,root,branch, temp, distance, temp2;
-        std::map<std::string,std::string> distance_map;
-        while (in.read_row(index,root,branch, temp, distance, temp2)) {
-            if (root.compare(GO_BIOLOGICAL_LVL) == 0     ||
-                root.compare(GO_MOLECULAR_LVL) == 0  ||
-                root.compare(GO_CELLULAR_LVL) ==0) {
-                if (distance_map.find(branch) == distance_map.end()) {
-                    distance_map.emplace(branch,distance);
-                } else {
-                    if (distance.empty()) continue;
-                    fp32 cur   = std::stoi(distance_map[branch]);
-                    fp32 query = std::stoi(distance);
-                    if (query > cur) distance_map[branch] = distance;
-                }
-            }
-        }
-        GoEntry goEntry;
-        std::string num,term,cat,go,ex,ex1,ex2;
-        io::CSVReader<7, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in2(go_term_path);
-        while (in2.read_row(num,term,cat,go,ex,ex1,ex2)) {
-            goEntry = {};
-            goEntry.category = cat;
-            if (!distance_map[num].empty()) {
-                try {
-                    goEntry.level = distance_map[num];
-                    goEntry.level_int = std::stoi(goEntry.level);
-                } catch(...) {
-                    ;
-                }
-            }
-            goEntry.term = term;
-            goEntry.go_id = go;
+        while (std::getline(infile_go, line)) {
+            if (line.empty()) continue;
 
-            // Add to SQL database OR to overall map
-            if (type == ENTAP_SQL) {
-                if (!sql_add_go_entry(goEntry)) {
-                    set_err_msg("ERROR Unable to add GO entry: " + goEntry.go_id, ERR_DATA_GO_ENTRY);
-                    return ERR_DATA_GO_ENTRY;
+            if (begin_parse) {
+                // See if we can find key within '[Term]'
+                pos = line.find_first_of(": ");
+                if (pos != std::string::npos) {
+                    parse_key = line.substr(0, pos);
+                    LOWERCASE(parse_key);
+                    parse_value = line.substr(pos+2);
+
+                    // See if key matches any of the ones we accept
+                    if (parse_key == "id") {
+                        goEntry.go_id = parse_value;
+                    } else if (parse_key == "namespace") {
+                        goEntry.category = parse_value;
+                        LOWERCASE(goEntry.category);
+                    } else if (parse_key == "name") {
+                        goEntry.term = parse_value;
+                    } else {
+                        // Ignore any other term, CONTINUE to next line
+                    }
+
+                } else {
+                    // No, can't find our key to start parsing, look for '[Term]'
+                    if (line.find("[Term]") != std::string::npos) {
+                        // If entry not empty, add to database
+                        if (!goEntry.is_empty()) {
+                            // Add to SQL database OR to overall map
+                            if (type == ENTAP_SQL) {
+                                if (!sql_add_go_entry(goEntry)) {
+                                    set_err_msg("ERROR Unable to add GO entry: " + goEntry.go_id, ERR_DATA_GO_ENTRY);
+                                    return ERR_DATA_GO_ENTRY;
+                                }
+                            } else {
+                                mpSerializedDatabase->gene_ontology_data[goEntry.go_id] = goEntry;
+                            }
+                        }
+                        // Reset go data
+                        goEntry = GoEntry{};
+                    }
                 }
             } else {
-                mpSerializedDatabase->gene_ontology_data[go] = goEntry;
+                if (line.find("[Term]") != std::string::npos) {
+                    begin_parse = true;
+                }
             }
         }
+        infile_go.close();  // Close GO file
+        mpFileSystem->delete_file(go_database_path);
+
     } catch (const std::exception &e) {
         set_err_msg("Unable to parse Gene Ontology data: " + std::string(e.what()), ERR_DATA_GO_PARSE);
         return ERR_DATA_GO_PARSE;

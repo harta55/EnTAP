@@ -402,6 +402,7 @@ void QueryData::final_statistics(std::string &outpath) {
     uint32                 count_frame_rejected=0;
     uint32                 count_sim_hits=0;
     uint32                 count_sim_no_hits=0;
+    uint32                 count_sim_contam=0;          // Unique alignments flagged as a contaminant
     uint32                 count_ontology=0;
     uint32                 count_no_ontology=0;
     uint32                 count_one_go=0;
@@ -453,6 +454,10 @@ void QueryData::final_statistics(std::string &outpath) {
         is_one_go = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ONE_GO);
         is_one_kegg = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ONE_KEGG);
 
+        if (pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_CONTAMINANT)) {
+            count_sim_contam++; // This is assumed as retained and currently only from sim search
+        }
+
         is_exp_kept ? count_exp_kept++ : count_exp_reject++;
         is_prot ? count_frame_kept++ : count_frame_rejected++;
         is_hit ? count_sim_hits++ : count_sim_no_hits++;
@@ -503,7 +508,7 @@ void QueryData::final_statistics(std::string &outpath) {
     if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
         ss <<
            "\nExpression Analysis" <<
-           "\n\tKept sequences: "  << count_exp_kept    << " (" <<
+           "\n\tRetained sequences: "  << count_exp_kept    << " (" <<
                 (((fp64) count_exp_kept / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
            "\n\tLost sequences: "  << count_exp_reject << " (" <<
                 (((fp64) count_exp_reject / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
@@ -519,8 +524,12 @@ void QueryData::final_statistics(std::string &outpath) {
     if (DATA_FLAG_GET(SUCCESS_SIM_SEARCH)) {
         ss <<
            "\nSimilarity Search"                               <<
-           "\n\tTotal unique sequences with an alignment: "    << count_sim_hits << " (" <<
+           "\n\tTotal unique sequences with an alignment: "    << count_sim_hits   << " (" <<
                  (((fp64) count_sim_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+           "\n\t\tTotal alignments flagged as a contaminant: "   << count_sim_contam << " (" <<
+                 (((fp64) count_sim_contam / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
+           "\n\t\tTotal alignments NOT flagged as a contaminant: "   << (count_sim_hits - count_sim_contam) << " (" <<
+                 (((fp64) (count_sim_hits - count_sim_contam) / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
            "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits << " (" <<
                  (((fp64) count_sim_no_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
     }
@@ -550,13 +559,17 @@ void QueryData::final_statistics(std::string &outpath) {
     }
     ss <<
        "\nTotals"   <<
-       "\n\tTotal Kept Sequences (After Filtering And/Or Frame Selection): " << count_total_kept_sequences <<
+       "\n\tTotal Retained Sequences (After Filtering And/Or Frame Selection): " << count_total_kept_sequences <<
        "\n\tTotal unique sequences annotated (similarity search alignments only): "      << count_sim_only      << " (" <<
             (((fp64) count_sim_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
        "\n\tTotal unique sequences annotated (gene family assignment only): "            << count_ontology_only << " (" <<
             (((fp64) count_ontology_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
        "\n\tTotal unique sequences annotated (gene family and/or similarity search): "   << count_TOTAL_ann     << " (" <<
             (((fp64) count_TOTAL_ann / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
+       "\n\t\tTotal alignments flagged as a contaminant (gene family and/or similarity search): " << count_sim_contam << " (" <<
+            (((fp64) count_sim_contam / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
+       "\n\t\tTotal alignments NOT flagged as a contaminant (gene family and/or similarity search): " << (count_sim_hits - count_sim_contam) << " (" <<
+            (((fp64) (count_sim_hits - count_sim_contam) / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
        "\n\tTotal unique sequences unannotated (gene family and/or similarity search): " << count_TOTAL_unann_kept << " ("
             << (((fp64) count_TOTAL_unann_kept / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)";
 

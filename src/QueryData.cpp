@@ -682,8 +682,11 @@ bool QueryData::start_alignment_files(const std::string &base_path, const std::v
                     // For TSV,CSV we want to create a new file for every go level
                     case FileSystem::ENT_FILE_DELIM_TSV:
                     case FileSystem::ENT_FILE_DELIM_CSV:
+                        /* Remove Gene Ontology levels for now
                         final_file_path = base_path + APPEND_GO_LEVEL_STR +
                                 std::to_string(level) + mpFileSystem->get_extension(type);
+                        */
+                        final_file_path = base_path + mpFileSystem->get_extension(type);
                         mAlignmentFiles.at(base_path).file_streams[type][level] =
                                 new std::ofstream(final_file_path, std::ios::out | std::ios::app);
                         initialize_file(mAlignmentFiles.at(base_path).file_streams[type][level],
@@ -704,9 +707,12 @@ bool QueryData::start_alignment_files(const std::string &base_path, const std::v
                         break;
 
                     case FileSystem::ENT_FILE_GENE_ENRICH_EFF_LEN:
+                        /*  Remove GO level data for now
                         final_file_path = base_path + APPEND_GO_LEVEL_STR +
                                           std::to_string(level) + APPEND_ENRICH_GENE_ID_LEN +
                                           mpFileSystem->get_extension(type);
+                        */
+                        final_file_path = base_path + APPEND_ENRICH_GENE_ID_LEN + mpFileSystem->get_extension(type);
                         mAlignmentFiles.at(base_path).file_streams[type][level] =
                                 new std::ofstream(final_file_path, std::ios::out | std::ios::app);
                         initialize_file(mAlignmentFiles.at(base_path).file_streams[type][level],
@@ -714,9 +720,12 @@ bool QueryData::start_alignment_files(const std::string &base_path, const std::v
                         break;
 
                     case FileSystem::ENT_FILE_GENE_ENRICH_GO_TERM:
+                        /*
                         final_file_path = base_path + APPEND_GO_LEVEL_STR +
                                           std::to_string(level) + APPEND_ENRICH_GENE_ID_GO +
                                           mpFileSystem->get_extension(type);
+                        */
+                        final_file_path = base_path + APPEND_ENRICH_GENE_ID_GO + mpFileSystem->get_extension(type);
                         mAlignmentFiles.at(base_path).file_streams[type][level] =
                                 new std::ofstream(final_file_path, std::ios::out | std::ios::app);
                         initialize_file(mAlignmentFiles.at(base_path).file_streams[type][level],

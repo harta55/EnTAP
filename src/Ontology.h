@@ -49,9 +49,6 @@ public:
 private:
 
     const std::string ONTOLOGY_OUT_PATH     = "ontology/";
-    const std::string FINAL_ANNOT_FILE      = "final_annotations";
-    const std::string FINAL_ANNOT_FILE_CONTAM = "final_annotations_contam";
-    const std::string FINAL_ANNOT_FILE_NO_CONTAM = "final_annotations_no_contam";
 
     std::vector<ENTAP_HEADERS>      mEntapHeaders;
     std::vector<uint16>             mGoLevels;
@@ -60,7 +57,6 @@ private:
     std::string                     mOutpath;
     std::string                     mNewInput;
     std::string                     mOntologyDir;
-    std::string                     mFinalOutputDir;
     QueryData                       *mpQueryData;
     FileSystem                      *mpFileSystem;
     UserInput                       *mpUserInput;

@@ -423,7 +423,7 @@ void QueryData::final_statistics(std::string &outpath) {
     bool                   is_exp_kept;
     bool                   is_prot;
     bool                   is_frame_kept;
-    bool                   is_hit;
+    bool                   is_sim_hit;
     bool                   is_ontology;
     bool                   is_one_go;
     bool                   is_one_kegg;
@@ -436,11 +436,9 @@ void QueryData::final_statistics(std::string &outpath) {
     out_annotated_nucl_path   = PATHS(outpath, OUT_ANNOTATED_NUCL);
     out_annotated_prot_path   = PATHS(outpath, OUT_ANNOTATED_PROT);
 
-    // Re-write these files
-    mpFileSystem->delete_file(out_unannotated_nucl_path);
-    mpFileSystem->delete_file(out_unannotated_prot_path);
-    mpFileSystem->delete_file(out_annotated_nucl_path);
-    mpFileSystem->delete_file(out_annotated_prot_path);
+    // Re-write the final output directory
+    mpFileSystem->delete_dir(outpath);
+    mpFileSystem->create_dir(outpath);
 
     std::ofstream file_unannotated_nucl(out_unannotated_nucl_path, std::ios::out | std::ios::app);
     std::ofstream file_unannotated_prot(out_unannotated_prot_path, std::ios::out | std::ios::app);
@@ -452,7 +450,7 @@ void QueryData::final_statistics(std::string &outpath) {
         is_exp_kept = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_EXPRESSION_KEPT);
         is_frame_kept = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FRAME_KEPT);
         is_prot = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN);
-        is_hit = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_BLAST_HIT);
+        is_sim_hit = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_BLAST_HIT);
         is_ontology = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ASSIGNED); // TODO Fix for interpro
         is_one_go = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ONE_GO);
         is_one_kegg = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ONE_KEGG);
@@ -463,19 +461,20 @@ void QueryData::final_statistics(std::string &outpath) {
 
         is_exp_kept ? count_exp_kept++ : count_exp_reject++;
         is_prot ? count_frame_kept++ : count_frame_rejected++;
-        is_hit ? count_sim_hits++ : count_sim_no_hits++;
+        is_sim_hit ? count_sim_hits++ : count_sim_no_hits++;
         is_ontology ? count_ontology++ : count_no_ontology++;
         if (is_one_go) count_one_go++;
         if (is_one_kegg) count_one_kegg++;
 
-        if (is_hit && !is_ontology) count_sim_only++;
-        if (!is_hit && is_ontology) count_ontology_only++;
+        if (is_sim_hit && !is_ontology) count_sim_only++;
+        if (!is_sim_hit && is_ontology) count_ontology_only++;
 
         if (is_exp_kept && is_frame_kept) {
             count_total_kept_sequences++;
         }
 
-        if (is_hit || is_ontology) {
+        // Are we annotated through either Similarity Search OR Ontology
+        if (is_sim_hit || is_ontology) {
             // Is annotated
             count_TOTAL_ann++;
             if (!pair.second->get_sequence_n().empty())

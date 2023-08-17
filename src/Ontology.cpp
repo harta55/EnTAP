@@ -75,14 +75,11 @@ Ontology::Ontology(std::string input, EntapDataPtrs &entap_data) {
     mSoftwareFlags      = mpUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_ONTOLOGY);
     mGoLevels           = mpUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_GO_LEVELS);
     mOntologyDir        = PATHS(mOutpath, ONTOLOGY_OUT_PATH);
-    mFinalOutputDir     = mpFileSystem->get_final_outdir();
     mAlignmentFileTypes = mpUserInput->get_user_output_types();
     mEntapHeaders       = mpUserInput->get_user_input<std::vector<ENTAP_HEADERS>>(INPUT_FLAG_ENTAP_HEADERS);
 
     if (mIsOverwrite) mpFileSystem->delete_dir(mOntologyDir);
     mpFileSystem->create_dir(mOntologyDir);
-    mpFileSystem->delete_dir(mFinalOutputDir);
-    mpFileSystem->create_dir(mFinalOutputDir);
 }
 
 
@@ -183,57 +180,4 @@ std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
                     mEntapDataPtrs
             ));
     }
-}
-
-
-/**
- * ======================================================================
- * Function void Ontology::print_eggnog()
- *
- * Description          - Handles printing of final annotation output
- *                      - Current prints tsv file for all go levels specified,
- *                        no contam + contam files
- *
- * Notes                - None
- *
- *
- * @return              - None
- *
- * =====================================================================
- */
-void Ontology::print_eggnog() {
-    FS_dprint("Beginning to print final results...");
-
-    std::string final_annotations_base;
-    std::string final_annotations_contam_base;
-    std::string final_annotations_no_contam_base;
-
-    // TODO move to QueryData
-    // Create output files for go levels (contaminants, no contam, all) and write headers
-
-    final_annotations_base             = PATHS(mFinalOutputDir, FINAL_ANNOT_FILE);
-    mpQueryData->start_alignment_files(final_annotations_base, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
-
-    final_annotations_contam_base      = PATHS(mFinalOutputDir, FINAL_ANNOT_FILE_CONTAM);
-    mpQueryData->start_alignment_files(final_annotations_contam_base, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
-
-    final_annotations_no_contam_base   = PATHS(mFinalOutputDir, FINAL_ANNOT_FILE_NO_CONTAM);
-    mpQueryData->start_alignment_files(final_annotations_no_contam_base, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
-
-    // Add respective alignements
-    for (auto &pair : *mpQueryData->get_sequences_ptr()) {
-        mpQueryData->add_alignment_data(final_annotations_base, pair.second, nullptr);
-
-        if (pair.second->is_contaminant()) {
-            mpQueryData->add_alignment_data(final_annotations_contam_base, pair.second, nullptr);
-        } else {
-            mpQueryData->add_alignment_data(final_annotations_no_contam_base, pair.second, nullptr);
-        }
-    }
-
-    // Cleanup
-    mpQueryData->end_alignment_files(final_annotations_base);
-    mpQueryData->end_alignment_files(final_annotations_contam_base);
-    mpQueryData->end_alignment_files(final_annotations_no_contam_base);
-    FS_dprint("Success!");
 }

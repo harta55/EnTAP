@@ -109,19 +109,20 @@ const uint16 UserInput::DEFAULT_THREADS                 = 1;
 #define CMD_NOCHECK         "no-check"
 
 #define CMD_OUTPUT_FORMAT   "output-format"
-#define DESC_OUTPUT_FORMAT  "Specify the output format for the processed alignments."   \
+#define DESC_OUTPUT_FORMAT  "Specify the output format for the processed alignments. EnTAP will generally try to output these " \
+                            "unless the data is unavailable. "                                                        \
                             "Multiple flags can be specified:\n"                          \
                             "    1. TSV Format (default)\n"                             \
                             "    2. CSV Format\n"                                       \
                             "    3. FASTA Amino Acid (default)\n"                       \
                             "    4. FASTA Nucleotide (default)\n"                       \
-                            "    5. Gene Enrichment Sequence ID vs. Effective Length TSV (default)\n"\
-                            "    6. Gene Enrichment Sequence ID vs. GO Term TSV (default)"
+                            "    5. Gene Enrichment Sequence ID vs. Effective Length TSV\n"\
+                            "    6. Gene Enrichment Sequence ID vs. GO Term TSV\n"         \
+                            "    7. Gene Ontology Terms TSV (default)"
 const vect_uint16_t UserInput::DEFAULT_OUT_FORMAT       =vect_uint16_t{FileSystem::ENT_FILE_DELIM_TSV,
                                                                        FileSystem::ENT_FILE_FASTA_FAA,
                                                                        FileSystem::ENT_FILE_FASTA_FNN,
-                                                                       FileSystem::ENT_FILE_GENE_ENRICH_EFF_LEN,
-                                                                       FileSystem::ENT_FILE_GENE_ENRICH_GO_TERM};
+                                                                       FileSystem::ENT_FILE_GENE_ONTOLOGY_TERMS};
 
 /* -------------------- EnTAP API Commands -----------------------*/
 #define CMD_ENTAP_API_TAXON "api-taxon"

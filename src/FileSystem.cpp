@@ -971,6 +971,7 @@ std::string FileSystem::get_extension(FileSystem::ENT_FILE_TYPES type) {
         case ENT_FILE_DELIM_TSV:
         case ENT_FILE_GENE_ENRICH_GO_TERM:
         case ENT_FILE_GENE_ENRICH_EFF_LEN:
+        case ENT_FILE_GENE_ONTOLOGY_TERMS:
             return EXT_TSV;
 
         case ENT_FILE_DELIM_CSV:

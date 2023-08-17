@@ -112,7 +112,7 @@ Ontology InterProScan Header Information
 
 Gene ontology terms are normalized to levels based on the input flag from the user (or the default of 0,1). A level of 0 within the filename indicates that ALL GO terms will be printed to the annotation file. Any other level will print that level and anything higher than it. Normalization of GO terms to levels is generally done before enrichment analysis and is based upon the hierarchical setup of the Gene Ontology database. More information can be found at GO_. 
 
-    * final_annotations_lvlX.tsv
+    * final_annotations.tsv
 
         * As mentioned above, the 'X' represents the normalized GO terms for the annotation (GO terms of X level and higher will be printed)
         * This .tsv file will have the headers as mentioned previously as a summary of the entire pipeline
@@ -133,17 +133,22 @@ Gene ontology terms are normalized to levels based on the input flag from the us
 
         * Nucleotide, protein, and tab-deliminated files containing all annotated sequences that were not flagged as a contaminant
 
-    * final_annotations_lvlX_enrich_geneid_go.tsv
+    * final_annotations_enrich_geneid_go.tsv
 
-        * Tab-deliminated file that can be used for Gene Enrichment, normalized to gene ontology level
+        * Tab-deliminated file that can be used for Gene Enrichment
         * First column contains the gene ID and second column contains the Gene Ontology term corresponding to the gene ID
-        * A level of 0 will print all GO terms assigned, while any other level will prnit that level and anything higher. Ex: 1 will print all terms of 1 and higher
 
-    * final_annotations_lvlX_enrich_geneid_len.tsv
+    * final_annotations_enrich_geneid_len.tsv
 
-        * Tab-deliminated file that can be used for Gene Enrichment, normalized to gene ontology levels
+        * Tab-deliminated file that can be used for Gene Enrichment
         * First column contains the gene ID and second columns contains the effective length from Expression Analysis. This file will not be printed if Expression Analysis has not been ran
-        * A level of 0 will print all GO terms assigned, while any other level will prnit that level and anything higher. Ex: 1 will print all terms of 1 and higher
+
+    * final_annotations_gene_ontology_terms.tsv
+
+        * Tab-deliminated file that can be used for Gene Enrichment
+        * Columns are as follows: Sequence ID, Gene Ontology Term ID, Gene Ontology Term, Gene Ontology Category, and Effective Length
+        * Note: the Effective Length column will not be printed when Expression Filtering has not been performed
+		
 
 .. _log-label:
 

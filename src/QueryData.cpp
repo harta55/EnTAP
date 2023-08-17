@@ -732,6 +732,14 @@ bool QueryData::start_alignment_files(const std::string &base_path, const std::v
                                         outputFileData.headers, type);
                         break;
 
+                    case FileSystem::ENT_FILE_GENE_ONTOLOGY_TERMS:
+                        final_file_path = base_path + APPEND_GENE_ONTOLOGY_TERMS + mpFileSystem->get_extension(type);
+                        mAlignmentFiles.at(base_path).file_streams[type][level] =
+                                new std::ofstream(final_file_path, std::ios::out | std::ios::app);
+                        initialize_file(mAlignmentFiles.at(base_path).file_streams[type][level],
+                                        outputFileData.headers, type);
+                        break;
+
                     default:
                         break;
                 }
@@ -876,6 +884,45 @@ bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *queryS
                                 FileSystem::DELIM_TSV <<
                                 querySequence->getMEffectiveLength() <<
                                 std::endl;
+                    }
+                    break;
+                }
+
+                    /*
+                     * ENT_FILE_GENE_ONTOLOGY_TERMS
+                     *  Essentially a combined format to the enrichment ones above
+                     *  Tab delimited format:
+                     *  Query Sequence | GO ID | GO Name | GO Category | Effective Length (from Expression filtering)
+                     *  Every new GO term has a new line, so a particular Query Sequence may have a bunch of lines
+                     *
+                     * */
+                case FileSystem::ENT_FILE_GENE_ONTOLOGY_TERMS:
+                {
+                    if (file_data->second.file_streams[type][go_level] == nullptr) continue;
+                    if (!querySequence->is_kept()) continue;
+
+                    go_format_t go_terms = querySequence->get_go_terms();
+                    if (!go_terms.empty()) {
+                        for (GoEntry const &entry : go_terms) {
+                            if (!entry.go_id.empty()) {
+                                if ((entry.level_int >= go_level && entry.level_int != GoEntry::UNKNOWN_LVL) ||
+                                    go_level == 0) {
+                                    *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
+                                            querySequence->getMSequenceID() << FileSystem::DELIM_TSV <<
+                                            entry.go_id                     << FileSystem::DELIM_TSV <<
+                                            entry.term                      << FileSystem::DELIM_TSV <<
+                                            entry.category                  << FileSystem::DELIM_TSV;
+
+                                    // We only want to include the effect length column if user has performed
+                                    //  expression filtering
+                                    if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
+                                        *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
+                                            querySequence->getMEffectiveLength() << FileSystem::DELIM_TSV <<
+                                            std::endl;
+                                    }
+                                }
+                            }
+                        }
                     }
                     break;
                 }
@@ -1066,6 +1113,18 @@ bool QueryData::initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HE
         case FileSystem::ENT_FILE_GENE_ENRICH_GO_TERM:
             *file_stream << HEADER_ENRICH_GENE_ID << FileSystem::DELIM_TSV
                          << HEADER_ENRICH_GO << std::endl;
+            break;
+
+        case FileSystem::ENT_FILE_GENE_ONTOLOGY_TERMS:
+            *file_stream << HEADER_GENE_ONTOLOGY_TERM_GENE_ID << FileSystem::DELIM_TSV <<
+                            HEADER_GENE_ONTOLOGY_TERM_GO_ID   << FileSystem::DELIM_TSV <<
+                            HEADER_GENE_ONTOLOGY_TERM_NAME    << FileSystem::DELIM_TSV <<
+                            HEADER_GENE_ONTOLOGY_TERM_CATEGORY<< FileSystem::DELIM_TSV;
+
+            // We only want to add effective length column when user has executed expression filtering
+            if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
+                *file_stream << HEADER_GENE_ONTOLOGY_TERM_LENGTH << std::endl;
+            }
             break;
 
         default:

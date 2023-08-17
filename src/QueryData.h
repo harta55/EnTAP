@@ -140,6 +140,8 @@ private:
     const std::vector<char> NUCLEO_MAP {
             'A', 'G', 'C', 'T', 'N'
     };
+
+    // File printing constants
     const std::string OUT_UNANNOTATED_NUCL = "final_unannotated.fnn";
     const std::string OUT_UNANNOTATED_PROT = "final_unannotated.faa";
     const std::string OUT_ANNOTATED_NUCL   = "final_annotated.fnn";
@@ -147,9 +149,15 @@ private:
     const std::string APPEND_GO_LEVEL_STR  = "_lvl";
     const std::string APPEND_ENRICH_GENE_ID_GO = "_enrich_geneid_go";
     const std::string APPEND_ENRICH_GENE_ID_LEN = "_enrich_geneid_len";
+    const std::string APPEND_GENE_ONTOLOGY_TERMS = "_gene_ontology_terms";
     const std::string HEADER_ENRICH_GENE_ID = "gene_id";
     const std::string HEADER_ENRICH_GO      = "go_term";
     const std::string HEADER_ENRICH_LENGTH  = "effective_length";
+    const std::string HEADER_GENE_ONTOLOGY_TERM_GENE_ID = "query_sequence";
+    const std::string HEADER_GENE_ONTOLOGY_TERM_GO_ID   = "go_id";
+    const std::string HEADER_GENE_ONTOLOGY_TERM_NAME    = "go_term";
+    const std::string HEADER_GENE_ONTOLOGY_TERM_CATEGORY = "category";
+    const std::string HEADER_GENE_ONTOLOGY_TERM_LENGTH   = "effective_length";
 
     QUERY_MAP_T  *mpSequences;
     bool         mNoTrim;

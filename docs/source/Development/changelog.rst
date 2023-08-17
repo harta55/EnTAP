@@ -7,6 +7,8 @@ EnTAP v1.1.1 (X X, 2023)
     * Updated RSEM (v1.3.3), TransDecoder (v5.7.1), and DIAMOND (v2.1.8) libraries in EnTAP repository. EnTAP is now compatible with these versions
     * Added additional statistics/percentages at the end of the Log File
     * Added support for Tidyverse format (TSV's will now print 'NA' for empty data)
+    * Added support for a new Gene Ontology term TSV output format. Similar to other formats, but combined into one file. More info can be seen with '--output--format' flag
+    * Removed the '--level' flag for Gene Ontology levels. This was not useful to users and caused confusion. Instead, all GO Terms will be printed by default
 
 EnTAP Beta v0.10.9-beta (June 29, 2023)
 ------------------------------------------

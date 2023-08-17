@@ -83,5 +83,6 @@ These are the general EnTAP flags that can be used during Execution. They are no
         * 2. CSV File
         * 3. FASTA Protein File (default)
         * 4. FASTA Nucleotide File (default)
-        * 5. Gene Enrichment Gene ID + Effective Length (default)
-        * 6. Gene Enrichment Gene ID + GO Terms (default)
+        * 5. Gene Enrichment Gene ID + Effective Length
+        * 6. Gene Enrichment Gene ID + GO Terms
+        * 7. Gene Ontology Terms (Sequence ID,GO Term ID, GO Term, Category, and Sequence Effective Length) TSV format (default)

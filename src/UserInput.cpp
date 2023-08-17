@@ -352,7 +352,7 @@ const std::string UserInput::ENTAP_INI_FILENAME         = "entap_config.ini";
 const vect_uint16_t UserInput::DEFAULT_DATA_TYPE        = vect_uint16_t{EntapDatabase::ENTAP_SERIALIZED};
 const std::string UserInput::DEFAULT_STATE              ="+";
 const uint16 UserInput::DEFAULT_FRAME_SELECTION         = FRAME_TRANSDECODER;
-const vect_uint16_t UserInput::DEFAULT_ONT_LEVELS       =vect_uint16_t{0,1};
+const vect_uint16_t UserInput::DEFAULT_ONT_LEVELS       =vect_uint16_t{0};
 const vect_uint16_t UserInput::DEFAULT_ONTOLOGY         =vect_uint16_t{ONT_EGGNOG_DMND};
 
 const uint16      UserInput::DEFAULT_TRANSDECODER_MIN_PROTEIN = 100;
@@ -466,7 +466,7 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
 
 /* Ontology Commands */
         {INI_ONTOLOGY  ,CMD_ONTOLOGY_FLAG        ,ENTAP_INI_NULL  ,DESC_ONTOLOGY_FLAG         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONTOLOGY       ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
-        {INI_ONTOLOGY  ,CMD_GO_LEVELS            ,ENTAP_INI_NULL  ,DESC_ONT_LEVELS            ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONT_LEVELS     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_ONTOLOGY  ,CMD_GO_LEVELS            ,ENTAP_INI_NULL  ,DESC_ONT_LEVELS            ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONT_LEVELS     ,ENT_INPUT_FUTURE, ENTAP_INI_NULL_VAL},
 
 /* Ontology - EggNOG Commands */
         {INI_ONT_EGGNOG,CMD_EGGNOG_SQL           ,ENTAP_INI_NULL  ,DESC_EGGNOG_SQL            ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_EGG_SQL_DB_INI ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
@@ -968,7 +968,7 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key) {
             // Ensure it is a command line argument
             if (entry->input_type == ENT_COMMAND_LINE) {
 
-                if (entry->category == INI_ENTAP_API) {
+                if ((entry->category == INI_ENTAP_API) && (arg->isSet())) {
                     mHasAPICmd = true;
                 }
 

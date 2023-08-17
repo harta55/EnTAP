@@ -75,16 +75,23 @@ Software:
     * RSEM_ (Expression Filtering with alignment file): version 1.3.3 packaged with EnTAP
 
         * Version 1.3.0
+		* Version 1.3.3
 
-    * TransDecoder_ (Frame Selection): version 5.3.0 packaged with EnTAP
+    * TransDecoder_ (Frame Selection): version 5.7.1 packaged with EnTAP
+	
+	    * Version 5.3.0
+		* Version 5.7.1
 
     * GeneMarkS-T_ (Frame Selection): version 5.1 must be installed separately (if not using TransDecoder)
+	
+	    * Version 5.1
 
-    * DIAMOND_ (Similarity Search): version 0.9.9 packaged with EnTAP
+    * DIAMOND_ (Similarity Search): version 2.1.8 packaged with EnTAP
 
         * Version 0.8.31
         * Version 0.9.19
         * Version 0.9.9
+		* Version 2.1.8
 
     * InterProScan_ (Protein Databases): version 5.19 must be installed separately
 

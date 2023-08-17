@@ -75,6 +75,16 @@ AbstractSimilaritySearch::AbstractSimilaritySearch(std::string &execution_stage_
     // set blast string to use for file naming
     mBlastp ? mBlastType = BLASTP_STR : mBlastType = BLASTX_STR;
 
+    // Check if our transcriptome data matches the output formats
+    if (!mpQueryData->DATA_FLAG_GET(QueryData::IS_NUCLEOTIDE)) {
+        mAlignmentFileTypes.erase(std::remove(mAlignmentFileTypes.begin(), mAlignmentFileTypes.end(), FileSystem::ENT_FILE_FASTA_FNN),
+                                  mAlignmentFileTypes.end());
+    }
+    if (!mpQueryData->DATA_FLAG_GET(QueryData::IS_PROTEIN)) {
+        mAlignmentFileTypes.erase(std::remove(mAlignmentFileTypes.begin(), mAlignmentFileTypes.end(), FileSystem::ENT_FILE_FASTA_FAA),
+                                  mAlignmentFileTypes.end());
+    }
+
     // create overall results dir
     mpFileSystem->delete_dir(mOverallResultsDir);
     mpFileSystem->create_dir(mOverallResultsDir);

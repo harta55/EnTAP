@@ -52,8 +52,9 @@ public:
         SUCCESS_FRAME_SEL  = (1 << 1),
         SUCCESS_ONTOLOGY   = (1 << 2),
         SUCCESS_SIM_SEARCH = (1 << 3),
-        IS_PROTEIN         = (1 << 4),
-        UNIPROT_MATCH      = (1 << 5),
+        IS_PROTEIN         = (1 << 4),  // We have some protein data
+        IS_NUCLEOTIDE      = (1 << 5),  // We have some nucleotide data
+        UNIPROT_MATCH      = (1 << 6),
 
         DATA_FLAGS_MAX     = (1 << 31)
     } DATA_FLAGS;
@@ -92,6 +93,7 @@ public:
     void set_is_success_sim_search(bool val);
     void set_is_success_ontology(bool val);
     void set_is_uniprot(bool val);
+    bool DATA_FLAG_GET(DATA_FLAGS);
 
     // Header routines
     void header_set(ENTAP_HEADERS header, bool val);
@@ -112,7 +114,6 @@ private:
     };
 
     void set_input_type(std::string&);
-    bool DATA_FLAG_GET(DATA_FLAGS);
     void DATA_FLAG_SET(DATA_FLAGS);
     void DATA_FLAG_CLEAR(DATA_FLAGS);
     void DATA_FLAG_CHANGE(DATA_FLAGS flag, bool val);

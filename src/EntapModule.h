@@ -66,8 +66,8 @@ protected:
     const std::string FIGURE_DIR            = "figures/";
     const std::string OVERALL_RESULTS_DIR   = "overall_results";
 
-    const std::string FILENAME_OUT_UNANNOTATED  = "unannotated_sequences";
-    const std::string FILENAME_OUT_ANNOTATED    = "annotated_sequences";
+    const std::string FILENAME_OUT_UNANNOTATED  = "unannotated_";
+    const std::string FILENAME_OUT_ANNOTATED    = "annotated_";
 
     const std::string GRAPH_GO_END_TXT        = "_go_bar_graph.txt";
     const std::string GRAPH_GO_END_PNG        = "_go_bar_graph.png";

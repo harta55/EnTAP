@@ -90,6 +90,12 @@ private:
     const std::string EGG_ANNOT_RESULTS       = "annotation_results";
     const std::string EGG_ANNOT_STD           = "annotation_std";
     const std::string EGG_ANNOT_APPEND        = ".emapper.annotations";
+    const std::string EGG_PREFIX              = "eggnog_";
+    const std::string EGG_UNANNOTATED_NUCL    = "unannoated.fnn";
+    const std::string EGG_ANNOTATED_NUCL      = "annoated.fna";
+    const std::string EGG_UNANNOTATED_PROTEIN = "unannoated.faa";
+    const std::string EGG_ANNOTATED_PROTEIN   = "annoated.faa";
+
 
     std::string mFigureDir;
     std::string mProcDir;

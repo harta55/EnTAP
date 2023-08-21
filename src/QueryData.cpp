@@ -393,7 +393,7 @@ std::pair<uint16, uint16> QueryData::calculate_N_vals
  *
  * =====================================================================
  */
-void QueryData::final_statistics(std::string &outpath) {
+void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::ENT_FILE_TYPES> output_types) {
     FS_dprint("Pipeline finished! Calculating final statistics...");
 
     std::stringstream      ss;
@@ -415,81 +415,96 @@ void QueryData::final_statistics(std::string &outpath) {
     uint32                 count_TOTAL_ann=0;
     uint32                 count_TOTAL_unann=0;
     uint32                 count_TOTAL_unann_kept=0;    // Total sequences unannotated if kept after expression/frame selection
-    std::string            out_unannotated_nucl_path;
-    std::string            out_unannotated_prot_path;
-    std::string            out_annotated_nucl_path;
-    std::string            out_annotated_prot_path;
+
+    // output files
+    std::string            out_unannotated_path;
+    std::string            out_annotated_path;
+    std::string            out_annotated_contam_path;
+    std::string            out_annotated_without_contam_path;
+    std::string            out_entap_report_path;
+
     std::string            out_msg;
     bool                   is_exp_kept;
     bool                   is_prot;
     bool                   is_frame_kept;
-    bool                   is_hit;
+    bool                   is_sim_hit;
     bool                   is_ontology;
     bool                   is_one_go;
     bool                   is_one_kegg;
     ent_input_multi_int_t  ontology_flags;
+    ent_input_multi_int_t  go_levels;
+    std::vector<ENTAP_HEADERS> headers;
 
     ontology_flags = mpUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_ONTOLOGY);
+    go_levels      = mpUserInput->get_user_input<ent_input_multi_int_t >(INPUT_FLAG_GO_LEVELS);
+    headers        = get_entap_headers();
 
-    out_unannotated_nucl_path = PATHS(outpath, OUT_UNANNOTATED_NUCL);
-    out_unannotated_prot_path = PATHS(outpath, OUT_UNANNOTATED_PROT);
-    out_annotated_nucl_path   = PATHS(outpath, OUT_ANNOTATED_NUCL);
-    out_annotated_prot_path   = PATHS(outpath, OUT_ANNOTATED_PROT);
+    // Check if our transcriptome data matches the output formats
+    if (!DATA_FLAG_GET(QueryData::IS_NUCLEOTIDE)) {
+        output_types.erase(std::remove(output_types.begin(), output_types.end(), FileSystem::ENT_FILE_FASTA_FNN),
+                           output_types.end());
+    }
+    if (!DATA_FLAG_GET(QueryData::IS_PROTEIN)) {
+        output_types.erase(std::remove(output_types.begin(), output_types.end(), FileSystem::ENT_FILE_FASTA_FAA),
+                           output_types.end());
+    }
 
-    // Re-write these files
-    mpFileSystem->delete_file(out_unannotated_nucl_path);
-    mpFileSystem->delete_file(out_unannotated_prot_path);
-    mpFileSystem->delete_file(out_annotated_nucl_path);
-    mpFileSystem->delete_file(out_annotated_prot_path);
+    // Start output files
+    out_annotated_path = PATHS(outpath, OUT_ANNOTATED_FILENAME);
+    start_alignment_files(out_annotated_path, headers, go_levels, output_types);
+    out_unannotated_path = PATHS(outpath, OUT_UNANNOTATED_FILENAME);
+    start_alignment_files(out_unannotated_path, headers, go_levels, output_types);
+    out_annotated_contam_path = PATHS(outpath, OUT_ANNOTATED_CONTAM_FILENAME);
+    start_alignment_files(out_annotated_contam_path, headers, go_levels, output_types);
+    out_annotated_without_contam_path = PATHS(outpath, OUT_ANNOTATED_NO_CONTAM_FILENAME);
+    start_alignment_files(out_annotated_without_contam_path, headers, go_levels, output_types);
+    out_entap_report_path = PATHS(outpath, out_entap_report_path);
+    start_alignment_files(out_entap_report_path, headers, go_levels, output_types);
 
-    std::ofstream file_unannotated_nucl(out_unannotated_nucl_path, std::ios::out | std::ios::app);
-    std::ofstream file_unannotated_prot(out_unannotated_prot_path, std::ios::out | std::ios::app);
-    std::ofstream file_annotated_nucl(out_annotated_nucl_path, std::ios::out | std::ios::app);
-    std::ofstream file_annotated_prot(out_annotated_prot_path, std::ios::out | std::ios::app);
+    // Re-write the final output directory
+    mpFileSystem->delete_dir(outpath);
+    mpFileSystem->create_dir(outpath);
 
     for (auto &pair : *mpSequences) {
         count_total_sequences++;
+        add_alignment_data(out_entap_report_path, pair.second, nullptr);
+
         is_exp_kept = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_EXPRESSION_KEPT);
         is_frame_kept = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FRAME_KEPT);
         is_prot = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN);
-        is_hit = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_BLAST_HIT);
+        is_sim_hit = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_BLAST_HIT);
         is_ontology = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ASSIGNED); // TODO Fix for interpro
         is_one_go = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ONE_GO);
         is_one_kegg = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ONE_KEGG);
 
-        if (pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_CONTAMINANT)) {
-            count_sim_contam++; // This is assumed as retained and currently only from sim search
-        }
-
         is_exp_kept ? count_exp_kept++ : count_exp_reject++;
         is_prot ? count_frame_kept++ : count_frame_rejected++;
-        is_hit ? count_sim_hits++ : count_sim_no_hits++;
+        is_sim_hit ? count_sim_hits++ : count_sim_no_hits++;
         is_ontology ? count_ontology++ : count_no_ontology++;
         if (is_one_go) count_one_go++;
         if (is_one_kegg) count_one_kegg++;
 
-        if (is_hit && !is_ontology) count_sim_only++;
-        if (!is_hit && is_ontology) count_ontology_only++;
+        if (is_sim_hit && !is_ontology) count_sim_only++;
+        if (!is_sim_hit && is_ontology) count_ontology_only++;
 
         if (is_exp_kept && is_frame_kept) {
             count_total_kept_sequences++;
         }
 
-        if (is_hit || is_ontology) {
+        // Are we annotated through either Similarity Search OR Ontology
+        if (is_sim_hit || is_ontology) {
             // Is annotated
             count_TOTAL_ann++;
-            if (!pair.second->get_sequence_n().empty())
-                file_annotated_nucl<<pair.second->get_sequence_n()<<std::endl;
-            if (!pair.second->get_sequence_p().empty()) {
-                file_annotated_prot<<pair.second->get_sequence_p()<<std::endl;
+            add_alignment_data(out_annotated_path, pair.second, nullptr);
+            if (pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_CONTAMINANT)) {
+                count_sim_contam++; // This is assumed as retained and currently only from sim search
+                add_alignment_data(out_annotated_contam_path, pair.second, nullptr);
+            } else {
+                add_alignment_data(out_annotated_without_contam_path, pair.second, nullptr);
             }
         } else {
             // Not annotated
-            if (!pair.second->get_sequence_n().empty())
-                file_unannotated_nucl<<pair.second->get_sequence_n()<<std::endl;
-            if (!pair.second->get_sequence_p().empty()) {
-                file_unannotated_prot<<pair.second->get_sequence_p()<<std::endl;
-            }
+            add_alignment_data(out_unannotated_path, pair.second, nullptr);
             if (is_exp_kept && is_frame_kept) {
                 count_TOTAL_unann_kept++;
             }
@@ -499,10 +514,12 @@ void QueryData::final_statistics(std::string &outpath) {
         }
     }
 
-    file_unannotated_nucl.close();
-    file_unannotated_prot.close();
-    file_annotated_nucl.close();
-    file_annotated_prot.close();
+    // Close output files
+    end_alignment_files(out_annotated_path);
+    end_alignment_files(out_annotated_contam_path);
+    end_alignment_files(out_annotated_without_contam_path);
+    end_alignment_files(out_entap_report_path);
+    end_alignment_files(out_unannotated_path);
 
     mpFileSystem->format_stat_stream(ss, "Final Annotation Statistics");
     ss <<

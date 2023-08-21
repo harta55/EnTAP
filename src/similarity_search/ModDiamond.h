@@ -97,6 +97,9 @@ private:
     const std::string INFORMATIVE_FLAG                           = "Informative";
     const std::string NO_HIT_FLAG                                = "No Hits";
 
+    // Software Prefix
+    const std::string DIAMOND_PREFIX                             = "diamond_";  // Prefix to be used when printing out files
+
     // Terminal Command EntapDefaults
     const uint16 CMD_DEFAULT_TOP_ALIGN  = 3;
     const std::string CMD_DEFAULT_OUTPUT_FORMAT = "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp stitle";

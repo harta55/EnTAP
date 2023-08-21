@@ -63,6 +63,7 @@ ModTransdecoder::ModTransdecoder(std::string &execution_stage_path, std::string 
     mTransdecoderPredictExe  = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_PREDICT_EXE);
     mIsNoRefineStarts        = mpUserInput->has_input(INPUT_FLAG_TRANS_NO_REFINE_STARTS);
     mExePath = mTransdecoderLongOrfsExe;
+    mSoftwarePrefix = TRANSDECODER_PREFIX;
 
     mMinProteinLength = mpUserInput->get_user_input<ent_input_uint_t >(INPUT_FLAG_TRANS_MIN_PROTEIN);
 

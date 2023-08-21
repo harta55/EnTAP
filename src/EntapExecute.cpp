@@ -80,6 +80,7 @@ namespace entapExecute {
         bool                                    blastp;                 // false for blastx, true for mBlastp
         vect_uint16_t                           entap_database_types;   // Database types from user
         EntapDatabase::DATABASE_TYPE            entap_database_type;    // First database type selected by user that will be used
+        std::vector<FileSystem::ENT_FILE_TYPES> output_types;
         std::string                             entap_database_path;    // Path to EnTAP database we are using
         EntapDataPtrs                           entap_data_ptrs;        // Struct of Execution pointers
         EntapDatabase*                          pEntap_Database=nullptr; // Pointer to the EnTAP database (binary / sql)
@@ -104,6 +105,7 @@ namespace entapExecute {
         state_queue    = pUserInput->get_state_queue();    // Will NOT be empty, default is +
         databases     = pUserInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_DATABASE);
         entap_graphing_path = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_GRAPH);
+        output_types = pUserInput->get_user_output_types();
 
         // Find database type that will be used by the rest (use 0 index no matter what)
         entap_database_types = pUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_DATABASE_TYPE);
@@ -289,7 +291,7 @@ namespace entapExecute {
             } // END WHILE
 
             // *************************** Exit Stuff ********************** //
-            pQUERY_DATA->final_statistics(final_out_dir);
+            pQUERY_DATA->final_statistics(final_out_dir, output_types);
            // pFileSystem->directory_iterate(FileSystem::FILE_ITER_DELETE_EMPTY, mOutpath);   // Delete empty files
             SAFE_DELETE(pQUERY_DATA);
             SAFE_DELETE(pGraphing_Manager);

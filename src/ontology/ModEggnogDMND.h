@@ -74,6 +74,9 @@ private:
     const std::string GRAPH_EGG_TAX_BAR_TXT   = "eggnog_tax_scope.txt";
     const std::string EGG_ANNOT_RESULTS       = "annotation_results";
     const std::string EGG_ANNOT_STD           = "annotation_std";
+    const std::string EGG_OUT_UNANNOTATED     = "unannotated";
+    const std::string EGG_OUT_ANNOTATED       = "annotated";
+    const std::string EGG_DIAMOND_PREFIX   = "eggnog_";
     static constexpr uint16 COUNT_TOP_TAX_SCOPE = 10;
     static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
 

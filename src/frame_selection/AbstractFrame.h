@@ -92,6 +92,7 @@ protected:
     const uint16 MINIMUM_KEPT_SEQUENCES = 0;        // Minimum required kept sequences before continuing pipeline
 
     std::string mFinalFaaPath;      // Absolute path to FAA (protein) file produced from Frame Selection process
+    std::string mSoftwarePrefix;
 
 
     void frame_calculate_statistics();

@@ -116,6 +116,7 @@ private:
     const char FLAG_QUERYID_V2_END = ':';   // some risk in this if the user has '.p' in sequence
     // Transdecoder file naming conventions
     const std::string FILE_TRANSDECODER_SUFFIX = ".transdecoder";
+    const std::string TRANSDECODER_PREFIX = "transdecoder_";
 
     static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
     //**********************************************************

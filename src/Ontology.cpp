@@ -115,9 +115,6 @@ void Ontology::execute() {
             ptr->set_success_flags();
             ptr.reset();
         }
-
-        // Print final annotations
-        print_eggnog();
     } catch (ExceptionHandler &e) {
         ptr.reset();
         throw e;

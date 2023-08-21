@@ -63,7 +63,6 @@ private:
     EntapDataPtrs                   mEntapDataPtrs;
     std::vector<FileSystem::ENT_FILE_TYPES> mAlignmentFileTypes;
 
-    void print_eggnog();
     std::unique_ptr<AbstractOntology> spawn_object(uint16&);
 };
 

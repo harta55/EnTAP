@@ -535,21 +535,21 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     mpFileSystem->create_dir(figure_base);
 
     // Open contam best hit tsv file and print headers
-    std::string out_best_contams_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_CONTAM);
+    std::string out_best_contams_filepath = PATHS(base_path, DIAMOND_PREFIX + SIM_SEARCH_DATABASE_BEST_HITS_CONTAM);
     if (!mContaminateTaxons.empty()) {
         mpQueryData->start_alignment_files(out_best_contams_filepath, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
     }
 
     // Open best hits files
-    std::string out_best_hits_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS);
+    std::string out_best_hits_filepath = PATHS(base_path, DIAMOND_PREFIX + SIM_SEARCH_DATABASE_BEST_HITS);
     mpQueryData->start_alignment_files(out_best_hits_filepath, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
 
     // Open best hits files with no contaminants
-    std::string out_best_hits_no_contams = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM);
+    std::string out_best_hits_no_contams = PATHS(base_path, DIAMOND_PREFIX + SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM);
     mpQueryData->start_alignment_files(out_best_hits_no_contams, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
 
     // Open unselected hits, so every hit that was not the best hit (tsv)
-    std::string out_unselected_tsv  = PATHS(base_path, SIM_SEARCH_DATABASE_UNSELECTED);
+    std::string out_unselected_tsv  = PATHS(base_path, DIAMOND_PREFIX + SIM_SEARCH_DATABASE_UNSELECTED);
     std::vector<FileSystem::ENT_FILE_TYPES> unselected_files = {FileSystem::ENT_FILE_DELIM_TSV};
     mpQueryData->start_alignment_files(out_unselected_tsv, mEntapHeaders, mGoLevels, unselected_files);
 

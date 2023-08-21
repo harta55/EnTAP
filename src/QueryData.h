@@ -73,7 +73,7 @@ public:
 
     std::pair<uint16, uint16> calculate_N_vals(std::vector<uint16>&,uint64);
     std::string trim_sequence_header(std::string&, std::string);
-    void final_statistics(std::string& outpath);
+    void final_statistics(std::string& outpath, std::vector<FileSystem::ENT_FILE_TYPES> output_types);
 
     // Output routines
     bool start_alignment_files(const std::string &base_path, const std::vector<ENTAP_HEADERS> &headers, const vect_uint16_t &go_levels,
@@ -142,10 +142,11 @@ private:
     };
 
     // File printing constants
-    const std::string OUT_UNANNOTATED_NUCL = "final_unannotated.fnn";
-    const std::string OUT_UNANNOTATED_PROT = "final_unannotated.faa";
-    const std::string OUT_ANNOTATED_NUCL   = "final_annotated.fnn";
-    const std::string OUT_ANNOTATED_PROT   = "final_annotated.faa";
+    const std::string OUT_UNANNOTATED_FILENAME = "unannotated";
+    const std::string OUT_ANNOTATED_FILENAME = "annotated";
+    const std::string OUT_ANNOTATED_CONTAM_FILENAME   = "annotated_contam";
+    const std::string OUT_ANNOTATED_NO_CONTAM_FILENAME = "annotated_without_contam";
+    const std::string OUT_ENTAP_REPORT_FILENAME   = "full_entap";
     const std::string APPEND_GO_LEVEL_STR  = "_lvl";
     const std::string APPEND_ENRICH_GENE_ID_GO = "_enrich_geneid_go";
     const std::string APPEND_ENRICH_GENE_ID_LEN = "_enrich_geneid_len";

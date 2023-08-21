@@ -247,6 +247,8 @@ enum ENTAP_HEADERS {
     ENTAP_HEADER_COUNT
 };
 
+std::vector<ENTAP_HEADERS> get_entap_headers();
+
 struct EntapDataPtrs {
     EntapDatabase*   mpEntapDatabase;
     FileSystem*      mpFileSystem;

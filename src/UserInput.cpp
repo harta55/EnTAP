@@ -566,6 +566,11 @@ void UserInput::parse_future_inputs() {
                 break;
             }
 
+            case INPUT_FLAG_GO_LEVELS: {
+                mUserInputs[i].parsed_value = UserInput::DEFAULT_ONT_LEVELS;
+                break;
+            }
+
             default:
                 break;
         }

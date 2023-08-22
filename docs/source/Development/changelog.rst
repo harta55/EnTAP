@@ -8,7 +8,9 @@ EnTAP v1.1.1 (X X, 2023)
     * Added additional statistics/percentages at the end of the Log File
     * Added support for Tidyverse format (TSV's will now print 'NA' for empty data)
     * Added support for a new Gene Ontology term TSV output format. Similar to other formats, but combined into one file. More info can be seen with '--output--format' flag
-    * Removed the '--level' flag for Gene Ontology levels. This was not useful to users and caused confusion. Instead, all GO Terms will be printed by default
+    * Removed the '--level' flag for Gene Ontology levels. This was not useful to users and caused confusion. Instead, all GO Terms will be printed by default and gene ontology levels are removed from output
+    * Renamed and restructured many of the output in the 'final_results' directory 
+    * Fixed issue if trying to run EnTAP configuration locally to rebuild the EnTAP database. Users may have seen it fail during the Gene Ontology stage due to a change in formatting of the Gene Ontology database
 
 EnTAP Beta v0.10.9-beta (June 29, 2023)
 ------------------------------------------

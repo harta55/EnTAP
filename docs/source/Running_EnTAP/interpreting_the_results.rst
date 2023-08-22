@@ -110,40 +110,39 @@ Ontology InterProScan Header Information
     * Protein Description (description of database entry)
     * E Value (E-value of hit against protein database)
 
-Gene ontology terms are normalized to levels based on the input flag from the user (or the default of 0,1). A level of 0 within the filename indicates that ALL GO terms will be printed to the annotation file. Any other level will print that level and anything higher than it. Normalization of GO terms to levels is generally done before enrichment analysis and is based upon the hierarchical setup of the Gene Ontology database. More information can be found at GO_. 
 
-    * final_annotations.tsv
+    * full_entap.tsv
 
-        * As mentioned above, the 'X' represents the normalized GO terms for the annotation (GO terms of X level and higher will be printed)
-        * This .tsv file will have the headers as mentioned previously as a summary of the entire pipeline
+        * This .tsv file is essentially a final report from EnTAP that will have the headers as mentioned previously, summarizing the results of the entire pipeline
 
-    * final_annotated.faa / .fnn
+    * annotated.faa / .fnn / .tsv
 
-        * Nucleotide and protein fasta files containing all sequences that either hit databases through similarity searching or through the ontology stage
+        * Nucleotide/protein fasta files along with tsv file containing all sequences that either hit databases through similarity searching or through the ontology stage
 
-    * final_unannotated.faa / .fnn
+    * unannotated.faa / .fnn / .tsv
 
-        * Nucleotide and protein fasta files containing all sequences that did not hit either through similarity searching nor through the ontology stage
+        * Nucleotide/protein fasta files along with tsv file containing all sequences that did not hit either through similarity searching nor through the ontology stage
 
-    * final_annotations_contam.faa / .fnn / .tsv
+    * annotated_contam.faa / .fnn / .tsv
 
-        * Nucleotide, protein, and tab-deliminated files containing all annotated sequences that were flagged as a contaminant
+        * Nucleotide/protein fasta files along with tsv file containing all annotated sequences that were flagged as a contaminant
 
-    * final_annotations_no_contam.faa / .fnn / .tsv
+    * annotated_without_contam.faa / .fnn / .tsv
 
-        * Nucleotide, protein, and tab-deliminated files containing all annotated sequences that were not flagged as a contaminant
+        * Nucleotide/protein fasta files along with tsv file containing all annotated sequences that were not flagged as a contaminant
 
-    * final_annotations_enrich_geneid_go.tsv
+    * x_enrich_geneid_go.tsv
 
         * Tab-deliminated file that can be used for Gene Enrichment
         * First column contains the gene ID and second column contains the Gene Ontology term corresponding to the gene ID
 
-    * final_annotations_enrich_geneid_len.tsv
+    * x_enrich_geneid_len.tsv
 
         * Tab-deliminated file that can be used for Gene Enrichment
         * First column contains the gene ID and second columns contains the effective length from Expression Analysis. This file will not be printed if Expression Analysis has not been ran
+        * Note: the Length column will not be printed when Expression Filtering has not been performed
 
-    * final_annotations_gene_ontology_terms.tsv
+    * x_gene_ontology_terms.tsv
 
         * Tab-deliminated file that can be used for Gene Enrichment
         * Columns are as follows: Sequence ID, Gene Ontology Term ID, Gene Ontology Term, Gene Ontology Category, and Effective Length

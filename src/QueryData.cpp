@@ -449,6 +449,10 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
                            output_types.end());
     }
 
+    // Re-write the final output directory
+    mpFileSystem->delete_dir(outpath);
+    mpFileSystem->create_dir(outpath);
+
     // Start output files
     out_annotated_path = PATHS(outpath, OUT_ANNOTATED_FILENAME);
     start_alignment_files(out_annotated_path, headers, go_levels, output_types);
@@ -460,10 +464,6 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
     start_alignment_files(out_annotated_without_contam_path, headers, go_levels, output_types);
     out_entap_report_path = PATHS(outpath, out_entap_report_path);
     start_alignment_files(out_entap_report_path, headers, go_levels, std::vector<FileSystem::ENT_FILE_TYPES>(FileSystem::ENT_FILE_DELIM_TSV));
-
-    // Re-write the final output directory
-    mpFileSystem->delete_dir(outpath);
-    mpFileSystem->create_dir(outpath);
 
     for (auto &pair : *mpSequences) {
         count_total_sequences++;

@@ -91,4 +91,5 @@ std::vector<ENTAP_HEADERS> get_entap_headers() {
     for (int i=0; i< ENTAP_HEADER_COUNT; i++) {
         out.push_back(static_cast<ENTAP_HEADERS>(i));
     }
+    return out;
 }

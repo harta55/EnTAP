@@ -449,6 +449,15 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
                            output_types.end());
     }
 
+    // Setup annotated output formats (GO terms will not be printed if unnanotated). Will do this a different way later
+    std::vector<FileSystem::ENT_FILE_TYPES> unannotated_output_types = output_types;
+    unannotated_output_types.erase(std::remove(unannotated_output_types.begin(), unannotated_output_types.end(), FileSystem::ENT_FILE_GENE_ONTOLOGY_TERMS),
+                       unannotated_output_types.end());
+    unannotated_output_types.erase(std::remove(unannotated_output_types.begin(), unannotated_output_types.end(), FileSystem::ENT_FILE_GENE_ENRICH_EFF_LEN),
+                                   unannotated_output_types.end());
+    unannotated_output_types.erase(std::remove(unannotated_output_types.begin(), unannotated_output_types.end(), FileSystem::ENT_FILE_GENE_ENRICH_GO_TERM),
+                                   unannotated_output_types.end());
+
     // Re-write the final output directory
     mpFileSystem->delete_dir(outpath);
     mpFileSystem->create_dir(outpath);
@@ -457,12 +466,12 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
     out_annotated_path = PATHS(outpath, OUT_ANNOTATED_FILENAME);
     start_alignment_files(out_annotated_path, headers, go_levels, output_types);
     out_unannotated_path = PATHS(outpath, OUT_UNANNOTATED_FILENAME);
-    start_alignment_files(out_unannotated_path, headers, go_levels, output_types);
+    start_alignment_files(out_unannotated_path, headers, go_levels, unannotated_output_types);
     out_annotated_contam_path = PATHS(outpath, OUT_ANNOTATED_CONTAM_FILENAME);
     start_alignment_files(out_annotated_contam_path, headers, go_levels, output_types);
     out_annotated_without_contam_path = PATHS(outpath, OUT_ANNOTATED_NO_CONTAM_FILENAME);
     start_alignment_files(out_annotated_without_contam_path, headers, go_levels, output_types);
-    out_entap_report_path = PATHS(outpath, out_entap_report_path);
+    out_entap_report_path = PATHS(outpath, OUT_ENTAP_REPORT_FILENAME);
     start_alignment_files(out_entap_report_path, headers, go_levels, std::vector<FileSystem::ENT_FILE_TYPES>(FileSystem::ENT_FILE_DELIM_TSV));
 
     for (auto &pair : *mpSequences) {

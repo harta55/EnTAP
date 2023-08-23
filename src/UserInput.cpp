@@ -360,7 +360,7 @@ const uint16      UserInput::DEFAULT_TRANSDECODER_MIN_PROTEIN = 100;
 
 const std::string UserInput::TRANSDECODER_LONG_DEFAULT_EXE    = "TransDecoder.LongOrfs";
 const std::string UserInput::TRANSDECODER_PREDICT_DEFAULT_EXE = "TransDecoder.Predict";
-const std::string UserInput::DIAMOND_DEFAULT_EXE              = PATHS(FileSystem::get_exe_dir(),"/libs/diamond-0.9.9/bin/diamond");
+const std::string UserInput::DIAMOND_DEFAULT_EXE              = PATHS(FileSystem::get_exe_dir(),"/libs/diamond-v2.1.8/bin/diamond");
 const std::string UserInput::EGG_SQL_DB_FILENAME              = "eggnog.db";
 const std::string UserInput::EGG_DMND_FILENAME                = "eggnog_proteins.dmnd";
 const std::string UserInput::INTERPRO_DEF_EXE                 = "interproscan.sh";

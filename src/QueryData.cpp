@@ -589,7 +589,7 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
     }
     ss <<
        "\nTotals"   <<
-       "\n\tTotal Retained Sequences (After Filtering And/Or Frame Selection): " << count_total_kept_sequences <<
+       "\n\tTotal retained sequences (after filtering and/or frame selection): " << count_total_kept_sequences <<
        "\n\tTotal unique sequences annotated (similarity search alignments only): "      << count_sim_only      << " (" <<
             (((fp64) count_sim_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
        "\n\tTotal unique sequences annotated (gene family assignment only): "            << count_ontology_only << " (" <<

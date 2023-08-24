@@ -146,7 +146,7 @@ private:
     const std::string OUT_ANNOTATED_FILENAME = "annotated";
     const std::string OUT_ANNOTATED_CONTAM_FILENAME   = "annotated_contam";
     const std::string OUT_ANNOTATED_NO_CONTAM_FILENAME = "annotated_without_contam";
-    const std::string OUT_ENTAP_REPORT_FILENAME   = "full_entap";
+    const std::string OUT_ENTAP_REPORT_FILENAME   = "entap_results";
     const std::string APPEND_GO_LEVEL_STR  = "_lvl";
     const std::string APPEND_ENRICH_GENE_ID_GO = "_enrich_geneid_go";
     const std::string APPEND_ENRICH_GENE_ID_LEN = "_enrich_geneid_len";

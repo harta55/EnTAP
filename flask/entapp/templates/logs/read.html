@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}{{ super() }} - Log{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4">{{ log.dt().strftime("%c") }}</h1>
+    <div class="alert alert-info text-break">
+        {{ log.read().replace('\n','<br/>')|safe }}
+    </div>
+</div>
+{% endblock %}

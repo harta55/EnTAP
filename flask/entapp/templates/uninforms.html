@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% import "wtf.html" as wtf %}
+
+{% block title %}{{ super() }} - Uninformatives{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mt-4">Uninformatives</h1>
+    <p>
+        During sequence comparisons of known proteins, the ascribed function may include terms that indicate the annotation is uninformative (e.g. "protein of unknown function").  Use the interface below to specify words that will indicate if the matching protein annotation is uninformative and the match should be ignored.
+    </p>
+    {{ wtf.quick_form(form,url_for('UninformsView:add')) }}
+    <div class="card card-body bg-light mt-3">
+        <label>List of Uninformatives</label>
+        <table class="table table-striped">
+        <thead>
+            <tr>
+                <th style="width:5em;"></th>
+                <th>Name</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for uninform in uninforms %}
+                <tr>
+                    <td style="width:5em;"><a class="btn btn-danger btn-sm" href="{{ url_for('UninformsView:remove',name=uninform) }}">Remove</a></td>
+                    <td class="align-middle">{{ uninform }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

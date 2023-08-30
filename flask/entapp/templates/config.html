@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% import "wtf.html" as wtf %}
+
+{% block title %}{{ super() }} - Configuration{% endblock %}
+
+{% block content %}
+<div class="container mb-4">
+    <h1 class="mt-4">Configuration</h1>
+    <p>
+        Before running EnTAP you can set input parameters and data sets that EnTAP needs to run. <a data-bs-toggle="collapse" href="#learnMore" role="button" aria-expanded="false" aria-controls="learnMore">Learn more.</a>
+    </p>
+    <div class="collapse" id="learnMore">
+        <div class="card card-body">
+            <p>Configuration is divided into three sections, all available through the Configuration menu above.  On this page you can specify parameter settings for EnTAP and its processes. Click the 'Configuration' > 'Databases' menu item to provide a list of protein FASTA files (databases) to which you want to use for comparison. Click the 'Configuration' > 'Uninformatives' menu item to specify functional phrases to avoid. See the EnTAP documentation for detailed information about these settings.</p>
+        </div>
+    </div>
+    <form id="configForm" action="{{ url_for('ConfigView:update') }}" method="POST">
+    {{ form.hidden_tag() }}
+    <h4 class="mt-3">General</h4>
+    {{ wtf.quick_field(form.outputFormat) }}
+    {{ wtf.quick_field(form.threadNum) }}
+    <h4 class="mt-3">Expression Analysis</h4>
+    {{ wtf.quick_field(form.fpkm) }}
+    {{ wtf.quick_field(form.singleEnd) }}
+    <h4 class="mt-3">Frame Selection</h4>
+    {{ wtf.quick_field(form.seqComplete) }}
+    {{ wtf.quick_field(form.minProteinLength) }}
+    {{ wtf.quick_field(form.refineStarts) }}
+    <h4 class="mt-3">Similarity Search</h4>
+    <div class="mt-3">
+        <label for="{{ form.taxonomy.id }}" class="form-label">{{ form.taxonomy.label.text }}</label>
+        {{ form.taxonomy(class_='form-control') }}
+        <div id="taxworking" class="mt-2 d-none text-warning">
+            <div class="spinner-border" role="status"></div>
+            <span>Checking taxonomy, please wait...</span>
+        </div>
+        <div id="taxfeedback" class="invalid-feedback d-none">The taxonomy name entered is invalid.</div>
+        <div class="form-text">{{ form.taxonomy.description }}</div>
+    </div>
+    {{ wtf.quick_field(form.queryCoverage) }}
+    {{ wtf.quick_field(form.targetCoverage) }}
+    {{ wtf.quick_field(form.eValue) }}
+    {{ wtf.quick_field(form.submit) }}
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+    $("#taxonomy").change(function(){
+        $("#taxonomy").removeClass("is-invalid");
+        $("#taxworking").removeClass("d-none");
+        $("#taxfeedback").addClass("d-none");
+        val = $("#taxonomy").val();
+        if (!val)
+        {
+            $("#taxworking").addClass("d-none");
+            return;
+        }
+        $.get("/config/taxonomy/"+encodeURIComponent(val),function(data){
+            obj = JSON.parse(data);
+            $("#taxworking").addClass("d-none");
+            if (!obj.valid)
+            {
+                $("#taxonomy").addClass("is-invalid");
+                $("#taxfeedback").removeClass("d-none");
+            }
+        });
+    });
+    $("#configForm").submit(function(){
+        return (!$("#taxonomy").hasClass("is-invalid") && $("#taxworking").hasClass("d-none"));
+    });
+});
+</script>
+{% endblock %}

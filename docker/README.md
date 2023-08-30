@@ -1,5 +1,5 @@
 # EnTAP Docker image Instructions
-The following provides instructions for building and using the EnTAP docker image.
+The following provides instructions for building and using the EnTAP docker image. 
 
 ## Build and Publish the Docker Image
 Within this directory, run the `make` command for the version of EnTAP that you want to be build.

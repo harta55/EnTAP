@@ -43,7 +43,7 @@ public:
         std::string         std_out_path;
 
         bool                blastp;
-        bool                more_sensitive;
+        bool                very_sensitive;
 
         uint16              threads;
         fp64                eval;

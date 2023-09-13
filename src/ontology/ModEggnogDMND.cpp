@@ -111,7 +111,7 @@ void ModEggnogDMND::execute() {
             blast +
             " -d " + mEggnogDbDiamond +
             " --top 1"             +
-            " --more-sensitive"    +
+            " --very-sensitive"    +
             " -q "                 + mInputTranscriptome   +
             " -o "                 + mOutHIts  +
             " -p "                 + std::to_string(mThreads) +

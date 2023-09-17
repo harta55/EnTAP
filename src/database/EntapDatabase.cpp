@@ -384,6 +384,14 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
         return ERR_DATA_GO_DOWNLOAD;
     }
 
+    // If we are creating SQL database, add GO table
+    if (type == ENTAP_SQL) {
+        if (!create_sql_table(ENTAP_GENE_ONTOLOGY)) {
+            // error creating table
+            return ERR_DATA_SQL_GO_CREATE_TABLE;
+        }
+    }
+
     /* !!! Below is the new Gene Ontology format as of >2018. This is version '1.2'. There is some data before
      *      the [Term] string that can be ignored
      * --------------------------------------------------------------------------------------------------------

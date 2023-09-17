@@ -10,8 +10,8 @@
 .. _TransDecoder: https://github.com/TransDecoder/TransDecoder/releases
 .. _NCBI Taxonomy: https://www.ncbi.nlm.nih.gov/taxonomy
 
-Installation
-================
+Installation from Source Code
+=======================
 
 EnTAP is packaged with all of the software necessary to fully annotate a set of transcripts.  It is optimized to allow a single-command execution for all steps in the pathway, including paramterization by the user.  EnTAP does not have a graphical user interface but it does generate visual summaries for the user at each stage as well as detailed summary files and logs. EnTAP must be installed and configured in order to begin annotating! A :ref:`test<test-label>` dataset comes with EnTAP to ensure it has been configured properly.
 Before full EnTAP installation, dependencies must be checked to see if they are included in your system (many are by default) and the accompanying pipeline software will need to be installed (unless already present on the system).
@@ -184,3 +184,6 @@ Or to install to a destination directory:
     make install
 
 If you receive no errors, please move on to the last stage in installation, configuration.
+
+Installation from Dockerfile
+========================

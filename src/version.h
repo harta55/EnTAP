@@ -33,9 +33,9 @@
 #define LICENSE_YEAR_END        "2023"
 
 // When changing Version ensure the EnTAP Database version/FTP is up-to-date (EntapDatabase.h)
-#define MAJOR_VERSION     0
-#define MINOR_VERSION     10
-#define BUILD_VERSION     10
+#define MAJOR_VERSION     1
+#define MINOR_VERSION     0
+#define BUILD_VERSION     0
 
 #define TO_STR2(x)             #x
 #define TO_STR(x)              TO_STR2(x)

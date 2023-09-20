@@ -9,6 +9,7 @@ RUN apt-get update && \
         wget \
         unzip \
         gnupg \
+		git \
         default-jre \
         python3-pip \
         cmake \
@@ -27,6 +28,23 @@ RUN apt-get update && \
 RUN ln -s /usr/bin/python3 /usr/bin/python && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
+	
+# Install Oracle Java 8 which is used by InterProScan. Rather than use
+# the apt-add-repository program (which installs a lot of packages) we will
+# manually add the repository.
+RUN echo "deb http://ppa.launchpad.net/openjdk-r/ppa/ubuntu xenial main" >> /etc/apt/sources.list \
+&& apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 86F44E2A \
+&& apt-get update \
+&& apt-get -y install openjdk-8-jdk \
+&& update-alternatives --config java
+
+# Install InterProScan
+RUN wget ftp://ftp.ebi.ac.uk/pub/software/unix/iprscan/5/5.64-96.0/alt/interproscan-core-5.64-96.0.tar.gz \
+&& tar -zxvf interproscan-core-5.64-96.0.tar.gz \
+&& mv interproscan-5.64-96.0 /usr/local/interproscan
+
+# Install IPRScan dependency
+RUN apt-get install -y elfutils
 
 # Download Diamond
 RUN wget https://github.com/bbuchfink/diamond/releases/download/v2.1.8/diamond-linux64.tar.gz && \

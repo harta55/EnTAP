@@ -75,12 +75,12 @@ GraphingManager::GraphingManager(std::string path, FileSystem *fileSystem) {
 
 GraphingManager::~GraphingManager() {
     FS_dprint("Killing Object - GraphingManager");
+    std::vector<std::string> erase_list;
     for (auto &pair : mGraphData) {
         if (pair.second != nullptr) {
             pair.second->close_graphing_file();
             SAFE_DELETE(pair.second);
         }
-        mGraphData.erase(pair.first);
     }
 }
 
@@ -195,19 +195,17 @@ bool GraphingManager::add_datapoint(std::string &path, std::list<std::string> li
 void GraphingManager::graph_data(std::string &path) {
     EntapGraphBase *graph_base=nullptr;
 
-    // If graphing enabled
-    if (mGraphingEnabled) {
-        // Yes, graphing is enabled
-        if (mGraphData.find(path) != mGraphData.end()) {
-            graph_base = mGraphData[path];
-        }
+    if (mGraphData.find(path) != mGraphData.end()) {
+        graph_base = mGraphData[path];
+    }
 
-        if (graph_base != nullptr) {
+    if (graph_base != nullptr) {
+        if (mGraphingEnabled) {
             graph(&graph_base->getMGraphingData());
-            graph_base->close_graphing_file();
-            SAFE_DELETE(graph_base);
-            mGraphData.erase(path);
         }
+        graph_base->close_graphing_file();
+        SAFE_DELETE(graph_base);
+        mGraphData.erase(path);
     }
 }
 

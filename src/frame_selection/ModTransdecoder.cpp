@@ -63,6 +63,7 @@ ModTransdecoder::ModTransdecoder(std::string &execution_stage_path, std::string 
     mTransdecoderPredictExe  = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_TRANS_PREDICT_EXE);
     mIsNoRefineStarts        = mpUserInput->has_input(INPUT_FLAG_TRANS_NO_REFINE_STARTS);
     mExePath = mTransdecoderLongOrfsExe;
+    mSoftwarePrefix = TRANSDECODER_PREFIX;
 
     mMinProteinLength = mpUserInput->get_user_input<ent_input_uint_t >(INPUT_FLAG_TRANS_MIN_PROTEIN);
 
@@ -526,8 +527,8 @@ void ModTransdecoder::parse_transdecoder_fasta_header(std::string &seq_id, std::
         //  format in the .pep file, this must be parsed differently:
         //      >TRINITY_DN0_c1_g1_i3.p1 TRINITY_DN0_c1_g1~~TRINITY_DN0_c1_g1_i3.p1
         //      ORF type:internal len:121 (-),score=46.75 TRINITY_DN0_c1_g1_i3:3-362(-)
-        uint64 temp = line.find(FLAG_SCORE_BEGIN);
-        ind1 = line.find(FLAG_QUERYID_V2_BEGIN, temp);
+        // Looking for last occurrence of whitespace -> colon
+        ind1 = line.find_last_of(FLAG_QUERYID_V2_BEGIN);
         ind2 = line.find(FLAG_QUERYID_V2_END, ind1);
         if (ind1 == std::string::npos || ind2 == std::string::npos) {
             // If even this doesnt work, throw error

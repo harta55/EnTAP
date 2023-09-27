@@ -2,6 +2,19 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.8-beta
 
+EnTAP v1.0.0 (September 26, 2023)
+------------------------------------------
+    * Updated RSEM (v1.3.3), TransDecoder (v5.7.1), and DIAMOND (v2.1.8) libraries in EnTAP repository. EnTAP is now compatible with these versions
+	* Added new test data (under 'test_data') directory in the EnTAP repository. This should work with latest versions of software being used by EnTAP. See docs for how to run.
+    * Added additional statistics/percentages at the end of the Log File
+    * Added support for Tidyverse format (TSV's will now print 'NA' for empty data)
+	* Added Dockerfile to EnTAP repository
+    * Added support for a new Gene Ontology term TSV output format. Similar to other formats, but combined into one file. More info can be seen with '--output--format' flag
+	* Changed DIAMOND runs (during Ontology and during Similarity Searching) to use 'very-sensitive' from 'more-sensitive'. This should give more alignments, but may take longer to execute now
+    * Removed the '--level' flag for Gene Ontology levels. This was not useful to users and caused confusion. Instead, all GO Terms will be printed by default and gene ontology levels are removed from output
+    * Renamed and restructured many of the output in the 'final_results' directory for better clarity
+    * Fixed issue if trying to run EnTAP configuration locally to rebuild the EnTAP database. Users may have seen it fail during the Gene Ontology stage due to a change in formatting of the Gene Ontology database
+
 EnTAP Beta v0.10.9-beta (June 29, 2023)
 ------------------------------------------
     * Optimizations made to similarity searching using the EnTAP SQL database. Should improve speed

@@ -97,6 +97,9 @@ private:
     const std::string INFORMATIVE_FLAG                           = "Informative";
     const std::string NO_HIT_FLAG                                = "No Hits";
 
+    // Software Prefix
+    const std::string DIAMOND_PREFIX                             = "diamond_";  // Prefix to be used when printing out files
+
     // Terminal Command EntapDefaults
     const uint16 CMD_DEFAULT_TOP_ALIGN  = 3;
     const std::string CMD_DEFAULT_OUTPUT_FORMAT = "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp stitle";
@@ -104,7 +107,7 @@ private:
     // Terminal Commands (as of DIAMOND v0.9.9)
     const std::string CMD_QUERY_COVERAGE   = "--query-cover";     // Specify minimum query coverage for alignment
     const std::string CMD_SUBJECT_COVERAGE = "--subject-cover";   // Specify minimum target coverage for alignment
-    const std::string CMD_MORE_SENSITIVE   = "--more-sensitive";  // Specify 'more sensitive' run that will take longer
+    const std::string CMD_MORE_SENSITIVE   = "--very-sensitive";  // Specify 'very sensitive' run that will take longer
     const std::string CMD_EVALUE           = "--evalue";          // Specify highest e-value to accept alignments for
     const std::string CMD_BLASTX           = "blastx";
     const std::string CMD_BLASTP           = "blastp";

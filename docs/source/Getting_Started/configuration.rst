@@ -17,14 +17,14 @@ Why is this important? EnTAP relies on several accompanying software packages an
 
 When a user is trying to execute EnTAP, they must specify the path to this ini file with the |flag_path| flag. By default, the ini file comes with some preset paths based on the installation directory. However, these should be checked for validity. If the ini file is not specified and there is not one in the working directory, an empty |config_file| will be generated with the following presets for execution paths. The ini file contains many other commands, but only the execution paths are required for configuration (specifically DIAMOND), so I will get to the others later on. 
 
-    * diamond-exe=/EnTAP/libs/diamond-0.9.9/bin/diamond
+    * diamond-exe=/EnTAP/libs/diamond-2.1.8/bin/diamond
     * rsem-sam-validator=/EnTAP/libs/RSEM-1.3.0/rsem-sam-validator
     * rsem-calculate-expression=/EnTAP/libs/RSEM-1.3.3/rsem-calculate-expression
     * rsem-prepare-reference=/EnTAP/libs/RSEM-1.3.3/rsem-prepare-reference
     * rsem-convert-sam-for-rsem=/EnTAP/libs/RSEM-1.3.3/convert-sam-for-rsem
     * genemarkst-exe=/EnTAP/libs/gmst_linux_64/gmst.pl
-    * transdecoder-long-exe=EnTAP/libs/TransDecoder-v5.3.0/TransDecoder.LongOrfs
-    * transdecoder-predict-exe=EnTAP/libs/TransDecoder-v5.3.0/TransDecoder.Predict
+    * transdecoder-long-exe=EnTAP/libs/TransDecoder-v5.7.1/TransDecoder.LongOrfs
+    * transdecoder-predict-exe=EnTAP/libs/TransDecoder-v5.7.1/TransDecoder.Predict
     * interpro_exe_path=interproscan.sh
 
 If something is globally installed, such as "interproscan-exe" above, put how you'd normally run the software after the '='. As an example, running DIAMOND through a global installation may simply be "diamond". The Ini File line for DIAMOND will simply read:

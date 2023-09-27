@@ -58,14 +58,23 @@ public:
 
     typedef enum {
         ENT_FILE_UNUSED=0,
-        ENT_FILE_DELIM_TSV,
-        ENT_FILE_DELIM_CSV,
-        ENT_FILE_FASTA_FAA,
-        ENT_FILE_FASTA_FNN,
+        ENT_FILE_DELIM_TSV,                     // Tab delimited
+        ENT_FILE_DELIM_CSV,                     // Comma delimited
+        ENT_FILE_FASTA_FAA,                     // Traditional FASTA file for amino acids
+        ENT_FILE_FASTA_FNN,                     // Trasidtional FASTA file for nucleotides
         ENT_FILE_GENE_ENRICH_EFF_LEN,           // Gene enrichment format for gene ontology
-                                                // gene ID and effective length, tab delim
+                                                //  gene ID and effective length, tab delim
         ENT_FILE_GENE_ENRICH_GO_TERM,           // Gene ID and Go terms, tab delim
-                                                // new row for every go term for each gene
+                                                //  new row for every go term for each gene
+        /*
+         * ENT_FILE_GENE_ONTOLOGY_TERMS
+         *  Essentially a combined format to the enrichment ones above
+         *  Tab delimited format:
+         *  Query Sequence | GO ID | GO Name | GO Category | Effective Length (from Expression filtering)
+         *  Every new GO term has a new line, so a particular Query Sequence may have a bunch of lines
+         *
+         * */
+        ENT_FILE_GENE_ONTOLOGY_TERMS,
         ENT_FILE_OUTPUT_FORMAT_MAX,     // File types above this are supported for data output
 
         ENT_FILE_XML,                   // Not yet supported for output format
@@ -159,6 +168,7 @@ public:
     static const std::string EXT_LST;
     static const std::string EXT_PEP;
     static const std::string EXT_CDS;
+    static const std::string TIDYVERSE_TSV_NULL;    // String to print in TSV when data is not present to support Tidyverse format
 
     static const char        DELIM_TSV;
     static const char        DELIM_CSV;

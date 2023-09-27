@@ -54,6 +54,7 @@ const std::string FileSystem::EXT_CSV  = ".csv";
 const std::string FileSystem::EXT_LST  = ".lst";
 const std::string FileSystem::EXT_CDS  = ".cds";
 const std::string FileSystem::EXT_PEP  = ".pep";
+const std::string FileSystem:: TIDYVERSE_TSV_NULL = "NA";
 
 const char FileSystem::DELIM_TSV = '\t';
 const char FileSystem::DELIM_CSV = ',';
@@ -970,6 +971,7 @@ std::string FileSystem::get_extension(FileSystem::ENT_FILE_TYPES type) {
         case ENT_FILE_DELIM_TSV:
         case ENT_FILE_GENE_ENRICH_GO_TERM:
         case ENT_FILE_GENE_ENRICH_EFF_LEN:
+        case ENT_FILE_GENE_ONTOLOGY_TERMS:
             return EXT_TSV;
 
         case ENT_FILE_DELIM_CSV:

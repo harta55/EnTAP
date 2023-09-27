@@ -10,8 +10,8 @@
 .. _TransDecoder: https://github.com/TransDecoder/TransDecoder/releases
 .. _NCBI Taxonomy: https://www.ncbi.nlm.nih.gov/taxonomy
 
-Installation
-================
+Installation from Source Code
+=======================
 
 EnTAP is packaged with all of the software necessary to fully annotate a set of transcripts.  It is optimized to allow a single-command execution for all steps in the pathway, including paramterization by the user.  EnTAP does not have a graphical user interface but it does generate visual summaries for the user at each stage as well as detailed summary files and logs. EnTAP must be installed and configured in order to begin annotating! A :ref:`test<test-label>` dataset comes with EnTAP to ensure it has been configured properly.
 Before full EnTAP installation, dependencies must be checked to see if they are included in your system (many are by default) and the accompanying pipeline software will need to be installed (unless already present on the system).
@@ -75,16 +75,23 @@ Software:
     * RSEM_ (Expression Filtering with alignment file): version 1.3.3 packaged with EnTAP
 
         * Version 1.3.0
+		* Version 1.3.3
 
-    * TransDecoder_ (Frame Selection): version 5.3.0 packaged with EnTAP
+    * TransDecoder_ (Frame Selection): version 5.7.1 packaged with EnTAP
+	
+	    * Version 5.3.0
+		* Version 5.7.1
 
     * GeneMarkS-T_ (Frame Selection): version 5.1 must be installed separately (if not using TransDecoder)
+	
+	    * Version 5.1
 
-    * DIAMOND_ (Similarity Search): version 0.9.9 packaged with EnTAP
+    * DIAMOND_ (Similarity Search): version 2.1.8 packaged with EnTAP
 
         * Version 0.8.31
         * Version 0.9.19
         * Version 0.9.9
+		* Version 2.1.8
 
     * InterProScan_ (Protein Databases): version 5.19 must be installed separately
 
@@ -177,3 +184,52 @@ Or to install to a destination directory:
     make install
 
 If you receive no errors, please move on to the last stage in installation, configuration.
+
+Installation from Dockerfile
+==============================
+
+If you'd prefer to use the Docker image to execute EnTAP, this can be done through :ref:`Docker<docker-label>` or :ref:`Singularity<singularity-label>`.
+
+.. _docker-label:
+
+Docker
+----------------------
+
+The Docker image can either be created locally from the Dockerfile, or pulled from Dockerhub. 
+
+To download the latest image from Dockerhub:
+
+.. code-block :: bash
+
+    docker image pull plantgenomics/entap:latest
+	
+To download a specific version of the EnTAP Docker image:
+
+.. code-block :: bash
+
+	docker image pull plantgenomics/entap:vX.Y.Z
+
+.. _singularity-label:
+
+The list of arguments that can be ran through the image will be described in the following pages.
+
+.. note:: Pay special attention to the entap_config.ini file located under /docker/entap_config.ini in the repo. The software execution paths here are specific to the Docker image paths and should not be changed!
+
+Singularity
+----------------------
+
+To download the latest Docker image through Singularity:
+
+.. code-block :: bash
+
+    singularity pull entap.sif docker://plantgenomics/entap:latest
+
+To download a specific version of the EnTAP Docker image through Singularity:
+
+.. code-block :: bash
+
+    singularity pull entap.sif docker://plantgenomics/entap:vX.Y.Z
+	
+The list of arguments that can be ran through the image will be described in the following pages.	
+
+.. note:: Pay special attention to the entap_config.ini file located under /docker/entap_config.ini in the repo. The software execution paths here are specific to the Docker image paths and should not be changed!

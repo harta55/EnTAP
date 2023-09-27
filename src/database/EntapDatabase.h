@@ -383,9 +383,7 @@ private:
 
     // FTP Paths
     const std::string FTP_GO_DATABASE =
-            "http://archive.geneontology.org/latest-full/go_monthly-termdb-tables.tar.gz";
-//    const std::string FTP_GO_DATABASE =
-//            "http://archive.geneontology.org/latest-termdb/go_daily-termdb-tables.tar.gz";
+            "http://current.geneontology.org/ontology/go.obo";
     const std::string FTP_NCBI_TAX_DUMP_TARGZ =
             "ftp://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump.tar.gz";
     const std::string FTP_ENTAP_DATABASE_SQL    =
@@ -437,15 +435,7 @@ private:
     const std::string SQL_TABLE_VERSION_COL_VER  = "VERSION";
 
     // Gene Ontology constants
-    const std::string GO_BIOLOGICAL_LVL = "6679";
-    const std::string GO_MOLECULAR_LVL  = "2892";
-    const std::string GO_CELLULAR_LVL   = "311";
-    const std::string GO_TERM_FILE      = "term.txt";
-    const std::string GO_GRAPH_FILE     = "graph_path.txt";
-//    const std::string GO_TERMDB_FILE    = "go_daily-termdb-tables.tar.gz";
-    const std::string GO_TERMDB_FILE    = "go_monthly-termdb-tables.tar.gz";
-//    const std::string GO_TERMDB_DIR     = "go_daily-termdb-tables/";
-    const std::string GO_TERMDB_DIR     = "go_monthly-termdb-tables/";
+    const std::string GO_TERMDB_FILE    = "go.obo";
 
     // UniProt mapping constants
     const std::string UNIPROT_DAT_FILE_GZ            = "uniprot_sprot.dat.gz";

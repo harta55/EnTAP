@@ -109,19 +109,20 @@ const uint16 UserInput::DEFAULT_THREADS                 = 1;
 #define CMD_NOCHECK         "no-check"
 
 #define CMD_OUTPUT_FORMAT   "output-format"
-#define DESC_OUTPUT_FORMAT  "Specify the output format for the processed alignments."   \
+#define DESC_OUTPUT_FORMAT  "Specify the output format for the processed alignments. EnTAP will generally try to output these " \
+                            "unless the data is unavailable. "                                                        \
                             "Multiple flags can be specified:\n"                          \
                             "    1. TSV Format (default)\n"                             \
                             "    2. CSV Format\n"                                       \
                             "    3. FASTA Amino Acid (default)\n"                       \
                             "    4. FASTA Nucleotide (default)\n"                       \
-                            "    5. Gene Enrichment Sequence ID vs. Effective Length TSV (default)\n"\
-                            "    6. Gene Enrichment Sequence ID vs. GO Term TSV (default)"
+                            "    5. Gene Enrichment Sequence ID vs. Effective Length TSV\n"\
+                            "    6. Gene Enrichment Sequence ID vs. GO Term TSV\n"         \
+                            "    7. Gene Ontology Terms TSV (default)"
 const vect_uint16_t UserInput::DEFAULT_OUT_FORMAT       =vect_uint16_t{FileSystem::ENT_FILE_DELIM_TSV,
                                                                        FileSystem::ENT_FILE_FASTA_FAA,
                                                                        FileSystem::ENT_FILE_FASTA_FNN,
-                                                                       FileSystem::ENT_FILE_GENE_ENRICH_EFF_LEN,
-                                                                       FileSystem::ENT_FILE_GENE_ENRICH_GO_TERM};
+                                                                       FileSystem::ENT_FILE_GENE_ONTOLOGY_TERMS};
 
 /* -------------------- EnTAP API Commands -----------------------*/
 #define CMD_ENTAP_API_TAXON "api-taxon"
@@ -352,14 +353,14 @@ const std::string UserInput::ENTAP_INI_FILENAME         = "entap_config.ini";
 const vect_uint16_t UserInput::DEFAULT_DATA_TYPE        = vect_uint16_t{EntapDatabase::ENTAP_SERIALIZED};
 const std::string UserInput::DEFAULT_STATE              ="+";
 const uint16 UserInput::DEFAULT_FRAME_SELECTION         = FRAME_TRANSDECODER;
-const vect_uint16_t UserInput::DEFAULT_ONT_LEVELS       =vect_uint16_t{0,1};
+const vect_uint16_t UserInput::DEFAULT_ONT_LEVELS       =vect_uint16_t{0};
 const vect_uint16_t UserInput::DEFAULT_ONTOLOGY         =vect_uint16_t{ONT_EGGNOG_DMND};
 
 const uint16      UserInput::DEFAULT_TRANSDECODER_MIN_PROTEIN = 100;
 
 const std::string UserInput::TRANSDECODER_LONG_DEFAULT_EXE    = "TransDecoder.LongOrfs";
 const std::string UserInput::TRANSDECODER_PREDICT_DEFAULT_EXE = "TransDecoder.Predict";
-const std::string UserInput::DIAMOND_DEFAULT_EXE              = PATHS(FileSystem::get_exe_dir(),"/libs/diamond-0.9.9/bin/diamond");
+const std::string UserInput::DIAMOND_DEFAULT_EXE              = PATHS(FileSystem::get_exe_dir(),"/libs/diamond-v2.1.8/bin/diamond");
 const std::string UserInput::EGG_SQL_DB_FILENAME              = "eggnog.db";
 const std::string UserInput::EGG_DMND_FILENAME                = "eggnog_proteins.dmnd";
 const std::string UserInput::INTERPRO_DEF_EXE                 = "interproscan.sh";
@@ -466,7 +467,7 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
 
 /* Ontology Commands */
         {INI_ONTOLOGY  ,CMD_ONTOLOGY_FLAG        ,ENTAP_INI_NULL  ,DESC_ONTOLOGY_FLAG         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONTOLOGY       ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
-        {INI_ONTOLOGY  ,CMD_GO_LEVELS            ,ENTAP_INI_NULL  ,DESC_ONT_LEVELS            ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONT_LEVELS     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_ONTOLOGY  ,CMD_GO_LEVELS            ,ENTAP_INI_NULL  ,DESC_ONT_LEVELS            ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONT_LEVELS     ,ENT_INPUT_FUTURE, ENTAP_INI_NULL_VAL},
 
 /* Ontology - EggNOG Commands */
         {INI_ONT_EGGNOG,CMD_EGGNOG_SQL           ,ENTAP_INI_NULL  ,DESC_EGGNOG_SQL            ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_EGG_SQL_DB_INI ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
@@ -562,6 +563,11 @@ void UserInput::parse_future_inputs() {
                 std::generate(header_vect.begin(), header_vect.end(),
                               [&] { return static_cast<ENTAP_HEADERS>(++n); });
                 mUserInputs[i].parsed_value = header_vect;
+                break;
+            }
+
+            case INPUT_FLAG_GO_LEVELS: {
+                mUserInputs[i].parsed_value = UserInput::DEFAULT_ONT_LEVELS;
                 break;
             }
 
@@ -968,7 +974,7 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key) {
             // Ensure it is a command line argument
             if (entry->input_type == ENT_COMMAND_LINE) {
 
-                if (entry->category == INI_ENTAP_API) {
+                if ((entry->category == INI_ENTAP_API) && (arg->isSet())) {
                     mHasAPICmd = true;
                 }
 

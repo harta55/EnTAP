@@ -335,8 +335,11 @@ void QueryData::set_input_type(std::string &in) {
     FS_dprint("Transcriptome Lines - END");
     if (deviations > NUCLEO_DEV) {
         DATA_FLAG_SET(IS_PROTEIN);
+        mTranscriptTypeStr = PROTEIN_FLAG;
+    } else{
+        DATA_FLAG_SET(IS_NUCLEOTIDE);
+        mTranscriptTypeStr = NUCLEO_FLAG;
     }
-    DATA_FLAG_GET(IS_PROTEIN) ? mTranscriptTypeStr = PROTEIN_FLAG : mTranscriptTypeStr = NUCLEO_FLAG;
     in_file.close();
 }
 
@@ -390,17 +393,19 @@ std::pair<uint16, uint16> QueryData::calculate_N_vals
  *
  * =====================================================================
  */
-void QueryData::final_statistics(std::string &outpath) {
+void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::ENT_FILE_TYPES> output_types) {
     FS_dprint("Pipeline finished! Calculating final statistics...");
 
     std::stringstream      ss;
     uint32                 count_total_sequences=0;
+    uint32                 count_total_kept_sequences=0;
     uint32                 count_exp_kept=0;
     uint32                 count_exp_reject=0;
     uint32                 count_frame_kept=0;
     uint32                 count_frame_rejected=0;
     uint32                 count_sim_hits=0;
     uint32                 count_sim_no_hits=0;
+    uint32                 count_sim_contam=0;          // Unique alignments flagged as a contaminant
     uint32                 count_ontology=0;
     uint32                 count_no_ontology=0;
     uint32                 count_one_go=0;
@@ -409,101 +414,154 @@ void QueryData::final_statistics(std::string &outpath) {
     uint32                 count_ontology_only=0;
     uint32                 count_TOTAL_ann=0;
     uint32                 count_TOTAL_unann=0;
-    std::string            out_unannotated_nucl_path;
-    std::string            out_unannotated_prot_path;
-    std::string            out_annotated_nucl_path;
-    std::string            out_annotated_prot_path;
+    uint32                 count_TOTAL_unann_kept=0;    // Total sequences unannotated if kept after expression/frame selection
+
+    // output files
+    std::string            out_unannotated_path;
+    std::string            out_annotated_path;
+    std::string            out_annotated_contam_path;
+    std::string            out_annotated_without_contam_path;
+    std::string            out_entap_report_path;
+
     std::string            out_msg;
     bool                   is_exp_kept;
     bool                   is_prot;
-    bool                   is_hit;
+    bool                   is_frame_kept;
+    bool                   is_sim_hit;
     bool                   is_ontology;
     bool                   is_one_go;
     bool                   is_one_kegg;
     ent_input_multi_int_t  ontology_flags;
+    ent_input_multi_int_t  go_levels;
+    std::vector<ENTAP_HEADERS> headers;
 
     ontology_flags = mpUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_ONTOLOGY);
+    go_levels      = mpUserInput->get_user_input<ent_input_multi_int_t >(INPUT_FLAG_GO_LEVELS);
+    headers        = get_entap_headers();
 
-    out_unannotated_nucl_path = PATHS(outpath, OUT_UNANNOTATED_NUCL);
-    out_unannotated_prot_path = PATHS(outpath, OUT_UNANNOTATED_PROT);
-    out_annotated_nucl_path   = PATHS(outpath, OUT_ANNOTATED_NUCL);
-    out_annotated_prot_path   = PATHS(outpath, OUT_ANNOTATED_PROT);
+    // Check if our transcriptome data matches the output formats
+    if (!DATA_FLAG_GET(QueryData::IS_NUCLEOTIDE)) {
+        output_types.erase(std::remove(output_types.begin(), output_types.end(), FileSystem::ENT_FILE_FASTA_FNN),
+                           output_types.end());
+    }
+    if (!DATA_FLAG_GET(QueryData::IS_PROTEIN)) {
+        output_types.erase(std::remove(output_types.begin(), output_types.end(), FileSystem::ENT_FILE_FASTA_FAA),
+                           output_types.end());
+    }
 
-    // Re-write these files
-    mpFileSystem->delete_file(out_unannotated_nucl_path);
-    mpFileSystem->delete_file(out_unannotated_prot_path);
-    mpFileSystem->delete_file(out_annotated_nucl_path);
-    mpFileSystem->delete_file(out_annotated_prot_path);
+    // Setup annotated output formats (GO terms will not be printed if unnanotated). Will do this a different way later
+    std::vector<FileSystem::ENT_FILE_TYPES> unannotated_output_types = output_types;
+    unannotated_output_types.erase(std::remove(unannotated_output_types.begin(), unannotated_output_types.end(), FileSystem::ENT_FILE_GENE_ONTOLOGY_TERMS),
+                       unannotated_output_types.end());
+    unannotated_output_types.erase(std::remove(unannotated_output_types.begin(), unannotated_output_types.end(), FileSystem::ENT_FILE_GENE_ENRICH_EFF_LEN),
+                                   unannotated_output_types.end());
+    unannotated_output_types.erase(std::remove(unannotated_output_types.begin(), unannotated_output_types.end(), FileSystem::ENT_FILE_GENE_ENRICH_GO_TERM),
+                                   unannotated_output_types.end());
 
-    std::ofstream file_unannotated_nucl(out_unannotated_nucl_path, std::ios::out | std::ios::app);
-    std::ofstream file_unannotated_prot(out_unannotated_prot_path, std::ios::out | std::ios::app);
-    std::ofstream file_annotated_nucl(out_annotated_nucl_path, std::ios::out | std::ios::app);
-    std::ofstream file_annotated_prot(out_annotated_prot_path, std::ios::out | std::ios::app);
+    // Re-write the final output directory
+    mpFileSystem->delete_dir(outpath);
+    mpFileSystem->create_dir(outpath);
+
+    // Start output files
+    out_annotated_path = PATHS(outpath, OUT_ANNOTATED_FILENAME);
+    start_alignment_files(out_annotated_path, headers, go_levels, output_types);
+    out_unannotated_path = PATHS(outpath, OUT_UNANNOTATED_FILENAME);
+    start_alignment_files(out_unannotated_path, headers, go_levels, unannotated_output_types);
+    out_annotated_contam_path = PATHS(outpath, OUT_ANNOTATED_CONTAM_FILENAME);
+    start_alignment_files(out_annotated_contam_path, headers, go_levels, output_types);
+    out_annotated_without_contam_path = PATHS(outpath, OUT_ANNOTATED_NO_CONTAM_FILENAME);
+    start_alignment_files(out_annotated_without_contam_path, headers, go_levels, output_types);
+    out_entap_report_path = PATHS(outpath, OUT_ENTAP_REPORT_FILENAME);
+    std::vector<FileSystem::ENT_FILE_TYPES> entap_report_format = {FileSystem::ENT_FILE_DELIM_TSV};
+    start_alignment_files(out_entap_report_path, headers, go_levels, entap_report_format);
 
     for (auto &pair : *mpSequences) {
         count_total_sequences++;
+        add_alignment_data(out_entap_report_path, pair.second, nullptr);
+
         is_exp_kept = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_EXPRESSION_KEPT);
+        is_frame_kept = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FRAME_KEPT);
         is_prot = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN);
-        is_hit = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_BLAST_HIT);
+        is_sim_hit = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_BLAST_HIT);
         is_ontology = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ASSIGNED); // TODO Fix for interpro
         is_one_go = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ONE_GO);
         is_one_kegg = pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_ONE_KEGG);
 
         is_exp_kept ? count_exp_kept++ : count_exp_reject++;
         is_prot ? count_frame_kept++ : count_frame_rejected++;
-        is_hit ? count_sim_hits++ : count_sim_no_hits++;
+        is_sim_hit ? count_sim_hits++ : count_sim_no_hits++;
         is_ontology ? count_ontology++ : count_no_ontology++;
         if (is_one_go) count_one_go++;
         if (is_one_kegg) count_one_kegg++;
 
-        if (is_hit && !is_ontology) count_sim_only++;
-        if (!is_hit && is_ontology) count_ontology_only++;
+        if (is_sim_hit && !is_ontology) count_sim_only++;
+        if (!is_sim_hit && is_ontology) count_ontology_only++;
 
-        if (is_hit || is_ontology) {
+        if (is_exp_kept && is_frame_kept) {
+            count_total_kept_sequences++;
+        }
+
+        // Are we annotated through either Similarity Search OR Ontology
+        if (is_sim_hit || is_ontology) {
             // Is annotated
             count_TOTAL_ann++;
-            if (!pair.second->get_sequence_n().empty())
-                file_annotated_nucl<<pair.second->get_sequence_n()<<std::endl;
-            if (!pair.second->get_sequence_p().empty()) {
-                file_annotated_prot<<pair.second->get_sequence_p()<<std::endl;
+            add_alignment_data(out_annotated_path, pair.second, nullptr);
+            if (pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_CONTAMINANT)) {
+                count_sim_contam++; // This is assumed as retained and currently only from sim search
+                add_alignment_data(out_annotated_contam_path, pair.second, nullptr);
+            } else {
+                add_alignment_data(out_annotated_without_contam_path, pair.second, nullptr);
             }
         } else {
             // Not annotated
-            if (!pair.second->get_sequence_n().empty())
-                file_unannotated_nucl<<pair.second->get_sequence_n()<<std::endl;
-            if (!pair.second->get_sequence_p().empty()) {
-                file_unannotated_prot<<pair.second->get_sequence_p()<<std::endl;
+            add_alignment_data(out_unannotated_path, pair.second, nullptr);
+            if (is_exp_kept && is_frame_kept) {
+                count_TOTAL_unann_kept++;
             }
-            count_TOTAL_unann++;
+            else {
+                count_TOTAL_unann++;
+            }
         }
     }
 
-    file_unannotated_nucl.close();
-    file_unannotated_prot.close();
-    file_annotated_nucl.close();
-    file_annotated_prot.close();
+    // Close output files
+    end_alignment_files(out_annotated_path);
+    end_alignment_files(out_annotated_contam_path);
+    end_alignment_files(out_annotated_without_contam_path);
+    end_alignment_files(out_entap_report_path);
+    end_alignment_files(out_unannotated_path);
 
     mpFileSystem->format_stat_stream(ss, "Final Annotation Statistics");
     ss <<
-       "Total Sequences: "                  << count_total_sequences;
+       "Total Input Sequences: "                  << count_total_sequences;
 
     if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
         ss <<
            "\nExpression Analysis" <<
-           "\n\tKept sequences: "  << count_exp_kept    <<
-           "\n\tLost sequences: "  << count_exp_reject;
+           "\n\tRetained sequences: "  << count_exp_kept    << " (" <<
+                (((fp64) count_exp_kept / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+           "\n\tLost sequences: "  << count_exp_reject << " (" <<
+                (((fp64) count_exp_reject / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
     }
     if (DATA_FLAG_GET(SUCCESS_FRAME_SEL)) {
         ss <<
            "\nFrame Selection"              <<
-           "\n\tTotal sequences retained: " << count_frame_kept     <<
-           "\n\tTotal sequences removed: "  << count_frame_rejected;
+           "\n\tTotal sequences retained: " << count_frame_kept     << " (" <<
+                (((fp64) count_frame_kept / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+           "\n\tTotal sequences removed: "  << count_frame_rejected << " (" <<
+                (((fp64) count_frame_rejected / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
     }
     if (DATA_FLAG_GET(SUCCESS_SIM_SEARCH)) {
         ss <<
            "\nSimilarity Search"                               <<
-           "\n\tTotal unique sequences with an alignment: "    << count_sim_hits <<
-           "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits;
+           "\n\tTotal unique sequences with an alignment: "    << count_sim_hits   << " (" <<
+                 (((fp64) count_sim_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+           "\n\t\tTotal alignments flagged as a contaminant: "   << count_sim_contam << " (" <<
+                 (((fp64) count_sim_contam / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
+           "\n\t\tTotal alignments NOT flagged as a contaminant: "   << (count_sim_hits - count_sim_contam) << " (" <<
+                 (((fp64) (count_sim_hits - count_sim_contam) / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
+           "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits << " (" <<
+                 (((fp64) count_sim_no_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
     }
     if (DATA_FLAG_GET(SUCCESS_ONTOLOGY)) {
         for (uint16 flag : ontology_flags) {
@@ -511,10 +569,14 @@ void QueryData::final_statistics(std::string &outpath) {
                 case ONT_EGGNOG_DMND:
                     ss <<
                        "\nGene Families"        <<
-                       "\n\tTotal unique sequences with family assignment: "    << count_ontology   <<
-                       "\n\tTotal unique sequences without family assignment: " << count_no_ontology<<
-                       "\n\tTotal unique sequences with at least one GO term: " << count_one_go     <<
-                       "\n\tTotal unique sequences with at least one pathway (KEGG) assignment: "   << count_one_kegg;
+                       "\n\tTotal unique sequences with family assignment: "    << count_ontology   << " (" <<
+                            (((fp64) count_ontology / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+                       "\n\tTotal unique sequences without family assignment: " << count_no_ontology<< " (" <<
+                            (((fp64) count_no_ontology / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+                       "\n\tTotal unique sequences with at least one GO term: " << count_one_go     << " (" <<
+                            (((fp64) count_one_go / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
+                       "\n\tTotal unique sequences with at least one pathway (KEGG) assignment: "   << count_one_kegg << " (" <<
+                           (((fp64) count_one_kegg / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
                     break;
                 case ONT_INTERPRO_SCAN:
                     ss <<
@@ -527,10 +589,19 @@ void QueryData::final_statistics(std::string &outpath) {
     }
     ss <<
        "\nTotals"   <<
-       "\n\tTotal unique sequences annotated (similarity search alignments only): "      << count_sim_only      <<
-       "\n\tTotal unique sequences annotated (gene family assignment only): "            << count_ontology_only <<
-       "\n\tTotal unique sequences annotated (gene family and/or similarity search): "   << count_TOTAL_ann     <<
-       "\n\tTotal unique sequences unannotated (gene family and/or similarity search): " << count_TOTAL_unann;
+       "\n\tTotal retained sequences (after filtering and/or frame selection): " << count_total_kept_sequences <<
+       "\n\tTotal unique sequences annotated (similarity search alignments only): "      << count_sim_only      << " (" <<
+            (((fp64) count_sim_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
+       "\n\tTotal unique sequences annotated (gene family assignment only): "            << count_ontology_only << " (" <<
+            (((fp64) count_ontology_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
+       "\n\tTotal unique sequences annotated (gene family and/or similarity search): "   << count_TOTAL_ann     << " (" <<
+            (((fp64) count_TOTAL_ann / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
+       "\n\t\tTotal alignments flagged as a contaminant (gene family and/or similarity search): " << count_sim_contam << " (" <<
+            (((fp64) count_sim_contam / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
+       "\n\t\tTotal alignments NOT flagged as a contaminant (gene family and/or similarity search): " << (count_sim_hits - count_sim_contam) << " (" <<
+            (((fp64) (count_sim_hits - count_sim_contam) / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
+       "\n\tTotal unique sequences unannotated (gene family and/or similarity search): " << count_TOTAL_unann_kept << " ("
+            << (((fp64) count_TOTAL_unann_kept / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)";
 
     out_msg = ss.str();
     mpFileSystem->print_stats(out_msg);
@@ -638,8 +709,11 @@ bool QueryData::start_alignment_files(const std::string &base_path, const std::v
                     // For TSV,CSV we want to create a new file for every go level
                     case FileSystem::ENT_FILE_DELIM_TSV:
                     case FileSystem::ENT_FILE_DELIM_CSV:
+                        /* Remove Gene Ontology levels for now
                         final_file_path = base_path + APPEND_GO_LEVEL_STR +
                                 std::to_string(level) + mpFileSystem->get_extension(type);
+                        */
+                        final_file_path = base_path + mpFileSystem->get_extension(type);
                         mAlignmentFiles.at(base_path).file_streams[type][level] =
                                 new std::ofstream(final_file_path, std::ios::out | std::ios::app);
                         initialize_file(mAlignmentFiles.at(base_path).file_streams[type][level],
@@ -660,9 +734,12 @@ bool QueryData::start_alignment_files(const std::string &base_path, const std::v
                         break;
 
                     case FileSystem::ENT_FILE_GENE_ENRICH_EFF_LEN:
+                        /*  Remove GO level data for now
                         final_file_path = base_path + APPEND_GO_LEVEL_STR +
                                           std::to_string(level) + APPEND_ENRICH_GENE_ID_LEN +
                                           mpFileSystem->get_extension(type);
+                        */
+                        final_file_path = base_path + APPEND_ENRICH_GENE_ID_LEN + mpFileSystem->get_extension(type);
                         mAlignmentFiles.at(base_path).file_streams[type][level] =
                                 new std::ofstream(final_file_path, std::ios::out | std::ios::app);
                         initialize_file(mAlignmentFiles.at(base_path).file_streams[type][level],
@@ -670,9 +747,20 @@ bool QueryData::start_alignment_files(const std::string &base_path, const std::v
                         break;
 
                     case FileSystem::ENT_FILE_GENE_ENRICH_GO_TERM:
+                        /*
                         final_file_path = base_path + APPEND_GO_LEVEL_STR +
                                           std::to_string(level) + APPEND_ENRICH_GENE_ID_GO +
                                           mpFileSystem->get_extension(type);
+                        */
+                        final_file_path = base_path + APPEND_ENRICH_GENE_ID_GO + mpFileSystem->get_extension(type);
+                        mAlignmentFiles.at(base_path).file_streams[type][level] =
+                                new std::ofstream(final_file_path, std::ios::out | std::ios::app);
+                        initialize_file(mAlignmentFiles.at(base_path).file_streams[type][level],
+                                        outputFileData.headers, type);
+                        break;
+
+                    case FileSystem::ENT_FILE_GENE_ONTOLOGY_TERMS:
+                        final_file_path = base_path + APPEND_GENE_ONTOLOGY_TERMS + mpFileSystem->get_extension(type);
                         mAlignmentFiles.at(base_path).file_streams[type][level] =
                                 new std::ofstream(final_file_path, std::ios::out | std::ios::app);
                         initialize_file(mAlignmentFiles.at(base_path).file_streams[type][level],
@@ -680,6 +768,7 @@ bool QueryData::start_alignment_files(const std::string &base_path, const std::v
                         break;
 
                     default:
+                        FS_dprint("WARNING unhandled file type (start_alignment_files): " + std::to_string(type));
                         break;
                 }
             }
@@ -827,8 +916,46 @@ bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *queryS
                     break;
                 }
 
+                    /*
+                     * ENT_FILE_GENE_ONTOLOGY_TERMS
+                     *  Essentially a combined format to the enrichment ones above
+                     *  Tab delimited format:
+                     *  Query Sequence | GO ID | GO Name | GO Category | Effective Length (from Expression filtering)
+                     *  Every new GO term has a new line, so a particular Query Sequence may have a bunch of lines
+                     *
+                     * */
+                case FileSystem::ENT_FILE_GENE_ONTOLOGY_TERMS:
+                {
+                    if (file_data->second.file_streams[type][go_level] == nullptr) continue;
+                    if (!querySequence->is_kept()) continue;
+
+                    go_format_t go_terms = querySequence->get_go_terms();
+                    if (!go_terms.empty()) {
+                        for (GoEntry const &entry : go_terms) {
+                            if (!entry.go_id.empty()) {
+                                if ((entry.level_int >= go_level && entry.level_int != GoEntry::UNKNOWN_LVL) ||
+                                    go_level == 0) {
+                                    *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
+                                            querySequence->getMSequenceID() << FileSystem::DELIM_TSV <<
+                                            entry.go_id                     << FileSystem::DELIM_TSV <<
+                                            entry.term                      << FileSystem::DELIM_TSV <<
+                                            entry.category                  << FileSystem::DELIM_TSV;
+
+                                    // We only want to include the effect length column if user has performed
+                                    //  expression filtering
+                                    if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
+                                        *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
+                                            querySequence->getMEffectiveLength() << FileSystem::DELIM_TSV <<
+                                            std::endl;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+
                 default:
-                    FS_dprint("ERROR unhandled file type (add_alignment_data): " + std::to_string(type));
                     break;
             }
 
@@ -910,7 +1037,13 @@ std::string QueryData::get_delim_data_sequence(std::vector<ENTAP_HEADERS> &heade
     for (ENTAP_HEADERS header : headers) {
         if (ENTAP_HEADER_INFO[header].print_header) {
             sequence->get_header_data(val, header, lvl);
-            ret << val << delim;
+            // TO support tidyverse format we want empty data in TSV format to print 'NA'
+            if (val.empty() && delim == FileSystem::DELIM_TSV) {
+                    ret << FileSystem::TIDYVERSE_TSV_NULL << delim;
+            }
+            else {
+                ret << val << delim;
+            }
         }
     }
     return ret.str();
@@ -1007,6 +1140,18 @@ bool QueryData::initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HE
         case FileSystem::ENT_FILE_GENE_ENRICH_GO_TERM:
             *file_stream << HEADER_ENRICH_GENE_ID << FileSystem::DELIM_TSV
                          << HEADER_ENRICH_GO << std::endl;
+            break;
+
+        case FileSystem::ENT_FILE_GENE_ONTOLOGY_TERMS:
+            *file_stream << HEADER_GENE_ONTOLOGY_TERM_GENE_ID << FileSystem::DELIM_TSV <<
+                            HEADER_GENE_ONTOLOGY_TERM_GO_ID   << FileSystem::DELIM_TSV <<
+                            HEADER_GENE_ONTOLOGY_TERM_NAME    << FileSystem::DELIM_TSV <<
+                            HEADER_GENE_ONTOLOGY_TERM_CATEGORY<< FileSystem::DELIM_TSV;
+
+            // We only want to add effective length column when user has executed expression filtering
+            if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
+                *file_stream << HEADER_GENE_ONTOLOGY_TERM_LENGTH << std::endl;
+            }
             break;
 
         default:

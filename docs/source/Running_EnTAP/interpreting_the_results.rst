@@ -44,9 +44,9 @@ The two files to check out first are the :ref:`final annotations<final-label>` a
 Final Annotations
 -----------------------
 
-The final EnTAP annotations are contained within the |final_dir| directory. These files are the summation of each stage of the pipeline and contain the combined information. So these can be considered the most important files! 
+The final EnTAP annotations are contained within the |final_dir| directory. These files are the summation of each stage of the pipeline and contain the combined information. So these can be considered the most important files! The "full_entap.tsv" file will contain all of the information gathered throughout the pipeline summarized in one file. This will include annotated, unannotated, and contaminated sequences. 
 
-All .tsv files in this section may have the following header information (from left to right) separated by each portion of the pipeline. Some headers will not be shown if that part of the pipeline was skipped or the information was not found for any of the input sequences.
+All .tsv files in this section may have the following header information (from left to right) separated by each portion of the pipeline. Some headers will not be shown if that part of the pipeline was skipped or the information was not found for any of the input sequences. TSV formatted files support Tidyverse format (including 'NA' being used for empty data cells).
 
 General Header Information
     * Query sequence ID
@@ -95,9 +95,9 @@ Ontology EggNOG Header Information
     * OGs (orthologous groups assigned)
     * EggNOG Description (EggNOG)
     * KEGG Terms (EggNOG)
-    * GO Biological (Gene Ontology normalized terms)
-    * GO Cellular (Gene Ontology normalized terms)
-    * GO Molecular (Gene Ontology normalized terms)
+    * GO Biological (Gene Ontology)
+    * GO Cellular (Gene Ontology)
+    * GO Molecular (Gene Ontology)
     * BIGG Reaction
 
 Ontology InterProScan Header Information
@@ -110,40 +110,45 @@ Ontology InterProScan Header Information
     * Protein Description (description of database entry)
     * E Value (E-value of hit against protein database)
 
-Gene ontology terms are normalized to levels based on the input flag from the user (or the default of 0,1). A level of 0 within the filename indicates that ALL GO terms will be printed to the annotation file. Any other level will print that level and anything higher than it. Normalization of GO terms to levels is generally done before enrichment analysis and is based upon the hierarchical setup of the Gene Ontology database. More information can be found at GO_. 
 
-    * final_annotations_lvlX.tsv
+    * full_entap.tsv
 
-        * As mentioned above, the 'X' represents the normalized GO terms for the annotation (GO terms of X level and higher will be printed)
-        * This .tsv file will have the headers as mentioned previously as a summary of the entire pipeline
+        * This .tsv file is essentially a final report from EnTAP that will have the headers as mentioned previously, summarizing the results of the entire pipeline
+        * Since this includes every single transcript, there will be annotated, unannotated, and contaminated sequences. Further filtering of transcripts (for example if you are only interested in those transcripts that were annotated) can be done with this file or the below files
 
-    * final_annotated.faa / .fnn
+    * annotated.faa / .fnn / .tsv
 
-        * Nucleotide and protein fasta files containing all sequences that either hit databases through similarity searching or through the ontology stage
+        * Nucleotide/protein fasta files along with tsv file containing all sequences that either align databases through similarity searching or through the ontology stage
 
-    * final_unannotated.faa / .fnn
+    * unannotated.faa / .fnn / .tsv
 
-        * Nucleotide and protein fasta files containing all sequences that did not hit either through similarity searching nor through the ontology stage
+        * Nucleotide/protein fasta files along with tsv file containing all sequences that did not align either through similarity searching nor through the ontology stage
 
-    * final_annotations_contam.faa / .fnn / .tsv
+    * annotated_contam.faa / .fnn / .tsv
 
-        * Nucleotide, protein, and tab-deliminated files containing all annotated sequences that were flagged as a contaminant
+        * Nucleotide/protein fasta files along with tsv file containing all annotated sequences that were flagged as a contaminant
 
-    * final_annotations_no_contam.faa / .fnn / .tsv
+    * annotated_without_contam.faa / .fnn / .tsv
 
-        * Nucleotide, protein, and tab-deliminated files containing all annotated sequences that were not flagged as a contaminant
+        * Nucleotide/protein fasta files along with tsv file containing all annotated sequences that were not flagged as a contaminant
 
-    * final_annotations_lvlX_enrich_geneid_go.tsv
+    * x_enrich_geneid_go.tsv
 
-        * Tab-deliminated file that can be used for Gene Enrichment, normalized to gene ontology level
+        * Tab-deliminated file that can be used for Gene Enrichment
         * First column contains the gene ID and second column contains the Gene Ontology term corresponding to the gene ID
-        * A level of 0 will print all GO terms assigned, while any other level will prnit that level and anything higher. Ex: 1 will print all terms of 1 and higher
 
-    * final_annotations_lvlX_enrich_geneid_len.tsv
+    * x_enrich_geneid_len.tsv
 
-        * Tab-deliminated file that can be used for Gene Enrichment, normalized to gene ontology levels
+        * Tab-deliminated file that can be used for Gene Enrichment
         * First column contains the gene ID and second columns contains the effective length from Expression Analysis. This file will not be printed if Expression Analysis has not been ran
-        * A level of 0 will print all GO terms assigned, while any other level will prnit that level and anything higher. Ex: 1 will print all terms of 1 and higher
+        * Note: the Length column will not be printed when Expression Filtering has not been performed
+
+    * x_gene_ontology_terms.tsv
+
+        * Tab-deliminated file that can be used for Gene Enrichment
+        * Columns are as follows: Sequence ID, Gene Ontology Term ID, Gene Ontology Term, Gene Ontology Category, and Effective Length
+        * Note: the Effective Length column will not be printed when Expression Filtering has not been performed
+		
 
 .. _log-label:
 
@@ -179,7 +184,6 @@ The log file contains a statistical analysis of each stage of the pipeline that 
 #. Gene Family Assignment
 
     * Phylogenetic distribution of gene family assignments
-    * Gene Ontology level distribution (note: level 0 means all levels)
     * Gene Ontology category distribution (biological processes, molecular function, cellular component)
 
 #. InterProScan
@@ -305,21 +309,21 @@ The files within the root |frame_dir| directory contain the results from the fra
 
 EnTAP Files: |frame_proc_dir|
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Files within the |frame_proc_dir| are generated by EnTAP and will contain ORF information based on the GeneMarkS-T execution.
+Files within the |frame_proc_dir| are generated by EnTAP and will contain ORF information based on the GeneMarkS-T or TransDecoder execution. Using TransDecoder as an example:
 
-* complete_genes.fasta
+* transdecoder_complete_genes.fasta
 
     * Amino acid sequences of complete genes from transcriptome
 
-* partial_genes.fasta
+* transdecoder_partial_genes.fasta
 
     * Amino acid sequences of partial (5' and 3') sequences
 
-* internal_genes.fasta
+* transdecoder_internal_genes.fasta
 
     * Amino acid sequences of internal sequences
 
-* sequences_lost.fasta
+* transdecoder_sequences_lost.fasta
 
     * Nucleotide sequences in which a frame was not found. These will not continue to the next stages of the pipeline
 
@@ -409,29 +413,29 @@ The files below represent a run with the same parameters as the section above:
     * ORF (taken from frame selection stage)
     * Contaminant (yes/no the hit was flagged as a contaminant)
 
-* database/best_hits.faa and .fnn and .tsv
+* database/diamond_annotated.faa and .fnn and .tsv
 
     * Best hits (protein and nucleotide) that were selected from this database
-    * This contains ALL best hits, including any contaminants that were found as well as uninformative hits
+    * This contains ALL best hits, including any contaminants that were found as well as uninformative hits. Sometimes a contaminant can be the highest quality alignment!
     * The .tsv file contains the header information mentioned above of these same sequences
     * Note: Protein or nucleotide information may not be available to report depending on your type of run (these files will be empty)
 
-* database/best_hits_contam.faa/.fnn/.tsv
+* database/diamond_annotated_contam.faa/.fnn/.tsv
 
     * Contaminants (protein/nucleotide) separated from the best hits file. As such, these contaminants will also be in the _best_hits.faa/.fnn.tsv files
 
-* database/best_hits_no_contam.faa/.fnn/.tsv
+* database/diamond_annotated_without_contam.faa/.fnn/.tsv
 
     * Sequences (protein/nucleotide) that were selected as best hits and not flagged as contaminants
     * With this in mind: best_hits = best_hits_no_contam + best_hits_contam
     * These sequences are separated from the rest for convenience if you would like to examine them differently
 
-* database/no_hits.faa/.fnn/.tsv
+* database/unannotated.faa/.fnn/.tsv
 
     * Sequences (protein/nucleotide) from the transcriptome that did not hit against this particular database.
     * This does not include sequences that were lost during expression filtering or frame selection
 
-* database/unselected.tsv
+* database/diamond_unselected_hits.tsv
 
     * Similarity searching can result in several hits for each query sequence. With only one best hit being selected, the rest are unselected and end up here
     * Unselected hits can be due to a low e-value, coverage, or other properties EnTAP takes into account when selecting hits
@@ -495,11 +499,11 @@ EnTAP Files: |egg_proc_dir|
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Files within the |egg_proc_dir| are generated by EnTAP and contain information on what sequences were annotated and which were not. 
 
-* unannotated_sequences.fnn/faa
+* eggnog_unannotated.fnn/faa
 
     * Sequences where no gene family could be assigned (nucleotide/protein)
 
-* annotated_sequences.fnn/faa
+* eggnog_annotated.fnn/faa
 
     * Sequences where a gene family could be assigned (nucleotide/protein)
 
@@ -512,7 +516,7 @@ The |egg_fig_dir| will contain figures generated by EnTAP of Gene Ontology and T
 
 * (overall/molecular_function/cellular_component/biological_process)#_go_bar_graph.png/.txt
 
-    * Bar graph of each category of Gene Ontology terms of a specific level # (remember, level 0 signifies all levels!)
+    * Bar graph of each category of Gene Ontology terms
 
 .. image::    plot_egg_overall0_go.png
 	:scale: 50%

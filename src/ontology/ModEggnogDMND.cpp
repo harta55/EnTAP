@@ -111,7 +111,7 @@ void ModEggnogDMND::execute() {
             blast +
             " -d " + mEggnogDbDiamond +
             " --top 1"             +
-            " --more-sensitive"    +
+            " --very-sensitive"    +
             " -q "                 + mInputTranscriptome   +
             " -o "                 + mOutHIts  +
             " -p "                 + std::to_string(mThreads) +
@@ -247,8 +247,8 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
     }
 
     // Output files
-    std::string out_no_hits_base = PATHS(mProcDir, FILENAME_OUT_UNANNOTATED);
-    std::string out_hits_base    = PATHS(mProcDir, FILENAME_OUT_ANNOTATED);
+    std::string out_no_hits_base = PATHS(mProcDir, EGG_DIAMOND_PREFIX + EGG_OUT_UNANNOTATED);
+    std::string out_hits_base    = PATHS(mProcDir, EGG_DIAMOND_PREFIX + EGG_OUT_ANNOTATED);
 
     mpQueryData->start_alignment_files(out_no_hits_base, output_headers, mGoLevels, mAlignmentFileTypes);
     mpQueryData->start_alignment_files(out_hits_base, output_headers, mGoLevels, mAlignmentFileTypes);
@@ -356,8 +356,55 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
         stream <<
                "\nTotal unique sequences with at least one GO term: " << ct_total_go_hits <<
                "\nTotal unique sequences without GO terms: " << ct_alignments - ct_total_go_hits <<
-               "\nTotal GO terms assigned: " << go_combined_map[GO_OVERALL_FLAG]._ct_total;;
+               "\nTotal GO terms assigned: " << go_combined_map[GO_OVERALL_FLAG]._ct_total;
 
+        for (auto &pair : go_combined_map) {
+            if (pair.first.empty() || pair.second.empty()) continue;
+            // Count maps (biological/molecular/cellular/overall)
+            graphing_data_temp = GraphingManager::GraphingData();
+            graphing_data_temp.x_axis_label = "Gene Ontology Term";
+            graphing_data_temp.y_axis_label = "Count";
+            graphing_data_temp.text_file_path = PATHS(mFigureDir, pair.first) + GRAPH_GO_END_TXT;
+            graphing_data_temp.fig_out_path   = PATHS(mFigureDir, pair.first) + GRAPH_GO_END_PNG;
+
+            if (pair.first == GO_BIOLOGICAL_FLAG) graphing_data_temp.graph_title = GRAPH_GO_BAR_BIO_TITLE;
+            if (pair.first == GO_CELLULAR_FLAG) graphing_data_temp.graph_title = GRAPH_GO_BAR_CELL_TITLE;
+            if (pair.first == GO_MOLECULAR_FLAG) graphing_data_temp.graph_title = GRAPH_GO_BAR_MOLE_TITLE;
+            if (pair.first == GO_OVERALL_FLAG) graphing_data_temp.graph_title = GRAPH_GO_BAR_ALL_TITLE;
+            graphing_data_temp.graph_type = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
+
+            mpGraphingManager->initialize_graph_data(graphing_data_temp);
+
+            // Sort count maps
+            pair.second.sort(true);
+
+            // get total count for each category
+            uint32 lvl_ct = 0;   // Use for percentages, total terms for each lvl
+            ct = 0;              // Use for unique count
+            // pair2 = unique go entry : number of that GoEntry
+            for (auto &pair2 : pair.second._sorted) {
+                ct++;
+                lvl_ct += pair2.second;
+            }
+            stream << "\nTotal "        << pair.first <<" terms: " << lvl_ct;
+            stream << "\nTotal unique " << pair.first <<" terms: " << ct;
+            stream << "\nTop " << COUNT_TOP_GO << " " << pair.first <<" terms assigned: ";
+
+            // Get the TOP x go terms and print out based on occurance
+            ct = 1;
+            for (auto &pair2 : pair.second._sorted) {
+                if (ct > COUNT_TOP_GO) break;
+                percent = ((fp32)pair2.second / lvl_ct) * 100;
+                stream <<
+                       "\n\t" << ct << ")" << pair2.first.go_id << ": " << pair2.second <<
+                       "(" << percent << "%)";
+                mpGraphingManager->add_datapoint(graphing_data_temp.text_file_path, {pair2.first.go_id, std::to_string(pair2.second)});
+                ct++;
+            }
+            mpGraphingManager->graph_data(graphing_data_temp.text_file_path);
+        }
+#if 0
+        // The below code is obsolete with the removal of Gene Ontology levels, keeping in here in case it is added back
         for (uint16 lvl : mGoLevels) {
             for (auto &pair : go_combined_map) {
                 if (pair.first.empty() || pair.second.empty()) continue;
@@ -409,6 +456,7 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
                 mpGraphingManager->graph_data(graphing_data_temp.text_file_path);
             }
         }
+#endif
     }
 
     //--------------------------- KEGG ----------------------------//

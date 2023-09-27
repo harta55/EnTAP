@@ -88,10 +88,10 @@ void AbstractFrame::frame_calculate_statistics() {
     std::pair<uint64, uint64>               kept_n;                 // N value of kept sequences
 
     // Set up outpaths, directories are already created by super
-    out_removed_path    = PATHS(mProcDir, FRAME_SELECTION_FILENAME_LOST);
-    out_internal_path   = PATHS(mProcDir, FRAME_SELECTION_FILENAME_INTERNAL);
-    out_complete_path   = PATHS(mProcDir, FRAME_SELECTION_FILENAME_COMPLETE);
-    out_partial_path    = PATHS(mProcDir, FRAME_SELECTION_FILENAME_PARTIAL);
+    out_removed_path    = PATHS(mProcDir, mSoftwarePrefix + FRAME_SELECTION_FILENAME_LOST);
+    out_internal_path   = PATHS(mProcDir, mSoftwarePrefix + FRAME_SELECTION_FILENAME_INTERNAL);
+    out_complete_path   = PATHS(mProcDir, mSoftwarePrefix + FRAME_SELECTION_FILENAME_COMPLETE);
+    out_partial_path    = PATHS(mProcDir, mSoftwarePrefix + FRAME_SELECTION_FILENAME_PARTIAL);
 
     // all nucleotide lengths
     min_removed=0xFFFFFFFF;

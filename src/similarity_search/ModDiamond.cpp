@@ -535,29 +535,36 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     mpFileSystem->create_dir(figure_base);
 
     // Open contam best hit tsv file and print headers
-    std::string out_best_contams_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_CONTAM);
-    mpQueryData->start_alignment_files(out_best_contams_filepath, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
+    std::string out_best_contams_filepath = PATHS(base_path, DIAMOND_PREFIX + SIM_SEARCH_DATABASE_BEST_HITS_CONTAM);
+    if (!mContaminateTaxons.empty()) {
+        mpQueryData->start_alignment_files(out_best_contams_filepath, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
+    }
 
     // Open best hits files
-    std::string out_best_hits_filepath = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS);
+    std::string out_best_hits_filepath = PATHS(base_path, DIAMOND_PREFIX + SIM_SEARCH_DATABASE_BEST_HITS);
     mpQueryData->start_alignment_files(out_best_hits_filepath, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
 
     // Open best hits files with no contaminants
-    std::string out_best_hits_no_contams = PATHS(base_path, SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM);
+    std::string out_best_hits_no_contams = PATHS(base_path, DIAMOND_PREFIX + SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM);
     mpQueryData->start_alignment_files(out_best_hits_no_contams, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
 
     // Open unselected hits, so every hit that was not the best hit (tsv)
-    std::string out_unselected_tsv  = PATHS(base_path, SIM_SEARCH_DATABASE_UNSELECTED);
+    std::string out_unselected_tsv  = PATHS(base_path, DIAMOND_PREFIX + SIM_SEARCH_DATABASE_UNSELECTED);
     std::vector<FileSystem::ENT_FILE_TYPES> unselected_files = {FileSystem::ENT_FILE_DELIM_TSV};
     mpQueryData->start_alignment_files(out_unselected_tsv, mEntapHeaders, mGoLevels, unselected_files);
 
-    // Open no hits file (fasta nucleotide)
-    std::string out_no_hits_fa_nucl = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS + FileSystem::EXT_FNN);
-    std::ofstream file_no_hits_nucl(out_no_hits_fa_nucl, std::ios::out | std::ios::app);
-
-    // Open no hits file (fasta protein)
-    std::string out_no_hits_fa_prot  = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS + FileSystem::EXT_FAA);
-    std::ofstream file_no_hits_prot(out_no_hits_fa_prot, std::ios::out | std::ios::app);
+    // No hits files - only print what we have data for
+    std::vector<FileSystem::ENT_FILE_TYPES> no_hits_files;
+    std::string out_no_hits = PATHS(base_path, SIM_SEARCH_DATABASE_NO_HITS);
+    if (mpQueryData->DATA_FLAG_GET(QueryData::IS_PROTEIN)) {
+        no_hits_files.push_back(FileSystem::ENT_FILE_FASTA_FAA);
+    }
+    if (mpQueryData->DATA_FLAG_GET(QueryData::IS_NUCLEOTIDE)) {
+        no_hits_files.push_back(FileSystem::ENT_FILE_FASTA_FNN);
+    }
+    if (!no_hits_files.empty()) {
+        mpQueryData->start_alignment_files(out_no_hits, mEntapHeaders, mGoLevels, no_hits_files);
+    }
 
     try {
         // Cycle through all sequences
@@ -570,8 +577,8 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                     (!pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN) && !mBlastp)) {
                     // Protein/nucleotide did not hit database
                     count_no_hit++;
-                    file_no_hits_nucl << pair.second->get_sequence_n() << std::endl;
-                    file_no_hits_prot << pair.second->get_sequence_p() << std::endl;
+                    mpQueryData->add_alignment_data(out_no_hits, pair.second, nullptr); // Function checks whether files been initializd
+
                     // Graphing
                     frame = pair.second->getFrame();
                     if (!frame.empty()) {
@@ -666,9 +673,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
         mpQueryData->end_alignment_files(out_best_hits_filepath);
         mpQueryData->end_alignment_files(out_best_hits_no_contams);
         mpQueryData->end_alignment_files(out_unselected_tsv);
-
-        mpFileSystem->close_file(file_no_hits_nucl);
-        mpFileSystem->close_file(file_no_hits_prot);
+        mpQueryData->end_alignment_files(out_no_hits);
     } catch (const ExceptionHandler &e) {throw e;}
 
     // ------------ Calculate statistics and print to output ------------ //
@@ -736,7 +741,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
        "\n\t\tReference transcriptome sequences with an alignment (FASTA):\n\t\t\t" << out_best_hits_filepath <<
        "\n\t\tSearch results (TSV):\n\t\t\t" << out_best_hits_filepath <<
        "\n\tTotal unique transcripts without an alignment: " << count_no_hit <<
-       "\n\t\tReference transcriptome sequences without an alignment (FASTA):\n\t\t\t" << out_no_hits_fa_prot;
+       "\n\t\tReference transcriptome sequences without an alignment (FASTA):\n\t\t\t" << out_no_hits;
     // Have frame information
     if (frame_inform_counter.find(NO_HIT_FLAG) != frame_inform_counter.end()) {
         for (auto &pair : frame_inform_counter[NO_HIT_FLAG]._data) {

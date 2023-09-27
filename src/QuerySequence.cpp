@@ -841,15 +841,19 @@ QuerySequence::get_database_hits(std::string &database, ExecuteStates state, uin
 
 std::string QuerySequence::format_go_info(go_format_t &go_list, uint8 lvl) {
     std::stringstream out;
-    std::string temp;
+    //std::string temp;
 
     for (GoEntry const &val : go_list)  {
         // Only return unknown levels when asking for '0' GO level
         // CLEANUP!
+		/*
         if (lvl == 0 || (val.level_int >= lvl && val.level_int != GoEntry::UNKNOWN_LVL)) {
             temp = val.go_id + "(L=" + std::to_string(val.level_int) + ")";
             out << temp << ",";
         }
+		*/
+		// Changing format since we are removing GO levels for the time being
+		out << val.go_id << ",";
     }
     return out.str();
 }

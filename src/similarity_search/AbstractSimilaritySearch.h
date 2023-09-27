@@ -43,7 +43,7 @@ public:
         std::string         std_out_path;
 
         bool                blastp;
-        bool                more_sensitive;
+        bool                very_sensitive;
 
         uint16              threads;
         fp64                eval;
@@ -82,11 +82,11 @@ protected:
     fp64                            mQCoverage;
     fp64                            mTCoverage;
 
-    const std::string SIM_SEARCH_DATABASE_BEST_HITS              = "best_hits";
-    const std::string SIM_SEARCH_DATABASE_BEST_HITS_CONTAM       = "best_hits_contam";
-    const std::string SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM    = "best_hits_no_contam";
-    const std::string SIM_SEARCH_DATABASE_NO_HITS                = "no_hits";
-    const std::string SIM_SEARCH_DATABASE_UNSELECTED             = "unselected";
+    const std::string SIM_SEARCH_DATABASE_BEST_HITS              = "annotated";
+    const std::string SIM_SEARCH_DATABASE_BEST_HITS_CONTAM       = "annotated_contam";
+    const std::string SIM_SEARCH_DATABASE_BEST_HITS_NO_CONTAM    = "annotated_without_contam";
+    const std::string SIM_SEARCH_DATABASE_NO_HITS                = "unannotated";
+    const std::string SIM_SEARCH_DATABASE_UNSELECTED             = "unselected_hits";
 
     const std::string BLASTX_STR           = "blastx";
     const std::string BLASTP_STR           = "blastp";

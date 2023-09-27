@@ -52,8 +52,9 @@ public:
         SUCCESS_FRAME_SEL  = (1 << 1),
         SUCCESS_ONTOLOGY   = (1 << 2),
         SUCCESS_SIM_SEARCH = (1 << 3),
-        IS_PROTEIN         = (1 << 4),
-        UNIPROT_MATCH      = (1 << 5),
+        IS_PROTEIN         = (1 << 4),  // We have some protein data
+        IS_NUCLEOTIDE      = (1 << 5),  // We have some nucleotide data
+        UNIPROT_MATCH      = (1 << 6),
 
         DATA_FLAGS_MAX     = (1 << 31)
     } DATA_FLAGS;
@@ -72,7 +73,7 @@ public:
 
     std::pair<uint16, uint16> calculate_N_vals(std::vector<uint16>&,uint64);
     std::string trim_sequence_header(std::string&, std::string);
-    void final_statistics(std::string& outpath);
+    void final_statistics(std::string& outpath, std::vector<FileSystem::ENT_FILE_TYPES> output_types);
 
     // Output routines
     bool start_alignment_files(const std::string &base_path, const std::vector<ENTAP_HEADERS> &headers, const vect_uint16_t &go_levels,
@@ -92,6 +93,7 @@ public:
     void set_is_success_sim_search(bool val);
     void set_is_success_ontology(bool val);
     void set_is_uniprot(bool val);
+    bool DATA_FLAG_GET(DATA_FLAGS);
 
     // Header routines
     void header_set(ENTAP_HEADERS header, bool val);
@@ -112,7 +114,6 @@ private:
     };
 
     void set_input_type(std::string&);
-    bool DATA_FLAG_GET(DATA_FLAGS);
     void DATA_FLAG_SET(DATA_FLAGS);
     void DATA_FLAG_CLEAR(DATA_FLAGS);
     void DATA_FLAG_CHANGE(DATA_FLAGS flag, bool val);
@@ -139,16 +140,25 @@ private:
     const std::vector<char> NUCLEO_MAP {
             'A', 'G', 'C', 'T', 'N'
     };
-    const std::string OUT_UNANNOTATED_NUCL = "final_unannotated.fnn";
-    const std::string OUT_UNANNOTATED_PROT = "final_unannotated.faa";
-    const std::string OUT_ANNOTATED_NUCL   = "final_annotated.fnn";
-    const std::string OUT_ANNOTATED_PROT   = "final_annotated.faa";
+
+    // File printing constants
+    const std::string OUT_UNANNOTATED_FILENAME = "unannotated";
+    const std::string OUT_ANNOTATED_FILENAME = "annotated";
+    const std::string OUT_ANNOTATED_CONTAM_FILENAME   = "annotated_contam";
+    const std::string OUT_ANNOTATED_NO_CONTAM_FILENAME = "annotated_without_contam";
+    const std::string OUT_ENTAP_REPORT_FILENAME   = "entap_results";
     const std::string APPEND_GO_LEVEL_STR  = "_lvl";
     const std::string APPEND_ENRICH_GENE_ID_GO = "_enrich_geneid_go";
     const std::string APPEND_ENRICH_GENE_ID_LEN = "_enrich_geneid_len";
+    const std::string APPEND_GENE_ONTOLOGY_TERMS = "_gene_ontology_terms";
     const std::string HEADER_ENRICH_GENE_ID = "gene_id";
     const std::string HEADER_ENRICH_GO      = "go_term";
     const std::string HEADER_ENRICH_LENGTH  = "effective_length";
+    const std::string HEADER_GENE_ONTOLOGY_TERM_GENE_ID = "query_sequence";
+    const std::string HEADER_GENE_ONTOLOGY_TERM_GO_ID   = "go_id";
+    const std::string HEADER_GENE_ONTOLOGY_TERM_NAME    = "go_term";
+    const std::string HEADER_GENE_ONTOLOGY_TERM_CATEGORY = "category";
+    const std::string HEADER_GENE_ONTOLOGY_TERM_LENGTH   = "effective_length";
 
     QUERY_MAP_T  *mpSequences;
     bool         mNoTrim;

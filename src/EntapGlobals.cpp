@@ -85,3 +85,11 @@ std::string &rtrim(std::string &s) {
 std::string &trim(std::string &s) {
     return ltrim(rtrim(s));
 }
+
+std::vector<ENTAP_HEADERS> get_entap_headers() {
+    std::vector<ENTAP_HEADERS> out;
+    for (int i=0; i< ENTAP_HEADER_COUNT; i++) {
+        out.push_back(static_cast<ENTAP_HEADERS>(i));
+    }
+    return out;
+}

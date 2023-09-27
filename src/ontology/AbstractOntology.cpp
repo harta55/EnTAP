@@ -34,6 +34,16 @@ AbstractOntology::AbstractOntology(std::string &in_hits, std::string &ont_out, E
 : EntapModule(ont_out, in_hits, entap_data, mod_name, module_headers) {
 
     mExecutionState    = GENE_ONTOLOGY;
+
+    // Check if our transcriptome data matches the output formats
+    if (!mpQueryData->DATA_FLAG_GET(QueryData::IS_NUCLEOTIDE)) {
+        mAlignmentFileTypes.erase(std::remove(mAlignmentFileTypes.begin(), mAlignmentFileTypes.end(), FileSystem::ENT_FILE_FASTA_FNN),
+                                  mAlignmentFileTypes.end());
+    }
+    if (!mpQueryData->DATA_FLAG_GET(QueryData::IS_PROTEIN)) {
+        mAlignmentFileTypes.erase(std::remove(mAlignmentFileTypes.begin(), mAlignmentFileTypes.end(), FileSystem::ENT_FILE_FASTA_FAA),
+                                  mAlignmentFileTypes.end());
+    }
 }
 
 void AbstractOntology::set_success_flags() {

@@ -25,8 +25,8 @@ import sphinx_rtd_theme
 
 # -- General configuration ------------------------------------------------
 
-# extensions = ['sphinx.ext.githubpages', "sphinx_rtd_theme"]
-extensions = ['sphinx.ext.githubpages']
+extensions = ['sphinx.ext.githubpages', "sphinx_rtd_theme"]
+#extensions = ['sphinx.ext.githubpages']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -79,8 +79,8 @@ todo_include_todos = False
 # a list of builtin themes.
 #
 
-#html_theme = 'sphinx_rtd_theme'
-html_theme = 'default'
+html_theme = 'sphinx_rtd_theme'
+#html_theme = 'default'
 html_theme_options = {
     'logo_only': True,
     'prev_next_buttons_location': 'None',

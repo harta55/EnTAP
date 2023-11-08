@@ -14,20 +14,14 @@ Introduction
 
 The Eukaryotic Non-Model Transcriptome Annotation Pipeline (*EnTAP*) is designed to improve the accuracy, speed, and flexibility of functional gene annotation for de novo assembled transcriptomes in non-model eukaryotes. 
 
-This software package addresses the fragmentation and related assembly issues that result in inflated transcript estimates and poor annotation rates.  Following filters applied through assessment of true expression and frame selection, open-source tools are leveraged to functionally annotate the translated proteins. 
+This software package addresses the fragmentation and related assembly issues that result in inflated transcript estimates and poor annotation rates.  Filtering is applied through assessment of true expression and frame selection, followed by leveraging open-source tools to functionally annotate the translated proteins. 
 
 Downstream features include fast similarity search across multiple databases, protein domain assignment, orthologous gene family assessment, Gene Ontology term assignment, and KEGG pathway annotation.  
 
 The final annotation integrates across multiple databases and selects an optimal assignment from a combination of weighted metrics describing similarity search score, taxonomic relationship, and informativeness.  Researchers have the option to include additional filters to identify and remove potential contaminants and prepare the transcripts for enrichment analysis.  This fully featured pipeline is easy to install, configure, and runs much faster than comparable functional annotation packages.  It is developed to contend with many of the issues in existing software solutions.  
 
-EnTAP is optimized to generate extensive functional information for the gene space of organisms with limited or poorly characterized genomic resources.
-
-How to cite:
-    * Hart AJ, Ginzburg S, Xu M, et al. EnTAP: Bringing faster and smarter functional annotation to non-model eukaryotic transcriptomes. Mol Ecol Resour. 2020;20:591–604. https://doi.org/10.1111/1755-0998.13106
-
-
 Pipeline Stages
-------------------------
+----------------------------
     * Transcriptome Filtering: designed to remove assembly artifacts and identify true CDS (complete and partial genes)
         1. Expression Filtering (RSEM)
         2. Frame Selection (TransDecoder by default, or GeneMarkS-T)
@@ -38,14 +32,13 @@ Pipeline Stages
         5. Orthologous Group Assignment: independent assignment of translated protein sequences to gene families (eggNOG).  Includes protein  domains (SMART/Pfam), Gene Ontology (GO) terms, and KEGG pathway assignment.
         6. InterProScan (optional): sequence search against the families of InterPro databases to assign protein domains, Gene Ontology terms, and pathway information
 
-.. note:: For information/bug reports, contact Alexander Hart at entap.dev@gmail.com or visit the Slack channel at entap-help.slack.com. 
-
-The figure below represents the typical EnTAP pipeline. A more detailed version with all output files can be seen within Interpreting the Results.
 
 .. image::    EnTAP_Overview_hires.png
-	:width: 400
 	:align: center
 
+
+How to cite:
+    * Hart AJ, Ginzburg S, Xu M, et al. EnTAP: Bringing faster and smarter functional annotation to non-model eukaryotic transcriptomes. Mol Ecol Resour. 2020;20:591–604. https://doi.org/10.1111/1755-0998.13106
 
 Citations
 -------------

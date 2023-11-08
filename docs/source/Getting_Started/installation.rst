@@ -17,7 +17,7 @@ EnTAP is packaged with all of the software necessary to fully annotate a set of 
 Before full EnTAP installation, dependencies must be checked to see if they are included in your system (many are by default) and the accompanying pipeline software will need to be installed (unless already present on the system).
 
 #. :ref:`System Requirements<sys-label>`
-#. :ref:`Dependency Check<dep-label>`
+#. :ref:`Installing Pipeline Software<dep-label>`
 #. :ref:`Pipeline Software<pipe-label>`
 #. :ref:`EnTAP Installation<entap-label>`
 
@@ -26,7 +26,7 @@ After installation is complete, EnTAP must be :ref:`configured<config-label>` in
 .. _sys-label:
 
 System Requirements
-----------------------
+-----------------------------------
   
     * Operating System
 
@@ -47,7 +47,7 @@ System Requirements
 .. _dep-label:
 
 Dependency Check
----------------------
+-----------------------------------
 Before continuing on in the installation process, ensure that the following dependencies are fully installed on your system:
 
     * C++11 compiler (GCC 4.8.1 or later)
@@ -65,8 +65,8 @@ Before continuing on in the installation process, ensure that the following depe
 
 .. _pipe-label:
 
-Pipeline Software
-----------------------
+Installing Pipeline Software
+--------------------------------------------
 EnTAP leverages several software distributions within the pipeline to provide the best quality annotations. The packages used (and their current/tested versions) can be seen below. This is not to say that newer versions will not be compatible, however they have not been tested yet with EnTAP. By default, EnTAP will use Transdecoder for frame selection, however both TransDecoder and GeneMarkS-T are supported and you may install either.
 
 .. note:: If the software is already installed on your system, this stage can be skipped

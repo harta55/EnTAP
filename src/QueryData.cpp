@@ -1146,12 +1146,13 @@ bool QueryData::initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HE
             *file_stream << HEADER_GENE_ONTOLOGY_TERM_GENE_ID << FileSystem::DELIM_TSV <<
                             HEADER_GENE_ONTOLOGY_TERM_GO_ID   << FileSystem::DELIM_TSV <<
                             HEADER_GENE_ONTOLOGY_TERM_NAME    << FileSystem::DELIM_TSV <<
-                            HEADER_GENE_ONTOLOGY_TERM_CATEGORY<< FileSystem::DELIM_TSV;
+                            HEADER_GENE_ONTOLOGY_TERM_CATEGORY;
 
             // We only want to add effective length column when user has executed expression filtering
             if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
-                *file_stream << HEADER_GENE_ONTOLOGY_TERM_LENGTH << std::endl;
+                *file_stream << FileSystem::DELIM_TSV << HEADER_GENE_ONTOLOGY_TERM_LENGTH;
             }
+            *file_stream << std::endl;
             break;
 
         default:

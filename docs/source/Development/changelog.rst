@@ -1,6 +1,10 @@
 Changelog
 ==================
-This page contains (mostly) all of the changes that were made between each version of EnTAP. The current latest version is EnTAP Beta v0.10.8-beta
+This page contains (mostly) all of the changes that were made between each version of EnTAP. 
+
+EnTAP v1.0.1 (November 13, 2023)
+------------------------------------------
+    * Fixed an issue with the formatting of the '...gene_ontology_terms.tsv' file output from EnTAP 
 
 EnTAP v1.0.0 (September 26, 2023)
 ------------------------------------------

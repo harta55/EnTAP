@@ -939,15 +939,15 @@ bool QueryData::add_alignment_data(std::string &base_path, QuerySequence *queryS
                                             querySequence->getMSequenceID() << FileSystem::DELIM_TSV <<
                                             entry.go_id                     << FileSystem::DELIM_TSV <<
                                             entry.term                      << FileSystem::DELIM_TSV <<
-                                            entry.category                  << FileSystem::DELIM_TSV;
+                                            entry.category;
 
                                     // We only want to include the effect length column if user has performed
                                     //  expression filtering
                                     if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
                                         *mAlignmentFiles.at(base_path).file_streams[type][go_level] <<
-                                            querySequence->getMEffectiveLength() << FileSystem::DELIM_TSV <<
-                                            std::endl;
+                                            FileSystem::DELIM_TSV << querySequence->getMEffectiveLength();
                                     }
+                                    *mAlignmentFiles.at(base_path).file_streams[type][go_level] << std::endl;
                                 }
                             }
                         }
@@ -1146,12 +1146,13 @@ bool QueryData::initialize_file(std::ofstream *file_stream, std::vector<ENTAP_HE
             *file_stream << HEADER_GENE_ONTOLOGY_TERM_GENE_ID << FileSystem::DELIM_TSV <<
                             HEADER_GENE_ONTOLOGY_TERM_GO_ID   << FileSystem::DELIM_TSV <<
                             HEADER_GENE_ONTOLOGY_TERM_NAME    << FileSystem::DELIM_TSV <<
-                            HEADER_GENE_ONTOLOGY_TERM_CATEGORY<< FileSystem::DELIM_TSV;
+                            HEADER_GENE_ONTOLOGY_TERM_CATEGORY;
 
             // We only want to add effective length column when user has executed expression filtering
             if (DATA_FLAG_GET(SUCCESS_EXPRESSION)) {
-                *file_stream << HEADER_GENE_ONTOLOGY_TERM_LENGTH << std::endl;
+                *file_stream << FileSystem::DELIM_TSV << HEADER_GENE_ONTOLOGY_TERM_LENGTH;
             }
+            *file_stream << std::endl;
             break;
 
         default:

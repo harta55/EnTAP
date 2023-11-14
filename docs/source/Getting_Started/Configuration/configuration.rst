@@ -1,7 +1,7 @@
 Configuration
 =====================
 
-After installation is complete, EnTAP must be configured for use. This stage will simply download and configure the necessary databases for full functionality. Configuration can be ran at anytime by a user or the system admin if they would like to update databases. It is in the installation section because it might be a bit easier to setup common databases beforehand that can be shared by multiple users.
+After Installation is complete, EnTAP must be configured for use. This stage will simply download and configure the necessary databases for full functionality and only needs to be ran once (unless more databases want to be updated or configured). 
 
 I'll break this up into two sections, :ref:`Ini File<hierarchy-label>` and :ref:`Usage<usage-label>`. The Ini File section will just describe how to ensure EnTAP is reading from the correct paths, which can be easily changed in the |config_file| (more on that later!). It will also go over the directories included in the installation. The Usage sections will go over the basic usage during the Configuration stage of EnTAP and how to setup reference databases. 
 
@@ -10,15 +10,12 @@ I'll break this up into two sections, :ref:`Ini File<hierarchy-label>` and :ref:
 Ini File
 -----------------
 
-From here on out, the "execution", or "EnTAP", directory will refer to the directory containing the EnTAP install (or binary file). Typically, this will just be at the root directory that was downloaded from the repository. All paths mentioned in this documentation will be relative to this directory. 
-
-
 Why is this important? EnTAP relies on several accompanying software packages and databases in order to run properly. Correct recognition of these paths is crucial and, as such, needed an entire section! The |config_file| is the answer to this pathing issue. It contains all of the necessary paths required for EnTAP (among many other commands) to run and can be configured as seen fit. 
 
 When a user is trying to execute EnTAP, they must specify the path to this ini file with the |flag_path| flag. By default, the ini file comes with some preset paths based on the installation directory. However, these should be checked for validity. If the ini file is not specified and there is not one in the working directory, an empty |config_file| will be generated with the following presets for execution paths. The ini file contains many other commands, but only the execution paths are required for configuration (specifically DIAMOND), so I will get to the others later on. 
 
     * diamond-exe=/EnTAP/libs/diamond-2.1.8/bin/diamond
-    * rsem-sam-validator=/EnTAP/libs/RSEM-1.3.0/rsem-sam-validator
+    * rsem-sam-validator=/EnTAP/libs/RSEM-1.3.3/rsem-sam-validator
     * rsem-calculate-expression=/EnTAP/libs/RSEM-1.3.3/rsem-calculate-expression
     * rsem-prepare-reference=/EnTAP/libs/RSEM-1.3.3/rsem-prepare-reference
     * rsem-convert-sam-for-rsem=/EnTAP/libs/RSEM-1.3.3/convert-sam-for-rsem
@@ -117,7 +114,7 @@ It is generally recommended that a user select at least three databases with var
 Running Configuration
 -------------------------------
 
-Once you have your protein FASTA database ready, you can begin to run the Configuration stage. As mentioned before, Configuration will only need to be run once prior to :ref:`Execution<exe-label>` unless you would like to configure/update more databases. 
+Once you have your protein FASTA database ready, you can begin to run the Configuration stage. As mentioned before, Configuration will only need to be run once prior to Execution unless you would like to configure/update more databases. 
 
 To run configuration with a FASTA database to output directory path/to/output (default is current working directory), the command is as follows (additional databases can be specified if necessary with the -d flag and threads with the -t flag):
 

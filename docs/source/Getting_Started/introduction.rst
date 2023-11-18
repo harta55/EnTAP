@@ -2,7 +2,6 @@
 .. _InterProScan: http://www.ebi.ac.uk/interpro/interproscan.html
 .. _eggnog: https://github.com/jhcepas/eggnog-mapper
 .. _diamond: https://github.com/bbuchfink/diamond
-.. _GeneMarkS-T: http://exon.gatech.edu/GeneMark/
 .. _TCLAP: http://tclap.sourceforge.net/
 .. _cereal: https://uscilab.github.io/cereal/
 .. _TransDecoder: https://github.com/TransDecoder/TransDecoder/releases
@@ -24,7 +23,7 @@ Pipeline Stages
 ----------------------------
     * Transcriptome Filtering: designed to remove assembly artifacts and identify true CDS (complete and partial genes)
         1. Expression Filtering (RSEM)
-        2. Frame Selection (TransDecoder by default, or GeneMarkS-T)
+        2. Frame Selection (TransDecoder)
 
     * Transcriptome Annotation: designed to assign functional information to sequences (homology, Gene Ontology, KEGG)
         3. Similarity Search: optimized search against user-selected databases (DIAMOND).  
@@ -83,7 +82,6 @@ Software contained or used within this pipeline:
 * `RSEM`_
 * `DIAMOND`_
 * `EggNOG`_
-* `GeneMarkS-T`_
 * `TransDecoder`_
 * `InterProScan`_
 * `TCLAP`_

@@ -4,7 +4,6 @@
 .. _RSEM: https://github.com/deweylab/RSEM
 .. _EggNOG-Emapper: https://github.com/jhcepas/eggnog-mapper
 .. _DIAMOND: https://github.com/bbuchfink/diamond
-.. _GeneMarkS-T: http://exon.gatech.edu/GeneMark/
 .. _CMake: https://cmake.org/
 .. _InterProScan: https://github.com/ebi-pf-team/interproscan
 .. _TransDecoder: https://github.com/TransDecoder/TransDecoder/releases
@@ -71,7 +70,7 @@ This repository contains the source code for RSEM, TransDecoder, and DIAMOND to 
 
 Installing Pipeline Software
 --------------------------------------------
-EnTAP leverages several software distributions within the pipeline to provide the best quality annotations. The packages used (and their current/compatible versions) can be seen below. This is not to say that newer versions will not be compatible, however they have not been tested yet with EnTAP. By default, EnTAP will use Transdecoder for frame selection, however both TransDecoder and GeneMarkS-T are supported and you may install either.
+EnTAP leverages several software distributions within the pipeline to provide the best quality annotations. The packages used (and their current/compatible versions) can be seen below. This is not to say that newer versions will not be compatible, however they have not been tested yet with EnTAP.
 
 .. note:: If the software is already installed on your system, this stage can be skipped
 
@@ -85,10 +84,6 @@ Supported Software:
 	
         * Version 5.3.0
         * Version 5.7.1
-
-    * GeneMarkS-T_ (Frame Selection): version 5.1 must be installed separately (if not using TransDecoder)
-
-        * Version 5.1
 
     * DIAMOND_ (Similarity Search): version 2.1.8 packaged with EnTAP
 

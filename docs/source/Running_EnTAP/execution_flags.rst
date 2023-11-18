@@ -215,13 +215,6 @@ These are the flags for the execution process of EnTAP. Flags will be repeated t
      - location (cmd/ini)
      - qualifier
      - example
-   * - frame-selection
-     - Specify the Frame Selection software to use
-         * 1. GeneMarkS-T 
-         * 2. TransDecoder (default)
-     - ini
-     - integer
-     - 2
    * - complete
      - Tell EnTAP to mark all of the transcripts as 'complete'. This will only be seen in the final output and will not affect the run.
      - ini
@@ -258,22 +251,6 @@ These are the flags for the execution process of EnTAP. Flags will be repeated t
      - ini
      - string
      - TransDecoder.Predict
-
-.. list-table:: Frame Selection - GeneMark-ST Specific Flags
-   :align: left
-   :widths: 10 50 10 10 10 
-   :header-rows: 1    
-   
-   * - param
-     - description
-     - location (cmd/ini)
-     - qualifier
-     - example
-   * - genemarkst-exe
-     - Specify the path to the :file:`gmst.pl` file for running GeneMark-ST 
-     - ini
-     - string
-     - gmst.pl
 
 .. list-table:: **Similarity Search Flags**
    :align: left

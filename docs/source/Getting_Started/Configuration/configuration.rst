@@ -19,7 +19,6 @@ When a user is trying to execute EnTAP, they must specify the path to this ini f
     * rsem-calculate-expression=/EnTAP/libs/RSEM-1.3.3/rsem-calculate-expression
     * rsem-prepare-reference=/EnTAP/libs/RSEM-1.3.3/rsem-prepare-reference
     * rsem-convert-sam-for-rsem=/EnTAP/libs/RSEM-1.3.3/convert-sam-for-rsem
-    * genemarkst-exe=/EnTAP/libs/gmst_linux_64/gmst.pl
     * transdecoder-long-exe=EnTAP/libs/TransDecoder-v5.7.1/TransDecoder.LongOrfs
     * transdecoder-predict-exe=EnTAP/libs/TransDecoder-v5.7.1/TransDecoder.Predict
     * interpro_exe_path=interproscan.sh

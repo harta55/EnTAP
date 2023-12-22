@@ -61,8 +61,8 @@ Before continuing on in the installation process, ensure that the following depe
 
 Downloading EnTAP Source Code
 ----------------------------------------
-First, download and extract the latest release(tagged) version from GitLab:
-https://gitlab.com/EnTAP/EnTAP/tags
+First, download and extract the latest release(tagged) version from GitHub:
+https://github.com/harta55/EnTAP/tags
 
 This repository contains the source code for RSEM, TransDecoder, and DIAMOND to be used with EnTAP.
 

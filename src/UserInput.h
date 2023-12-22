@@ -63,7 +63,8 @@ typedef enum {
     INPUT_FLAG_RUNPROTEIN,
     INPUT_FLAG_RUNNUCLEOTIDE,
     INPUT_FLAG_OVERWRITE,
-    INPUT_FLAG_INI_FILE,
+    INPUT_FLAG_ENTAP_RUN_PARAM_INI_FILE,
+    INPUT_FLAG_ENTAP_CONFIG_INI_FILE,
 //    INPUT_FLAG_HELP,      // Native to TCLAP
 //    INPUT_FLAG_VERSION,   // Native to TCLAP
     INPUT_FLAG_TRANSCRIPTOME,
@@ -145,6 +146,14 @@ typedef enum {
 
 
 class UserInput {
+private:
+
+    typedef enum {
+        ENT_COMMAND_LINE,   // Specify command line command
+        ENT_RUN_PARAM_INI_FILE, // File input by user for run-specific commands
+        ENT_CONFIG_INI_FILE,    // File input by user for generally EnTAP/software package paths
+        ENT_INPUT_FUTURE    // Flag for a future feature, will not be in other input methods yet
+    } ENT_INPUT_TYPES;
 
 public:
     UserInput(int argc, const char** argv, FileSystem*fileSystem);
@@ -170,7 +179,7 @@ public:
     static std::string getDATABASE_DIR_DEFAULT();
 
     bool has_input(ENTAP_INPUT_FLAGS input);
-    void parse_ini(std::string &ini_path);
+    void parse_ini(std::string &ini_path, ENT_INPUT_TYPES input_type);
     EXECUTION_TYPE verify_user_input();
     int get_supported_threads();
     std::queue<char> get_state_queue();
@@ -195,12 +204,6 @@ public:
     }
 
 private:
-
-    typedef enum {
-        ENT_COMMAND_LINE,
-        ENT_INI_FILE,
-        ENT_INPUT_FUTURE    // Flag for a future feature, will not be in other input methods yet
-    } ENT_INPUT_TYPES;
 
     // WARNING order must match VAR_TYPE_STR
     typedef enum {
@@ -248,12 +251,12 @@ private:
     void parse_future_inputs();
     void parse_arguments_tclap(int, const char **);
     void print_user_input();
-    EntapINIEntry* check_ini_key(std::string &);
+    EntapINIEntry* check_ini_key(std::string &key, ENT_INPUT_TYPES input_type);
     void verify_databases(bool);
     void verify_species (SPECIES_FLAGS, EntapDatabase*);
     void process_user_species(std::string&);
     void verify_software_paths(std::string &state, bool is_protein, bool is_execution, QueryData *pQuery_data);
-    void generate_ini_file(std::string& ini_path);
+    void generate_ini_file(std::string& ini_path, ENT_INPUT_TYPES input_type);
 
     const uint16 MAX_GO_LEVELS_SELECTED        = 5; // Max number of GO levels user can select to output
     const uint16 TRANS_MIN_PROTEIN_MIN         = 0;
@@ -310,9 +313,12 @@ private:
     static const vect_uint16_t DEFAULT_ONTOLOGY;
     static const vect_uint16_t DEFAULT_OUT_FORMAT;
     static const uint16        DEFAULT_TRANSDECODER_MIN_PROTEIN;
-    static const std::string   DEFAULT_INI_PATH;
 
-    static const std::string ENTAP_INI_FILENAME;
+    static const std::string   DEFAULT_RUN_PARAM_INI_FILENAME;
+    static const std::string   DEFAULT_ENT_CONFIG_INI_PATH;
+
+    static const std::string ENTAP_RUN_PARAM_INI_FILENAME;
+    static const std::string ENTAP_CONFIG_INI_FILENAME;
     const std::string INI_FILE_BOOL_TRUE = "true";
     const std::string INI_FILE_BOOL_FALSE= "false";
     const char INI_FILE_MULTI_DELIM = ',';
@@ -321,7 +327,8 @@ private:
 
     nlohmann::json mJsonOutput;                 // Output for API commands
     FileSystem *mpFileSystem;
-    std::string mIniFilePath;
+    std::string mEntRunParamIniFilePath;
+    std::string mEntConfigIniFilePath;
     bool        mIsConfig;
     bool        mHasAPICmd;                     // User has selected API command
     static EntapINIEntry mUserInputs[];

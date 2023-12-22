@@ -2,10 +2,13 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. 
 
+EnTAP v1.X.X (X X, 2023)
+------------------------------------------
+    * Removed GeneMarkS-T from supported Frame Selection software
+
 EnTAP v1.0.1 (November 13, 2023)
 ------------------------------------------
-    * Fixed an issue with the formatting of the '...gene_ontology_terms.tsv' file output from EnTAP
-    * Removed GeneMarkS-T from supported Frame Selection software
+    * Fixed an issue with the formatting of the '...gene_ontology_terms.tsv' file output from EnTAP 
 
 EnTAP v1.0.0 (September 26, 2023)
 ------------------------------------------

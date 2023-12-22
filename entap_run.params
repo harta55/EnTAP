@@ -29,12 +29,6 @@ complete=false
 #-------------------------------
 # [frame_selection-transdecoder]
 #-------------------------------
-#Method to execute TransDecoder.LongOrfs. This may be the path to the executable or simply TransDecoder.LongOrfs
-#type:string
-transdecoder-long-exe=TransDecoder.LongOrfs
-#Method to execute TransDecoder.Predict. This may be the path to the executable or simply TransDecoder.Predict
-#type:string
-transdecoder-predict-exe=TransDecoder.Predict
 #Transdecoder only. Specify the minimum protein length
 #type:integer
 transdecoder-m=100

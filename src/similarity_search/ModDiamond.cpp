@@ -722,6 +722,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     // Print taxonomy warning
     if (count_no_taxonomy >= TAXONOMY_ATTEMPTS) {
         ss << "\n\tWARNING taxonomy information could not be found for a large number of alignments and may skew taxonomy results for this database";
+        FS_dprint("WARNING taxonomy info could not be found for large number of alignments (" + std::to_string(count_no_taxonomy) + ")");
     }
 
     // If overall alignments are 0, then throw error

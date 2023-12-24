@@ -512,6 +512,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     uint64                      count_uninformative=0;  // Number of uninformative alignments
     uint64                      count_unselected=0;     // Number of unselected alignments (those that are not best hits)
     uint64                      count_TOTAL_alignments=0;
+    uint64                      count_no_taxonomy=0;     // Count number of alignments where tax information could not be found
     uint32                      ct;
     fp64                        percent;
     fp64                        contam_percent;
@@ -641,7 +642,11 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                 }
 
                 // Count species type
-                species_counter.add_value(species);
+                if (species.empty()) {
+                    count_no_taxonomy++;
+                } else {
+                    species_counter.add_value(species);
+                }
 
                 // Check if this is an informative alignment and respond accordingly
                 if (sim_search_data->is_informative) {
@@ -713,13 +718,20 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
            "\n\t\tWritten to: "                   << out_unselected_tsv;
     }
 
+
+    // Print taxonomy warning
+    if (count_no_taxonomy >= TAXONOMY_ATTEMPTS) {
+        ss << "\n\tWARNING taxonomy information could not be found for a large number of alignments and may skew taxonomy results for this database";
+        FS_dprint("WARNING taxonomy info could not be found for large number of alignments (" + std::to_string(count_no_taxonomy) + ")");
+    }
+
     // If overall alignments are 0, then throw error
     if (is_final && count_filtered == 0) {
         throw ExceptionHandler("No alignments found during Similarity Searching!",
                                ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
     }
 
-    // If no total or filealignments for this database, return and warn user
+    // If no total or file alignments for this database, return and warn user
     if (!is_final && (count_TOTAL_alignments == 0 || count_filtered == 0)) {
         ss << "WARNING: No alignments for this database";
         std::string out_msg = ss.str() + "\n";

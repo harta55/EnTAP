@@ -91,6 +91,8 @@ protected:
     const std::string BLASTX_STR           = "blastx";
     const std::string BLASTP_STR           = "blastp";
     const uint8       UNIPROT_ATTEMPTS     = 15;   // Number of attempts to see if database is uniprot
+    const uint8       TAXONOMY_ATTEMPTS    = 20;   // Number of attempts at parsing tax data from a database before we give an error
+                                                   //   parsing will still continue even if limit is hit (just for warning purposes)
     const uint8       MIN_CONTAM_COUNT     = 1;    // Minimum number of contaminants to graph
     const std::string NCBI_REGEX          = "\\[(.+)\\](?!.+\\[.+\\])";
     const std::string UNIPROT_REGEX       = "OS=(.+?)\\s\\S\\S=";

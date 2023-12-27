@@ -88,7 +88,6 @@ AbstractSimilaritySearch::AbstractSimilaritySearch(std::string &execution_stage_
     // create overall results dir
     mpFileSystem->delete_dir(mOverallResultsDir);
     mpFileSystem->create_dir(mOverallResultsDir);
-
 }
 
 /**

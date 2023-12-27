@@ -28,6 +28,7 @@
 
 //*********************** Includes *****************************
 #include "EntapExecute.h"
+#include "HorizontalGeneTransfer.h"
 //**************************************************************
 
 
@@ -280,6 +281,21 @@ namespace entapExecute {
                         ontology->execute();
                         break;
                     }
+
+                    case HORIZONTAL_GENE_TRANSFER: {
+                        FS_dprint("STATE - HORIZONTAL GENE TRANSFER");
+                        if (pUserInput->run_horizontal_gene_transfer()) {
+                            std::unique_ptr<HorizontalGeneTransfer> hgt_analysis(new HorizontalGeneTransfer(
+                                    input_path,
+                                    entap_data_ptrs
+                            ));
+
+                        } else {
+                            FS_dprint("User has not input required flags for HGT analysis, skipping...");
+                        }
+                        break;
+                    }
+
                     default:
                         executeStates = EXIT;
                         break;

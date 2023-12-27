@@ -54,7 +54,8 @@ class ModDiamond : public AbstractSimilaritySearch {
 
 public:
     //******************* Public Functions *********************
-    ModDiamond(std::string &out, std::string &fasta_path,EntapDataPtrs &entap_data, vect_str_t &databases);
+    ModDiamond(std::string &out, std::string &fasta_path,EntapDataPtrs &entap_data, vect_str_t &databases,
+               std::string module_name, uint16 software_flag);
     ~ModDiamond() = default;
 
     // ModEntap overrides

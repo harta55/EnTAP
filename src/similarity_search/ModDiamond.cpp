@@ -25,7 +25,11 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wparentheses"
+#pragma GCC diagnostic ignored "-Wformat-truncation="
 #include <csv.h>
+#pragma GCC diagnostic pop
 #include "ModDiamond.h"
 #include "../QuerySequence.h"
 #include "../QueryAlignment.h"
@@ -94,12 +98,12 @@ std::vector<ENTAP_HEADERS> ModDiamond::UNIPROT_HEADERS = {
  * =====================================================================
  */
 ModDiamond::ModDiamond(std::string &execution_stage_path, std::string &fasta_path, EntapDataPtrs &entap_data,
-                       vect_str_t &databases)
-: AbstractSimilaritySearch(execution_stage_path, fasta_path, entap_data, "DIAMOND", DEFAULT_HEADERS, databases){
+                       vect_str_t &databases, std::string module_name, uint16 software_flag)
+: AbstractSimilaritySearch(execution_stage_path, fasta_path, entap_data, module_name, DEFAULT_HEADERS, databases){
 
-    FS_dprint("Spawn Object - ModDiamond");
+    FS_dprint("Spawn Object - ModDiamond: " + module_name);
     mParsedFile = false;
-    mSoftwareFlag = SIM_DIAMOND;
+    mSoftwareFlag = software_flag;
     mExePath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
     mpFileSystem->delete_dir(mFigureDir);   // Don't need for DIAMOND, may change
 }

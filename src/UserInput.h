@@ -139,6 +139,12 @@ typedef enum {
     INPUT_FLAG_BUSCO_DATABASE,
     INPUT_FLAG_BUSCO_EVAL,
 
+    /* Horizontal Gene Transfer Commands */
+    INPUT_FLAG_HGT_DONOR_DATABASES,
+    INPUT_FLAG_HGT_RECIPIENT_DATABASES,
+    INPUT_FLAG_HGT_GFF,
+
+
 
     INPUT_FLAG_MAX
 
@@ -191,6 +197,7 @@ public:
     std::vector<FileSystem::ENT_FILE_TYPES> get_user_output_types();
     bool run_frame_selection(QueryData *queryData, bool &run_frame_selection);
     bool run_expression_filtering();
+    bool run_horizontal_gene_transfer();
     std::string get_json_output();
 
     template<class T>
@@ -252,7 +259,7 @@ private:
     void parse_arguments_tclap(int, const char **);
     void print_user_input();
     EntapINIEntry* check_ini_key(std::string &key, ENT_INPUT_TYPES input_type);
-    void verify_databases(bool);
+    void verify_databases(bool, ENTAP_INPUT_FLAGS input_database_flag);
     void verify_species (SPECIES_FLAGS, EntapDatabase*);
     void process_user_species(std::string&);
     void verify_software_paths(std::string &state, bool is_protein, bool is_execution, QueryData *pQuery_data);

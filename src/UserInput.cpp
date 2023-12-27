@@ -329,6 +329,17 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
 #define DESC_BUSCO_EVAL    "Minimum E-Value for BUSCO related BLAST searches."
 const fp64   UserInput::DEFAULT_BUSCO_E_VALUE           = 1e-5;
 
+/* -------------------- Horizontal Gene Transfer Commands --------------------*/
+#define CMD_HGT_DONOR_DB  "hgt-donor"
+#define DESC_HGT_DONOR_DB "Specify the DIAMOND configured (.dmnd extension) donor databases for Horizontal Gene Transfer \n" \
+                            "analysis"
+#define CMD_HGT_RECIPIENT_DB "hgt-recipient"
+#define DESC_HGT_RECIPIENT_DB "Specify the DIAMOND configured (.dmnd extension) recipient databases for Horizontal Gene Transfer \n" \
+                            "analysis"
+#define CMD_HGT_GFF_FILE "hgt-gff"
+#define DESC_HGT_GFF_FILE "Specify the path to the GFF file associated with your dataset. Ensure that all headers match those in your \n" \
+                            "input transcript file."
+
 #define INI_FRAME_GENEMARK "frame_selection-genemarks-t"
 #define INI_FRAME_TRANSDECODER "frame_selection-transdecoder"
 #define INI_GENERAL "general"
@@ -343,6 +354,7 @@ const fp64   UserInput::DEFAULT_BUSCO_E_VALUE           = 1e-5;
 #define INI_ONT_EGGNOG "ontology-eggnog"
 #define INI_ENTAP "entap"
 #define INI_TRANSC_BUSCO "ontology-busco"
+#define INI_HORIZONTAL_GT "horizontal-gene-transfer"
 
 #define ENTAP_INI_NULL_STR_VECT vect_str_t()
 #define ENTAP_INI_NULL_INT_VECT vect_uint16_t()
@@ -489,6 +501,11 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_TRANSC_BUSCO,CMD_BUSCO_EXE          ,ENTAP_INI_NULL  ,DESC_BUSCO_EXE             ,EX_BUSCO_EXE     ,ENT_INI_VAR_STRING      ,DEFAULT_BUSCO_EXE      ,ENT_INPUT_FUTURE, ENTAP_INI_NULL_VAL},
         {INI_TRANSC_BUSCO,CMD_BUSCO_DATABASE     ,ENTAP_INI_NULL  ,DESC_BUSCO_DATABASE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_INPUT_FUTURE, ENTAP_INI_NULL_VAL},
         {INI_TRANSC_BUSCO,CMD_BUSCO_EVAL         ,ENTAP_INI_NULL  ,DESC_BUSCO_EVAL            ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_BUSCO_E_VALUE  ,ENT_INPUT_FUTURE, ENTAP_INI_NULL_VAL},
+
+/* Horizontal Gene Transfer - Commands */
+        {INI_HORIZONTAL_GT,CMD_HGT_DONOR_DB       ,ENTAP_INI_NULL  ,DESC_HGT_DONOR_DB         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING ,ENTAP_INI_NULL_VAL  ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_HORIZONTAL_GT,CMD_HGT_RECIPIENT_DB   ,ENTAP_INI_NULL  ,DESC_HGT_RECIPIENT_DB     ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING ,ENTAP_INI_NULL_VAL  ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_HORIZONTAL_GT,CMD_HGT_GFF_FILE       ,ENTAP_INI_NULL  ,DESC_HGT_GFF_FILE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING       ,ENTAP_INI_NULL_VAL  ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
 
 /* END COMMANDS */
         {ENTAP_INI_NULL,ENTAP_INI_NULL           ,ENTAP_INI_NULL  ,ENTAP_INI_NULL             , ENTAP_INI_NULL  ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL}
@@ -1241,7 +1258,8 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
 
     try {
 
-        verify_databases(is_run);
+        // Verify generic Similarity Search databases
+        verify_databases(is_run, INPUT_FLAG_DATABASE);
 
         // Handle generic flags
         if (has_input(INPUT_FLAG_OUTPUT_FORMAT)) {
@@ -1417,6 +1435,19 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
                 }
             }
 
+            // Verify Horizontal Gene Transfer flags
+            if (has_input(INPUT_FLAG_HGT_RECIPIENT_DATABASES)) {
+                // Throws exception on error
+                verify_databases(true, INPUT_FLAG_HGT_RECIPIENT_DATABASES);
+            }
+            if (has_input(INPUT_FLAG_HGT_DONOR_DATABASES)) {
+                // Throws exception on error
+                verify_databases(true, INPUT_FLAG_HGT_DONOR_DATABASES);
+            }
+            if (has_input(INPUT_FLAG_HGT_GFF)) {
+                // TODO add GFF File analysis
+            }
+
         } else {
             // Must be config
 
@@ -1466,12 +1497,12 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
  * @return              - None
  * ======================================================================
  */
-void UserInput::verify_databases(bool is_run) {
+void UserInput::verify_databases(bool is_run, ENTAP_INPUT_FLAGS input_database_flag) {
 
     ent_input_multi_str_t     other_data;
 
-    if (has_input(INPUT_FLAG_DATABASE)) {
-        other_data = get_user_input<ent_input_multi_str_t>(INPUT_FLAG_DATABASE);
+    if (has_input(input_database_flag)) {
+        other_data = get_user_input<ent_input_multi_str_t>(input_database_flag);
     } else if (is_run){
         // Must specify database when executing
         throw ExceptionHandler("Must select databases when executing main pipeline", ERR_ENTAP_INPUT_PARSE);
@@ -1728,15 +1759,23 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
     if (state == DEFAULT_STATE) {
         bool is_run_frame_select;
 
+        // Optional, check if user wants to run based on inputs
         if (run_expression_filtering()) {
             execute |= EXPRESSION_FILTERING;
         }
 
+        // Optional, check if user wants to run based on inputs
         if (run_frame_selection(pQuery_data, is_run_frame_select)) {
             if (is_run_frame_select) {
                 execute |= FRAME_SELECTION;
             }
         }
+
+        // Optional, check if user wants to run based on inputs
+        if (run_horizontal_gene_transfer()) {
+            execute |= HORIZONTAL_GENE_TRANSFER;
+        }
+
         execute |= SIMILARITY_SEARCH;
         execute |= GENE_ONTOLOGY;
 
@@ -1768,6 +1807,9 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
                                                ERR_ENTAP_INPUT_PARSE);
                     }
                     break;
+
+                default:
+                    break;
             }
         }
 
@@ -1778,6 +1820,7 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
                                        "installed and the path is correct", ERR_ENTAP_INPUT_PARSE);
             }
         }
+        // Check Gene Ontology software
         if (execute & GENE_ONTOLOGY) {
             for (uint16 flag : ontology_flags) {
                 switch (flag) {
@@ -1824,6 +1867,14 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
                     default:
                         break;
                 }
+            }
+        }
+        // Check HGT Software
+        if (execute & HORIZONTAL_GENE_TRANSFER) {
+            // The only software used by Horizontal Gene Transfer currently is DIAMOND
+            if (!ModDiamond::is_executable(dmnd_exe)) {
+                throw ExceptionHandler("Could not execute a test run of DIAMOND for HGT analysis, be sure it's properly "
+                                       "installed and the path is correct", ERR_ENTAP_INPUT_PARSE);
             }
         }
     // No, using CONFIGURATION stage of pipeline
@@ -2053,4 +2104,26 @@ std::string UserInput::get_json_output() {
     } else {
         return "";
     }
+}
+
+bool UserInput::run_horizontal_gene_transfer() {
+    bool ret = true;
+    FS_dprint("Determining if we want to run horizontal gene transfer analysis...");
+
+    if (!has_input(INPUT_FLAG_HGT_DONOR_DATABASES)) {
+        FS_dprint("    No, INPUT_FLAG_HGT_DONOR_DATABASES not input");
+        ret = false;
+    }
+
+    if (!has_input(INPUT_FLAG_HGT_RECIPIENT_DATABASES)) {
+        FS_dprint("    No, INPUT_FLAG_HGT_RECIPIENT_DATABASES not input");
+        ret = false;
+    }
+
+    if (!has_input(INPUT_FLAG_HGT_GFF)) {
+        FS_dprint("    No, INPUT_FLAG_HGT_GFF not input");
+        ret = false;
+    }
+
+    return ret;
 }

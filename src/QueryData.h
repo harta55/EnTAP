@@ -55,6 +55,7 @@ public:
         IS_PROTEIN         = (1 << 4),  // We have some protein data
         IS_NUCLEOTIDE      = (1 << 5),  // We have some nucleotide data
         UNIPROT_MATCH      = (1 << 6),
+        SUCCESS_HGT        = (1 << 7),
 
         DATA_FLAGS_MAX     = (1 << 31)
     } DATA_FLAGS;
@@ -92,6 +93,7 @@ public:
     void set_is_success_expression(bool val);
     void set_is_success_sim_search(bool val);
     void set_is_success_ontology(bool val);
+    void set_is_success_hgt(bool val);
     void set_is_uniprot(bool val);
     bool DATA_FLAG_GET(DATA_FLAGS);
 

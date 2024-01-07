@@ -167,6 +167,10 @@ bool GraphingManager::initialize_graph_data(GraphingManager::GraphingData &graph
             new_graph = new EntapGraphBarStacked(graphingData);
             break;
 
+        case ENT_LOG_VISUAL:
+            new_graph = new EntapLogVisual(graphingData);
+            break;
+
         default:
             ret = false;
             break;
@@ -437,4 +441,21 @@ bool GraphingManager::EntapGraphBarStacked::add_datapoint(std::list<std::string>
         *mpOutputTextStream << out << std::endl;
     }
     return ret;
+}
+
+//**********************************************************************
+//**********************************************************************
+//                 EntapLogVisual Nested Class
+//**********************************************************************
+//**********************************************************************
+
+GraphingManager::EntapLogVisual::EntapLogVisual(GraphingManager::GraphingData &graphingData)
+        : EntapGraphBase(graphingData) {
+
+}
+
+bool GraphingManager::EntapLogVisual::add_datapoint(string key, string value) {
+    *mpOutputTextStream << key << ':' << value << std::endl;
+
+    return true;
 }

@@ -531,6 +531,8 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
     end_alignment_files(out_entap_report_path);
     end_alignment_files(out_unannotated_path);
 
+    EntapLogVisual->add_datapoint("Total_sequences", count_total_sequences)    
+        
     mpFileSystem->format_stat_stream(ss, "Final Annotation Statistics");
     ss <<
        "Total Input Sequences: "                  << count_total_sequences;

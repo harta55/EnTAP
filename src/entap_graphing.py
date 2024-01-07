@@ -30,6 +30,7 @@ import sys
 import collections
 import os
 from operator import add
+from jinja2 import Template
 
 # ------------------- GLOBALS -------------------
 gTextFilePath = ""
@@ -60,6 +61,7 @@ GRAPH_TYPE_PIE_CHART = 4
 GRAPH_TYPE_BOX_PLOT_VERTICAL = 5
 GRAPH_TYPE_BOX_PLOT_HORIZONTAL = 6
 GRAPH_TYPE_BAR_STACKED = 7
+GRAPH_TYPE_LOG_VISUAL = 8
 
 ENTAP_EXIT_OK = 0
 ENTAP_EXIT_UNSUPPORTED_SOFTWARE = 1
@@ -166,9 +168,23 @@ def create_graphs(graph_type):
         create_bar_stacked(gGraphTitle, gOutputPath, InputValues.label_map,
                            InputValues.xlabel, InputValues.ylabel)
         pass
+    elif graph_type == GRAPH_TYPE_LOG_VISUAL:
+        input_vals = parse_dict(gTextFilePath)
+        create_gen_statistics(input_vals)
     else:
         exit(ENTAP_EXIT_UNSUPPORTED_GRAPH_TYPE)
 
+
+def create_gen_statistics(vals):
+    total_sequences = vals["Total_sequences"]
+    template_str = """
+    <html>
+    <body>
+    <h1></h1>
+    <p>You are {{total_sequences}} years old.</p>
+    </body>
+    </html>
+    """
 
 
 # dict[dict] structure
@@ -263,6 +279,18 @@ def parse_input(path):
         UserVals.labels.append(values[0])
         UserVals.values.append(int(values[1]))
     return UserVals
+
+def parse_dict(path):
+    key_value_dict = {}
+
+    with open(path, 'r') as file:
+    for line in file:
+        key, value = line.strip().split(',')
+
+        key_value_dict[key] = value
+
+   return key_value_dict
+
 
 
 # Used for box plot with multiple labels to a value

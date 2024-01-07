@@ -98,6 +98,7 @@ public:
          *
          *
          */
+        ENT_LOG_VISUAL=8
 
     } ENT_GRAPHING_TYPES;
 
@@ -206,6 +207,13 @@ public:
     private:
         static constexpr  uint16 MINIMUM_ARGS = 3;
         static constexpr  uint16 MAXIMUM_ARGS = 3;
+    };
+
+    class EntapLogVisual : public EntapGraphBase {
+    public:
+        EntapLogVisual(GraphingData &graphingData);
+        virtual ~EntapLogVisual()= default;
+        bool add_datapoint(std::list<std::string> &list) override;
     };
 
 private:

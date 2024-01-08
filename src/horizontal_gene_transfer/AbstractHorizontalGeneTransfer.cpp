@@ -39,12 +39,23 @@ AbstractHorizontalGeneTransfer::AbstractHorizontalGeneTransfer(std::string &exec
     mDonorDatabasePaths = mpUserInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_HGT_DONOR_DATABASES);
     mRecipientDatabasePaths = mpUserInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_HGT_RECIPIENT_DATABASES);
     mGFFPath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_HGT_GFF);
+    mQCoverage        = mpUserInput->get_user_input<ent_input_fp_t >(INPUT_FLAG_QCOVERAGE);
+    mTCoverage        = mpUserInput->get_user_input<ent_input_fp_t >(INPUT_FLAG_TCOVERAGE);
+    mEVal            = mpUserInput->get_user_input<ent_input_fp_t>(INPUT_FLAG_E_VALUE);
 
 //    // create overall results dir
-//    mpFileSystem->delete_dir(mOverallResultsDir);
-//    mpFileSystem->create_dir(mOverallResultsDir);
+    mpFileSystem->delete_dir(mOverallResultsDir);
+    mpFileSystem->create_dir(mOverallResultsDir);
 }
 
 void AbstractHorizontalGeneTransfer::set_success_flags() {
     mpQueryData->set_is_success_hgt(true);
+}
+
+std::string AbstractHorizontalGeneTransfer::get_database_shortname(std::string &full_path) {
+    return mpFileSystem->get_filename(full_path, false);
+}
+
+std::string AbstractHorizontalGeneTransfer::get_database_output_path(std::string &database_name) {
+    return PATHS(mModOutDir,mBlastType + "_" + mTranscriptomeShortname + "_" + get_database_shortname(database_name) + FileSystem::EXT_OUT);
 }

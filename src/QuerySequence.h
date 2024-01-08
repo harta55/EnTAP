@@ -75,7 +75,11 @@ public:
         QUERY_FAMILY_ONE_GO     = (1 << 14),        // Sequence contains at least one GO from EggNOG process
         QUERY_ONT_INTERPRO_GO   = (1 << 15),        // Sequence contains at least one GO from InterPro process
         QUERY_ONT_INTERPRO_PATHWAY = (1 << 16),     // Sequence contains at least one KEGG from InterPro process
-        QUERY_ONT_BUSCO         = (1 << 17),
+        QUERY_ONT_BUSCO         = (1 << 17),        // Sequence has BUSCO data
+        QUERY_HGT_CANDIDATE     = (1 << 18),        // Sequence is an HGT candidate (not necessarily confirmed as HGT)
+                                                    //  This means the sequence aligned with the correct number of donor/recipient
+                                                    //  databases to be considered an HGT candidate
+        QUERY_HGT_CONFIRMED     = (1 << 19),        // Sequence confirmed as HGT gene
 
         QUERY_MAX               = (1 << 31)
 
@@ -243,7 +247,7 @@ public:
         return static_cast<T*>(mAlignmentData->get_best_align_ptr(state, software, database));
     }
 
-    // Checks whether an alignment was found against specific atabase
+    // Checks whether an alignment was found against specific database
     bool hit_database(ExecuteStates state, uint16 software, std::string database);
     void update_query_flags(ExecuteStates state, uint16 software);
     void get_header_data(std::string& data, ENTAP_HEADERS header, uint8 lvl);

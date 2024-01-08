@@ -289,6 +289,7 @@ namespace entapExecute {
                                     input_path,
                                     entap_data_ptrs
                             ));
+                            hgt_analysis->execute();
 
                         } else {
                             FS_dprint("User has not input required flags for HGT analysis, skipping...");

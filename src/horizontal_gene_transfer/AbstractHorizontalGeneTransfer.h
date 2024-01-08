@@ -51,7 +51,13 @@ protected:
     vect_str_t  mDonorDatabasePaths;
     vect_str_t  mRecipientDatabasePaths;
     std::string mGFFPath;
+    fp64        mEVal;
+    fp64        mQCoverage;
+    fp64        mTCoverage;
+    std::string mBlastType; // string to signify blast type
 
+    std::string get_database_shortname(std::string &full_path);
+    std::string get_database_output_path(std::string &database_name);
 };
 
 

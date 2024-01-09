@@ -285,7 +285,7 @@ def parse_dict(path):
 
     with open(path, 'r') as file:
     for line in file:
-        key, value = line.strip().split(',')
+        key, value = line.strip().split(':')
 
         key_value_dict[key] = value
 

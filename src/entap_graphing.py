@@ -170,12 +170,12 @@ def create_graphs(graph_type):
         pass
     elif graph_type == GRAPH_TYPE_LOG_VISUAL:
         input_vals = parse_dict(gTextFilePath)
-        create_gen_statistics(input_vals)
+        create_gen_statistics(input_vals,gOutputPath)
     else:
         exit(ENTAP_EXIT_UNSUPPORTED_GRAPH_TYPE)
 
 
-def create_gen_statistics(vals):
+def create_gen_statistics(vals,file):
     total_sequences = vals["Total_sequences"]
     template_str = """
     <html>
@@ -185,6 +185,8 @@ def create_gen_statistics(vals):
     </body>
     </html>
     """
+    with open(file, "w") as html_file:
+        html_file.write(html_content)
 
 
 # dict[dict] structure

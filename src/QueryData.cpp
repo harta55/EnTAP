@@ -531,7 +531,18 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
     end_alignment_files(out_entap_report_path);
     end_alignment_files(out_unannotated_path);
 
-    EntapLogVisual->add_datapoint("Total_sequences", count_total_sequences)    
+    // Setup graphing files    
+    GraphingManager::GraphingData graph_html;
+    graph_html.text_file_path = PATHS(outpath, HTML_STATS_TXT);
+    graph_html.fig_out_path   = PATHS(outpath, FINAL_STATS_HTML);
+    graph_html.graph_type     = GraphingManager::ENT_LOG_VISUAL;
+    mpGraphingManager->initialize_graph_data(graph_html);
+
+    // Add datapoints to the graphing text file
+    mpGraphingManager->add_datapoint("Total sequences", count_total_sequences);
+
+    // Graphing handle
+    mpGraphingManager->graph_data(graph_html.text_file_path);
         
     mpFileSystem->format_stat_stream(ss, "Final Annotation Statistics");
     ss <<

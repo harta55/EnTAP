@@ -30,7 +30,7 @@
 #include "ExceptionHandler.h"
 #include "FileSystem.h"
 #include "UserInput.h"
-
+#include "GraphingManager.h"
 // This table should match order in EntapGlobals.h ENTAP_HEADERS enum
 QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
         {"Unused",              false},                         // 0
@@ -396,6 +396,9 @@ std::pair<uint16, uint16> QueryData::calculate_N_vals
 void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::ENT_FILE_TYPES> output_types) {
     FS_dprint("Pipeline finished! Calculating final statistics...");
 
+
+    GraphingManager::GraphingData    graphingStruct;
+        
     std::stringstream      ss;
     uint32                 count_total_sequences=0;
     uint32                 count_total_kept_sequences=0;

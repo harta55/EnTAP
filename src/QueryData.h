@@ -33,9 +33,10 @@
 #include "QuerySequence.h"
 #include "common.h"
 #include "UserInput.h"
-
+#include "GraphingManager.h"
 // Forward Declarations
 class QueryAlignment;
+class GraphingManager;
 
 typedef std::unordered_map<std::string, QuerySequence*> QUERY_MAP_T;
 
@@ -65,7 +66,7 @@ public:
     } SEQUENCE_TYPES;
 
 
-    QueryData(std::string &input_path, UserInput* userInput, FileSystem* fileSystem);
+    QueryData(std::string &input_path, UserInput* userInput, FileSystem* fileSystem, GraphingManager* graphingManager);
     QueryData(std::string&, std::string&, UserInput*, FileSystem*);
     ~QueryData();
 

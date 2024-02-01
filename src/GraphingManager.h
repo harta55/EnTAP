@@ -92,7 +92,7 @@ public:
          * This will give us a Y-Axis Label of "Sequence Length", and an X-Axis
          * label of "Removed" and "Selected"
          */
-        ENT_GRAPH_BAR_STACKED=7
+        ENT_GRAPH_BAR_STACKED=7,
         /*
          * Bar Graph Stacked Formatting
          *

@@ -30,7 +30,6 @@ import sys
 import collections
 import os
 from operator import add
-from jinja2 import Template
 
 # ------------------- GLOBALS -------------------
 gTextFilePath = ""
@@ -169,24 +168,19 @@ def create_graphs(graph_type):
                            InputValues.xlabel, InputValues.ylabel)
         pass
     elif graph_type == GRAPH_TYPE_LOG_VISUAL:
-        input_vals = parse_dict(gTextFilePath)
-        create_gen_statistics(input_vals,gOutputPath)
+        input_vals = parse_inptut_dict(gTextFilePath)
+        create_gen_statistics(gOutputPath, input_vals)
     else:
         exit(ENTAP_EXIT_UNSUPPORTED_GRAPH_TYPE)
 
 
-def create_gen_statistics(vals,file):
-    total_sequences = vals["Total_sequences"]
-    template_str = """
-    <html>
-    <body>
-    <h1></h1>
-    <p>You are {{total_sequences}} years old.</p>
-    </body>
-    </html>
-    """
-    with open(file, "w") as html_file:
-        html_file.write(html_content)
+def create_gen_statistics(file, label_vals):
+    with open(file, 'w') as html_file:
+        for key, values in label_vals.items():
+            html_file.write("<li>{}: {}</li>\n".format(key, ", ".join(map(str, values))))
+
+        html_file.write("</ul>\n</body>\n</html>")
+
 
 
 # dict[dict] structure

@@ -454,8 +454,12 @@ GraphingManager::EntapLogVisual::EntapLogVisual(GraphingManager::GraphingData &g
 
 }
 
-bool GraphingManager::EntapLogVisual::add_datapoint(const std::string& key, fp64 value) {
-    *mpOutputTextStream << key << ':' << value << std::endl;
+bool GraphingManager::EntapLogVisual::add_datapoint(std::list<std::string> &list) {
+    bool ret = true;
 
-    return true;
+    *mpOutputTextStream << list.front() << '\t';
+    list.pop_front();
+    *mpOutputTextStream << list.front() << std::endl;
+    
+    return ret;
 }

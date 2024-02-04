@@ -113,7 +113,6 @@ private:
         std::vector<ENTAP_HEADERS> headers;
         std::ofstream* file_streams[FileSystem::ENT_FILE_OUTPUT_FORMAT_MAX][UserInput::MAX_GO_LEVEL+1];
     };
-    GraphingManager* mpGraphingManager;
     void set_input_type(std::string&);
     void DATA_FLAG_SET(DATA_FLAGS);
     void DATA_FLAG_CLEAR(DATA_FLAGS);

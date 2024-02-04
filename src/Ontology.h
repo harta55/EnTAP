@@ -48,7 +48,7 @@ public:
 
 private:
 
-    const std::string ONTOLOGY_OUT_PATH     = "ontology/";
+    const std::string ONTOLOGY_OUT_PATH     = "gene_family/";
 
     std::vector<ENTAP_HEADERS>      mEntapHeaders;
     std::vector<uint16>             mGoLevels;

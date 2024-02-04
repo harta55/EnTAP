@@ -289,6 +289,21 @@ private:
 #endif
     AlignmentData                     *mAlignmentData;  // Alignment information
     std::string                       mHeaderInfo[ENTAP_HEADER_COUNT];  // Header mappings
+
+    /* Values taken from GFF file if user inputs */
+    const QuerySequence *mpUpstreamSequence;
+public:
+    const QuerySequence *getMpUpstreamSequence() const;
+
+    void setMpUpstreamSequence(const QuerySequence *mpUpstreamSequence);
+
+    const QuerySequence *getMpDownstreamSequence() const;
+
+    void setMpDownstreamSequence(const QuerySequence *mpDownstreamSequence);
+
+private:
+    // Sequence that is upstream from this sequence
+    const QuerySequence *mpDownstreamSequence;  // Sequence that is downstream from this sequence
     //**********************************************************
 };
 

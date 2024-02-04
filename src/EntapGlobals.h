@@ -296,6 +296,7 @@ namespace std {
 //*********************** Externs *****************************
 
 extern std::string DEBUG_FILE_PATH;
+extern bool INITIALIZED_DEBUG_FILE;
 // ************************************************************
 
 static const std::string GO_MOLECULAR_FLAG     = "molecular_function";

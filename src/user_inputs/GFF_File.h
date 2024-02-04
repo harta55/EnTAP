@@ -35,11 +35,24 @@
 class GFF_File {
 public:
     GFF_File(FileSystem *fileSystem, QueryData *queryData, std::string &file_path);
+    bool process_gff();
 
 private:
-    const FileSystem *mpFileSystem;   // Pointer to EnTAP filesystem
-    const QueryData *mpQueryData;
+    FileSystem *mpFileSystem;   // Pointer to EnTAP filesystem
+    QueryData *mpQueryData;
     std::string mGFFPath;       // File path to GFF File
+    std::string mErrMessage;
+public:
+    const std::string &getMErrMessage() const;
+
+private:
+
+    const uint8 GFF_COL_NUMBER = 9;    // 'Standard' GFF file column number
+    const std::string TRANSCRIPT_ID_TAG_1 = "mRNA";
+    const std::string TRANSCRIPT_ID_TAG_2 = "transcript";
+    const std::string TRANSCRIPT_ID_START = "ID=";
+    const std::string TRANSCRIPT_ID_END   = ";";
+
 };
 
 

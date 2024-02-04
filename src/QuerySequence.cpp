@@ -959,6 +959,22 @@ void QuerySequence::setMFrameScore(fp32 mFrameScore) {
     QuerySequence::mFrameScore = mFrameScore;
 }
 
+const QuerySequence *QuerySequence::getMpUpstreamSequence() const {
+    return mpUpstreamSequence;
+}
+
+void QuerySequence::setMpUpstreamSequence(const QuerySequence *mpUpstreamSequence) {
+    QuerySequence::mpUpstreamSequence = mpUpstreamSequence;
+}
+
+const QuerySequence *QuerySequence::getMpDownstreamSequence() const {
+    return mpDownstreamSequence;
+}
+
+void QuerySequence::setMpDownstreamSequence(const QuerySequence *mpDownstreamSequence) {
+    QuerySequence::mpDownstreamSequence = mpDownstreamSequence;
+}
+
 
 QuerySequence::align_database_hits_t* QuerySequence::AlignmentData::get_database_ptr(ExecuteStates state, uint16 software, std::string& database) {
     if (database.empty()) return nullptr;

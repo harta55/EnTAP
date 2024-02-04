@@ -43,6 +43,7 @@
 #include "database/BuscoDatabase.h"
 #include "ontology/ModBUSCO.h"
 #include "frame_selection/ModGeneMarkST.h"
+#include "user_inputs/GFF_File.h"
 //**************************************************************
 
 //*********************** Defines ******************************
@@ -525,14 +526,7 @@ UserInput::UserInput(int argc, const char** argv, FileSystem *fileSystem) {
     // Parse command line arguments
     parse_arguments_tclap(argc, argv);
 
-    if (has_input(INPUT_FLAG_OUTPUT_DIR)) {
-        root_dir = get_user_input<ent_input_str_t>(INPUT_FLAG_OUTPUT_DIR);
-    } else {
-        root_dir = FileSystem::get_cur_dir();
-    }
-    mpFileSystem->set_root_dir(root_dir);
-
-    if (mHasAPICmd) return;  // WARNING RETURN if API comand has been used
+    if (mHasAPICmd) return;  // WARNING RETURN if API command has been used
 
     // Get our INI paths, BOTH ini files (entap config and entap run param) are required
     // If not input by User, generate them and EXIT
@@ -544,9 +538,8 @@ UserInput::UserInput(int argc, const char** argv, FileSystem *fileSystem) {
         // ERROR INI file not found, generate one in CWD
         ent_config_ini_path = PATHS(mpFileSystem->get_cur_dir(), ENTAP_CONFIG_INI_FILENAME);
         generate_ini_file(ent_config_ini_path, ENT_CONFIG_INI_FILE);
-        FS_dprint("EnTAP config ini not found, generated at: " + ent_config_ini_path);
+        TC_print(TC_PRINT_COUT, "EnTAP config ini not found, generated at: " + ent_config_ini_path);
         generated_ini = true;
-
     }
 
     // Verify entap run param ini file is valid
@@ -554,7 +547,7 @@ UserInput::UserInput(int argc, const char** argv, FileSystem *fileSystem) {
         // ERROR INI file not found, generate one in CWD
         ent_run_param_ini_path = PATHS(mpFileSystem->get_cur_dir(), ENTAP_RUN_PARAM_INI_FILENAME);
         generate_ini_file(ent_run_param_ini_path, ENT_RUN_PARAM_INI_FILE);
-        FS_dprint("EnTAP run parameter ini not found, generated at: " + ent_run_param_ini_path);
+        TC_print(TC_PRINT_COUT, "EnTAP run parameter ini not found, generated at: " + ent_run_param_ini_path);
         generated_ini = true;
     }
 
@@ -571,6 +564,13 @@ UserInput::UserInput(int argc, const char** argv, FileSystem *fileSystem) {
         parse_ini(mEntConfigIniFilePath, ENT_CONFIG_INI_FILE);
     }
 
+    if (has_input(INPUT_FLAG_OUTPUT_DIR)) {
+        root_dir = get_user_input<ent_input_str_t>(INPUT_FLAG_OUTPUT_DIR);
+    } else {
+        root_dir = FileSystem::get_cur_dir();
+    }
+    mpFileSystem->set_root_dir(root_dir);
+    TC_print(TC_PRINT_COUT, "ini files parsed, debug logging will continue at: " + DEBUG_FILE_PATH);
     parse_future_inputs();
 }
 
@@ -643,7 +643,7 @@ void UserInput::parse_future_inputs() {
  * ======================================================================
  */
 void UserInput::parse_ini(std::string &ini_path, ENT_INPUT_TYPES input_type) {
-    FS_dprint("Parsing ini file at: " + ini_path);
+    TC_print(TC_PRINT_COUT, "Parsing ini file at: " + ini_path);
 
     EntapINIEntry                               *ini_entry;
     std::string                                 line;
@@ -1316,7 +1316,6 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
                     } catch (const ExceptionHandler &e) {
                         throw e;
                     }
-
                 }
             }
 
@@ -1445,7 +1444,24 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
                 verify_databases(true, INPUT_FLAG_HGT_DONOR_DATABASES);
             }
             if (has_input(INPUT_FLAG_HGT_GFF)) {
-                // TODO add GFF File analysis
+                if (pQuery_Data != nullptr) {
+                    FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_HGT_GFF].input);
+                    ent_input_str_t gff_path = get_user_input<ent_input_str_t>(INPUT_FLAG_HGT_GFF);
+                    if (!mpFileSystem->file_exists(gff_path)) {
+                        throw(ExceptionHandler("GFF file not found at: " + gff_path, ERR_ENTAP_INPUT_PARSE));
+                    } else if (mpFileSystem->file_empty(gff_path)) {
+                        throw (ExceptionHandler("GFF file empty: " + gff_path, ERR_ENTAP_INPUT_PARSE));
+                    } else {
+                        // GFF file valid, start parsing
+                        GFF_File gffFile = GFF_File(mpFileSystem, pQuery_Data.get(), gff_path);
+                        if (!gffFile.process_gff()) {
+                            throw (ExceptionHandler(gffFile.getMErrMessage(), ERR_ENTAP_INPUT_PARSE));
+                        }
+                    }
+                }
+                else {
+                    throw ExceptionHandler("Unable to verify transcriptome when analyzing GFF",ERR_ENTAP_INPUT_PARSE);
+                }
             }
 
         } else {

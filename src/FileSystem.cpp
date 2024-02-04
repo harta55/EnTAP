@@ -131,6 +131,7 @@ void FileSystem::close_file(std::ofstream &ofstream) {
  * =====================================================================
  */
 void FS_dprint(const std::string &msg) {
+    if (!INITIALIZED_DEBUG_FILE) return;
     std::ofstream debug_file(DEBUG_FILE_PATH, std::ios::out | std::ios::app);
 
     debug_file << get_cur_time() << ": " + msg << std::endl;
@@ -616,6 +617,7 @@ void FileSystem::init_log() {
     mLogFilePath   = PATHS(mRootPath, log_file_name);
     delete_file(DEBUG_FILE_PATH);
     delete_file(mLogFilePath);
+    INITIALIZED_DEBUG_FILE = true;
     FS_dprint("Start - EnTAP");
 }
 

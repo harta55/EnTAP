@@ -29,6 +29,7 @@
 //*********************** Includes *****************************
 #include "EntapExecute.h"
 #include "HorizontalGeneTransfer.h"
+#include "user_inputs/GFF_File.h"
 //**************************************************************
 
 
@@ -129,6 +130,15 @@ namespace entapExecute {
                     transcriptome_outpath,     // Transcriptome directory
                     pUserInput,        // User input map
                     pFileSystem);      // Filesystem object
+
+            // Update QueryData with GFF information if being used
+            if (user_input->run_horizontal_gene_transfer()) {
+                ent_input_str_t gff_path = user_input->get_user_input<ent_input_str_t>(INPUT_FLAG_HGT_GFF);
+                GFF_File gffFile = GFF_File(pFileSystem, pQUERY_DATA, gff_path);
+                if (!gffFile.process_gff()) {
+                    throw (ExceptionHandler(gffFile.getMErrMessage(), ERR_ENTAP_INPUT_PARSE));
+                }
+            }
 
             // Initialize Graphing Manager
             pGraphing_Manager = new GraphingManager(entap_graphing_path, pFileSystem);

@@ -170,7 +170,7 @@ private:
     uint64       mProteinLengthStart;      // Starting total len (protein)
     FileSystem  *mpFileSystem;
     UserInput   *mpUserInput;
-    GraphingManager* mpGraphingManager;
+    GraphingManager *mpGraphingManager;
     std::string mTranscriptTypeStr;
     std::unordered_map<std::string, OutputFileData> mAlignmentFiles;
     static EntapHeader ENTAP_HEADER_INFO[];

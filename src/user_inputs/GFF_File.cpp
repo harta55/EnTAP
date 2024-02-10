@@ -38,7 +38,9 @@ bool GFF_File::process_gff() {
     std::string transcript_id;
     QuerySequence *current_query_sequence= nullptr;
     QuerySequence *previous_query_sequence= nullptr;
-    bool ret = true;
+    bool ret = true;    // TRUE no errors parsing, FALSE otherwise
+    uint16 line_ct = 0;
+    const uint16 PRINT_LINES = 15;  // Print up to this many lines to debug file
 
     if (!mpFileSystem->file_exists(mGFFPath)) {
         mErrMessage = "ERROR GFF file does not exist at path: " + mGFFPath;
@@ -56,9 +58,16 @@ bool GFF_File::process_gff() {
      *
      * */
 
+    FS_dprint("Beginning to parse GFF file at: " + mGFFPath);
     std::ifstream in_file(mGFFPath);
     while (getline(in_file, line)) {
         if (line.empty()) continue;
+
+        // Print number of GFF lines to debug file for debugging later
+        if (line_ct < PRINT_LINES) {
+            FS_dprint(line);
+            line_ct++;
+        }
 
         // Check if the line contains 'mRNA' or 'transcript', and skip if neither
         if ((line.find(TRANSCRIPT_ID_TAG_1) == std::string::npos) && (line.find(TRANSCRIPT_ID_TAG_2) == std::string::npos)) {
@@ -84,10 +93,15 @@ bool GFF_File::process_gff() {
             }
             previous_query_sequence = current_query_sequence;
         } else {
-            mErrMessage = "Unable to find sequence in the GFF file: " + transcript_id;
+            mErrMessage = "Unable to find sequence from the GFF file in input transcriptome: " + transcript_id;
             ret = false;
             break;
         }
+    }
+    if (ret) {
+        FS_dprint("Parsing GFF Complete!");
+    } else {
+        FS_dprint("Parsing GFF Complete with Errors");
     }
     return ret;
 }

@@ -333,10 +333,10 @@ const fp64   UserInput::DEFAULT_BUSCO_E_VALUE           = 1e-5;
 /* -------------------- Horizontal Gene Transfer Commands --------------------*/
 #define CMD_HGT_DONOR_DB  "hgt-donor"
 #define DESC_HGT_DONOR_DB "Specify the DIAMOND configured (.dmnd extension) donor databases for Horizontal Gene Transfer \n" \
-                            "analysis"
+                            "analysis. Separate databases with a comma (',')"
 #define CMD_HGT_RECIPIENT_DB "hgt-recipient"
 #define DESC_HGT_RECIPIENT_DB "Specify the DIAMOND configured (.dmnd extension) recipient databases for Horizontal Gene Transfer \n" \
-                            "analysis"
+                            "analysis. Separate databases with a comma (',')"
 #define CMD_HGT_GFF_FILE "hgt-gff"
 #define DESC_HGT_GFF_FILE "Specify the path to the GFF file associated with your dataset. Ensure that all headers match those in your \n" \
                             "input transcript file."

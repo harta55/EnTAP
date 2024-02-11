@@ -43,6 +43,9 @@ AbstractHorizontalGeneTransfer::AbstractHorizontalGeneTransfer(std::string &exec
     mTCoverage        = mpUserInput->get_user_input<ent_input_fp_t >(INPUT_FLAG_TCOVERAGE);
     mEVal            = mpUserInput->get_user_input<ent_input_fp_t>(INPUT_FLAG_E_VALUE);
 
+    // set blast string to use for file naming
+    mBlastp ? mBlastType = BLASTP_STR : mBlastType = BLASTX_STR;
+
 //    // create overall results dir
     mpFileSystem->delete_dir(mOverallResultsDir);
     mpFileSystem->create_dir(mOverallResultsDir);

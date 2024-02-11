@@ -55,6 +55,8 @@ protected:
     fp64        mQCoverage;
     fp64        mTCoverage;
     std::string mBlastType; // string to signify blast type
+    const std::string BLASTX_STR           = "blastx";
+    const std::string BLASTP_STR           = "blastp";
 
     std::string get_database_shortname(std::string &full_path);
     std::string get_database_output_path(std::string &database_name);

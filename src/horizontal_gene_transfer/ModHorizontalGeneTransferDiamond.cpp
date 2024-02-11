@@ -34,7 +34,7 @@ std::vector<ENTAP_HEADERS> ModHorizontalGeneTransferDiamond::DEFAULT_HEADERS = {
 
 ModHorizontalGeneTransferDiamond::ModHorizontalGeneTransferDiamond(std::string &execution_stage_path, std::string &fasta_path,
                                                                    EntapDataPtrs &entap_data)
-: AbstractHorizontalGeneTransfer(execution_stage_path, fasta_path, entap_data, "Horizontal Gene Transfer", DEFAULT_HEADERS){
+: AbstractHorizontalGeneTransfer(execution_stage_path, fasta_path, entap_data, "HGT_DIAMOND", DEFAULT_HEADERS){
 
     mSoftwareFlag = HGT_DIAMOND;
     mExePath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);

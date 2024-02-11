@@ -37,6 +37,7 @@ ModHorizontalGeneTransferDiamond::ModHorizontalGeneTransferDiamond(std::string &
 : AbstractHorizontalGeneTransfer(execution_stage_path, fasta_path, entap_data, "Horizontal Gene Transfer", DEFAULT_HEADERS){
 
     mSoftwareFlag = HGT_DIAMOND;
+    mExePath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
 }
 
 EntapModule::ModVerifyData ModHorizontalGeneTransferDiamond::verify_files() {

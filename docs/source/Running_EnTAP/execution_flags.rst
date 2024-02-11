@@ -154,7 +154,7 @@ These are the flags for the execution process of EnTAP. Flags will be repeated t
            * 4. FASTA Nucleotide File (default)
            * 5. Gene Enrichment Gene ID + Effective Length
            * 6. Gene Enrichment Gene ID + GO Terms
-           * 7. Gene Ontology Terms (Sequence ID,GO Term ID, GO Term, Category, and Sequence Effective Length) TSV format
+           * 7. Gene Ontology Terms (Sequence ID,GO Term ID, GO Term, Category, and Sequence Effective Length) TSV format (default)
      - ini
      - multi-integer
      - 1,3,4,7
@@ -242,12 +242,12 @@ These are the flags for the execution process of EnTAP. Flags will be repeated t
      - bool
      - false
    * - transdecoder-long-exe
-     - Method to execute TransDecoder.LongOrfs. This may be the path to the executable, or simple, 'TransDecoder.LongOrfs' if installed globally
+     - Method to execute TransDecoder.LongOrfs. This may be the path to the executable, or simply, 'TransDecoder.LongOrfs' if installed globally
      - ini
      - string
      - TransDecoder.LongOrfs
    * - transdecoder-predict-exe
-     - Method to execute TransDecoder.Predict. This may be the path to the executable, or simple, 'TransDecoder.Predict' if installed globally
+     - Method to execute TransDecoder.Predict. This may be the path to the executable, or simply, 'TransDecoder.Predict' if installed globally
      - ini
      - string
      - TransDecoder.Predict
@@ -385,6 +385,40 @@ These are the flags for the execution process of EnTAP. Flags will be repeated t
      - ini
      - string
      - interproscan.sh
+
+.. list-table:: **Horizontal Gene Transfer Flags**
+   :align: left
+   :widths: 10 50 10 10 10 
+   :header-rows: 1    
+   
+   * - param
+     - description
+     - location (cmd/ini)
+     - qualifier
+     - example
+   * - hgt-donor
+     - Specify the DIAMOND configured (.dmnd extension) donor databases for Horizontal Gene Transfer analysis. Separate databases with a comma (',')
+     - ini
+     - multi-string
+     - path/to/donor/database1.dmnd,path/to/donor/database2.dmnd
+   * - hgt-recipient
+     - Specify the DIAMOND configured (.dmnd extension) recipient databases for Horizontal Gene Transfer analysis. Separate databases with a comma (',')
+     - ini
+     - multi-string
+     - path/to/recipient/database1.dmnd,path/to/recipient/database2.dmnd
+   * - hgt-gff
+     - Specify path to the GFF file for HGT analysis. The input GFF must satisfy the following:
+           * Protein identifiers must match between FASTA and GFF attribute fields
+		   * Primary transcripts only (longest isoform for each gene)
+		   * Feature type = 'transcript' or 'mRNA'
+     - ini
+     - string
+     - path/to/gff/file.gff
+   * - taxon
+     - This flag should be used to specify the taxonomy of the input species (from NCBI Taxonomy Database) and will be used in determination of horizontally transferred genes. Format **must** replace all spaces with underscores ('_'). 
+     - ini
+     - string
+     - homo_sapiens
      
 .. list-table:: **EnTAP API Flags**
    :align: left

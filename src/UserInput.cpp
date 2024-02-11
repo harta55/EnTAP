@@ -224,7 +224,7 @@ const fp64   UserInput::RSEM_FPKM_DEFAULT               = 0.5;
 #define DESC_DIAMOND_EXE     "Method to execute DIAMOND. This can be a path to the executable or simply 'diamond' if installed globally."
 #define CMD_DIAMOND_EXE     "diamond-exe"
 #define DESC_TAXON          "Specify the type of species/taxon you are analyzing and would like alignments closer in taxonomic relevance" \
-                            " to be favored (based on NCBI Taxonomic Database)\n"              \
+                            " to be favored (based on NCBI Taxonomic Database). This field is also used for determination of horizontally transferred genes.\n"              \
                             "Note: replace all spaces with underscores '_'"
 #define CMD_TAXON           "taxon"
 #define CMD_QCOVERAGE       "qcoverage"

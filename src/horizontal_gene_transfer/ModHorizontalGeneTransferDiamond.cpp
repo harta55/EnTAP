@@ -26,7 +26,7 @@
 */
 
 #include "ModHorizontalGeneTransferDiamond.h"
-#include "../ExceptionHandler.h"
+#include "csv.h"
 
 std::vector<ENTAP_HEADERS> ModHorizontalGeneTransferDiamond::DEFAULT_HEADERS = {
         ENTAP_HEADER_HORIZONTALLY_TRANSFERRED_GENE
@@ -98,12 +98,123 @@ void ModHorizontalGeneTransferDiamond::execute() {
     // 2.
 }
 
+// TODO restrucutre this and ModDIAMOND so that code can be reused better
 void ModHorizontalGeneTransferDiamond::parse() {
+    uint16              file_status=0;                  // File statuses (defined FileSystem.h)
+    std::string         species;                        // Species from subject sequence
+    QuerySequence::HorizontalGeneTransferResults horizontalGeneTransferResults;   // Compiled similarity search results
+    TaxEntry            taxEntry;                       // Entry from Tarxonomic database
+    std::pair<bool, std::string> contam_info;           // Contaminate information
+    std::stringstream   ss;                             // Output string stream
+    // ------------------ Read from DIAMOND output ----------------------- //
+    std::string qseqid;             // Sequence ID of query sequence
+    std::string sseqid;             // Sequence ID of subject/target sequence (from database)
+    std::string stitle;             // Title of subject sequence pulled from database
+    std::string pident;             // Percent identical
+    std::string bitscore;           // Bit score
+    std::string length;             // Length (bp)
+    std::string mismatch;           // Mismatches
+    std::string gapopen;            // Gap open
+    std::string qstart;             // Query start bp
+    std::string qend;               // Query end bp
+    std::string sstart;             // Subject start bp
+    std::string send;               // SUbject end bp
+    fp64 evalue;                    // E-value
+    fp64 coverage;                  // Coverage
+    // ------------------------------------------------------------------ //
+
+    FS_dprint("Beginning to filter individual DIAMOND files...");
+    TC_print(TC_PRINT_COUT, "Parsing DIAMOND Similarity Search...");
+
+    for (HGTDatabase &hgtDatabase : mHGTDatabases) {
+        FS_dprint("DIAMOND file located at " + hgtDatabase.database_path + " being parsed");
+
+        horizontalGeneTransferResults = {};
+        ss.str("");
+        ss.clear();
+
+        // ensure file exists
+        file_status = mpFileSystem->get_file_status(hgtDatabase.database_path);
+        if (file_status & FileSystem::FILE_STATUS_EMPTY) {
+            // Empty file, skip this file and let user know
+            mpFileSystem->format_stat_stream(ss, "Compiled Horizontal Gene Transfer - DIAMOND - Best Overall");
+            FS_dprint("WARNING: empty DIAMOND file found, skipping: " + hgtDatabase.database_path);
+            ss << "DIAMOND file is empty. This will be skipped but pipeline will continue with other files";
+            std::string out_msg = ss.str() + "\n";
+            mpFileSystem->print_stats(out_msg);
+            continue;   // WARNING CONTINUE if alignment file is empty
+
+        } else if (file_status != 0) {
+            throw ExceptionHandler("File not found or empty: " + hgtDatabase.database_path, ERR_ENTAP_HGT_PARSE);
+        }
+
+        // Begin using CSVReader lib to parse data
+        io::CSVReader<DMND_COL_NUMBER, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(hgtDatabase.database_path);
+        while (in.read_row(qseqid, sseqid, pident, length, mismatch, gapopen,
+                           qstart, qend, sstart, send, evalue, bitscore, coverage,stitle)) {
+            horizontalGeneTransferResults = {};
+
+            // Get pointer to sequence in overall map
+            QuerySequence *query = mpQueryData->get_sequence(qseqid);
+            if (query == nullptr) {
+                throw ExceptionHandler("Unable to find sequence in transcriptome: " + qseqid + " from file: " + hgtDatabase.database_path,
+                                       ERR_ENTAP_HGT_PARSE);
+            }
+
+            // get species from database alignment title
+            species = AbstractSimilaritySearch::get_species(stitle);
+            // get taxonomic information with species
+            taxEntry = mpEntapDatabase->get_tax_entry(species);
+
+            // Compile sim search data
+            horizontalGeneTransferResults.database_path = hgtDatabase.database_path;
+            horizontalGeneTransferResults.qseqid = qseqid;
+            horizontalGeneTransferResults.sseqid = sseqid;
+            horizontalGeneTransferResults.pident = pident;
+            horizontalGeneTransferResults.length = length;
+            horizontalGeneTransferResults.mismatch = mismatch;
+            horizontalGeneTransferResults.gapopen = gapopen;
+            horizontalGeneTransferResults.qstart = qstart;
+            horizontalGeneTransferResults.qend = qend;
+            horizontalGeneTransferResults.sstart = sstart;
+            horizontalGeneTransferResults.send = send;
+            horizontalGeneTransferResults.stitle = stitle;
+            horizontalGeneTransferResults.bit_score = bitscore;
+            horizontalGeneTransferResults.lineage = taxEntry.lineage;
+            horizontalGeneTransferResults.species = species;
+            horizontalGeneTransferResults.e_val_raw = evalue;
+            horizontalGeneTransferResults.e_val = float_to_sci(evalue,2);
+            horizontalGeneTransferResults.coverage_raw = coverage;
+            horizontalGeneTransferResults.coverage = float_to_string(coverage);
+
+            query->add_alignment(mExecutionState, mSoftwareFlag,
+                                 horizontalGeneTransferResults, hgtDatabase.database_path);
+
+        } // END WHILE LOOP
+
+        // Finished parsing and adding to alignment data, being to calc stats
+        FS_dprint("File parsed, calculating statistics and writing output...");
+        //calculate_best_stats(false,output_path);
+        FS_dprint("Success!");
+    } // END FOR LOOP
+
+
+//    FS_dprint("Calculating overall Similarity Searching statistics...");
+//    calculate_best_stats(true);
+//    FS_dprint("Success!");
+
+    TC_print(TC_PRINT_COUT, "Success");
 
 }
 
 bool ModHorizontalGeneTransferDiamond::is_executable(std::string &exe) {
-    return false;
+    TerminalData terminalData;  // Terminal data structure
+
+    terminalData.command = exe + " --version";
+    terminalData.print_files = false;
+    terminalData.suppress_std_err = false;
+
+    return TC_execute_cmd(terminalData) == 0;
 }
 
 bool ModHorizontalGeneTransferDiamond::set_version() {
@@ -188,4 +299,5 @@ bool ModHorizontalGeneTransferDiamond::run_diamond(AbstractSimilaritySearch::Sim
         throw ExceptionHandler("Error with database located at: " + cmd->database_path + "\nDIAMOND Error: " +
                                terminalData.err_stream, ERR_ENTAP_RUN_SIM_SEARCH_RUN);
     }
-    return ret;}
+    return ret;
+}

@@ -33,10 +33,11 @@
 #include "../common.h"
 #include "../similarity_search/AbstractSimilaritySearch.h"
 #include "../similarity_search/ModDiamond.h"
+#include "../ExceptionHandler.h"
 
 // TODO restructure this to be more modular with DIAMOND module and overhaul DIAMOND mod
 //  there's a lot of duplicate code between this and that module that will need to be overhauled for
-class ModHorizontalGeneTransferDiamond : public AbstractHorizontalGeneTransfer{
+class ModHorizontalGeneTransferDiamond : public AbstractHorizontalGeneTransfer {
 
 public:
     ModHorizontalGeneTransferDiamond(std::string &execution_stage_path, std::string &fasta_path, EntapDataPtrs &entap_data);
@@ -49,12 +50,12 @@ public:
     static bool is_executable(std::string& exe);
     virtual bool set_version() override;
 
-private:
-
     enum HGT_DATABASE_TYPES {
+        HGT_DATABASE_UNKNOWN=0,
         HGT_DATABASE_DONOR,
         HGT_DATABASE_RECIPIENT
     };
+protected:
 
 
     struct HGTDatabase {
@@ -65,6 +66,7 @@ private:
         bool diamond_ran_success;       // Has DIAMOND been ran against this database?
         HGT_DATABASE_TYPES database_type;
     };
+    static constexpr int DMND_COL_NUMBER = 14;
 
     // Terminal Commands (as of DIAMOND v0.9.9)
     // WARNING until restructuring of code make sure this matches ModDiamond.h

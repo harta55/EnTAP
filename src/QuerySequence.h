@@ -155,6 +155,29 @@ public:
         UniprotEntry                      uniprot_info;
     };
 
+    struct HorizontalGeneTransferResults {
+        std::string                       length;
+        std::string                       mismatch;
+        std::string                       gapopen;
+        std::string                       qstart;
+        std::string                       qend;
+        std::string                       sstart;
+        std::string                       send;
+        std::string                       pident;
+        std::string                       bit_score;
+        std::string                       e_val;
+        std::string                       coverage;
+        std::string                       database_path;
+        std::string                       qseqid;
+        std::string                       sseqid;
+        std::string                       stitle;
+        std::string                       species;
+        std::string                       lineage;
+        fp32                              tax_score;     // taxonomic score, may be based on parent
+        fp64                              e_val_raw;
+        fp64                              coverage_raw;
+    };
+
     /**
      * ======================================================================
      * @struct AlignmentData - nested
@@ -178,6 +201,7 @@ public:
 
         ALIGNMENT_DATA_T sim_search_data[SIM_SOFTWARE_COUNT];
         ALIGNMENT_DATA_T ontology_data[ONT_SOFTWARE_COUNT];
+        ALIGNMENT_DATA_T horizontal_gene_data[HGT_SOFTWARE_COUNT];
         QuerySequence* querySequence;
 
         QueryAlignment* overall_alignment[EXECUTION_MAX][ONT_SOFTWARE_COUNT]{};
@@ -237,6 +261,7 @@ public:
     void add_alignment(ExecuteStates state, uint16 software, SimSearchResults &results, std::string& database,std::string lineage);
     void add_alignment(ExecuteStates state, uint16 software, InterProResults &results, std::string& database);
     void add_alignment(ExecuteStates state, uint16 software, BuscoResults &results, std::string& database);
+    void add_alignment(ExecuteStates state, uint16 software, HorizontalGeneTransferResults &results, std::string &database);
     QuerySequence::align_database_hits_t* get_database_hits(std::string& database,ExecuteStates state, uint16 software);
 
     std::string format_go_info(go_format_t &go_list, uint8 lvl);
@@ -267,6 +292,7 @@ private:
     uint64 calc_seq_length(std::string &,bool);
     void trim_sequence(std::string& sequence);
     void QUERY_FLAG_SET(QUERY_FLAGS flag);
+    void is_hgt_candidate(uint32 donor_databases, uint32 recipient_databases);
     //**********************************************************
 
     //**************** Private Const Variables *****************
@@ -278,6 +304,8 @@ private:
     fp64                              mTPM;             // TPM value from Expression Filtering
     fp32                              mEffectiveLength; // Effective length from expression filtering
     uint32                            mQueryFlags;      // Status flags for the sequence
+    uint32                            mDonorDatabaseHitCt; // Count of at least one alignment against donor database
+    uint32                            mRecipientDatabaseHitCt; // Count of at least one alignment against recip database
     std::string                       mSequenceID;      // Sequence ID
     uint64                            mSequenceLength;  // Sequence length (nucleotide bp)
     std::string                       mSequenceProtein; // Protein sequence

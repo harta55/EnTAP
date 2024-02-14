@@ -36,6 +36,7 @@
 
 // Forward Declarations
 class QueryAlignment;
+class QuerySequence;
 
 typedef std::unordered_map<std::string, QuerySequence*> QUERY_MAP_T;
 

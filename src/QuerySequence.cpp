@@ -31,6 +31,7 @@
 #include "common.h"
 #include "QueryAlignment.h"
 
+
 /**
  * ======================================================================
  * Function uint64 QuerySequence::get_sequence_length() const
@@ -649,6 +650,12 @@ void QuerySequence::add_alignment(ExecuteStates state, uint16 software, QuerySeq
     mAlignmentData->update_best_hit(new_alignmet);
 }
 
+void QuerySequence::add_alignment(ExecuteStates state, uint16 software,
+                                  QuerySequence::HorizontalGeneTransferResults &results, std::string &database) {
+    QueryAlignment *new_alignment = new HorizontalGeneTransferDmndAlignment(state, software, database, this, results);
+    mAlignmentData->update_best_hit(new_alignment);
+}
+
 //**********************************************************************
 //**********************************************************************
 //                 AlignmentData Nested Structure
@@ -701,6 +708,17 @@ QuerySequence::AlignmentData::~AlignmentData() {
 
     // remove ontology alignments
     for (ALIGNMENT_DATA_T &software_data : ontology_data) {
+        // Cycle through each software data struct
+        for (auto &pair : software_data) {
+            // for each database, delete vector
+            for (auto &alignment : pair.second) {
+                delete alignment;
+            }
+        }
+    }
+
+    // remove ontology alignments
+    for (ALIGNMENT_DATA_T &software_data : horizontal_gene_data) {
         // Cycle through each software data struct
         for (auto &pair : software_data) {
             // for each database, delete vector
@@ -784,6 +802,18 @@ void QuerySequence::update_query_flags(ExecuteStates state, uint16 software) {
             SimSearchResults *results = best_align->get_results();
             QUERY_FLAG_CHANGE(QUERY_INFORMATIVE, results->is_informative);
             QUERY_FLAG_CHANGE(QUERY_CONTAMINANT, results->contaminant);
+            break;
+        }
+
+        case HORIZONTAL_GENE_TRANSFER: {
+            switch (software) {
+                case HGT_DIAMOND: {
+
+                    break;
+                }
+                default:
+                    return;
+            }
             break;
         }
 
@@ -975,6 +1005,9 @@ void QuerySequence::setMpDownstreamSequence(const QuerySequence *mpDownstreamSeq
     QuerySequence::mpDownstreamSequence = mpDownstreamSequence;
 }
 
+void QuerySequence::is_hgt_candidate(uint32 donor_databases, uint32 recipient_databases) {
+
+}
 
 QuerySequence::align_database_hits_t* QuerySequence::AlignmentData::get_database_ptr(ExecuteStates state, uint16 software, std::string& database) {
     if (database.empty()) return nullptr;
@@ -992,6 +1025,12 @@ QuerySequence::align_database_hits_t* QuerySequence::AlignmentData::get_database
             } else {
                 return nullptr;
             }
+        case HORIZONTAL_GENE_TRANSFER:
+            if (this->horizontal_gene_data[software].find(database) != (this->horizontal_gene_data[software].end())) {
+                return &this->horizontal_gene_data[software].at(database);
+            } else {
+                return nullptr;
+            }
         default:
             return nullptr;
     }
@@ -1003,6 +1042,8 @@ QuerySequence::AlignmentData::ALIGNMENT_DATA_T* QuerySequence::AlignmentData::ge
             return &this->sim_search_data[software];
         case GENE_ONTOLOGY:
             return &this->ontology_data[software];
+        case HORIZONTAL_GENE_TRANSFER:
+            return &this->horizontal_gene_data[software];
         default:
             return nullptr;
     }

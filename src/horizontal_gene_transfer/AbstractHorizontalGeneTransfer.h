@@ -48,6 +48,8 @@ public:
     virtual bool set_version() = 0;
 
 protected:
+    std::string                     mInputLineage;
+    std::string                     mInputSpecies;
     vect_str_t  mDonorDatabasePaths;
     vect_str_t  mRecipientDatabasePaths;
     std::string mGFFPath;

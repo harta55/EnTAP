@@ -67,6 +67,8 @@ public:
     virtual bool set_version() = 0;
 
     virtual bool run_blast(SimSearchCmd *cmd, bool use_defaults) = 0;
+    static std::string get_species(std::string &title);
+
 
 protected:
 
@@ -99,7 +101,6 @@ protected:
     std::string get_database_output_path(std::string &database_name);
     std::pair<bool, std::string> is_contaminant(std::string lineage, vect_str_t &contams);
     bool is_informative(std::string title, vect_str_t &uninformative_vect);
-    std::string get_species(std::string &title);
 };
 
 

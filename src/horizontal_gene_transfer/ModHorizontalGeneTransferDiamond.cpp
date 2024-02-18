@@ -127,29 +127,26 @@ void ModHorizontalGeneTransferDiamond::parse() {
     TC_print(TC_PRINT_COUT, "Parsing DIAMOND Similarity Search...");
 
     for (HGTDatabase &hgtDatabase : mHGTDatabases) {
-        FS_dprint("DIAMOND file located at " + hgtDatabase.database_path + " being parsed");
+        FS_dprint("DIAMOND file located at " + hgtDatabase.diamond_output + " being parsed");
 
         horizontalGeneTransferResults = {};
         ss.str("");
         ss.clear();
 
         // ensure file exists
-        file_status = mpFileSystem->get_file_status(hgtDatabase.database_path);
-        if (file_status & FileSystem::FILE_STATUS_EMPTY) {
+        file_status = mpFileSystem->get_file_status(hgtDatabase.diamond_output);
+        if (file_status != 0) {
             // Empty file, skip this file and let user know
             mpFileSystem->format_stat_stream(ss, "Compiled Horizontal Gene Transfer - DIAMOND - Best Overall");
-            FS_dprint("WARNING: empty DIAMOND file found, skipping: " + hgtDatabase.database_path);
-            ss << "DIAMOND file is empty. This will be skipped but pipeline will continue with other files";
+            FS_dprint("WARNING: empty DIAMOND file found, skipping: " + hgtDatabase.diamond_output);
+            ss << "DIAMOND file is empty or cannot be read. This will be skipped but pipeline will continue with other files";
             std::string out_msg = ss.str() + "\n";
             mpFileSystem->print_stats(out_msg);
             continue;   // WARNING CONTINUE if alignment file is empty
-
-        } else if (file_status != 0) {
-            throw ExceptionHandler("File not found or empty: " + hgtDatabase.database_path, ERR_ENTAP_HGT_PARSE);
         }
 
         // Begin using CSVReader lib to parse data
-        io::CSVReader<DMND_COL_NUMBER, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(hgtDatabase.database_path);
+        io::CSVReader<DMND_COL_NUMBER, io::trim_chars<' '>, io::no_quote_escape<'\t'>> in(hgtDatabase.diamond_output);
         while (in.read_row(qseqid, sseqid, pident, length, mismatch, gapopen,
                            qstart, qend, sstart, send, evalue, bitscore, coverage,stitle)) {
             horizontalGeneTransferResults = {};
@@ -157,7 +154,7 @@ void ModHorizontalGeneTransferDiamond::parse() {
             // Get pointer to sequence in overall map
             QuerySequence *query = mpQueryData->get_sequence(qseqid);
             if (query == nullptr) {
-                throw ExceptionHandler("Unable to find sequence in transcriptome: " + qseqid + " from file: " + hgtDatabase.database_path,
+                throw ExceptionHandler("Unable to find sequence in transcriptome (" + qseqid + ") from file: " + hgtDatabase.diamond_output,
                                        ERR_ENTAP_HGT_PARSE);
             }
 
@@ -223,8 +220,6 @@ bool ModHorizontalGeneTransferDiamond::set_version() {
 
 EntapModule::ModVerifyData ModHorizontalGeneTransferDiamond::verify_databases(ent_input_multi_str_t &databases, HGT_DATABASE_TYPES data_type) {
     EntapModule::ModVerifyData ret_data;
-    std::string   database_name;        // Shortened name to be used for file naming
-    std::string   out_path;             // Full output path for each database alignment
     uint16 file_status = 0;             // File statuses (empty, doesn't exist, etc...)
 
     ret_data.files_exist = true;
@@ -241,20 +236,20 @@ EntapModule::ModVerifyData ModHorizontalGeneTransferDiamond::verify_databases(en
         hgtDatabase.database_type = data_type;
 
         // Check if file exists/can be read/empty
-        file_status = mpFileSystem->get_file_status(out_path);
+        file_status = mpFileSystem->get_file_status(hgtDatabase.diamond_output);
         if (file_status != 0) {
-            FS_dprint("File for database " + database_name + " does not exist.\n" + out_path);
+            FS_dprint("File for database " + hgtDatabase.database_shortname + " does not exist at.\n" + hgtDatabase.diamond_output);
             // If we need to execute against ANY database
             ret_data.files_exist = false;
             // delete file just in case it is corrupt/empty
-            mpFileSystem->delete_file(out_path);
+            mpFileSystem->delete_file(hgtDatabase.diamond_output);
         } else {
             // File found + is 'legit', can skip execution for it
-            FS_dprint("File for database " + database_name + " exists, skipping...\n" + out_path);
+            FS_dprint("File for database " + hgtDatabase.database_shortname + " exists, skipping...\n" + hgtDatabase.diamond_output);
             hgtDatabase.diamond_ran_success = true;
         }
         mHGTDatabases.push_back(hgtDatabase);
-        ret_data.output_paths.push_back(out_path);   // Add paths to verify data (not currently used)
+        ret_data.output_paths.push_back(hgtDatabase.diamond_output);   // Add paths to verify data (not currently used)
     }
     FS_dprint("Success! Verified files for DIAMOND, continuing...");
     return ret_data;

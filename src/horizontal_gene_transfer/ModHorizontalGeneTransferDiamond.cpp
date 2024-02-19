@@ -27,6 +27,7 @@
 
 #include "ModHorizontalGeneTransferDiamond.h"
 #include "csv.h"
+#include "../QueryAlignment.h"
 
 std::vector<ENTAP_HEADERS> ModHorizontalGeneTransferDiamond::DEFAULT_HEADERS = {
         ENTAP_HEADER_HORIZONTALLY_TRANSFERRED_GENE
@@ -124,7 +125,7 @@ void ModHorizontalGeneTransferDiamond::parse() {
     // ------------------------------------------------------------------ //
 
     FS_dprint("Beginning to filter individual DIAMOND files...");
-    TC_print(TC_PRINT_COUT, "Parsing DIAMOND Similarity Search...");
+    TC_print(TC_PRINT_COUT, "Parsing DIAMOND Horizontal Gene Transfer...");
 
     for (HGTDatabase &hgtDatabase : mHGTDatabases) {
         FS_dprint("DIAMOND file located at " + hgtDatabase.diamond_output + " being parsed");
@@ -189,16 +190,12 @@ void ModHorizontalGeneTransferDiamond::parse() {
 
         } // END WHILE LOOP
 
-        // Finished parsing and adding to alignment data, being to calc stats
+        // Finished parsing DIAMOND output file and adding to alignment data, begin to calc stats
         FS_dprint("File parsed, calculating statistics and writing output...");
-        //calculate_best_stats(false,output_path);
+        calculate_best_stats(hgtDatabase);
         FS_dprint("Success!");
     } // END FOR LOOP
-
-
-//    FS_dprint("Calculating overall Similarity Searching statistics...");
-//    calculate_best_stats(true);
-//    FS_dprint("Success!");
+    calculate_hgt_candidates(mHGTDatabases);
 
     TC_print(TC_PRINT_COUT, "Success");
 
@@ -295,4 +292,182 @@ bool ModHorizontalGeneTransferDiamond::run_diamond(AbstractSimilaritySearch::Sim
                                terminalData.err_stream, ERR_ENTAP_RUN_SIM_SEARCH_RUN);
     }
     return ret;
+}
+
+void ModHorizontalGeneTransferDiamond::calculate_best_stats (ModHorizontalGeneTransferDiamond::HGTDatabase &database) {
+
+    GraphingManager::GraphingData graphingStruct;         // Graphing data
+    std::string                 species;
+    std::string                 frame;
+    std::string                 base_path;
+    std::string                 temp_file_path;
+    std::string                 contam;
+    std::stringstream           ss;
+    uint64                      count_no_hit=0;
+    uint64                      count_filtered=0;
+    uint64                      count_unselected=0;     // Number of unselected alignments (those that are not best hits)
+    uint64                      count_TOTAL_alignments=0;
+    uint32                      ct;
+    fp64                        percent;
+    Compair<std::string>        species_counter;
+    std::unordered_map<std::string, Compair<std::string>> frame_inform_counter;
+
+    base_path   = PATHS(mProcDir, database.database_shortname);
+    mpFileSystem->create_dir(base_path);
+
+    // Open best hits files
+    std::string out_best_hits_filepath = PATHS(base_path, DIAMOND_PREFIX + HGT_DIAMOND_DATABASE_BEST_HITS);
+    mpQueryData->start_alignment_files(out_best_hits_filepath, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
+
+    // Open unselected hits, so every hit that was not the best hit (tsv)
+    std::string out_unselected_tsv  = PATHS(base_path, DIAMOND_PREFIX + HGT_DIAMOND_DATABASE_UNSELECTED);
+    std::vector<FileSystem::ENT_FILE_TYPES> unselected_files = {FileSystem::ENT_FILE_DELIM_TSV};
+    mpQueryData->start_alignment_files(out_unselected_tsv, mEntapHeaders, mGoLevels, unselected_files);
+
+    // No hits files - only print what we have data for
+    std::vector<FileSystem::ENT_FILE_TYPES> no_hits_files;
+    std::string out_no_hits = PATHS(base_path, HGT_DIAMOND_DATABASE_NO_HITS);
+    if (mpQueryData->DATA_FLAG_GET(QueryData::IS_PROTEIN)) {
+        no_hits_files.push_back(FileSystem::ENT_FILE_FASTA_FAA);
+    }
+    if (mpQueryData->DATA_FLAG_GET(QueryData::IS_NUCLEOTIDE)) {
+        no_hits_files.push_back(FileSystem::ENT_FILE_FASTA_FNN);
+    }
+    if (!no_hits_files.empty()) {
+        mpQueryData->start_alignment_files(out_no_hits, mEntapHeaders, mGoLevels, no_hits_files);
+    }
+
+    try {
+        // Cycle through all sequences
+        for (auto &pair : *mpQueryData->get_sequences_ptr()) {
+            // Check if original sequences have hit a database
+            if (!pair.second->hit_database(HORIZONTAL_GENE_TRANSFER, HGT_DIAMOND, database.database_path)) {
+                // Did NOT hit a database during sim search
+                // Do NOT log if it was never blasted
+                if ((pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN) && mBlastp) ||
+                    (!pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_IS_PROTEIN) && !mBlastp)) {
+                    // Protein/nucleotide did not hit database
+                    count_no_hit++;
+                    mpQueryData->add_alignment_data(out_no_hits, pair.second, nullptr); // Function checks whether files been initializd
+
+                    // Graphing
+                    frame = pair.second->getFrame();
+                    if (!frame.empty()) {
+                        if (frame_inform_counter.find(NO_HIT_FLAG) == frame_inform_counter.end()) {
+                            frame_inform_counter.emplace(NO_HIT_FLAG, Compair<std::string>());
+                        }
+                        frame_inform_counter[NO_HIT_FLAG].add_value(frame);
+                    }
+
+                } else {
+                    pair.second->set_blasted();
+                }
+            } else {
+                // HIT a database during HGT DIAMOND search
+
+                QuerySequence::HorizontalGeneTransferResults *hgt_data;
+                HorizontalGeneTransferDmndAlignment *best_hit;
+                // Process unselected hits for non-final analysis and set best hit pointer
+
+                best_hit = pair.second->get_best_hit_alignment<HorizontalGeneTransferDmndAlignment>(
+                        HORIZONTAL_GENE_TRANSFER, HGT_DIAMOND,database.database_path);
+                QuerySequence::align_database_hits_t *alignment_data =
+                        pair.second->get_database_hits(database.database_path,HORIZONTAL_GENE_TRANSFER, HGT_DIAMOND);
+                hgt_data = best_hit->get_results();
+                for (auto &hit : *alignment_data) {
+                    count_TOTAL_alignments++;
+                    if (hit != best_hit) {  // If this hit is not the best hit
+                        mpQueryData->add_alignment_data(out_unselected_tsv, pair.second, hit);
+                        count_unselected++;
+                    } else {
+                        ;   // Do notthing
+                    }
+                }
+
+                count_filtered++;   // increment best hit
+
+                // Write to best hits files
+                mpQueryData->add_alignment_data(out_best_hits_filepath, pair.second, best_hit);
+
+                frame = pair.second->getFrame();     // Used for graphing
+                species = hgt_data->species;
+
+                // Count species type
+                species_counter.add_value(species);
+            }
+        }
+    } catch (const std::exception &e){throw ExceptionHandler(e.what(), ERR_ENTAP_HGT_PARSE);}
+
+    try {
+        mpQueryData->end_alignment_files(out_best_hits_filepath);
+        mpQueryData->end_alignment_files(out_unselected_tsv);
+        mpQueryData->end_alignment_files(out_no_hits);
+    } catch (const ExceptionHandler &e) {throw e;}
+
+    // ------------ Calculate statistics and print to output ------------ //
+    // ------------------------------------------------------------------ //
+
+    // Different headers if final analysis or database specific analysis
+
+    mpFileSystem->format_stat_stream(ss, "Horizontal Gene Transfer - DIAMOND - " + database.database_shortname);
+    ss <<
+       "Search results:\n"                    << database.database_path <<
+       "\n\tTotal alignments: "               << count_TOTAL_alignments   <<
+       "\n\tTotal unselected results: "       << count_unselected      <<
+       "\n\t\tWritten to: "                   << out_unselected_tsv;
+
+    // If no total or file alignments for this database, return and warn user
+    if (count_TOTAL_alignments == 0 || count_filtered == 0) {
+        ss << "WARNING: No alignments for this database";
+        std::string out_msg = ss.str() + "\n";
+        mpFileSystem->print_stats(out_msg);
+        return; // RETURN we do not have any alignments
+    }
+
+    // Sort counters
+    species_counter.sort(true);
+    for (auto &pair : frame_inform_counter) {
+        pair.second.sort(true);
+    }
+
+    ss <<
+       "\n\tTotal unique transcripts with an alignment: " << count_filtered <<
+       "\n\t\tReference transcriptome sequences with an alignment (FASTA):\n\t\t\t" << out_best_hits_filepath <<
+       "\n\t\tSearch results (TSV):\n\t\t\t" << out_best_hits_filepath <<
+       "\n\tTotal unique transcripts without an alignment: " << count_no_hit <<
+       "\n\t\tReference transcriptome sequences without an alignment (FASTA):\n\t\t\t" << out_no_hits;
+    // Have frame information
+    if (frame_inform_counter.find(NO_HIT_FLAG) != frame_inform_counter.end()) {
+        for (auto &pair : frame_inform_counter[NO_HIT_FLAG]._data) {
+            ss << "\n\t\t" << pair.first << "(" << pair.second << ")";
+        }
+    }
+
+    ss << "\n\tTop " << COUNT_TOP_SPECIES << " alignments by species:";
+    ct = 1;
+    for (auto &pair : species_counter._sorted) {
+        if (ct > COUNT_TOP_SPECIES) break;
+        percent = ((fp64) pair.second / count_filtered) * ENTAP_PERCENT;
+        ss
+                << "\n\t\t\t" << ct << ")" << pair.first << ": "
+                << pair.second << "(" << percent << "%)";
+        ct++;
+    }
+    std::string out_msg = ss.str() + "\n";
+    mpFileSystem->print_stats(out_msg);
+}
+
+void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTDatabase> hgt_databases) {
+    FS_dprint("Calculating HGT Candidates...");
+
+    // Loop through entire transcriptome, probably slow TODO speed up HGT parsing
+    for (auto &pair : *mpQueryData->get_sequences_ptr()) {
+
+        // Check if sequence hit at least one HGT database
+    }
+
+
+
+    FS_dprint("HGT Candidate calculation complete!");
+
 }

@@ -34,6 +34,7 @@
 #include "../similarity_search/AbstractSimilaritySearch.h"
 #include "../similarity_search/ModDiamond.h"
 #include "../ExceptionHandler.h"
+#include "../GraphingManager.h"
 
 // TODO restructure this to be more modular with DIAMOND module and overhaul DIAMOND mod
 //  there's a lot of duplicate code between this and that module that will need to be overhauled for
@@ -87,11 +88,20 @@ protected:
     const uint16 CMD_DEFAULT_TOP_ALIGN  = 3;
     const std::string CMD_DEFAULT_OUTPUT_FORMAT = "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qcovhsp stitle";
 
+    // Stats output defines
+    const std::string DIAMOND_PREFIX                             = "hgt_diamond_";  // Prefix to be used when printing out files
+    const std::string HGT_DIAMOND_DATABASE_BEST_HITS              = "annotated";
+    const std::string HGT_DIAMOND_DATABASE_NO_HITS                = "unannotated";
+    const std::string HGT_DIAMOND_DATABASE_UNSELECTED             = "unselected_hits";
+    const std::string UNINFORMATIVE_FLAG                         = "Uninformative";
+    const std::string INFORMATIVE_FLAG                           = "Informative";
+    const std::string NO_HIT_FLAG                                = "No Hits";
 
     static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
     std::vector<HGTDatabase> mHGTDatabases;
 
-
+    void calculate_best_stats (ModHorizontalGeneTransferDiamond::HGTDatabase &database);
+    void calculate_hgt_candidates(std::vector<HGTDatabase> hgt_databases);
     EntapModule::ModVerifyData verify_databases(ent_input_multi_str_t &databases, HGT_DATABASE_TYPES data_type);
     bool run_diamond(AbstractSimilaritySearch::SimSearchCmd *cmd);
 

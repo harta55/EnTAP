@@ -618,8 +618,8 @@ void QuerySequence::add_alignment(ExecuteStates state, uint16 software, SimSearc
 void QuerySequence::add_alignment(ExecuteStates state, uint16 software, InterProResults &results,
                                   std::string &database) {
     QUERY_FLAG_SET(QUERY_INTERPRO);
-    QueryAlignment *new_alignmet = new InterproAlignment(state, software, database, this, results);
-    mAlignmentData->update_best_hit(new_alignmet);
+    QueryAlignment *new_alignment = new InterproAlignment(state, software, database, this, results);
+    mAlignmentData->update_best_hit(new_alignment);
 }
 
 
@@ -652,6 +652,7 @@ void QuerySequence::add_alignment(ExecuteStates state, uint16 software, QuerySeq
 
 void QuerySequence::add_alignment(ExecuteStates state, uint16 software,
                                   QuerySequence::HorizontalGeneTransferResults &results, std::string &database) {
+    QUERY_FLAG_SET(QUERY_HGT_BLASTED);
     QueryAlignment *new_alignment = new HorizontalGeneTransferDmndAlignment(state, software, database, this, results);
     mAlignmentData->update_best_hit(new_alignment);
 }

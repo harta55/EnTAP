@@ -80,6 +80,7 @@ public:
                                                     //  This means the sequence aligned with the correct number of donor/recipient
                                                     //  databases to be considered an HGT candidate
         QUERY_HGT_CONFIRMED     = (1 << 19),        // Sequence confirmed as HGT gene
+        QUERY_HGT_BLASTED       = (1 << 20),        // Sequence hit against at least one donor or recipient database
 
         QUERY_MAX               = (1 << 31)
 

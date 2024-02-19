@@ -68,6 +68,7 @@ protected:
         HGT_DATABASE_TYPES database_type;
     };
     static constexpr int DMND_COL_NUMBER = 14;
+    static constexpr int HGT_DONOR_DATABASE_MIN = 1;    // Minimum donor databases to have hit
 
     // Terminal Commands (as of DIAMOND v0.9.9)
     // WARNING until restructuring of code make sure this matches ModDiamond.h
@@ -99,6 +100,8 @@ protected:
 
     static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
     std::vector<HGTDatabase> mHGTDatabases;
+    uint16 mDonorDatabaseCt;
+    uint16 mRecipientDatabaseCt;
 
     void calculate_best_stats (ModHorizontalGeneTransferDiamond::HGTDatabase &database);
     void calculate_hgt_candidates(std::vector<HGTDatabase> hgt_databases);

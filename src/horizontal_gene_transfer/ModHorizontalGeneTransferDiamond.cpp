@@ -198,7 +198,6 @@ void ModHorizontalGeneTransferDiamond::parse() {
     calculate_hgt_candidates(mHGTDatabases);
 
     TC_print(TC_PRINT_COUT, "Success");
-
 }
 
 bool ModHorizontalGeneTransferDiamond::is_executable(std::string &exe) {
@@ -231,6 +230,9 @@ EntapModule::ModVerifyData ModHorizontalGeneTransferDiamond::verify_databases(en
         hgtDatabase.diamond_output = get_database_output_path(data_path);
         hgtDatabase.diamond_ran_success = false;
         hgtDatabase.database_type = data_type;
+
+        if (data_type == HGT_DATABASE_RECIPIENT) mRecipientDatabaseCt++;
+        if (data_type == HGT_DATABASE_DONOR) mDonorDatabaseCt++;
 
         // Check if file exists/can be read/empty
         file_status = mpFileSystem->get_file_status(hgtDatabase.diamond_output);
@@ -460,13 +462,41 @@ void ModHorizontalGeneTransferDiamond::calculate_best_stats (ModHorizontalGeneTr
 void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTDatabase> hgt_databases) {
     FS_dprint("Calculating HGT Candidates...");
 
+    uint16 query_donor_ct=0;
+    uint16 query_recipient_ct=0;
+
     // Loop through entire transcriptome, probably slow TODO speed up HGT parsing
     for (auto &pair : *mpQueryData->get_sequences_ptr()) {
 
         // Check if sequence hit at least one HGT database
+        if (pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_HGT_BLASTED)) {
+            query_donor_ct=0;
+            query_recipient_ct=0;
+            for (auto &database : hgt_databases) {
+                // Check if this query hit against the database then keep track of count
+                if (pair.second->hit_database(HORIZONTAL_GENE_TRANSFER, HGT_DIAMOND,database.database_path)) {
+                    if (database.database_type == HGT_DATABASE_DONOR) {
+                        query_donor_ct++;
+                    } else {
+                        query_recipient_ct++;
+                    }
+                }
+            }
+
+            // Determine if horizontal gene transfer candidate
+            // If 1 or more hits against DONOR databases BUT not all
+            if ((query_donor_ct >= HGT_DONOR_DATABASE_MIN) &&(query_donor_ct < mDonorDatabaseCt)) {
+                // AND we have no recipient hits
+                if (query_recipient_ct == 0) {
+                    pair.second->QUERY_FLAG_CHANGE(QuerySequence::QUERY_HGT_CANDIDATE, true);
+                    FS_dprint("HGT Candidate Found! " + pair.first);
+                }
+            }
+
+            //
+
+        }
     }
-
-
 
     FS_dprint("HGT Candidate calculation complete!");
 

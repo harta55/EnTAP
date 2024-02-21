@@ -39,9 +39,6 @@ AbstractHorizontalGeneTransfer::AbstractHorizontalGeneTransfer(std::string &exec
     mDonorDatabasePaths = mpUserInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_HGT_DONOR_DATABASES);
     mRecipientDatabasePaths = mpUserInput->get_user_input<ent_input_multi_str_t>(INPUT_FLAG_HGT_RECIPIENT_DATABASES);
     mGFFPath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_HGT_GFF);
-    mQCoverage        = mpUserInput->get_user_input<ent_input_fp_t >(INPUT_FLAG_QCOVERAGE);
-    mTCoverage        = mpUserInput->get_user_input<ent_input_fp_t >(INPUT_FLAG_TCOVERAGE);
-    mEVal            = mpUserInput->get_user_input<ent_input_fp_t>(INPUT_FLAG_E_VALUE);
     mInputSpecies    = mpUserInput->get_target_species_str();
     // Get input species lineage information
     TaxEntry taxEntry = mpEntapDatabase->get_tax_entry(mInputSpecies);

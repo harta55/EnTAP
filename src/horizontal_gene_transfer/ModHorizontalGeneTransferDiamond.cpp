@@ -80,9 +80,9 @@ void ModHorizontalGeneTransferDiamond::execute() {
             simSearchCmd.std_out_path  = database.diamond_output + FileSystem::EXT_STD;
             simSearchCmd.threads       = (uint16)mThreads;
             simSearchCmd.query_path    = mInputTranscriptome;
-            simSearchCmd.eval          = mEVal;
-            simSearchCmd.tcoverage     = mTCoverage;
-            simSearchCmd.qcoverage     = mQCoverage;
+            simSearchCmd.eval          = DMND_E_VAL;
+            simSearchCmd.tcoverage     = DMND_TARGET_COVERAGE;
+            simSearchCmd.qcoverage     = DMND_QUERY_COVERAGE;
             simSearchCmd.exe_path      = mExePath;
             simSearchCmd.blastp        = mBlastp;
 
@@ -464,6 +464,8 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
 
     uint16 query_donor_ct=0;
     uint16 query_recipient_ct=0;
+    const QuerySequence *upstream_sequence;
+    const QuerySequence *downstream_sequence;
 
     // Loop through entire transcriptome, probably slow TODO speed up HGT parsing
     for (auto &pair : *mpQueryData->get_sequences_ptr()) {
@@ -483,9 +485,9 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
                 }
             }
 
-            // Determine if horizontal gene transfer candidate
+            // 1) Determine if horizontal gene transfer candidate
             // If 1 or more hits against DONOR databases BUT not all
-            if ((query_donor_ct >= HGT_DONOR_DATABASE_MIN) &&(query_donor_ct < mDonorDatabaseCt)) {
+            if ((query_donor_ct >= HGT_DONOR_DATABASE_MIN) && (query_donor_ct < mDonorDatabaseCt)) {
                 // AND we have no recipient hits
                 if (query_recipient_ct == 0) {
                     pair.second->QUERY_FLAG_CHANGE(QuerySequence::QUERY_HGT_CANDIDATE, true);
@@ -493,7 +495,14 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
                 }
             }
 
-            //
+            // 2) Verify the candidates through NEIGHBORHOOD ANALYSIS and checking the surrounding genes taxonomic lineage
+            upstream_sequence = pair.second->getMpUpstreamSequence();
+            downstream_sequence = pair.second->getMpDownstreamSequence();
+            // Make sure we have valid upstream and downstream genes first
+            if ((upstream_sequence == nullptr) || (downstream_sequence == nullptr)) {
+                FS_dprint("WARNING unable to verify gene (" + pair.first + ") since upstream/downstream gene missing");
+                continue;
+            }
 
         }
     }

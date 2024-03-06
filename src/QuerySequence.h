@@ -249,7 +249,7 @@ public:
     bool is_protein();
     bool is_nucleotide();
     bool is_kept_expression();
-    bool QUERY_FLAG_GET(QUERY_FLAGS flag);
+    bool QUERY_FLAG_GET(QUERY_FLAGS flag) const;
     void QUERY_FLAG_CLEAR(QUERY_FLAGS flag);
     void QUERY_FLAG_CHANGE(QUERY_FLAGS flag, bool val);
     bool QUERY_FLAG_CONTAINS(uint32 flags);
@@ -293,7 +293,6 @@ private:
     uint64 calc_seq_length(std::string &,bool);
     void trim_sequence(std::string& sequence);
     void QUERY_FLAG_SET(QUERY_FLAGS flag);
-    void is_hgt_candidate(uint32 donor_databases, uint32 recipient_databases);
     //**********************************************************
 
     //**************** Private Const Variables *****************
@@ -305,7 +304,18 @@ private:
     fp64                              mTPM;             // TPM value from Expression Filtering
     fp32                              mEffectiveLength; // Effective length from expression filtering
     uint32                            mQueryFlags;      // Status flags for the sequence
-    uint32                            mDonorDatabaseHitCt; // Count of at least one alignment against donor database
+    uint32                            mDonorDatabaseHitCt;
+public:
+    uint32 getMDonorDatabaseHitCt() const;
+
+    void setMDonorDatabaseHitCt(uint32 mDonorDatabaseHitCt);
+
+    uint32 getMRecipientDatabaseHitCt() const;
+
+    void setMRecipientDatabaseHitCt(uint32 mRecipientDatabaseHitCt);
+
+private:
+    // Count of at least one alignment against donor database
     uint32                            mRecipientDatabaseHitCt; // Count of at least one alignment against recip database
     std::string                       mSequenceID;      // Sequence ID
     uint64                            mSequenceLength;  // Sequence length (nucleotide bp)
@@ -321,6 +331,8 @@ private:
 
     /* Values taken from GFF file if user inputs */
     const QuerySequence *mpUpstreamSequence;
+    const QuerySequence *mpDownstreamSequence;  // Sequence that is downstream from this sequence
+
 public:
     const QuerySequence *getMpUpstreamSequence() const;
 
@@ -329,11 +341,6 @@ public:
     const QuerySequence *getMpDownstreamSequence() const;
 
     void setMpDownstreamSequence(const QuerySequence *mpDownstreamSequence);
-
-private:
-    // Sequence that is upstream from this sequence
-    const QuerySequence *mpDownstreamSequence;  // Sequence that is downstream from this sequence
-    //**********************************************************
 };
 
 

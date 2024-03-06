@@ -466,6 +466,13 @@ void QuerySequence::set_header_data() {
     if (align_ptr != nullptr) {
         align_ptr->get_all_header_data(mHeaderInfo);
     }
+
+    // Horizontal Gene Transfer
+    if (QUERY_FLAG_GET(QUERY_HGT_CONFIRMED)) {
+        mHeaderInfo[ENTAP_HEADER_HORIZONTALLY_TRANSFERRED_GENE] = "YES";
+    } else {
+        mHeaderInfo[ENTAP_HEADER_HORIZONTALLY_TRANSFERRED_GENE] = "NO";
+    }
 }
 
 /**
@@ -525,7 +532,7 @@ bool QuerySequence::is_kept() {
 }
 
 
-bool QuerySequence::QUERY_FLAG_GET(QUERY_FLAGS flag) {
+bool QuerySequence::QUERY_FLAG_GET(QUERY_FLAGS flag) const {
     return (mQueryFlags & flag) != 0;
 }
 
@@ -1006,8 +1013,20 @@ void QuerySequence::setMpDownstreamSequence(const QuerySequence *mpDownstreamSeq
     QuerySequence::mpDownstreamSequence = mpDownstreamSequence;
 }
 
-void QuerySequence::is_hgt_candidate(uint32 donor_databases, uint32 recipient_databases) {
+uint32 QuerySequence::getMDonorDatabaseHitCt() const {
+    return mDonorDatabaseHitCt;
+}
 
+void QuerySequence::setMDonorDatabaseHitCt(uint32 mDonorDatabaseHitCt) {
+    QuerySequence::mDonorDatabaseHitCt = mDonorDatabaseHitCt;
+}
+
+uint32 QuerySequence::getMRecipientDatabaseHitCt() const {
+    return mRecipientDatabaseHitCt;
+}
+
+void QuerySequence::setMRecipientDatabaseHitCt(uint32 mRecipientDatabaseHitCt) {
+    QuerySequence::mRecipientDatabaseHitCt = mRecipientDatabaseHitCt;
 }
 
 QuerySequence::align_database_hits_t* QuerySequence::AlignmentData::get_database_ptr(ExecuteStates state, uint16 software, std::string& database) {

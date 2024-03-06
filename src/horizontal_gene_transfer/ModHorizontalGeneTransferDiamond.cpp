@@ -467,6 +467,17 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
     const QuerySequence *upstream_sequence;
     const QuerySequence *downstream_sequence;
 
+    /*
+     * 1) Determine Horizontal Gene Transfer Candidates
+     *
+     *  For this stage, we cycle through the entire transcriptome to determine
+     *      the HGT candidates based on the Donor and Recipient alignments
+     *
+     *  HGT Candidate Determined By:
+     *      1. One or more hits against the DONOR database
+     *      2. No hits against RECIPIENT databases
+     *
+     * */
     // Loop through entire transcriptome, probably slow TODO speed up HGT parsing
     for (auto &pair : *mpQueryData->get_sequences_ptr()) {
 
@@ -484,8 +495,10 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
                     }
                 }
             }
+            pair.second->setMDonorDatabaseHitCt(query_donor_ct);
+            pair.second->setMRecipientDatabaseHitCt(query_recipient_ct);
 
-            // 1) Determine if horizontal gene transfer candidate
+            // Determine if horizontal gene transfer candidate
             // If 1 or more hits against DONOR databases BUT not all
             if ((query_donor_ct >= HGT_DONOR_DATABASE_MIN) && (query_donor_ct < mDonorDatabaseCt)) {
                 // AND we have no recipient hits
@@ -494,19 +507,59 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
                     FS_dprint("HGT Candidate Found! " + pair.first);
                 }
             }
+        }
+    }
 
-            // 2) Verify the candidates through NEIGHBORHOOD ANALYSIS and checking the surrounding genes taxonomic lineage
+    /*
+     * 2) Refine HGT Candidates based on neighboring genes
+     *
+     *  For this stage, we cycle through our HGT Candidate and analyze relationships between
+     *      the neighbors (using GFF file information)
+     *
+     *  Refinement determined by:
+     *      1. If either neighbor of an HGT Candidate is an HGT Candidate, remove them all from consideration
+     *      2. Neighbors should not have any DONOR database hits, only RECIPIENT
+     * */
+    for (auto &pair : *mpQueryData->get_sequences_ptr()) {
+
+        // We only want to analyze those sequences that are an HGT Candidate
+        if (pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_HGT_CANDIDATE)) {
+
+            // 2.1) Confirm we have existing neighbors, if not, NOT HGT
             upstream_sequence = pair.second->getMpUpstreamSequence();
             downstream_sequence = pair.second->getMpDownstreamSequence();
             // Make sure we have valid upstream and downstream genes first
             if ((upstream_sequence == nullptr) || (downstream_sequence == nullptr)) {
                 FS_dprint("WARNING unable to verify gene (" + pair.first + ") since upstream/downstream gene missing");
-                continue;
+                continue;   // !!!! WARNING CONTINUE, gene neighbors missing
             }
 
+            // 2.2) Check if neighbors are HGT Candidates. If so, NOT HGT
+            if ((upstream_sequence->QUERY_FLAG_GET(QuerySequence::QUERY_HGT_CANDIDATE)) ||
+                (downstream_sequence->QUERY_FLAG_GET(QuerySequence::QUERY_HGT_CANDIDATE))) {
+
+                pair.second->QUERY_FLAG_CHANGE(QuerySequence::QUERY_HGT_CONFIRMED, false);
+                FS_dprint("WARNING skipped gene (" + pair.first + ") due to neighbor HGT Candidates");
+                continue; // !!!! WARNING CONTINUE, neighbor HGT Candidates
+            }
+
+            // 2.3) Check if neighbors have any donor hits, if so, NOT HGT
+            //  neighbors should ONLY have recipient hits
+            if ((upstream_sequence->getMDonorDatabaseHitCt() >= HGT_DONOR_DATABASE_NEIGHBOR_MAX) ||
+                (downstream_sequence->getMDonorDatabaseHitCt() >= HGT_DONOR_DATABASE_NEIGHBOR_MAX)) {
+
+                pair.second->QUERY_FLAG_CHANGE(QuerySequence::QUERY_HGT_CONFIRMED, false);
+                FS_dprint("WARNING skipped gene (" + pair.first + ") due to neighbor HGT Candidates having donor hits");
+                continue; // !!!! WARNING CONTINUE, neighbor HGT Candidates hit donor database
+            }
+
+            // If we got past every other step, this is HGT Confirmed!!
+            pair.second->QUERY_FLAG_CHANGE(QuerySequence::QUERY_HGT_CONFIRMED, true);
+            FS_dprint("HGT CANDIDATE CONFIRMED!!!: " + pair.first);
         }
     }
 
-    FS_dprint("HGT Candidate calculation complete!");
+    // Loop through only our HGT Candidates for further analyze them
 
+    FS_dprint("HGT Candidate calculation complete!");
 }

@@ -68,7 +68,8 @@ protected:
         HGT_DATABASE_TYPES database_type;
     };
     static constexpr int DMND_COL_NUMBER = 14;
-    static constexpr int HGT_DONOR_DATABASE_MIN = 1;    // Minimum donor databases to have hit
+    static constexpr int HGT_DONOR_DATABASE_MIN = 1;    // Minimum donor databases to have hit to be HGT candidate
+    static constexpr int HGT_DONOR_DATABASE_NEIGHBOR_MAX = 0; // If neighbor has more than this hits for donor database, query is NOT HGT
 
     // Terminal Commands (as of DIAMOND v0.9.9)
     // WARNING until restructuring of code make sure this matches ModDiamond.h

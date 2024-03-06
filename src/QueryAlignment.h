@@ -164,4 +164,28 @@ protected:
 
 };
 
+//**********************************************************************
+//**********************************************************************
+//               HorizontalGeneTransferDmndAlignment
+//**********************************************************************
+//**********************************************************************
+
+class HorizontalGeneTransferDmndAlignment : public QueryAlignment {
+
+public:
+    HorizontalGeneTransferDmndAlignment(ExecuteStates state, uint16 software, std::string &database_path, QuerySequence* parent,
+                        QuerySequence::HorizontalGeneTransferResults &horizontalGeneTransferResults);
+    ~HorizontalGeneTransferDmndAlignment() override = default;
+    QuerySequence::HorizontalGeneTransferResults* get_results();
+    bool operator>(const QueryAlignment&) override;
+    void refresh_headers();
+
+private:
+    QuerySequence::HorizontalGeneTransferResults mHorizontalGeneTransferResults;
+
+protected:
+    bool is_go_header(ENTAP_HEADERS header, go_format_t & go_list) override;
+
+};
+
 #endif //ENTAP_QUERYALIGNMENT_H

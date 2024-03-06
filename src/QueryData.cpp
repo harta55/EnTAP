@@ -46,17 +46,17 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
 
         /* Similarity Search - General */
         {"Subject Sequence",    false},
-        {"Percent Identical",   false},                          // 5
+        {"Percent Identical",   false},
         {"Alignment Length",    false},
         {"Mismatches",          false},
         {"Gap Openings",        false},
         {"Query Start",         false},
-        {"Query End",           false},                          // 10
+        {"Query End",           false},
         {"Subject Start",       false},
         {"Subject End",         false},
         {"E Value",             false},
         {"Coverage",            false},
-        {"Description",         false},                          // 15
+        {"Description",         false},
         {"Species",             false},
         {"Taxonomic Lineage",   false},
         {"Origin Database",     false},
@@ -64,7 +64,7 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
         {"Informative",         false},
 
         /* Similarity Search - UniProt */
-        {"UniProt Database Cross Reference",        false},      // 20
+        {"UniProt Database Cross Reference",        false},
         {"UniProt Additional Information",          false},
         {"UniProt KEGG Terms",                      false},
         {"UniProt GO Biological",                   false},
@@ -88,7 +88,7 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
         {"EggNOG Protein Domains",                 false},
 
         /* Ontology - InterProScan */
-        {"IPScan GO Biological",                    false},     // 40
+        {"IPScan GO Biological",                    false},
         {"IPScan GO Cellular",                      false},
         {"IPScan GO Molecular",                     false},
         {"IPScan Pathways",                         false},
@@ -100,9 +100,11 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
         /* Ontology - BUSCO */
         {"BUSCO ID",                                false},
         {"BUSCO Status",                            false},
-        {"BUSCO Length",                            false},    // 50
+        {"BUSCO Length",                            false},
         {"BUSCO Score",                             false},
 
+        /* Horizontal Gene Transfer */
+        {"Horizontally Transferred Gene",           false},
 
         {"Unused",                                  false}
 };
@@ -1249,4 +1251,8 @@ bool QueryData::print_transcriptome(uint32 flags, std::string &outpath, SEQUENCE
     }
     outfile.close();
     return ret;
+}
+
+void QueryData::set_is_success_hgt(bool val) {
+    DATA_FLAG_CHANGE(SUCCESS_HGT, val);
 }

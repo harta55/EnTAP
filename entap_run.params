@@ -41,7 +41,7 @@ transdecoder-no-refine-starts=false
 #-------------------------------
 #Specify the output directory you would like the data produced by EnTAP to be saved to.
 #type:string
-out-dir=/home/ahart/CLionProjects/EnTAP/cmake-build-debug/entap_outfiles
+out-dir=entap_outfiles
 #Select this option if you would like to overwrite files from a previous execution of EnTAP. This will DISABLE 'picking up where you left off' which enables you to continue an annotation from where you left off before. Refer to the documentation for more information.
 #type:boolean (true/false)
 overwrite=false
@@ -74,6 +74,21 @@ threads=1
 #    7. Gene Ontology Terms TSV (default)
 #type:list (integer)
 output-format=1,3,4,7,
+#-------------------------------
+# [horizontal-gene-transfer]
+#-------------------------------
+#Specify the DIAMOND configured (.dmnd extension) donor databases for Horizontal Gene Transfer 
+#analysis
+#type:list (string)
+hgt-donor=
+#Specify the DIAMOND configured (.dmnd extension) recipient databases for Horizontal Gene Transfer 
+#analysis
+#type:list (string)
+hgt-recipient=
+#Specify the path to the GFF file associated with your dataset. Ensure that all headers match those in your 
+#input transcript file.
+#type:string
+hgt-gff=
 #-------------------------------
 # [ontology]
 #-------------------------------

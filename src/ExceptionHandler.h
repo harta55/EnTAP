@@ -93,6 +93,8 @@ enum ENTAP_ERR {
     ERR_ENTAP_VERSION_UNSUPPORTED_BUSCO   = 192u,
     ERR_ENTAP_FILE_IO                     = 200u,
     ERR_ENTAP_MEM_ALLOC                   = 201u,
+    ERR_ENTAP_HGT_PARSE                   = 210u,
+    ERR_ENTAP_HGT_RUN                     = 211u,
     ERR_ENTAP_MAX                         = 201u
 };
 

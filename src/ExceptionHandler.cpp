@@ -52,7 +52,6 @@ ExceptionHandler::ExceptionHandler(const std::string& msg, int err) {
     this->mMessage = msg;
 }
 
-
 /**
  * ======================================================================
  * Function ExceptionHandler::print_msg()

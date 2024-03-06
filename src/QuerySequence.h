@@ -75,7 +75,12 @@ public:
         QUERY_FAMILY_ONE_GO     = (1 << 14),        // Sequence contains at least one GO from EggNOG process
         QUERY_ONT_INTERPRO_GO   = (1 << 15),        // Sequence contains at least one GO from InterPro process
         QUERY_ONT_INTERPRO_PATHWAY = (1 << 16),     // Sequence contains at least one KEGG from InterPro process
-        QUERY_ONT_BUSCO         = (1 << 17),
+        QUERY_ONT_BUSCO         = (1 << 17),        // Sequence has BUSCO data
+        QUERY_HGT_CANDIDATE     = (1 << 18),        // Sequence is an HGT candidate (not necessarily confirmed as HGT)
+                                                    //  This means the sequence aligned with the correct number of donor/recipient
+                                                    //  databases to be considered an HGT candidate
+        QUERY_HGT_CONFIRMED     = (1 << 19),        // Sequence confirmed as HGT gene
+        QUERY_HGT_BLASTED       = (1 << 20),        // Sequence hit against at least one donor or recipient database
 
         QUERY_MAX               = (1 << 31)
 
@@ -151,6 +156,29 @@ public:
         UniprotEntry                      uniprot_info;
     };
 
+    struct HorizontalGeneTransferResults {
+        std::string                       length;
+        std::string                       mismatch;
+        std::string                       gapopen;
+        std::string                       qstart;
+        std::string                       qend;
+        std::string                       sstart;
+        std::string                       send;
+        std::string                       pident;
+        std::string                       bit_score;
+        std::string                       e_val;
+        std::string                       coverage;
+        std::string                       database_path;
+        std::string                       qseqid;
+        std::string                       sseqid;
+        std::string                       stitle;
+        std::string                       species;
+        std::string                       lineage;
+        fp32                              tax_score;     // taxonomic score, may be based on parent
+        fp64                              e_val_raw;
+        fp64                              coverage_raw;
+    };
+
     /**
      * ======================================================================
      * @struct AlignmentData - nested
@@ -174,6 +202,7 @@ public:
 
         ALIGNMENT_DATA_T sim_search_data[SIM_SOFTWARE_COUNT];
         ALIGNMENT_DATA_T ontology_data[ONT_SOFTWARE_COUNT];
+        ALIGNMENT_DATA_T horizontal_gene_data[HGT_SOFTWARE_COUNT];
         QuerySequence* querySequence;
 
         QueryAlignment* overall_alignment[EXECUTION_MAX][ONT_SOFTWARE_COUNT]{};
@@ -220,7 +249,7 @@ public:
     bool is_protein();
     bool is_nucleotide();
     bool is_kept_expression();
-    bool QUERY_FLAG_GET(QUERY_FLAGS flag);
+    bool QUERY_FLAG_GET(QUERY_FLAGS flag) const;
     void QUERY_FLAG_CLEAR(QUERY_FLAGS flag);
     void QUERY_FLAG_CHANGE(QUERY_FLAGS flag, bool val);
     bool QUERY_FLAG_CONTAINS(uint32 flags);
@@ -233,6 +262,7 @@ public:
     void add_alignment(ExecuteStates state, uint16 software, SimSearchResults &results, std::string& database,std::string lineage);
     void add_alignment(ExecuteStates state, uint16 software, InterProResults &results, std::string& database);
     void add_alignment(ExecuteStates state, uint16 software, BuscoResults &results, std::string& database);
+    void add_alignment(ExecuteStates state, uint16 software, HorizontalGeneTransferResults &results, std::string &database);
     QuerySequence::align_database_hits_t* get_database_hits(std::string& database,ExecuteStates state, uint16 software);
 
     std::string format_go_info(go_format_t &go_list, uint8 lvl);
@@ -243,7 +273,7 @@ public:
         return static_cast<T*>(mAlignmentData->get_best_align_ptr(state, software, database));
     }
 
-    // Checks whether an alignment was found against specific atabase
+    // Checks whether an alignment was found against specific database
     bool hit_database(ExecuteStates state, uint16 software, std::string database);
     void update_query_flags(ExecuteStates state, uint16 software);
     void get_header_data(std::string& data, ENTAP_HEADERS header, uint8 lvl);
@@ -274,6 +304,19 @@ private:
     fp64                              mTPM;             // TPM value from Expression Filtering
     fp32                              mEffectiveLength; // Effective length from expression filtering
     uint32                            mQueryFlags;      // Status flags for the sequence
+    uint32                            mDonorDatabaseHitCt;
+public:
+    uint32 getMDonorDatabaseHitCt() const;
+
+    void setMDonorDatabaseHitCt(uint32 mDonorDatabaseHitCt);
+
+    uint32 getMRecipientDatabaseHitCt() const;
+
+    void setMRecipientDatabaseHitCt(uint32 mRecipientDatabaseHitCt);
+
+private:
+    // Count of at least one alignment against donor database
+    uint32                            mRecipientDatabaseHitCt; // Count of at least one alignment against recip database
     std::string                       mSequenceID;      // Sequence ID
     uint64                            mSequenceLength;  // Sequence length (nucleotide bp)
     std::string                       mSequenceProtein; // Protein sequence
@@ -285,7 +328,19 @@ private:
 #endif
     AlignmentData                     *mAlignmentData;  // Alignment information
     std::string                       mHeaderInfo[ENTAP_HEADER_COUNT];  // Header mappings
-    //**********************************************************
+
+    /* Values taken from GFF file if user inputs */
+    const QuerySequence *mpUpstreamSequence;
+    const QuerySequence *mpDownstreamSequence;  // Sequence that is downstream from this sequence
+
+public:
+    const QuerySequence *getMpUpstreamSequence() const;
+
+    void setMpUpstreamSequence(const QuerySequence *mpUpstreamSequence);
+
+    const QuerySequence *getMpDownstreamSequence() const;
+
+    void setMpDownstreamSequence(const QuerySequence *mpDownstreamSequence);
 };
 
 

@@ -458,3 +458,28 @@ bool BuscoAlignment::operator>(const QueryAlignment &alignment) {
 
     return this->mBuscoResults.score > alignment_cast.mBuscoResults.score;
 }
+
+HorizontalGeneTransferDmndAlignment::HorizontalGeneTransferDmndAlignment(ExecuteStates state, uint16 software,
+                                                                         std::string &database_path,
+                                                                         QuerySequence *parent,
+                                                                         QuerySequence::HorizontalGeneTransferResults &horizontalGeneTransferResults)
+        : QueryAlignment(state, software, database_path, parent)  {
+    mHorizontalGeneTransferResults = horizontalGeneTransferResults;
+}
+
+QuerySequence::HorizontalGeneTransferResults *HorizontalGeneTransferDmndAlignment::get_results() {
+    return &this->mHorizontalGeneTransferResults;
+}
+
+bool HorizontalGeneTransferDmndAlignment::operator>(const QueryAlignment &alignment) {
+    const HorizontalGeneTransferDmndAlignment alignment_cast = dynamic_cast<const HorizontalGeneTransferDmndAlignment&>(alignment);
+
+    return this->mHorizontalGeneTransferResults.e_val_raw < alignment_cast.mHorizontalGeneTransferResults.e_val_raw;
+}
+
+void HorizontalGeneTransferDmndAlignment::refresh_headers() {
+
+}
+bool HorizontalGeneTransferDmndAlignment::is_go_header(ENTAP_HEADERS header, go_format_t &go_list) {
+    return false;
+}

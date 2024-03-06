@@ -31,7 +31,11 @@
 
 //*********************** Includes *****************************
 #include "AbstractExpression.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wparentheses"
+#pragma GCC diagnostic ignored "-Wformat-truncation="
 #include <csv.h>
+#pragma GCC diagnostic pop
 #include "../ExceptionHandler.h"
 #include "../GraphingManager.h"
 #include "../FileSystem.h"

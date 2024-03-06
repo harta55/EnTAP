@@ -103,7 +103,8 @@ std::unique_ptr<AbstractSimilaritySearch> SimilaritySearch::spawn_object() {
         case SIM_DIAMOND:
         default:
             return std::unique_ptr<AbstractSimilaritySearch>(new ModDiamond(
-                    mSimSearchDir, mInputFastaPath, *mpEntapData, mDatabasePaths
+                    mSimSearchDir, mInputFastaPath, *mpEntapData, mDatabasePaths,
+                    "DIAMOND", SIM_DIAMOND
                     ));
     }
 }

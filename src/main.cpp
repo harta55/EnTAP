@@ -60,6 +60,7 @@ UserInput::EXECUTION_TYPE EXECUTE_TYPE;                             // Config/Ex
 //******************** Global Variables ************************
 std::string DEBUG_FILE_PATH;        // Extern
 std::string LOG_FILE_PATH;          // Extern
+bool INITIALIZED_DEBUG_FILE;        // Extern
 //**************************************************************
 
 //******************** Local Prototype Functions ***************
@@ -134,6 +135,7 @@ void init_entap(int argc, const char** argv) {
 
     // Begin timing
     startTime = std::chrono::system_clock::now();
+    INITIALIZED_DEBUG_FILE = false;
 
     // Create filesystem
     pFileSystem = new FileSystem();

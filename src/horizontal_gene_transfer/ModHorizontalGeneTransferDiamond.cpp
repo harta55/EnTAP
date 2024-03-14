@@ -545,8 +545,8 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
 
             // 2.3) Check if neighbors have any donor hits, if so, NOT HGT
             //  neighbors should ONLY have recipient hits
-            if ((upstream_sequence->getMDonorDatabaseHitCt() >= HGT_DONOR_DATABASE_NEIGHBOR_MAX) ||
-                (downstream_sequence->getMDonorDatabaseHitCt() >= HGT_DONOR_DATABASE_NEIGHBOR_MAX)) {
+            if ((upstream_sequence->getMDonorDatabaseHitCt() > HGT_DONOR_DATABASE_NEIGHBOR_MAX) ||
+                (downstream_sequence->getMDonorDatabaseHitCt() > HGT_DONOR_DATABASE_NEIGHBOR_MAX)) {
 
                 pair.second->QUERY_FLAG_CHANGE(QuerySequence::QUERY_HGT_CONFIRMED, false);
                 FS_dprint("WARNING skipped gene (" + pair.first + ") due to neighbor HGT Candidates having donor hits");

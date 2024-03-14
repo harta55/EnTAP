@@ -93,7 +93,7 @@ hgt-gff=
 # [ontology]
 #-------------------------------
 # Specify the ontology software you would like to use
-#Note: it is possible to specify more than one! Just usemultiple --ontology flags
+#Note: it is possible to specify more than one! Just use multiple --ontology flags
 #Specify flags as follows:
 #    0. EggNOG (default)
 #    1. InterProScan

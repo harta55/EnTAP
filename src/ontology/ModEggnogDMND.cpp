@@ -349,6 +349,7 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
         }
         mpGraphingManager->graph_data(graphing_data_temp.text_file_path);
     }
+    //-------------------------------------------------------------//
 
     //-------------------------- Gene Ontology --------------------//
     if (ct_total_go_hits > 0) {

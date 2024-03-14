@@ -140,18 +140,12 @@ void Ontology::execute() {
 std::unique_ptr<AbstractOntology> Ontology::spawn_object(uint16 &software) {
     ent_input_str_t exe_path;
     switch (software) {
-#ifdef EGGNOG_MAPPER
-        case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
+        case ONT_EGGNOG_MAPPER:
             return std::unique_ptr<AbstractOntology>(new ModEggnog(
-                    mOutpath,
-                    mNewInput,
                     mOntologyDir,
-                    mBlastp,
-                    mGoLevels,
-                    mEntapDataPtrs,
-                    mEggnogDbPath    // additional data
+                    mNewInput,
+                    mEntapDataPtrs
             ));
-#endif
         case ONT_INTERPRO_SCAN:
             return std::unique_ptr<AbstractOntology>(new ModInterpro(
                     mOntologyDir,

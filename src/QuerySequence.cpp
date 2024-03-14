@@ -286,14 +286,6 @@ void QuerySequence::setFrame(const std::string &frame) {
     set_header_data();
 }
 
-#ifdef EGGNOG_MAPPER
-void QuerySequence::set_eggnog_results(const EggnogResults &eggnogResults) {
-    memcpy(&this->mEggnogResults, &eggnogResults, sizeof(eggnogResults));
-    QUERY_FLAG_SET(QUERY_EGGNOG_HIT);
-    QUERY_FLAG_SET(QUERY_FAMILY_ASSIGNED);
-}
-#endif
-
 /**
  * ======================================================================
  * Function void QuerySequence::init_sequence()
@@ -319,9 +311,6 @@ void QuerySequence::init_sequence() {
     mFrameScore = 0.0;
 
     mAlignmentData = new AlignmentData(this);
-#ifdef EGGNOG_MAPPER
-    mEggnogResults = EggnogResults();
-#endif
 
     mFrameType = "";
     mSequenceProtein = "";
@@ -814,24 +803,38 @@ void QuerySequence::update_query_flags(ExecuteStates state, uint16 software) {
         }
 
         case HORIZONTAL_GENE_TRANSFER: {
-            switch (software) {
-                case HGT_DIAMOND: {
-
-                    break;
-                }
-                default:
-                    return;
-            }
             break;
         }
 
         case GENE_ONTOLOGY: {
             switch (software) {
-                case ONT_EGGNOG_DMND: {
+
+                case ONT_EGGNOG_MAPPER: {
                     EggnogDmndAlignment *best_align = get_best_hit_alignment<EggnogDmndAlignment>(state, software,"");
-                    EggnogResults *results = best_align->get_results();
 
                     if (best_align != nullptr) {
+                        EggnogResults *results = best_align->get_results();
+
+                        if (!results->parsed_go.empty()) {
+                            QUERY_FLAG_SET(QUERY_FAMILY_ONE_GO);
+                            QUERY_FLAG_SET(QUERY_ONE_GO);
+                        }
+
+                        if ((!results->kegg_reaction.empty()) || (!results->kegg_pathway.empty()) ||
+                                (!results->kegg_module.empty()) || (!results->kegg_rclass.empty())) {
+                            QUERY_FLAG_SET(QUERY_FAMILY_ONE_KEGG);
+                            QUERY_FLAG_SET(QUERY_ONE_KEGG);
+                        }
+                    }
+                    break;
+                }
+
+                case ONT_EGGNOG_DMND: {
+                    EggnogDmndAlignment *best_align = get_best_hit_alignment<EggnogDmndAlignment>(state, software,"");
+
+                    if (best_align != nullptr) {
+                        EggnogResults *results = best_align->get_results();
+
                         QUERY_FLAG_CHANGE(QUERY_FAMILY_ONE_GO, !results->parsed_go.empty());
                         QUERY_FLAG_CHANGE(QUERY_FAMILY_ONE_KEGG, !results->kegg.empty());
 

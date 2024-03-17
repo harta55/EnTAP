@@ -141,7 +141,7 @@ void ModEggnog::execute() {
             {"--sensmode", "more-sensitive"},
             {"-i", mInputTranscriptome},
             {"--dmnd_db", mEggnogMapDMNDPath},
-            {"-data_dir", mEggnogMapDataDir},
+            {"--data_dir", mEggnogMapDataDir},
             {"--output_dir", mModOutDir},
             {"--no_file_comments",""}
     };

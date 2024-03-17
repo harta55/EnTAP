@@ -117,7 +117,12 @@ std::string TC_generate_command(command_map_t &map, std::string &exe_path) {
     std::string       out;
 
     ss << exe_path << " ";
-    for (auto &pair : map)ss << pair.first << " " << pair.second << " ";
+    for (auto &pair : map) {
+        ss << pair.first << " " << pair.second;
+        if (!pair.second.empty()) {
+            ss << " ";
+        }
+    }
     out = ss.str();
     return out;
 }

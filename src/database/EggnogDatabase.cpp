@@ -233,6 +233,8 @@ const vect_str_t EggnogDatabase::TAXONOMIC_RESOLUTION = {"apiNOG", "virNOG", "ne
                                          "fuNOG", "opiNOG", "euNOG", "arNOG", "bactNOG",
                                          "NOG"};
 
+const std::string EggnogDatabase::EGG_DB_SQL_FILENAME = "eggnog.db";
+const std::string EggnogDatabase::EGG_DB_DMND_FILENAME = "eggnog_proteins.dmnd";
 
 EggnogDatabase::EggnogDatabase(FileSystem* filesystem, EntapDatabase* entap_data, QueryData* queryData) {
     mpFileSystem = filesystem;

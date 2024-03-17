@@ -33,11 +33,6 @@
 //#define USE_BOOST   1
 #endif
 
-// Use EggNOG mapper (not supported, leaving for now)
-#ifndef EGGNOG_MAPPER
-//#define EGGNOG_MAPPER 1
-#endif
-
 // Compile with CURL? Will use wget command otherwise (not supported yet)
 #ifndef USE_CURL
 //#define USE_CURL    1

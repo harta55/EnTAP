@@ -130,6 +130,10 @@ typedef enum {
     INPUT_FLAG_EGG_SQL_DB,
     INPUT_FLAG_EGG_DMND_DB,
 
+    INPUT_FLAG_EGG_MAPPER_EXE,
+    INPUT_FLAG_EGG_MAPPER_DATA_DIR,
+    INPUT_FLAG_EGG_MAPPER_DMND_DB,
+
     /* Ontology Commands - InterProScan */
     INPUT_FLAG_INTERPRO_EXE,
     INPUT_FLAG_INTERPRO,
@@ -299,6 +303,11 @@ private:
     static const std::string ENTAP_DATABASE_SQL_DEFAULT        ;
     static const std::string EGG_SQL_DB_DEFAULT                ;
     static const std::string EGG_DMND_DEFAULT                  ;
+
+    // Ontology - Eggnog Mapper Defaults
+    static const std::string EGG_MAP_EXE_DEFAULT;
+    static const std::string EGG_MAP_DATA_DIR_DEFAULT;
+
     static const std::string DEFAULT_ENTAP_DB_BIN_INI;
     static const std::string DEFAULT_ENTAP_DB_SQL_INI;
     static const std::string DEFAULT_EGG_SQL_DB_INI;

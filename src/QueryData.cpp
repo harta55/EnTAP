@@ -82,6 +82,12 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
         {"EggNOG Description",                     false},
         {"EggNOG BIGG Reaction",                   false},
         {"EggNOG KEGG Terms",                      false},
+        {"EggNOG KEGG KO",                         false},
+        {"EggNOG KEGG Pathway",                    false},
+        {"EggNOG KEGG Module",                     false},
+        {"EggNOG KEGG Reaction",                   false},
+        {"EggNOG KEGG RClass",                     false},
+        {"EggNOG BRITE",                           false},
         {"EggNOG GO Biological",                   false},
         {"EggNOG GO Cellular",                     false},
         {"EggNOG GO Molecular" ,                   false},
@@ -1255,4 +1261,19 @@ bool QueryData::print_transcriptome(uint32 flags, std::string &outpath, SEQUENCE
 
 void QueryData::set_is_success_hgt(bool val) {
     DATA_FLAG_CHANGE(SUCCESS_HGT, val);
+}
+
+uint64 QueryData::get_sequence_count(uint32 flags) const {
+    uint64 ret_count=0;
+    for (auto &pair : *mpSequences) {
+        // Check if this sequence has any of the flags we want
+        if (pair.second->QUERY_FLAG_CONTAINS(flags)){
+            ret_count++;
+        }
+    }
+    return ret_count;
+}
+
+uint32 QueryData::getMTotalSequences() const {
+    return mTotalSequences;
 }

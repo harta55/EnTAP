@@ -59,7 +59,7 @@ public:
     typedef enum {
 
         QUERY_BLAST_HIT         = (1 << 0),         // Aligned against sequence during Similarity Search
-        QUERY_EGGNOG_HIT        = (1 << 1),         // Aligned against sequence during EggNOG
+        QUERY_EGGNOG_HIT        = (1 << 1),         // Aligned against sequence during EggNOG (either DIAMOND or mapper)
         QUERY_EXPRESSION_KEPT   = (1 << 2),         // Was not removed during Expression Analysis
         QUERY_FRAME_KEPT        = (1 << 3),         // Was not removed during Frame Selection
         QUERY_FAMILY_ASSIGNED   = (1 << 4),         // Family was assigned during EggNOG
@@ -79,7 +79,7 @@ public:
         QUERY_HGT_CANDIDATE     = (1 << 18),        // Sequence is an HGT candidate (not necessarily confirmed as HGT)
                                                     //  This means the sequence aligned with the correct number of donor/recipient
                                                     //  databases to be considered an HGT candidate
-        QUERY_HGT_CONFIRMED     = (1 << 19),        // Sequence confirmed as HGT gene
+        QUERY_HGT_CONFIRMED     = (1 << 19),        // Sequence confirmed as HGT gene after performing neighbor analysis
         QUERY_HGT_BLASTED       = (1 << 20),        // Sequence hit against at least one donor or recipient database
 
         QUERY_MAX               = (1 << 31)
@@ -87,25 +87,42 @@ public:
     } QUERY_FLAGS;
     //**********************************************************
 
+    // With Eggnog, some data is shared between mapper and diamond implementations
+    //  some are also not shared and only pulled from one version, outlined below
     struct EggnogResults {
-        std::string              member_ogs;        // 0A01R@biNOG,0V8CP@meNOG (ortholgous groups)
+        // Shared data
         std::string              seed_ortholog;     // 34740.HMEL017225-PA
         std::string              seed_evalue;       // Pulled from DIAMOND run
         std::string              seed_score;        // Pulled from DIAMOND run
+        fp64                     seed_eval_raw;     // Used for finding best hit
+        std::string              member_ogs;        // 0A01R@biNOG,0V8CP@meNOG (eggnog ortholgous groups)
+        std::string              tax_scope_lvl_max; // 'virNOG[6]' or '33208|Metazoa' if using mapper
+        std::string              description;       // Description of narrowest OG with a valid one
+        go_format_t              parsed_go;         // All go terms found parsed into EnTAP format
+        std::string              name;              // Preferred name
+        std::string              bigg;              // BiGG reaction
+        std::string              protein_domains;   // Pfam 'GCFC,NTR2' (comma separated)
+
+        // DIAMOND specific eggnog data
         std::string              seed_coverage;     // Pulled from DIAMOND run
         std::string              predicted_gene;    // Most common predicted gene (pname)
-        std::string              tax_scope_lvl_max; // virNOG[6]
+        std::string              kegg;              // Everything combined in comma separated list
         std::string              tax_scope;         // virNOG
         std::string              tax_scope_readable;// Ascomycota
         std::string              pname;             // All predicted gene names
-        std::string              name;
-        std::string              bigg;
-        std::string              kegg;
         std::string              og_key;            // Used for indexing into older SQL database (if using)
-        std::string              description;       // Used for older version
-        std::string              protein_domains;
-        fp64                     seed_eval_raw;     // Used for finding best hit
-        go_format_t              parsed_go;         // All go terms found
+
+        // EggNOG-mapper specific eggnog data
+        std::string              cog_category;      // COG category of narrowest OG with a valid one
+        std::string              ec_value;
+        std::string              kegg_ko;           // 'ko:K01672,ko:K12345' (comma separated)
+        std::string              kegg_pathway;      // 'ko:K01672,ko:K12345' (comma separated)
+        std::string              kegg_module ;      // 'M00355,M00595' (comma separated)
+        std::string              kegg_reaction;     // 'R00132,R00154' (comma separated)
+        std::string              kegg_rclass;       // 'RC02807,RC00299' (comma separated)
+        std::string              brite;             // 'ko00000,ko03029 (comma separated)
+        std::string              kegg_tc;           // '3.A.3.1,3.A.1.1' (comma separated)
+        std::string              cazy;              // GH84
     };
 
     struct InterProResults {
@@ -254,9 +271,7 @@ public:
     void QUERY_FLAG_CHANGE(QUERY_FLAGS flag, bool val);
     bool QUERY_FLAG_CONTAINS(uint32 flags);
     bool is_contaminant();
-#ifdef EGGNOG_MAPPER
-    void set_eggnog_results(const EggnogResults&);
-#endif
+
     // Alignemnt accession routines
     void add_alignment(ExecuteStates state, uint16 software, EggnogResults &results, std::string& database);
     void add_alignment(ExecuteStates state, uint16 software, SimSearchResults &results, std::string& database,std::string lineage);
@@ -307,13 +322,14 @@ private:
     uint32                            mDonorDatabaseHitCt;
 public:
     uint32 getMDonorDatabaseHitCt() const;
-
     void setMDonorDatabaseHitCt(uint32 mDonorDatabaseHitCt);
-
     uint32 getMRecipientDatabaseHitCt() const;
-
     void setMRecipientDatabaseHitCt(uint32 mRecipientDatabaseHitCt);
-
+    const QuerySequence *getMpUpstreamSequence() const;
+    void setMpUpstreamSequence(const QuerySequence *mpUpstreamSequence);
+    const QuerySequence *getMpDownstreamSequence() const;
+    void setMpDownstreamSequence(const QuerySequence *mpDownstreamSequence);
+    
 private:
     // Count of at least one alignment against donor database
     uint32                            mRecipientDatabaseHitCt; // Count of at least one alignment against recip database
@@ -323,24 +339,12 @@ private:
     std::string                       mSequenceNucleo;  // Nucleotide sequence
     std::string                       mFrameType;       // Frame type from Frame Selection
     fp32                              mFrameScore;      // Frame selection score
-#ifdef EGGNOG_MAPPER
-    EggnogResults                     mEggnogResults;   // EggNOG mapper results
-#endif
     AlignmentData                     *mAlignmentData;  // Alignment information
     std::string                       mHeaderInfo[ENTAP_HEADER_COUNT];  // Header mappings
 
     /* Values taken from GFF file if user inputs */
     const QuerySequence *mpUpstreamSequence;
     const QuerySequence *mpDownstreamSequence;  // Sequence that is downstream from this sequence
-
-public:
-    const QuerySequence *getMpUpstreamSequence() const;
-
-    void setMpUpstreamSequence(const QuerySequence *mpUpstreamSequence);
-
-    const QuerySequence *getMpDownstreamSequence() const;
-
-    void setMpDownstreamSequence(const QuerySequence *mpDownstreamSequence);
 };
 
 

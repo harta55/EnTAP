@@ -48,6 +48,8 @@ typedef enum {
 
 typedef std::unordered_map<std::string, std::string> command_map_t;
 
+const int TC_EXIT_SUCCESS = EXIT_SUCCESS;
+
 int TC_execute_cmd(TerminalData &terminalData);
 void TC_print(TC_PRINT_TYPES printTypes, std::string msg);
 std::string TC_generate_command(command_map_t& command_map, std::string& exe_path);

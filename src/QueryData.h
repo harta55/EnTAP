@@ -86,6 +86,7 @@ public:
     bool print_transcriptome(uint32 flags, std::string &outpath, SEQUENCE_TYPES sequence_type);
 
     QUERY_MAP_T get_specific_sequences(uint32 flags);
+    uint64 get_sequence_count(uint32 flags) const;
 
     // DATA_FLAG routines
     bool is_protein_data();
@@ -97,6 +98,8 @@ public:
     void set_is_success_hgt(bool val);
     void set_is_uniprot(bool val);
     bool DATA_FLAG_GET(DATA_FLAGS);
+
+    uint32 getMTotalSequences() const;
 
     // Header routines
     void header_set(ENTAP_HEADERS header, bool val);

@@ -63,8 +63,9 @@ public:
 
     typedef enum {
         EGGNOG_VERSION_UNKONWN=0,   // We could NOT find version and did not assume one
-        EGGNOG_VERSION_EARLIER,     // EggNOG Database v4.1 (default)
+        EGGNOG_VERSION_EARLIER,     // EggNOG Database v4.1
         EGGNOG_VERSION_4_5_1,
+        EGGNOG_VERSION_5_0_2,       // EggNOG-mapper database v5.0.2 (default)
         EGGNOG_VERSION_MAX
     } EGGNOG_SQL_VERSION;
 
@@ -82,13 +83,18 @@ public:
     ERR_EGGNOG_DB open_sql(std::string& sql_path);
     std::string print_err();
     void get_eggnog_entry(QuerySequence::EggnogResults *eg);
-
+    static const std::string EGG_DB_SQL_FILENAME;
+    static const std::string EGG_DB_DMND_FILENAME;
 
 private:
     // EggNOG 4.1 URLs
-    const std::string FTP_EGGNOG_SQL  = "http://eggnog5.embl.de/download/eggnog_4.1/eggnog-mapper-data/eggnog.db.gz";
-    const std::string FTP_EGGNOG_DMND = "http://eggnog5.embl.de/download/eggnog_4.1/eggnog-mapper-data/eggnog_proteins.dmnd.gz";
-    const std::string FTP_EGGNOG_FASTA= "http://eggnog5.embl.de/download/eggnog_4.1/eggnog-mapper-data/eggnog4.clustered_proteins.fa.gz";
+    const std::string FTP_EGGNOG_SQL_4_1  = "http://eggnog5.embl.de/download/eggnog_4.1/eggnog-mapper-data/eggnog.db.gz";
+    const std::string FTP_EGGNOG_DMND_4_1 = "http://eggnog5.embl.de/download/eggnog_4.1/eggnog-mapper-data/eggnog_proteins.dmnd.gz";
+    const std::string FTP_EGGNOG_FASTA = "http://eggnog5.embl.de/download/eggnog_4.1/eggnog-mapper-data/eggnog4.clustered_proteins.fa.gz";
+
+    // EggNOG 5.0.2 URLs (default for Eggnog-mapper
+    const std::string FTP_EGGNOG_SQL  = "http://eggnog6.embl.de/download/emapperdb-5.0.2/eggnog.db.gz";
+    const std::string FTP_EGGNOG_DMND = "http://eggnog6.embl.de/download/emapperdb-5.0.2/eggnog_proteins.dmnd.gz";
 
     const std::string TEMP_SQL_GZ = "temp_egg_sql.gz";
     const std::string TEMP_DMND_GZ = "temp_egg_dmnd.gz";

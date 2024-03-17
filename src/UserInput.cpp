@@ -209,7 +209,11 @@ const fp64   UserInput::RSEM_FPKM_DEFAULT               = 0.5;
                                 "command '--no_refine_starts' when it is executed. Default: False\n"           \
                                 "This will 'start refinement identifies potential start codons for " \
                                 "5' partial ORFs using a PWM, process on by default.' "
+
+/* -----------------------------------------------------------*/
 /* ------------------ Similarity Search Commands -------------*/
+/* -----------------------------------------------------------*/
+
 #define CMD_DATABASE        "database"
 #define CMD_SHORT_DATABASE  "d"
 #define DESC_DATABASE       "Provide the paths to the databases you would like to use for either 'run' or 'configuration'." \
@@ -271,13 +275,28 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
         "uninformative"
 };
 
-/* -------------------- Ontology Commands --------------------*/
+/* -----------------------------------------------------------*/
+/* ---------------------- Ontology Commands ------------------*/
+/* -----------------------------------------------------------*/
+
+// EggNOG Mapper Commands
+#define DESC_EGGNOG_MAP_EXE "Path to EggNOG-mapper executable. Likely just 'emapper.py'"
+#define CMD_EGGNOG_MAP_EXE "eggnog-map-exe"
+
+#define DESC_EGGNOG_MAP_DATA_DIR "Path to directory containing the EggNOG SQL database(s)."
+#define CMD_EGGNOG_MAP_DATA_DIR "eggnog-map-data"
+
+#define DESC_EGGNOG_MAP_DMND_DB "Path to EggNOG DIAMOND configured database that was generated during the Configuration stage"
+#define CMD_EGGNOG_MAP_DMND_DB "eggnog-map-dmnd"
+
+// EggNOG DIAMOND Commands
 #define DESC_EGGNOG_DMND     "Path to EggNOG DIAMOND configured database that was generated during the Configuration stage."
 #define CMD_EGGNOG_DMND     "eggnog-dmnd"
 
 #define DESC_EGGNOG_SQL     "Path to the EggNOG SQL database that was downloaded during the Configuration stage."
 #define CMD_EGGNOG_SQL      "eggnog-sql"
 
+// InterProScan Commands
 #define DESC_INTERPRO_EXE   "Execution method of InterProScan. This is how InterProScan is generally ran on your system. " \
                             " It could be as simple as 'interproscan.sh' depending on if it is globally installed."
 #define CMD_INTERPRO_EXE    "interproscan-exe"
@@ -353,6 +372,7 @@ const fp64   UserInput::DEFAULT_BUSCO_E_VALUE           = 1e-5;
 #define INI_ONT_INTERPRO "ontology-interproscan"
 #define INI_ONTOLOGY "ontology"
 #define INI_ONT_EGGNOG "ontology-eggnog"
+#define INI_ONT_EGGNOG_MAPPER "ontology-eggnog-mapper"
 #define INI_ENTAP "entap"
 #define INI_TRANSC_BUSCO "ontology-busco"
 #define INI_HORIZONTAL_GT "horizontal-gene-transfer"
@@ -373,13 +393,15 @@ const vect_uint16_t UserInput::DEFAULT_DATA_TYPE        = vect_uint16_t{EntapDat
 const std::string UserInput::DEFAULT_STATE              ="+";
 const uint16 UserInput::DEFAULT_FRAME_SELECTION         = FRAME_TRANSDECODER;
 const vect_uint16_t UserInput::DEFAULT_ONT_LEVELS       =vect_uint16_t{0};
-const vect_uint16_t UserInput::DEFAULT_ONTOLOGY         =vect_uint16_t{ONT_EGGNOG_DMND};
+const vect_uint16_t UserInput::DEFAULT_ONTOLOGY         =vect_uint16_t{ONT_EGGNOG_MAPPER};
 
+// --- Frame Selection Default Values ---
 const uint16      UserInput::DEFAULT_TRANSDECODER_MIN_PROTEIN = 100;
-
 const std::string UserInput::TRANSDECODER_LONG_DEFAULT_EXE    = "TransDecoder.LongOrfs";
 const std::string UserInput::TRANSDECODER_PREDICT_DEFAULT_EXE = "TransDecoder.Predict";
 const std::string UserInput::DIAMOND_DEFAULT_EXE              = PATHS(FileSystem::get_exe_dir(),"/libs/diamond-v2.1.8/bin/diamond");
+
+// --- Ontology Default Values ---
 const std::string UserInput::EGG_SQL_DB_FILENAME              = "eggnog.db";
 const std::string UserInput::EGG_DMND_FILENAME                = "eggnog_proteins.dmnd";
 const std::string UserInput::INTERPRO_DEF_EXE                 = "interproscan.sh";
@@ -392,6 +414,8 @@ const std::string UserInput::ENTAP_DATABASE_BIN_DEFAULT       = PATHS(BIN_PATH_D
 const std::string UserInput::ENTAP_DATABASE_SQL_DEFAULT       = PATHS(DATABASE_DIR_DEFAULT, ENTAP_DATABASE_SQL_FILENAME);
 const std::string UserInput::EGG_SQL_DB_DEFAULT               = PATHS(DATABASE_DIR_DEFAULT, EGG_SQL_DB_FILENAME);
 const std::string UserInput::EGG_DMND_DEFAULT                 = PATHS(BIN_PATH_DEFAULT, EGG_DMND_FILENAME);
+const std::string UserInput::EGG_MAP_EXE_DEFAULT              = "emapper.py";
+const std::string UserInput::EGG_MAP_DATA_DIR_DEFAULT         = DATABASE_DIR_DEFAULT;
 
 // INI file path defaults using static filesystem
 const std::string UserInput::RSEM_SAM_VALID        = "rsem-sam-validator";
@@ -490,9 +514,16 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_ONTOLOGY  ,CMD_ONTOLOGY_FLAG        ,ENTAP_INI_NULL  ,DESC_ONTOLOGY_FLAG         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONTOLOGY       ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
         {INI_ONTOLOGY  ,CMD_GO_LEVELS            ,ENTAP_INI_NULL  ,DESC_ONT_LEVELS            ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONT_LEVELS     ,ENT_INPUT_FUTURE      , ENTAP_INI_NULL_VAL},
 
-/* Ontology - EggNOG Commands */
-        {INI_ONT_EGGNOG,CMD_EGGNOG_SQL           ,ENTAP_INI_NULL  ,DESC_EGGNOG_SQL            ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_EGG_SQL_DB_INI ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
-        {INI_ONT_EGGNOG,CMD_EGGNOG_DMND          ,ENTAP_INI_NULL  ,DESC_EGGNOG_DMND           ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_EGG_DMND_DB_INI,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
+/* Ontology - EggNOG DMND Commands */
+// DISABLED FOR NOW
+        {INI_ONT_EGGNOG,CMD_EGGNOG_SQL           ,ENTAP_INI_NULL  ,DESC_EGGNOG_SQL            ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_EGG_SQL_DB_INI ,ENT_INPUT_FUTURE   , ENTAP_INI_NULL_VAL},
+        {INI_ONT_EGGNOG,CMD_EGGNOG_DMND          ,ENTAP_INI_NULL  ,DESC_EGGNOG_DMND           ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_EGG_DMND_DB_INI,ENT_INPUT_FUTURE   , ENTAP_INI_NULL_VAL},
+
+/* Ontology - EggNOG Mapper Commands */
+        {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_EXE,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_EXE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,EGG_MAP_EXE_DEFAULT     ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
+        {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DATA_DIR  ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DATA_DIR,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING  ,EGG_MAP_DATA_DIR_DEFAULT,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
+        {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DMND_DB   ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DMND_DB ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING  ,DEFAULT_EGG_DMND_DB_INI ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
+
 /* Ontology - InterPro Commands */
         {INI_ONT_INTERPRO,CMD_INTERPRO_EXE       ,ENTAP_INI_NULL  ,DESC_INTERPRO_EXE          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,INTERPRO_DEF_EXE       ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
         {INI_ONT_INTERPRO,CMD_INTER_DATA         ,ENTAP_INI_NULL  ,DESC_INTER_DATA            ,EX_INTER_DATA    ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
@@ -1222,7 +1253,6 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
             return ret_execution;
         }
     }
-
     // --------------------------------------------------------------------- //
 
 
@@ -1751,7 +1781,11 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
     std::pair<bool, std::string> out;
     ent_input_str_t dmnd_exe;
     ent_input_str_t egg_db_dmnd;
+    ent_input_str_t egg_map_exe;
     ent_input_str_t egg_db_sql;
+    ent_input_str_t egg_map_data_dir;
+    ent_input_str_t egg_map_sql_path;
+    ent_input_str_t egg_map_dmnd_db;
     ent_input_str_t interpro_exe;
     ent_input_str_t busco_exe;
     ent_input_str_t genemarkst_exe;
@@ -1761,8 +1795,14 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
     ent_input_uint_t frame_selection_software;
 
     dmnd_exe     = get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
+
     egg_db_dmnd  = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
     egg_db_sql   = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
+    egg_map_data_dir = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_DATA_DIR);
+    egg_map_dmnd_db  = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
+    egg_map_sql_path = PATHS(egg_map_data_dir, EGG_SQL_DB_FILENAME);
+    egg_map_exe      = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_EXE);
+
     interpro_exe = get_user_input<ent_input_str_t>(INPUT_FLAG_INTERPRO_EXE);
     busco_exe    = get_user_input<ent_input_str_t>(INPUT_FLAG_BUSCO_EXE);
     genemarkst_exe = get_user_input<ent_input_str_t>(INPUT_FLAG_GENEMARKST_EXE);
@@ -1840,15 +1880,22 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
         if (execute & GENE_ONTOLOGY) {
             for (uint16 flag : ontology_flags) {
                 switch (flag) {
-#ifdef EGGNOG_MAPPER
-                    case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-                    if (!pFileSystem->file_exists(EGG_SQL_DB_PATH))
-                        return std::make_pair(false, "Could not find EggNOG SQL database at: " + EGG_SQL_DB_PATH);
-                    if (!ModEggnog::is_executable())
-                        return std::make_pair(false, "Test of EggNOG Emapper failed, "
-                                "ensure python is properly installed and the paths are correct");
-                    break;
-#endif
+                    case ONT_EGGNOG_MAPPER:
+                        FS_dprint("Verifying EggNOG-mapper inputs...");
+                        if (!mpFileSystem->file_exists(egg_map_dmnd_db)) {
+                            throw ExceptionHandler("Could not find EggNOG DMND database at: " + egg_map_dmnd_db,
+                                                   ERR_ENTAP_INPUT_PARSE);
+                        }
+                        if (!mpFileSystem->file_exists(egg_map_sql_path)) {
+                            throw ExceptionHandler("Could not find EggNOG SQL database at: " + egg_map_sql_path, ERR_ENTAP_INPUT_PARSE);
+                        }
+                        if (!ModEggnog::is_executable(egg_map_exe)) {
+                            throw ExceptionHandler("Test of EggNOG mapper failed, ensure python is properly installed and the paths are correct",
+                                                   ERR_ENTAP_INPUT_PARSE);
+                        }
+                        FS_dprint("Success!");
+                        break;
+
                     case ONT_INTERPRO_SCAN:
                         FS_dprint("Verifying InterProScan inputs...");
                         if (!ModInterpro::is_executable(interpro_exe)) {

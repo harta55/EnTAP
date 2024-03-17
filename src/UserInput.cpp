@@ -1799,7 +1799,7 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
     egg_db_dmnd  = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
     egg_db_sql   = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
     egg_map_data_dir = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_DATA_DIR);
-    egg_map_dmnd_db  = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
+    egg_map_dmnd_db  = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_DMND_DB);
     egg_map_sql_path = PATHS(egg_map_data_dir, EGG_SQL_DB_FILENAME);
     egg_map_exe      = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_EXE);
 

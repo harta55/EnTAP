@@ -56,7 +56,7 @@ ModEggnog::ModEggnog(std::string &ont_out, std::string &in_hits, EntapDataPtrs &
         : AbstractOntology(in_hits, ont_out, entap_data, "EggNOG", DEFAULT_HEADERS) {
 
     mExePath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_EXE);
-    mEggnogMapDMNDPath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
+    mEggnogMapDMNDPath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_DMND_DB);
     mEggnogMapDataDir = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_DATA_DIR);
 
     mEggnogMapAnnotationsOutputPath = PATHS(mModOutDir, get_output_tag()+EGG_OUTPUT_ANNOT_APPEND);

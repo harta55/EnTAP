@@ -39,6 +39,9 @@ ModHorizontalGeneTransferDiamond::ModHorizontalGeneTransferDiamond(std::string &
 
     mSoftwareFlag = HGT_DIAMOND;
     mExePath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
+    // These aren't used right now, going to move out of super
+    mpFileSystem->delete_dir(mOverallResultsDir);
+    mpFileSystem->delete_dir(mFigureDir);
 }
 
 EntapModule::ModVerifyData ModHorizontalGeneTransferDiamond::verify_files() {
@@ -467,8 +470,10 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
     const QuerySequence *upstream_sequence;
     const QuerySequence *downstream_sequence;
     std::stringstream   ss;                             // Output string stream
+    std::stringstream hgt_genes;
+    uint32 hgt_confirmed_ct=0;
 
-    ss << "\nThe following Horizontally Transferred Genes were found:\n";
+    mpFileSystem->format_stat_stream(ss, "Horizontal Gene Transfer - Summary");
 
     /*
      * 1) Determine Horizontal Gene Transfer Candidates
@@ -549,7 +554,7 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
                 (downstream_sequence->QUERY_FLAG_GET(QuerySequence::QUERY_HGT_CANDIDATE))) {
 
                 pair.second->QUERY_FLAG_CHANGE(QuerySequence::QUERY_HGT_CONFIRMED, false);
-                FS_dprint("WARNING skipped gene (" + pair.first + ") due to neighbors being HGT candidates");
+                FS_dprint("HGT skipped gene (" + pair.first + ") due to neighbors being HGT candidates");
                 continue; // !!!! WARNING CONTINUE, neighbor HGT Candidates
             }
 
@@ -559,7 +564,7 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
                 (downstream_sequence->getMDonorDatabaseHitCt() > HGT_DONOR_DATABASE_NEIGHBOR_MAX)) {
 
                 pair.second->QUERY_FLAG_CHANGE(QuerySequence::QUERY_HGT_CONFIRMED, false);
-                FS_dprint("WARNING skipped gene (" + pair.first + ") due to neighbor HGT Candidates having donor hits");
+                FS_dprint("HGT skipped gene (" + pair.first + ") due to neighbor HGT Candidates having donor hits");
                 continue; // !!!! WARNING CONTINUE, neighbor HGT Candidates hit donor database
             }
 
@@ -568,8 +573,17 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
             pair.second->update_query_flags(GENE_ONTOLOGY, ONT_EGGNOG_MAPPER);
             FS_dprint("HGT CANDIDATE CONFIRMED!!!: " + pair.first);
             mpQueryData->add_alignment_data(hgt_candidates_base_path, pair.second, nullptr);
-            ss << pair.first << ",";
+            hgt_confirmed_ct++;
+            hgt_genes << pair.first << ",";
         }
+    }
+
+    if (hgt_confirmed_ct > 0) {
+        std::string temp = hgt_genes.str();
+        temp.pop_back();
+        ss << "The following Horizontally Transferred Genes were found:\n" << temp;
+    } else {
+        ss << "No Horizontally Transferred Genes were found";
     }
     std::string output = ss.str();
     mpFileSystem->print_stats(output);

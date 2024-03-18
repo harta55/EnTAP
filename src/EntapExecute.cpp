@@ -318,7 +318,9 @@ namespace entapExecute {
             } // END WHILE
 
             // *************************** Exit Stuff ********************** //
+            TC_print(TC_PRINT_COUT, "Compiling final EnTAP statistics...");
             pQUERY_DATA->final_statistics(final_out_dir, output_types);
+            TC_print(TC_PRINT_COUT, "EnTAP complete!");
            // pFileSystem->directory_iterate(FileSystem::FILE_ITER_DELETE_EMPTY, mOutpath);   // Delete empty files
             SAFE_DELETE(pQUERY_DATA);
             SAFE_DELETE(pGraphing_Manager);

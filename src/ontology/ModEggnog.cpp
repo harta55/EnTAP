@@ -63,6 +63,7 @@ ModEggnog::ModEggnog(std::string &ont_out, std::string &in_hits, EntapDataPtrs &
     mEggnogMapHitsOutputPath = PATHS(mModOutDir, get_output_tag() + EGG_OUTPUT_HITS_APPEND);
     mEggnogMapSeedOrthoOutputPath = PATHS(mModOutDir, get_output_tag() + EGG_OUTPUT_SEED_ORTHO_APPEND);
     mEggnogMapperState = EGGNOG_MAPPER_NOT_STARTED;
+    mSoftwareFlag = ONT_EGGNOG_MAPPER;
 }
 
 bool ModEggnog::is_executable(std::string &exe) {
@@ -305,18 +306,26 @@ void ModEggnog::parse() {
 
     FS_dprint("Success! Printing output files");
     // Initialize and print output files, inefficient redo
-    uint32 output_query_flags=0;
-    output_query_flags |= QuerySequence::QUERY_EGGNOG_HIT;
-    output_query_flags |= QuerySequence::QUERY_FRAME_KEPT;
-    output_query_flags |= QuerySequence::QUERY_EXPRESSION_KEPT;
-    std::string out_no_hits_faa = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_UNANNOTATED + FileSystem::EXT_FAA);
-    std::string out_no_hits_fnn = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_UNANNOTATED + FileSystem::EXT_FNN);
-    std::string out_hits_faa = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_ANNOTATED + FileSystem::EXT_FAA);
-    std::string out_hits_fnn = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_ANNOTATED + FileSystem::EXT_FNN);
-    mpQueryData->print_transcriptome(output_query_flags, out_no_hits_faa, QueryData::SEQUENCE_AMINO_ACID);
-    mpQueryData->print_transcriptome(output_query_flags, out_no_hits_fnn, QueryData::SEQUENCE_NUCLEOTIDE);
-    mpQueryData->print_transcriptome(output_query_flags, out_hits_faa, QueryData::SEQUENCE_AMINO_ACID);
-    mpQueryData->print_transcriptome(output_query_flags, out_hits_fnn, QueryData::SEQUENCE_NUCLEOTIDE);
+    uint32 output_annotated_query_flags=0;
+    output_annotated_query_flags |= QuerySequence::QUERY_EGGNOG_HIT;
+    output_annotated_query_flags |= QuerySequence::QUERY_FRAME_KEPT;
+    output_annotated_query_flags |= QuerySequence::QUERY_EXPRESSION_KEPT;
+    uint32 output_unannotated_query_flags = 0;
+    output_unannotated_query_flags |= QuerySequence::QUERY_FRAME_KEPT;
+    output_unannotated_query_flags |= QuerySequence::QUERY_EXPRESSION_KEPT;
+    if (mpQueryData->is_protein_data()) {
+        std::string out_no_hits_faa = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_UNANNOTATED + FileSystem::EXT_FAA);
+        mpQueryData->print_transcriptome(output_unannotated_query_flags, out_no_hits_faa, QueryData::SEQUENCE_AMINO_ACID);
+        std::string out_hits_faa = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_ANNOTATED + FileSystem::EXT_FAA);
+        mpQueryData->print_transcriptome(output_annotated_query_flags, out_hits_faa, QueryData::SEQUENCE_AMINO_ACID);
+    }
+
+    if (mpQueryData->is_nucleotide_data()) {
+        std::string out_no_hits_fnn = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_UNANNOTATED + FileSystem::EXT_FNN);
+        std::string out_hits_fnn = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_ANNOTATED + FileSystem::EXT_FNN);
+        mpQueryData->print_transcriptome(output_unannotated_query_flags, out_no_hits_fnn, QueryData::SEQUENCE_NUCLEOTIDE);
+        mpQueryData->print_transcriptome(output_annotated_query_flags, out_hits_fnn, QueryData::SEQUENCE_NUCLEOTIDE);
+    }
 
     count_no_hits = mpQueryData->getMTotalSequences() - count_TOTAL_hits;
 

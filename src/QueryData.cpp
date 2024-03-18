@@ -423,6 +423,7 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
     uint32                 count_TOTAL_ann=0;
     uint32                 count_TOTAL_unann=0;
     uint32                 count_TOTAL_unann_kept=0;    // Total sequences unannotated if kept after expression/frame selection
+    uint32                 count_hgts=0;                // Total number of Horizontally Transferred Genes
 
     // output files
     std::string            out_unannotated_path;
@@ -430,6 +431,7 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
     std::string            out_annotated_contam_path;
     std::string            out_annotated_without_contam_path;
     std::string            out_entap_report_path;
+    std::string            hgt_sequence_ids;            // Commma delim list of confirmed HGT's sequence ID
 
     std::string            out_msg;
     bool                   is_exp_kept;
@@ -504,6 +506,10 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
 
         if (is_sim_hit && !is_ontology) count_sim_only++;
         if (!is_sim_hit && is_ontology) count_ontology_only++;
+        if (pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_HGT_CONFIRMED)) {
+            count_hgts++;
+            hgt_sequence_ids += pair.first + ",";
+        }
 
         if (is_exp_kept && is_frame_kept) {
             count_total_kept_sequences++;
@@ -574,6 +580,7 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
     if (DATA_FLAG_GET(SUCCESS_ONTOLOGY)) {
         for (uint16 flag : ontology_flags) {
             switch (flag) {
+                case ONT_EGGNOG_MAPPER: // WARNING fall through
                 case ONT_EGGNOG_DMND:
                     ss <<
                        "\nGene Families"        <<
@@ -595,6 +602,21 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
             }
         }
     }
+
+    if (DATA_FLAG_GET(SUCCESS_HGT)) {
+        ss <<
+           "\nHorizontal Gene Transfer";
+        if (count_hgts >0) {
+            hgt_sequence_ids.pop_back();
+            ss <<
+                "\n\tTotal number of Horizontally Transferred Genes: " << count_hgts <<
+                "\n\tHGT genes: " << hgt_sequence_ids;
+        } else {
+            ss <<
+                "\n\tNo Horizontally Transferred Genes were found!";
+        }
+    }
+
     ss <<
        "\nTotals"   <<
        "\n\tTotal retained sequences (after filtering and/or frame selection): " << count_total_kept_sequences <<

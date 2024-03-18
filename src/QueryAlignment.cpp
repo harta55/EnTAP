@@ -350,7 +350,7 @@ void EggnogDmndAlignment::refresh_headers() {
             {ENTAP_HEADER_ONT_EGG_GO_MOLE,    nullptr}
     };
     mpParentSequence->set_header_data();
-    mpParentSequence->update_query_flags(GENE_ONTOLOGY, ONT_EGGNOG_DMND);
+    mpParentSequence->update_query_flags(GENE_ONTOLOGY, ONT_EGGNOG_MAPPER);
 }
 
 const go_format_t &EggnogDmndAlignment::get_go_data() const {

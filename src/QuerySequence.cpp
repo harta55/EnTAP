@@ -384,7 +384,7 @@ void QuerySequence::get_header_data(std::string &data, ENTAP_HEADERS header, uin
         case ENTAP_HEADER_ONT_EGG_GO_MOLE:
         case ENTAP_HEADER_ONT_EGG_GO_CELL:
         case ENTAP_HEADER_ONT_EGG_GO_BIO:
-            align_ptr = get_best_hit_alignment<EggnogDmndAlignment>(GENE_ONTOLOGY, ONT_EGGNOG_DMND, "");
+            align_ptr = get_best_hit_alignment<EggnogDmndAlignment>(GENE_ONTOLOGY, ONT_EGGNOG_MAPPER, "");
             break;
 
         case ENTAP_HEADER_ONT_INTER_GO_BIO:
@@ -439,7 +439,7 @@ void QuerySequence::set_header_data() {
     }
 
     // Ontology EggNOG data
-    align_ptr = this->mAlignmentData->get_best_align_ptr(GENE_ONTOLOGY, ONT_EGGNOG_DMND, "");
+    align_ptr = this->mAlignmentData->get_best_align_ptr(GENE_ONTOLOGY, ONT_EGGNOG_MAPPER, "");
     if (align_ptr != nullptr) {
         align_ptr->get_all_header_data(mHeaderInfo);
     }
@@ -944,7 +944,7 @@ go_format_t QuerySequence::get_go_terms() {
     go_format_t  align_data;
 
     // Pull EggNOG GO Terms
-    auto *egg_alignment = get_best_hit_alignment<EggnogDmndAlignment>(GENE_ONTOLOGY, ONT_EGGNOG_DMND, "");
+    auto *egg_alignment = get_best_hit_alignment<EggnogDmndAlignment>(GENE_ONTOLOGY, ONT_EGGNOG_MAPPER, "");
     if (egg_alignment != nullptr) {
         if (!egg_alignment->get_go_data().empty()) {
             ret = egg_alignment->get_go_data();

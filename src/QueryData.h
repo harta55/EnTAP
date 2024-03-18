@@ -90,6 +90,7 @@ public:
 
     // DATA_FLAG routines
     bool is_protein_data();
+    bool is_nucleotide_data();
     void set_is_protein_data(bool val);
     void set_is_success_frame_selection(bool val);
     void set_is_success_expression(bool val);

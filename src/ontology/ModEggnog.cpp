@@ -236,9 +236,10 @@ void ModEggnog::parse() {
     output_headers.insert(output_headers.begin(), ENTAP_HEADER_QUERY);
 
     // Begin to read through TSV file, these are all the headers in a  default eggnog-mapper run
-    std::string qseqid, seed_ortho, seed_e, seed_score, eggnog_ogs, max_annot_tax_level, cog_category, description,
+    std::string qseqid, seed_ortho, seed_score, eggnog_ogs, max_annot_tax_level, cog_category, description,
             preferred_name, gene_ontology_terms, ec_value, kegg_ko, kegg_pathway, kegg_mod, kegg_reaction, kegg_rclass,
             brite, kegg_tc, cazy, bigg_reaction, pfams;
+    fp64 seed_e;
     io::CSVReader<EGGNOG_COL_NUM, io::trim_chars<' ','-'>, io::no_quote_escape<'\t'>> in(mEggnogMapAnnotationsOutputPath);
     in.next_line(); // Skip header line
     while (in.read_row(qseqid, seed_ortho, seed_e, seed_score, eggnog_ogs, max_annot_tax_level, cog_category, description,
@@ -257,7 +258,8 @@ void ModEggnog::parse() {
         // Populate data from EggNOG-mapper run
         EggnogResults = {};
         EggnogResults.seed_ortholog = seed_ortho;
-        EggnogResults.seed_evalue = seed_e;
+        EggnogResults.seed_evalue = std::to_string(seed_e);
+        EggnogResults.seed_eval_raw = seed_e;
         EggnogResults.seed_score = seed_score;
         EggnogResults.member_ogs = eggnog_ogs;
         EggnogResults.tax_scope_lvl_max = max_annot_tax_level;

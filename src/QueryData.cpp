@@ -1277,3 +1277,7 @@ uint64 QueryData::get_sequence_count(uint32 flags) const {
 uint32 QueryData::getMTotalSequences() const {
     return mTotalSequences;
 }
+
+bool QueryData::is_nucleotide_data() {
+    return DATA_FLAG_GET(IS_NUCLEOTIDE);
+}

@@ -92,6 +92,7 @@ protected:
 
     // Stats output defines
     const std::string DIAMOND_PREFIX                             = "hgt_diamond_";  // Prefix to be used when printing out files
+    const std::string HGT_CONFIRMED_CANDIDATES_FILENAME           = "hgt_candidates";
     const std::string HGT_DIAMOND_DATABASE_BEST_HITS              = "annotated";
     const std::string HGT_DIAMOND_DATABASE_NO_HITS                = "unannotated";
     const std::string HGT_DIAMOND_DATABASE_UNSELECTED             = "unselected_hits";

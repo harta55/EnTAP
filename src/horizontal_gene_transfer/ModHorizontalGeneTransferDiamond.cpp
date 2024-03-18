@@ -466,6 +466,9 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
     uint16 query_recipient_ct=0;
     const QuerySequence *upstream_sequence;
     const QuerySequence *downstream_sequence;
+    std::stringstream   ss;                             // Output string stream
+
+    ss << "\nThe following Horizontally Transferred Genes were found:\n";
 
     /*
      * 1) Determine Horizontal Gene Transfer Candidates
@@ -510,6 +513,13 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
         }
     }
 
+    // Start our output files, only outputting FASTA for confirmed HGTs
+    std::string hgt_candidates_base_path = PATHS(mModOutDir, HGT_CONFIRMED_CANDIDATES_FILENAME);
+    std::vector<FileSystem::ENT_FILE_TYPES> output_file_types;
+    if (mpQueryData->is_protein_data()) output_file_types.push_back(FileSystem::ENT_FILE_FASTA_FAA);
+    if (mpQueryData->is_nucleotide_data()) output_file_types.push_back(FileSystem::ENT_FILE_FASTA_FNN);
+    mpQueryData->start_alignment_files(hgt_candidates_base_path, DEFAULT_HEADERS, mGoLevels, output_file_types);
+
     /*
      * 2) Refine HGT Candidates based on neighboring genes
      *
@@ -539,7 +549,7 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
                 (downstream_sequence->QUERY_FLAG_GET(QuerySequence::QUERY_HGT_CANDIDATE))) {
 
                 pair.second->QUERY_FLAG_CHANGE(QuerySequence::QUERY_HGT_CONFIRMED, false);
-                FS_dprint("WARNING skipped gene (" + pair.first + ") due to neighbor HGT Candidates");
+                FS_dprint("WARNING skipped gene (" + pair.first + ") due to neighbors being HGT candidates");
                 continue; // !!!! WARNING CONTINUE, neighbor HGT Candidates
             }
 
@@ -555,11 +565,14 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
 
             // If we got past every other step, this is HGT Confirmed!!
             pair.second->QUERY_FLAG_CHANGE(QuerySequence::QUERY_HGT_CONFIRMED, true);
+            pair.second->update_query_flags(GENE_ONTOLOGY, ONT_EGGNOG_MAPPER);
             FS_dprint("HGT CANDIDATE CONFIRMED!!!: " + pair.first);
+            mpQueryData->add_alignment_data(hgt_candidates_base_path, pair.second, nullptr);
+            ss << pair.first << ",";
         }
     }
-
-    // Loop through only our HGT Candidates for further analyze them
-
+    std::string output = ss.str();
+    mpFileSystem->print_stats(output);
+    mpQueryData->end_alignment_files(hgt_candidates_base_path);
     FS_dprint("HGT Candidate calculation complete!");
 }

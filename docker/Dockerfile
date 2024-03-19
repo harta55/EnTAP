@@ -19,6 +19,7 @@ RUN apt-get update && \
         elfutils \
         libtclap-dev \
         libgsl-dev \
+        sqlite \
         python3-numpy \
         python3-pandas \
         python3-xmltodict \
@@ -62,6 +63,12 @@ RUN apt-get -y install zlib1g-dev \
 && make \
 && make ebseq \
 && make install
+
+# Download eggnog-mapper
+RUN wget https://github.com/eggnogdb/eggnog-mapper/archive/refs/tags/2.1.12.tar.gz && \
+tar -zxvf 2.1.12.tar.gz && \
+cd eggnog-mapper-2.1.12 && \
+python setup.py install
 
 # Clone EnTAP repository and install requirements
 RUN git clone https://github.com/harta55/EnTAP.git /tmp/entap && \

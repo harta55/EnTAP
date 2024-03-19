@@ -27,11 +27,7 @@
 
 
 //*********************** Includes *****************************
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wparentheses"
-#pragma GCC diagnostic ignored "-Wformat-truncation="
 #include <csv.h>
-#pragma GCC diagnostic pop
 #include "ModInterpro.h"
 #include "../ExceptionHandler.h"
 #include "../QueryData.h"

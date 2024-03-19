@@ -24,11 +24,7 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wparentheses"
-#pragma GCC diagnostic ignored "-Wformat-truncation="
 #include <csv.h>
-#pragma GCC diagnostic pop
 #include "EntapDatabase.h"
 
 /**

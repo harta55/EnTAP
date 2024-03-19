@@ -43,4 +43,5 @@ EntapModule(execution_stage_path, in_hits, entap_data, module_name, module_heade
 
 void AbstractExpression::set_success_flags() {
     mpQueryData->set_is_success_expression(true);
+    mpQueryData->setMTotalKeptSequences(mTotalKeptSequences);
 }

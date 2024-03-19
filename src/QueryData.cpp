@@ -283,6 +283,7 @@ void QueryData::generate_transcriptome(std::string &input_path, bool print_outpu
 
     avg_len = total_len / count_seqs;
     mTotalSequences = count_seqs;
+    mTotalKeptSequences = count_seqs;
     DATA_FLAG_GET(IS_PROTEIN)  ? mProteinLengthStart = total_len : mNucleoLengthStart = total_len;
     // first - n50, second - n90
     n_vals = calculate_N_vals(sequence_lengths, total_len);
@@ -309,6 +310,7 @@ void QueryData::generate_transcriptome(std::string &input_path, bool print_outpu
 
 void QueryData::init_params(FileSystem *fileSystem, UserInput *userInput) {
     mTotalSequences = 0;
+    mTotalKeptSequences = 0;
     mDataFlags      = 0;
     mpSequences      = new QUERY_MAP_T;
 
@@ -1302,4 +1304,12 @@ uint32 QueryData::getMTotalSequences() const {
 
 bool QueryData::is_nucleotide_data() {
     return DATA_FLAG_GET(IS_NUCLEOTIDE);
+}
+
+uint32 QueryData::getMTotalKeptSequences() const {
+    return mTotalKeptSequences;
+}
+
+void QueryData::setMTotalKeptSequences(uint32 mTotalKeptSequences) {
+    QueryData::mTotalKeptSequences = mTotalKeptSequences;
 }

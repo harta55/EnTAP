@@ -93,6 +93,7 @@ protected:
 
     std::string mFinalFaaPath;      // Absolute path to FAA (protein) file produced from Frame Selection process
     std::string mSoftwarePrefix;
+    uint32      mTotalKeptSequences;
 
 
     void frame_calculate_statistics();

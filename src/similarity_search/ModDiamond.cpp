@@ -788,7 +788,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     // ********** Contaminant Calculations ************** //
     if (count_contam >= MIN_CONTAM_COUNT) {
         // Only show contaminant information if we have contaminants
-        contam_percent = ((fp64) count_contam / count_filtered) * ENTAP_PERCENT;
+        contam_percent = ((fp64) count_contam / mpQueryData->getMTotalKeptSequences()) * ENTAP_PERCENT;
 
         graph_contaminants_bar.x_axis_label   = "Contaminant Species";
         graph_contaminants_bar.y_axis_label   = "Count";
@@ -800,14 +800,14 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
 
         ss <<
            "\n\tTotal unique contaminants: " << count_contam <<
-           "(" << contam_percent << "%): " <<
+           "(" << contam_percent << "% of total retained sequences): " <<
            "\n\t\tTranscriptome reference sequences labeled as a contaminant (FASTA):\n\t\t\t"
            << out_best_contams_filepath <<
            "\n\t\tTranscriptome reference sequences labeled as a contaminant (TSV):\n\t\t\t" << out_best_contams_filepath;
 
-        ss << "\n\t\tFlagged contaminants (all % based on total contaminants):";
+        ss << "\n\t\tFlagged contaminants (all % based on total retained sequences):";
         for (auto &pair : contam_counter._data) {
-            percent = ((fp64) pair.second / count_contam) * 100;
+            percent = ((fp64) pair.second / mpQueryData->getMTotalKeptSequences()) * 100;
             ss
                     << "\n\t\t\t" << pair.first << ": " << pair.second << "(" << percent << "%)";
         }
@@ -815,7 +815,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
         ct = 1;
         for (auto &pair : contam_species_counter._sorted) {
             if (ct > COUNT_TOP_SPECIES) break;
-            percent = ((fp64) pair.second / count_contam) * ENTAP_PERCENT;
+            percent = ((fp64) pair.second / mpQueryData->getMTotalKeptSequences()) * ENTAP_PERCENT;
             ss
                     << "\n\t\t\t" << ct << ")" << pair.first << ": "
                     << pair.second << "(" << percent << "%)";
@@ -830,10 +830,10 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     ct = 1;
     for (auto &pair : species_counter._sorted) {
         if (ct > COUNT_TOP_SPECIES) break;
-        percent = ((fp64) pair.second / count_filtered) * ENTAP_PERCENT;
+        percent = ((fp64) pair.second / mpQueryData->getMTotalKeptSequences()) * ENTAP_PERCENT;
         ss
                 << "\n\t\t\t" << ct << ")" << pair.first << ": "
-                << pair.second << "(" << percent << "%)";
+                << pair.second << "(" << percent << "% of total retained sequences)";
         mpGraphingManager->add_datapoint(graph_species_bar.text_file_path, {pair.first, std::to_string(pair.second)});
         ct++;
     }

@@ -82,8 +82,8 @@ private:
 
 
     static constexpr short EGGNOG_COL_NUM     = 21;
-    static constexpr uint8 COUNT_TOP_TAX_SCOPE= 10;
-    static constexpr uint8 COUNT_TOP_GO       = 10;
+    const uint16 COUNT_TOP_TAX_SCOPE= 10;
+    const uint16 COUNT_TOP_GO       = 10;
     const std::string EGGNOG_DIRECTORY        = "EggNOG/";
     const std::string GRAPH_EGG_TAX_BAR_TITLE = "Top_10_Tax_Levels";
     const std::string GRAPH_EGG_TAX_BAR_PNG   = "eggnog_tax_scope.png";

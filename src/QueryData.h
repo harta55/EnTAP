@@ -171,6 +171,14 @@ private:
     bool         mNoTrim;
     bool         mIsComplete;              // All sequences can be tagged as 'complete' genes
     uint32       mTotalSequences;          // Original sequence number
+    uint32       mTotalKeptSequences;
+public:
+    uint32 getMTotalKeptSequences() const;
+
+    void setMTotalKeptSequences(uint32 mTotalKeptSequences);
+
+private:
+    // Total number of sequences kept after filtering (Expression Analysis + Frame Selection)
     uint32       mDataFlags;
     uint64       mNucleoLengthStart;       // Starting total len (nucleotide)
     uint64       mProteinLengthStart;      // Starting total len (protein)

@@ -291,6 +291,7 @@ void ModRSEM::parse() {
 
 
     if (count_kept > 0) {
+        mTotalKeptSequences = count_kept;
         rejected_percent = ((fp32)count_removed / count_total) * 100;
         avg_kept = (fp32) total_kept_len / count_kept;
         kept_n = mpQueryData->calculate_N_vals(all_kept_lengths, total_kept_len);

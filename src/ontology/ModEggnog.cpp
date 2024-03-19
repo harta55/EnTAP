@@ -358,10 +358,10 @@ void ModEggnog::parse() {
             tax_scope_counter.sort(true);
             for (auto &pair : tax_scope_counter._sorted) {
                 if (ct > COUNT_TOP_TAX_SCOPE) break;
-                percent = ((fp32)pair.second / tax_scope_counter._ct_total) * 100;
+                percent = ((fp32)pair.second / (fp32)mpQueryData->getMTotalKeptSequences()) * 100;
                 stats_stream <<
                        "\n\t" << ct << ")" << pair.first << ": " << pair.second <<
-                       "(" << percent << "%)";
+                       "(" << percent << "% of total retained sequences)";
                 mpGraphingManager->add_datapoint(graphing_data_temp.text_file_path, {pair.first, std::to_string(pair.second)});
                 ct++;
             }
@@ -421,7 +421,7 @@ void ModEggnog::parse() {
                     percent = ((fp32)pair2.second / lvl_ct) * 100;
                     stats_stream <<
                            "\n\t" << ct << ")" << pair2.first.go_id << ": " << pair2.second <<
-                           "(" << percent << "%)";
+                           "(" << percent << "% of total GO terms)";
                     mpGraphingManager->add_datapoint(graphing_data_temp.text_file_path, {pair2.first.go_id, std::to_string(pair2.second)});
                     ct++;
                 }

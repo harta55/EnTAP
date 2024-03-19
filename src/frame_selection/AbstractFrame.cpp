@@ -240,6 +240,7 @@ void AbstractFrame::frame_calculate_statistics() {
         // Calculate and print stats
         FS_dprint("Beginning to calculate statistics...");
         avg_selected = (fp32)total_kept_len / count_selected;
+        mTotalKeptSequences = count_selected;
         mpFileSystem->format_stat_stream(stat_output, "Frame Selected Transcripts (" + mModuleName + ")");
         stat_output <<
                     "Total sequences frame selected: "      << count_selected          <<
@@ -328,5 +329,6 @@ std::string AbstractFrame::get_final_faa() {
 void AbstractFrame::set_success_flags() {
     mpQueryData->set_is_protein_data(true);
     mpQueryData->set_is_success_frame_selection(true);
+    mpQueryData->setMTotalKeptSequences(mTotalKeptSequences);
 }
 

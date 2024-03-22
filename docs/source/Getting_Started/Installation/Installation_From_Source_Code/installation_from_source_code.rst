@@ -2,7 +2,7 @@
 .. _Perl: https://www.perl.org/
 .. _Python: https://www.python.org/
 .. _RSEM: https://github.com/deweylab/RSEM
-.. _EggNOG-Emapper: https://github.com/jhcepas/eggnog-mapper
+.. _EggNOG-mapper: https://github.com/jhcepas/eggnog-mapper
 .. _DIAMOND: https://github.com/bbuchfink/diamond
 .. _CMake: https://cmake.org/
 .. _InterProScan: https://github.com/ebi-pf-team/interproscan
@@ -87,10 +87,12 @@ Supported Software:
 
     * DIAMOND_ (Similarity Search): version 2.1.8 packaged with EnTAP
 
-        * Version 0.8.31
-        * Version 0.9.19
-        * Version 0.9.9
+        * Version 2.0.10 (minimum required DIAMOND version)
         * Version 2.1.8
+		
+    * EggNOG-mapper_ (Gene Family assignment): version 2.1.12 packaged with EnTAP
+	   
+	    * Version 2.1.12
 
     * InterProScan_ (Protein Databases): must be installed separately
    
@@ -122,9 +124,29 @@ Run the following command to compile:
 .. code-block :: bash
 
     make
+	
+All set! Ensure that DIAMOND has been properly setup and add the correct path to the |config_file| file. If installed globally, add 'diamond' (without quotes) to the file. If installed locally, add 'path/to/EnTAP/libs/diamond-2.1.8/bin/diamond'.
+	
+.. _eggnog-mapper-label:
+
+EggNOG-mapper Installation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EggNOG-mapper comes packaged with EnTAP, but can also be downloaded from the GitHub. If installing through the packaged version...
+
+.. code-block :: bash
+
+    cd libs/
+    tar -xvzf eggnog-mapper-2.1.12.tar.gz
+    cd eggnog-mapper-2.1.12
+
+Run the following command to install globally:
+
+.. code-block :: bash
+
+    python setup.py install
 
 
-All set! Ensure that DIAMOND has been properly setup and add the correct path to the entap_config.txt file. If installed globally, add 'diamond' (without quotes) to the file. If installed locally, add 'path/to/EnTAP/libs/diamond-0.9.9/bin/diamond'.
+All set! Ensure that EggNOG-mapper has been properly setup and add the correct path to the |config_file| file. If installed globally, add 'emapper.py' (without quotes) to the file. If installed locally, add 'path/to/EnTAP/libs/eggnog-mapper-2.1.12/emapper.py'.
 
 .. _rsem-label:
 

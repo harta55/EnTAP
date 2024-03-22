@@ -2,9 +2,17 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. 
 
-EnTAP v1.X.X (X X, 2023)
+EnTAP v1.1.0 (X X, 2024)
 ------------------------------------------
     * Removed GeneMarkS-T from supported Frame Selection software
+    * Added HTML output for EnTAP final report that displays key statistics and visuals from the EnTAP run
+    * Split entap_config.ini file into two separate files, entap_config.ini and entap_run.params. The intention is to make it clearer that entap_run.params is used for specific runs while the entap_config.ini file is setup once and not changed often. 
+    * Added support for Horizontal Gene Transfer analysis. New commands and EnTAP output added to allow for analysis. GFF and donor/recipient databases required for analysis.
+    * Added support for utilizing eggnog-mapper (https://github.com/eggnogdb/eggnog-mapper) to access EggNOG databases. Added new output and commands for support. Added support for downloading necessary EggNOG databases during EnTAP configuration. Due to this change, run Configuration again if using this release!
+    * Added warning to log file if taxonomic information could not be leveraged for a particular database during Similarity Searching
+    * Changed 'ontology' output directory to 'gene_family'
+    * Changed several statistics/percentages from Similarity Search and EggNOG to be based on total retained sequences rather than total contaminants
+    * Suppressed warnings from a library used by EnTAP during compilation (may not work on all compilers)
 
 EnTAP v1.0.1 (November 13, 2023)
 ------------------------------------------

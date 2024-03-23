@@ -22,14 +22,15 @@ The final annotation integrates across multiple databases and selects an optimal
 Pipeline Stages
 ----------------------------
     * Transcriptome Filtering: designed to remove assembly artifacts and identify true CDS (complete and partial genes)
-        1. Expression Filtering (RSEM)
-        2. Frame Selection (TransDecoder)
+        1. Expression Filtering (optional): filter the transcriptome based on gene expression levels from SAM/BAM file (RSEM)
+        2. Frame Selection (optional): refine transcriptome further based on true CDS (TransDecoder)
 
     * Transcriptome Annotation: designed to assign functional information to sequences (homology, Gene Ontology, KEGG)
         3. Similarity Search: optimized search against user-selected databases (DIAMOND).  
         4. Contaminant Filtering and Best Hit Selection: selects final annotation and identifies potential contaminants
         5. Orthologous Group Assignment: independent assignment of translated protein sequences to gene families (eggNOG/eggnog-mapper).  Includes protein  domains (SMART/Pfam), Gene Ontology (GO) terms, and KEGG pathway assignment.
         6. InterProScan (optional): sequence search against the families of InterPro databases to assign protein domains, Gene Ontology terms, and pathway information
+        7. Horizontal Gene Transfer (optional): analyze user-selected genes for horizontally transferred genes utilizing donor/recipient databases (DIAMOND)
 
 
 .. image::    EnTAP_Overview_hires.png
@@ -94,7 +95,6 @@ Software contained or used within this pipeline:
 -------------------------------------------------------
 * `RSEM`_
 * `DIAMOND`_
-* `EggNOG`_
 * `TransDecoder`_
 * `InterProScan`_
 * `TCLAP`_

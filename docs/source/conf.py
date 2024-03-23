@@ -175,25 +175,43 @@ rst_prolog = """
 .. |ref_invert| replace:: https://ftp.ncbi.nih.gov/refseq/release/invertebrate/
 .. |uni_swiss| replace:: ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.fasta.gz
 .. |uni_trembl| replace:: ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_trembl.fasta.gz
+
+.. |entap_db_bin_file_format| replace:: :file:`entap_database.bin`
+.. |entap_db_bin_file| replace:: entap_database.bin
+.. |entap_db_sql_file_format| replace:: :file:`entap_database.db`
+.. |entap_db_sql_file| replace:: entap_database.db
+
+.. |eggnog_map_dmnd_db_file_format| replace:: :file:`eggnog_proteins.dmnd`
+.. |eggnog_map_sql_db_file_format| replace:: :file:`eggnog.db`
+
 .. |entap_bin_ftp| replace:: https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.bin.gz
 .. |entap_sql_ftp| replace:: https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.db.gz
-.. |eggnog_sql_ftp| replace:: http://eggnog5.embl.de/download/eggnog_4.1/eggnog-mapper-data/eggnog.db.gz
+.. |eggnog_sql_ftp| replace:: http://eggnog6.embl.de/download/emapperdb-5.0.2/eggnog.db.gz
 .. |eggnog_fasta_ftp| replace:: http://eggnog5.embl.de/download/eggnog_4.1/eggnog-mapper-data/eggnog4.clustered_proteins.fa.gz
+.. |eggnog_dmnd_ftp| replace:: http://eggnog6.embl.de/download/emapperdb-5.0.2/eggnog_proteins.dmnd.gz
+
 .. |out_dir| replace:: /entap_outfiles
 .. |libs_dir| replace:: /libs
 .. |entap_dir| replace:: /EnTAP
 .. |src_dir| replace:: /src
 .. |config_file| replace:: entap_config.ini
+.. |config_file_format| replace:: :file:`entap_config.ini`
 .. |run_ini_file| replace:: entap_run.params
+.. |run_ini_file_format| replace:: :file:`entap_run.params`
+.. |final_results_dir| replace:: :file:`final_results`
 .. |bin_dir| replace:: /bin
 .. |test_dir| replace:: /test_data
 .. |data_dir| replace:: /databases
 .. |tax_file| replace:: download_tax.pl
 .. |graph_file| replace:: entap_graphing.py
+.. |graph_file_format| replace:: :file:`entap_graphing.py`
 .. |go_term| replace:: go_term.entp
 .. |tax_bin| replace:: ncbi_tax_bin.entp
 .. |tax_data| replace:: ncbi_tax.entp
 .. |flag_path| replace:: ini
 .. |flag_taxon| replace:: taxon
+
+.. |emapper_exe_format| replace:: :file:`emapper.py`
+
 """
 

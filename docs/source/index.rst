@@ -36,7 +36,7 @@ Hart AJ, Ginzburg S, Xu M, et al. EnTAP: Bringing faster and smarter functional 
    :caption: Running EnTAP
    :name: sec-running
    
-   Running_EnTAP/basic_usage.rst
+   Running_EnTAP/execution_index.rst
    Running_EnTAP/execution_flags.rst
    Running_EnTAP/interpreting_the_results.rst
    Running_EnTAP/troubleshooting.rst

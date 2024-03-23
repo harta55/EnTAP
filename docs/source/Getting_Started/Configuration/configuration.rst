@@ -85,54 +85,36 @@ Running Configuration
 
 As mentioned before, Configuration will only need to be ran once to download necessary files for EnTAP unless you would like to configure/update more databases. 
 
-In general, the command to run EnTAP Configuration is as follows:
+In general, the command to run EnTAP Configuration is as follows. Before execution, please refer to the relevant Configuration Flags before running this to be sure it goes smoothly and duplicate databases are not downloaded:
 
 .. code-block:: bash
 
-    EnTAP --config --run-ini path/to/|config_file| --entap-ini path/to/|run_ini_file|
-	
+    EnTAP --config --run-ini path/to/entap_config.ini --entap-ini path/to/entap_run.params
 
+To run configuration and format a FASTA database for DIAMOND, simply add these databases to the |run_ini_file_format| file.
 
-To run configuration and format a FASTA database for DIAMOND. to output directory path/to/output (default is current working directory), the command is as follows (additional databases can be specified if necessary with the -d flag and threads with the -t flag):
-
-.. code-block:: bash
-
-    EnTAP --config -d path/to/database.fasta -d path/to/database2.fasta --out-dir path/to/output -t 8 --ini path/to/ini
-
-
-If your databases are already indexed for DIAMOND, you can simply provide the paths in the .ini file and run the following command with 8 threads:
-
-.. code-block:: bash
-
-    EnTAP --config -t 8 --ini path/to/ini
-
-.. note:: This is the only stage that requires connection to the Internet.
+.. warning ::
+    Sometimes DIAMOND database versions are not always cross-compatible with different versions of DIAMOND. To avoid this, configure databases and eventually execute with the same version of DIAMOND
 
 In both cases, the following databases will be downloaded and configured:
 
-* EnTAP Binary Database:
+* EnTAP Database:
     * Comprised of Gene Ontology, UniProt, and Taxonomic mappings for use during Execution. FTP downloaded file.
     * Downloaded from |entap_bin_ftp|
     * Filename: entap_database.bin
     * The SQL version is the same database, but formatted as a SQL database. Only one version of the database is needed (binary is used by default and SQL is much slower but uses less memory)
+    * If you experience any trouble in downloading, you can simply specify the - - data-generate flag during Configuration to configure it locally (more on that later)
+    * The database for the newest version of EnTAP will always reside in the "latest" FTP directory. Keep in mind, if you are using an older version of EnTAP, you do not want to download from the "latest" directory. Instead, you will need to consider the version you are using. The FTP will always be updated only when a new database version is created. For example, if you see v0.8.2 and v0.8.5 on the FTP while you are using v0.8.3, you will download the database located in the v0.8.2 directory. 
 
 * EggNOG DIAMOND Reference:
     * Reference database containing EggNOG database entries
-    * FASTA file is downloaded and configured for DIAMOND from |eggnog_fasta_ftp|
+    * DIAMOND formatted database is downloaded from |eggnog_dmnd_ftp|
     * Filename: eggnog_proteins.dmnd
 
 * EggNOG SQL Database:
     * SQL database containing EggNOG mappings
     * Downloaded from |eggnog_sql_ftp|
     * Filename: eggnog.db
+    * Note, when referencing this file in the |config_file_format|, you must use the directory that contains this file with the --egg-map-data flag, rather than the path to the file itself
 
 .. note:: Either the EnTAP binary database (default) or the EnTAP SQL database is required for execution. Both are not needed.
-
-The EnTAP Binary Database is downloaded from the FTP addresses below. By default, the binary version will be downloaded and used. Only one version is required. If you experience any trouble in downloading, you can simply specify the - - data-generate flag during Configuration to configure it locally (more on that later). The database for the newest version of EnTAP will always reside in the "latest" FTP directory. Keep in mind, if you are using an older version of EnTAP, you do not want to download from the "latest" directory. Instead, you will need to consider the version you are using. The FTP will always be updated only when a new database version is created. For example, if you see v0.8.2 and v0.8.5 on the FTP while you are using v0.8.3, you will download the database located in the v0.8.2 directory. 
-
-    * |entap_bin_ftp|
-    * |entap_sql_ftp|
-
-
-.. warning ::
-    DIAMOND databases must be configured and eventually executed with the same version of DIAMOND.

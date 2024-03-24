@@ -1,92 +1,214 @@
-.. |sim_dir| replace:: */similarity_search*
-.. |sim_proc_dir| replace:: */processed*
-.. |sim_fig_dir| replace:: */figures*
+.. |sim_dir| replace:: :file:`/similarity_search/DIAMOND`
+.. |sim_proc_dir| replace:: :file:`/similarity_search/DIAMOND/processed/database_ref`
+.. |sim_overall_dir| replace:: :file:`/similarity_search/DIAMOND/overall_results`
+.. |sim_fig_dir| replace:: :file:`/similarity_search/DIAMOND/processed/database_ref/figures`
 .. |sim_res_dir| replace:: */overall_results*
-.. _DIAMOND: https://github.com/bbuchfink/diamond
+.. |ncbi_refseq| replace:: https://www.ncbi.nlm.nih.gov/refseq/
+.. |uniprot_swiss| replace:: https://www.uniprot.org/
+.. |diamond_git| replace:: https://github.com/bbuchfink/diamond
+.. |ncbi_tax| replace:: https://www.ncbi.nlm.nih.gov/taxonomy
 
 Similarity Searching
 =========================
+Similarity Searching is the process of aligning the sequences at this stage of the pipeline (after filtering and refinement has been performed) to reference databases. These databases often come from NCBI RefSeq (|ncbi_refseq| or UniProt Swiss-Prot (|uniprot_swiss|). The assumption here is that the user has already configured some of these databases for use with DIAMOND. If not, these can be done during the Configuration stage of EnTAP, refer back to that page for more information.
 
-Taxonomic Favoring and Contaminant Filtering
---------------------------------------------------
-Taxonomic contaminant filtering (as well as taxonomic favoring) is based upon the `NCBI Taxonomy`_ database. In saying this, all species/genus/lineage names must be contained within this database in order for it to be recognized by EnTAP. 
+DIAMOND (|diamond_git|) is utilized for Similarity Searching over traditional methods, such as BLAST, due to its improved speeds and accuracy. 
 
-**Contaminant Filtering:**
+Running Similarity Searching
+----------------------------------
+Similarity Searching is a mandatory stage of EnTAP. In order to run this, the user must input multiple DIAMOND configured databases (should have the '.dmnd' extension) through the :file:`database` command. There are many customizable parameters for this stage as well that can be seen in the table below. An important piece to consider, is that EnTAP will utilize a unique method of :ref:`best alignment selection<best_hit-label>` that selects the best aligment per database utilizing a variety of parameters. This also factors in contaminant filtering!
 
-Contaminants can be introduced during collection or processing of a sample. A contaminant is essentially a species that is not of the target species you are collecting. Some common contaminants are bacteria and fungi that can sometimes be found within collected samples. Transcripts flagged as contaminants will be written to a file appended with "_contam", but not removed from the final annotations file. Oftentimes, researchers would like to remove these sequences from the dataset. 
+Similarity Search Commands
+-------------------------------------
 
-One or more contaminants can be specified in the ini file (separated by a comma). An example of flagging bacteria and fungi as contaminants can be seen below:
+.. list-table:: **Similarity Search Flags**
+   :align: left
+   :widths: 10 50 10 10 10 
+   :header-rows: 1    
+   
+   * - param
+     - description
+     - location (cmd/R-ini,E-ini)
+     - qualifier
+     - example
+   * - database / d
+     - Specify up to 5 DIAMOND indexed (.dmnd) databases to run similarity search against
+     - R-ini
+     - multi-string
+     - /path/to/diamond/database.dmnd
+   * - data-type
+     - Specify which EnTAP database you'd like to use for execution
+         * 0. Binary Database (default) - This will be much quicker and is recommended
+         * 1. SQL Database - Slower although will be more easily compatible with every system
+     - R-ini
+     - integer
+     - 0
+   * - contam / c
+     - Specify contaminants to be used during Simlilarity Search best hit selection. Contaminants can be selected by species or through a specific taxon (insecta) from the NCBI Taxonomy Database. If your taxon is more than one word just replace the spaces with underscores (_). Alignments will be flagged as contaminants and will be lower scoring compared to other alignments.
+     - R-ini
+     - multi-string
+     - insecta
+   * - taxon
+     - This flag will allow for 'taxonomic favoring' of hits that are closer to your target species or lineage. Any lineage can be used as referenced by the NCBI Taxonomic database, such as genus, phylum, or species. Format **must** replace all spaces with underscores ('_')
+     - R-ini
+     - string
+     - homo_sapiens
+   * - e
+     - Specify E-value cutoff for Similarity Searching results (in scientific notation format).
+     - R-ini
+     - scientific
+     - 10E-5
+   * - tcoverage
+     - Specify minimum target coverage for similarity searching
+     - R-ini
+     - float
+     - 50
+   * - qcoverage
+     - Specify minimum query coverage for similarity searching
+     - R-ini
+     - float
+     - 50
+   * - uninformative
+     - Comma-deliminated list of terms you would like to be deemed "uninformative". Any alignments during Similarity Searching tagged as uninformative will be scored lower
+     - R-ini
+     - string
+     - conserved, predicted, unnamed, hypothetical, putative, unidentified, uncharacterized, unknown, uncultured, uninformative
+   * - diamond-exe
+     - Specify the execution method for DIAMOND. This can be a path to the :file:`diamond` file generated during installation, or simply the command if installed globally
+     - E-ini
+     - string
+     - diamond
+
+
+.. _best_hit-label:
+
+EnTAP Best Alignment Selection
+-----------------------------------
+EnTAP incorporates a unique method of selecting the best alignment per database, then overall. This utilizes parameters such as E-Value, Coverage, :ref:`Contaminant Filtering<contam-label>`, and :ref:`Taxonomic Favoring<taxon_favor-label>`. 
+
+Best Alignment Selection For Each Database:
+
+    #. Examine E-Value
+	
+        * If E-Value difference is high, select the smallest E-Value alignment
+		
+        * If E-Value difference is low, continue
+		
+    #. Examine Coverage
+	
+        * If Coverage difference is high, select the larger Coverage alignment
+		
+        * If Coverage difference is low, continue
+		
+    #. :ref:`Contaminant Filtering<contam-label>`
+	
+        * If one alignment is a contaminant, select non-contaminant
+		
+        * If both/neither alignments are contaminants, continue
+		
+    #. :ref:`Taxonomic Favoring<taxon_favor-label>` and :ref:`Informativeness<inform-label>`
+	
+        * Select alignment that is closer in lineage to our target species and more informative
+
+.. _contam-label:
+
+Contaminant Filtering
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Contaminant Filtering leverages the NCBI Taxonomic Database (|ncbi_tax|) to tag alignments that could be considered a contaminant. Contaminants can be introduced during collection or processing of a sample. A contaminant is essentially a species that is not of the target species you are collecting. Some common contaminants are bacteria and fungi that can sometimes be found within collected samples. Oftentimes, researchers would like to remove these sequences from the dataset. 
+
+In order to use Contaminant Filtering, the user must use the :file:`contam` flag to select multiple (comma-separated) species/taxon from the NCBI Taxonomy Database. When inputting these, any spaces in the taxon must be replaced by an underscore ('_'). Any alignments containing the contaminant taxon will be flagged as such and unfavored during best alignment selection. 
+
+As an example with common contaminants within the |run_ini_file_format| file:
 
 .. code-block:: bash
+    
+    contam=insecta,fungi,bacteria
 
-    contam=fungi,bacteria
+.. note:: Sometimes the best alignment can be a contaminant! EnTAP will flag this and allow the user to decide whether or not they would like to retain it
 
-Some common contaminants:
-* insecta
-* fungi
-* bacteria
 
-**Taxonomic Favoring**
+.. _taxon_favor-label:
 
-During best hit selection of similarity searched results, taxonomic consideration can utilized. If a certain lineage (pinus) is specified, hits closer in taxonomic lineage to this selection will be chosen. Any lineage such as species/kingdom/phylum can be utilized as long as it is contained within the Taxonomic Database. If it is not located within the database, EnTAP will stop the execution immediately and let you know! 
+Taxonomic Favoring
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+During best alignment selection of similarity searched results, taxonomic consideration can utilized. If a certain lineage (pinus) is specified, hits closer in taxonomic lineage to this selection will be chosen. Any lineage such as species/kingdom/phylum can be utilized as long as it is contained within the NCBI Taxonomic Database. If it is not located within the database, EnTAP will stop the execution immediately and let you know! 
 
-This feature can be utilized via the ini file. An example can be seen below (Note: replace any spaces with an underscore):
+This feature can be utilized via the |run_ini_file_format| file. An example can be seen below (remember to replace any spaces with an underscore):
 
 .. code-block:: bash
 
     taxon=pinus_taeda
 
-Another example could be:
+.. _inform-label:
+
+Informativeness
+^^^^^^^^^^^^^^^^^^^^^^^^^
+Informativeness is another metric that is used during selection of the best alignment. Oftentimes reference databases may have terms such as 'unknown' in the descriptions of alignments where certain information may not be known about that alignment. EnTAP will attempt to select alignments that are well established rather than these 'uninformative' alignments.
+
+Any term can be used via the :file:`uninformative` flag in the |run_ini_file_format|, so you are not limited! Below are defaults used by EnTAP as comma-separated:
 
 .. code-block:: bash
-    
-    taxon=pinus
 
-Keep in mind, EnTAP will weigh the E-Value (within a database)and Coverage of the alignment before taxonomic weight in order to provide the most accurate result. If both the E-Value and Coverage are relatively similar, EnTAP will leverage taxonomic information.
+    uninformative=conserved, predicted, unnamed, hypothetical, putative, unidentified, uncharacterized, unknown, uncultured, uninformative
 
 Interpreting the Results
 -------------------------------
-The |sim_dir| directory will contain all of the relevant information for the similarity searching stage of the pipeline. This folder will contain the :ref:`main files<sim_main-label>` (results from similarity search software), :ref:`files<sim_proc-label>` analyzing hits from each database, :ref:`overall<sim_res-label>` results combining the information from each database, and :ref:`figures<sim_fig-label>` generated from EnTAP.
+The |sim_dir| directory will contain all of the relevant information for the Similarity Searching stage of the pipeline. This folder will contain the files generated from DIAMOND as well as files generated from EnTAP. Files generated from EnTAP for each individual reference database are contained within the |sim_proc_dir|, while the overall analysis compiling the results of each reference database are contained within the |sim_overall_dir|. 
 
-.. _sim_main-label:
+The same files are repeated across databases and across the overall results, so I will only go into detail for each file once below with an input transcriptome labelled 'species' and a reference database labelled 'ref_database'.
 
-DIAMOND Files: |sim_dir|
+.. list-table:: **Similarity Search Results**
+   :align: left
+   :widths: 10 50 10
+   :header-rows: 1    
+   
+   * - filename
+     - description
+     - directory
+   * - :file:`blastp_species_ref_database.out`
+     - Generated from DIAMOND. Contains a lot of information from the DIAMOND search including e-value, coverage, reference database descriptions, and much more. This is a typical output file from a BLAST type of search. The filename is prepended with either blastp or blastx depending on if runP or runN was used. A file like this will be generated for each reference database used.
+     - |sim_dir|
+   * - :file:`blastp_species_ref_database_std.err/.out`
+     - Generated from DIAMOND. These files are will contain any error or general information produced from the DIAMOND run.
+     - |sim_dir|
+   * - :file:`diamond_annotated.faa/.fnn/.tsv`
+     - Generated from EnTAP. Contains all of the best alignments (protein/nucleotide format) that were selected from this database, or overall combining the results from each database used. Since this contains all best alignments, it may contain contaminants or uninformative alignments. Sometimes a contaminant can be the best alignment! Note: Protein or nucleotide information may not be available to report depending on your type of input sequences or runN vs. runP.
+     - |sim_proc_dir| or |sim_overall_dir|
+   * - :file:`diamond_annotated_contam.faa/.fnn/.tsv`
+     - Generated from EnTAP. Contains all of the transcripts flagged as contaminants (protein/nucleotide format) that are a subset of the diamond_annotated best alignment files. Again this will be seen per database, or overall combining the results from each database used.
+     - |sim_proc_dir| or |sim_overall_dir|
+   * - :file:`diamond_annotated_without_contam.faa/.fnn/.tsv`
+     - Generated from EnTAP. Contains all of the transcripts NOT flagged as contaminants (protein/nucleotide format) that are a subset of the diamond_annotated best alignment files. With this in mind: best_hits = best_hits_no_contam + best_hits_contam. Again this will be seen per database, or overall combining the results from each database used. These sequences are separated from the rest for convenience if you would like to examine them differently
+     - |sim_proc_dir| or |sim_overall_dir|
+   * - :file:`unannotated.faa/.fnn/.tsv`
+     - Generated from EnTAP. Sequences (protein/nucleotide) from the transcriptome that did not hit against this particular reference database. This does not include sequences that were lost during expression filtering or frame selection. Again this will be seen per database, or overall combining the results from each database used.
+     - |sim_proc_dir| or |sim_overall_dir|
+   * - :file:`diamond_unselected_hits.faa/.fnn/.tsv`
+     - Generated from EnTAP. Similarity searching can result in several hits for each query sequence. With only one best alignment being selected, the rest are unselected and end up here. Unselected hits can be due to a low e-value, coverage, or other properties EnTAP takes into account when selecting hits
+     - |sim_proc_dir| or |sim_overall_dir|
+   * - :file:`species_bar.txt/png`
+     - Generated from EnTAP. Bar graph representing the top 10 species that were hit within a reference database or overall. 
+       Example:   
+	   
+       .. image:: plot_sim_species_bar.png
+          :scale: 50% 
+          :align: center
+		  
+     - |sim_fig_dir|
+   * - :file:`contam_bar.txt/png`
+     - Generated from EnTAP. Bar graph representing the top 10 contaminants (within best hits) that were hit against the database or overall.
+       Example:   
+	   
+       .. image:: plot_sim_contam_bar.png
+          :scale: 50% 
+          :align: center
+		  
+     - |sim_fig_dir|
+
+
+Similarity Search Headers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The files within the |sim_dir| directory contain the results from the similarity searching portion of the pipeline against each database you select. More information can be found at DIAMOND_. With running _blastp (protein similarity searching), a generic transcriptome input of "Species.fasta", with a database called "database" the files will have the following format:
-
-* blastp_Species_database.out
-
-    * This contains the similarity search information provided in the format from DIAMOND
-    * Header information (from left to right):
-
-        * Query Sequence ID
-        * Subject Sequence ID
-        * Percentage of Identical Matches
-        * Alignment Length
-        * Number of Mismatches
-        * Number of gap openings
-        * Start of alignment in query
-        * End of alignment in query
-        * Start of alignment in subject
-        * End of alignment in subject
-        * Expect (e) value
-        * Bit score
-        * Query Coverage
-        * Subject Title (pulled from database)
-* blastp_Species_database_std.err and .out
-
-    * These files are will contain any error or general information produced from DIAMOND
-
-.. _sim_proc-label:
-
-EnTAP Files: |sim_proc_dir|
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Files within the |sim_proc_dir| are generated by EnTAP and will contain information based on the hits returned from similarity searching against each database. This information contains the *best hits* (discussed previously) from each database based on e-value, coverage, informativeness, phylogenetic closeness, and contaminant status.
-
-The files below represent a run with the same parameters as the section above:
-
-
-* All the TSV files mentioned in this section will have the same header as follows (from left to right):
+TSV files generated from EnTAP will have the following headers for Similarity Searching (from left to right). Other headers may be present from previous stages of EnTAP (such as Frame Selection or Expression Filtering).
 
     * Query sequence ID
     * Subject sequence ID
@@ -103,67 +225,14 @@ The files below represent a run with the same parameters as the section above:
     * Subject title
     * Species (pulled from hit)
     * Origin Database
-    * ORF (taken from frame selection stage)
     * Contaminant (yes/no the hit was flagged as a contaminant)
+    * Informative (yes/no the hit is informative)
+	
+If you ran Similarity Searching against a UniProt database, EnTAP will pull additional UniProt information for your alignments. The following headers will then be added.
 
-* database/diamond_annotated.faa and .fnn and .tsv
-
-    * Best hits (protein and nucleotide) that were selected from this database
-    * This contains ALL best hits, including any contaminants that were found as well as uninformative hits. Sometimes a contaminant can be the highest quality alignment!
-    * The .tsv file contains the header information mentioned above of these same sequences
-    * Note: Protein or nucleotide information may not be available to report depending on your type of run (these files will be empty)
-
-* database/diamond_annotated_contam.faa/.fnn/.tsv
-
-    * Contaminants (protein/nucleotide) separated from the best hits file. As such, these contaminants will also be in the _best_hits.faa/.fnn.tsv files
-
-* database/diamond_annotated_without_contam.faa/.fnn/.tsv
-
-    * Sequences (protein/nucleotide) that were selected as best hits and not flagged as contaminants
-    * With this in mind: best_hits = best_hits_no_contam + best_hits_contam
-    * These sequences are separated from the rest for convenience if you would like to examine them differently
-
-* database/unannotated.faa/.fnn/.tsv
-
-    * Sequences (protein/nucleotide) from the transcriptome that did not hit against this particular database.
-    * This does not include sequences that were lost during expression filtering or frame selection
-
-* database/diamond_unselected_hits.tsv
-
-    * Similarity searching can result in several hits for each query sequence. With only one best hit being selected, the rest are unselected and end up here
-    * Unselected hits can be due to a low e-value, coverage, or other properties EnTAP takes into account when selecting hits
-
-
-.. _sim_res-label:
-
-EnTAP Files: |sim_res_dir|
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-While the |sim_proc_dir| directory contains the best hit information from each database, the |sim_res_dir| directory contains the overall best hits combining the hits from each database.
-
-
-.. _sim_fig-label:
-
-EnTAP Files: |sim_fig_dir|
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-In addition to files, EnTAP will generate figures within the |sim_fig_dir| directory for each database. These are some useful visualizations of the information provided by similarity searching.
-
-Here, there will be several figures:
-
-* species_bar.png / species_bar.txt
-
-    * Bar graph representing the top 10 species that were hit within a database
-    * Text file representing the data being displayed
-
-.. image::    plot_sim_species_bar.png
-	:scale: 50%
-	:align: center
-
-* contam_bar.png / contam_bar.txt
-
-    * Bar graph representing the top 10 contaminants (within best hits) that were hit against the databast
-    * Text file representing the data being displayed
-
-.. image::    plot_sim_contam_bar.png
-	:scale: 50%
-	:align: center
-
+    * UniProt Database Cross Reference
+    * UniProt Additional Information
+    * UniProt KEGG Terms
+    * UniProt GO Biological
+    * UniProt GO Cellular
+    * UniProt GO Molecular

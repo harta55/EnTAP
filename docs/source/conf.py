@@ -194,10 +194,12 @@ rst_prolog = """
 .. |libs_dir| replace:: /libs
 .. |entap_dir| replace:: /EnTAP
 .. |src_dir| replace:: /src
+
 .. |config_file| replace:: entap_config.ini
 .. |config_file_format| replace:: :file:`entap_config.ini`
 .. |run_ini_file| replace:: entap_run.params
 .. |run_ini_file_format| replace:: :file:`entap_run.params`
+
 .. |final_results_dir| replace:: :file:`final_results`
 .. |bin_dir| replace:: /bin
 .. |test_dir| replace:: /test_data
@@ -210,6 +212,8 @@ rst_prolog = """
 .. |tax_data| replace:: ncbi_tax.entp
 .. |flag_path| replace:: ini
 .. |flag_taxon| replace:: taxon
+
+.. |rsem_github| replace:: https://github.com/deweylab/RSEM
 
 .. |emapper_exe_format| replace:: :file:`emapper.py`
 

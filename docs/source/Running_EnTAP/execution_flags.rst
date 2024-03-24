@@ -500,9 +500,12 @@ There are a few data types (qualifiers) to keep in mind used throughout these in
      - path/to/recipient/database1.dmnd,path/to/recipient/database2.dmnd
    * - hgt-gff
      - Specify path to the GFF file for HGT analysis. The input GFF must satisfy the following:
+	 
            * Protein identifiers must match between FASTA and GFF attribute fields
-		   * Primary transcripts only (longest isoform for each gene)
-		   * Feature type = 'transcript' or 'mRNA'
+           * Primary transcripts only (longest isoform for each gene)
+           * Feature type = 'transcript' or 'mRNA'
+           * Must be in relative order. This can be accomplished if it is ran through software such as agat_sp_keep_longest_isoform (https://agat.readthedocs.io/en/latest/tools/agat_sp_keep_longest_isoform.html)
+		   
      - R-ini
      - string
      - path/to/gff/file.gff

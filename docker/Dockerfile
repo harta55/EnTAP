@@ -1,4 +1,6 @@
 FROM --platform=linux/amd64 debian:latest
+# Newer version needed for eggnog-mapper setup (bug in older python)
+FROM python:3.10
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -19,11 +21,12 @@ RUN apt-get update && \
         elfutils \
         libtclap-dev \
         libgsl-dev \
-        sqlite \
+        sqlite3 \
         python3-numpy \
         python3-pandas \
         python3-xmltodict \
-        python3-matplotlib
+        python3-matplotlib \
+        python3-setuptools
 
 # Create a symbolic link for Python
 RUN ln -s /usr/bin/python3 /usr/bin/python && \

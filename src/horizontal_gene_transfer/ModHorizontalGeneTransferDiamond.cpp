@@ -375,9 +375,9 @@ void ModHorizontalGeneTransferDiamond::calculate_best_stats (ModHorizontalGeneTr
                 // Process unselected hits for non-final analysis and set best hit pointer
 
                 best_hit = pair.second->get_best_hit_alignment<HorizontalGeneTransferDmndAlignment>(
-                        HORIZONTAL_GENE_TRANSFER, HGT_DIAMOND,database.database_path);
+                        mExecutionState, mSoftwareFlag,database.database_path);
                 QuerySequence::align_database_hits_t *alignment_data =
-                        pair.second->get_database_hits(database.database_path,HORIZONTAL_GENE_TRANSFER, HGT_DIAMOND);
+                        pair.second->get_database_hits(database.database_path,mExecutionState, mSoftwareFlag);
                 hgt_data = best_hit->get_results();
                 for (auto &hit : *alignment_data) {
                     count_TOTAL_alignments++;
@@ -412,9 +412,12 @@ void ModHorizontalGeneTransferDiamond::calculate_best_stats (ModHorizontalGeneTr
     // ------------ Calculate statistics and print to output ------------ //
     // ------------------------------------------------------------------ //
 
-    // Different headers if final analysis or database specific analysis
+    std::string header = "Horizontal Gene Transfer - DIAMOND - " + database.database_shortname + " - ";
+    if (database.database_type == HGT_DATABASE_DONOR) header += "donor";
+    if (database.database_type == HGT_DATABASE_RECIPIENT) header += "recipient";
 
-    mpFileSystem->format_stat_stream(ss, "Horizontal Gene Transfer - DIAMOND - " + database.database_shortname);
+    mpFileSystem->format_stat_stream(ss, header);
+
     ss <<
        "Search results:\n"                    << database.database_path <<
        "\n\tTotal alignments: "               << count_TOTAL_alignments   <<
@@ -469,8 +472,8 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
     uint16 query_recipient_ct=0;
     const QuerySequence *upstream_sequence;
     const QuerySequence *downstream_sequence;
+    std::vector<QuerySequence*> hgt_genes;
     std::stringstream   ss;                             // Output string stream
-    std::stringstream hgt_genes;
     uint32 hgt_confirmed_ct=0;
 
     mpFileSystem->format_stat_stream(ss, "Horizontal Gene Transfer - Summary");
@@ -519,7 +522,7 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
     }
 
     // Start our output files, only outputting FASTA for confirmed HGTs
-    std::string hgt_candidates_base_path = PATHS(mModOutDir, HGT_CONFIRMED_CANDIDATES_FILENAME);
+    std::string hgt_candidates_base_path = PATHS(mProcDir, HGT_CONFIRMED_CANDIDATES_FILENAME);
     std::vector<FileSystem::ENT_FILE_TYPES> output_file_types;
     if (mpQueryData->is_protein_data()) output_file_types.push_back(FileSystem::ENT_FILE_FASTA_FAA);
     if (mpQueryData->is_nucleotide_data()) output_file_types.push_back(FileSystem::ENT_FILE_FASTA_FNN);
@@ -574,14 +577,47 @@ void ModHorizontalGeneTransferDiamond::calculate_hgt_candidates(std::vector<HGTD
             FS_dprint("HGT CANDIDATE CONFIRMED!!!: " + pair.first);
             mpQueryData->add_alignment_data(hgt_candidates_base_path, pair.second, nullptr);
             hgt_confirmed_ct++;
-            hgt_genes << pair.first << ",";
+            hgt_genes.push_back(pair.second);
         }
     }
 
+    FS_dprint("Finished parsing HGT candidates");
+
     if (hgt_confirmed_ct > 0) {
-        std::string temp = hgt_genes.str();
+        /*
+         * Create HGT TSV File
+         * This file formatted as TSV with each line corresponding to the following columns
+         *      Gene ID | Donor Database Name | Species Name (from sim search) | Database Description (from sim search)
+         *  As a result, there can be multiple lines for the same Gene ID
+         * */
+        std::string hgt_candidates_outpath = PATHS(mProcDir,  HGT_CANDIDATES_FILENAME + FileSystem::EXT_TSV);
+        std::ofstream hgt_candidates_outfile(hgt_candidates_outpath, std::ios::out | std::ios::app);
+        hgt_candidates_outfile << "Gene ID\t" << "Donor Database\t" << "Species\t" << "Database Description\n";
+
+        std::string temp;
+        for (auto sequence : hgt_genes) {
+            temp += sequence->getMSequenceID() + ",";
+
+            // Loop through HGT databases and pull donor alignment information and add to output file
+            for (auto database : mHGTDatabases) {
+                if (database.database_type == HGT_DATABASE_DONOR) {
+                    if (sequence->hit_database(mExecutionState, mSoftwareFlag, database.database_path)) {
+                        auto best_alignment = sequence->get_best_hit_alignment<HorizontalGeneTransferDmndAlignment>(
+                                mExecutionState, mSoftwareFlag, database.database_path);
+                        hgt_candidates_outfile << sequence->getMSequenceID() << "\t"
+                                               << database.database_path << "\t"
+                                               << best_alignment->get_results()->species << "\t"
+                                               << best_alignment->get_results()->stitle << std::endl;
+                    }
+                }
+            }
+        }
+        hgt_candidates_outfile.close();
         temp.pop_back();
-        ss << "The following Horizontally Transferred Genes were found:\n" << temp;
+        ss << "The following Horizontally Transferred Genes were found:\n" << temp
+           << "\nHGT TSV file written to: " << hgt_candidates_outpath
+           << "\nHGT FASTA file(s) written to: " << hgt_candidates_base_path;
+
     } else {
         ss << "No Horizontally Transferred Genes were found";
     }

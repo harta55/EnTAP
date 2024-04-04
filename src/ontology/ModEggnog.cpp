@@ -433,8 +433,8 @@ void ModEggnog::parse() {
         //--------------------------- KEGG ----------------------------//
         if (count_total_kegg_hits > 0) {
             stats_stream <<
-                  "\nTotal unique sequences with at least one pathway (KEGG) assignment: " << count_total_kegg_hits<<
-                  "\nTotal unique sequences without pathways (KEGG): " << count_TOTAL_hits - count_total_kegg_hits;
+                  "\nTotal unique sequences with at least one KEGG assignment: " << count_total_kegg_hits<<
+                  "\nTotal unique sequences without KEGG assignment: " << count_TOTAL_hits - count_total_kegg_hits;
         }
         //-------------------------------------------------------------//
 

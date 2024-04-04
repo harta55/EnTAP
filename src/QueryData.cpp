@@ -622,18 +622,23 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
     ss <<
        "\nTotals"   <<
        "\n\tTotal retained sequences (after filtering and/or frame selection): " << count_total_kept_sequences <<
+       "\n\t\tFinal transcriptome written to directory: " << mpFileSystem->get_trancriptome_dir() <<
        "\n\tTotal unique sequences annotated (similarity search alignments only): "      << count_sim_only      << " (" <<
             (((fp64) count_sim_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
        "\n\tTotal unique sequences annotated (gene family assignment only): "            << count_ontology_only << " (" <<
             (((fp64) count_ontology_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
        "\n\tTotal unique sequences annotated (gene family and/or similarity search): "   << count_TOTAL_ann     << " (" <<
             (((fp64) count_TOTAL_ann / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
-       "\n\t\tTotal alignments flagged as a contaminant (gene family and/or similarity search): " << count_sim_contam << " (" <<
-            (((fp64) count_sim_contam / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
-       "\n\t\tTotal alignments NOT flagged as a contaminant (gene family and/or similarity search): " << (count_sim_hits - count_sim_contam) << " (" <<
-            (((fp64) (count_sim_hits - count_sim_contam) / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
+       "\n\t\tWritten to: " << out_annotated_path <<
+       "\n\t\tTotal annotated sequences flagged as a contaminant from similarity search: " << count_sim_contam << " (" <<
+            (((fp64) count_sim_contam / count_TOTAL_ann) * ENTAP_PERCENT) << "% of total annotated)" <<
+       "\n\t\t\tWritten to: " << out_annotated_contam_path <<
+       "\n\t\tTotal annotated sequences NOT flagged as a contaminant from similarity search: " << (count_TOTAL_ann - count_sim_contam) << " (" <<
+            (((fp64) (count_TOTAL_ann - count_sim_contam) / count_TOTAL_ann) * ENTAP_PERCENT) << "% of total annotated)" <<
+       "\n\t\t\tWritten to: " << out_annotated_without_contam_path <<
        "\n\tTotal unique sequences unannotated (gene family and/or similarity search): " << count_TOTAL_unann_kept << " ("
-            << (((fp64) count_TOTAL_unann_kept / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)";
+            << (((fp64) count_TOTAL_unann_kept / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
+       "\n\t\tWritten to: " << out_unannotated_path;
 
     out_msg = ss.str();
     mpFileSystem->print_stats(out_msg);

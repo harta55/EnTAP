@@ -96,6 +96,7 @@ protected:
     const std::string HGT_DIAMOND_DATABASE_BEST_HITS              = "annotated";
     const std::string HGT_DIAMOND_DATABASE_NO_HITS                = "unannotated";
     const std::string HGT_DIAMOND_DATABASE_UNSELECTED             = "unselected_hits";
+    const std::string HGT_CANDIDATES_FILENAME                     = "hgt_candidates"; // TSV output
     const std::string UNINFORMATIVE_FLAG                         = "Uninformative";
     const std::string INFORMATIVE_FLAG                           = "Informative";
     const std::string NO_HIT_FLAG                                = "No Hits";

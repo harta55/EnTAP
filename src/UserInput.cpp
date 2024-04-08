@@ -1946,7 +1946,7 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
         // Check if EggNOG DIAMOND database exists, if not, check DIAMOND run
         if (!mpFileSystem->file_exists(get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB))) {
             if (!ModDiamond::is_executable(dmnd_exe)) {
-                throw ExceptionHandler("EggNOG DIAMOND database was not found at: " + egg_db_dmnd +
+                throw ExceptionHandler("EggNOG DIAMOND database was not found at: " + egg_map_dmnd_db +
                                        "\nThe DIAMOND test run failed.", ERR_ENTAP_INPUT_PARSE);
             }
         }

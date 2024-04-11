@@ -144,7 +144,7 @@ void ModEggnog::execute() {
             {"--dmnd_db", mEggnogMapDMNDPath},
             {"--data_dir", mEggnogMapDataDir},
             {"--output_dir", mModOutDir},
-            {"---cpu", std::to_string(mpUserInput->get_supported_threads())},
+            {"--cpu", std::to_string(mpUserInput->get_supported_threads())},
             {"--no_file_comments",""}
     };
 

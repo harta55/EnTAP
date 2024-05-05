@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -48,7 +48,7 @@ public:
 
 private:
 
-    const std::string ONTOLOGY_OUT_PATH     = "ontology/";
+    const std::string ONTOLOGY_OUT_PATH     = "gene_family/";
 
     std::vector<ENTAP_HEADERS>      mEntapHeaders;
     std::vector<uint16>             mGoLevels;

@@ -6,7 +6,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,12 +30,12 @@
 #include "config.h"
 
 #define LICENSE_YEAR_START      "2017"
-#define LICENSE_YEAR_END        "2023"
+#define LICENSE_YEAR_END        "2024"
 
 // When changing Version ensure the EnTAP Database version/FTP is up-to-date (EntapDatabase.h)
 #define MAJOR_VERSION     1
-#define MINOR_VERSION     0
-#define BUILD_VERSION     1
+#define MINOR_VERSION     1
+#define BUILD_VERSION     0
 
 #define TO_STR2(x)             #x
 #define TO_STR(x)              TO_STR2(x)

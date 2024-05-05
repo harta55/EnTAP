@@ -32,6 +32,11 @@
 #ifndef CSV_H
 #define CSV_H
 
+// Adding to remove compilation errors in this library
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wparentheses"
+#pragma GCC diagnostic ignored "-Wformat-truncation"
+
 #include <vector>
 #include <string>
 #include <cstring>
@@ -1245,5 +1250,7 @@ namespace io{
                 }
         };
 }
+#pragma GCC diagnostic pop
+
 #endif
 

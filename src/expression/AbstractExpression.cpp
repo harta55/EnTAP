@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -43,4 +43,5 @@ EntapModule(execution_stage_path, in_hits, entap_data, module_name, module_heade
 
 void AbstractExpression::set_success_flags() {
     mpQueryData->set_is_success_expression(true);
+    mpQueryData->setMTotalKeptSequences(mTotalKeptSequences);
 }

@@ -2,9 +2,8 @@
 .. _Perl: https://www.perl.org/
 .. _Python: https://www.python.org/
 .. _RSEM: https://github.com/deweylab/RSEM
-.. _EggNOG-Emapper: https://github.com/jhcepas/eggnog-mapper
+.. _EggNOG-mapper: https://github.com/jhcepas/eggnog-mapper
 .. _DIAMOND: https://github.com/bbuchfink/diamond
-.. _GeneMarkS-T: http://exon.gatech.edu/GeneMark/
 .. _CMake: https://cmake.org/
 .. _InterProScan: https://github.com/ebi-pf-team/interproscan
 .. _TransDecoder: https://github.com/TransDecoder/TransDecoder/releases
@@ -62,8 +61,8 @@ Before continuing on in the installation process, ensure that the following depe
 
 Downloading EnTAP Source Code
 ----------------------------------------
-First, download and extract the latest release(tagged) version from GitHub:
-https://github.com/harta55/EnTAP/tags
+First, download and extract the latest release(tagged) version from GitLab:
+https://gitlab.com/EnTAP/EnTAP/tags
 
 This repository contains the source code for RSEM, TransDecoder, and DIAMOND to be used with EnTAP.
 
@@ -71,7 +70,7 @@ This repository contains the source code for RSEM, TransDecoder, and DIAMOND to 
 
 Installing Pipeline Software
 --------------------------------------------
-EnTAP leverages several software distributions within the pipeline to provide the best quality annotations. The packages used (and their current/compatible versions) can be seen below. This is not to say that newer versions will not be compatible, however they have not been tested yet with EnTAP. By default, EnTAP will use Transdecoder for frame selection, however both TransDecoder and GeneMarkS-T are supported and you may install either.
+EnTAP leverages several software distributions within the pipeline to provide the best quality annotations. The packages used (and their current/compatible versions) can be seen below. This is not to say that newer versions will not be compatible, however they have not been tested yet with EnTAP.
 
 .. note:: If the software is already installed on your system, this stage can be skipped
 
@@ -86,16 +85,14 @@ Supported Software:
         * Version 5.3.0
         * Version 5.7.1
 
-    * GeneMarkS-T_ (Frame Selection): version 5.1 must be installed separately (if not using TransDecoder)
-
-        * Version 5.1
-
     * DIAMOND_ (Similarity Search): version 2.1.8 packaged with EnTAP
 
-        * Version 0.8.31
-        * Version 0.9.19
-        * Version 0.9.9
+        * Version 2.0.10 (minimum required DIAMOND version)
         * Version 2.1.8
+		
+    * EggNOG-mapper_ (Gene Family assignment): version 2.1.12 packaged with EnTAP
+	   
+	    * Version 2.1.12
 
     * InterProScan_ (Protein Databases): must be installed separately
    
@@ -127,9 +124,29 @@ Run the following command to compile:
 .. code-block :: bash
 
     make
+	
+All set! Ensure that DIAMOND has been properly setup and add the correct path to the |config_file| file. If installed globally, add 'diamond' (without quotes) to the file. If installed locally, add 'path/to/EnTAP/libs/diamond-2.1.8/bin/diamond'.
+	
+.. _eggnog-mapper-label:
+
+EggNOG-mapper Installation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EggNOG-mapper comes packaged with EnTAP, but can also be downloaded from the GitHub. If installing through the packaged version...
+
+.. code-block :: bash
+
+    cd libs/
+    tar -xvzf eggnog-mapper-2.1.12.tar.gz
+    cd eggnog-mapper-2.1.12
+
+Run the following command to install globally:
+
+.. code-block :: bash
+
+    python setup.py install
 
 
-All set! Ensure that DIAMOND has been properly setup and add the correct path to the entap_config.txt file. If installed globally, add 'diamond' (without quotes) to the file. If installed locally, add 'path/to/EnTAP/libs/diamond-0.9.9/bin/diamond'.
+All set! Ensure that EggNOG-mapper has been properly setup and add the correct path to the |config_file| file. If installed globally, add 'emapper.py' (without quotes) to the file. If installed locally, add 'path/to/EnTAP/libs/eggnog-mapper-2.1.12/emapper.py'.
 
 .. _rsem-label:
 

@@ -1,5 +1,3 @@
-#ifdef EGGNOG_MAPPER
-
 /*
  *
  * Developed by Alexander Hart
@@ -9,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -34,7 +32,9 @@
 
 #include "AbstractOntology.h"
 #include "../common.h"
-
+#include "../QuerySequence.h"
+#include "../QueryData.h"
+#include "../GraphingManager.h"
 /**
  * ======================================================================
  * @class ModEggnog
@@ -63,44 +63,48 @@
 class ModEggnog : public AbstractOntology{
 
 public:
-    ModEggnog(std::string &out, std::string &in, std::string &ont,
-            bool blastp,std::vector<uint16>& lvls, EntapDataPtrs &entap_data, std::string&);
-
+    ModEggnog(std::string &ont_out, std::string &in_hits,
+            EntapDataPtrs &entap_data);
+    ModVerifyData verify_files() override;
     ~ModEggnog();
-    virtual std::pair<bool, std::string> verify_files() override ;
     virtual void execute() override ;
-    virtual void parse() override ;
-    static bool is_executable() ;
-    static bool valid_input(boostPO::variables_map&);
+    virtual void parse() override;
+    static bool is_executable(std::string &exe);
+    virtual bool set_version() override;
 
 private:
 
-    void get_tax_scope(std::string&, QuerySequence::EggnogResults&);
-    void get_sql_data(QuerySequence::EggnogResults&, SQLDatabaseHelper&);
-    std::string format_sql_data(std::string&);
-    void get_og_query(QuerySequence::EggnogResults&);
+    enum EGGNOG_MAPPER_STATES {
+        EGGNOG_MAPPER_NOT_STARTED=0,
+        EGGNOG_MAPPER_DIAMOND_COMPLETE,
+        EGGNOG_MAPPER_ANNOTATIONS_COMPLETE
+    };
 
-    static constexpr short EGGNOG_COL_NUM     = 12;
-    static constexpr uint8 COUNT_TOP_TAX_SCOPE= 10;
-    static constexpr uint8 COUNT_TOP_GO       = 10;
+
+    static constexpr short EGGNOG_COL_NUM     = 21;
+    const uint16 COUNT_TOP_TAX_SCOPE= 10;
+    const uint16 COUNT_TOP_GO       = 10;
     const std::string EGGNOG_DIRECTORY        = "EggNOG/";
-    const std::string GRAPH_EGG_TAX_BAR_TITLE = "Top_10_Tax_Levels";
-    const std::string GRAPH_EGG_TAX_BAR_PNG   = "eggnog_tax_scope.png";
-    const std::string GRAPH_EGG_TAX_BAR_TXT   = "eggnog_tax_scope.txt";
     const std::string EGG_ANNOT_RESULTS       = "annotation_results";
     const std::string EGG_ANNOT_STD           = "annotation_std";
-    const std::string EGG_ANNOT_APPEND        = ".emapper.annotations";
+    const std::string EGG_OUTPUT_ANNOT_APPEND = ".emapper.annotations";
+    const std::string EGG_OUTPUT_HITS_APPEND  = ".emapper.hits";
+    const std::string EGG_OUTPUT_SEED_ORTHO_APPEND = ".emapper.seed_orthologs";
+    const std::string EGG_OUT_UNANNOTATED     = "unannotated";
+    const std::string EGG_OUT_ANNOTATED       = "annotated";
+    const std::string EGG_MAPPER_PREFIX   = "eggnog_";
 
-    std::string mFigureDir;
-    std::string mProcDir;
-    std::string _egg_out_dir;
-    std::string mEggnogDbPath;
     std::string mOutHIts;
+    std::string mEggnogMapDataDir;
+    std::string mEggnogMapDMNDPath;
+    std::string mEggnogMapAnnotationsOutputPath;
+    std::string mEggnogMapHitsOutputPath;
+    std::string mEggnogMapSeedOrthoOutputPath;
+    EGGNOG_MAPPER_STATES mEggnogMapperState;
 
-    static std::string EGG_EMAPPER_EXE;
-    std::string eggnog_format(std::string);
+    static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
+    std::string get_output_tag();
 };
 
 
 #endif //ENTAP_MODEGGNOG_H
-#endif

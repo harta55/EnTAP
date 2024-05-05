@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -101,6 +101,7 @@ protected:
     std::string     mAlignPath;     // Absolute path to alignment file (BAM/SAM)
     std::string     mFinalFasta;    // Absolute path to final filtered FASTA produced from this stage
     fp64            mFPKM;          // FPKM threshold user would like to filter by
+    uint32          mTotalKeptSequences;
     bool            mIsSingle;       // TRUE if use has non-paired data
 };
 

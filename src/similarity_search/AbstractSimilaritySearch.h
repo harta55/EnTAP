@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -67,6 +67,8 @@ public:
     virtual bool set_version() = 0;
 
     virtual bool run_blast(SimSearchCmd *cmd, bool use_defaults) = 0;
+    static std::string get_species(std::string &title);
+
 
 protected:
 
@@ -91,6 +93,8 @@ protected:
     const std::string BLASTX_STR           = "blastx";
     const std::string BLASTP_STR           = "blastp";
     const uint8       UNIPROT_ATTEMPTS     = 15;   // Number of attempts to see if database is uniprot
+    const uint8       TAXONOMY_ATTEMPTS    = 20;   // Number of attempts at parsing tax data from a database before we give an error
+                                                   //   parsing will still continue even if limit is hit (just for warning purposes)
     const uint8       MIN_CONTAM_COUNT     = 1;    // Minimum number of contaminants to graph
     const std::string NCBI_REGEX          = "\\[(.+)\\](?!.+\\[.+\\])";
     const std::string UNIPROT_REGEX       = "OS=(.+?)\\s\\S\\S=";
@@ -99,7 +103,6 @@ protected:
     std::string get_database_output_path(std::string &database_name);
     std::pair<bool, std::string> is_contaminant(std::string lineage, vect_str_t &contams);
     bool is_informative(std::string title, vect_str_t &uninformative_vect);
-    std::string get_species(std::string &title);
 };
 
 

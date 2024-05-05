@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -338,13 +338,19 @@ void EggnogDmndAlignment::refresh_headers() {
             {ENTAP_HEADER_ONT_EGG_DESC,       &mEggnogResults.description},
             {ENTAP_HEADER_ONT_EGG_BIGG,       &mEggnogResults.bigg},
             {ENTAP_HEADER_ONT_EGG_KEGG,       &mEggnogResults.kegg},
+            {ENTAP_HEADER_ONT_EGG_KEGG_KO,    &mEggnogResults.kegg_ko},
+            {ENTAP_HEADER_ONT_EGG_KEGG_PATHWAY,&mEggnogResults.kegg_pathway},
+            {ENTAP_HEADER_ONT_EGG_KEGG_MODULE, &mEggnogResults.kegg_module},
+            {ENTAP_HEADER_ONT_EGG_KEGG_REACTION,&mEggnogResults.kegg_reaction},
+            {ENTAP_HEADER_ONT_EGG_KEGG_RCLASS,       &mEggnogResults.kegg_rclass},
+            {ENTAP_HEADER_ONT_EGG_BRITE,       &mEggnogResults.brite},
             {ENTAP_HEADER_ONT_EGG_PROTEIN,    &mEggnogResults.protein_domains},
             {ENTAP_HEADER_ONT_EGG_GO_BIO ,    nullptr},
             {ENTAP_HEADER_ONT_EGG_GO_CELL,    nullptr},
             {ENTAP_HEADER_ONT_EGG_GO_MOLE,    nullptr}
     };
     mpParentSequence->set_header_data();
-    mpParentSequence->update_query_flags(GENE_ONTOLOGY, ONT_EGGNOG_DMND);
+    mpParentSequence->update_query_flags(GENE_ONTOLOGY, ONT_EGGNOG_MAPPER);
 }
 
 const go_format_t &EggnogDmndAlignment::get_go_data() const {
@@ -457,4 +463,29 @@ bool BuscoAlignment::operator>(const QueryAlignment &alignment) {
     const BuscoAlignment alignment_cast = dynamic_cast<const BuscoAlignment&>(alignment);
 
     return this->mBuscoResults.score > alignment_cast.mBuscoResults.score;
+}
+
+HorizontalGeneTransferDmndAlignment::HorizontalGeneTransferDmndAlignment(ExecuteStates state, uint16 software,
+                                                                         std::string &database_path,
+                                                                         QuerySequence *parent,
+                                                                         QuerySequence::HorizontalGeneTransferResults &horizontalGeneTransferResults)
+        : QueryAlignment(state, software, database_path, parent)  {
+    mHorizontalGeneTransferResults = horizontalGeneTransferResults;
+}
+
+QuerySequence::HorizontalGeneTransferResults *HorizontalGeneTransferDmndAlignment::get_results() {
+    return &this->mHorizontalGeneTransferResults;
+}
+
+bool HorizontalGeneTransferDmndAlignment::operator>(const QueryAlignment &alignment) {
+    const HorizontalGeneTransferDmndAlignment alignment_cast = dynamic_cast<const HorizontalGeneTransferDmndAlignment&>(alignment);
+
+    return this->mHorizontalGeneTransferResults.e_val_raw < alignment_cast.mHorizontalGeneTransferResults.e_val_raw;
+}
+
+void HorizontalGeneTransferDmndAlignment::refresh_headers() {
+
+}
+bool HorizontalGeneTransferDmndAlignment::is_go_header(ENTAP_HEADERS header, go_format_t &go_list) {
+    return false;
 }

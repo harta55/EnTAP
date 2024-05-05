@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -161,6 +161,30 @@ private:
 
 protected:
     bool is_go_header(ENTAP_HEADERS header, go_format_t  &go_list) override;
+
+};
+
+//**********************************************************************
+//**********************************************************************
+//               HorizontalGeneTransferDmndAlignment
+//**********************************************************************
+//**********************************************************************
+
+class HorizontalGeneTransferDmndAlignment : public QueryAlignment {
+
+public:
+    HorizontalGeneTransferDmndAlignment(ExecuteStates state, uint16 software, std::string &database_path, QuerySequence* parent,
+                        QuerySequence::HorizontalGeneTransferResults &horizontalGeneTransferResults);
+    ~HorizontalGeneTransferDmndAlignment() override = default;
+    QuerySequence::HorizontalGeneTransferResults* get_results();
+    bool operator>(const QueryAlignment&) override;
+    void refresh_headers();
+
+private:
+    QuerySequence::HorizontalGeneTransferResults mHorizontalGeneTransferResults;
+
+protected:
+    bool is_go_header(ENTAP_HEADERS header, go_format_t & go_list) override;
 
 };
 

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -55,6 +55,8 @@ const std::string FileSystem::EXT_LST  = ".lst";
 const std::string FileSystem::EXT_CDS  = ".cds";
 const std::string FileSystem::EXT_PEP  = ".pep";
 const std::string FileSystem:: TIDYVERSE_TSV_NULL = "NA";
+const std::string FileSystem::ENTAP_FINAL_OUTPUT        = "final_results/"; // Directory name for final output annotations directory
+const std::string FileSystem::ENTAP_TRANSCRIPTOME_DIR   = "transcriptomes/"; // Directory name for transcriptome directory (frame selected, expression analysis)
 
 const char FileSystem::DELIM_TSV = '\t';
 const char FileSystem::DELIM_CSV = ',';
@@ -131,6 +133,7 @@ void FileSystem::close_file(std::ofstream &ofstream) {
  * =====================================================================
  */
 void FS_dprint(const std::string &msg) {
+    if (!INITIALIZED_DEBUG_FILE) return;
     std::ofstream debug_file(DEBUG_FILE_PATH, std::ios::out | std::ios::app);
 
     debug_file << get_cur_time() << ": " + msg << std::endl;
@@ -616,6 +619,7 @@ void FileSystem::init_log() {
     mLogFilePath   = PATHS(mRootPath, log_file_name);
     delete_file(DEBUG_FILE_PATH);
     delete_file(mLogFilePath);
+    INITIALIZED_DEBUG_FILE = true;
     FS_dprint("Start - EnTAP");
 }
 

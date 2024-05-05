@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -88,7 +88,6 @@ AbstractSimilaritySearch::AbstractSimilaritySearch(std::string &execution_stage_
     // create overall results dir
     mpFileSystem->delete_dir(mOverallResultsDir);
     mpFileSystem->create_dir(mOverallResultsDir);
-
 }
 
 /**

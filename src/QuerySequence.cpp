@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -30,6 +30,7 @@
 #include "EntapGlobals.h"
 #include "common.h"
 #include "QueryAlignment.h"
+
 
 /**
  * ======================================================================
@@ -285,14 +286,6 @@ void QuerySequence::setFrame(const std::string &frame) {
     set_header_data();
 }
 
-#ifdef EGGNOG_MAPPER
-void QuerySequence::set_eggnog_results(const EggnogResults &eggnogResults) {
-    memcpy(&this->mEggnogResults, &eggnogResults, sizeof(eggnogResults));
-    QUERY_FLAG_SET(QUERY_EGGNOG_HIT);
-    QUERY_FLAG_SET(QUERY_FAMILY_ASSIGNED);
-}
-#endif
-
 /**
  * ======================================================================
  * Function void QuerySequence::init_sequence()
@@ -318,9 +311,6 @@ void QuerySequence::init_sequence() {
     mFrameScore = 0.0;
 
     mAlignmentData = new AlignmentData(this);
-#ifdef EGGNOG_MAPPER
-    mEggnogResults = EggnogResults();
-#endif
 
     mFrameType = "";
     mSequenceProtein = "";
@@ -394,7 +384,7 @@ void QuerySequence::get_header_data(std::string &data, ENTAP_HEADERS header, uin
         case ENTAP_HEADER_ONT_EGG_GO_MOLE:
         case ENTAP_HEADER_ONT_EGG_GO_CELL:
         case ENTAP_HEADER_ONT_EGG_GO_BIO:
-            align_ptr = get_best_hit_alignment<EggnogDmndAlignment>(GENE_ONTOLOGY, ONT_EGGNOG_DMND, "");
+            align_ptr = get_best_hit_alignment<EggnogDmndAlignment>(GENE_ONTOLOGY, ONT_EGGNOG_MAPPER, "");
             break;
 
         case ENTAP_HEADER_ONT_INTER_GO_BIO:
@@ -449,7 +439,7 @@ void QuerySequence::set_header_data() {
     }
 
     // Ontology EggNOG data
-    align_ptr = this->mAlignmentData->get_best_align_ptr(GENE_ONTOLOGY, ONT_EGGNOG_DMND, "");
+    align_ptr = this->mAlignmentData->get_best_align_ptr(GENE_ONTOLOGY, ONT_EGGNOG_MAPPER, "");
     if (align_ptr != nullptr) {
         align_ptr->get_all_header_data(mHeaderInfo);
     }
@@ -464,6 +454,13 @@ void QuerySequence::set_header_data() {
     align_ptr = this->mAlignmentData->get_best_align_ptr(GENE_ONTOLOGY, ONT_BUSCO, "");
     if (align_ptr != nullptr) {
         align_ptr->get_all_header_data(mHeaderInfo);
+    }
+
+    // Horizontal Gene Transfer
+    if (QUERY_FLAG_GET(QUERY_HGT_CONFIRMED)) {
+        mHeaderInfo[ENTAP_HEADER_HORIZONTALLY_TRANSFERRED_GENE] = "YES";
+    } else {
+        mHeaderInfo[ENTAP_HEADER_HORIZONTALLY_TRANSFERRED_GENE] = "NO";
     }
 }
 
@@ -524,7 +521,7 @@ bool QuerySequence::is_kept() {
 }
 
 
-bool QuerySequence::QUERY_FLAG_GET(QUERY_FLAGS flag) {
+bool QuerySequence::QUERY_FLAG_GET(QUERY_FLAGS flag) const {
     return (mQueryFlags & flag) != 0;
 }
 
@@ -617,8 +614,8 @@ void QuerySequence::add_alignment(ExecuteStates state, uint16 software, SimSearc
 void QuerySequence::add_alignment(ExecuteStates state, uint16 software, InterProResults &results,
                                   std::string &database) {
     QUERY_FLAG_SET(QUERY_INTERPRO);
-    QueryAlignment *new_alignmet = new InterproAlignment(state, software, database, this, results);
-    mAlignmentData->update_best_hit(new_alignmet);
+    QueryAlignment *new_alignment = new InterproAlignment(state, software, database, this, results);
+    mAlignmentData->update_best_hit(new_alignment);
 }
 
 
@@ -647,6 +644,13 @@ void QuerySequence::add_alignment(ExecuteStates state, uint16 software, QuerySeq
     QUERY_FLAG_SET(QUERY_ONT_BUSCO);
     QueryAlignment *new_alignmet = new BuscoAlignment(state, software, database, this, results);
     mAlignmentData->update_best_hit(new_alignmet);
+}
+
+void QuerySequence::add_alignment(ExecuteStates state, uint16 software,
+                                  QuerySequence::HorizontalGeneTransferResults &results, std::string &database) {
+    QUERY_FLAG_SET(QUERY_HGT_BLASTED);
+    QueryAlignment *new_alignment = new HorizontalGeneTransferDmndAlignment(state, software, database, this, results);
+    mAlignmentData->update_best_hit(new_alignment);
 }
 
 //**********************************************************************
@@ -701,6 +705,17 @@ QuerySequence::AlignmentData::~AlignmentData() {
 
     // remove ontology alignments
     for (ALIGNMENT_DATA_T &software_data : ontology_data) {
+        // Cycle through each software data struct
+        for (auto &pair : software_data) {
+            // for each database, delete vector
+            for (auto &alignment : pair.second) {
+                delete alignment;
+            }
+        }
+    }
+
+    // remove ontology alignments
+    for (ALIGNMENT_DATA_T &software_data : horizontal_gene_data) {
         // Cycle through each software data struct
         for (auto &pair : software_data) {
             // for each database, delete vector
@@ -787,13 +802,39 @@ void QuerySequence::update_query_flags(ExecuteStates state, uint16 software) {
             break;
         }
 
+        case HORIZONTAL_GENE_TRANSFER: {
+            break;
+        }
+
         case GENE_ONTOLOGY: {
             switch (software) {
-                case ONT_EGGNOG_DMND: {
+
+                case ONT_EGGNOG_MAPPER: {
                     EggnogDmndAlignment *best_align = get_best_hit_alignment<EggnogDmndAlignment>(state, software,"");
-                    EggnogResults *results = best_align->get_results();
 
                     if (best_align != nullptr) {
+                        EggnogResults *results = best_align->get_results();
+
+                        if (!results->parsed_go.empty()) {
+                            QUERY_FLAG_SET(QUERY_FAMILY_ONE_GO);
+                            QUERY_FLAG_SET(QUERY_ONE_GO);
+                        }
+
+                        if ((!results->kegg_reaction.empty()) || (!results->kegg_pathway.empty()) ||
+                                (!results->kegg_module.empty()) || (!results->kegg_rclass.empty())) {
+                            QUERY_FLAG_SET(QUERY_FAMILY_ONE_KEGG);
+                            QUERY_FLAG_SET(QUERY_ONE_KEGG);
+                        }
+                    }
+                    break;
+                }
+
+                case ONT_EGGNOG_DMND: {
+                    EggnogDmndAlignment *best_align = get_best_hit_alignment<EggnogDmndAlignment>(state, software,"");
+
+                    if (best_align != nullptr) {
+                        EggnogResults *results = best_align->get_results();
+
                         QUERY_FLAG_CHANGE(QUERY_FAMILY_ONE_GO, !results->parsed_go.empty());
                         QUERY_FLAG_CHANGE(QUERY_FAMILY_ONE_KEGG, !results->kegg.empty());
 
@@ -903,7 +944,7 @@ go_format_t QuerySequence::get_go_terms() {
     go_format_t  align_data;
 
     // Pull EggNOG GO Terms
-    auto *egg_alignment = get_best_hit_alignment<EggnogDmndAlignment>(GENE_ONTOLOGY, ONT_EGGNOG_DMND, "");
+    auto *egg_alignment = get_best_hit_alignment<EggnogDmndAlignment>(GENE_ONTOLOGY, ONT_EGGNOG_MAPPER, "");
     if (egg_alignment != nullptr) {
         if (!egg_alignment->get_go_data().empty()) {
             ret = egg_alignment->get_go_data();
@@ -959,6 +1000,37 @@ void QuerySequence::setMFrameScore(fp32 mFrameScore) {
     QuerySequence::mFrameScore = mFrameScore;
 }
 
+const QuerySequence *QuerySequence::getMpUpstreamSequence() const {
+    return mpUpstreamSequence;
+}
+
+void QuerySequence::setMpUpstreamSequence(const QuerySequence *mpUpstreamSequence) {
+    QuerySequence::mpUpstreamSequence = mpUpstreamSequence;
+}
+
+const QuerySequence *QuerySequence::getMpDownstreamSequence() const {
+    return mpDownstreamSequence;
+}
+
+void QuerySequence::setMpDownstreamSequence(const QuerySequence *mpDownstreamSequence) {
+    QuerySequence::mpDownstreamSequence = mpDownstreamSequence;
+}
+
+uint32 QuerySequence::getMDonorDatabaseHitCt() const {
+    return mDonorDatabaseHitCt;
+}
+
+void QuerySequence::setMDonorDatabaseHitCt(uint32 mDonorDatabaseHitCt) {
+    QuerySequence::mDonorDatabaseHitCt = mDonorDatabaseHitCt;
+}
+
+uint32 QuerySequence::getMRecipientDatabaseHitCt() const {
+    return mRecipientDatabaseHitCt;
+}
+
+void QuerySequence::setMRecipientDatabaseHitCt(uint32 mRecipientDatabaseHitCt) {
+    QuerySequence::mRecipientDatabaseHitCt = mRecipientDatabaseHitCt;
+}
 
 QuerySequence::align_database_hits_t* QuerySequence::AlignmentData::get_database_ptr(ExecuteStates state, uint16 software, std::string& database) {
     if (database.empty()) return nullptr;
@@ -976,6 +1048,12 @@ QuerySequence::align_database_hits_t* QuerySequence::AlignmentData::get_database
             } else {
                 return nullptr;
             }
+        case HORIZONTAL_GENE_TRANSFER:
+            if (this->horizontal_gene_data[software].find(database) != (this->horizontal_gene_data[software].end())) {
+                return &this->horizontal_gene_data[software].at(database);
+            } else {
+                return nullptr;
+            }
         default:
             return nullptr;
     }
@@ -987,6 +1065,8 @@ QuerySequence::AlignmentData::ALIGNMENT_DATA_T* QuerySequence::AlignmentData::ge
             return &this->sim_search_data[software];
         case GENE_ONTOLOGY:
             return &this->ontology_data[software];
+        case HORIZONTAL_GENE_TRANSFER:
+            return &this->horizontal_gene_data[software];
         default:
             return nullptr;
     }

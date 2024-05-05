@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -36,6 +36,7 @@
 
 // Forward Declarations
 class QueryAlignment;
+class QuerySequence;
 
 typedef std::unordered_map<std::string, QuerySequence*> QUERY_MAP_T;
 
@@ -55,6 +56,7 @@ public:
         IS_PROTEIN         = (1 << 4),  // We have some protein data
         IS_NUCLEOTIDE      = (1 << 5),  // We have some nucleotide data
         UNIPROT_MATCH      = (1 << 6),
+        SUCCESS_HGT        = (1 << 7),
 
         DATA_FLAGS_MAX     = (1 << 31)
     } DATA_FLAGS;
@@ -84,16 +86,21 @@ public:
     bool print_transcriptome(uint32 flags, std::string &outpath, SEQUENCE_TYPES sequence_type);
 
     QUERY_MAP_T get_specific_sequences(uint32 flags);
+    uint64 get_sequence_count(uint32 flags) const;
 
     // DATA_FLAG routines
     bool is_protein_data();
+    bool is_nucleotide_data();
     void set_is_protein_data(bool val);
     void set_is_success_frame_selection(bool val);
     void set_is_success_expression(bool val);
     void set_is_success_sim_search(bool val);
     void set_is_success_ontology(bool val);
+    void set_is_success_hgt(bool val);
     void set_is_uniprot(bool val);
     bool DATA_FLAG_GET(DATA_FLAGS);
+
+    uint32 getMTotalSequences() const;
 
     // Header routines
     void header_set(ENTAP_HEADERS header, bool val);
@@ -164,6 +171,14 @@ private:
     bool         mNoTrim;
     bool         mIsComplete;              // All sequences can be tagged as 'complete' genes
     uint32       mTotalSequences;          // Original sequence number
+    uint32       mTotalKeptSequences;
+public:
+    uint32 getMTotalKeptSequences() const;
+
+    void setMTotalKeptSequences(uint32 mTotalKeptSequences);
+
+private:
+    // Total number of sequences kept after filtering (Expression Analysis + Frame Selection)
     uint32       mDataFlags;
     uint64       mNucleoLengthStart;       // Starting total len (nucleotide)
     uint64       mProteinLengthStart;      // Starting total len (protein)

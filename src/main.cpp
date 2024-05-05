@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -60,6 +60,7 @@ UserInput::EXECUTION_TYPE EXECUTE_TYPE;                             // Config/Ex
 //******************** Global Variables ************************
 std::string DEBUG_FILE_PATH;        // Extern
 std::string LOG_FILE_PATH;          // Extern
+bool INITIALIZED_DEBUG_FILE;        // Extern
 //**************************************************************
 
 //******************** Local Prototype Functions ***************
@@ -134,6 +135,7 @@ void init_entap(int argc, const char** argv) {
 
     // Begin timing
     startTime = std::chrono::system_clock::now();
+    INITIALIZED_DEBUG_FILE = false;
 
     // Create filesystem
     pFileSystem = new FileSystem();

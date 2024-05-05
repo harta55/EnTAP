@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -63,7 +63,6 @@ protected:
     } ERR_ENTAP_MODULE;
 
     const std::string PROCESSED_OUT_DIR     = "processed/";
-    const std::string FIGURE_DIR            = "figures/";
     const std::string OVERALL_RESULTS_DIR   = "overall_results";
 
     const std::string FILENAME_OUT_UNANNOTATED  = "unannotated_";
@@ -96,7 +95,6 @@ protected:
     ent_input_str_t    mInputTranscriptome;
     std::string        mModuleName;                // Name of module
     std::string        mProcDir;                   // "processed" directory, or data analyzed
-    std::string        mFigureDir;                 // "figure" directory to place any generated figures
     std::string        mModOutDir;                 // Root out directory for the EnTAP module we are dealing with
     std::string        mOverallResultsDir;
     ent_input_str_t    mExePath;

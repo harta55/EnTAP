@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -153,18 +153,17 @@ enum ExecuteStates {
     COPY_FINAL_TRANSCRIPTOME,
     SIMILARITY_SEARCH,
     GENE_ONTOLOGY,
+    HORIZONTAL_GENE_TRANSFER,
     EXIT,
     EXECUTION_MAX
 };
 
 enum ONTOLOGY_SOFTWARE {
-    ONT_EGGNOG_DMND,
+    ONT_EGGNOG_MAPPER=0,
     ONT_INTERPRO_SCAN,
+    ONT_SOFTWARE_COUNT,     // Anything below this not supported yet
     ONT_BUSCO,
-#ifdef EGGNOG_MAPPER
-    EGGNOG_INT_FLAG,
-#endif
-    ONT_SOFTWARE_COUNT
+    ONT_EGGNOG_DMND
 };
 
 enum SIMILARITY_SOFTWARE {
@@ -172,6 +171,12 @@ enum SIMILARITY_SOFTWARE {
     SIM_SOFTWARE_COUNT
 };
 
+enum HORIZONTAL_GENE_TRANSFER_SOFTWARE {
+    HGT_DIAMOND=0,
+    HGT_SOFTWARE_COUNT
+};
+
+// WARNING this should match ENTAP_HEADER_INFO in QueryData.cpp
 enum ENTAP_HEADERS {
     ENTAP_HEADER_UNUSED = 0,                // 0
     ENTAP_HEADER_QUERY,
@@ -211,7 +216,7 @@ enum ENTAP_HEADERS {
     ENTAP_HEADER_SIM_UNI_GO_CELL,
     ENTAP_HEADER_SIM_UNI_GO_MOLE,
 
-    /* Ontology - EggNOG*/
+    /* Ontology - EggNOG (both mapper and DIAMOND-only) */
     ENTAP_HEADER_ONT_EGG_SEED_ORTHO,
     ENTAP_HEADER_ONT_EGG_SEED_EVAL,
     ENTAP_HEADER_ONT_EGG_SEED_SCORE,
@@ -222,6 +227,12 @@ enum ENTAP_HEADERS {
     ENTAP_HEADER_ONT_EGG_DESC,
     ENTAP_HEADER_ONT_EGG_BIGG,
     ENTAP_HEADER_ONT_EGG_KEGG,
+    ENTAP_HEADER_ONT_EGG_KEGG_KO,
+    ENTAP_HEADER_ONT_EGG_KEGG_PATHWAY,
+    ENTAP_HEADER_ONT_EGG_KEGG_MODULE,
+    ENTAP_HEADER_ONT_EGG_KEGG_REACTION,
+    ENTAP_HEADER_ONT_EGG_KEGG_RCLASS,
+    ENTAP_HEADER_ONT_EGG_BRITE,
     ENTAP_HEADER_ONT_EGG_GO_BIO,
     ENTAP_HEADER_ONT_EGG_GO_CELL,
     ENTAP_HEADER_ONT_EGG_GO_MOLE,
@@ -242,6 +253,9 @@ enum ENTAP_HEADERS {
     ENTAP_HEADER_ONT_BUSCO_STATUS,
     ENTAP_HEADER_ONT_BUSCO_LENGTH,                  // 50
     ENTAP_HEADER_ONT_BUSCO_SCORE,
+
+    /* Horizontal Gene Transfer */
+    ENTAP_HEADER_HORIZONTALLY_TRANSFERRED_GENE,
 
 
     ENTAP_HEADER_COUNT
@@ -285,6 +299,7 @@ namespace std {
 //*********************** Externs *****************************
 
 extern std::string DEBUG_FILE_PATH;
+extern bool INITIALIZED_DEBUG_FILE;
 // ************************************************************
 
 static const std::string GO_MOLECULAR_FLAG     = "molecular_function";

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -24,6 +24,7 @@
  * You should have received a copy of the GNU General Public License
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 
 #include <csv.h>
 #include "ModDiamond.h"
@@ -94,14 +95,13 @@ std::vector<ENTAP_HEADERS> ModDiamond::UNIPROT_HEADERS = {
  * =====================================================================
  */
 ModDiamond::ModDiamond(std::string &execution_stage_path, std::string &fasta_path, EntapDataPtrs &entap_data,
-                       vect_str_t &databases)
-: AbstractSimilaritySearch(execution_stage_path, fasta_path, entap_data, "DIAMOND", DEFAULT_HEADERS, databases){
+                       vect_str_t &databases, std::string module_name, uint16 software_flag)
+: AbstractSimilaritySearch(execution_stage_path, fasta_path, entap_data, module_name, DEFAULT_HEADERS, databases){
 
-    FS_dprint("Spawn Object - ModDiamond");
+    FS_dprint("Spawn Object - ModDiamond: " + module_name);
     mParsedFile = false;
-    mSoftwareFlag = SIM_DIAMOND;
+    mSoftwareFlag = software_flag;
     mExePath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
-    mpFileSystem->delete_dir(mFigureDir);   // Don't need for DIAMOND, may change
 }
 
 /**
@@ -499,7 +499,6 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     GraphingManager::GraphingData graphingStruct;         // Graphing data
     std::string                 species;
     std::string                 database_shortname;
-    std::string                 figure_base;
     std::string                 frame;
     std::string                 base_path;
     std::string                 temp_file_path;
@@ -512,6 +511,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     uint64                      count_uninformative=0;  // Number of uninformative alignments
     uint64                      count_unselected=0;     // Number of unselected alignments (those that are not best hits)
     uint64                      count_TOTAL_alignments=0;
+    uint64                      count_no_taxonomy=0;     // Count number of alignments where tax information could not be found
     uint32                      ct;
     fp64                        percent;
     fp64                        contam_percent;
@@ -530,9 +530,7 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
         database_shortname = mPathToDatabase[database_path];
         base_path   = PATHS(mProcDir, database_shortname);
     }
-    figure_base = PATHS(base_path, FIGURE_DIR);
     mpFileSystem->create_dir(base_path);
-    mpFileSystem->create_dir(figure_base);
 
     // Open contam best hit tsv file and print headers
     std::string out_best_contams_filepath = PATHS(base_path, DIAMOND_PREFIX + SIM_SEARCH_DATABASE_BEST_HITS_CONTAM);
@@ -641,7 +639,11 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
                 }
 
                 // Count species type
-                species_counter.add_value(species);
+                if (species.empty()) {
+                    count_no_taxonomy++;
+                } else {
+                    species_counter.add_value(species);
+                }
 
                 // Check if this is an informative alignment and respond accordingly
                 if (sim_search_data->is_informative) {
@@ -677,28 +679,6 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     } catch (const ExceptionHandler &e) {throw e;}
 
     // ------------ Calculate statistics and print to output ------------ //
-
-    // ------------------- Setup graphing files ------------------------- //
-    GraphingManager::GraphingData graph_contaminants_bar;
-    GraphingManager::GraphingData graph_species_bar;
-    graph_species_bar.x_axis_label   = "Species";
-    graph_species_bar.y_axis_label   = "Count";
-    graph_species_bar.text_file_path = PATHS(figure_base, GRAPH_SPECIES_BAR_TXT);
-    graph_species_bar.fig_out_path   = PATHS(figure_base, GRAPH_SPECIES_BAR_PNG);
-    graph_species_bar.graph_title    = database_shortname + GRAPH_SPECIES_TITLE;
-    graph_species_bar.graph_type     = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
-    mpGraphingManager->initialize_graph_data(graph_species_bar);
-
-    GraphingManager::GraphingData graph_frame_inform_stack;
-    graph_frame_inform_stack.x_axis_label = "Category";
-    graph_frame_inform_stack.y_axis_label = "Count";
-    graph_frame_inform_stack.text_file_path = PATHS(figure_base, GRAPH_DATABASE_SUM_TXT);
-    graph_frame_inform_stack.fig_out_path   = PATHS(figure_base, GRAPH_DATABASE_SUM_PNG);
-    graph_frame_inform_stack.graph_title    = database_shortname + GRAPH_DATABASE_SUM_TITLE;
-    graph_frame_inform_stack.graph_type     = GraphingManager::ENT_GRAPH_BAR_STACKED;
-    mpGraphingManager->initialize_graph_data(graph_frame_inform_stack);
-
-
     // ------------------------------------------------------------------ //
 
     // Different headers if final analysis or database specific analysis
@@ -713,13 +693,20 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
            "\n\t\tWritten to: "                   << out_unselected_tsv;
     }
 
+
+    // Print taxonomy warning
+    if (count_no_taxonomy >= TAXONOMY_ATTEMPTS) {
+        ss << "\n\tWARNING taxonomy information could not be found for a large number of alignments and may skew taxonomy results for this database";
+        FS_dprint("WARNING taxonomy info could not be found for large number of alignments (" + std::to_string(count_no_taxonomy) + ")");
+    }
+
     // If overall alignments are 0, then throw error
     if (is_final && count_filtered == 0) {
         throw ExceptionHandler("No alignments found during Similarity Searching!",
                                ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
     }
 
-    // If no total or filealignments for this database, return and warn user
+    // If no total or file alignments for this database, return and warn user
     if (!is_final && (count_TOTAL_alignments == 0 || count_filtered == 0)) {
         ss << "WARNING: No alignments for this database";
         std::string out_msg = ss.str() + "\n";
@@ -746,8 +733,6 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     if (frame_inform_counter.find(NO_HIT_FLAG) != frame_inform_counter.end()) {
         for (auto &pair : frame_inform_counter[NO_HIT_FLAG]._data) {
             ss << "\n\t\t" << pair.first << "(" << pair.second << ")";
-            mpGraphingManager->add_datapoint(graph_frame_inform_stack.text_file_path, {pair.first, NO_HIT_FLAG,
-                                                                                       std::to_string(pair.second)});
         }
     }
     ss <<
@@ -755,8 +740,6 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     if (frame_inform_counter.find(INFORMATIVE_FLAG) != frame_inform_counter.end()) {
         for (auto &pair : frame_inform_counter[INFORMATIVE_FLAG]._data) {
             ss << "\n\t\t" << pair.first << "(" << pair.second << ")";
-            mpGraphingManager->add_datapoint(graph_frame_inform_stack.text_file_path, {pair.first, INFORMATIVE_FLAG,
-                                                                                       std::to_string(pair.second)});
         }
     }
     ss <<
@@ -764,34 +747,23 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
     if (frame_inform_counter.find(UNINFORMATIVE_FLAG) != frame_inform_counter.end()) {
         for (auto &pair : frame_inform_counter[UNINFORMATIVE_FLAG]._data) {
             ss << "\n\t\t" << pair.first << "(" << pair.second << ")";
-            mpGraphingManager->add_datapoint(graph_frame_inform_stack.text_file_path, {pair.first, UNINFORMATIVE_FLAG,
-                                                                                       std::to_string(pair.second)});
         }
     }
 
     // ********** Contaminant Calculations ************** //
     if (count_contam >= MIN_CONTAM_COUNT) {
         // Only show contaminant information if we have contaminants
-        contam_percent = ((fp64) count_contam / count_filtered) * ENTAP_PERCENT;
-
-        graph_contaminants_bar.x_axis_label   = "Contaminant Species";
-        graph_contaminants_bar.y_axis_label   = "Count";
-        graph_contaminants_bar.text_file_path = PATHS(figure_base, GRAPH_CONTAM_BAR_TXT);
-        graph_contaminants_bar.fig_out_path   = PATHS(figure_base, GRAPH_CONTAM_BAR_PNG);
-        graph_contaminants_bar.graph_title    = database_shortname + GRAPH_CONTAM_TITLE;
-        graph_contaminants_bar.graph_type     = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
-        mpGraphingManager->initialize_graph_data(graph_contaminants_bar);
-
+        contam_percent = ((fp64) count_contam / mpQueryData->getMTotalKeptSequences()) * ENTAP_PERCENT;
         ss <<
            "\n\tTotal unique contaminants: " << count_contam <<
-           "(" << contam_percent << "%): " <<
+           "(" << contam_percent << "% of total retained sequences): " <<
            "\n\t\tTranscriptome reference sequences labeled as a contaminant (FASTA):\n\t\t\t"
            << out_best_contams_filepath <<
            "\n\t\tTranscriptome reference sequences labeled as a contaminant (TSV):\n\t\t\t" << out_best_contams_filepath;
 
-        ss << "\n\t\tFlagged contaminants (all % based on total contaminants):";
+        ss << "\n\t\tFlagged contaminants (all % based on total retained sequences):";
         for (auto &pair : contam_counter._data) {
-            percent = ((fp64) pair.second / count_contam) * 100;
+            percent = ((fp64) pair.second / mpQueryData->getMTotalKeptSequences()) * 100;
             ss
                     << "\n\t\t\t" << pair.first << ": " << pair.second << "(" << percent << "%)";
         }
@@ -799,36 +771,26 @@ void ModDiamond::calculate_best_stats (bool is_final, std::string database_path)
         ct = 1;
         for (auto &pair : contam_species_counter._sorted) {
             if (ct > COUNT_TOP_SPECIES) break;
-            percent = ((fp64) pair.second / count_contam) * ENTAP_PERCENT;
+            percent = ((fp64) pair.second / mpQueryData->getMTotalKeptSequences()) * ENTAP_PERCENT;
             ss
                     << "\n\t\t\t" << ct << ")" << pair.first << ": "
                     << pair.second << "(" << percent << "%)";
-            mpGraphingManager->add_datapoint(graph_contaminants_bar.text_file_path, {pair.first, std::to_string(pair.second)});
             ct++;
         }
-
-        mpGraphingManager->graph_data(graph_contaminants_bar.text_file_path);
     }
 
     ss << "\n\tTop " << COUNT_TOP_SPECIES << " alignments by species:";
     ct = 1;
     for (auto &pair : species_counter._sorted) {
         if (ct > COUNT_TOP_SPECIES) break;
-        percent = ((fp64) pair.second / count_filtered) * ENTAP_PERCENT;
+        percent = ((fp64) pair.second / mpQueryData->getMTotalKeptSequences()) * ENTAP_PERCENT;
         ss
                 << "\n\t\t\t" << ct << ")" << pair.first << ": "
-                << pair.second << "(" << percent << "%)";
-        mpGraphingManager->add_datapoint(graph_species_bar.text_file_path, {pair.first, std::to_string(pair.second)});
+                << pair.second << "(" << percent << "% of total retained sequences)";
         ct++;
     }
     std::string out_msg = ss.str() + "\n";
     mpFileSystem->print_stats(out_msg);
-    // ------------------------------------------------------------------ //
-
-
-    // -------------------------- Graphing Handle ----------------------- //
-    mpGraphingManager->graph_data(graph_species_bar.text_file_path);
-    mpGraphingManager->graph_data(graph_frame_inform_stack.text_file_path);
     // ------------------------------------------------------------------ //
 }
 

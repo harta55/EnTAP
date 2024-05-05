@@ -1,8 +1,7 @@
 .. _rsem: https://github.com/deweylab/RSEM
 .. _InterProScan: http://www.ebi.ac.uk/interpro/interproscan.html
-.. _eggnog: https://github.com/jhcepas/eggnog-mapper
+.. _EggNOG-mapper: https://github.com/jhcepas/eggnog-mapper
 .. _diamond: https://github.com/bbuchfink/diamond
-.. _GeneMarkS-T: http://exon.gatech.edu/GeneMark/
 .. _TCLAP: http://tclap.sourceforge.net/
 .. _cereal: https://uscilab.github.io/cereal/
 .. _TransDecoder: https://github.com/TransDecoder/TransDecoder/releases
@@ -23,14 +22,15 @@ The final annotation integrates across multiple databases and selects an optimal
 Pipeline Stages
 ----------------------------
     * Transcriptome Filtering: designed to remove assembly artifacts and identify true CDS (complete and partial genes)
-        1. Expression Filtering (RSEM)
-        2. Frame Selection (TransDecoder by default, or GeneMarkS-T)
+        1. Expression Filtering (optional): filter the transcriptome based on gene expression levels from SAM/BAM file (RSEM)
+        2. Frame Selection (optional): refine transcriptome further based on true CDS (TransDecoder)
 
     * Transcriptome Annotation: designed to assign functional information to sequences (homology, Gene Ontology, KEGG)
         3. Similarity Search: optimized search against user-selected databases (DIAMOND).  
         4. Contaminant Filtering and Best Hit Selection: selects final annotation and identifies potential contaminants
-        5. Orthologous Group Assignment: independent assignment of translated protein sequences to gene families (eggNOG).  Includes protein  domains (SMART/Pfam), Gene Ontology (GO) terms, and KEGG pathway assignment.
+        5. Orthologous Group Assignment: independent assignment of translated protein sequences to gene families (eggNOG/eggnog-mapper).  Includes protein  domains (SMART/Pfam), Gene Ontology (GO) terms, and KEGG pathway assignment.
         6. InterProScan (optional): sequence search against the families of InterPro databases to assign protein domains, Gene Ontology terms, and pathway information
+        7. Horizontal Gene Transfer (optional): analyze user-selected genes for horizontally transferred genes utilizing donor/recipient databases (DIAMOND)
 
 
 .. image::    EnTAP_Overview_hires.png
@@ -55,36 +55,48 @@ Citations
       Sunagawa, Michael Kuhn, Lars Juhl Jensen, Christian von Mering, and Peer
       Bork. Nucl. Acids Res. (04 January 2016) 44 (D1): D286-D293. doi:
       10.1093/nar/gkv1248
+	  
+[4]   eggNOG 5.0: a hierarchical, functionally and phylogenetically annotated
+      orthology resource based on 5090 organisms and 2502 viruses. Jaime
+      Huerta-Cepas, Damian Szklarczyk, Davide Heller, Ana Hernández-Plaza, Sofia
+      K Forslund, Helen Cook, Daniel R Mende, Ivica Letunic, Thomas Rattei, Lars
+      J Jensen, Christian von Mering, Peer Bork Nucleic Acids Res. 2019 Jan 8;
+      47(Database issue): D309–D314. doi: 10.1093/nar/gky1085 
+	  
+[5]   eggNOG-mapper v2: functional annotation, orthology assignments, and domain 
+      prediction at the metagenomic scale. Carlos P. Cantalapiedra, 
+      Ana Hernandez-Plaza, Ivica Letunic, Peer Bork, Jaime Huerta-Cepas. 2021.
+      Molecular Biology and Evolution, msab293, https://doi.org/10.1093/molbev/msab293
 
-[4]   G. O. Consortium, "Gene Ontology Consortium: going forward," (in eng), Nucleic Acids Res,
+[6]   G. O. Consortium, "Gene Ontology Consortium: going forward," (in eng), Nucleic Acids Res,
       vol. 43, no. Database issue, pp. D1049-56, Jan 2015. 
 
-[5]   J. Huerta-Cepas et al., "Fast genome-wide functional annotation through orthology 
+[7]   J. Huerta-Cepas et al., "Fast genome-wide functional annotation through orthology 
       assignment by eggNOG-mapper," (in eng), Mol Biol Evol, Apr 2017.
 
-[6]   M. Kanehisa, M. Furumichi, M. Tanabe, Y. Sato, and K. Morishima, "KEGG: 
+[8]   M. Kanehisa, M. Furumichi, M. Tanabe, Y. Sato, and K. Morishima, "KEGG: 
       new perspectives on genomes, pathways, diseases and 
       drugs," (in eng), Nucleic Acids Res, vol. 45, no. D1, pp. D353-D361, Jan 2017
    
-[7]   B. Li and C. N. Dewey, "RSEM: accurate transcript quantification from 
+[9]   B. Li and C. N. Dewey, "RSEM: accurate transcript quantification from 
       RNA-Seq data with or without a reference genome," (in eng), 
       BMC Bioinformatics, vol. 12, p. 323, Aug 2011. 
 
-[8]   P. Jones et al., "InterProScan 5: genome-scale protein function classification," (in eng),
+[10]  P. Jones et al., "InterProScan 5: genome-scale protein function classification," (in eng),
       Bioinformatics, vol. 30, no. 9, pp. 1236-40, May 2014.
 
-[9]   S. Tang, A. Lomsadze, and M. Borodovsky, "Identification of protein coding regions in
+[11]   S. Tang, A. Lomsadze, and M. Borodovsky, "Identification of protein coding regions in
       RNA transcripts," Nucleic Acids Research, 2015
 
-[10]  https://github.com/TransDecoder/TransDecoder/releases
+[12]  https://github.com/TransDecoder/TransDecoder/releases
+
 
 Software contained or used within this pipeline:
 -------------------------------------------------------
 * `RSEM`_
 * `DIAMOND`_
-* `EggNOG`_
-* `GeneMarkS-T`_
 * `TransDecoder`_
 * `InterProScan`_
 * `TCLAP`_
 * `cereal`_
+* `EggNOG-mapper`_

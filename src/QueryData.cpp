@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -46,17 +46,17 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
 
         /* Similarity Search - General */
         {"Subject Sequence",    false},
-        {"Percent Identical",   false},                          // 5
+        {"Percent Identical",   false},
         {"Alignment Length",    false},
         {"Mismatches",          false},
         {"Gap Openings",        false},
         {"Query Start",         false},
-        {"Query End",           false},                          // 10
+        {"Query End",           false},
         {"Subject Start",       false},
         {"Subject End",         false},
         {"E Value",             false},
         {"Coverage",            false},
-        {"Description",         false},                          // 15
+        {"Description",         false},
         {"Species",             false},
         {"Taxonomic Lineage",   false},
         {"Origin Database",     false},
@@ -64,7 +64,7 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
         {"Informative",         false},
 
         /* Similarity Search - UniProt */
-        {"UniProt Database Cross Reference",        false},      // 20
+        {"UniProt Database Cross Reference",        false},
         {"UniProt Additional Information",          false},
         {"UniProt KEGG Terms",                      false},
         {"UniProt GO Biological",                   false},
@@ -82,13 +82,19 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
         {"EggNOG Description",                     false},
         {"EggNOG BIGG Reaction",                   false},
         {"EggNOG KEGG Terms",                      false},
+        {"EggNOG KEGG KO",                         false},
+        {"EggNOG KEGG Pathway",                    false},
+        {"EggNOG KEGG Module",                     false},
+        {"EggNOG KEGG Reaction",                   false},
+        {"EggNOG KEGG RClass",                     false},
+        {"EggNOG BRITE",                           false},
         {"EggNOG GO Biological",                   false},
         {"EggNOG GO Cellular",                     false},
         {"EggNOG GO Molecular" ,                   false},
         {"EggNOG Protein Domains",                 false},
 
         /* Ontology - InterProScan */
-        {"IPScan GO Biological",                    false},     // 40
+        {"IPScan GO Biological",                    false},
         {"IPScan GO Cellular",                      false},
         {"IPScan GO Molecular",                     false},
         {"IPScan Pathways",                         false},
@@ -100,9 +106,11 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
         /* Ontology - BUSCO */
         {"BUSCO ID",                                false},
         {"BUSCO Status",                            false},
-        {"BUSCO Length",                            false},    // 50
+        {"BUSCO Length",                            false},
         {"BUSCO Score",                             false},
 
+        /* Horizontal Gene Transfer */
+        {"Horizontally Transferred Gene",           false},
 
         {"Unused",                                  false}
 };
@@ -275,6 +283,7 @@ void QueryData::generate_transcriptome(std::string &input_path, bool print_outpu
 
     avg_len = total_len / count_seqs;
     mTotalSequences = count_seqs;
+    mTotalKeptSequences = count_seqs;
     DATA_FLAG_GET(IS_PROTEIN)  ? mProteinLengthStart = total_len : mNucleoLengthStart = total_len;
     // first - n50, second - n90
     n_vals = calculate_N_vals(sequence_lengths, total_len);
@@ -301,6 +310,7 @@ void QueryData::generate_transcriptome(std::string &input_path, bool print_outpu
 
 void QueryData::init_params(FileSystem *fileSystem, UserInput *userInput) {
     mTotalSequences = 0;
+    mTotalKeptSequences = 0;
     mDataFlags      = 0;
     mpSequences      = new QUERY_MAP_T;
 
@@ -415,6 +425,7 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
     uint32                 count_TOTAL_ann=0;
     uint32                 count_TOTAL_unann=0;
     uint32                 count_TOTAL_unann_kept=0;    // Total sequences unannotated if kept after expression/frame selection
+    uint32                 count_hgts=0;                // Total number of Horizontally Transferred Genes
 
     // output files
     std::string            out_unannotated_path;
@@ -422,6 +433,7 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
     std::string            out_annotated_contam_path;
     std::string            out_annotated_without_contam_path;
     std::string            out_entap_report_path;
+    std::string            hgt_sequence_ids;            // Commma delim list of confirmed HGT's sequence ID
 
     std::string            out_msg;
     bool                   is_exp_kept;
@@ -468,9 +480,11 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
     out_unannotated_path = PATHS(outpath, OUT_UNANNOTATED_FILENAME);
     start_alignment_files(out_unannotated_path, headers, go_levels, unannotated_output_types);
     out_annotated_contam_path = PATHS(outpath, OUT_ANNOTATED_CONTAM_FILENAME);
-    start_alignment_files(out_annotated_contam_path, headers, go_levels, output_types);
     out_annotated_without_contam_path = PATHS(outpath, OUT_ANNOTATED_NO_CONTAM_FILENAME);
-    start_alignment_files(out_annotated_without_contam_path, headers, go_levels, output_types);
+    if (mpUserInput->has_input(INPUT_FLAG_CONTAMINANT)) {
+        start_alignment_files(out_annotated_contam_path, headers, go_levels, output_types);
+        start_alignment_files(out_annotated_without_contam_path, headers, go_levels, output_types);
+    }
     out_entap_report_path = PATHS(outpath, OUT_ENTAP_REPORT_FILENAME);
     std::vector<FileSystem::ENT_FILE_TYPES> entap_report_format = {FileSystem::ENT_FILE_DELIM_TSV};
     start_alignment_files(out_entap_report_path, headers, go_levels, entap_report_format);
@@ -496,6 +510,10 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
 
         if (is_sim_hit && !is_ontology) count_sim_only++;
         if (!is_sim_hit && is_ontology) count_ontology_only++;
+        if (pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_HGT_CONFIRMED)) {
+            count_hgts++;
+            hgt_sequence_ids += pair.first + ",";
+        }
 
         if (is_exp_kept && is_frame_kept) {
             count_total_kept_sequences++;
@@ -555,17 +573,25 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
         ss <<
            "\nSimilarity Search"                               <<
            "\n\tTotal unique sequences with an alignment: "    << count_sim_hits   << " (" <<
-                 (((fp64) count_sim_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
-           "\n\t\tTotal alignments flagged as a contaminant: "   << count_sim_contam << " (" <<
-                 (((fp64) count_sim_contam / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
-           "\n\t\tTotal alignments NOT flagged as a contaminant: "   << (count_sim_hits - count_sim_contam) << " (" <<
-                 (((fp64) (count_sim_hits - count_sim_contam) / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
-           "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits << " (" <<
+                 (((fp64) count_sim_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
+        if (mpUserInput->has_input(INPUT_FLAG_CONTAMINANT)) {
+            ss <<
+               "\n\t\tTotal alignments flagged as a contaminant: "   << count_sim_contam << " (" <<
+               (((fp64) count_sim_contam / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
+               "\n\t\tTotal alignments NOT flagged as a contaminant: "   << (count_sim_hits - count_sim_contam) << " (" <<
+               (((fp64) (count_sim_hits - count_sim_contam) / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)";
+        } else {
+            ss <<
+                "\n\t\tNo contaminants were selected by user";
+        }
+
+        ss << "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits << " (" <<
                  (((fp64) count_sim_no_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
     }
     if (DATA_FLAG_GET(SUCCESS_ONTOLOGY)) {
         for (uint16 flag : ontology_flags) {
             switch (flag) {
+                case ONT_EGGNOG_MAPPER: // WARNING fall through
                 case ONT_EGGNOG_DMND:
                     ss <<
                        "\nGene Families"        <<
@@ -587,21 +613,48 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
             }
         }
     }
+
+    if (DATA_FLAG_GET(SUCCESS_HGT)) {
+        ss <<
+           "\nHorizontal Gene Transfer";
+        if (count_hgts >0) {
+            hgt_sequence_ids.pop_back();
+            ss <<
+                "\n\tTotal number of Horizontally Transferred Genes: " << count_hgts <<
+                "\n\tHGT genes: " << hgt_sequence_ids;
+        } else {
+            ss <<
+                "\n\tNo Horizontally Transferred Genes were found!";
+        }
+    }
+
     ss <<
        "\nTotals"   <<
+       "\nEnTAP files written to: " << mpFileSystem->get_root_path() <<
        "\n\tTotal retained sequences (after filtering and/or frame selection): " << count_total_kept_sequences <<
+       "\n\t\tFinal transcriptome written to directory: " << FileSystem::ENTAP_TRANSCRIPTOME_DIR <<
        "\n\tTotal unique sequences annotated (similarity search alignments only): "      << count_sim_only      << " (" <<
             (((fp64) count_sim_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
        "\n\tTotal unique sequences annotated (gene family assignment only): "            << count_ontology_only << " (" <<
             (((fp64) count_ontology_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
        "\n\tTotal unique sequences annotated (gene family and/or similarity search): "   << count_TOTAL_ann     << " (" <<
             (((fp64) count_TOTAL_ann / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
-       "\n\t\tTotal alignments flagged as a contaminant (gene family and/or similarity search): " << count_sim_contam << " (" <<
-            (((fp64) count_sim_contam / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
-       "\n\t\tTotal alignments NOT flagged as a contaminant (gene family and/or similarity search): " << (count_sim_hits - count_sim_contam) << " (" <<
-            (((fp64) (count_sim_hits - count_sim_contam) / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
+       "\n\t\tWritten to: " << PATHS(FileSystem::ENTAP_FINAL_OUTPUT, OUT_ANNOTATED_FILENAME);
+       if (mpUserInput->has_input(INPUT_FLAG_CONTAMINANT)) {
+           ss << "\n\t\tTotal annotated sequences flagged as a contaminant from similarity search: " << count_sim_contam << " (" <<
+           (((fp64) count_sim_contam / count_TOTAL_ann) * ENTAP_PERCENT) << "% of total annotated)" <<
+           "\n\t\t\tWritten to: " << PATHS(FileSystem::ENTAP_FINAL_OUTPUT, OUT_ANNOTATED_CONTAM_FILENAME) <<
+           "\n\t\tTotal annotated sequences NOT flagged as a contaminant from similarity search: " << (count_TOTAL_ann - count_sim_contam) << " (" <<
+           (((fp64) (count_TOTAL_ann - count_sim_contam) / count_TOTAL_ann) * ENTAP_PERCENT) << "% of total annotated)" <<
+           "\n\t\t\tWritten to: " << PATHS(FileSystem::ENTAP_FINAL_OUTPUT, OUT_ANNOTATED_NO_CONTAM_FILENAME);
+       } else {
+           ss << "\n\t\tNo contaminants were selected by user";
+       }
+
+       ss <<
        "\n\tTotal unique sequences unannotated (gene family and/or similarity search): " << count_TOTAL_unann_kept << " ("
-            << (((fp64) count_TOTAL_unann_kept / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)";
+            << (((fp64) count_TOTAL_unann_kept / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
+       "\n\t\tWritten to: " << PATHS(FileSystem::ENTAP_FINAL_OUTPUT, OUT_UNANNOTATED_FILENAME);
 
     out_msg = ss.str();
     mpFileSystem->print_stats(out_msg);
@@ -1249,4 +1302,35 @@ bool QueryData::print_transcriptome(uint32 flags, std::string &outpath, SEQUENCE
     }
     outfile.close();
     return ret;
+}
+
+void QueryData::set_is_success_hgt(bool val) {
+    DATA_FLAG_CHANGE(SUCCESS_HGT, val);
+}
+
+uint64 QueryData::get_sequence_count(uint32 flags) const {
+    uint64 ret_count=0;
+    for (auto &pair : *mpSequences) {
+        // Check if this sequence has any of the flags we want
+        if (pair.second->QUERY_FLAG_CONTAINS(flags)){
+            ret_count++;
+        }
+    }
+    return ret_count;
+}
+
+uint32 QueryData::getMTotalSequences() const {
+    return mTotalSequences;
+}
+
+bool QueryData::is_nucleotide_data() {
+    return DATA_FLAG_GET(IS_NUCLEOTIDE);
+}
+
+uint32 QueryData::getMTotalKeptSequences() const {
+    return mTotalKeptSequences;
+}
+
+void QueryData::setMTotalKeptSequences(uint32 mTotalKeptSequences) {
+    QueryData::mTotalKeptSequences = mTotalKeptSequences;
 }

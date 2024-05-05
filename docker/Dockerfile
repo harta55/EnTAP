@@ -1,5 +1,4 @@
-FROM --platform=linux/amd64 debian:latest
-
+FROM --platform=linux/amd64 python:3.10
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Update and install dependencies
@@ -9,7 +8,6 @@ RUN apt-get update && \
         wget \
         unzip \
         gnupg \
-		git \
         default-jre \
         python3-pip \
         cmake \
@@ -19,10 +17,14 @@ RUN apt-get update && \
         elfutils \
         libtclap-dev \
         libgsl-dev \
+        sqlite3 \
         python3-numpy \
         python3-pandas \
         python3-xmltodict \
-        python3-matplotlib
+        python3-matplotlib \
+        python3-setuptools && \
+        apt-get clean && \
+        rm -rf /var/lib/apt/lists/*
 
 # Create a symbolic link for Python
 RUN ln -s /usr/bin/python3 /usr/bin/python && \
@@ -61,7 +63,17 @@ RUN apt-get -y install zlib1g-dev \
 && cd RSEM-1.3.3 \
 && make \
 && make ebseq \
-&& make install
+&& make install \
+&& cd .. \
+&& rm -rf RSEM-1.3.3 v1.3.3.tar.gz
+
+# Download eggnog-mapper
+RUN wget https://github.com/eggnogdb/eggnog-mapper/archive/refs/tags/2.1.12.tar.gz \
+    && tar -zxvf 2.1.12.tar.gz \
+    && cd eggnog-mapper-2.1.12 \
+    && python setup.py install \
+    && cd .. \
+    && rm -rf eggnog-mapper-2.1.12 2.1.12.tar.gz
 
 # Clone EnTAP repository and install requirements
 RUN git clone https://github.com/harta55/EnTAP.git /tmp/entap && \

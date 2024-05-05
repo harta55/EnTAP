@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -43,6 +43,7 @@
 #include "database/BuscoDatabase.h"
 #include "ontology/ModBUSCO.h"
 #include "frame_selection/ModGeneMarkST.h"
+#include "user_inputs/GFF_File.h"
 //**************************************************************
 
 //*********************** Defines ******************************
@@ -80,8 +81,13 @@
 #define DESC_OVERWRITE      "Select this option if you would like to overwrite files from a previous execution of EnTAP."   \
                             " This will DISABLE 'picking up where you left off' which enables you to continue an annotation" \
                             " from where you left off before. Refer to the documentation for more information."
-#define CMD_INI_FILE        "ini"
-#define DESC_INI_FILE      "[REQUIRED] Specify path to the entap_config.ini file that will be used to find all of the configuration data."
+
+#define CMD_ENT_RUN_PARAM_INI_FILE        "run-ini"
+#define DESC_ENT_RUN_PARAM_INI_FILE      "[REQUIRED] Specify path to the entap_run.params file that will be used to find all of the run-specific commands."
+
+#define CMD_ENT_CONFIG_INI_FILE        "entap-ini"
+#define DESC_ENT_CONFIG_INI_FILE      "[REQUIRED] Specify path to the entap_config.ini file that will be used to find all of the EnTAP software paths."
+
 
 #define DESC_VERSION       "Print the version of EnTAP software you are running."
 #define CMD_VERSION        "version"
@@ -203,7 +209,11 @@ const fp64   UserInput::RSEM_FPKM_DEFAULT               = 0.5;
                                 "command '--no_refine_starts' when it is executed. Default: False\n"           \
                                 "This will 'start refinement identifies potential start codons for " \
                                 "5' partial ORFs using a PWM, process on by default.' "
+
+/* -----------------------------------------------------------*/
 /* ------------------ Similarity Search Commands -------------*/
+/* -----------------------------------------------------------*/
+
 #define CMD_DATABASE        "database"
 #define CMD_SHORT_DATABASE  "d"
 #define DESC_DATABASE       "Provide the paths to the databases you would like to use for either 'run' or 'configuration'." \
@@ -218,7 +228,7 @@ const fp64   UserInput::RSEM_FPKM_DEFAULT               = 0.5;
 #define DESC_DIAMOND_EXE     "Method to execute DIAMOND. This can be a path to the executable or simply 'diamond' if installed globally."
 #define CMD_DIAMOND_EXE     "diamond-exe"
 #define DESC_TAXON          "Specify the type of species/taxon you are analyzing and would like alignments closer in taxonomic relevance" \
-                            " to be favored (based on NCBI Taxonomic Database)\n"              \
+                            " to be favored (based on NCBI Taxonomic Database). This field is also used for determination of horizontally transferred genes.\n"              \
                             "Note: replace all spaces with underscores '_'"
 #define CMD_TAXON           "taxon"
 #define CMD_QCOVERAGE       "qcoverage"
@@ -265,13 +275,28 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
         "uninformative"
 };
 
-/* -------------------- Ontology Commands --------------------*/
+/* -----------------------------------------------------------*/
+/* ---------------------- Ontology Commands ------------------*/
+/* -----------------------------------------------------------*/
+
+// EggNOG Mapper Commands
+#define DESC_EGGNOG_MAP_EXE "Path to EggNOG-mapper executable. Likely just 'emapper.py'"
+#define CMD_EGGNOG_MAP_EXE "eggnog-map-exe"
+
+#define DESC_EGGNOG_MAP_DATA_DIR "Path to directory containing the EggNOG SQL database(s)."
+#define CMD_EGGNOG_MAP_DATA_DIR "eggnog-map-data"
+
+#define DESC_EGGNOG_MAP_DMND_DB "Path to EggNOG DIAMOND configured database that was generated during the Configuration stage"
+#define CMD_EGGNOG_MAP_DMND_DB "eggnog-map-dmnd"
+
+// EggNOG DIAMOND Commands
 #define DESC_EGGNOG_DMND     "Path to EggNOG DIAMOND configured database that was generated during the Configuration stage."
 #define CMD_EGGNOG_DMND     "eggnog-dmnd"
 
 #define DESC_EGGNOG_SQL     "Path to the EggNOG SQL database that was downloaded during the Configuration stage."
 #define CMD_EGGNOG_SQL      "eggnog-sql"
 
+// InterProScan Commands
 #define DESC_INTERPRO_EXE   "Execution method of InterProScan. This is how InterProScan is generally ran on your system. " \
                             " It could be as simple as 'interproscan.sh' depending on if it is globally installed."
 #define CMD_INTERPRO_EXE    "interproscan-exe"
@@ -324,6 +349,17 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
 #define DESC_BUSCO_EVAL    "Minimum E-Value for BUSCO related BLAST searches."
 const fp64   UserInput::DEFAULT_BUSCO_E_VALUE           = 1e-5;
 
+/* -------------------- Horizontal Gene Transfer Commands --------------------*/
+#define CMD_HGT_DONOR_DB  "hgt-donor"
+#define DESC_HGT_DONOR_DB "Specify the DIAMOND configured (.dmnd extension) donor databases for Horizontal Gene Transfer \n" \
+                            "analysis. Separate databases with a comma (',')"
+#define CMD_HGT_RECIPIENT_DB "hgt-recipient"
+#define DESC_HGT_RECIPIENT_DB "Specify the DIAMOND configured (.dmnd extension) recipient databases for Horizontal Gene Transfer \n" \
+                            "analysis. Separate databases with a comma (',')"
+#define CMD_HGT_GFF_FILE "hgt-gff"
+#define DESC_HGT_GFF_FILE "Specify the path to the GFF file associated with your dataset. Ensure that all headers match those in your \n" \
+                            "input transcript file."
+
 #define INI_FRAME_GENEMARK "frame_selection-genemarks-t"
 #define INI_FRAME_TRANSDECODER "frame_selection-transdecoder"
 #define INI_GENERAL "general"
@@ -336,8 +372,10 @@ const fp64   UserInput::DEFAULT_BUSCO_E_VALUE           = 1e-5;
 #define INI_ONT_INTERPRO "ontology-interproscan"
 #define INI_ONTOLOGY "ontology"
 #define INI_ONT_EGGNOG "ontology-eggnog"
+#define INI_ONT_EGGNOG_MAPPER "ontology-eggnog-mapper"
 #define INI_ENTAP "entap"
 #define INI_TRANSC_BUSCO "ontology-busco"
+#define INI_HORIZONTAL_GT "horizontal-gene-transfer"
 
 #define ENTAP_INI_NULL_STR_VECT vect_str_t()
 #define ENTAP_INI_NULL_INT_VECT vect_uint16_t()
@@ -348,19 +386,22 @@ const fp64   UserInput::DEFAULT_BUSCO_E_VALUE           = 1e-5;
 #define ENTAP_INI_NULL_VAL boost::any()
 
 //**************************************************************
-const std::string UserInput::ENTAP_INI_FILENAME         = "entap_config.ini";
+const std::string UserInput::ENTAP_RUN_PARAM_INI_FILENAME = "entap_run.params";
+const std::string UserInput::ENTAP_CONFIG_INI_FILENAME    = "entap_config.ini";
 
 const vect_uint16_t UserInput::DEFAULT_DATA_TYPE        = vect_uint16_t{EntapDatabase::ENTAP_SERIALIZED};
 const std::string UserInput::DEFAULT_STATE              ="+";
 const uint16 UserInput::DEFAULT_FRAME_SELECTION         = FRAME_TRANSDECODER;
 const vect_uint16_t UserInput::DEFAULT_ONT_LEVELS       =vect_uint16_t{0};
-const vect_uint16_t UserInput::DEFAULT_ONTOLOGY         =vect_uint16_t{ONT_EGGNOG_DMND};
+const vect_uint16_t UserInput::DEFAULT_ONTOLOGY         =vect_uint16_t{ONT_EGGNOG_MAPPER};
 
+// --- Frame Selection Default Values ---
 const uint16      UserInput::DEFAULT_TRANSDECODER_MIN_PROTEIN = 100;
-
 const std::string UserInput::TRANSDECODER_LONG_DEFAULT_EXE    = "TransDecoder.LongOrfs";
 const std::string UserInput::TRANSDECODER_PREDICT_DEFAULT_EXE = "TransDecoder.Predict";
 const std::string UserInput::DIAMOND_DEFAULT_EXE              = PATHS(FileSystem::get_exe_dir(),"/libs/diamond-v2.1.8/bin/diamond");
+
+// --- Ontology Default Values ---
 const std::string UserInput::EGG_SQL_DB_FILENAME              = "eggnog.db";
 const std::string UserInput::EGG_DMND_FILENAME                = "eggnog_proteins.dmnd";
 const std::string UserInput::INTERPRO_DEF_EXE                 = "interproscan.sh";
@@ -373,6 +414,8 @@ const std::string UserInput::ENTAP_DATABASE_BIN_DEFAULT       = PATHS(BIN_PATH_D
 const std::string UserInput::ENTAP_DATABASE_SQL_DEFAULT       = PATHS(DATABASE_DIR_DEFAULT, ENTAP_DATABASE_SQL_FILENAME);
 const std::string UserInput::EGG_SQL_DB_DEFAULT               = PATHS(DATABASE_DIR_DEFAULT, EGG_SQL_DB_FILENAME);
 const std::string UserInput::EGG_DMND_DEFAULT                 = PATHS(BIN_PATH_DEFAULT, EGG_DMND_FILENAME);
+const std::string UserInput::EGG_MAP_EXE_DEFAULT              = "emapper.py";
+const std::string UserInput::EGG_MAP_DATA_DIR_DEFAULT         = DATABASE_DIR_DEFAULT;
 
 // INI file path defaults using static filesystem
 const std::string UserInput::RSEM_SAM_VALID        = "rsem-sam-validator";
@@ -387,7 +430,8 @@ const std::string UserInput::DEFAULT_RSEM_CONV_SAM = PATHS(RSEM_DEFAULT_EXE_DIR,
 
 const std::string UserInput::GENEMARK_DEFAULT_EXE        = PATHS(FileSystem::get_exe_dir(),"/libs/gmst_linux_64/gmst.pl");
 const std::string UserInput::DEFAULT_OUT_DIR             = PATHS(FileSystem::get_cur_dir(),"entap_outfiles");
-const std::string UserInput::DEFAULT_INI_PATH            = PATHS(FileSystem::get_cur_dir(), ENTAP_INI_FILENAME);
+const std::string UserInput::DEFAULT_RUN_PARAM_INI_FILENAME = PATHS(FileSystem::get_cur_dir(), ENTAP_RUN_PARAM_INI_FILENAME);
+const std::string UserInput::DEFAULT_ENT_CONFIG_INI_PATH = PATHS(FileSystem::get_cur_dir(), ENTAP_CONFIG_INI_FILENAME);
 const std::string UserInput::DEFAULT_ENTAP_DB_BIN_INI    = PATHS(FileSystem::get_exe_dir(), ENTAP_DATABASE_BIN_DEFAULT);
 const std::string UserInput::DEFAULT_ENTAP_DB_SQL_INI    = PATHS(FileSystem::get_exe_dir(), ENTAP_DATABASE_SQL_DEFAULT);
 const std::string UserInput::DEFAULT_EGG_SQL_DB_INI      = PATHS(FileSystem::get_exe_dir(), EGG_SQL_DB_DEFAULT);
@@ -402,79 +446,87 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {ENTAP_INI_NULL,ENTAP_INI_NULL           ,ENTAP_INI_NULL  ,ENTAP_INI_NULL             , ENTAP_INI_NULL  ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
 
 /* General Input Commands */
-        {INI_GENERAL   ,CMD_OUTPUT_DIR           ,ENTAP_INI_NULL  ,DESC_OUTPUT_DIR            ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_OUT_DIR        ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_OUTPUT_DIR           ,ENTAP_INI_NULL  ,DESC_OUTPUT_DIR            ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_OUT_DIR        ,ENT_RUN_PARAM_INI_FILE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_CONFIG               ,ENTAP_INI_NULL  ,DESC_CONFIG                ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_RUN_PROTEIN          ,ENTAP_INI_NULL  ,DESC_RUN_PROTEIN           ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_RUN_NUCLEO           ,ENTAP_INI_NULL  ,DESC_RUN_NUCLEO            ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
-        {INI_GENERAL   ,CMD_OVERWRITE            ,ENTAP_INI_NULL  ,DESC_OVERWRITE             ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
-        {INI_GENERAL   ,CMD_INI_FILE             ,ENTAP_INI_NULL  ,DESC_INI_FILE              ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_INI_PATH       ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_OVERWRITE            ,ENTAP_INI_NULL  ,DESC_OVERWRITE             ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_ENT_RUN_PARAM_INI_FILE,ENTAP_INI_NULL ,DESC_ENT_RUN_PARAM_INI_FILE,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_RUN_PARAM_INI_FILENAME,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_ENT_CONFIG_INI_FILE  ,ENTAP_INI_NULL  ,DESC_ENT_CONFIG_INI_FILE   ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENT_CONFIG_INI_PATH,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
 //        {INI_GENERAL   ,CMD_HELP                 ,CMD_SHORT_HELP       ,DESC_HELP             ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL   ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
 //        {INI_GENERAL   ,CMD_VERSION              ,CMD_SHORT_VERSION    ,DESC_VERSION          ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL   ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
-        {INI_GENERAL   ,CMD_INPUT_TRAN           ,CMD_SHORT_INPUT_TRAN ,DESC_INPUT_TRAN       ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
-        {INI_GENERAL   ,CMD_DATABASE             ,CMD_SHORT_DATABASE   ,DESC_DATABASE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_INPUT_TRAN           ,CMD_SHORT_INPUT_TRAN ,DESC_INPUT_TRAN       ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_DATABASE             ,CMD_SHORT_DATABASE   ,DESC_DATABASE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_GRAPHING             ,ENTAP_INI_NULL  ,DESC_GRAPHING              ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
-        {INI_GENERAL   ,CMD_NO_TRIM              ,ENTAP_INI_NULL  ,DESC_NO_TRIM               ,EX_NO_TRIM       ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
-        {INI_GENERAL   ,CMD_THREADS              ,CMD_SHORT_THREADS    ,DESC_THREADS          ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT         ,DEFAULT_THREADS        ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_NO_TRIM              ,ENTAP_INI_NULL  ,DESC_NO_TRIM               ,EX_NO_TRIM       ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_THREADS              ,CMD_SHORT_THREADS    ,DESC_THREADS          ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT         ,DEFAULT_THREADS        ,ENT_RUN_PARAM_INI_FILE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_STATE                ,ENTAP_INI_NULL  ,DESC_STATE                 ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_STATE          ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_NOCHECK              ,ENTAP_INI_NULL  ,DESC_NOCHECK               ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
-        {INI_GENERAL   ,CMD_OUTPUT_FORMAT        ,ENTAP_INI_NULL  ,DESC_OUTPUT_FORMAT         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_OUT_FORMAT     ,ENT_INI_FILE         ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_OUTPUT_FORMAT        ,ENTAP_INI_NULL  ,DESC_OUTPUT_FORMAT         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_OUT_FORMAT     ,ENT_RUN_PARAM_INI_FILE         ,ENTAP_INI_NULL_VAL},
 
 /* EnTAP API Commands */
         {INI_ENTAP_API,CMD_ENTAP_API_TAXON      ,ENTAP_INI_NULL  ,DESC_ENTAP_API_TAXON       ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
 
 /* EnTAP Commands */
-        {INI_ENTAP     ,CMD_ENTAP_DB_BIN         ,ENTAP_INI_NULL  ,DESC_ENTAP_DB_BIN          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENTAP_DB_BIN_INI, ENT_INI_FILE        ,ENTAP_INI_NULL_VAL},
-        {INI_ENTAP     ,CMD_ENTAP_DB_SQL         ,ENTAP_INI_NULL  ,DESC_ENTAP_DB_SQL          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENTAP_DB_SQL_INI, ENT_INI_FILE        ,ENTAP_INI_NULL_VAL},
-        {INI_ENTAP     ,CMD_ENTAP_GRAPH_PATH     ,ENTAP_INI_NULL  ,DESC_ENTAP_GRAPH_PATH      ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENTAP_GRAPH_INI , ENT_INI_FILE        ,ENTAP_INI_NULL_VAL},
+        {INI_ENTAP     ,CMD_ENTAP_DB_BIN         ,ENTAP_INI_NULL  ,DESC_ENTAP_DB_BIN          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENTAP_DB_BIN_INI, ENT_CONFIG_INI_FILE  ,ENTAP_INI_NULL_VAL},
+        {INI_ENTAP     ,CMD_ENTAP_DB_SQL         ,ENTAP_INI_NULL  ,DESC_ENTAP_DB_SQL          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENTAP_DB_SQL_INI, ENT_CONFIG_INI_FILE  ,ENTAP_INI_NULL_VAL},
+        {INI_ENTAP     ,CMD_ENTAP_GRAPH_PATH     ,ENTAP_INI_NULL  ,DESC_ENTAP_GRAPH_PATH      ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENTAP_GRAPH_INI , ENT_CONFIG_INI_FILE  ,ENTAP_INI_NULL_VAL},
         {INI_ENTAP     ,ENTAP_INI_NULL           ,ENTAP_INI_NULL  ,ENTAP_INI_NULL             ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT,ENTAP_INI_NULL_VAL      , ENT_INPUT_FUTURE    ,ENTAP_INI_NULL_VAL},
 
 /* Configuration Commands */
-        {INI_CONFIG    ,CMD_DATA_GENERATE        ,ENTAP_INI_NULL  ,DESC_DATA_GENERATE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
-        {INI_CONFIG    ,CMD_DATABASE_TYPE        ,ENTAP_INI_NULL  ,DESC_DATABASE_TYPE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_DATA_TYPE      ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+        {INI_CONFIG    ,CMD_DATA_GENERATE        ,ENTAP_INI_NULL  ,DESC_DATA_GENERATE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_CONFIG_INI_FILE   ,ENTAP_INI_NULL_VAL},
+        {INI_CONFIG    ,CMD_DATABASE_TYPE        ,ENTAP_INI_NULL  ,DESC_DATABASE_TYPE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_DATA_TYPE      ,ENT_CONFIG_INI_FILE   ,ENTAP_INI_NULL_VAL},
 
 /* Expression Analysis Commands */
-        {INI_EXPRESSION,CMD_FPKM                 ,ENTAP_INI_NULL  ,DESC_FPKM                  ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,RSEM_FPKM_DEFAULT      ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
-        {INI_EXPRESSION,CMD_ALIGN_FILE           ,CMD_SHORT_ALIGN_FILE ,DESC_ALIGN_FILE       ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
-        {INI_EXPRESSION,CMD_SINGLE_END           ,ENTAP_INI_NULL  ,DESC_SINGLE_END            ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+        {INI_EXPRESSION,CMD_FPKM                 ,ENTAP_INI_NULL  ,DESC_FPKM                  ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,RSEM_FPKM_DEFAULT      ,ENT_RUN_PARAM_INI_FILE,ENTAP_INI_NULL_VAL},
+        {INI_EXPRESSION,CMD_ALIGN_FILE           ,CMD_SHORT_ALIGN_FILE ,DESC_ALIGN_FILE       ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE,ENTAP_INI_NULL_VAL},
+        {INI_EXPRESSION,CMD_SINGLE_END           ,ENTAP_INI_NULL  ,DESC_SINGLE_END            ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE,ENTAP_INI_NULL_VAL},
 
 /* Expression Analysis - RSEM Commands */
-        {INI_EXP_RSEM  ,CMD_RSEM_CALC_EXP        ,ENTAP_INI_NULL  ,DESC_RSEM_CALC_EXP         ,EX_RSEM_CALC_EXP ,ENT_INI_VAR_STRING      ,DEFAULT_RSEM_CALC_EXP  ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
-        {INI_EXP_RSEM  ,CMD_RSEM_SAM_VALID       ,ENTAP_INI_NULL  ,DESC_RSEM_SAM_VALID        ,EX_RSEM_SAM_VALID,ENT_INI_VAR_STRING      ,DEFAULT_RSEM_SAM_VALID ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
-        {INI_EXP_RSEM  ,CMD_RSEM_PREP_REF        ,ENTAP_INI_NULL  ,DESC_RSEM_PREP_REF         ,EX_RSEM_PREP_REF ,ENT_INI_VAR_STRING      ,DEFAULT_RSEM_PREP_REF  ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
-        {INI_EXP_RSEM  ,CMD_RSEM_CONV_SAM        ,ENTAP_INI_NULL  ,DESC_RSEM_CONV_SAM         ,EX_RSEM_CONV_SAM ,ENT_INI_VAR_STRING      ,DEFAULT_RSEM_CONV_SAM  ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+        {INI_EXP_RSEM  ,CMD_RSEM_CALC_EXP        ,ENTAP_INI_NULL  ,DESC_RSEM_CALC_EXP         ,EX_RSEM_CALC_EXP ,ENT_INI_VAR_STRING      ,DEFAULT_RSEM_CALC_EXP  ,ENT_CONFIG_INI_FILE   ,ENTAP_INI_NULL_VAL},
+        {INI_EXP_RSEM  ,CMD_RSEM_SAM_VALID       ,ENTAP_INI_NULL  ,DESC_RSEM_SAM_VALID        ,EX_RSEM_SAM_VALID,ENT_INI_VAR_STRING      ,DEFAULT_RSEM_SAM_VALID ,ENT_CONFIG_INI_FILE   ,ENTAP_INI_NULL_VAL},
+        {INI_EXP_RSEM  ,CMD_RSEM_PREP_REF        ,ENTAP_INI_NULL  ,DESC_RSEM_PREP_REF         ,EX_RSEM_PREP_REF ,ENT_INI_VAR_STRING      ,DEFAULT_RSEM_PREP_REF  ,ENT_CONFIG_INI_FILE   ,ENTAP_INI_NULL_VAL},
+        {INI_EXP_RSEM  ,CMD_RSEM_CONV_SAM        ,ENTAP_INI_NULL  ,DESC_RSEM_CONV_SAM         ,EX_RSEM_CONV_SAM ,ENT_INI_VAR_STRING      ,DEFAULT_RSEM_CONV_SAM  ,ENT_CONFIG_INI_FILE   ,ENTAP_INI_NULL_VAL},
 
 /* Frame Selection Commands */
-        {INI_FRAME     ,CMD_COMPLETE_PROT        ,ENTAP_INI_NULL  ,DESC_COMPLETE_PROT         ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
-        {INI_FRAME     ,CMD_FRAME_SELECTION_FLAG ,ENTAP_INI_NULL  ,DESC_FRAME_SELECTION_FLAG  ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT         ,DEFAULT_FRAME_SELECTION,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+        {INI_FRAME     ,CMD_COMPLETE_PROT        ,ENTAP_INI_NULL  ,DESC_COMPLETE_PROT         ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE,ENTAP_INI_NULL_VAL},
+        {INI_FRAME     ,CMD_FRAME_SELECTION_FLAG ,ENTAP_INI_NULL  ,DESC_FRAME_SELECTION_FLAG  ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT         ,DEFAULT_FRAME_SELECTION,ENT_INPUT_FUTURE      ,ENTAP_INI_NULL_VAL},
 
 /* Frame Selection - GeneMarkST Commands */
-        {INI_FRAME_GENEMARK,CMD_GENEMARKST_EXE   ,ENTAP_INI_NULL  ,DESC_GENEMARKST_EXE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,GENEMARK_DEFAULT_EXE   ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+        {INI_FRAME_GENEMARK,CMD_GENEMARKST_EXE   ,ENTAP_INI_NULL  ,DESC_GENEMARKST_EXE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,GENEMARK_DEFAULT_EXE   ,ENT_INPUT_FUTURE      ,ENTAP_INI_NULL_VAL},
 
 /* Frame Selection - TransDecoder Commands */
-        {INI_FRAME_TRANSDECODER,CMD_TRANS_LONG_EXE,ENTAP_INI_NULL ,DESC_TRANS_LONG_EXE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,TRANSDECODER_LONG_DEFAULT_EXE, ENT_INI_FILE   ,ENTAP_INI_NULL_VAL},
-        {INI_FRAME_TRANSDECODER,CMD_TRANS_PREDICT_EXE,ENTAP_INI_NULL,DESC_TRANS_PREDICT_EXE   ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,TRANSDECODER_PREDICT_DEFAULT_EXE, ENT_INI_FILE,ENTAP_INI_NULL_VAL},
-        {INI_FRAME_TRANSDECODER,CMD_TRANS_MIN_FLAG,ENTAP_INI_NULL ,DESC_TRANS_MIN_FLAG        ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT         ,DEFAULT_TRANSDECODER_MIN_PROTEIN, ENT_INI_FILE,ENTAP_INI_NULL_VAL},
-        {INI_FRAME_TRANSDECODER,CMD_TRANS_NO_REF_START,ENTAP_INI_NULL, DESC_TRANS_NO_REF_START,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL       ,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE          ,ENTAP_INI_NULL_VAL},
+        {INI_FRAME_TRANSDECODER,CMD_TRANS_LONG_EXE,ENTAP_INI_NULL ,DESC_TRANS_LONG_EXE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,TRANSDECODER_LONG_DEFAULT_EXE, ENT_CONFIG_INI_FILE   ,ENTAP_INI_NULL_VAL},
+        {INI_FRAME_TRANSDECODER,CMD_TRANS_PREDICT_EXE,ENTAP_INI_NULL,DESC_TRANS_PREDICT_EXE   ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,TRANSDECODER_PREDICT_DEFAULT_EXE, ENT_CONFIG_INI_FILE,ENTAP_INI_NULL_VAL},
+        {INI_FRAME_TRANSDECODER,CMD_TRANS_MIN_FLAG,ENTAP_INI_NULL ,DESC_TRANS_MIN_FLAG        ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT         ,DEFAULT_TRANSDECODER_MIN_PROTEIN, ENT_RUN_PARAM_INI_FILE,ENTAP_INI_NULL_VAL},
+        {INI_FRAME_TRANSDECODER,CMD_TRANS_NO_REF_START,ENTAP_INI_NULL, DESC_TRANS_NO_REF_START,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL       ,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE           ,ENTAP_INI_NULL_VAL},
 
 /* Similarity Search Commands */
-        {INI_SIM_SEARCH,CMD_DIAMOND_EXE          ,ENTAP_INI_NULL  ,DESC_DIAMOND_EXE           ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DIAMOND_DEFAULT_EXE    ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
-        {INI_SIM_SEARCH,CMD_TAXON                ,ENTAP_INI_NULL  ,DESC_TAXON                 ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
-        {INI_SIM_SEARCH,CMD_QCOVERAGE            ,ENTAP_INI_NULL  ,DESC_QCOVERAGE             ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_QCOVERAGE      ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
-        {INI_SIM_SEARCH,CMD_TCOVERAGE            ,ENTAP_INI_NULL  ,DESC_TCOVERAGE             ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_TCOVERAGE      ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
-        {INI_SIM_SEARCH,CMD_CONTAMINANT          ,CMD_SHORT_CONTAMINANT,DESC_CONTAMINANT      ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
-        {INI_SIM_SEARCH,CMD_EVAL                 ,CMD_SHORT_EVAL       ,DESC_EVAL             ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_E_VALUE        ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
-        {INI_SIM_SEARCH,CMD_UNINFORMATIVE        ,ENTAP_INI_NULL  ,DESC_UNINFORMATIVE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,DEFAULT_UNINFORMATIVE  ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_DIAMOND_EXE          ,ENTAP_INI_NULL  ,DESC_DIAMOND_EXE           ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DIAMOND_DEFAULT_EXE    ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_TAXON                ,ENTAP_INI_NULL  ,DESC_TAXON                 ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_QCOVERAGE            ,ENTAP_INI_NULL  ,DESC_QCOVERAGE             ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_QCOVERAGE      ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_TCOVERAGE            ,ENTAP_INI_NULL  ,DESC_TCOVERAGE             ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_TCOVERAGE      ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_CONTAMINANT          ,CMD_SHORT_CONTAMINANT,DESC_CONTAMINANT      ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_EVAL                 ,CMD_SHORT_EVAL       ,DESC_EVAL             ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_E_VALUE        ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_UNINFORMATIVE        ,ENTAP_INI_NULL  ,DESC_UNINFORMATIVE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,DEFAULT_UNINFORMATIVE  ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
 
 /* Ontology Commands */
-        {INI_ONTOLOGY  ,CMD_ONTOLOGY_FLAG        ,ENTAP_INI_NULL  ,DESC_ONTOLOGY_FLAG         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONTOLOGY       ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
-        {INI_ONTOLOGY  ,CMD_GO_LEVELS            ,ENTAP_INI_NULL  ,DESC_ONT_LEVELS            ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONT_LEVELS     ,ENT_INPUT_FUTURE, ENTAP_INI_NULL_VAL},
+        {INI_ONTOLOGY  ,CMD_ONTOLOGY_FLAG        ,ENTAP_INI_NULL  ,DESC_ONTOLOGY_FLAG         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONTOLOGY       ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_ONTOLOGY  ,CMD_GO_LEVELS            ,ENTAP_INI_NULL  ,DESC_ONT_LEVELS            ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONT_LEVELS     ,ENT_INPUT_FUTURE      , ENTAP_INI_NULL_VAL},
 
-/* Ontology - EggNOG Commands */
-        {INI_ONT_EGGNOG,CMD_EGGNOG_SQL           ,ENTAP_INI_NULL  ,DESC_EGGNOG_SQL            ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_EGG_SQL_DB_INI ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
-        {INI_ONT_EGGNOG,CMD_EGGNOG_DMND          ,ENTAP_INI_NULL  ,DESC_EGGNOG_DMND           ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_EGG_DMND_DB_INI,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+/* Ontology - EggNOG DMND Commands */
+// DISABLED FOR NOW
+        {INI_ONT_EGGNOG,CMD_EGGNOG_SQL           ,ENTAP_INI_NULL  ,DESC_EGGNOG_SQL            ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_EGG_SQL_DB_INI ,ENT_INPUT_FUTURE   , ENTAP_INI_NULL_VAL},
+        {INI_ONT_EGGNOG,CMD_EGGNOG_DMND          ,ENTAP_INI_NULL  ,DESC_EGGNOG_DMND           ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_EGG_DMND_DB_INI,ENT_INPUT_FUTURE   , ENTAP_INI_NULL_VAL},
+
+/* Ontology - EggNOG Mapper Commands */
+        {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_EXE,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_EXE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,EGG_MAP_EXE_DEFAULT     ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
+        {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DATA_DIR  ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DATA_DIR,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING  ,EGG_MAP_DATA_DIR_DEFAULT,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
+        {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DMND_DB   ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DMND_DB ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING  ,DEFAULT_EGG_DMND_DB_INI ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
+
 /* Ontology - InterPro Commands */
-        {INI_ONT_INTERPRO,CMD_INTERPRO_EXE       ,ENTAP_INI_NULL  ,DESC_INTERPRO_EXE          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,INTERPRO_DEF_EXE       ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
-        {INI_ONT_INTERPRO,CMD_INTER_DATA         ,ENTAP_INI_NULL  ,DESC_INTER_DATA            ,EX_INTER_DATA    ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_ONT_INTERPRO,CMD_INTERPRO_EXE       ,ENTAP_INI_NULL  ,DESC_INTERPRO_EXE          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,INTERPRO_DEF_EXE       ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
+        {INI_ONT_INTERPRO,CMD_INTER_DATA         ,ENTAP_INI_NULL  ,DESC_INTER_DATA            ,EX_INTER_DATA    ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
 
 /* Ontology - BUSCO Commands */
 // DISABLED FOR NOW
@@ -482,20 +534,66 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_TRANSC_BUSCO,CMD_BUSCO_DATABASE     ,ENTAP_INI_NULL  ,DESC_BUSCO_DATABASE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_INPUT_FUTURE, ENTAP_INI_NULL_VAL},
         {INI_TRANSC_BUSCO,CMD_BUSCO_EVAL         ,ENTAP_INI_NULL  ,DESC_BUSCO_EVAL            ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_BUSCO_E_VALUE  ,ENT_INPUT_FUTURE, ENTAP_INI_NULL_VAL},
 
+/* Horizontal Gene Transfer - Commands */
+        {INI_HORIZONTAL_GT,CMD_HGT_DONOR_DB       ,ENTAP_INI_NULL  ,DESC_HGT_DONOR_DB         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING ,ENTAP_INI_NULL_VAL  ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_HORIZONTAL_GT,CMD_HGT_RECIPIENT_DB   ,ENTAP_INI_NULL  ,DESC_HGT_RECIPIENT_DB     ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING ,ENTAP_INI_NULL_VAL  ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_HORIZONTAL_GT,CMD_HGT_GFF_FILE       ,ENTAP_INI_NULL  ,DESC_HGT_GFF_FILE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING       ,ENTAP_INI_NULL_VAL  ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+
 /* END COMMANDS */
         {ENTAP_INI_NULL,ENTAP_INI_NULL           ,ENTAP_INI_NULL  ,ENTAP_INI_NULL             , ENTAP_INI_NULL  ,ENT_INI_VAR_STRING      ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL}
 };
 
 UserInput::UserInput(int argc, const char** argv, FileSystem *fileSystem) {
-    std::string ini_file_path;
+    std::string ent_config_ini_path;
+    std::string ent_run_param_ini_path;
     std::string root_dir;
+    bool generated_ini = false; // Flag if we have generated either ini file required for execution
 
     FS_dprint("Spawn Object - UserInput");
 
     mpFileSystem = fileSystem;
+    mHasAPICmd = false;
 
     // Parse command line arguments
     parse_arguments_tclap(argc, argv);
+
+    if (mHasAPICmd) return;  // WARNING RETURN if API command has been used
+
+    // Get our INI paths, BOTH ini files (entap config and entap run param) are required
+    // If not input by User, generate them and EXIT
+    ent_config_ini_path    = get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_CONFIG_INI_FILE);
+    ent_run_param_ini_path = get_user_input<ent_input_str_t>(INPUT_FLAG_ENTAP_RUN_PARAM_INI_FILE);
+
+    // Verify entap config ini file is valid
+    if (!mpFileSystem->file_exists(ent_config_ini_path)) {
+        // ERROR INI file not found, generate one in CWD
+        ent_config_ini_path = PATHS(mpFileSystem->get_cur_dir(), ENTAP_CONFIG_INI_FILENAME);
+        generate_ini_file(ent_config_ini_path, ENT_CONFIG_INI_FILE);
+        TC_print(TC_PRINT_COUT, "EnTAP config ini not found, generated at: " + ent_config_ini_path);
+        generated_ini = true;
+    }
+
+    // Verify entap run param ini file is valid
+    if (!mpFileSystem->file_exists(ent_run_param_ini_path)) {
+        // ERROR INI file not found, generate one in CWD
+        ent_run_param_ini_path = PATHS(mpFileSystem->get_cur_dir(), ENTAP_RUN_PARAM_INI_FILENAME);
+        generate_ini_file(ent_run_param_ini_path, ENT_RUN_PARAM_INI_FILE);
+        TC_print(TC_PRINT_COUT, "EnTAP run parameter ini not found, generated at: " + ent_run_param_ini_path);
+        generated_ini = true;
+    }
+
+    if (generated_ini) {
+        // INI file has been generated for user, EXIT application
+        throw ExceptionHandler("Both INI files are required for EnTAP execution, missing file(s) generated at: " + FileSystem::get_cur_dir(),
+                               ERR_ENTAP_CONFIG_CREATE_SUCCESS);
+    }
+    else {
+        // Both INIs input by the user, we can continue with parsing
+        mEntRunParamIniFilePath = ent_run_param_ini_path;
+        mEntConfigIniFilePath = ent_config_ini_path;
+        parse_ini(mEntRunParamIniFilePath, ENT_RUN_PARAM_INI_FILE);
+        parse_ini(mEntConfigIniFilePath, ENT_CONFIG_INI_FILE);
+    }
 
     if (has_input(INPUT_FLAG_OUTPUT_DIR)) {
         root_dir = get_user_input<ent_input_str_t>(INPUT_FLAG_OUTPUT_DIR);
@@ -503,28 +601,7 @@ UserInput::UserInput(int argc, const char** argv, FileSystem *fileSystem) {
         root_dir = FileSystem::get_cur_dir();
     }
     mpFileSystem->set_root_dir(root_dir);
-
-    ini_file_path = get_user_input<ent_input_str_t>(INPUT_FLAG_INI_FILE);
-
-    // Ensure user has input the INI file path, EXIT otherwise
-    if (!mpFileSystem->file_exists(ini_file_path)) {
-
-        if (!mHasAPICmd) {
-            // INI file is required for EnTAP execution, generate one in the CWD
-            ini_file_path = PATHS(mpFileSystem->get_cur_dir(), ENTAP_INI_FILENAME);
-            generate_ini_file(ini_file_path);
-            throw ExceptionHandler("INI file was not found and is required for EnTAP execution, generated at: " + ini_file_path,
-                                   ERR_ENTAP_CONFIG_CREATE_SUCCESS);
-        } else {
-            // WARNING skip parsing ini file with API commands!!!
-            ;
-        }
-
-    } else {
-        // Ini file exists and file path is valid
-        mIniFilePath = ini_file_path;
-        parse_ini(mIniFilePath);
-    }
+    TC_print(TC_PRINT_COUT, "ini files parsed, debug logging will continue at: " + DEBUG_FILE_PATH);
     parse_future_inputs();
 }
 
@@ -571,6 +648,11 @@ void UserInput::parse_future_inputs() {
                 break;
             }
 
+            case INPUT_FLAG_FRAME_SELECTION: {
+                mUserInputs[i].parsed_value = UserInput::DEFAULT_FRAME_SELECTION;
+                break;
+            }
+
             default:
                 break;
         }
@@ -591,8 +673,8 @@ void UserInput::parse_future_inputs() {
  * @return              - None
  * ======================================================================
  */
-void UserInput::parse_ini(std::string &ini_path) {
-    FS_dprint("Parsing ini file at: " + ini_path);
+void UserInput::parse_ini(std::string &ini_path, ENT_INPUT_TYPES input_type) {
+    TC_print(TC_PRINT_COUT, "Parsing ini file at: " + ini_path);
 
     EntapINIEntry                               *ini_entry;
     std::string                                 line;
@@ -611,7 +693,7 @@ void UserInput::parse_ini(std::string &ini_path) {
         std::istringstream in_line(line);
         if (std::getline(in_line,key,INI_FILE_ASSIGN)) {
             // Ensure this INI file key is correct and user hasn't changed it EXIT otherwise
-            ini_entry = check_ini_key(key);
+            ini_entry = check_ini_key(key, input_type);
             if (ini_entry == nullptr) {
                 throw ExceptionHandler("Incorrect format in config file at line: " + in_line.str(), ERR_ENTAP_CONFIG_PARSE);
             } else {
@@ -692,7 +774,7 @@ void UserInput::parse_ini(std::string &ini_path) {
     FS_dprint("Success!");
 }
 
-void UserInput::generate_ini_file(std::string &ini_path) {
+void UserInput::generate_ini_file(std::string &ini_path, ENT_INPUT_TYPES input_type) {
     std::map<std::string, std::vector<EntapINIEntry*>> printed_categories;
     std::string line;
 
@@ -700,7 +782,8 @@ void UserInput::generate_ini_file(std::string &ini_path) {
 
     for (EntapINIEntry& entry : mUserInputs) {
         // Skip NULL or future features
-        if ((entry.category == ENTAP_INI_NULL) || (entry.input_type == ENT_INPUT_FUTURE)) continue;
+        if ((entry.category == ENTAP_INI_NULL) || (entry.input_type == ENT_INPUT_FUTURE) ||
+            (entry.input_type != input_type)) continue;
         if (printed_categories.find(entry.category) != printed_categories.end()) {
             printed_categories[entry.category].push_back(&entry);
         } else {
@@ -733,7 +816,7 @@ void UserInput::generate_ini_file(std::string &ini_path) {
 
             for (EntapINIEntry *entry : pair.second) {
 
-                if (entry->input_type != ENT_INI_FILE) continue;
+                if (entry->input_type != input_type) continue;
 
                 // Print description
                 std::stringstream ss(entry->description);
@@ -835,7 +918,7 @@ void UserInput::generate_ini_file(std::string &ini_path) {
 
 /**
  * ======================================================================
- * Function bool check_ini_key(std::string&     key)
+ * Function bool check_ini_key(std::string&key, ENT_INPUT_TYPES input_type)
  *
  * Description          - Ensures EnTAP ini file has valid
  *                        entries and has not been edited by user
@@ -846,12 +929,12 @@ void UserInput::generate_ini_file(std::string &ini_path) {
  * @return              - Flag if key is valid or not
  * =====================================================================
  */
-UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key) {
+UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key, ENT_INPUT_TYPES input_type) {
     EntapINIEntry *ret = nullptr;
 
     LOWERCASE(key);
     for (EntapINIEntry &entry : mUserInputs) {
-        if ((entry.input == key) && (entry.input_type == ENT_INI_FILE)) {
+        if ((entry.input == key) && (entry.input_type == input_type)) {
             ret = &entry;
             break;
         }
@@ -884,7 +967,7 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key) {
     boost::any any_val;
 
     try {
-        TCLAP::CmdLine cmd("EnTAP\nAlexander Hart and Dr. Jill Wegrzyn\nUniversity of Connecticut\nCopyright 2017-2023",
+        TCLAP::CmdLine cmd("EnTAP\nAlexander Hart and Dr. Jill Wegrzyn\nUniversity of Connecticut\nCopyright 2017-2024",
                            ' ', ENTAP_VERSION_STR);
 
         // Generate Arguments and add them to CMD
@@ -1170,7 +1253,6 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
             return ret_execution;
         }
     }
-
     // --------------------------------------------------------------------- //
 
 
@@ -1206,7 +1288,8 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
 
     try {
 
-        verify_databases(is_run);
+        // Verify generic Similarity Search databases
+        verify_databases(is_run, INPUT_FLAG_DATABASE);
 
         // Handle generic flags
         if (has_input(INPUT_FLAG_OUTPUT_FORMAT)) {
@@ -1263,7 +1346,6 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
                     } catch (const ExceptionHandler &e) {
                         throw e;
                     }
-
                 }
             }
 
@@ -1382,6 +1464,36 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
                 }
             }
 
+            // Verify Horizontal Gene Transfer flags
+            if (has_input(INPUT_FLAG_HGT_RECIPIENT_DATABASES)) {
+                // Throws exception on error
+                verify_databases(true, INPUT_FLAG_HGT_RECIPIENT_DATABASES);
+            }
+            if (has_input(INPUT_FLAG_HGT_DONOR_DATABASES)) {
+                // Throws exception on error
+                verify_databases(true, INPUT_FLAG_HGT_DONOR_DATABASES);
+            }
+            if (has_input(INPUT_FLAG_HGT_GFF)) {
+                if (pQuery_Data != nullptr) {
+                    FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_HGT_GFF].input);
+                    ent_input_str_t gff_path = get_user_input<ent_input_str_t>(INPUT_FLAG_HGT_GFF);
+                    if (!mpFileSystem->file_exists(gff_path)) {
+                        throw(ExceptionHandler("GFF file not found at: " + gff_path, ERR_ENTAP_INPUT_PARSE));
+                    } else if (mpFileSystem->file_empty(gff_path)) {
+                        throw (ExceptionHandler("GFF file empty: " + gff_path, ERR_ENTAP_INPUT_PARSE));
+                    } else {
+                        // GFF file valid, start parsing
+                        GFF_File gffFile = GFF_File(mpFileSystem, pQuery_Data.get(), gff_path);
+                        if (!gffFile.process_gff()) {
+                            throw (ExceptionHandler(gffFile.getMErrMessage(), ERR_ENTAP_INPUT_PARSE));
+                        }
+                    }
+                }
+                else {
+                    throw ExceptionHandler("Unable to verify transcriptome when analyzing GFF",ERR_ENTAP_INPUT_PARSE);
+                }
+            }
+
         } else {
             // Must be config
 
@@ -1431,12 +1543,12 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
  * @return              - None
  * ======================================================================
  */
-void UserInput::verify_databases(bool is_run) {
+void UserInput::verify_databases(bool is_run, ENTAP_INPUT_FLAGS input_database_flag) {
 
     ent_input_multi_str_t     other_data;
 
-    if (has_input(INPUT_FLAG_DATABASE)) {
-        other_data = get_user_input<ent_input_multi_str_t>(INPUT_FLAG_DATABASE);
+    if (has_input(input_database_flag)) {
+        other_data = get_user_input<ent_input_multi_str_t>(input_database_flag);
     } else if (is_run){
         // Must specify database when executing
         throw ExceptionHandler("Must select databases when executing main pipeline", ERR_ENTAP_INPUT_PARSE);
@@ -1669,7 +1781,11 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
     std::pair<bool, std::string> out;
     ent_input_str_t dmnd_exe;
     ent_input_str_t egg_db_dmnd;
+    ent_input_str_t egg_map_exe;
     ent_input_str_t egg_db_sql;
+    ent_input_str_t egg_map_data_dir;
+    ent_input_str_t egg_map_sql_path;
+    ent_input_str_t egg_map_dmnd_db;
     ent_input_str_t interpro_exe;
     ent_input_str_t busco_exe;
     ent_input_str_t genemarkst_exe;
@@ -1679,8 +1795,14 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
     ent_input_uint_t frame_selection_software;
 
     dmnd_exe     = get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
+
     egg_db_dmnd  = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
     egg_db_sql   = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
+    egg_map_data_dir = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_DATA_DIR);
+    egg_map_dmnd_db  = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_DMND_DB);
+    egg_map_sql_path = PATHS(egg_map_data_dir, EGG_SQL_DB_FILENAME);
+    egg_map_exe      = get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_EXE);
+
     interpro_exe = get_user_input<ent_input_str_t>(INPUT_FLAG_INTERPRO_EXE);
     busco_exe    = get_user_input<ent_input_str_t>(INPUT_FLAG_BUSCO_EXE);
     genemarkst_exe = get_user_input<ent_input_str_t>(INPUT_FLAG_GENEMARKST_EXE);
@@ -1693,15 +1815,23 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
     if (state == DEFAULT_STATE) {
         bool is_run_frame_select;
 
+        // Optional, check if user wants to run based on inputs
         if (run_expression_filtering()) {
             execute |= EXPRESSION_FILTERING;
         }
 
+        // Optional, check if user wants to run based on inputs
         if (run_frame_selection(pQuery_data, is_run_frame_select)) {
             if (is_run_frame_select) {
                 execute |= FRAME_SELECTION;
             }
         }
+
+        // Optional, check if user wants to run based on inputs
+        if (run_horizontal_gene_transfer()) {
+            execute |= HORIZONTAL_GENE_TRANSFER;
+        }
+
         execute |= SIMILARITY_SEARCH;
         execute |= GENE_ONTOLOGY;
 
@@ -1733,6 +1863,9 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
                                                ERR_ENTAP_INPUT_PARSE);
                     }
                     break;
+
+                default:
+                    break;
             }
         }
 
@@ -1743,18 +1876,26 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
                                        "installed and the path is correct", ERR_ENTAP_INPUT_PARSE);
             }
         }
+        // Check Gene Ontology software
         if (execute & GENE_ONTOLOGY) {
             for (uint16 flag : ontology_flags) {
                 switch (flag) {
-#ifdef EGGNOG_MAPPER
-                    case ENTAP_EXECUTE::EGGNOG_INT_FLAG:
-                    if (!pFileSystem->file_exists(EGG_SQL_DB_PATH))
-                        return std::make_pair(false, "Could not find EggNOG SQL database at: " + EGG_SQL_DB_PATH);
-                    if (!ModEggnog::is_executable())
-                        return std::make_pair(false, "Test of EggNOG Emapper failed, "
-                                "ensure python is properly installed and the paths are correct");
-                    break;
-#endif
+                    case ONT_EGGNOG_MAPPER:
+                        FS_dprint("Verifying EggNOG-mapper inputs...");
+                        if (!mpFileSystem->file_exists(egg_map_dmnd_db)) {
+                            throw ExceptionHandler("Could not find EggNOG DMND database at: " + egg_map_dmnd_db,
+                                                   ERR_ENTAP_INPUT_PARSE);
+                        }
+                        if (!mpFileSystem->file_exists(egg_map_sql_path)) {
+                            throw ExceptionHandler("Could not find EggNOG SQL database at: " + egg_map_sql_path, ERR_ENTAP_INPUT_PARSE);
+                        }
+                        if (!ModEggnog::is_executable(egg_map_exe)) {
+                            throw ExceptionHandler("Test of EggNOG mapper failed, ensure python is properly installed and the paths are correct",
+                                                   ERR_ENTAP_INPUT_PARSE);
+                        }
+                        FS_dprint("Success!");
+                        break;
+
                     case ONT_INTERPRO_SCAN:
                         FS_dprint("Verifying InterProScan inputs...");
                         if (!ModInterpro::is_executable(interpro_exe)) {
@@ -1791,13 +1932,21 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
                 }
             }
         }
+        // Check HGT Software
+        if (execute & HORIZONTAL_GENE_TRANSFER) {
+            // The only software used by Horizontal Gene Transfer currently is DIAMOND
+            if (!ModDiamond::is_executable(dmnd_exe)) {
+                throw ExceptionHandler("Could not execute a test run of DIAMOND for HGT analysis, be sure it's properly "
+                                       "installed and the path is correct", ERR_ENTAP_INPUT_PARSE);
+            }
+        }
     // No, using CONFIGURATION stage of pipeline
     } else {
 
         // Check if EggNOG DIAMOND database exists, if not, check DIAMOND run
         if (!mpFileSystem->file_exists(get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB))) {
             if (!ModDiamond::is_executable(dmnd_exe)) {
-                throw ExceptionHandler("EggNOG DIAMOND database was not found at: " + egg_db_dmnd +
+                throw ExceptionHandler("EggNOG DIAMOND database was not found at: " + egg_map_dmnd_db +
                                        "\nThe DIAMOND test run failed.", ERR_ENTAP_INPUT_PARSE);
             }
         }
@@ -2018,4 +2167,26 @@ std::string UserInput::get_json_output() {
     } else {
         return "";
     }
+}
+
+bool UserInput::run_horizontal_gene_transfer() {
+    bool ret = true;
+    FS_dprint("Determining if we want to run horizontal gene transfer analysis...");
+
+    if (!has_input(INPUT_FLAG_HGT_DONOR_DATABASES)) {
+        FS_dprint("    No, INPUT_FLAG_HGT_DONOR_DATABASES not input");
+        ret = false;
+    }
+
+    if (!has_input(INPUT_FLAG_HGT_RECIPIENT_DATABASES)) {
+        FS_dprint("    No, INPUT_FLAG_HGT_RECIPIENT_DATABASES not input");
+        ret = false;
+    }
+
+    if (!has_input(INPUT_FLAG_HGT_GFF)) {
+        FS_dprint("    No, INPUT_FLAG_HGT_GFF not input");
+        ret = false;
+    }
+
+    return ret;
 }

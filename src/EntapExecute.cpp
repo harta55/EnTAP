@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -28,6 +28,8 @@
 
 //*********************** Includes *****************************
 #include "EntapExecute.h"
+#include "HorizontalGeneTransfer.h"
+#include "user_inputs/GFF_File.h"
 //**************************************************************
 
 
@@ -128,6 +130,15 @@ namespace entapExecute {
                     transcriptome_outpath,     // Transcriptome directory
                     pUserInput,        // User input map
                     pFileSystem);      // Filesystem object
+
+            // Update QueryData with GFF information if being used
+            if (user_input->run_horizontal_gene_transfer()) {
+                ent_input_str_t gff_path = user_input->get_user_input<ent_input_str_t>(INPUT_FLAG_HGT_GFF);
+                GFF_File gffFile = GFF_File(pFileSystem, pQUERY_DATA, gff_path);
+                if (!gffFile.process_gff()) {
+                    throw (ExceptionHandler(gffFile.getMErrMessage(), ERR_ENTAP_INPUT_PARSE));
+                }
+            }
 
             // Initialize Graphing Manager
             pGraphing_Manager = new GraphingManager(entap_graphing_path, pFileSystem);
@@ -280,6 +291,22 @@ namespace entapExecute {
                         ontology->execute();
                         break;
                     }
+
+                    case HORIZONTAL_GENE_TRANSFER: {
+                        FS_dprint("STATE - HORIZONTAL GENE TRANSFER");
+                        if (pUserInput->run_horizontal_gene_transfer()) {
+                            std::unique_ptr<HorizontalGeneTransfer> hgt_analysis(new HorizontalGeneTransfer(
+                                    input_path,
+                                    entap_data_ptrs
+                            ));
+                            hgt_analysis->execute();
+
+                        } else {
+                            FS_dprint("User has not input required flags for HGT analysis, skipping...");
+                        }
+                        break;
+                    }
+
                     default:
                         executeStates = EXIT;
                         break;
@@ -291,7 +318,9 @@ namespace entapExecute {
             } // END WHILE
 
             // *************************** Exit Stuff ********************** //
+            TC_print(TC_PRINT_COUT, "Compiling final EnTAP statistics...");
             pQUERY_DATA->final_statistics(final_out_dir, output_types);
+            TC_print(TC_PRINT_COUT, "EnTAP complete!");
            // pFileSystem->directory_iterate(FileSystem::FILE_ITER_DELETE_EMPTY, mOutpath);   // Delete empty files
             SAFE_DELETE(pQUERY_DATA);
             SAFE_DELETE(pGraphing_Manager);

@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -117,7 +117,12 @@ std::string TC_generate_command(command_map_t &map, std::string &exe_path) {
     std::string       out;
 
     ss << exe_path << " ";
-    for (auto &pair : map)ss << pair.first << " " << pair.second << " ";
+    for (auto &pair : map) {
+        ss << pair.first << " " << pair.second;
+        if (!pair.second.empty()) {
+            ss << " ";
+        }
+    }
     out = ss.str();
     return out;
 }

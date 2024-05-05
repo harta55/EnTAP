@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -31,11 +31,6 @@
 // Compile with boost libraries?
 #ifndef USE_BOOST
 //#define USE_BOOST   1
-#endif
-
-// Use EggNOG mapper (not supported, leaving for now)
-#ifndef EGGNOG_MAPPER
-//#define EGGNOG_MAPPER 1
 #endif
 
 // Compile with CURL? Will use wget command otherwise (not supported yet)

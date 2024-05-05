@@ -24,7 +24,7 @@ if (PYTHONINTERP_FOUND)
     message("Python detected! Version: ${PYTHON_VERSION_STRING}")
     message("--   Ensure Python SQLITE and Matplotlib (optional) modules are installed")
 else()
-    message(WARNING "Python was not detected, EnTAP graphing and EggNOG functionality will not be allowed")
+    message(WARNING "Python was not detected, EnTAP graphing will not be allowed")
 endif()
 
 find_package(Perl)
@@ -70,7 +70,11 @@ set(SOURCE_FILES
         src/database/BuscoDatabase.cpp src/database/BuscoDatabase.h
         src/ontology/ModBUSCO.cpp src/ontology/ModBUSCO.h
         src/tests/UnitTests.cpp src/tests/UnitTests.h
-        src/database/NCBIEntrez.cpp src/database/NCBIEntrez.h)
+        src/database/NCBIEntrez.cpp src/database/NCBIEntrez.h
+        src/user_inputs/GFF_File.cpp src/user_inputs/GFF_File.h src/HorizontalGeneTransfer.cpp
+        src/HorizontalGeneTransfer.h src/horizontal_gene_transfer/AbstractHorizontalGeneTransfer.cpp
+        src/horizontal_gene_transfer/AbstractHorizontalGeneTransfer.h src/horizontal_gene_transfer/ModHorizontalGeneTransferDiamond.cpp
+        src/horizontal_gene_transfer/ModHorizontalGeneTransferDiamond.h)
 
 # Include libraries
 include_directories(libs/pstream)

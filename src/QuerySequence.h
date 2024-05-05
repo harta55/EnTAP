@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -59,7 +59,7 @@ public:
     typedef enum {
 
         QUERY_BLAST_HIT         = (1 << 0),         // Aligned against sequence during Similarity Search
-        QUERY_EGGNOG_HIT        = (1 << 1),         // Aligned against sequence during EggNOG
+        QUERY_EGGNOG_HIT        = (1 << 1),         // Aligned against sequence during EggNOG (either DIAMOND or mapper)
         QUERY_EXPRESSION_KEPT   = (1 << 2),         // Was not removed during Expression Analysis
         QUERY_FRAME_KEPT        = (1 << 3),         // Was not removed during Frame Selection
         QUERY_FAMILY_ASSIGNED   = (1 << 4),         // Family was assigned during EggNOG
@@ -75,32 +75,54 @@ public:
         QUERY_FAMILY_ONE_GO     = (1 << 14),        // Sequence contains at least one GO from EggNOG process
         QUERY_ONT_INTERPRO_GO   = (1 << 15),        // Sequence contains at least one GO from InterPro process
         QUERY_ONT_INTERPRO_PATHWAY = (1 << 16),     // Sequence contains at least one KEGG from InterPro process
-        QUERY_ONT_BUSCO         = (1 << 17),
+        QUERY_ONT_BUSCO         = (1 << 17),        // Sequence has BUSCO data
+        QUERY_HGT_CANDIDATE     = (1 << 18),        // Sequence is an HGT candidate (not necessarily confirmed as HGT)
+                                                    //  This means the sequence aligned with the correct number of donor/recipient
+                                                    //  databases to be considered an HGT candidate
+        QUERY_HGT_CONFIRMED     = (1 << 19),        // Sequence confirmed as HGT gene after performing neighbor analysis
+        QUERY_HGT_BLASTED       = (1 << 20),        // Sequence hit against at least one donor or recipient database
 
         QUERY_MAX               = (1 << 31)
 
     } QUERY_FLAGS;
     //**********************************************************
 
+    // With Eggnog, some data is shared between mapper and diamond implementations
+    //  some are also not shared and only pulled from one version, outlined below
     struct EggnogResults {
-        std::string              member_ogs;        // 0A01R@biNOG,0V8CP@meNOG (ortholgous groups)
+        // Shared data
         std::string              seed_ortholog;     // 34740.HMEL017225-PA
         std::string              seed_evalue;       // Pulled from DIAMOND run
         std::string              seed_score;        // Pulled from DIAMOND run
+        fp64                     seed_eval_raw;     // Used for finding best hit
+        std::string              member_ogs;        // 0A01R@biNOG,0V8CP@meNOG (eggnog ortholgous groups)
+        std::string              tax_scope_lvl_max; // 'virNOG[6]' or '33208|Metazoa' if using mapper
+        std::string              description;       // Description of narrowest OG with a valid one
+        go_format_t              parsed_go;         // All go terms found parsed into EnTAP format
+        std::string              name;              // Preferred name
+        std::string              bigg;              // BiGG reaction
+        std::string              protein_domains;   // Pfam 'GCFC,NTR2' (comma separated)
+
+        // DIAMOND specific eggnog data
         std::string              seed_coverage;     // Pulled from DIAMOND run
         std::string              predicted_gene;    // Most common predicted gene (pname)
-        std::string              tax_scope_lvl_max; // virNOG[6]
+        std::string              kegg;              // Everything combined in comma separated list
         std::string              tax_scope;         // virNOG
         std::string              tax_scope_readable;// Ascomycota
         std::string              pname;             // All predicted gene names
-        std::string              name;
-        std::string              bigg;
-        std::string              kegg;
         std::string              og_key;            // Used for indexing into older SQL database (if using)
-        std::string              description;       // Used for older version
-        std::string              protein_domains;
-        fp64                     seed_eval_raw;     // Used for finding best hit
-        go_format_t              parsed_go;         // All go terms found
+
+        // EggNOG-mapper specific eggnog data
+        std::string              cog_category;      // COG category of narrowest OG with a valid one
+        std::string              ec_value;
+        std::string              kegg_ko;           // 'ko:K01672,ko:K12345' (comma separated)
+        std::string              kegg_pathway;      // 'ko:K01672,ko:K12345' (comma separated)
+        std::string              kegg_module ;      // 'M00355,M00595' (comma separated)
+        std::string              kegg_reaction;     // 'R00132,R00154' (comma separated)
+        std::string              kegg_rclass;       // 'RC02807,RC00299' (comma separated)
+        std::string              brite;             // 'ko00000,ko03029 (comma separated)
+        std::string              kegg_tc;           // '3.A.3.1,3.A.1.1' (comma separated)
+        std::string              cazy;              // GH84
     };
 
     struct InterProResults {
@@ -151,6 +173,29 @@ public:
         UniprotEntry                      uniprot_info;
     };
 
+    struct HorizontalGeneTransferResults {
+        std::string                       length;
+        std::string                       mismatch;
+        std::string                       gapopen;
+        std::string                       qstart;
+        std::string                       qend;
+        std::string                       sstart;
+        std::string                       send;
+        std::string                       pident;
+        std::string                       bit_score;
+        std::string                       e_val;
+        std::string                       coverage;
+        std::string                       database_path;
+        std::string                       qseqid;
+        std::string                       sseqid;
+        std::string                       stitle;
+        std::string                       species;
+        std::string                       lineage;
+        fp32                              tax_score;     // taxonomic score, may be based on parent
+        fp64                              e_val_raw;
+        fp64                              coverage_raw;
+    };
+
     /**
      * ======================================================================
      * @struct AlignmentData - nested
@@ -174,6 +219,7 @@ public:
 
         ALIGNMENT_DATA_T sim_search_data[SIM_SOFTWARE_COUNT];
         ALIGNMENT_DATA_T ontology_data[ONT_SOFTWARE_COUNT];
+        ALIGNMENT_DATA_T horizontal_gene_data[HGT_SOFTWARE_COUNT];
         QuerySequence* querySequence;
 
         QueryAlignment* overall_alignment[EXECUTION_MAX][ONT_SOFTWARE_COUNT]{};
@@ -220,19 +266,18 @@ public:
     bool is_protein();
     bool is_nucleotide();
     bool is_kept_expression();
-    bool QUERY_FLAG_GET(QUERY_FLAGS flag);
+    bool QUERY_FLAG_GET(QUERY_FLAGS flag) const;
     void QUERY_FLAG_CLEAR(QUERY_FLAGS flag);
     void QUERY_FLAG_CHANGE(QUERY_FLAGS flag, bool val);
     bool QUERY_FLAG_CONTAINS(uint32 flags);
     bool is_contaminant();
-#ifdef EGGNOG_MAPPER
-    void set_eggnog_results(const EggnogResults&);
-#endif
+
     // Alignemnt accession routines
     void add_alignment(ExecuteStates state, uint16 software, EggnogResults &results, std::string& database);
     void add_alignment(ExecuteStates state, uint16 software, SimSearchResults &results, std::string& database,std::string lineage);
     void add_alignment(ExecuteStates state, uint16 software, InterProResults &results, std::string& database);
     void add_alignment(ExecuteStates state, uint16 software, BuscoResults &results, std::string& database);
+    void add_alignment(ExecuteStates state, uint16 software, HorizontalGeneTransferResults &results, std::string &database);
     QuerySequence::align_database_hits_t* get_database_hits(std::string& database,ExecuteStates state, uint16 software);
 
     std::string format_go_info(go_format_t &go_list, uint8 lvl);
@@ -243,7 +288,7 @@ public:
         return static_cast<T*>(mAlignmentData->get_best_align_ptr(state, software, database));
     }
 
-    // Checks whether an alignment was found against specific atabase
+    // Checks whether an alignment was found against specific database
     bool hit_database(ExecuteStates state, uint16 software, std::string database);
     void update_query_flags(ExecuteStates state, uint16 software);
     void get_header_data(std::string& data, ENTAP_HEADERS header, uint8 lvl);
@@ -274,18 +319,32 @@ private:
     fp64                              mTPM;             // TPM value from Expression Filtering
     fp32                              mEffectiveLength; // Effective length from expression filtering
     uint32                            mQueryFlags;      // Status flags for the sequence
+    uint32                            mDonorDatabaseHitCt;
+public:
+    uint32 getMDonorDatabaseHitCt() const;
+    void setMDonorDatabaseHitCt(uint32 mDonorDatabaseHitCt);
+    uint32 getMRecipientDatabaseHitCt() const;
+    void setMRecipientDatabaseHitCt(uint32 mRecipientDatabaseHitCt);
+    const QuerySequence *getMpUpstreamSequence() const;
+    void setMpUpstreamSequence(const QuerySequence *mpUpstreamSequence);
+    const QuerySequence *getMpDownstreamSequence() const;
+    void setMpDownstreamSequence(const QuerySequence *mpDownstreamSequence);
+    
+private:
+    // Count of at least one alignment against donor database
+    uint32                            mRecipientDatabaseHitCt; // Count of at least one alignment against recip database
     std::string                       mSequenceID;      // Sequence ID
     uint64                            mSequenceLength;  // Sequence length (nucleotide bp)
     std::string                       mSequenceProtein; // Protein sequence
     std::string                       mSequenceNucleo;  // Nucleotide sequence
     std::string                       mFrameType;       // Frame type from Frame Selection
     fp32                              mFrameScore;      // Frame selection score
-#ifdef EGGNOG_MAPPER
-    EggnogResults                     mEggnogResults;   // EggNOG mapper results
-#endif
     AlignmentData                     *mAlignmentData;  // Alignment information
     std::string                       mHeaderInfo[ENTAP_HEADER_COUNT];  // Header mappings
-    //**********************************************************
+
+    /* Values taken from GFF file if user inputs */
+    const QuerySequence *mpUpstreamSequence;
+    const QuerySequence *mpDownstreamSequence;  // Sequence that is downstream from this sequence
 };
 
 

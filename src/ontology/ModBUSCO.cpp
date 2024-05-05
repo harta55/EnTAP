@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -24,6 +24,7 @@
  * You should have received a copy of the GNU General Public License
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
+
 
 #include <csv.h>
 #include "ModBUSCO.h"

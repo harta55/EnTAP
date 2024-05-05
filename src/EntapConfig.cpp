@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -220,113 +220,165 @@ namespace entapConfig {
         std::string sql_outpath;                // Absolute path to EggNOG sql output
         std::string fasta_outpath;              // Absolute path to EggNOG fasta output
         std::string dmnd_outpath;               // Absolute path to converted FASTA -> DMND
-        std::string user_egg_dmnd;              // User input EggNOG DMND database
-        std::string user_egg_sql;               // User input EggNOG SQL database
         std::string err_msg;                    // Error mMessage from execution
         std::string index_cmd;                  // DMND indexing command
         std::string std_out;                    // Standard output (err, out) from execution
         std::stringstream log_msg;              // Message to print to EnTAP log file
-
+        ent_input_multi_int_t ontology_flags;
         FS_dprint("Ensuring EggNOG databases exist...");
         TC_print(TC_PRINT_COUT, "Checking EggNOG database..,");
 
         pFileSystem->format_stat_stream(log_msg, "EggNOG Database Configuration");
 
+        // Check which EggNOG app we want to use
+        ontology_flags = pUserInput->get_user_input<ent_input_multi_int_t>(INPUT_FLAG_ONTOLOGY);
         // Generate database to allow downloading
         EggnogDatabase eggnogDatabase = EggnogDatabase(pFileSystem, pEntapDatabase, nullptr);
-
-#if EGGNOG_MAPPER
-        std::string eggnog_cmd;
-
-        eggnog_cmd =
-                "python " + eggnog_exe +
-                " none -y";
-
-        if (!pFileSystem->file_exists(eggnog_exe)) {
-            throw ExceptionHandler("Eggnog download path does not exist at: " +
-                                   eggnog_exe, ERR_ENTAP_INIT_EGGNOG);
-        }
-        if (TC_execute_cmd(eggnog_cmd) != 0) {
-            throw ExceptionHandler("EggNOG command: " + eggnog_cmd,ERR_ENTAP_INIT_EGGNOG);
-        }
-        FS_dprint("Success! EggNOG databases verified");
-        return;
-#endif
         // setup outpath
         sql_outpath   = PATHS(dataDir, pUserInput->getEGG_SQL_DB_FILENAME());
         fasta_outpath = PATHS(pFileSystem->get_temp_outdir(), "eggnog_fasta_temp.fa");
         dmnd_outpath  = PATHS(binDir, pUserInput->getEGG_DMND_FILENAME());
-        user_egg_dmnd = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
-        user_egg_sql  = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
 
-        // Check if SQL database already exists
-        if (!pFileSystem->file_exists(user_egg_sql) && !pFileSystem->file_exists(sql_outpath)) {
-            // No, path does not. Download it
-            TC_print(TC_PRINT_COUT, "Configuring EggNOG database...");
-            if (eggnogDatabase.download(EggnogDatabase::EGGNOG_SQL, sql_outpath) != EggnogDatabase::ERR_EGG_OK) {
-                // Error in download
-                err_msg = "Unable to download EggNOG sql database from FTP to: " +
-                        sql_outpath + "\nError: " + eggnogDatabase.print_err();
-                throw ExceptionHandler(err_msg,ERR_ENTAP_INIT_EGGNOG);
-            } else {
-                // Downloaded successfully
-                FS_dprint("Success! EggNOG SQL database downloaded to: " + sql_outpath);
-                log_msg << "EggNOG SQL database written to: " + sql_outpath << std::endl;
+        for (uint16 flag : ontology_flags) {
+            switch (flag) {
+
+                case ONT_EGGNOG_MAPPER: {
+                    std::string user_egg_map_sql_db = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_DATA_DIR);
+                    user_egg_map_sql_db = PATHS(user_egg_map_sql_db,pUserInput->getEGG_SQL_DB_FILENAME());
+
+                    if (!pFileSystem->file_exists(user_egg_map_sql_db) && !pFileSystem->file_exists(sql_outpath)) {
+                        FS_dprint("EggNOG SQL database not found at " + user_egg_map_sql_db);
+                        TC_print(TC_PRINT_COUT, "Configuring EggNOG database...");
+                        if (eggnogDatabase.download(EggnogDatabase::EGGNOG_SQL, sql_outpath) != EggnogDatabase::ERR_EGG_OK) {
+                            // Error in download
+                            err_msg = "Unable to download EggNOG sql database from FTP to: " +
+                                      sql_outpath + "\nError: " + eggnogDatabase.print_err();
+                            throw ExceptionHandler(err_msg,ERR_ENTAP_INIT_EGGNOG);
+                        } else {
+                            // Downloaded successfully
+                            FS_dprint("Success! EggNOG SQL database downloaded to: " + sql_outpath);
+                            log_msg << "EggNOG SQL database written to: " + sql_outpath << std::endl;
+                        }
+
+                    } else {
+                        // EggNOG SQL database already exists, skip
+                        std::string path;
+                        if (pFileSystem->file_exists(user_egg_map_sql_db)) path = user_egg_map_sql_db;
+                        if (pFileSystem->file_exists(sql_outpath)) path = sql_outpath;
+                        FS_dprint("EggNOG SQL database already exists at: " + path +
+                                  " skipping");
+                        log_msg << "EggNOG SQL Database skipped, exists at: " << path << std::endl;
+                    }
+
+                    // Check if DIAMOND EggNOG database exists
+                    std::string user_egg_map_dmnd = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_DMND_DB);
+                    if (!pFileSystem->file_exists(user_egg_map_dmnd) && !pFileSystem->file_exists(dmnd_outpath)) {
+                        // No, does not exist, need to generate from FASTA
+                        if (eggnogDatabase.download(EggnogDatabase::EGGNOG_DIAMOND, dmnd_outpath) != EggnogDatabase::ERR_EGG_OK) {
+                            // Error in download
+                            err_msg = "Unable to get EggNOG DIAMOND from FTP to: " +
+                                    dmnd_outpath + "\nError: " + eggnogDatabase.print_err();
+                            throw ExceptionHandler(err_msg,ERR_ENTAP_INIT_EGGNOG);
+                        }
+
+                        // Now, index for DIAMOND
+                        FS_dprint("Success! EggNOG DIAMOND downloaded");
+                        log_msg << "EggNOG DIAMOND database written to: " + dmnd_outpath << std::endl;
+
+                    } else {
+                        // Yes, file already exists
+                        std::string path;
+                        if (pFileSystem->file_exists(user_egg_map_dmnd)) path = user_egg_map_dmnd;
+                        if (pFileSystem->file_exists(dmnd_outpath)) path = dmnd_outpath;
+                        FS_dprint("EggNOG DIAMOND database already exists at: " + path);
+                        log_msg << "EggNOG DIAMOND database skipped, exists at: " << path << std::endl;
+                        TC_print(TC_PRINT_COUT, "EggNOG database already exist, skipping...");
+                    }
+                    break;
+                }
+
+                case ONT_EGGNOG_DMND: {
+                    std::string user_egg_dmnd = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB);
+                    std::string user_egg_sql  = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_SQL_DB);
+
+                    // Check if SQL database already exists
+                    if (!pFileSystem->file_exists(user_egg_sql) && !pFileSystem->file_exists(sql_outpath)) {
+                        // No, path does not. Download it
+                        TC_print(TC_PRINT_COUT, "Configuring EggNOG database...");
+                        if (eggnogDatabase.download(EggnogDatabase::EGGNOG_SQL, sql_outpath) != EggnogDatabase::ERR_EGG_OK) {
+                            // Error in download
+                            err_msg = "Unable to download EggNOG sql database from FTP to: " +
+                                      sql_outpath + "\nError: " + eggnogDatabase.print_err();
+                            throw ExceptionHandler(err_msg,ERR_ENTAP_INIT_EGGNOG);
+                        } else {
+                            // Downloaded successfully
+                            FS_dprint("Success! EggNOG SQL database downloaded to: " + sql_outpath);
+                            log_msg << "EggNOG SQL database written to: " + sql_outpath << std::endl;
+                        }
+                    } else {
+                        // Already exists, skip
+                        std::string path;
+                        if (pFileSystem->file_exists(user_egg_sql)) path = user_egg_sql;
+                        if (pFileSystem->file_exists(sql_outpath)) path = sql_outpath;
+                        FS_dprint("EggNOG SQL database already exists at: " + path +
+                                  " skipping");
+                        log_msg << "EggNOG SQL Database skipped, exists at: " << path << std::endl;
+                    }
+
+                    // Check if DIAMOND EggNOG database exists
+                    if (!pFileSystem->file_exists(user_egg_dmnd) && !pFileSystem->file_exists(dmnd_outpath)) {
+                        // No, does not exist, need to generate from FASTA
+                        if (eggnogDatabase.download(EggnogDatabase::EGGNOG_FASTA, fasta_outpath) != EggnogDatabase::ERR_EGG_OK) {
+                            // Error in download
+                            err_msg = "Unable to get EggNOG FASTA from FTP to: " +
+                                      fasta_outpath + "\nError: " + eggnogDatabase.print_err();
+                            throw ExceptionHandler(err_msg,ERR_ENTAP_INIT_EGGNOG);
+                        }
+
+                        // Now, index for DIAMOND
+                        FS_dprint("Success! EggNOG FASTA downloaded, indexing for DIAMOND...");
+                        log_msg << "EggNOG FASTA database written to: " + fasta_outpath << std::endl;
+
+                        // TODO move to DIAMOND module
+                        index_cmd =
+                                diamond_exe + " makedb --in " + fasta_outpath +
+                                " -d "      + dmnd_outpath +
+                                " -p "      +std::to_string(threads);
+                        std_out = fasta_outpath + FileSystem::EXT_STD;
+
+                        TerminalData terminalData = TerminalData();
+
+                        terminalData.command       = index_cmd;
+                        terminalData.base_std_path = std_out;
+                        terminalData.print_files   = true;
+                        terminalData.suppress_std_err = false;
+
+                        if (TC_execute_cmd(terminalData) != 0) {
+                            throw ExceptionHandler("Error indexing database at: " + dmnd_outpath + "\nError:" +
+                                                   terminalData.err_stream, ERR_ENTAP_INIT_EGGNOG);
+                        }
+                        FS_dprint("Success! EggNOG DIAMOND database indexed at: " + dmnd_outpath);
+                        log_msg << "DIAMOND EggNOG database written to: " + dmnd_outpath << std::endl;
+
+                    } else {
+                        // Yes, file already exists
+                        std::string path;
+                        if (pFileSystem->file_exists(user_egg_dmnd)) path = user_egg_dmnd;
+                        if (pFileSystem->file_exists(dmnd_outpath)) path = dmnd_outpath;
+                        FS_dprint("EggNOG DIAMOND database already exists at: " + path);
+                        log_msg << "EggNOG DIAMOND database skipped, exists at: " << path << std::endl;
+                        TC_print(TC_PRINT_COUT, "EggNOG database already exist, skipping...");
+                    }
+                    break;
+                }
+
+                default:
+                    break;
             }
-        } else {
-            // Already exists, skip
-            std::string path;
-            if (pFileSystem->file_exists(user_egg_sql)) path = user_egg_sql;
-            if (pFileSystem->file_exists(sql_outpath)) path = sql_outpath;
-            FS_dprint("EggNOG SQL database already exists at: " + path +
-                " skipping");
-            log_msg << "EggNOG SQL Database skipped, exists at: " << path << std::endl;
         }
 
-        // Check if DIAMOND EggNOG database exists
-        if (!pFileSystem->file_exists(user_egg_dmnd) && !pFileSystem->file_exists(dmnd_outpath)) {
-            // No, does not exist, need to generate from FASTA
-            if (eggnogDatabase.download(EggnogDatabase::EGGNOG_FASTA, fasta_outpath) != EggnogDatabase::ERR_EGG_OK) {
-                // Error in download
-                err_msg = "Unable to get EggNOG FASTA from FTP to: " +
-                          fasta_outpath + "\nError: " + eggnogDatabase.print_err();
-                throw ExceptionHandler(err_msg,ERR_ENTAP_INIT_EGGNOG);
-            }
 
-            // Now, index for DIAMOND
-            FS_dprint("Success! EggNOG FASTA downloaded, indexing for DIAMOND...");
-            log_msg << "EggNOG FASTA database written to: " + fasta_outpath << std::endl;
 
-            // TODO move to DIAMOND module
-            index_cmd =
-                    diamond_exe + " makedb --in " + fasta_outpath +
-                    " -d "      + dmnd_outpath +
-                    " -p "      +std::to_string(threads);
-            std_out = fasta_outpath + FileSystem::EXT_STD;
-
-            TerminalData terminalData = TerminalData();
-
-            terminalData.command       = index_cmd;
-            terminalData.base_std_path = std_out;
-            terminalData.print_files   = true;
-            terminalData.suppress_std_err = false;
-
-            if (TC_execute_cmd(terminalData) != 0) {
-                throw ExceptionHandler("Error indexing database at: " + dmnd_outpath + "\nError:" +
-                                       terminalData.err_stream, ERR_ENTAP_INIT_EGGNOG);
-            }
-            FS_dprint("Success! EggNOG DIAMOND database indexed at: " + dmnd_outpath);
-            log_msg << "DIAMOND EggNOG database written to: " + dmnd_outpath << std::endl;
-
-        } else {
-            // Yes, file already exists
-            std::string path;
-            if (pFileSystem->file_exists(user_egg_dmnd)) path = user_egg_dmnd;
-            if (pFileSystem->file_exists(dmnd_outpath)) path = dmnd_outpath;
-            FS_dprint("EggNOG DIAMOND database already exists at: " + path);
-            log_msg << "EggNOG DIAMOND database skipped, exists at: " << path << std::endl;
-            TC_print(TC_PRINT_COUT, "EggNOG database already exist, skipping...");
-        }
         // Print to log/debug
         FS_dprint("Success! All EggNOG files verified");
         std::string temp = log_msg.str();

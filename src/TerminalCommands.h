@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -47,6 +47,8 @@ typedef enum {
 } TC_PRINT_TYPES;
 
 typedef std::unordered_map<std::string, std::string> command_map_t;
+
+const int TC_EXIT_SUCCESS = EXIT_SUCCESS;
 
 int TC_execute_cmd(TerminalData &terminalData);
 void TC_print(TC_PRINT_TYPES printTypes, std::string msg);

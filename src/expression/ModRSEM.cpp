@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -207,17 +207,7 @@ void ModRSEM::parse() {
                                ERR_ENTAP_RUN_RSEM_EXPRESSION);
     }
 
-    // Setup figure files, directories already created
-    GraphingManager::GraphingData graph_box_plot;
-    graph_box_plot.x_axis_label = "Flag";
-    graph_box_plot.y_axis_label = "Sequence Length";
-    graph_box_plot.text_file_path = PATHS(mFigureDir, GRAPH_TXT_BOX_PLOT);
-    graph_box_plot.fig_out_path   = PATHS(mFigureDir, GRAPH_PNG_BOX_PLOT);
-    graph_box_plot.graph_title    = GRAPH_TITLE_BOX_PLOT;
-    graph_box_plot.graph_type     = GraphingManager::ENT_GRAPH_BOX_PLOT_VERTICAL;
-    mpGraphingManager->initialize_graph_data(graph_box_plot);
-
-    // Setup processed file paths, directories already created
+        // Setup processed file paths, directories already created
     original_filename = mFilename;
     removed_filename  = original_filename + RSEM_OUT_REMOVED;
     kept_filename     = original_filename + RSEM_OUT_KEPT;
@@ -248,7 +238,6 @@ void ModRSEM::parse() {
         if (fpkm_val > mFPKM) {
             // Kept sequence
             out_file << querySequence->get_sequence() << std::endl;
-            mpGraphingManager->add_datapoint(graph_box_plot.text_file_path, {GRAPH_KEPT_FLAG, std::to_string(length)});
             //TODO move to QueryData
             if (length < min_selected) {
                 min_selected = length;
@@ -265,7 +254,6 @@ void ModRSEM::parse() {
             // Removed sequence
             querySequence->QUERY_FLAG_CLEAR(QuerySequence::QUERY_EXPRESSION_KEPT);
             removed_file << querySequence->get_sequence() << std::endl;
-            mpGraphingManager->add_datapoint(graph_box_plot.text_file_path, {GRAPH_REJECTED_FLAG, std::to_string(length)});
 
             if (length < min_removed) {
                 min_removed = length;
@@ -291,6 +279,7 @@ void ModRSEM::parse() {
 
 
     if (count_kept > 0) {
+        mTotalKeptSequences = count_kept;
         rejected_percent = ((fp32)count_removed / count_total) * 100;
         avg_kept = (fp32) total_kept_len / count_kept;
         kept_n = mpQueryData->calculate_N_vals(all_kept_lengths, total_kept_len);
@@ -338,8 +327,6 @@ void ModRSEM::parse() {
 
 
     //------------------------Graphing------------------------//
-    FS_dprint("Beginning to send data to graphing manager...");
-    mpGraphingManager->graph_data(graph_box_plot.text_file_path);
     FS_dprint("Success!");
     //--------------------------------------------------------//
 

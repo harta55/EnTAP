@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -103,7 +103,8 @@ std::unique_ptr<AbstractSimilaritySearch> SimilaritySearch::spawn_object() {
         case SIM_DIAMOND:
         default:
             return std::unique_ptr<AbstractSimilaritySearch>(new ModDiamond(
-                    mSimSearchDir, mInputFastaPath, *mpEntapData, mDatabasePaths
+                    mSimSearchDir, mInputFastaPath, *mpEntapData, mDatabasePaths,
+                    "DIAMOND", SIM_DIAMOND
                     ));
     }
 }

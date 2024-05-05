@@ -80,15 +80,6 @@ protected:
     const std::string FRAME_SELECTION_FILENAME_INTERNAL  = "internal_genes";
     const std::string FRAME_SELECTION_FILENAME_LOST      = "sequences_removed";
 
-    const std::string GRAPH_TITLE_FRAME_RESULTS     = "Frame_Selection_ORFs";
-    const std::string GRAPH_FILE_FRAME_RESUTS       = "frame_results_pie.png";
-    const std::string GRAPH_TEXT_FRAME_RESUTS       = "frame_results_pie.txt";
-    const std::string GRAPH_TITLE_REF_COMPAR        = "Frame_Selected_Sequences";
-    const std::string GRAPH_FILE_REF_COMPAR         = "removed_comparison_box.png";
-    const std::string GRAPH_TEXT_REF_COMPAR         = "removed_comparison_box.txt";
-    const std::string GRAPH_REJECTED_FLAG           = "Removed";
-    const std::string GRAPH_KEPT_FLAG               = "Selected";
-
     const uint16 MINIMUM_KEPT_SEQUENCES = 0;        // Minimum required kept sequences before continuing pipeline
 
     std::string mFinalFaaPath;      // Absolute path to FAA (protein) file produced from Frame Selection process

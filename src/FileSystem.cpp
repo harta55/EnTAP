@@ -55,6 +55,8 @@ const std::string FileSystem::EXT_LST  = ".lst";
 const std::string FileSystem::EXT_CDS  = ".cds";
 const std::string FileSystem::EXT_PEP  = ".pep";
 const std::string FileSystem:: TIDYVERSE_TSV_NULL = "NA";
+const std::string FileSystem::ENTAP_FINAL_OUTPUT        = "final_results/"; // Directory name for final output annotations directory
+const std::string FileSystem::ENTAP_TRANSCRIPTOME_DIR   = "transcriptomes/"; // Directory name for transcriptome directory (frame selected, expression analysis)
 
 const char FileSystem::DELIM_TSV = '\t';
 const char FileSystem::DELIM_CSV = ',';

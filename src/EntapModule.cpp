@@ -75,7 +75,6 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
 
     // INIT directories
     mModOutDir  = PATHS(mOutpath, module_name);
-    mFigureDir  = PATHS(mModOutDir, FIGURE_DIR);
     mProcDir    = PATHS(mModOutDir, PROCESSED_OUT_DIR);
     mOverallResultsDir = PATHS(mModOutDir, OVERALL_RESULTS_DIR);    // generated at app level (some don't need this directory)
 
@@ -84,12 +83,10 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     if (mOverwrite) {
         mpFileSystem->delete_dir(mModOutDir);
     } else {
-        mpFileSystem->delete_dir(mFigureDir);
         mpFileSystem->delete_dir(mProcDir);
     }
     // Recreate module + figure + processed directories
     mpFileSystem->create_dir(mModOutDir);
-    mpFileSystem->create_dir(mFigureDir);
     mpFileSystem->create_dir(mProcDir);
 
     mpFileSystem->set_working_dir(mModOutDir);

@@ -169,6 +169,8 @@ public:
     static const std::string EXT_PEP;
     static const std::string EXT_CDS;
     static const std::string TIDYVERSE_TSV_NULL;    // String to print in TSV when data is not present to support Tidyverse format
+    static const std::string ENTAP_FINAL_OUTPUT       ;
+    static const std::string ENTAP_TRANSCRIPTOME_DIR  ;
 
     static const char        DELIM_TSV;
     static const char        DELIM_CSV;
@@ -196,8 +198,6 @@ private:
 #else
     const std::string DEBUG_FILENAME            = "debug"; // Filename for EnTAP debug file
 #endif
-    const std::string ENTAP_FINAL_OUTPUT        = "final_results/"; // Directory name for final output annotations directory
-    const std::string ENTAP_TRANSCRIPTOME_DIR   = "transcriptomes/"; // Directory name for transcriptome directory (frame selected, expression analysis)
     const std::string TEMP_DIRECTORY            = "temp/"; // Directory name for 'temp' directory  (deleted once EnTAP exits)
 
     // Log file specifics

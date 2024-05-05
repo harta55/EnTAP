@@ -480,9 +480,11 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
     out_unannotated_path = PATHS(outpath, OUT_UNANNOTATED_FILENAME);
     start_alignment_files(out_unannotated_path, headers, go_levels, unannotated_output_types);
     out_annotated_contam_path = PATHS(outpath, OUT_ANNOTATED_CONTAM_FILENAME);
-    start_alignment_files(out_annotated_contam_path, headers, go_levels, output_types);
     out_annotated_without_contam_path = PATHS(outpath, OUT_ANNOTATED_NO_CONTAM_FILENAME);
-    start_alignment_files(out_annotated_without_contam_path, headers, go_levels, output_types);
+    if (mpUserInput->has_input(INPUT_FLAG_CONTAMINANT)) {
+        start_alignment_files(out_annotated_contam_path, headers, go_levels, output_types);
+        start_alignment_files(out_annotated_without_contam_path, headers, go_levels, output_types);
+    }
     out_entap_report_path = PATHS(outpath, OUT_ENTAP_REPORT_FILENAME);
     std::vector<FileSystem::ENT_FILE_TYPES> entap_report_format = {FileSystem::ENT_FILE_DELIM_TSV};
     start_alignment_files(out_entap_report_path, headers, go_levels, entap_report_format);
@@ -571,12 +573,19 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
         ss <<
            "\nSimilarity Search"                               <<
            "\n\tTotal unique sequences with an alignment: "    << count_sim_hits   << " (" <<
-                 (((fp64) count_sim_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
-           "\n\t\tTotal alignments flagged as a contaminant: "   << count_sim_contam << " (" <<
-                 (((fp64) count_sim_contam / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
-           "\n\t\tTotal alignments NOT flagged as a contaminant: "   << (count_sim_hits - count_sim_contam) << " (" <<
-                 (((fp64) (count_sim_hits - count_sim_contam) / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
-           "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits << " (" <<
+                 (((fp64) count_sim_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
+        if (mpUserInput->has_input(INPUT_FLAG_CONTAMINANT)) {
+            ss <<
+               "\n\t\tTotal alignments flagged as a contaminant: "   << count_sim_contam << " (" <<
+               (((fp64) count_sim_contam / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
+               "\n\t\tTotal alignments NOT flagged as a contaminant: "   << (count_sim_hits - count_sim_contam) << " (" <<
+               (((fp64) (count_sim_hits - count_sim_contam) / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)";
+        } else {
+            ss <<
+                "\n\t\tNo contaminants were selected by user";
+        }
+
+        ss << "\n\tTotal unique sequences without an alignment: " << count_sim_no_hits << " (" <<
                  (((fp64) count_sim_no_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
     }
     if (DATA_FLAG_GET(SUCCESS_ONTOLOGY)) {
@@ -621,24 +630,31 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
 
     ss <<
        "\nTotals"   <<
+       "\nEnTAP files written to: " << mpFileSystem->get_root_path() <<
        "\n\tTotal retained sequences (after filtering and/or frame selection): " << count_total_kept_sequences <<
-       "\n\t\tFinal transcriptome written to directory: " << mpFileSystem->get_trancriptome_dir() <<
+       "\n\t\tFinal transcriptome written to directory: " << FileSystem::ENTAP_TRANSCRIPTOME_DIR <<
        "\n\tTotal unique sequences annotated (similarity search alignments only): "      << count_sim_only      << " (" <<
             (((fp64) count_sim_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
        "\n\tTotal unique sequences annotated (gene family assignment only): "            << count_ontology_only << " (" <<
             (((fp64) count_ontology_only / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
        "\n\tTotal unique sequences annotated (gene family and/or similarity search): "   << count_TOTAL_ann     << " (" <<
             (((fp64) count_TOTAL_ann / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
-       "\n\t\tWritten to: " << out_annotated_path <<
-       "\n\t\tTotal annotated sequences flagged as a contaminant from similarity search: " << count_sim_contam << " (" <<
-            (((fp64) count_sim_contam / count_TOTAL_ann) * ENTAP_PERCENT) << "% of total annotated)" <<
-       "\n\t\t\tWritten to: " << out_annotated_contam_path <<
-       "\n\t\tTotal annotated sequences NOT flagged as a contaminant from similarity search: " << (count_TOTAL_ann - count_sim_contam) << " (" <<
-            (((fp64) (count_TOTAL_ann - count_sim_contam) / count_TOTAL_ann) * ENTAP_PERCENT) << "% of total annotated)" <<
-       "\n\t\t\tWritten to: " << out_annotated_without_contam_path <<
+       "\n\t\tWritten to: " << PATHS(FileSystem::ENTAP_FINAL_OUTPUT, OUT_ANNOTATED_FILENAME);
+       if (mpUserInput->has_input(INPUT_FLAG_CONTAMINANT)) {
+           ss << "\n\t\tTotal annotated sequences flagged as a contaminant from similarity search: " << count_sim_contam << " (" <<
+           (((fp64) count_sim_contam / count_TOTAL_ann) * ENTAP_PERCENT) << "% of total annotated)" <<
+           "\n\t\t\tWritten to: " << PATHS(FileSystem::ENTAP_FINAL_OUTPUT, OUT_ANNOTATED_CONTAM_FILENAME) <<
+           "\n\t\tTotal annotated sequences NOT flagged as a contaminant from similarity search: " << (count_TOTAL_ann - count_sim_contam) << " (" <<
+           (((fp64) (count_TOTAL_ann - count_sim_contam) / count_TOTAL_ann) * ENTAP_PERCENT) << "% of total annotated)" <<
+           "\n\t\t\tWritten to: " << PATHS(FileSystem::ENTAP_FINAL_OUTPUT, OUT_ANNOTATED_NO_CONTAM_FILENAME);
+       } else {
+           ss << "\n\t\tNo contaminants were selected by user";
+       }
+
+       ss <<
        "\n\tTotal unique sequences unannotated (gene family and/or similarity search): " << count_TOTAL_unann_kept << " ("
             << (((fp64) count_TOTAL_unann_kept / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
-       "\n\t\tWritten to: " << out_unannotated_path;
+       "\n\t\tWritten to: " << PATHS(FileSystem::ENTAP_FINAL_OUTPUT, OUT_UNANNOTATED_FILENAME);
 
     out_msg = ss.str();
     mpFileSystem->print_stats(out_msg);

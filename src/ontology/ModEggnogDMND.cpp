@@ -319,17 +319,6 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
 
     //--------------------- Top Ten Taxonomic Scopes --------------//
     if (!tax_scope_counter.empty()) {
-        // Setup graphing files
-        graphing_data_temp = GraphingManager::GraphingData();
-        graphing_data_temp.x_axis_label = "Taxonomic Scope";
-        graphing_data_temp.y_axis_label = "Count";
-        graphing_data_temp.text_file_path = PATHS(mFigureDir, GRAPH_EGG_TAX_BAR_TXT);
-        graphing_data_temp.fig_out_path   = PATHS(mFigureDir, GRAPH_EGG_TAX_BAR_PNG);
-        graphing_data_temp.graph_title    = GRAPH_EGG_TAX_BAR_TITLE;
-        graphing_data_temp.graph_type     = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
-
-        mpGraphingManager->initialize_graph_data(graphing_data_temp);
-
         stream << "\nTop " << std::to_string(COUNT_TOP_TAX_SCOPE) << " Taxonomic Scopes Assigned:";
         ct = 1;
         // Sort taxonomy scope
@@ -340,10 +329,8 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
             stream <<
                "\n\t" << ct << ")" << pair.first << ": " << pair.second <<
                "(" << percent << "%)";
-            mpGraphingManager->add_datapoint(graphing_data_temp.text_file_path, {pair.first, std::to_string(pair.second)});
             ct++;
         }
-        mpGraphingManager->graph_data(graphing_data_temp.text_file_path);
     }
     //-------------------------------------------------------------//
 
@@ -362,20 +349,6 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
         for (auto &pair : go_combined_map) {
             if (pair.first.empty() || pair.second.empty()) continue;
             // Count maps (biological/molecular/cellular/overall)
-            graphing_data_temp = GraphingManager::GraphingData();
-            graphing_data_temp.x_axis_label = "Gene Ontology Term";
-            graphing_data_temp.y_axis_label = "Count";
-            graphing_data_temp.text_file_path = PATHS(mFigureDir, pair.first) + GRAPH_GO_END_TXT;
-            graphing_data_temp.fig_out_path   = PATHS(mFigureDir, pair.first) + GRAPH_GO_END_PNG;
-
-            if (pair.first == GO_BIOLOGICAL_FLAG) graphing_data_temp.graph_title = GRAPH_GO_BAR_BIO_TITLE;
-            if (pair.first == GO_CELLULAR_FLAG) graphing_data_temp.graph_title = GRAPH_GO_BAR_CELL_TITLE;
-            if (pair.first == GO_MOLECULAR_FLAG) graphing_data_temp.graph_title = GRAPH_GO_BAR_MOLE_TITLE;
-            if (pair.first == GO_OVERALL_FLAG) graphing_data_temp.graph_title = GRAPH_GO_BAR_ALL_TITLE;
-            graphing_data_temp.graph_type = GraphingManager::ENT_GRAPH_BAR_HORIZONTAL;
-
-            mpGraphingManager->initialize_graph_data(graphing_data_temp);
-
             // Sort count maps
             pair.second.sort(true);
 
@@ -399,10 +372,8 @@ void ModEggnogDMND::calculate_stats(std::stringstream &stream) {
                 stream <<
                        "\n\t" << ct << ")" << pair2.first.go_id << ": " << pair2.second <<
                        "(" << percent << "%)";
-                mpGraphingManager->add_datapoint(graphing_data_temp.text_file_path, {pair2.first.go_id, std::to_string(pair2.second)});
                 ct++;
             }
-            mpGraphingManager->graph_data(graphing_data_temp.text_file_path);
         }
 #if 0
         // The below code is obsolete with the removal of Gene Ontology levels, keeping in here in case it is added back

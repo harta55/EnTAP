@@ -85,9 +85,6 @@ private:
     const uint16 COUNT_TOP_TAX_SCOPE= 10;
     const uint16 COUNT_TOP_GO       = 10;
     const std::string EGGNOG_DIRECTORY        = "EggNOG/";
-    const std::string GRAPH_EGG_TAX_BAR_TITLE = "Top_10_Tax_Levels";
-    const std::string GRAPH_EGG_TAX_BAR_PNG   = "eggnog_tax_scope.png";
-    const std::string GRAPH_EGG_TAX_BAR_TXT   = "eggnog_tax_scope.txt";
     const std::string EGG_ANNOT_RESULTS       = "annotation_results";
     const std::string EGG_ANNOT_STD           = "annotation_std";
     const std::string EGG_OUTPUT_ANNOT_APPEND = ".emapper.annotations";

@@ -133,27 +133,6 @@ void AbstractFrame::frame_calculate_statistics() {
                 {FRAME_SELECTION_THREE_FLAG   ,0 },
         };
 
-        // Initialize graphing data
-        GraphingManager::GraphingData graph_pie_results;
-        graph_pie_results.x_axis_label = ENT_GRAPH_NULL;
-        graph_pie_results.y_axis_label = "Sequence Length";
-        graph_pie_results.text_file_path = PATHS(mFigureDir, GRAPH_TEXT_FRAME_RESUTS);
-        graph_pie_results.fig_out_path   = PATHS(mFigureDir, GRAPH_FILE_FRAME_RESUTS);
-        graph_pie_results.graph_title    = GRAPH_TITLE_FRAME_RESULTS;
-        graph_pie_results.graph_type     = GraphingManager::ENT_GRAPH_PIE_CHART;
-
-        GraphingManager::GraphingData graph_box_comparison;
-        graph_box_comparison.x_axis_label = ENT_GRAPH_NULL;
-        graph_box_comparison.y_axis_label = "Sequence Length";
-        graph_box_comparison.text_file_path = PATHS(mFigureDir, GRAPH_TEXT_REF_COMPAR);
-        graph_box_comparison.fig_out_path   = PATHS(mFigureDir, GRAPH_FILE_REF_COMPAR);
-        graph_box_comparison.graph_title    = GRAPH_TITLE_REF_COMPAR;
-        graph_box_comparison.graph_type     = GraphingManager::ENT_GRAPH_BOX_PLOT_VERTICAL;
-
-        mpGraphingManager->initialize_graph_data(graph_pie_results);
-        mpGraphingManager->initialize_graph_data(graph_box_comparison);
-
-
         for (auto& pair : *mpQueryData->get_sequences_ptr()) {
             if (!pair.second->is_kept()) continue; // Skip seqs that were lost to expression analysis
 
@@ -175,9 +154,6 @@ void AbstractFrame::frame_calculate_statistics() {
 
                 total_kept_len += length;            // Update total transcriptome length for statistics
                 all_kept_lengths.push_back(length);  // Update individual lengths for statistics
-
-                // Update figure
-                mpGraphingManager->add_datapoint(graph_box_comparison.text_file_path, {GRAPH_KEPT_FLAG, std::to_string(length)});
 
                 // Print nucleotide + protein sequences to files
                 auto file_it = file_map_faa.find(pair.second->getFrame());
@@ -206,7 +182,6 @@ void AbstractFrame::frame_calculate_statistics() {
                     max_removed_seq = pair.first;
                     max_removed = length;
                 }
-                mpGraphingManager->add_datapoint(graph_box_comparison.text_file_path, {GRAPH_REJECTED_FLAG, std::to_string(length)});
                 all_lost_lengths.push_back(length);
                 total_removed_len += length;
             } else {
@@ -286,20 +261,6 @@ void AbstractFrame::frame_calculate_statistics() {
         }
         std::string stat_out_msg = stat_output.str();
         mpFileSystem->print_stats(stat_out_msg);
-        FS_dprint("Success!");
-
-        //---------------------- Figure handling ----------------------//
-        FS_dprint("Beginning figure handling...");
-        mpGraphingManager->add_datapoint(graph_pie_results.text_file_path, {GRAPH_REJECTED_FLAG, std::to_string(count_removed)});
-        mpGraphingManager->add_datapoint(graph_pie_results.text_file_path, {FRAME_SELECTION_FIVE_FLAG, std::to_string(count_map[FRAME_SELECTION_FIVE_FLAG])});
-        mpGraphingManager->add_datapoint(graph_pie_results.text_file_path, {FRAME_SELECTION_THREE_FLAG, std::to_string(count_map[FRAME_SELECTION_THREE_FLAG])});
-        mpGraphingManager->add_datapoint(graph_pie_results.text_file_path, {FRAME_SELECTION_COMPLETE_FLAG, std::to_string(count_map[FRAME_SELECTION_COMPLETE_FLAG])});
-        mpGraphingManager->add_datapoint(graph_pie_results.text_file_path, {FRAME_SELECTION_INTERNAL_FLAG, std::to_string(count_map[FRAME_SELECTION_INTERNAL_FLAG])});
-
-        mpGraphingManager->graph_data(graph_pie_results.text_file_path);
-        mpGraphingManager->graph_data(graph_box_comparison.text_file_path);
-        //------------------------------------------------------------//
-
         FS_dprint("Success! Frame Selection statistics completed");
 
     } catch (const std::exception &e) {

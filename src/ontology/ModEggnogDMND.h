@@ -69,9 +69,6 @@ private:
 
     static constexpr int DMND_COL_NUMBER = 14;
     const uint32      STATUS_UPDATE_HITS = 5000;
-    const std::string GRAPH_EGG_TAX_BAR_TITLE = "Top_Tax_Levels";
-    const std::string GRAPH_EGG_TAX_BAR_PNG   = "eggnog_tax_scope.png";
-    const std::string GRAPH_EGG_TAX_BAR_TXT   = "eggnog_tax_scope.txt";
     const std::string EGG_ANNOT_RESULTS       = "annotation_results";
     const std::string EGG_ANNOT_STD           = "annotation_std";
     const std::string EGG_OUT_UNANNOTATED     = "unannotated";

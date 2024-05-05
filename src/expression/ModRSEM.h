@@ -56,7 +56,11 @@
  * Citation             - B. Li and C. N. Dewey, “RSEM: accurate transcript
  *                        quantification from RNA-Seq data with or without
  *                        a reference genome,” (in eng), BMC Bioinformatics,
- *                        vol. 12, p. 323, Aug 2011.
+ *                        vol. 12, p. 323, Aug 2011.    const std::string GRAPH_TXT_BOX_PLOT    = "comparison_box.txt";
+    const std::string GRAPH_PNG_BOX_PLOT    = "comparison_box.png";
+    const std::string GRAPH_TITLE_BOX_PLOT  = "Expression_Analysis";
+    const std::string GRAPH_REJECTED_FLAG   = "Removed";
+    const std::string GRAPH_KEPT_FLAG       = "Selected";
  *
  * ======================================================================
  */
@@ -83,11 +87,6 @@ private:
     const std::string STD_EXP_OUT           = "_rsem_exp";
     const std::string STD_VALID_OUT         = "_rsem_validate";
     const std::string STD_CONVERT_SAM       = "_rsem_convert";
-    const std::string GRAPH_TXT_BOX_PLOT    = "comparison_box.txt";
-    const std::string GRAPH_PNG_BOX_PLOT    = "comparison_box.png";
-    const std::string GRAPH_TITLE_BOX_PLOT  = "Expression_Analysis";
-    const std::string GRAPH_REJECTED_FLAG   = "Removed";
-    const std::string GRAPH_KEPT_FLAG       = "Selected";
     const float REJECTED_ERROR_CUTOFF       = 75.0;
 
     static constexpr int RSEM_COL_NUM = 7;

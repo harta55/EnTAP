@@ -41,7 +41,6 @@ ModHorizontalGeneTransferDiamond::ModHorizontalGeneTransferDiamond(std::string &
     mExePath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
     // These aren't used right now, going to move out of super
     mpFileSystem->delete_dir(mOverallResultsDir);
-    mpFileSystem->delete_dir(mFigureDir);
 }
 
 EntapModule::ModVerifyData ModHorizontalGeneTransferDiamond::verify_files() {

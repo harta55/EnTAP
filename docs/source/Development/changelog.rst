@@ -2,7 +2,7 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. 
 
-EnTAP v1.1.0 (X X, 2024)
+EnTAP v1.1.0 (May 5, 2024)
 ------------------------------------------
     * Removed GeneMarkS-T from supported Frame Selection software
     * Removed all figures from EnTAP. This will be replaced in the next version with updated figures/graphs. 

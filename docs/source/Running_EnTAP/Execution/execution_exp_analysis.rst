@@ -1,6 +1,5 @@
 .. |exp_dir| replace:: :file:`/expression/RSEM`
 .. |exp_proc_dir| replace:: :file:`/expression/RSEM/processed`
-.. |exp_fig_dir| replace:: :file:`/expression/RSEM/figures`
 
 Expression Analysis
 =============================
@@ -61,7 +60,7 @@ Expression Analysis Commands
 
 Interpreting the Results
 -----------------------------
-The |exp_dir| folder will contain all of the relevant information for this stage of the pipeline. This includes many files generated from RSEM as well as files generated from EnTAP. Files generated from EnTAP are contained within the |exp_proc_dir| and |exp_fig_dir| directories. 
+The |exp_dir| folder will contain all of the relevant information for this stage of the pipeline. This includes many files generated from RSEM as well as files generated from EnTAP. Files generated from EnTAP are contained within the |exp_proc_dir| directory. 
 
 RSEM generates many files, but the :file:`genes.results` file is what we are particularly interested in from the RSEM output. This contains the relevant FPKM values used for thresholding. The following files can be found within the |exp_dir| directory using an example input transcriptome titled "Species.fasta":
 
@@ -82,15 +81,6 @@ RSEM generates many files, but the :file:`genes.results` file is what we are par
    * - :file:`Species_kept.fasta`
      - Generated from EnTAP. Contains all of the transcripts that have been retained due to having an FPKM threshold above the user input one
      - |exp_proc_dir|
-   * - :file:`comparison_box.txt/png`
-     - Generated from EnTAP. Box plot of the sequence length vs. the sequences that were removed/kept after Expression Analysis.
-       Example:   
-	   
-       .. image:: plot_exp_box.png
-          :scale: 50% 
-          :align: center
-		  
-     - |exp_fig_dir|
 
 
 Expression Analysis Headers

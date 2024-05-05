@@ -5,7 +5,7 @@ This page contains (mostly) all of the changes that were made between each versi
 EnTAP v1.1.0 (X X, 2024)
 ------------------------------------------
     * Removed GeneMarkS-T from supported Frame Selection software
-    * Added HTML output for EnTAP final report that displays key statistics and visuals from the EnTAP run
+    * Removed all figures from EnTAP. This will be replaced in the next version with updated figures/graphs. 
     * Split entap_config.ini file into two separate files, entap_config.ini and entap_run.params. The intention is to make it clearer that entap_run.params is used for specific runs while the entap_config.ini file is setup once and not changed often. 
     * Added support for Horizontal Gene Transfer analysis. New commands and EnTAP output added to allow for analysis. GFF and donor/recipient databases required for analysis.
     * Added support for utilizing eggnog-mapper (https://github.com/eggnogdb/eggnog-mapper) to access EggNOG databases. Added new output and commands for support. Added support for downloading necessary EggNOG databases during EnTAP configuration. Due to this change, run Configuration again if using this release!

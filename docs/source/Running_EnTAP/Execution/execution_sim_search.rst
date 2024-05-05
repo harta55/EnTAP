@@ -1,7 +1,6 @@
 .. |sim_dir| replace:: :file:`/similarity_search/DIAMOND`
 .. |sim_proc_dir| replace:: :file:`/similarity_search/DIAMOND/processed/database_ref`
 .. |sim_overall_dir| replace:: :file:`/similarity_search/DIAMOND/overall_results`
-.. |sim_fig_dir| replace:: :file:`/similarity_search/DIAMOND/processed/database_ref/figures`
 .. |sim_res_dir| replace:: */overall_results*
 .. |ncbi_refseq| replace:: https://www.ncbi.nlm.nih.gov/refseq/
 .. |uniprot_swiss| replace:: https://www.uniprot.org/
@@ -186,24 +185,6 @@ The same files are repeated across databases and across the overall results, so 
    * - :file:`diamond_unselected_hits.faa/.fnn/.tsv`
      - Generated from EnTAP. Similarity searching can result in several hits for each query sequence. With only one best alignment being selected, the rest are unselected and end up here. Unselected hits can be due to a low e-value, coverage, or other properties EnTAP takes into account when selecting hits
      - |sim_proc_dir| or |sim_overall_dir|
-   * - :file:`species_bar.txt/png`
-     - Generated from EnTAP. Bar graph representing the top 10 species that were hit within a reference database or overall. 
-       Example:   
-	   
-       .. image:: plot_sim_species_bar.png
-          :scale: 50% 
-          :align: center
-		  
-     - |sim_fig_dir|
-   * - :file:`contam_bar.txt/png`
-     - Generated from EnTAP. Bar graph representing the top 10 contaminants (within best hits) that were hit against the database or overall.
-       Example:   
-	   
-       .. image:: plot_sim_contam_bar.png
-          :scale: 50% 
-          :align: center
-		  
-     - |sim_fig_dir|
 
 
 Similarity Search Headers

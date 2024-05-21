@@ -51,6 +51,11 @@ RUN git clone https://github.com/TransDecoder/TransDecoder.git \
 && git checkout TransDecoder-v5.7.1 \
 && cp -R . /usr/lib/TransDecoder-v5.7.1
 
+# Download TransDecoder dependencies
+RUN curl -L https://cpanmin.us | perl - App::cpanminus \
+&& cpanm install DB_File \
+&& cpanm install URI::Escape
+
 # Install R and required packages
 RUN R -e "install.packages('ggplot2', repos='https://ftp.osuosl.org/pub/cran/')" && \
     R -e "install.packages('BiocManager', repos='https://ftp.osuosl.org/pub/cran/')" && \

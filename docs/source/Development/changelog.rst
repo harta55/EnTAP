@@ -2,6 +2,10 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. 
 
+EnTAP v1.1.1 (May 21, 2024)
+------------------------------------------
+    * Updated Dockerfile to include TransDecoder dependencies (DB_File and URI::Escape)
+
 EnTAP v1.1.0 (May 5, 2024)
 ------------------------------------------
     * Removed GeneMarkS-T from supported Frame Selection software

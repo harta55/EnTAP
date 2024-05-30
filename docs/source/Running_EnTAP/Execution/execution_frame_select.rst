@@ -13,21 +13,6 @@ TransDecoder (|transdecoder_git|) is leveraged to determine the coding regions f
 
 Frame Selection Commands
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. list-table:: **Frame Selection Flags**
-   :align: left
-   :widths: 10 50 10 10 10 
-   :header-rows: 1    
-   
-   * - param
-     - description
-     - location (cmd/R-ini,E-ini)
-     - qualifier
-     - example
-   * - complete
-     - Tell EnTAP to mark all of the transcripts as 'complete'. This will only be seen in the final output and will not affect the run.
-     - R-ini
-     - bool
-     - complete
 
 .. list-table:: Frame Selection - TransDecoder Specific Flags
    :align: left

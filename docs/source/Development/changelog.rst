@@ -2,6 +2,10 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. 
 
+EnTAP v1.2.0 ()
+------------------------------------------
+    * Removed --complete flag from Frame Selection, not needed with current implementation. May come back later
+
 EnTAP v1.1.1 (May 21, 2024)
 ------------------------------------------
     * Updated Dockerfile to include TransDecoder dependencies (DB_File and URI::Escape)

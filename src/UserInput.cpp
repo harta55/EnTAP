@@ -1942,6 +1942,8 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
     // No, using CONFIGURATION stage of pipeline
     } else {
 
+        /* EggNOG databases are downloaded through now for Eggnog-mapper, no need to check DIAMOND at this stage
+         *  Keeping for now in case implementation changes
         // Check if EggNOG DIAMOND database exists, if not, check DIAMOND run
         if (!mpFileSystem->file_exists(get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB))) {
             if (!ModDiamond::is_executable(dmnd_exe)) {
@@ -1949,6 +1951,7 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
                                        "\nThe DIAMOND test run failed.", ERR_ENTAP_INPUT_PARSE);
             }
         }
+        */
 
         // Test run DIAMOND if user input databases
         if (has_input(INPUT_FLAG_DATABASE)) {

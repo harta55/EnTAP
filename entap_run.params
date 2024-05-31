@@ -20,13 +20,6 @@ align=
 #type:boolean (true/false)
 single-end=false
 #-------------------------------
-# [frame_selection]
-#-------------------------------
-#Select this option if all of your sequences are complete proteins.
-#At this point, this option will merely flag the sequences in your output file
-#type:boolean (true/false)
-complete=false
-#-------------------------------
 # [frame_selection-transdecoder]
 #-------------------------------
 #Transdecoder only. Specify the minimum protein length

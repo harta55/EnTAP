@@ -169,7 +169,6 @@ private:
 
     QUERY_MAP_T  *mpSequences;
     bool         mNoTrim;
-    bool         mIsComplete;              // All sequences can be tagged as 'complete' genes
     uint32       mTotalSequences;          // Original sequence number
     uint32       mTotalKeptSequences;
 public:

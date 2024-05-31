@@ -249,7 +249,6 @@ void QueryData::generate_transcriptome(std::string &input_path, bool print_outpu
                     sequence += line + "\n";
                 }
                 QuerySequence *query_seq = new QuerySequence(DATA_FLAG_GET(IS_PROTEIN),sequence, seq_id);
-                if (mIsComplete) query_seq->setFrame(COMPLETE_FLAG);
                 // Check for duplicate headers in input transcriptomes
                 if (mpSequences->find(seq_id) != mpSequences->end()) {
                     throw ExceptionHandler("Duplicate headers in your input transcriptome: " + seq_id,
@@ -300,7 +299,6 @@ void QueryData::generate_transcriptome(std::string &input_path, bool print_outpu
                 "\nn90: "                                      << n_vals.second <<
                 "\nLongest sequence(bp): " << longest_len << " ("<<longest_seq<<")"<<
                 "\nShortest sequence(bp): "<< shortest_len<<" ("<<shortest_seq<<")";
-        if (mIsComplete)out_msg<<"\nAll sequences ("<<count_seqs<<") were flagged as complete genes";
         std::string msg = out_msg.str();
         mpFileSystem->print_stats(msg);
     }
@@ -318,7 +316,6 @@ void QueryData::init_params(FileSystem *fileSystem, UserInput *userInput) {
     mpFileSystem = fileSystem;
 
     mNoTrim        = mpUserInput->has_input(INPUT_FLAG_NO_TRIM);
-    mIsComplete    = mpUserInput->has_input(INPUT_FLAG_COMPLETE);
 }
 
 void QueryData::set_input_type(std::string &in) {

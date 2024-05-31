@@ -101,7 +101,6 @@ typedef enum {
     INPUT_FLAG_RSEM_CONVERT_SAM,
 
     /* Frame Selection Commands */
-    INPUT_FLAG_COMPLETE,
     INPUT_FLAG_FRAME_SELECTION,
 
     /* Frame Selection - GeneMarkST Commands */

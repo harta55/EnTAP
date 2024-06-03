@@ -233,6 +233,35 @@ const vect_str_t EggnogDatabase::TAXONOMIC_RESOLUTION = {"apiNOG", "virNOG", "ne
                                          "fuNOG", "opiNOG", "euNOG", "arNOG", "bactNOG",
                                          "NOG"};
 
+const std::unordered_map<char, std::string> EggnogDatabase::EGGNOG_COG_CATEGORIES = {
+        {'J', "Translation, ribosomal structure and biogenesis"},
+        {'A', "RNA processing and modification"},
+        {'K', "Transcription"},
+        {'L', "Replication, recombination and repair"},
+        {'B', "Chromatin structure and dynamics"},
+        {'D', "Cell cycle control, cell division, chromosome partitioning"},
+        {'Y', "Nuclear structure"},
+        {'V', "Defense mechanisms"},
+        {'T', "Signal transduction mechanisms"},
+        {'M', "Cell wall/membrane/envelope biogenesis"},
+        {'N', "Cell motility"},
+        {'Z', "Cytoskeleton"},
+        {'W', "Extracellular structures"},
+        {'U', "Intracellular trafficking, secretion, and vesicular transport"},
+        {'O', "Posttranslational modification, protein turnover, chaperones"},
+        {'X', "Mobilome: prophages, transposons"},
+        {'C', "Energy production and conversion"},
+        {'G', "Carbohydrate transport and metabolism"},
+        {'E', "Amino acid transport and metabolism"},
+        {'F', "Nucleotide transport and metabolism"},
+        {'H', "Coenzyme transport and metabolism"},
+        {'I', "Lipid transport and metabolism"},
+        {'P', "Inorganic ion transport and metabolism"},
+        {'Q', "Secondary metabolites biosynthesis, transport and catabolism"},
+        {'R', "General function prediction only"},
+        {'S', "Function unknown"}
+};
+
 const std::string EggnogDatabase::EGG_DB_SQL_FILENAME = "eggnog.db";
 const std::string EggnogDatabase::EGG_DB_DMND_FILENAME = "eggnog_proteins.dmnd";
 
@@ -981,4 +1010,9 @@ void EggnogDatabase::update_dataset(set_str_t &set, EGGNOG_DATA_TYPES datatype, 
         default:
             return;
     }
+}
+
+std::string EggnogDatabase::get_cog_category_description(const char &category_abbrev) {
+    char key = (char)toupper(category_abbrev);
+    return EGGNOG_COG_CATEGORIES.at(key);
 }

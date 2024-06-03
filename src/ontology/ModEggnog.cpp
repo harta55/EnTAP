@@ -30,6 +30,7 @@
 #include "ModEggnog.h"
 #include "../ExceptionHandler.h"
 #include "../FileSystem.h"
+#include "../database/EggnogDatabase.h"
 
 std::vector<ENTAP_HEADERS> ModEggnog::DEFAULT_HEADERS = {
         ENTAP_HEADER_ONT_EGG_SEED_ORTHO,
@@ -38,6 +39,8 @@ std::vector<ENTAP_HEADERS> ModEggnog::DEFAULT_HEADERS = {
         ENTAP_HEADER_ONT_EGG_TAX_SCOPE_MAX,
         ENTAP_HEADER_ONT_EGG_MEMBER_OGS,
         ENTAP_HEADER_ONT_EGG_DESC,
+        ENTAP_HEADER_ONT_EGG_COG_ABBREVIATION,
+        ENTAP_HEADER_ONT_EGG_COG_DESCRIPTION,
         ENTAP_HEADER_ONT_EGG_BIGG,
         ENTAP_HEADER_ONT_EGG_KEGG_KO,
         ENTAP_HEADER_ONT_EGG_KEGG_PATHWAY,
@@ -224,6 +227,7 @@ void ModEggnog::parse() {
     std::unordered_map<std::string,Compair<GoEntry>>  go_combined_map;     // Just for convenience
     QuerySequence                           *querySequence;
     QuerySequence::EggnogResults            EggnogResults;
+    EggnogDatabase                          *pEggnogDatabase;
     std::stringstream stats_stream;
 
     FS_dprint("Eggnog file located at " + mEggnogMapAnnotationsOutputPath + " being filtered");
@@ -234,6 +238,9 @@ void ModEggnog::parse() {
     // setup headers for printing
     output_headers = DEFAULT_HEADERS;
     output_headers.insert(output_headers.begin(), ENTAP_HEADER_QUERY);
+
+    // Get EggNOG database, only used to map COG categories currently
+    pEggnogDatabase = new EggnogDatabase(mpFileSystem, mpEntapDatabase, mpQueryData);
 
     // Begin to read through TSV file, these are all the headers in a  default eggnog-mapper run
     std::string qseqid, seed_ortho, seed_score, eggnog_ogs, max_annot_tax_level, cog_category, description,
@@ -249,6 +256,7 @@ void ModEggnog::parse() {
         // Check if the query matches one of our original transcriptome sequences
         querySequence = mpQueryData->get_sequence(qseqid);
         if (querySequence == nullptr) {
+            delete pEggnogDatabase;
             throw ExceptionHandler("Unable to find sequence " + qseqid + " in input transcriptome",
                                    ERR_ENTAP_PARSE_EGGNOG);
         }
@@ -264,6 +272,16 @@ void ModEggnog::parse() {
         EggnogResults.member_ogs = eggnog_ogs;
         EggnogResults.tax_scope_lvl_max = max_annot_tax_level;
         EggnogResults.cog_category = cog_category;
+        // Ensure COG Category abbreviation is not empty or NULL
+        if ((!cog_category.empty()) && (cog_category != EGGNOG_NULL_CHARACTER)) {
+            // Format from EggNOG is "C" or "CA", can be multiple
+            std::string cog_descriptions;
+            for (char abbrev : cog_category) {
+                cog_descriptions += pEggnogDatabase->get_cog_category_description(abbrev) + ";";
+            }
+            cog_descriptions.pop_back();
+            EggnogResults.cog_category_description = cog_descriptions;
+        }
         EggnogResults.description = description;
         EggnogResults.pname = preferred_name;
         EggnogResults.parsed_go = mpEntapDatabase->format_go_delim(gene_ontology_terms,',');
@@ -302,6 +320,7 @@ void ModEggnog::parse() {
         }
 
     } // END WHILE file reading
+    delete pEggnogDatabase;
 
     FS_dprint("Success! Printing output files");
     // Initialize and print output files, inefficient redo

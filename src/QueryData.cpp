@@ -80,6 +80,8 @@ QueryData::EntapHeader QueryData::ENTAP_HEADER_INFO[] = {
         {"EggNOG Tax Scope Max",                   false},
         {"EggNOG Member OGs",                      false},
         {"EggNOG Description",                     false},
+        {"EggNOG COG Abbreviation",                false},
+        {"EggNOG COG Description",                 false},
         {"EggNOG BIGG Reaction",                   false},
         {"EggNOG KEGG Terms",                      false},
         {"EggNOG KEGG KO",                         false},

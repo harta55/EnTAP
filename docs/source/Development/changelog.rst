@@ -7,6 +7,8 @@ EnTAP v1.2.0 ()
     * Removed --complete flag from Frame Selection, not needed with current implementation. May come back later
     * Changed 'ontology' flag to 'ontology_source' to improve clarity when selecting ontology sources (EggNOG or InterProScan)
     * Changed 'protein' flag to 'interproscan-db' to improve clarity when specifying InterProScan databases
+    * Added 'EggNOG COG Abbreviation' (from EggNOG-mapper output) and 'EggNOG COG Description' (mapping of abbreviation to descriptions) columns to 'entap_results.tsv' file
+    * Added support for all EnTAP parameters through the command line as well as ini. In the event the command line is used, that will take precedence compared to the ini files
 
 EnTAP v1.1.1 (May 21, 2024)
 ------------------------------------------

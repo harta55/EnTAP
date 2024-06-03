@@ -121,6 +121,8 @@ TSV files generated from EnTAP will have the following headers from EggNOG analy
     * EggNOG Tax Scope Max
     * EggNOG Member OGs
     * EggNOG Description
+    * EggNOG COG Abbreviation
+    * EggNOG COG Description
     * EggNOG BIGG Reaction
     * EggNOG KEGG KO
     * EggNOG KEGG Pathway

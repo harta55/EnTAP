@@ -114,6 +114,9 @@ public:
 
         // EggNOG-mapper specific eggnog data
         std::string              cog_category;      // COG category of narrowest OG with a valid one
+        std::string              cog_category_description; // COG category description mapped from cog_category abbreviation
+                                                           // EggNOG results may have multiple categories ('AJ' format)
+                                                           // This will be formatted as 'description;description;'etc
         std::string              ec_value;
         std::string              kegg_ko;           // 'ko:K01672,ko:K12345' (comma separated)
         std::string              kegg_pathway;      // 'ko:K01672,ko:K12345' (comma separated)

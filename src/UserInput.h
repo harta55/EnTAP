@@ -251,6 +251,7 @@ private:
         boost::any          default_value;
         ENT_INPUT_TYPES     input_type;
         boost::any          parsed_value;
+        bool                is_cmd_set; // Value was set by command line
     };
 
     typedef enum {

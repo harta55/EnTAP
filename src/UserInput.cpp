@@ -554,6 +554,7 @@ UserInput::UserInput(int argc, const char** argv, FileSystem *fileSystem) {
     mHasAPICmd = false;
 
     // Parse command line arguments
+    // NOTE: cmd arguments override ini arguments
     parse_arguments_tclap(argc, argv);
 
     if (mHasAPICmd) return;  // WARNING RETURN if API command has been used
@@ -693,6 +694,8 @@ void UserInput::parse_ini(std::string &ini_path, ENT_INPUT_TYPES input_type) {
         if (std::getline(in_line,key,INI_FILE_ASSIGN)) {
             // Ensure this INI file key is correct and user hasn't changed it EXIT otherwise
             ini_entry = check_ini_key(key, input_type);
+            // We do NOT want to override cmd line, cmd line should take precedence
+            if (ini_entry->is_cmd_set) continue; // CONTINUE!!
             if (ini_entry == nullptr) {
                 throw ExceptionHandler("Incorrect format in config file at line: " + in_line.str(), ERR_ENTAP_CONFIG_PARSE);
             } else {
@@ -974,8 +977,8 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key, ENT_INPUT_T
 
             tclap_arguments[i] = nullptr;
             entry = &mUserInputs[i];
-            // Continue if entry is NOT parsed through command line
-            if (entry->input_type != ENT_COMMAND_LINE) continue;    // CONTINUE
+            // Skip NULL or future features
+            if ((entry->category == ENTAP_INI_NULL) || (entry->input_type == ENT_INPUT_FUTURE)) continue; // CONTINUE
 
             if (!entry->default_value.empty()) {
                 any_val = entry->default_value;
@@ -1053,8 +1056,8 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key, ENT_INPUT_T
             arg = tclap_arguments[i];
             entry = &mUserInputs[i];
 
-            // Ensure it is a command line argument
-            if (entry->input_type == ENT_COMMAND_LINE) {
+            // Ensure we have a valid category
+            if ((entry->category != ENTAP_INI_NULL) && (entry->input_type != ENT_INPUT_FUTURE)) {
 
                 if ((entry->category == INI_ENTAP_API) && (arg->isSet())) {
                     mHasAPICmd = true;
@@ -1064,10 +1067,11 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key, ENT_INPUT_T
                 if (arg == nullptr || !arg->isSet()) {
                     // Yes, set the final value to the default value
                     entry->parsed_value = entry->default_value;
+                    entry->is_cmd_set = false;
                 } else {
                     // No, we want to update final value with the user input value
+                    entry->is_cmd_set = true;
                     switch (entry->var_type) {
-
                         // If switch argument
                         case ENT_INI_VAR_BOOL:
                             entry->parsed_value = true;

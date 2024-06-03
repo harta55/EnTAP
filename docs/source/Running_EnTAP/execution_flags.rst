@@ -391,8 +391,8 @@ There are a few data types (qualifiers) to keep in mind used throughout these in
      - location (cmd/R-ini,E-ini)
      - qualifier
      - example
-   * - ontology
-     - Specify which ontology packages you would like to use. Multiple flags may be used to specify execution of multiple software packages.
+   * - ontology_source
+     - Specify which ontology source packages you would like to use. Multiple flags may be used to specify execution of multiple software packages.
             * 0 - EggNOG (default)
             * 1 - InterProScan
      - R-ini

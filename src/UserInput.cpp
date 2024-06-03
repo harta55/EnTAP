@@ -323,10 +323,10 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
                             "Make sure the database is downloaded, EnTAP will not check!"
 #define EX_INTER_DATA       "--" CMD_INTER_DATA " tigrfam " "--" CMD_INTER_DATA " pfam"
 
-#define CMD_ONTOLOGY_FLAG   "ontology"
-#define DESC_ONTOLOGY_FLAG  " Specify the ontology software you would like to use\n"     \
+#define CMD_ONTOLOGY_FLAG   "ontology_source"
+#define DESC_ONTOLOGY_FLAG  " Specify the ontology source databases you would like to use\n"     \
                             "Note: it is possible to specify more than one! Just use"   \
-                            "multiple --ontology flags\n"                               \
+                            "multiple --ontology_source flags\n"                               \
                             "Specify flags as follows:\n"                               \
                             "    0. EggNOG (default)\n"                                 \
                             "    1. InterProScan"

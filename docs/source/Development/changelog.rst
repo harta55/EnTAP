@@ -5,6 +5,7 @@ This page contains (mostly) all of the changes that were made between each versi
 EnTAP v1.2.0 ()
 ------------------------------------------
     * Removed --complete flag from Frame Selection, not needed with current implementation. May come back later
+    * Changed 'ontology' flag to 'ontology_source' to improve clarity in usage
 
 EnTAP v1.1.1 (May 21, 2024)
 ------------------------------------------

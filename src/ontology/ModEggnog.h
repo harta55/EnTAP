@@ -84,6 +84,7 @@ private:
     static constexpr short EGGNOG_COL_NUM     = 21;
     const uint16 COUNT_TOP_TAX_SCOPE= 10;
     const uint16 COUNT_TOP_GO       = 10;
+    const std::string EGGNOG_NULL_CHARACTER = "-"; // EggNOG mapper uses this when a result was not found
     const std::string EGGNOG_DIRECTORY        = "EggNOG/";
     const std::string EGG_ANNOT_RESULTS       = "annotation_results";
     const std::string EGG_ANNOT_STD           = "annotation_std";

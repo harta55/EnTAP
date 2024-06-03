@@ -336,6 +336,8 @@ void EggnogDmndAlignment::refresh_headers() {
             {ENTAP_HEADER_ONT_EGG_TAX_SCOPE_MAX, &mEggnogResults.tax_scope_lvl_max},
             {ENTAP_HEADER_ONT_EGG_MEMBER_OGS,&mEggnogResults.member_ogs},
             {ENTAP_HEADER_ONT_EGG_DESC,       &mEggnogResults.description},
+            {ENTAP_HEADER_ONT_EGG_COG_ABBREVIATION, &mEggnogResults.cog_category},
+            {ENTAP_HEADER_ONT_EGG_COG_DESCRIPTION, &mEggnogResults.cog_category_description},
             {ENTAP_HEADER_ONT_EGG_BIGG,       &mEggnogResults.bigg},
             {ENTAP_HEADER_ONT_EGG_KEGG,       &mEggnogResults.kegg},
             {ENTAP_HEADER_ONT_EGG_KEGG_KO,    &mEggnogResults.kegg_ko},

@@ -435,7 +435,7 @@ There are a few data types (qualifiers) to keep in mind used throughout these in
      - location (cmd/R-ini,E-ini)
      - qualifier
      - example
-   * - protein
+   * - interproscan-db
      - User this option if you would like to run InterProScan against specific databases. Multiple databases can be selected. 
            * tigrfam
            * sfld

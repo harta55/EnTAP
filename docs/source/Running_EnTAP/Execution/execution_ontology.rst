@@ -154,7 +154,7 @@ InterProScan Commands
      - location (cmd/R-ini,E-ini)
      - qualifier
      - example
-   * - protein
+   * - interproscan-db
      - User this option if you would like to run InterProScan against specific databases. Multiple databases can be selected. 
            * tigrfam
            * sfld

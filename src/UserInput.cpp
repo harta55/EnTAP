@@ -301,7 +301,7 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
                             " It could be as simple as 'interproscan.sh' depending on if it is globally installed."
 #define CMD_INTERPRO_EXE    "interproscan-exe"
 
-#define CMD_INTER_DATA      "protein"
+#define CMD_INTER_DATA      "interproscan-db"
 #define DESC_INTER_DATA     "Select which databases you would like for InterProScan. "    \
                             "Databases must be one of the following:\n"                 \
                             "    -tigrfam\n"                                            \

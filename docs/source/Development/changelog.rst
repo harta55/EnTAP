@@ -5,7 +5,8 @@ This page contains (mostly) all of the changes that were made between each versi
 EnTAP v1.2.0 ()
 ------------------------------------------
     * Removed --complete flag from Frame Selection, not needed with current implementation. May come back later
-    * Changed 'ontology' flag to 'ontology_source' to improve clarity in usage
+    * Changed 'ontology' flag to 'ontology_source' to improve clarity when selecting ontology sources (EggNOG or InterProScan)
+    * Changed 'protein' flag to 'interproscan-db' to improve clarity when specifying InterProScan databases
 
 EnTAP v1.1.1 (May 21, 2024)
 ------------------------------------------

@@ -113,9 +113,9 @@ ontology_source=0,
 #    -coils
 #    -morbidblite
 #Make sure the database is downloaded, EnTAP will not check!
-#--protein tigrfam --protein pfam
+#--interproscan-db tigrfam --interproscan-db pfam
 #type:list (string)
-protein=
+interproscan-db=
 #-------------------------------
 # [similarity_search]
 #-------------------------------

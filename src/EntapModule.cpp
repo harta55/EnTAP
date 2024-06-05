@@ -89,7 +89,7 @@ EntapModule::EntapModule(std::string &execution_stage_path, std::string &in_hits
     mpFileSystem->create_dir(mModOutDir);
     mpFileSystem->create_dir(mProcDir);
 
-    mpFileSystem->set_working_dir(mModOutDir);
+    //mpFileSystem->set_working_dir(mModOutDir);
 
     enable_headers();   // Enable all headers by default,
                         //   module will disable from here
@@ -101,11 +101,4 @@ void EntapModule::enable_headers() {
     }
 }
 
-// Set directory back to original
-// DIAMOND will sometimes have issues wirh execution without this
-EntapModule::~EntapModule() {
-    if (mpFileSystem != nullptr) {
-        std::string root_dir = mpFileSystem->getMOriginalWorkingDir();
-        mpFileSystem->set_working_dir(root_dir);
-    }
-}
+EntapModule::~EntapModule() =default;

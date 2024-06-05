@@ -694,11 +694,11 @@ void UserInput::parse_ini(std::string &ini_path, ENT_INPUT_TYPES input_type) {
         if (std::getline(in_line,key,INI_FILE_ASSIGN)) {
             // Ensure this INI file key is correct and user hasn't changed it EXIT otherwise
             ini_entry = check_ini_key(key, input_type);
-            // We do NOT want to override cmd line, cmd line should take precedence
-            if (ini_entry->is_cmd_set) continue; // CONTINUE!!
             if (ini_entry == nullptr) {
                 throw ExceptionHandler("Incorrect format in config file at line: " + in_line.str(), ERR_ENTAP_CONFIG_PARSE);
             } else {
+                // We do NOT want to override cmd line, cmd line should take precedence
+                if (ini_entry->is_cmd_set) continue; // CONTINUE!!
                 // Key is valid, parse the value
                 if (std::getline(in_line,val)) {
                     // If value is empty, use default

@@ -35,12 +35,14 @@ GFF_File::GFF_File(FileSystem *fileSystem, QueryData *queryData, std::string &fi
 
 bool GFF_File::process_gff() {
     std::string line;
+    vect_str_t split_line;
     std::string transcript_id;
     QuerySequence *current_query_sequence= nullptr;
     QuerySequence *previous_query_sequence= nullptr;
     bool ret = true;    // TRUE no errors parsing, FALSE otherwise
     uint16 line_ct = 0;
     const uint16 PRINT_LINES = 15;  // Print up to this many lines to debug file
+    uint64 gene_ct=0;
 
     if (!mpFileSystem->file_exists(mGFFPath)) {
         mErrMessage = "ERROR GFF file does not exist at path: " + mGFFPath;
@@ -69,8 +71,14 @@ bool GFF_File::process_gff() {
             line_ct++;
         }
 
-        // Check if the line contains 'mRNA' or 'transcript', and skip if neither
-        if ((line.find(TRANSCRIPT_ID_TAG_1) == std::string::npos) && (line.find(TRANSCRIPT_ID_TAG_2) == std::string::npos)) {
+        // Split each tab delim line into a vector
+        split_line = split_string(line,'\t');
+
+        if (split_line.size() <= GFF_COL_ID_TAG) continue; // CONTINUE if split line is too small
+
+        // Check if the line contains 'mRNA' or 'transcript' IN THE CORRECT COLUMN, and skip if neither
+        if ((split_line.at(GFF_COL_ID_TAG).find(TRANSCRIPT_ID_TAG_1) == std::string::npos) &&
+            (split_line.at(GFF_COL_ID_TAG).find(TRANSCRIPT_ID_TAG_2) == std::string::npos)) {
             continue;   // CONTINUE if this is not a line that contains the 'mRNA' or 'transcript' tag
         }
 
@@ -90,6 +98,7 @@ bool GFF_File::process_gff() {
             if (previous_query_sequence != nullptr) {
                 previous_query_sequence->setMpDownstreamSequence(current_query_sequence);
                 current_query_sequence->setMpUpstreamSequence(previous_query_sequence);
+                gene_ct++;
             }
             previous_query_sequence = current_query_sequence;
         } else {
@@ -98,6 +107,13 @@ bool GFF_File::process_gff() {
             break;
         }
     }
+
+    // Ensure we have at least one found in GFF
+    if (gene_ct == 0) {
+        ret = false;
+        mErrMessage += "\nNo sequences found while parsing GFF";
+    }
+
     if (ret) {
         FS_dprint("Parsing GFF Complete!");
     } else {

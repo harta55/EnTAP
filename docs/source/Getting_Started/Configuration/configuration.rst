@@ -89,7 +89,7 @@ In general, the command to run EnTAP Configuration is as follows. Before executi
 
 .. code-block:: bash
 
-    EnTAP --config --run-ini path/to/entap_config.ini --entap-ini path/to/entap_run.params
+    EnTAP --config --run-ini path/to/entap_run.params --entap-ini path/to/entap_config.ini
 
 To run configuration and format a FASTA database for DIAMOND, simply add these databases to the |run_ini_file_format| file.
 

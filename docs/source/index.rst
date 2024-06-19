@@ -13,7 +13,7 @@ Welcome to EnTAP's documentation!
 
 EnTAP is an eukaryotic non-model annotation pipeline developed by Alexander Hart and Dr. Jill Wegrzyn of the Plant Computational Genomics Lab at the University of Connecticut with additional support from Dr. Stephen Ficklin and Josh Burns of Washington State University.
 
-Version 1.1.1
+The version these docs relate to can be seen on the bottom left of the ReadTheDocs page. 
 
 How to cite:
 Hart AJ, Ginzburg S, Xu M, et al. EnTAP: Bringing faster and smarter functional annotation to non-model eukaryotic transcriptomes. Mol Ecol Resour. 2020;20:591–604. https://doi.org/10.1111/1755-0998.13106

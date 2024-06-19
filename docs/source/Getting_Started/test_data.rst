@@ -15,7 +15,7 @@ Once the ini files have been setup, execute the following command to configure t
 
 .. code-block:: bash
 
-    EnTAP --config --run-ini path/to/entap_config.ini --entap-ini path/to/entap_run.params
+    EnTAP --config --run-ini path/to/entap_run.params --entap-ini path/to/entap_config.ini
 
 
 This should finish very shortly without any errors and you should find a uniprot_sprot.dmnd file within the |test_dir| directory. 
@@ -34,7 +34,7 @@ To test EnTAP with the frame selection portion of the pipeline, execute the foll
 
 .. code-block:: bash
 
-    EnTAP --runP --run-ini path/to/entap_config.ini --entap-ini path/to/entap_run.params
+    EnTAP --runP --run-ini path/to/entap_run.params --entap-ini path/to/entap_config.ini
 
 Update the |run_ini_file_format| file again for our test without frame selection:
 
@@ -46,7 +46,7 @@ To test EnTAP without the frame selection portion of the pipeline, execute the f
 
 .. code-block:: bash
 
-    EnTAP --runP --run-ini path/to/entap_config.ini --entap-ini path/to/entap_run.params
+    EnTAP --runP --run-ini path/to/entap_run.params --entap-ini path/to/entap_config.ini
 
 These should run without error and you should have several files within the created |out_dir| directory.
 

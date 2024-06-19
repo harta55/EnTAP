@@ -2,13 +2,15 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. 
 
-EnTAP v1.2.0 ()
+EnTAP v1.2.0 (June 19, 2024)
 ------------------------------------------
-    * Removed --complete flag from Frame Selection, not needed with current implementation. May come back later
+    * Removed --complete flag from Frame Selection, not needed with current implementation. May come back later. Do to this and other changes, please update your ini files, the latest are in the repository
     * Changed 'ontology' flag to 'ontology_source' to improve clarity when selecting ontology sources (EggNOG or InterProScan)
     * Changed 'protein' flag to 'interproscan-db' to improve clarity when specifying InterProScan databases
     * Added 'EggNOG COG Abbreviation' (from EggNOG-mapper output) and 'EggNOG COG Description' (mapping of abbreviation to descriptions) columns to 'entap_results.tsv' file
     * Added support for all EnTAP parameters through the command line as well as ini. In the event the command line is used, that will take precedence compared to the ini files
+    * Fixed a compatibility issue that was causing certain DIAMOND runs to fail giving an error message relating to being unable to access a 'temporary directory' 
+    * Fixed an issue parsing certain GFF formats, issue would present itself as an error in parsing the file
 
 EnTAP v1.1.1 (May 21, 2024)
 ------------------------------------------

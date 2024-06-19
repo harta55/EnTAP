@@ -152,6 +152,7 @@ void ModTransdecoder::execute() {
     std::string err_msg="";     // Message printed to user if TransDecoder fails
     std::string temp_filepath;
     std::string temp_filename;
+    uint16 file_status;
 
     TC_print(TC_PRINT_COUT, "Running TransDecoder Frame Selection...");
 
@@ -170,21 +171,44 @@ void ModTransdecoder::execute() {
                 err_msg, ERR_ENTAP_RUN_TRANSDECODER);
     }
 
-    FS_dprint("Success! Moving necessary output files...");
+    FS_dprint("Success! Checking we have correct/valid TransDecoder files");
+
+    // Verify the PEP file first
     try {
-        // Move CDS file
-        temp_filename = mpFileSystem->get_filename(mInputTranscriptome, true) + FILE_TRANSDECODER_SUFFIX + FileSystem::EXT_CDS;
-        temp_filepath = PATHS(mpFileSystem->get_cur_dir(), temp_filename);
-        mpFileSystem->rename_file(temp_filename, mOutputCDSFilePath);
+        file_status = mpFileSystem->get_file_status(mFinalFaaPath);
+        if (file_status != 0) {
+            // Older versions of TransDecoder (around 5.5.1) will output files to current working directory (bug in outdir flag)
+            //  we'll check there to see if we have what we need
+            temp_filename = mpFileSystem->get_filename(mInputTranscriptome, true) + FILE_TRANSDECODER_SUFFIX + FileSystem::EXT_PEP;
+            temp_filepath = PATHS(mpFileSystem->get_cur_dir(), temp_filename);
+            if (mpFileSystem->file_exists(temp_filepath)) {
+                FS_dprint("Valid PEP file found at: " + temp_filepath);
+                mpFileSystem->rename_file(temp_filename, mFinalFaaPath);
+            } else {
+                FS_dprint("WARNING unable to verify PEP file!");
+            }
+        } else {
+            FS_dprint("Valid PEP file found at: " + mFinalFaaPath);
+        }
 
-        // Move PEP file
-        temp_filename = mpFileSystem->get_filename(mInputTranscriptome, true) + FILE_TRANSDECODER_SUFFIX + FileSystem::EXT_PEP;
-        temp_filepath = PATHS(mpFileSystem->get_cur_dir(), temp_filename);
-        mpFileSystem->rename_file(temp_filename, mFinalFaaPath);
-
+        // Verify the CDS file
+        file_status = mpFileSystem->get_file_status(mOutputCDSFilePath);
+        if (file_status != 0) {
+            temp_filename = mpFileSystem->get_filename(mInputTranscriptome, true) + FILE_TRANSDECODER_SUFFIX + FileSystem::EXT_CDS;
+            temp_filepath = PATHS(mpFileSystem->get_cur_dir(), temp_filename);
+            if (mpFileSystem->file_exists(temp_filepath)) {
+                FS_dprint("Valid CDS file found at: " + temp_filepath);
+                mpFileSystem->rename_file(temp_filename, mOutputCDSFilePath);
+            } else {
+                FS_dprint("WARNING unable to verify CDS file!");
+            }
+        } else {
+            FS_dprint("Valid CDS file found at: " + mOutputCDSFilePath);
+        }
     } catch (const std::exception &err) {
         throw ExceptionHandler(err.what(), ERR_ENTAP_RUN_TRANSDECODER_MOVE);
     }
+
     TC_print(TC_PRINT_COUT, "Success");
 }
 
@@ -261,7 +285,7 @@ int ModTransdecoder::train_data(std::string &err_msg) {
 
     tc_command_map.emplace(CMD_TRANSCRIPTOME_INPUT, mInputTranscriptome);    // Transcriptome
     tc_command_map.emplace(CMD_MIN_PROTEIN_LENGTH, std::to_string(mMinProteinLength)); // Optional minimum protien length
-//    tc_command_map.emplace(CMD_OUTPUT_DIR, mModOutDir); // Add output directory, DOESN't WORK!!! with latest version
+    tc_command_map.emplace(CMD_OUTPUT_DIR, mModOutDir); // Add output directory, this doesn't work in older versions (5.5.1)
 
     terminal_data.command = TC_generate_command(tc_command_map, mTransdecoderLongOrfsExe);
     terminal_data.base_std_path = PATHS(mModOutDir, STD_OUTPUT_TRAINING);
@@ -299,7 +323,7 @@ int ModTransdecoder::predict_frame(std::string &err_msg) {
 
     tc_command_map.emplace(CMD_TRANSCRIPTOME_INPUT, mInputTranscriptome);    // Transcriptome
     tc_command_map.emplace(CMD_SINGLE_BEST_ONLY, TC_NULL_ARGUMENT); // retain only one best ORF per sequence
-//    tc_command_map.emplace(CMD_OUTPUT_DIR, mModOutDir); // Add output directory, DOESN't WORK!!! with latest version
+    tc_command_map.emplace(CMD_OUTPUT_DIR, mModOutDir); // Add output directory, this doesn't work in older versions (5.5.1)
     if (mIsNoRefineStarts) {
         tc_command_map.emplace(CMD_NO_REFINE_STARTS, TC_NULL_ARGUMENT);
     }

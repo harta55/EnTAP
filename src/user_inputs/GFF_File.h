@@ -48,10 +48,12 @@ public:
 private:
 
     const uint8 GFF_COL_NUMBER = 9;    // 'Standard' GFF file column number
+    const uint8 GFF_COL_ID_TAG = 2;   // Column (starting from 0) we want to find the TAG in
     const std::string TRANSCRIPT_ID_TAG_1 = "mRNA";
     const std::string TRANSCRIPT_ID_TAG_2 = "transcript";
     const std::string TRANSCRIPT_ID_START = "ID=";
     const std::string TRANSCRIPT_ID_END   = ";";
+    const char GFF_FILE_DELIM = '\t';   // Delim for GFF files
 
 };
 

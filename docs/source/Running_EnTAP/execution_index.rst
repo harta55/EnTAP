@@ -49,7 +49,7 @@ In |run_ini_file_format|, change the following lines for our frame selection tes
 
 .. code-block:: bash
 
-    EnTAP --runP --run-ini path/to/|config_file| --entap-ini path/to/|run_ini_file|
+    EnTAP --runP --run-ini path/to/entap_run.params --entap-ini path/to/entap_config.ini
 
 Further detail on each stage of EnTAP can be found in the page for each stage!
 

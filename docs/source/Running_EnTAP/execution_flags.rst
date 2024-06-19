@@ -291,22 +291,6 @@ There are a few data types (qualifiers) to keep in mind used throughout these in
      - R-ini
      - bool
      - true
-     
-.. list-table:: **Frame Selection Flags**
-   :align: left
-   :widths: 10 50 10 10 10 
-   :header-rows: 1    
-   
-   * - param
-     - description
-     - location (cmd/R-ini,E-ini)
-     - qualifier
-     - example
-   * - complete
-     - Tell EnTAP to mark all of the transcripts as 'complete'. This will only be seen in the final output and will not affect the run.
-     - R-ini
-     - bool
-     - complete
 
 .. list-table:: Frame Selection - TransDecoder Specific Flags
    :align: left
@@ -407,8 +391,8 @@ There are a few data types (qualifiers) to keep in mind used throughout these in
      - location (cmd/R-ini,E-ini)
      - qualifier
      - example
-   * - ontology
-     - Specify which ontology packages you would like to use. Multiple flags may be used to specify execution of multiple software packages.
+   * - ontology_source
+     - Specify which ontology source packages you would like to use. Multiple flags may be used to specify execution of multiple software packages.
             * 0 - EggNOG (default)
             * 1 - InterProScan
      - R-ini
@@ -451,7 +435,7 @@ There are a few data types (qualifiers) to keep in mind used throughout these in
      - location (cmd/R-ini,E-ini)
      - qualifier
      - example
-   * - protein
+   * - interproscan-db
      - User this option if you would like to run InterProScan against specific databases. Multiple databases can be selected. 
            * tigrfam
            * sfld

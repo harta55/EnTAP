@@ -83,6 +83,7 @@ public:
     ERR_EGGNOG_DB open_sql(std::string& sql_path);
     std::string print_err();
     void get_eggnog_entry(QuerySequence::EggnogResults *eg);
+    std::string get_cog_category_description(const char &category_abbrev);
     static const std::string EGG_DB_SQL_FILENAME;
     static const std::string EGG_DB_DMND_FILENAME;
 
@@ -187,6 +188,7 @@ private:
     static const std::unordered_map<std::string,std::string> EGGNOG_LEVELS;   // Mappings from tax lvl to full name
     static const std::unordered_map<std::string, vect_str_t> LEVEL_CONTENT;
     static const vect_str_t                                  TAXONOMIC_RESOLUTION;
+    static const std::unordered_map<char, std::string> EGGNOG_COG_CATEGORIES; // Mappings of COG category character to description
 
     void get_tax_scope(QuerySequence::EggnogResults*);
     void get_additional_sql_data(QuerySequence::EggnogResults* eggnogResults);

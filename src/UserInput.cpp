@@ -301,7 +301,7 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
                             " It could be as simple as 'interproscan.sh' depending on if it is globally installed."
 #define CMD_INTERPRO_EXE    "interproscan-exe"
 
-#define CMD_INTER_DATA      "protein"
+#define CMD_INTER_DATA      "interproscan-db"
 #define DESC_INTER_DATA     "Select which databases you would like for InterProScan. "    \
                             "Databases must be one of the following:\n"                 \
                             "    -tigrfam\n"                                            \
@@ -323,10 +323,10 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
                             "Make sure the database is downloaded, EnTAP will not check!"
 #define EX_INTER_DATA       "--" CMD_INTER_DATA " tigrfam " "--" CMD_INTER_DATA " pfam"
 
-#define CMD_ONTOLOGY_FLAG   "ontology"
-#define DESC_ONTOLOGY_FLAG  " Specify the ontology software you would like to use\n"     \
+#define CMD_ONTOLOGY_FLAG   "ontology_source"
+#define DESC_ONTOLOGY_FLAG  " Specify the ontology source databases you would like to use\n"     \
                             "Note: it is possible to specify more than one! Just use"   \
-                            "multiple --ontology flags\n"                               \
+                            "multiple --ontology_source flags\n"                               \
                             "Specify flags as follows:\n"                               \
                             "    0. EggNOG (default)\n"                                 \
                             "    1. InterProScan"
@@ -489,7 +489,6 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_EXP_RSEM  ,CMD_RSEM_CONV_SAM        ,ENTAP_INI_NULL  ,DESC_RSEM_CONV_SAM         ,EX_RSEM_CONV_SAM ,ENT_INI_VAR_STRING      ,DEFAULT_RSEM_CONV_SAM  ,ENT_CONFIG_INI_FILE   ,ENTAP_INI_NULL_VAL},
 
 /* Frame Selection Commands */
-        {INI_FRAME     ,CMD_COMPLETE_PROT        ,ENTAP_INI_NULL  ,DESC_COMPLETE_PROT         ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE,ENTAP_INI_NULL_VAL},
         {INI_FRAME     ,CMD_FRAME_SELECTION_FLAG ,ENTAP_INI_NULL  ,DESC_FRAME_SELECTION_FLAG  ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT         ,DEFAULT_FRAME_SELECTION,ENT_INPUT_FUTURE      ,ENTAP_INI_NULL_VAL},
 
 /* Frame Selection - GeneMarkST Commands */
@@ -555,6 +554,7 @@ UserInput::UserInput(int argc, const char** argv, FileSystem *fileSystem) {
     mHasAPICmd = false;
 
     // Parse command line arguments
+    // NOTE: cmd arguments override ini arguments
     parse_arguments_tclap(argc, argv);
 
     if (mHasAPICmd) return;  // WARNING RETURN if API command has been used
@@ -697,6 +697,8 @@ void UserInput::parse_ini(std::string &ini_path, ENT_INPUT_TYPES input_type) {
             if (ini_entry == nullptr) {
                 throw ExceptionHandler("Incorrect format in config file at line: " + in_line.str(), ERR_ENTAP_CONFIG_PARSE);
             } else {
+                // We do NOT want to override cmd line, cmd line should take precedence
+                if (ini_entry->is_cmd_set) continue; // CONTINUE!!
                 // Key is valid, parse the value
                 if (std::getline(in_line,val)) {
                     // If value is empty, use default
@@ -975,8 +977,8 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key, ENT_INPUT_T
 
             tclap_arguments[i] = nullptr;
             entry = &mUserInputs[i];
-            // Continue if entry is NOT parsed through command line
-            if (entry->input_type != ENT_COMMAND_LINE) continue;    // CONTINUE
+            // Skip NULL or future features
+            if ((entry->category == ENTAP_INI_NULL) || (entry->input_type == ENT_INPUT_FUTURE)) continue; // CONTINUE
 
             if (!entry->default_value.empty()) {
                 any_val = entry->default_value;
@@ -1054,8 +1056,8 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key, ENT_INPUT_T
             arg = tclap_arguments[i];
             entry = &mUserInputs[i];
 
-            // Ensure it is a command line argument
-            if (entry->input_type == ENT_COMMAND_LINE) {
+            // Ensure we have a valid category
+            if ((entry->category != ENTAP_INI_NULL) && (entry->input_type != ENT_INPUT_FUTURE)) {
 
                 if ((entry->category == INI_ENTAP_API) && (arg->isSet())) {
                     mHasAPICmd = true;
@@ -1065,10 +1067,11 @@ UserInput::EntapINIEntry* UserInput::check_ini_key(std::string &key, ENT_INPUT_T
                 if (arg == nullptr || !arg->isSet()) {
                     // Yes, set the final value to the default value
                     entry->parsed_value = entry->default_value;
+                    entry->is_cmd_set = false;
                 } else {
                     // No, we want to update final value with the user input value
+                    entry->is_cmd_set = true;
                     switch (entry->var_type) {
-
                         // If switch argument
                         case ENT_INI_VAR_BOOL:
                             entry->parsed_value = true;
@@ -1943,6 +1946,8 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
     // No, using CONFIGURATION stage of pipeline
     } else {
 
+        /* EggNOG databases are downloaded through now for Eggnog-mapper, no need to check DIAMOND at this stage
+         *  Keeping for now in case implementation changes
         // Check if EggNOG DIAMOND database exists, if not, check DIAMOND run
         if (!mpFileSystem->file_exists(get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_DMND_DB))) {
             if (!ModDiamond::is_executable(dmnd_exe)) {
@@ -1950,6 +1955,7 @@ void UserInput::verify_software_paths(std::string &state, bool runP, bool is_exe
                                        "\nThe DIAMOND test run failed.", ERR_ENTAP_INPUT_PARSE);
             }
         }
+        */
 
         // Test run DIAMOND if user input databases
         if (has_input(INPUT_FLAG_DATABASE)) {

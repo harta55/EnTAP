@@ -273,7 +273,7 @@ namespace entapConfig {
                     // Check if DIAMOND EggNOG database exists
                     std::string user_egg_map_dmnd = pUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_DMND_DB);
                     if (!pFileSystem->file_exists(user_egg_map_dmnd) && !pFileSystem->file_exists(dmnd_outpath)) {
-                        // No, does not exist, need to generate from FASTA
+                        // No, does not exist, need to dowload
                         if (eggnogDatabase.download(EggnogDatabase::EGGNOG_DIAMOND, dmnd_outpath) != EggnogDatabase::ERR_EGG_OK) {
                             // Error in download
                             err_msg = "Unable to get EggNOG DIAMOND from FTP to: " +

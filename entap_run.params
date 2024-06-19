@@ -20,13 +20,6 @@ align=
 #type:boolean (true/false)
 single-end=false
 #-------------------------------
-# [frame_selection]
-#-------------------------------
-#Select this option if all of your sequences are complete proteins.
-#At this point, this option will merely flag the sequences in your output file
-#type:boolean (true/false)
-complete=false
-#-------------------------------
 # [frame_selection-transdecoder]
 #-------------------------------
 #Transdecoder only. Specify the minimum protein length
@@ -92,13 +85,13 @@ hgt-gff=
 #-------------------------------
 # [ontology]
 #-------------------------------
-# Specify the ontology software you would like to use
-#Note: it is possible to specify more than one! Just use multiple --ontology flags
+# Specify the ontology source databases you would like to use
+#Note: it is possible to specify more than one! Just use multiple --ontology_source flags
 #Specify flags as follows:
 #    0. EggNOG (default)
 #    1. InterProScan
 #type:list (integer)
-ontology=0,
+ontology_source=0,
 #-------------------------------
 # [ontology-interproscan]
 #-------------------------------
@@ -120,9 +113,9 @@ ontology=0,
 #    -coils
 #    -morbidblite
 #Make sure the database is downloaded, EnTAP will not check!
-#--protein tigrfam --protein pfam
+#--interproscan-db tigrfam --interproscan-db pfam
 #type:list (string)
-protein=
+interproscan-db=
 #-------------------------------
 # [similarity_search]
 #-------------------------------

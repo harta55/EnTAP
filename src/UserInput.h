@@ -101,7 +101,6 @@ typedef enum {
     INPUT_FLAG_RSEM_CONVERT_SAM,
 
     /* Frame Selection Commands */
-    INPUT_FLAG_COMPLETE,
     INPUT_FLAG_FRAME_SELECTION,
 
     /* Frame Selection - GeneMarkST Commands */
@@ -252,6 +251,7 @@ private:
         boost::any          default_value;
         ENT_INPUT_TYPES     input_type;
         boost::any          parsed_value;
+        bool                is_cmd_set; // Value was set by command line
     };
 
     typedef enum {

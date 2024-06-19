@@ -35,8 +35,8 @@ General Ontology Analysis Flags
      - location (cmd/R-ini,E-ini)
      - qualifier
      - example
-   * - ontology
-     - Specify which ontology packages you would like to use. Multiple flags may be used to specify execution of multiple software packages.
+   * - ontology_source
+     - Specify which ontology source packages you would like to use. Multiple flags may be used to specify execution of multiple software packages.
             * 0 - EggNOG (default)
             * 1 - InterProScan
      - R-ini
@@ -121,6 +121,8 @@ TSV files generated from EnTAP will have the following headers from EggNOG analy
     * EggNOG Tax Scope Max
     * EggNOG Member OGs
     * EggNOG Description
+    * EggNOG COG Abbreviation
+    * EggNOG COG Description
     * EggNOG BIGG Reaction
     * EggNOG KEGG KO
     * EggNOG KEGG Pathway
@@ -154,7 +156,7 @@ InterProScan Commands
      - location (cmd/R-ini,E-ini)
      - qualifier
      - example
-   * - protein
+   * - interproscan-db
      - User this option if you would like to run InterProScan against specific databases. Multiple databases can be selected. 
            * tigrfam
            * sfld

@@ -266,7 +266,7 @@ void ModEggnog::parse() {
         // Populate data from EggNOG-mapper run
         EggnogResults = {};
         EggnogResults.seed_ortholog = seed_ortho;
-        EggnogResults.seed_evalue = std::to_string(seed_e);
+        EggnogResults.seed_evalue = float_to_sci(seed_e, 2);
         EggnogResults.seed_eval_raw = seed_e;
         EggnogResults.seed_score = seed_score;
         EggnogResults.member_ogs = eggnog_ogs;

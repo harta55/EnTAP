@@ -2,6 +2,10 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. 
 
+EnTAP v1.2.1 (June 20, 2024)
+-----------------------------------------
+    * Fixed path to TransDecoder executable in entap_config.ini file for Docker
+
 EnTAP v1.2.0 (June 19, 2024)
 ------------------------------------------
     * Removed --complete flag from Frame Selection, not needed with current implementation. May come back later. Do to this and other changes, please update your ini files, the latest are in the repository

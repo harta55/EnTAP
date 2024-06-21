@@ -49,7 +49,9 @@ RUN wget https://github.com/bbuchfink/diamond/releases/download/v2.1.8/diamond-l
 RUN git clone https://github.com/TransDecoder/TransDecoder.git \
 && cd TransDecoder \
 && git checkout TransDecoder-v5.7.1 \
-&& cp -R . /usr/lib/TransDecoder-v5.7.1
+&& cp -R . /usr/lib/TransDecoder-v5.7.1 \
+&& cd .. \
+&& rm -rf TransDecoder
 
 # Download TransDecoder dependencies
 RUN curl -L https://cpanmin.us | perl - App::cpanminus \

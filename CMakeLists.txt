@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(EnTAP VERSION 1.2.0 LANGUAGES CXX C)
+project(EnTAP VERSION 1.2.1 LANGUAGES CXX C)
 include(CheckCXXCompilerFlag)
 include(GNUInstallDirs)
 

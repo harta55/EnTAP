@@ -1016,3 +1016,16 @@ std::string EggnogDatabase::get_cog_category_description(const char &category_ab
     char key = (char)toupper(category_abbrev);
     return EGGNOG_COG_CATEGORIES.at(key);
 }
+
+// Format of tax scope max from eggnog mapper = '35493|Streptophyta'
+// We want the "Streptophyta" part to index into EnTAP database
+std::string EggnogDatabase::get_tax_from_tax_scope_max(const std::string &tax_scope_max) {
+    std::string ret;
+    if (!tax_scope_max.empty()) {
+        size_t pos = tax_scope_max.find('|');
+        if (pos != std::string::npos) {
+            ret = tax_scope_max.substr(pos+1);
+        }
+    }
+    return ret;
+}

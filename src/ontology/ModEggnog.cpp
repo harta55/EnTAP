@@ -61,6 +61,7 @@ ModEggnog::ModEggnog(std::string &ont_out, std::string &in_hits, EntapDataPtrs &
     mExePath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_EXE);
     mEggnogMapDMNDPath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_DMND_DB);
     mEggnogMapDataDir = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_EGG_MAPPER_DATA_DIR);
+    mUserContaminants = mpUserInput->get_contaminants();
 
     mEggnogMapAnnotationsOutputPath = PATHS(mModOutDir, get_output_tag()+EGG_OUTPUT_ANNOT_APPEND);
     mEggnogMapHitsOutputPath = PATHS(mModOutDir, get_output_tag() + EGG_OUTPUT_HITS_APPEND);
@@ -216,6 +217,7 @@ void ModEggnog::parse() {
     TC_print(TC_PRINT_COUT, "Parsing EggNOG-mapper Analysis...");
 
     std::string                              out_msg;
+    std::string                              tax_scope_lineage;
     uint32                                   count_total_go_hits=0;
     uint32                                   count_TOTAL_hits=0;         // All ortho matches
     uint32                                   count_total_kegg_hits=0;
@@ -270,7 +272,18 @@ void ModEggnog::parse() {
         EggnogResults.seed_eval_raw = seed_e;
         EggnogResults.seed_score = seed_score;
         EggnogResults.member_ogs = eggnog_ogs;
-        EggnogResults.tax_scope_lvl_max = max_annot_tax_level;
+        EggnogResults.tax_scope_lvl_max = max_annot_tax_level; //Format: '35493|Streptophyta'
+        if (!max_annot_tax_level.empty()) {
+            tax_scope_lineage = pEggnogDatabase->get_tax_from_tax_scope_max(max_annot_tax_level);
+            for (const auto& contam : mUserContaminants) {
+                if (mpEntapDatabase->is_contaminant(contam, tax_scope_lineage)) {
+                    EggnogResults.is_contaminant = true;
+                    break;
+                }
+            }
+        }
+
+
         EggnogResults.cog_category = cog_category;
         // Ensure COG Category abbreviation is not empty or NULL
         if ((!cog_category.empty()) && (cog_category != EGGNOG_NULL_CHARACTER)) {

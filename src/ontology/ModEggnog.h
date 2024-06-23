@@ -101,6 +101,8 @@ private:
     std::string mEggnogMapAnnotationsOutputPath;
     std::string mEggnogMapHitsOutputPath;
     std::string mEggnogMapSeedOrthoOutputPath;
+    vect_str_t mUserContaminants;
+
     EGGNOG_MAPPER_STATES mEggnogMapperState;
 
     static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;

@@ -100,7 +100,10 @@ public:
         std::string              seed_score;        // Pulled from DIAMOND run
         fp64                     seed_eval_raw;     // Used for finding best hit
         std::string              member_ogs;        // 0A01R@biNOG,0V8CP@meNOG (eggnog ortholgous groups)
-        std::string              tax_scope_lvl_max; // 'virNOG[6]' or '33208|Metazoa' if using mapper
+        std::string              tax_scope_lvl_max; // 'virNOG[6]' or '33208|Metazoa' if using mapper. According to mapper docs,
+                                                    //  this is the lowest taxon level used for annotation
+        std::string              tax_scope_readable;// 'Ascomycota' This is the tax scope used for contaminant detection
+                                                    //   should be the lowest (or most refined) taxon we can get
         std::string              description;       // Description of narrowest OG with a valid one
         go_format_t              parsed_go;         // All go terms found parsed into EnTAP format
         std::string              name;              // Preferred name
@@ -113,7 +116,6 @@ public:
         std::string              predicted_gene;    // Most common predicted gene (pname)
         std::string              kegg;              // Everything combined in comma separated list
         std::string              tax_scope;         // virNOG
-        std::string              tax_scope_readable;// Ascomycota
         std::string              pname;             // All predicted gene names
         std::string              og_key;            // Used for indexing into older SQL database (if using)
 

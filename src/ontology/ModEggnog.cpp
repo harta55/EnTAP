@@ -51,7 +51,8 @@ std::vector<ENTAP_HEADERS> ModEggnog::DEFAULT_HEADERS = {
         ENTAP_HEADER_ONT_EGG_GO_BIO,
         ENTAP_HEADER_ONT_EGG_GO_CELL,
         ENTAP_HEADER_ONT_EGG_GO_MOLE,
-        ENTAP_HEADER_ONT_EGG_PROTEIN
+        ENTAP_HEADER_ONT_EGG_PROTEIN,
+        ENTAP_HEADER_CONTAMINANT
 };
 
 
@@ -68,6 +69,7 @@ ModEggnog::ModEggnog(std::string &ont_out, std::string &in_hits, EntapDataPtrs &
     mEggnogMapSeedOrthoOutputPath = PATHS(mModOutDir, get_output_tag() + EGG_OUTPUT_SEED_ORTHO_APPEND);
     mEggnogMapperState = EGGNOG_MAPPER_NOT_STARTED;
     mSoftwareFlag = ONT_EGGNOG_MAPPER;
+    mRunContaminantAnalysis = run_eggnog_contam_analysis();
 }
 
 bool ModEggnog::is_executable(std::string &exe) {
@@ -217,7 +219,6 @@ void ModEggnog::parse() {
     TC_print(TC_PRINT_COUT, "Parsing EggNOG-mapper Analysis...");
 
     std::string                              out_msg;
-    std::string                              tax_scope_lineage;
     uint32                                   count_total_go_hits=0;
     uint32                                   count_TOTAL_hits=0;         // All ortho matches
     uint32                                   count_total_kegg_hits=0;
@@ -225,6 +226,7 @@ void ModEggnog::parse() {
     uint32                                   ct = 0;
     fp32                                     percent;
     Compair<std::string>                     tax_scope_counter;
+    Compair<std::string>                     contaminant_counter;
     std::vector<ENTAP_HEADERS>               output_headers;
     std::unordered_map<std::string,Compair<GoEntry>>  go_combined_map;     // Just for convenience
     QuerySequence                           *querySequence;
@@ -243,6 +245,14 @@ void ModEggnog::parse() {
 
     // Get EggNOG database, only used to map COG categories currently
     pEggnogDatabase = new EggnogDatabase(mpFileSystem, mpEntapDatabase, mpQueryData);
+
+    // Setup output files
+    std::string out_annotated_filepath = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_ANNOTATED);
+    mpQueryData->start_alignment_files(out_annotated_filepath, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
+    std::string out_annotated_contam_filepath = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_CONTAMINANTS);
+    if (mRunContaminantAnalysis) {
+        mpQueryData->start_alignment_files(out_annotated_contam_filepath, mEntapHeaders, mGoLevels, mAlignmentFileTypes);
+    }
 
     // Begin to read through TSV file, these are all the headers in a  default eggnog-mapper run
     std::string qseqid, seed_ortho, seed_score, eggnog_ogs, max_annot_tax_level, cog_category, description,
@@ -271,18 +281,20 @@ void ModEggnog::parse() {
         EggnogResults.seed_evalue = float_to_sci(seed_e, 2);
         EggnogResults.seed_eval_raw = seed_e;
         EggnogResults.seed_score = seed_score;
-        EggnogResults.member_ogs = eggnog_ogs;
+        EggnogResults.member_ogs = eggnog_ogs;  // Format: '2CN31@1|root,2QTMT@2759|Eukaryota,37KQP@33090|Viridiplantae'
         EggnogResults.tax_scope_lvl_max = max_annot_tax_level; //Format: '35493|Streptophyta'
-        if (!max_annot_tax_level.empty()) {
-            tax_scope_lineage = pEggnogDatabase->get_tax_from_tax_scope_max(max_annot_tax_level);
-            for (const auto& contam : mUserContaminants) {
-                if (mpEntapDatabase->is_contaminant(contam, tax_scope_lineage)) {
-                    EggnogResults.is_contaminant = true;
-                    break;
+        if (eggnog_ogs.size() > 1) {
+            EggnogResults.tax_scope_readable = pEggnogDatabase->get_tax_from_tax_scope_max(eggnog_ogs);
+            if (mRunContaminantAnalysis) {
+                for (const auto& contam : mUserContaminants) {
+                    if (mpEntapDatabase->is_contaminant(contam, EggnogResults.tax_scope_readable)) {
+                        EggnogResults.is_contaminant = true;
+                        contaminant_counter.add_value(EggnogResults.tax_scope_readable);
+                        break;
+                    }
                 }
             }
         }
-
 
         EggnogResults.cog_category = cog_category;
         // Ensure COG Category abbreviation is not empty or NULL
@@ -311,11 +323,15 @@ void ModEggnog::parse() {
         EggnogResults.protein_domains = pfams;
 
         querySequence->add_alignment(GENE_ONTOLOGY, mSoftwareFlag, EggnogResults, mEggnogMapDMNDPath);
+        mpQueryData->add_alignment_data(out_annotated_filepath, querySequence, nullptr);
+        if (EggnogResults.is_contaminant) {
+            mpQueryData->add_alignment_data(out_annotated_contam_filepath, querySequence, nullptr);
+        }
 
         // Count GO results
         if (!EggnogResults.parsed_go.empty()) {
             count_total_go_hits++;
-            for (auto goEntry : EggnogResults.parsed_go) {
+            for (auto const &goEntry : EggnogResults.parsed_go) {
                 go_combined_map[goEntry.category].add_value(goEntry);
                 go_combined_map[GO_OVERALL_FLAG].add_value(goEntry);
             }
@@ -335,27 +351,25 @@ void ModEggnog::parse() {
     } // END WHILE file reading
     delete pEggnogDatabase;
 
+    try {
+        mpQueryData->end_alignment_files(out_annotated_filepath);
+        mpQueryData->end_alignment_files(out_annotated_contam_filepath);
+    } catch (const ExceptionHandler &e) {throw e;}
+
     FS_dprint("Success! Printing output files");
     // Initialize and print output files, inefficient redo
-    uint32 output_annotated_query_flags=0;
-    output_annotated_query_flags |= QuerySequence::QUERY_EGGNOG_HIT;
-    output_annotated_query_flags |= QuerySequence::QUERY_FRAME_KEPT;
-    output_annotated_query_flags |= QuerySequence::QUERY_EXPRESSION_KEPT;
     uint32 output_unannotated_query_flags = 0;
     output_unannotated_query_flags |= QuerySequence::QUERY_FRAME_KEPT;
     output_unannotated_query_flags |= QuerySequence::QUERY_EXPRESSION_KEPT;
+    std::string out_no_hits_base = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_UNANNOTATED);
     if (mpQueryData->is_protein_data()) {
-        std::string out_no_hits_faa = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_UNANNOTATED + FileSystem::EXT_FAA);
+        std::string out_no_hits_faa = out_no_hits_base + FileSystem::EXT_FAA;
         mpQueryData->print_transcriptome(output_unannotated_query_flags, out_no_hits_faa, QueryData::SEQUENCE_AMINO_ACID);
-        std::string out_hits_faa = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_ANNOTATED + FileSystem::EXT_FAA);
-        mpQueryData->print_transcriptome(output_annotated_query_flags, out_hits_faa, QueryData::SEQUENCE_AMINO_ACID);
     }
 
     if (mpQueryData->is_nucleotide_data()) {
-        std::string out_no_hits_fnn = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_UNANNOTATED + FileSystem::EXT_FNN);
-        std::string out_hits_fnn = PATHS(mProcDir, EGG_MAPPER_PREFIX + EGG_OUT_ANNOTATED + FileSystem::EXT_FNN);
+        std::string out_no_hits_fnn = out_no_hits_base + FileSystem::EXT_FNN;
         mpQueryData->print_transcriptome(output_unannotated_query_flags, out_no_hits_fnn, QueryData::SEQUENCE_NUCLEOTIDE);
-        mpQueryData->print_transcriptome(output_annotated_query_flags, out_hits_fnn, QueryData::SEQUENCE_NUCLEOTIDE);
     }
 
     count_no_hits = mpQueryData->getMTotalSequences() - count_TOTAL_hits;
@@ -369,7 +383,9 @@ void ModEggnog::parse() {
         stats_stream <<
                "Statistics for overall Eggnog results: "               <<
                "\nTotal unique sequences with family assignment: "     << count_TOTAL_hits <<
-               "\nTotal unique sequences without family assignment: "  << count_no_hits;
+               "\n\tWritten to: " << out_annotated_filepath <<
+               "\nTotal unique sequences without family assignment: "  << count_no_hits <<
+               "\n\tWritten to: " << out_no_hits_base;
 
         //--------------------- Top Ten Taxonomic Scopes --------------//
         if (!tax_scope_counter.empty()) {
@@ -439,6 +455,28 @@ void ModEggnog::parse() {
         }
         //-------------------------------------------------------------//
 
+        //------------------------ CONTAMINANTS -----------------------//
+        if (!contaminant_counter.empty()) {
+            contaminant_counter.sort(true);
+            percent = ((fp32)contaminant_counter._ct_total / (fp32)mpQueryData->getMTotalKeptSequences()) * ENTAP_PERCENT;
+            stats_stream << "\nTotal unique EggNOG contaminants: " << contaminant_counter._ct_total <<
+                         "(" << percent << "% of total retained sequences)" <<
+                         "\n\tWritten to: " << out_annotated_contam_filepath;
+
+            stats_stream << "\n\tFlagged EggNOG contaminants based on lowest tax scope found (all % based on total retained sequences):";
+            stats_stream << "\n\t\tTop " << COUNT_TOP_SPECIES << " contaminants by lowest tax scope found:";
+            ct = 1;
+            for (auto &pair : contaminant_counter._sorted) {
+                if (ct > COUNT_TOP_SPECIES) break;
+                percent = ((fp32) pair.second / mpQueryData->getMTotalKeptSequences()) * ENTAP_PERCENT;
+                stats_stream
+                        << "\n\t\t\t" << ct << ")" << pair.first << ": "
+                        << pair.second << "(" << percent << "%)";
+                ct++;
+            }
+        }
+        //-------------------------------------------------------------//
+
     } else {
         FS_dprint("WARNING: NO alignments against EggNOG!");
         stats_stream << "Warning: No alignments against EggNOG database" << std::endl;
@@ -462,4 +500,9 @@ std::string ModEggnog::get_output_tag() {
 
 bool ModEggnog::set_version() {
     return false;
+}
+
+bool ModEggnog::run_eggnog_contam_analysis() {
+    return (mpUserInput->has_input(INPUT_FLAG_CONTAMINANT) &&
+    mpUserInput->has_input(INPUT_FLAG_EGG_MAPPER_CONTAMINANT));
 }

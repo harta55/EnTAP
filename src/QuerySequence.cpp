@@ -462,6 +462,13 @@ void QuerySequence::set_header_data() {
     } else {
         mHeaderInfo[ENTAP_HEADER_HORIZONTALLY_TRANSFERRED_GENE] = "NO";
     }
+
+    // Contaminant
+    if (QUERY_FLAG_GET(QUERY_CONTAMINANT)) {
+        mHeaderInfo[ENTAP_HEADER_CONTAMINANT] = "YES";
+    } else {
+        mHeaderInfo[ENTAP_HEADER_CONTAMINANT] = "NO";
+    }
 }
 
 /**

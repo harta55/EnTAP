@@ -93,6 +93,12 @@ hgt-gff=
 #type:list (integer)
 ontology_source=0,
 #-------------------------------
+# [ontology-eggnog-mapper]
+#-------------------------------
+#Specify this to turn on/off EggNOG contaminant analysis. This leverages the taxon input from the contaminant Similarity Search command to determine if an EggNOG annotation should be flagged as a contaminant. EggNOG contaminant analysis can only be performed alongside Similarity Search contaminant analysis (not on its own) and will only be utilized if no alignments were found for a given transcript during Similarity Searching
+#type:boolean (true/false)
+eggnog-contaminant=false
+#-------------------------------
 # [ontology-interproscan]
 #-------------------------------
 #Select which databases you would like for InterProScan. Databases must be one of the following:

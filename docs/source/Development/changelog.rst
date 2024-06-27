@@ -2,6 +2,10 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. 
 
+EnTAP v1.3.0 (XXX)
+-----------------------------------------
+    * Added EggNOG contaminant analysis. This is turned on/off through the 'eggnog-contaminant' flag and only utilized alongside Similarity Search contaminant analysis when an alignment from Similarity Search is not found
+
 EnTAP v1.2.1 (June 20, 2024)
 -----------------------------------------
     * Fixed path to TransDecoder executable in entap_config.ini file for Docker

@@ -93,6 +93,12 @@ hgt-gff=
 #type:list (integer)
 ontology_source=0,
 #-------------------------------
+# [ontology-eggnog-mapper]
+#-------------------------------
+#Specify this to use the '--dbmem' flag with EggNOG-mapper. This will load the entire eggnog.db sqlite3 database into memory which can require up to ~44GB of memory. However, this will significantly speed up EggNOG annotations.
+#type:boolean (true/false)
+eggnog-dbmem=false
+#-------------------------------
 # [ontology-interproscan]
 #-------------------------------
 #Select which databases you would like for InterProScan. Databases must be one of the following:

@@ -2,6 +2,10 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. 
 
+EnTAP v1.3.1 ()
+-----------------------------------------
+    * Added 'eggnog-dbmem' flag which will utilize the 'dbmem' flag with EggNOG-mapper. This flag will speed up EggNOG annotations significantly, but will take upwards of 44 GB of usable memory
+
 EnTAP v1.2.1 (June 20, 2024)
 -----------------------------------------
     * Fixed path to TransDecoder executable in entap_config.ini file for Docker

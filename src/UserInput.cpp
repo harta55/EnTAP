@@ -844,7 +844,9 @@ void UserInput::generate_ini_file(std::string &ini_path, ENT_INPUT_TYPES input_t
                 switch (entry->var_type) {
 
                     case ENT_INI_VAR_BOOL:
-                        if ((entry->default_value.empty()) || (!boost::any_cast<bool>(entry->default_value))) {
+                        if (entry->default_value.empty()) {
+                            ini_file << INI_FILE_BOOL_FALSE;
+                        } else if (!boost::any_cast<bool>(entry->default_value)) {
                             ini_file << INI_FILE_BOOL_FALSE;
                         } else {
                             ini_file << INI_FILE_BOOL_TRUE;

@@ -55,7 +55,7 @@ EggNOG analysis is executed by default with EnTAP so the only thing to make sure
 
 EggNOG Contaminant Analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-EggNOG contaminant analysis can be turned on/off through the :file:`eggnog-contaminant` flag. When turning EggNOG contaminant analysis on, be sure to review the Similarity Search :file:`contam` flag as the same taxons specified there will be used (must exist in the NCBI Taxonomy Database). 
+EggNOG contaminant analysis can be turned on/off through the :file:`eggnog-contaminant` flag (on by default). When turning EggNOG contaminant analysis on, be sure to review the Similarity Search :file:`contam` flag as the same taxons specified there will be used (must exist in the NCBI Taxonomy Database). 
 
 If EggNOG contaminant analysis is turned on, the results will be displayed in the Log File under the EggNOG section. A contaminant is determined by taking the narrowest Orthologous Groups (seen as "EggNOG Member OGs" in the EnTAP output) assigned to each query and comparing its full lineage to the contaminants input by the user. Although EnTAP reports this information, it does not mean that the query is automatically considered a contaminant through EggNOG analysis. The final contaminant status (seen as "Contaminant" in the EnTAP output) of a query will first be determined through Similarity Search then, if no alignment is found through Similarity Search, rely on the EggNOG contaminant analysis. 
 
@@ -88,10 +88,10 @@ EggNOG Commands
      - string
      - emapper.py
    * - eggnog-contaminant
-     - Specify this to turn on/off EggNOG contaminant analysis. This leverages the taxon input from the contaminant Similarity Search command to  determine if an EggNOG annotation should be flagged as a contaminant. EggNOG contaminant analysis can only be performed alongside Similarity  Search contaminant analysis (not on its own) and will only be utilized if no alignments were found for a given transcript during Similarity Searching
+     - Specify this to turn on/off EggNOG contaminant analysis (on by default). This leverages the taxon input from the contaminant Similarity Search command to  determine if an EggNOG annotation should be flagged as a contaminant. EggNOG contaminant analysis can only be performed alongside Similarity  Search contaminant analysis (not on its own) and will only be utilized if no alignments were found for a given transcript during Similarity Searching
      - R-ini
      - bool
-     - false
+     - true
 	 
 Interpreting EggNOG Results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -425,10 +425,10 @@ There are a few data types (qualifiers) to keep in mind used throughout these in
      - string
      - emapper.py
    * - eggnog-contaminant
-     - Specify this to turn on/off EggNOG contaminant analysis. This leverages the taxon input from the contaminant Similarity Search command to  determine if an EggNOG annotation should be flagged as a contaminant. EggNOG contaminant analysis can only be performed alongside Similarity  Search contaminant analysis (not on its own) and will only be utilized if no alignments were found for a given transcript during Similarity Searching
+     - Specify this to turn on/off EggNOG contaminant analysis (on by default). This leverages the taxon input from the contaminant Similarity Search command to  determine if an EggNOG annotation should be flagged as a contaminant. EggNOG contaminant analysis can only be performed alongside Similarity  Search contaminant analysis (not on its own) and will only be utilized if no alignments were found for a given transcript during Similarity Searching
      - R-ini
      - bool
-     - false
+     - true
      
 .. list-table:: Ontology - InterProScan Specific Flags
    :align: left

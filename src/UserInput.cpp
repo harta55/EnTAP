@@ -524,7 +524,7 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_EXE,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_EXE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,EGG_MAP_EXE_DEFAULT     ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DATA_DIR  ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DATA_DIR,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING  ,EGG_MAP_DATA_DIR_DEFAULT,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DMND_DB   ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DMND_DB ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING  ,DEFAULT_EGG_DMND_DB_INI ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
-        {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_CONTAM    ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_CONTAM ,ENTAP_INI_NULL    ,ENT_INI_VAR_BOOL    ,ENTAP_INI_NULL_VAL      ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_CONTAM    ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_CONTAM ,ENTAP_INI_NULL    ,ENT_INI_VAR_BOOL    ,true      ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
 
 /* Ontology - InterPro Commands */
         {INI_ONT_INTERPRO,CMD_INTERPRO_EXE       ,ENTAP_INI_NULL  ,DESC_INTERPRO_EXE          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,INTERPRO_DEF_EXE       ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
@@ -844,7 +844,7 @@ void UserInput::generate_ini_file(std::string &ini_path, ENT_INPUT_TYPES input_t
                 switch (entry->var_type) {
 
                     case ENT_INI_VAR_BOOL:
-                        if (entry->default_value.empty()) {
+                        if ((entry->default_value.empty()) || (!boost::any_cast<bool>(entry->default_value))) {
                             ini_file << INI_FILE_BOOL_FALSE;
                         } else {
                             ini_file << INI_FILE_BOOL_TRUE;

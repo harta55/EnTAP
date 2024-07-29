@@ -96,7 +96,7 @@ EggNOG Commands
      - Specify this to use the '--dbmem' flag with EggNOG-mapper. This will load the entire eggnog.db sqlite3 database into memory which can require up to ~44GB of memory. However, this will significantly speed up EggNOG annotations
      - R-ini
      - bool
-     - false
+     - true
 	 
 Interpreting EggNOG Results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

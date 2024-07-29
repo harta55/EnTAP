@@ -433,7 +433,7 @@ There are a few data types (qualifiers) to keep in mind used throughout these in
      - Specify this to use the '--dbmem' flag with EggNOG-mapper. This will load the entire eggnog.db sqlite3 database into memory which can require up to ~44GB of memory. However, this will significantly speed up EggNOG annotations
      - R-ini
      - bool
-     - false
+     - true
      
 .. list-table:: Ontology - InterProScan Specific Flags
    :align: left

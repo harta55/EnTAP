@@ -100,7 +100,7 @@ ontology_source=0,
 eggnog-contaminant=true
 #Specify this to use the '--dbmem' flag with EggNOG-mapper. This will load the entire eggnog.db sqlite3 database into memory which can require up to ~44GB of memory. However, this will significantly speed up EggNOG annotations.
 #type:boolean (true/false)
-eggnog-dbmem=false
+eggnog-dbmem=true
 #-------------------------------
 # [ontology-interproscan]
 #-------------------------------

@@ -93,6 +93,7 @@ private:
     const std::string EGG_OUTPUT_SEED_ORTHO_APPEND = ".emapper.seed_orthologs";
     const std::string EGG_OUT_UNANNOTATED     = "unannotated";
     const std::string EGG_OUT_ANNOTATED       = "annotated";
+    const std::string EGG_OUT_CONTAMINANTS    = "contaminants";
     const std::string EGG_MAPPER_PREFIX   = "eggnog_";
 
     std::string mOutHIts;
@@ -101,10 +102,14 @@ private:
     std::string mEggnogMapAnnotationsOutputPath;
     std::string mEggnogMapHitsOutputPath;
     std::string mEggnogMapSeedOrthoOutputPath;
+    bool        mRunContaminantAnalysis;
+    vect_str_t mUserContaminants;
+
     EGGNOG_MAPPER_STATES mEggnogMapperState;
 
     static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
     std::string get_output_tag();
+    bool run_eggnog_contam_analysis();
 };
 
 

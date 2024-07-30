@@ -462,6 +462,13 @@ void QuerySequence::set_header_data() {
     } else {
         mHeaderInfo[ENTAP_HEADER_HORIZONTALLY_TRANSFERRED_GENE] = "NO";
     }
+
+    // Contaminant
+    if (QUERY_FLAG_GET(QUERY_CONTAMINANT)) {
+        mHeaderInfo[ENTAP_HEADER_CONTAMINANT] = "YES";
+    } else {
+        mHeaderInfo[ENTAP_HEADER_CONTAMINANT] = "NO";
+    }
 }
 
 /**
@@ -799,6 +806,7 @@ void QuerySequence::update_query_flags(ExecuteStates state, uint16 software) {
             SimSearchResults *results = best_align->get_results();
             QUERY_FLAG_CHANGE(QUERY_INFORMATIVE, results->is_informative);
             QUERY_FLAG_CHANGE(QUERY_CONTAMINANT, results->contaminant);
+            QUERY_FLAG_CHANGE(QUERY_SIM_SEARCH_CONTAM, results->contaminant);
             break;
         }
 
@@ -814,6 +822,7 @@ void QuerySequence::update_query_flags(ExecuteStates state, uint16 software) {
 
                     if (best_align != nullptr) {
                         EggnogResults *results = best_align->get_results();
+                        QUERY_FLAG_CHANGE(QUERY_FAMILY_CONTAM, results->is_contaminant);
 
                         if (!results->parsed_go.empty()) {
                             QUERY_FLAG_SET(QUERY_FAMILY_ONE_GO);
@@ -824,6 +833,14 @@ void QuerySequence::update_query_flags(ExecuteStates state, uint16 software) {
                                 (!results->kegg_module.empty()) || (!results->kegg_rclass.empty())) {
                             QUERY_FLAG_SET(QUERY_FAMILY_ONE_KEGG);
                             QUERY_FLAG_SET(QUERY_ONE_KEGG);
+                        }
+
+                        // A sequence can only be flagged as a contaminant from EggNOG analysis if it did
+                        //  not align against anything during Similarity Searching
+                        if (!QUERY_FLAG_GET(QUERY_BLAST_HIT)) {
+                            if (results->is_contaminant) {
+                                QUERY_FLAG_SET(QUERY_CONTAMINANT);
+                            }
                         }
                     }
                     break;
@@ -920,7 +937,8 @@ bool QuerySequence::is_kept_expression() {
 }
 
 void QuerySequence::setMTPM(fp64 mTPM) {
-    QuerySequence::mTPM = mTPM;
+    this->mTPM = mTPM;
+    set_header_data();
 }
 
 bool QuerySequence::QUERY_FLAG_CONTAINS(uint32 flags) {
@@ -936,7 +954,8 @@ bool QuerySequence::is_nucleotide() {
 }
 
 void QuerySequence::setMEffectiveLength(fp32 mEffectiveLength) {
-    QuerySequence::mEffectiveLength = mEffectiveLength;
+    this->mEffectiveLength = mEffectiveLength;
+    set_header_data();
 }
 
 go_format_t QuerySequence::get_go_terms() {

@@ -1016,3 +1016,16 @@ std::string EggnogDatabase::get_cog_category_description(const char &category_ab
     char key = (char)toupper(category_abbrev);
     return EGGNOG_COG_CATEGORIES.at(key);
 }
+
+// Format of OGs: '2CN31@1|root,2QTMT@2759|Eukaryota,37KQP@33090|Viridiplantae'
+// We want to pull the last one in the list (Viridiplantae) as it is the smallest tax scope
+std::string EggnogDatabase::get_tax_from_tax_scope_max(const std::string &tax_scope_max) {
+    std::string ret;
+    if (tax_scope_max.size() > 1) {
+        size_t pos = tax_scope_max.find_last_of('|');
+        if (pos != std::string::npos) {
+            ret = tax_scope_max.substr(pos+1);
+        }
+    }
+    return ret;
+}

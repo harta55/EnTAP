@@ -424,6 +424,16 @@ There are a few data types (qualifiers) to keep in mind used throughout these in
      - E-ini
      - string
      - emapper.py
+   * - eggnog-contaminant
+     - Specify this to turn on/off EggNOG contaminant analysis (on by default). This leverages the taxon input from the contaminant Similarity Search command to  determine if an EggNOG annotation should be flagged as a contaminant. EggNOG contaminant analysis can only be performed alongside Similarity  Search contaminant analysis (not on its own) and will only be utilized if no alignments were found for a given transcript during Similarity Searching
+     - R-ini
+     - bool
+     - true
+   * - eggnog-dbmem
+     - Specify this to use the '--dbmem' flag with EggNOG-mapper. This will load the entire eggnog.db sqlite3 database into memory which can require up to ~44GB of memory. However, this will significantly speed up EggNOG annotations
+     - R-ini
+     - bool
+     - true
      
 .. list-table:: Ontology - InterProScan Specific Flags
    :align: left

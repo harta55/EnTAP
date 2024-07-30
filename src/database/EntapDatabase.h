@@ -334,6 +334,7 @@ public:
     bool is_ncbi_tax_entry(std::string &species);
 
     bool is_uniprot_entry(std::string &sseqid, UniprotEntry &entry);
+    bool is_contaminant(std::string contam, std::string lineage);
 
     // Database versioning
     bool is_valid_version();

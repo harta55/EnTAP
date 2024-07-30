@@ -205,7 +205,7 @@ enum ENTAP_HEADERS {
     ENTAP_HEADER_SIM_SPECIES,
     ENTAP_HEADER_SIM_TAXONOMIC_LINEAGE,
     ENTAP_HEADER_SIM_DATABASE,
-    ENTAP_HEADER_SIM_CONTAM,
+    ENTAP_HEADER_CONTAMINANT,   // Contaminant from either Similarity search or EggNOG
     ENTAP_HEADER_SIM_INFORM,
 
     /* Similarity Search - UniProt*/

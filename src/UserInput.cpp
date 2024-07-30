@@ -198,10 +198,6 @@ const fp64   UserInput::RSEM_FPKM_DEFAULT               = 0.5;
                             "Specify flags as follows:\n"                               \
                             "    1. GeneMarkS-T\n"                            \
                             "    2. Transdecoder (default)"
-#define DESC_COMPLETE_PROT  "Select this option if all of your sequences are complete " \
-                            "proteins.\n"                                               \
-                            "At this point, this option will merely flag the sequences in your output file"
-#define CMD_COMPLETE_PROT   "complete"
 #define DESC_TRANS_MIN_FLAG "Transdecoder only. Specify the minimum protein length"
 #define CMD_TRANS_MIN_FLAG "transdecoder-m"
 #define CMD_TRANS_NO_REF_START "transdecoder-no-refine-starts"
@@ -288,6 +284,16 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
 
 #define DESC_EGGNOG_MAP_DMND_DB "Path to EggNOG DIAMOND configured database that was generated during the Configuration stage"
 #define CMD_EGGNOG_MAP_DMND_DB "eggnog-map-dmnd"
+
+#define DESC_EGGNOG_MAP_CONTAM "Specify this to turn on/off EggNOG contaminant analysis. This leverages the taxon input from the contaminant " \
+                                "Similarity Search command to determine if an EggNOG annotation should be flagged as a contaminant. EggNOG contaminant " \
+                                "analysis can only be performed alongside Similarity Search contaminant analysis (not on its own) and will only be utilized if no alignments " \
+                                "were found for a given transcript during Similarity Searching"
+#define CMD_EGGNOG_MAP_CONTAM "eggnog-contaminant"
+#define DESC_EGGNOG_MAP_DBMEM "Specify this to use the '--dbmem' flag with EggNOG-mapper. This will load the entire eggnog.db sqlite3" \
+                                " database into memory which can require up to ~44GB of memory. However, this will significantly speed up" \
+                                " EggNOG annotations."
+#define CMD_EGGNOG_MAP_DBMEM "eggnog-dbmem"
 
 // EggNOG DIAMOND Commands
 #define DESC_EGGNOG_DMND     "Path to EggNOG DIAMOND configured database that was generated during the Configuration stage."
@@ -522,6 +528,8 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_EXE,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_EXE        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,EGG_MAP_EXE_DEFAULT     ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DATA_DIR  ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DATA_DIR,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING  ,EGG_MAP_DATA_DIR_DEFAULT,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DMND_DB   ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DMND_DB ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING  ,DEFAULT_EGG_DMND_DB_INI ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
+        {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_CONTAM    ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_CONTAM ,ENTAP_INI_NULL    ,ENT_INI_VAR_BOOL    ,true      ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DBMEM   ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DBMEM ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL  ,true ,ENT_RUN_PARAM_INI_FILE   , ENTAP_INI_NULL_VAL},
 
 /* Ontology - InterPro Commands */
         {INI_ONT_INTERPRO,CMD_INTERPRO_EXE       ,ENTAP_INI_NULL  ,DESC_INTERPRO_EXE          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,INTERPRO_DEF_EXE       ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
@@ -842,6 +850,8 @@ void UserInput::generate_ini_file(std::string &ini_path, ENT_INPUT_TYPES input_t
 
                     case ENT_INI_VAR_BOOL:
                         if (entry->default_value.empty()) {
+                            ini_file << INI_FILE_BOOL_FALSE;
+                        } else if (!boost::any_cast<bool>(entry->default_value)) {
                             ini_file << INI_FILE_BOOL_FALSE;
                         } else {
                             ini_file << INI_FILE_BOOL_TRUE;
@@ -1358,10 +1368,20 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
                 verify_species(SPECIES, pEntap_database);
             }
 
-            // Verify contaminant
+            // Verify Similarity Search contaminant analysis
             if (has_input(INPUT_FLAG_CONTAMINANT)) {
                 FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_CONTAMINANT].input);
                 verify_species(CONTAMINANT, pEntap_database);
+            }
+
+            // Verify EggNOG contaminant analysis
+            if (has_input(INPUT_FLAG_EGG_MAPPER_CONTAMINANT)) {
+                FS_dprint("Verifying input flag " + mUserInputs[INPUT_FLAG_EGG_MAPPER_CONTAMINANT].input);
+                // Similarity Search contaminant required if EggNOG contaminant set to TRUE
+                if (!has_input(INPUT_FLAG_CONTAMINANT)) {
+                    throw ExceptionHandler("Contaminant taxon(s) are required with the " + mUserInputs[INPUT_FLAG_CONTAMINANT].input +
+                                           " flag if running EggNOG contaminant analysis", ERR_ENTAP_INPUT_PARSE);
+                }
             }
 
             // Verify path + extension for alignment file
@@ -1747,11 +1767,11 @@ void UserInput::verify_species(SPECIES_FLAGS flag, EntapDatabase *database) {
  * ======================================================================
  * Function void process_user_species(std::string &input)
  *
- * Description          - Format species user has input
+ * Description          - Format species user has input into format read by EnTAP database
  *
  * Notes                - Throw error on failure
  *
- * @param input         - Species to be formatted
+ * @param input         - Species to be formatted (homo_sapiens) separated by '_'
  * @return              - None
  * ======================================================================
  */

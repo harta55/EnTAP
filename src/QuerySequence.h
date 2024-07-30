@@ -70,17 +70,21 @@ public:
         QUERY_IS_PROTEIN        = (1 << 9),         // Sequence has a corresponding protein sequence
         QUERY_IS_NUCLEOTIDE     = (1 << 10),        // Sequence has a corresponding nucleotide sequence
         QUERY_BLASTED           = (1 << 11),        // Sequence was BLASTED (Sim Search was ran)
-        QUERY_CONTAMINANT       = (1 << 12),        // Sequence is determined as a contaminant from Sim Search
-        QUERY_FAMILY_ONE_KEGG   = (1 << 13),        // Sequence contains at least one KEGG from EggNOG process
-        QUERY_FAMILY_ONE_GO     = (1 << 14),        // Sequence contains at least one GO from EggNOG process
-        QUERY_ONT_INTERPRO_GO   = (1 << 15),        // Sequence contains at least one GO from InterPro process
-        QUERY_ONT_INTERPRO_PATHWAY = (1 << 16),     // Sequence contains at least one KEGG from InterPro process
-        QUERY_ONT_BUSCO         = (1 << 17),        // Sequence has BUSCO data
-        QUERY_HGT_CANDIDATE     = (1 << 18),        // Sequence is an HGT candidate (not necessarily confirmed as HGT)
+        QUERY_SIM_SEARCH_CONTAM = (1 << 12),        // Sequence flagged as a contaminant from Similarity Searching results
+        QUERY_CONTAMINANT       = (1 << 13),        // Sequence flagged as a contaminant from Sim Search or EggNOG analysis
+                                                    //      EggNOG contaminant status is only looked at if there were no alignments
+                                                    //      during Similarity Searching
+        QUERY_FAMILY_ONE_KEGG   = (1 << 14),        // Sequence contains at least one KEGG from EggNOG process
+        QUERY_FAMILY_ONE_GO     = (1 << 15),        // Sequence contains at least one GO from EggNOG process
+        QUERY_FAMILY_CONTAM     = (1 << 16),        // Sequence flagged as a contaminant from EggNOG analysis
+        QUERY_ONT_INTERPRO_GO   = (1 << 17),        // Sequence contains at least one GO from InterPro process
+        QUERY_ONT_INTERPRO_PATHWAY = (1 << 18),     // Sequence contains at least one KEGG from InterPro process
+        QUERY_ONT_BUSCO         = (1 << 19),        // Sequence has BUSCO data
+        QUERY_HGT_CANDIDATE     = (1 << 20),        // Sequence is an HGT candidate (not necessarily confirmed as HGT)
                                                     //  This means the sequence aligned with the correct number of donor/recipient
                                                     //  databases to be considered an HGT candidate
-        QUERY_HGT_CONFIRMED     = (1 << 19),        // Sequence confirmed as HGT gene after performing neighbor analysis
-        QUERY_HGT_BLASTED       = (1 << 20),        // Sequence hit against at least one donor or recipient database
+        QUERY_HGT_CONFIRMED     = (1 << 21),        // Sequence confirmed as HGT gene after performing neighbor analysis
+        QUERY_HGT_BLASTED       = (1 << 22),        // Sequence hit against at least one donor or recipient database
 
         QUERY_MAX               = (1 << 31)
 
@@ -96,19 +100,22 @@ public:
         std::string              seed_score;        // Pulled from DIAMOND run
         fp64                     seed_eval_raw;     // Used for finding best hit
         std::string              member_ogs;        // 0A01R@biNOG,0V8CP@meNOG (eggnog ortholgous groups)
-        std::string              tax_scope_lvl_max; // 'virNOG[6]' or '33208|Metazoa' if using mapper
+        std::string              tax_scope_lvl_max; // 'virNOG[6]' or '33208|Metazoa' if using mapper. According to mapper docs,
+                                                    //  this is the lowest taxon level used for annotation
+        std::string              tax_scope_readable;// 'Ascomycota' This is the tax scope used for contaminant detection
+                                                    //   should be the lowest (or most refined) taxon we can get
         std::string              description;       // Description of narrowest OG with a valid one
         go_format_t              parsed_go;         // All go terms found parsed into EnTAP format
         std::string              name;              // Preferred name
         std::string              bigg;              // BiGG reaction
         std::string              protein_domains;   // Pfam 'GCFC,NTR2' (comma separated)
+        bool                     is_contaminant;    // TRUE if determined to be contaminant based on user input contaminants
 
         // DIAMOND specific eggnog data
         std::string              seed_coverage;     // Pulled from DIAMOND run
         std::string              predicted_gene;    // Most common predicted gene (pname)
         std::string              kegg;              // Everything combined in comma separated list
         std::string              tax_scope;         // virNOG
-        std::string              tax_scope_readable;// Ascomycota
         std::string              pname;             // All predicted gene names
         std::string              og_key;            // Used for indexing into older SQL database (if using)
 

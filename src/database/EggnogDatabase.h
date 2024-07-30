@@ -84,6 +84,7 @@ public:
     std::string print_err();
     void get_eggnog_entry(QuerySequence::EggnogResults *eg);
     std::string get_cog_category_description(const char &category_abbrev);
+    std::string get_tax_from_tax_scope_max(const std::string &tax_scope_max);
     static const std::string EGG_DB_SQL_FILENAME;
     static const std::string EGG_DB_DMND_FILENAME;
 

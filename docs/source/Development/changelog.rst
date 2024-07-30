@@ -2,6 +2,14 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. 
 
+EnTAP v1.3.0 (July 30, 2024)
+-----------------------------------------
+    * Added EggNOG contaminant analysis. This is turned on/off through the 'eggnog-contaminant' flag and only utilized alongside Similarity Search contaminant analysis when an alignment from Similarity Search is not found. More information found in docs
+    * Added 'eggnog-dbmem' flag which will utilize the 'dbmem' flag with EggNOG-mapper. This flag will speed up EggNOG annotations significantly, but will take upwards of 44 GB of usable memory. This is on by default, if you are experiencing memory issues this can be turned off
+    * Changed 'NA' in empty cells of the final output to 'NaN'
+    * Fixed an issue with the EggNOG Seed E-Value not printing correctly in scientific notation in the final 'entap_results' file (was printing as 0). Correct value can be seen in the EggNOG specific output in the 'gene_family/EggNOG' directory
+    * Fixed an issue with the RSEM TPM and Effective Length not printing correctly in the final 'entap_results' file (was printing as 0). Correct value can be seen in the RSEM specific output in the 'expression_analysis/RSEM' directory
+
 EnTAP v1.2.1 (June 20, 2024)
 -----------------------------------------
     * Fixed path to TransDecoder executable in entap_config.ini file for Docker

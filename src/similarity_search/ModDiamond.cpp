@@ -419,7 +419,7 @@ void ModDiamond::parse() {
                     }
                 } // Else, database is NOT UniProt after # of attempts
             }
-
+            // test
             // Compile sim search data
             simSearchResults.database_path = output_path;
             simSearchResults.qseqid = qseqid;

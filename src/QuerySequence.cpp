@@ -937,7 +937,8 @@ bool QuerySequence::is_kept_expression() {
 }
 
 void QuerySequence::setMTPM(fp64 mTPM) {
-    QuerySequence::mTPM = mTPM;
+    this->mTPM = mTPM;
+    set_header_data();
 }
 
 bool QuerySequence::QUERY_FLAG_CONTAINS(uint32 flags) {
@@ -953,7 +954,8 @@ bool QuerySequence::is_nucleotide() {
 }
 
 void QuerySequence::setMEffectiveLength(fp32 mEffectiveLength) {
-    QuerySequence::mEffectiveLength = mEffectiveLength;
+    this->mEffectiveLength = mEffectiveLength;
+    set_header_data();
 }
 
 go_format_t QuerySequence::get_go_terms() {

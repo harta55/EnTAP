@@ -1461,5 +1461,13 @@ bool EntapDatabase::is_ncbi_tax_entry(std::string &species) {
     return mpNCBIEntrez->entrez_has_hits(entrezInput);
 }
 
+bool EntapDatabase::is_contaminant(std::string contam, std::string lineage) {
+    if (contam.empty() || lineage.empty()) return false;
+
+    LOWERCASE(contam);
+    LOWERCASE(lineage);
+    return lineage.find(contam) != std::string::npos;
+}
+
 const int16 GoEntry::UNKNOWN_LVL = -1;
 const std::string GoEntry::UNKNOWN_LVL_STR = "UNKNOWN";

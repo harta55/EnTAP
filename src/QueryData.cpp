@@ -414,7 +414,9 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
     uint32                 count_frame_rejected=0;
     uint32                 count_sim_hits=0;
     uint32                 count_sim_no_hits=0;
-    uint32                 count_sim_contam=0;          // Unique alignments flagged as a contaminant
+    uint32                 count_contam=0;          // Unique alignments flagged as a contaminant (either Eggnog or Sim Search)
+    uint32                 count_sim_contam=0;      // Contaminant flagged from sim search
+    uint32                 count_eggnog_contam=0;   // Contaminant flagged from EggNOG
     uint32                 count_ontology=0;
     uint32                 count_no_ontology=0;
     uint32                 count_one_go=0;
@@ -523,8 +525,16 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
             // Is annotated
             count_TOTAL_ann++;
             add_alignment_data(out_annotated_path, pair.second, nullptr);
+            if (pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_SIM_SEARCH_CONTAM)) {
+                count_sim_contam++;
+            }
+
+            if (pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_FAMILY_CONTAM)) {
+                count_eggnog_contam++;
+            }
+
             if (pair.second->QUERY_FLAG_GET(QuerySequence::QUERY_CONTAMINANT)) {
-                count_sim_contam++; // This is assumed as retained and currently only from sim search
+                count_contam++; // This is assumed as retained and currently only from sim search
                 add_alignment_data(out_annotated_contam_path, pair.second, nullptr);
             } else {
                 add_alignment_data(out_annotated_without_contam_path, pair.second, nullptr);
@@ -575,10 +585,10 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
                  (((fp64) count_sim_hits / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
         if (mpUserInput->has_input(INPUT_FLAG_CONTAMINANT)) {
             ss <<
-               "\n\t\tTotal alignments flagged as a contaminant: "   << count_sim_contam << " (" <<
-               (((fp64) count_sim_contam / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)" <<
-               "\n\t\tTotal alignments NOT flagged as a contaminant: "   << (count_sim_hits - count_sim_contam) << " (" <<
-               (((fp64) (count_sim_hits - count_sim_contam) / count_sim_hits) * ENTAP_PERCENT) << "% of total unique alignments)";
+               "\n\t\tTotal alignments flagged as a Similarity Search contaminant: "   << count_sim_contam << " (" <<
+               (((fp64) count_sim_contam / count_sim_hits) * ENTAP_PERCENT) << "% of total unique sim search alignments)" <<
+               "\n\t\tTotal alignments NOT flagged as a Similarity Search contaminant: "   << (count_sim_hits - count_sim_contam) << " (" <<
+               (((fp64) (count_sim_hits - count_sim_contam) / count_sim_hits) * ENTAP_PERCENT) << "% of total unique sim search alignments)";
         } else {
             ss <<
                 "\n\t\tNo contaminants were selected by user";
@@ -602,6 +612,15 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
                             (((fp64) count_one_go / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)" <<
                        "\n\tTotal unique sequences with at least one pathway (KEGG) assignment: "   << count_one_kegg << " (" <<
                            (((fp64) count_one_kegg / count_total_sequences) * ENTAP_PERCENT) << "% of total input sequences)";
+                    if (mpUserInput->has_input(INPUT_FLAG_EGG_MAPPER_CONTAMINANT)) {
+                        ss << "\n\tTotal unique sequences flagged as an EggNOG contaminant: " << count_eggnog_contam << " (" <<
+                            (((fp64) count_eggnog_contam / count_ontology) * ENTAP_PERCENT) << "% of EggNOG assignments)" <<
+                              "\n\tTotal unique sequences NOT flagged as an EggNOG contaminant: " << (count_ontology - count_eggnog_contam) << " (" <<
+                                  (((fp64) (count_ontology - count_eggnog_contam) / count_ontology) * ENTAP_PERCENT) << "% of total unique family assignments)";
+                    } else {
+                        ss << "\n\t\tEggNOG contaminant analysis turned off";
+                    }
+
                     break;
                 case ONT_INTERPRO_SCAN:
                     ss <<
@@ -640,11 +659,11 @@ void QueryData::final_statistics(std::string &outpath, std::vector<FileSystem::E
             (((fp64) count_TOTAL_ann / count_total_kept_sequences) * ENTAP_PERCENT) << "% of total retained)" <<
        "\n\t\tWritten to: " << PATHS(FileSystem::ENTAP_FINAL_OUTPUT, OUT_ANNOTATED_FILENAME);
        if (mpUserInput->has_input(INPUT_FLAG_CONTAMINANT)) {
-           ss << "\n\t\tTotal annotated sequences flagged as a contaminant from similarity search: " << count_sim_contam << " (" <<
-           (((fp64) count_sim_contam / count_TOTAL_ann) * ENTAP_PERCENT) << "% of total annotated)" <<
+           ss << "\n\t\tTotal annotated sequences flagged as a contaminant from either Similarity Search or EggNOG: " << count_contam << " (" <<
+           (((fp64) count_contam / count_TOTAL_ann) * ENTAP_PERCENT) << "% of total annotated)" <<
            "\n\t\t\tWritten to: " << PATHS(FileSystem::ENTAP_FINAL_OUTPUT, OUT_ANNOTATED_CONTAM_FILENAME) <<
-           "\n\t\tTotal annotated sequences NOT flagged as a contaminant from similarity search: " << (count_TOTAL_ann - count_sim_contam) << " (" <<
-           (((fp64) (count_TOTAL_ann - count_sim_contam) / count_TOTAL_ann) * ENTAP_PERCENT) << "% of total annotated)" <<
+           "\n\t\tTotal annotated sequences NOT flagged as a contaminant: " << (count_TOTAL_ann - count_contam) << " (" <<
+           (((fp64) (count_TOTAL_ann - count_contam) / count_TOTAL_ann) * ENTAP_PERCENT) << "% of total annotated)" <<
            "\n\t\t\tWritten to: " << PATHS(FileSystem::ENTAP_FINAL_OUTPUT, OUT_ANNOTATED_NO_CONTAM_FILENAME);
        } else {
            ss << "\n\t\tNo contaminants were selected by user";

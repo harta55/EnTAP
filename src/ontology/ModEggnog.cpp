@@ -159,6 +159,12 @@ void ModEggnog::execute() {
         tc_command_map.emplace("--itype", "CDS");
     }
 
+    // Does user want to specify --dbmem flag for EggNOG
+    if (mpUserInput->has_input(INPUT_FLAG_EGG_MAPPER_DBMEM))
+    {
+        tc_command_map.emplace("--dbmem", "");
+    }
+
     switch (mEggnogMapperState) {
         case EGGNOG_MAPPER_NOT_STARTED:
             FS_dprint("Running EggNOG-mapper from beginning...");

@@ -290,6 +290,10 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
                                 "analysis can only be performed alongside Similarity Search contaminant analysis (not on its own) and will only be utilized if no alignments " \
                                 "were found for a given transcript during Similarity Searching"
 #define CMD_EGGNOG_MAP_CONTAM "eggnog-contaminant"
+#define DESC_EGGNOG_MAP_DBMEM "Specify this to use the '--dbmem' flag with EggNOG-mapper. This will load the entire eggnog.db sqlite3" \
+                                " database into memory which can require up to ~44GB of memory. However, this will significantly speed up" \
+                                " EggNOG annotations."
+#define CMD_EGGNOG_MAP_DBMEM "eggnog-dbmem"
 
 // EggNOG DIAMOND Commands
 #define DESC_EGGNOG_DMND     "Path to EggNOG DIAMOND configured database that was generated during the Configuration stage."
@@ -525,6 +529,7 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DATA_DIR  ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DATA_DIR,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING  ,EGG_MAP_DATA_DIR_DEFAULT,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DMND_DB   ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DMND_DB ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING  ,DEFAULT_EGG_DMND_DB_INI ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_CONTAM    ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_CONTAM ,ENTAP_INI_NULL    ,ENT_INI_VAR_BOOL    ,true      ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DBMEM   ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DBMEM ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL  ,ENTAP_INI_NULL_VAL ,ENT_RUN_PARAM_INI_FILE   , ENTAP_INI_NULL_VAL},
 
 /* Ontology - InterPro Commands */
         {INI_ONT_INTERPRO,CMD_INTERPRO_EXE       ,ENTAP_INI_NULL  ,DESC_INTERPRO_EXE          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,INTERPRO_DEF_EXE       ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},

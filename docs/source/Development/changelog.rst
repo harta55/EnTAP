@@ -5,6 +5,7 @@ This page contains (mostly) all of the changes that were made between each versi
 EnTAP v1.3.0 (XXX)
 -----------------------------------------
     * Added EggNOG contaminant analysis. This is turned on/off through the 'eggnog-contaminant' flag and only utilized alongside Similarity Search contaminant analysis when an alignment from Similarity Search is not found
+    * Added 'eggnog-dbmem' flag which will utilize the 'dbmem' flag with EggNOG-mapper. This flag will speed up EggNOG annotations significantly, but will take upwards of 44 GB of usable memory
 
 EnTAP v1.2.1 (June 20, 2024)
 -----------------------------------------

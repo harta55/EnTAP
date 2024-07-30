@@ -27,6 +27,7 @@ Next up is verifying the main execution stage! Once again, first ensure that the
 In |run_ini_file_format|, change the following lines for our frame selection test:
 
 .. code-block:: bash
+
     input=/test_data/nucleotide_trinity.fnn
     database=/test_data/bin/uniprot_sprot.dmnd
 

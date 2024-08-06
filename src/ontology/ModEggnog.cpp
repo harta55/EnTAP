@@ -70,6 +70,7 @@ ModEggnog::ModEggnog(std::string &ont_out, std::string &in_hits, EntapDataPtrs &
     mEggnogMapperState = EGGNOG_MAPPER_NOT_STARTED;
     mSoftwareFlag = ONT_EGGNOG_MAPPER;
     mRunContaminantAnalysis = run_eggnog_contam_analysis();
+    mDmndSensitivity = mpUserInput->get_diamond_sensitivity(INPUT_FLAG_DMND_SENSITIVITY);
 }
 
 bool ModEggnog::is_executable(std::string &exe) {

@@ -41,6 +41,7 @@ ModHorizontalGeneTransferDiamond::ModHorizontalGeneTransferDiamond(std::string &
     mExePath = mpUserInput->get_user_input<ent_input_str_t>(INPUT_FLAG_DIAMOND_EXE);
     // These aren't used right now, going to move out of super
     mpFileSystem->delete_dir(mOverallResultsDir);
+    mDmndSensitivity = mpUserInput->get_diamond_sensitivity(INPUT_FLAG_DMND_SENSITIVITY);
 }
 
 EntapModule::ModVerifyData ModHorizontalGeneTransferDiamond::verify_files() {
@@ -274,7 +275,7 @@ bool ModHorizontalGeneTransferDiamond::run_diamond(AbstractSimilaritySearch::Sim
     tc_commands.emplace(CMD_QUERY_COVERAGE, std::to_string(cmd->qcoverage));
     tc_commands.emplace(CMD_SUBJECT_COVERAGE, std::to_string(cmd->tcoverage));
     tc_commands.emplace(CMD_EVALUE, std::to_string(cmd->eval));
-    tc_commands.emplace(CMD_MORE_SENSITIVE, TC_NULL_ARGUMENT);
+    tc_commands.emplace(mDmndSensitivity, TC_NULL_ARGUMENT);
     tc_commands.emplace(CMD_TOP_ALIGNMENTS, std::to_string(CMD_DEFAULT_TOP_ALIGN));
 
     tc_commands.emplace(CMD_OUTPUT_PATH, cmd->output_path);

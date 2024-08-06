@@ -38,13 +38,13 @@ public:
     AbstractOntology(std::string &in_hits, std::string &ont_out,
                      EntapDataPtrs &entap_data, std::string mod_name,
                      std::vector<ENTAP_HEADERS> &module_headers);
-    ~AbstractOntology() = default;
-    virtual ModVerifyData verify_files()=0;
-    virtual void execute() = 0;
-    virtual void parse() = 0;
-    virtual bool set_version() = 0;
+    ~AbstractOntology() override = default;
+    ModVerifyData verify_files() override =0;
+    void execute() override = 0;
+    void parse() override = 0;
+    bool set_version() override = 0;
 
-    virtual void set_success_flags() override ;
+    void set_success_flags() override ;
 };
 
 

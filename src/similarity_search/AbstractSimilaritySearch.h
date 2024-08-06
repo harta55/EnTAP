@@ -59,7 +59,7 @@ public:
                              std::string mod_name,
                              std::vector<ENTAP_HEADERS> &module_headers,
                              vect_str_t &databases);
-    ~AbstractSimilaritySearch() = default;
+    virtual ~AbstractSimilaritySearch() = default;
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;

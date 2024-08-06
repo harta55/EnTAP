@@ -256,7 +256,23 @@ const fp64   UserInput::DEFAULT_E_VALUE                 = 1e-5;
                             "would like to weigh certain alignments differently (see full documentation)"\
                             "\nExample (defaults):\n"          \
                             "conserved, predicted, unknown, hypothetical, putative, unidentified, uncultured, uninformative, unnamed"
+#define CMD_DMND_SENSITIVITY "diamond-sensitivity"
+#define DESC_DMND_SENSITIVITY "Specify the DIAMOND sensitivity used against input DIAMOND databases (Similarity Searching and HGT Analysis)." \
+" Sensitivities are based off of DIAMOND documentation with a higher sensitivity generally taking longer" \
+" but giving a higher alignment rate. Sensitivity options are 1 (fast), 2 (mid-sensitive), 3 (sensitive), 4" \
+" (more-sensitive), 5 (very-sensitive), 6 (ultra-sensitive)."
+const uint16 UserInput::DEFAULT_DMND_SENSITIVITY = 5;
+const std::string UserInput::DEFAULT_DMND_SENSITIVITY_STR = "--very-sensitive";
 
+const std::unordered_map<uint16, std::string> DIAMOND_SENSITIVITY_MAP =
+    {
+    {1, "--fast"},
+    {2, "--mid-sensitive"},
+    {3, "--sensitive"},
+    {4, "--more-sensitive"},
+    {5, "--very-sensitive"},
+    {6, "--ultra-sensitive"}
+    };
 // Enter as lowercase
 const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
         "conserved",
@@ -294,7 +310,12 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
                                 " database into memory which can require up to ~44GB of memory. However, this will significantly speed up" \
                                 " EggNOG annotations."
 #define CMD_EGGNOG_MAP_DBMEM "eggnog-dbmem"
-
+#define CMD_EGGNOG_MAP_SENSITIVITY "eggnog-sensitivity"
+#define DESC_EGGNOG_MAP_SENSITIVITY "Specify the DIAMOND sensitivity used during EggNOG mapper execution against the EggNOG database." \
+                                    " Sensitivities are based off of DIAMOND documentation with a higher sensitivity generally taking longer" \
+                                    " but giving a higher alignment rate. Sensitivity options are 1 (fast), 2 (mid-sensitive), 3 (sensitive), 4" \
+                                    " (more-sensitive), 5 (very-sensitive), 6 (ultra-sensitive)."
+const uint16 UserInput::DEFAULT_EGGNOG_MAP_SENSITIVITY = 5;
 // EggNOG DIAMOND Commands
 #define DESC_EGGNOG_DMND     "Path to EggNOG DIAMOND configured database that was generated during the Configuration stage."
 #define CMD_EGGNOG_DMND     "eggnog-dmnd"
@@ -514,6 +535,7 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_SIM_SEARCH,CMD_CONTAMINANT          ,CMD_SHORT_CONTAMINANT,DESC_CONTAMINANT      ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
         {INI_SIM_SEARCH,CMD_EVAL                 ,CMD_SHORT_EVAL       ,DESC_EVAL             ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_E_VALUE        ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
         {INI_SIM_SEARCH,CMD_UNINFORMATIVE        ,ENTAP_INI_NULL  ,DESC_UNINFORMATIVE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,DEFAULT_UNINFORMATIVE  ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+        {INI_SIM_SEARCH,CMD_DMND_SENSITIVITY       ,ENTAP_INI_NULL  ,DESC_DMND_SENSITIVITY        ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT,DEFAULT_DMND_SENSITIVITY  ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
 
 /* Ontology Commands */
         {INI_ONTOLOGY  ,CMD_ONTOLOGY_FLAG        ,ENTAP_INI_NULL  ,DESC_ONTOLOGY_FLAG         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONTOLOGY       ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
@@ -530,6 +552,7 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DMND_DB   ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DMND_DB ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING  ,DEFAULT_EGG_DMND_DB_INI ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_CONTAM    ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_CONTAM ,ENTAP_INI_NULL    ,ENT_INI_VAR_BOOL    ,true      ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DBMEM   ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DBMEM ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL  ,true ,ENT_RUN_PARAM_INI_FILE   , ENTAP_INI_NULL_VAL},
+        {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_SENSITIVITY,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_SENSITIVITY ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT  ,DEFAULT_EGGNOG_MAP_SENSITIVITY ,ENT_RUN_PARAM_INI_FILE   , ENTAP_INI_NULL_VAL},
 
 /* Ontology - InterPro Commands */
         {INI_ONT_INTERPRO,CMD_INTERPRO_EXE       ,ENTAP_INI_NULL  ,DESC_INTERPRO_EXE          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,INTERPRO_DEF_EXE       ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
@@ -2026,6 +2049,18 @@ int UserInput::get_supported_threads() {
         threads = user_threads;
     }
     return threads;
+}
+
+std::string UserInput::get_diamond_sensitivity(ENTAP_INPUT_FLAGS INPUT_FLAG) {
+    if (this->has_input(INPUT_FLAG))
+    {
+        auto sensitivity = this->get_user_input<ent_input_uint_t>(INPUT_FLAG);
+        if (DIAMOND_SENSITIVITY_MAP.find(sensitivity) != DIAMOND_SENSITIVITY_MAP.end())
+        {
+            return DIAMOND_SENSITIVITY_MAP.at(sensitivity);
+        }
+    }
+    return DEFAULT_DMND_SENSITIVITY_STR; // Default return value
 }
 
 std::queue<char> UserInput::get_state_queue() {

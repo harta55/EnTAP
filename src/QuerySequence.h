@@ -32,6 +32,7 @@
 #include "common.h"
 #include "database/EntapDatabase.h"
 
+class SimSearchAlignment;
 class QueryAlignment;
 
 /**
@@ -284,7 +285,7 @@ public:
 
     // Alignemnt accession routines
     void add_alignment(ExecuteStates state, uint16 software, EggnogResults &results, std::string& database);
-    void add_alignment(ExecuteStates state, uint16 software, SimSearchResults &results, std::string& database,std::string lineage);
+    SimSearchAlignment* add_alignment(ExecuteStates state, uint16 software, SimSearchResults &results, std::string& database,std::string lineage);
     void add_alignment(ExecuteStates state, uint16 software, InterProResults &results, std::string& database);
     void add_alignment(ExecuteStates state, uint16 software, BuscoResults &results, std::string& database);
     void add_alignment(ExecuteStates state, uint16 software, HorizontalGeneTransferResults &results, std::string &database);

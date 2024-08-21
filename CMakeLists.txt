@@ -74,7 +74,9 @@ set(SOURCE_FILES
         src/user_inputs/GFF_File.cpp src/user_inputs/GFF_File.h src/HorizontalGeneTransfer.cpp
         src/HorizontalGeneTransfer.h src/horizontal_gene_transfer/AbstractHorizontalGeneTransfer.cpp
         src/horizontal_gene_transfer/AbstractHorizontalGeneTransfer.h src/horizontal_gene_transfer/ModHorizontalGeneTransferDiamond.cpp
-        src/horizontal_gene_transfer/ModHorizontalGeneTransferDiamond.h)
+        src/horizontal_gene_transfer/ModHorizontalGeneTransferDiamond.h
+        src/database/NCBIDatabase.cpp
+        src/database/NCBIDatabase.h)
 
 # Include libraries
 include_directories(libs/pstream)

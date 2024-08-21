@@ -52,10 +52,11 @@ protected:
     void UTEntapDatabase_03(EntapDatabase *entapDatabase, EntapDatabase::DATABASE_TYPE type);
     void UTEntapDatabase_04(EntapDatabase *entapDatabase);
 
-
     void TestQueryData();
 
     void TestEggnogDatabase();
+
+    void TestNCBIEntrez();
 
 };
 

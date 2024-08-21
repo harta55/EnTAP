@@ -593,10 +593,11 @@ void QuerySequence::add_alignment(ExecuteStates state, uint16 software, EggnogRe
  *
  * =====================================================================
  */
-void QuerySequence::add_alignment(ExecuteStates state, uint16 software, SimSearchResults &results, std::string& database,std::string lineage) {
+SimSearchAlignment* QuerySequence::add_alignment(ExecuteStates state, uint16 software, SimSearchResults &results, std::string& database,std::string lineage) {
     QUERY_FLAG_SET(QUERY_BLAST_HIT);
     QueryAlignment *new_alignment = new SimSearchAlignment(state, software, database, this, results, lineage);
     mAlignmentData->update_best_hit(new_alignment);
+    return dynamic_cast<SimSearchAlignment*>(new_alignment);
 }
 
 /**

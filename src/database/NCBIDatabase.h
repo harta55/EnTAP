@@ -1,6 +1,5 @@
 /*
- *
- * Developed by Alexander Hart
+* Developed by Alexander Hart
  * Plant Computational Genomics Lab
  * University of Connecticut
  *
@@ -25,34 +24,30 @@
  * along with EnTAP.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef ENTAP_CONFIG_H
-#define ENTAP_CONFIG_H
-
-// Compile with boost libraries?
-#ifndef USE_BOOST
-//#define USE_BOOST   1
-#endif
-
-// Compile with CURL? Will use wget command otherwise (not supported yet)
-#ifndef USE_CURL
-//#define USE_CURL    1
-#endif
-
-// Compile with using the Fast CSV Parser (required now)
-#ifndef USE_FAST_CSV
-#define USE_FAST_CSV  1
-#endif
-
-// Compile with ZLIB? Will use tar command otherwise (not supported yet)
-#ifndef USE_ZLIB
-//#define USE_ZLIB    1
-#endif
-
-//  Compile this in to run Unit tests
-#define UNIT_TESTS 1
-
-// Comment this out if it is debug code
-#define RELEASE_BUILD
+#ifndef NCBIDATABASE_H
+#define NCBIDATABASE_H
+#include "../QueryAlignment.h"
 
 
-#endif //ENTAP_CONFIG_H
+class NCBIDatabase {
+
+public:
+ ~NCBIDatabase();
+ NCBIDatabase(FileSystem *pfile_system);
+
+ void get_ncbi_data(SimSearchAlignment* alignment);
+private:
+ bool mContinueProcessing;
+ bool mProcessRemaining;
+ std::list<std::thread::id> mRunningThreads;
+ std::queue<SimSearchAlignment*> mProcessingQueue;
+ NCBIEntrez *mpNCBIEntrez;
+
+ void main_loop();
+ void get_entrez_ncbi_data(const std::string& query_ids, std::unordered_map<std::string, SimSearchAlignment*> bulk_query_map);
+ uint16 ENTREZ_QUEUE_SIZE = 100; // Bulk processing size for entrez data
+};
+
+
+
+#endif //NCBIDATABASE_H

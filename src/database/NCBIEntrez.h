@@ -33,6 +33,12 @@
 class NCBIEntrez {
 
 public:
+    // Data we want to access from the NCBI database through Entrez
+    typedef enum
+    {
+        ENTREZ_DATA_NULL=0,
+        ENTREZ_DATA_GENEID=1  // GeneID, ex: '106664428'
+    } ENTREZ_DATA_TYPES;
 
     // Required input for an Entrez Search
     struct EntrezInput {
@@ -41,18 +47,33 @@ public:
         std::string rettype;
         std::string term;
         vect_str_t  uid_list;
+        std::vector<ENTREZ_DATA_TYPES> data_types;
     };
+
+    struct EntrezEntryData {
+        std::string geneid;
+    };
+
+    typedef std::unordered_map<std::string, EntrezEntryData> entrez_data_results;
 
     struct EntrezResults {
         std::string count;
         vect_str_t uid_list;
+        entrez_data_results entrez_results;
     };
+
+
+
+
+
 
     // Entrez DATABASE types
     static const std::string NCBI_DATABASE_TAXONOMY;
+    static const std::string NCBI_DATABASE_PROTEIN;
 
     // Entrez RETTYPE types
     static const std::string NCBI_ENTREZ_RETTYPE_XML;
+    static const std::string NCBI_ENTREZ_RETTYPE_GP;  // Genpep flat file
 
     // Entrez RETMODE types
     static const std::string NCBI_ENTREZ_RETMODE_TEXT;
@@ -62,6 +83,7 @@ public:
     ~NCBIEntrez();
     bool entrez_has_hits(EntrezInput &entrezInput);
     bool entrez_search(EntrezInput &entrezInput, EntrezResults &entrezResults);
+    bool entrez_fetch(EntrezInput &entrezInput, EntrezResults &entrezResults);
 
 #ifndef UNIT_TESTS
 protected:
@@ -100,6 +122,7 @@ protected:
     FileSystem *mpFileSystem;
     std::string generate_query(EntrezInput &entrezInput, ENTREZ_TYPES type);
     void process_term(std::string& term);
+    bool parse_ncbi_gp_file(EntrezInput &entrezInput, EntrezResults &entrezResults, std::string &output_file);
 };
 
 #endif //ENTAP_NCBIENTREZ_H

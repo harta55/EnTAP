@@ -26,13 +26,18 @@
 
 #include "NCBIEntrez.h"
 
+#include <regex>
+
 const std::string NCBIEntrez::NCBI_DATABASE_TAXONOMY = "taxonomy";
+const std::string NCBIEntrez::NCBI_DATABASE_PROTEIN = "protein";
+
 const std::string NCBIEntrez::NCBI_ENTREZ_RETMODE_TEXT = "text";
+
 const std::string NCBIEntrez::NCBI_ENTREZ_RETTYPE_XML  = "xml";
+const std::string NCBIEntrez::NCBI_ENTREZ_RETTYPE_GP  = "gp";
 
 NCBIEntrez::NCBIEntrez(FileSystem *fileSystem) {
     mpFileSystem = fileSystem;
-
 }
 
 NCBIEntrez::~NCBIEntrez() {
@@ -115,7 +120,31 @@ bool NCBIEntrez::entrez_search(NCBIEntrez::EntrezInput &entrezInput, NCBIEntrez:
     return ret;
 }
 
-std::string NCBIEntrez::generate_query(NCBIEntrez::EntrezInput &entrezInput, ENTREZ_TYPES type) {
+bool NCBIEntrez::entrez_fetch(EntrezInput& entrezInput, EntrezResults& entrezResults) {
+    std::string output_file;
+    std::string line;           // line read from file downloaded from NCBI
+
+    if (entrezInput.uid_list.empty()) return false;
+    std::string query = generate_query(entrezInput, ENTREZ_FETCH);
+    if (query.empty()) return false;
+
+    // TODO will need to include CURL in project, downloading to file now to test
+    // Download data
+    bool ret = mpFileSystem->download_url_data(query, output_file);
+    if (ret && mpFileSystem->file_exists(output_file))
+    {
+        // File successfully downloaded, parse
+        if (entrezInput.rettype == NCBI_ENTREZ_RETTYPE_GP) {
+            return parse_ncbi_gp_file(entrezInput, entrezResults, output_file);
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+}
+
+std::string NCBIEntrez::generate_query(EntrezInput &entrezInput, ENTREZ_TYPES type) {
 
     std::string final_url;
 
@@ -166,4 +195,61 @@ std::string NCBIEntrez::generate_query(NCBIEntrez::EntrezInput &entrezInput, ENT
 
 void NCBIEntrez::process_term(std::string &term) {
     STR_REPLACE(term, ' ', '_');
+}
+
+/*
+ * GP Flat Files from NCBI generally start with the following format:
+ *
+ * (+)
+ * DEFINITION  carbonic anhydrase 2 [Cimex lectularius].
+ * ACCESSION   XP_014245616
+ * VERSION     XP_014245616.1
+ * DBLINK      BioProject: PRJNA298750
+ * DBSOURCE    REFSEQ: accession XM_014390130.2
+ * KEYWORDS    RefSeq.
+ * SOURCE      Cimex lectularius (bed bug)
+ * ........................ (a bit further down in file)
+ *      CDS             1..298
+ *                    /gene="LOC106664428"
+ *                    /coded_by="XM_014390130.2:154..1050"
+ *                    /db_xref="GeneID:106664428"
+ *
+ *  Unfortunately access to the database requires manual parsing to get specific data
+ */
+bool NCBIEntrez::parse_ncbi_gp_file(EntrezInput& entrezInput, EntrezResults& entrezResults, std::string &output_file) {
+    std::string line;
+    std::smatch match;
+    std::string current_sequence;
+    EntrezEntryData entrez_entry_data;
+    std::ifstream infile(output_file);
+    const std::string TEST_REGEX = "LOCUS\\s*(\\S+)\\s";
+    const std::string TEXT_REGEX_GENE = "\\s+\\/db_xref=\"GeneID:(.+)\"";
+    while (std::getline(infile, line)) {
+        if (line.empty()) continue;
+
+        // Find what sequence we are on (it is possible to pull data for multiple at once
+        if (current_sequence.empty()) {
+            if (std::regex_search(line, match, std::regex(TEST_REGEX)) && match.size() > 1) {
+                current_sequence = std::string(match[1].first, match[2].second);
+                entrez_entry_data = {};
+            }
+        } else {
+            // Check if this line contains any data we want
+            for (ENTREZ_DATA_TYPES data_type : entrezInput.data_types) {
+                switch (data_type) {
+                    case ENTREZ_DATA_GENEID:
+                        if (std::regex_search(line, match, std::regex(TEXT_REGEX_GENE)) && match.size() > 1) {
+                            entrez_entry_data.geneid = std::string(match[1].first, match[2].second);
+                            entrezResults.entrez_results.emplace(current_sequence, entrez_entry_data);
+                        }
+                        break;
+                    default:
+                        break;
+
+                }
+            }
+        }
+    }
+    infile.close();
+    return true;
 }

@@ -43,11 +43,13 @@ UnitTests::~UnitTests() {
 void UnitTests::execute_tests() {
 
     // Test suite of EnTAP database tests
-    TestEntapDatabase();
+    // TestEntapDatabase();
 
     // Test suite of QueryData tests
 //    TestQueryData();
 
+    // Test suite of NCBI Entrez tests
+    TestNCBIEntrez();
 }
 
 void UnitTests::TestEntapDatabase() {
@@ -246,6 +248,17 @@ void UnitTests::TestEggnogDatabase() {
 
 }
 
+void UnitTests::TestNCBIEntrez() {
+    NCBIEntrez ncbi_entrez = NCBIEntrez(mpFileSystem);
+    NCBIEntrez::EntrezResults entrez_results;
+    NCBIEntrez::EntrezInput entrez_input;
+    entrez_input.data_types = {NCBIEntrez::ENTREZ_DATA_GENEID};
+    entrez_input.uid_list = {"XP_014245616"};
+    entrez_input.database = NCBIEntrez::NCBI_DATABASE_PROTEIN;
+    entrez_input.rettype = NCBIEntrez::NCBI_ENTREZ_RETTYPE_GP;
+
+    ncbi_entrez.entrez_fetch(entrez_input, entrez_results);
+}
 
 
 #endif

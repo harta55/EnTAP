@@ -33,6 +33,7 @@
 #include "../QueryData.h"
 #include "../GraphingManager.h"
 #include "../ExceptionHandler.h"
+#include "../database/NCBIDatabase.h"
 
 #ifdef USE_BOOST
 #include <boost/regex.hpp>
@@ -326,6 +327,7 @@ void ModDiamond::parse() {
     TaxEntry            taxEntry;                       // Entry from Tarxonomic database
     std::pair<bool, std::string> contam_info;           // Contaminate information
     std::stringstream   ss;                             // Output string stream
+    SimSearchAlignment*     p_sim_alignment;              // Pointer to query alignment
 
     // ------------------ Read from DIAMOND output ----------------------- //
     std::string qseqid;             // Sequence ID of query sequence
@@ -448,7 +450,7 @@ void ModDiamond::parse() {
             simSearchResults.is_informative ? simSearchResults.yes_no_inform = YES_FLAG :
                     simSearchResults.yes_no_inform  = NO_FLAG;
 
-            query->add_alignment(mExecutionState, mSoftwareFlag,
+            p_sim_alignment = query->add_alignment(mExecutionState, mSoftwareFlag,
                     simSearchResults, output_path, mInputLineage);
 
 #ifdef TEST_SIM_PARSE_01

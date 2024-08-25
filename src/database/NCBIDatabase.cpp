@@ -25,7 +25,7 @@
 */
 
 #include "NCBIDatabase.h"
-
+#include "../QueryAlignment.h"
 #include <thread>
 #include <unistd.h>
 
@@ -80,6 +80,7 @@ void NCBIDatabase::main_loop()
 void NCBIDatabase::get_entrez_ncbi_data(const std::string& query_ids, std::unordered_map<std::string, SimSearchAlignment*> bulk_query_map)
 {
     if (mpNCBIEntrez == nullptr) return;    // RETURN with invalid entrez pointer
+    SimSearchAlignment *alignment;
     NCBIEntrez::EntrezResults entrez_results;
     NCBIEntrez::EntrezInput entrez_input;
     entrez_input.database = NCBIEntrez::NCBI_DATABASE_PROTEIN;
@@ -88,6 +89,11 @@ void NCBIDatabase::get_entrez_ncbi_data(const std::string& query_ids, std::unord
 
     if (mpNCBIEntrez->entrez_fetch(entrez_input, entrez_results))
     {
-
+        for (auto &results : entrez_results.entrez_results) {
+            alignment = bulk_query_map.at(results.first);
+            if (alignment != nullptr) {
+                //alignment->get_results().
+            }
+        }
     }
 }

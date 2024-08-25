@@ -57,6 +57,10 @@ protected:
     void TestEggnogDatabase();
 
     void TestNCBIEntrez();
+    void UTNCBIEntrez_00();
+
+    void TestNCBIDatabase();
+    void UTNCBIDatabase_00();
 
 };
 

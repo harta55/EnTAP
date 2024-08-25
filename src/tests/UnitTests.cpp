@@ -29,6 +29,8 @@
 #include "../database/EntapDatabase.h"
 #include "../QueryData.h"
 #include <assert.h>
+#include "../database/NCBIDatabase.h"
+
 
 UnitTests::UnitTests() {
     mpFileSystem = new FileSystem();
@@ -50,6 +52,9 @@ void UnitTests::execute_tests() {
 
     // Test suite of NCBI Entrez tests
     TestNCBIEntrez();
+
+    // Test suite of NCBI Database tests
+
 }
 
 void UnitTests::TestEntapDatabase() {
@@ -249,15 +254,102 @@ void UnitTests::TestEggnogDatabase() {
 }
 
 void UnitTests::TestNCBIEntrez() {
+
+    UTNCBIEntrez_00();
+
+}
+
+// Test Entrez fetch
+void UnitTests::UTNCBIEntrez_00() {
     NCBIEntrez ncbi_entrez = NCBIEntrez(mpFileSystem);
+
+    FS_dprint("UT_NCBIEntrez_00 START");
+    std::cout << "UT_NCBIEntrez_00 START" << std::endl;
+
+    // Test 1, pulling gene id from protein database for a single NCBI ID
+    std::string test_ncbi_id = "XP_014245616";
+    std::string test_expected_geneid = "106664428";
     NCBIEntrez::EntrezResults entrez_results;
     NCBIEntrez::EntrezInput entrez_input;
     entrez_input.data_types = {NCBIEntrez::ENTREZ_DATA_GENEID};
-    entrez_input.uid_list = {"XP_014245616"};
+    entrez_input.uid_list = {test_ncbi_id};
     entrez_input.database = NCBIEntrez::NCBI_DATABASE_PROTEIN;
     entrez_input.rettype = NCBIEntrez::NCBI_ENTREZ_RETTYPE_GP;
 
     ncbi_entrez.entrez_fetch(entrez_input, entrez_results);
+    assert(!entrez_results.entrez_results.empty());
+    assert(entrez_results.entrez_results.find(test_ncbi_id) != entrez_results.entrez_results.end());
+    assert(entrez_results.entrez_results.at(test_ncbi_id).geneid == test_expected_geneid);
+    FS_dprint("\tUT_NCBIEntrez_00 - CASE_01 PASS");
+    std::cout << "\tUT_NCBIEntrez_00 - CASE_01 PASS" << std::endl;
+
+
+    // Test 2, pulling gene id from protein database for multiple NCBI ID
+    //  including NCBI versions (XXXX.1)
+    entrez_input = {};
+    entrez_results = {};
+    entrez_input.data_types = {NCBIEntrez::ENTREZ_DATA_GENEID};
+    entrez_input.uid_list = {"XP_014245616", "XP_020482136.1", "XP_026476231.1"};
+    entrez_input.database = NCBIEntrez::NCBI_DATABASE_PROTEIN;
+    entrez_input.rettype = NCBIEntrez::NCBI_ENTREZ_RETTYPE_GP;
+
+    ncbi_entrez.entrez_fetch(entrez_input, entrez_results);
+    assert(!entrez_results.entrez_results.empty());
+    assert(entrez_results.entrez_results.find("XP_014245616") != entrez_results.entrez_results.end());
+    assert(entrez_results.entrez_results.at("XP_014245616").geneid == "106664428");
+    assert(entrez_results.entrez_results.find("XP_020482136.1") != entrez_results.entrez_results.end());
+    assert(entrez_results.entrez_results.at("XP_020482136.1").geneid == "109976342");
+    assert(entrez_results.entrez_results.find("XP_026476231.1") != entrez_results.entrez_results.end());
+    assert(entrez_results.entrez_results.at("XP_026476231.1").geneid == "113381705");
+    FS_dprint("\tUT_NCBIEntrez_00 - CASE_02 PASS");
+    std::cout << "\tUT_NCBIEntrez_00 - CASE_02 PASS" << std::endl;
+
+    // Test 3, entrez_fetch returns FALSE if no data retrieved
+    entrez_input = {};
+    entrez_results = {};
+    entrez_input.data_types = {NCBIEntrez::ENTREZ_DATA_GENEID};
+    entrez_input.uid_list = {"XP_014245616safdsafs"};
+    entrez_input.database = NCBIEntrez::NCBI_DATABASE_PROTEIN;
+    entrez_input.rettype = NCBIEntrez::NCBI_ENTREZ_RETTYPE_GP;
+
+    assert(false == ncbi_entrez.entrez_fetch(entrez_input, entrez_results));
+    FS_dprint("\tUT_NCBIEntrez_00 - CASE_03 PASS");
+    std::cout << "\tUT_NCBIEntrez_00 - CASE_03 PASS" << std::endl;
+
+    // Test 4, entrez_fetch returns FALSE with no UID list
+    entrez_input = {};
+    entrez_results = {};
+    entrez_input.data_types = {NCBIEntrez::ENTREZ_DATA_GENEID};
+    entrez_input.uid_list = {};
+    entrez_input.database = NCBIEntrez::NCBI_DATABASE_PROTEIN;
+    entrez_input.rettype = NCBIEntrez::NCBI_ENTREZ_RETTYPE_GP;
+
+    assert(false == ncbi_entrez.entrez_fetch(entrez_input, entrez_results));
+    FS_dprint("\tUT_NCBIEntrez_00 - CASE_04 PASS");
+    std::cout << "\tUT_NCBIEntrez_00 - CASE_04 PASS" << std::endl;
+
+    FS_dprint("UT_NCBIEntrez_00 COMPLETE");
+    std::cout << "UT_NCBIEntrez_00 COMPLETE" << std::endl;
+}
+
+void UnitTests::TestNCBIDatabase() {
+
+    UTNCBIDatabase_00();
+
+}
+
+void UnitTests::UTNCBIDatabase_00() {
+    NCBIDatabase ncbi_database = NCBIDatabase(mpFileSystem);
+    QuerySequence query_sequence;
+    QuerySequence::SimSearchResults sim_search_results;
+    // sim_search_results.sseqid = "XP_014245616";
+    // SimSearchAlignment sim_search_alignment =
+    //     SimSearchAlignment(SIMILARITY_SEARCH, SIM_DIAMOND, "test_path", query_sequence*,
+    //                                     sim_search_results, "homo_sapiens");
+
+
+
+
 }
 
 

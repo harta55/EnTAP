@@ -25,8 +25,8 @@
 */
 
 #include "NCBIEntrez.h"
-
 #include <regex>
+#include "NCBIDatabase.h"
 
 const std::string NCBIEntrez::NCBI_DATABASE_TAXONOMY = "taxonomy";
 const std::string NCBIEntrez::NCBI_DATABASE_PROTEIN = "protein";
@@ -44,7 +44,7 @@ NCBIEntrez::~NCBIEntrez() {
 
 }
 
-bool NCBIEntrez::entrez_has_hits(NCBIEntrez::EntrezInput &entrezInput) {
+bool NCBIEntrez::entrez_has_hits(EntrezInput &entrezInput) {
     bool ret = false;
     std::string query;
     std::string output_file;
@@ -222,15 +222,28 @@ bool NCBIEntrez::parse_ncbi_gp_file(EntrezInput& entrezInput, EntrezResults& ent
     std::string current_sequence;
     EntrezEntryData entrez_entry_data;
     std::ifstream infile(output_file);
-    const std::string TEST_REGEX = "LOCUS\\s*(\\S+)\\s";
+    const std::string TEST_REGEX = R"(LOCUS\s*(\S+)\s)";
     const std::string TEXT_REGEX_GENE = "\\s+\\/db_xref=\"GeneID:(.+)\"";
+
+    // NOTE with NCBI data versions, depending on what database version we are searching against,
+    //  it could be inconsistent with the latest version on NCBI. These versions are denoted after the '.'
+    //  example: XP_014245616.1 is verison 1. Theoretically it could be XP_014245616.2 at some point. We
+    //  also want to preserve the version that the user searched against.
+    // Because of this, we are going to map  the Users data to what we find in NCBI, extremely inefficient...
+    std::unordered_map<std::string, std::string> ncbi_id_mappings;
+    for (std::string& entry : entrezInput.uid_list) {
+        if (entry.empty()) continue;
+        std::string reformatted = entry.substr(0,entry.find('.'));
+        ncbi_id_mappings.emplace(reformatted, entry);
+    }
+
     while (std::getline(infile, line)) {
         if (line.empty()) continue;
 
         // Find what sequence we are on (it is possible to pull data for multiple at once
         if (current_sequence.empty()) {
-            if (std::regex_search(line, match, std::regex(TEST_REGEX)) && match.size() > 1) {
-                current_sequence = std::string(match[1].first, match[2].second);
+            if (std::regex_search(line, match, std::regex(TEST_REGEX))) {
+                current_sequence = std::string(match[1]);
                 entrez_entry_data = {};
             }
         } else {
@@ -238,15 +251,21 @@ bool NCBIEntrez::parse_ncbi_gp_file(EntrezInput& entrezInput, EntrezResults& ent
             for (ENTREZ_DATA_TYPES data_type : entrezInput.data_types) {
                 switch (data_type) {
                     case ENTREZ_DATA_GENEID:
-                        if (std::regex_search(line, match, std::regex(TEXT_REGEX_GENE)) && match.size() > 1) {
-                            entrez_entry_data.geneid = std::string(match[1].first, match[2].second);
-                            entrezResults.entrez_results.emplace(current_sequence, entrez_entry_data);
+                        if (std::regex_search(line, match, std::regex(TEXT_REGEX_GENE))) {
+                            entrez_entry_data.geneid = std::string(match[1]);
                         }
                         break;
                     default:
                         break;
 
                 }
+            }
+
+            // Check if have finished with this sequences
+            //  NCBI denotes this as '//'
+            if (line == "//") {
+                entrezResults.entrez_results.emplace(ncbi_id_mappings.at(current_sequence), entrez_entry_data);
+                current_sequence = "";
             }
         }
     }

@@ -26,8 +26,11 @@
 
 #ifndef NCBIDATABASE_H
 #define NCBIDATABASE_H
-#include "../QueryAlignment.h"
 
+#include "NCBIEntrez.h"
+#include "../FileSystem.h"
+class SimSearchAlignment;
+class NCBIEntrez;
 
 class NCBIDatabase {
 
@@ -36,6 +39,10 @@ public:
  NCBIDatabase(FileSystem *pfile_system);
 
  void get_ncbi_data(SimSearchAlignment* alignment);
+
+ struct NCBIData {
+  std::string geneid;
+ };
 private:
  bool mContinueProcessing;
  bool mProcessRemaining;

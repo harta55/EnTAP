@@ -339,8 +339,10 @@ const std::string UserInput::DEFAULT_EGGNOG_MAP_SENSITIVITY = "more-sensitive";
                             "    -panther\n"                                            \
                             "    -gene3d\n"                                             \
                             "    -pirsf\n"                                              \
+                            "    -pirsr\n"                                              \
                             "    -coils\n"                                              \
-                            "    -morbidblite\n"                                        \
+                            "    -antifam\n"                                              \
+                            "    -mobidblite\n"                                        \
                             "Make sure the database is downloaded, EnTAP will not check!"
 #define EX_INTER_DATA       "--" CMD_INTER_DATA " tigrfam " "--" CMD_INTER_DATA " pfam"
 

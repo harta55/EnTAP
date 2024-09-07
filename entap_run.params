@@ -119,8 +119,10 @@ eggnog-dbmem=true
 #    -panther
 #    -gene3d
 #    -pirsf
+#    -pirsr
 #    -coils
-#    -morbidblite
+#    -antifam
+#    -mobidblite
 #Make sure the database is downloaded, EnTAP will not check!
 #--interproscan-db tigrfam --interproscan-db pfam
 #type:list (string)

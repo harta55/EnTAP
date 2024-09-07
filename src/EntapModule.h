@@ -46,7 +46,7 @@ public:
     EntapModule(std::string &execution_stage_path, std::string &in_hits,
                 EntapDataPtrs &entap_data, std::string module_name,
                 std::vector<ENTAP_HEADERS> &module_headers);
-    ~EntapModule();
+    virtual ~EntapModule()=default;
     virtual ModVerifyData verify_files()=0;
     virtual void execute() = 0;
     virtual void parse() = 0;

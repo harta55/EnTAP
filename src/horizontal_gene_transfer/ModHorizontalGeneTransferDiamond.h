@@ -75,7 +75,6 @@ protected:
     // WARNING until restructuring of code make sure this matches ModDiamond.h
     const std::string CMD_QUERY_COVERAGE   = "--query-cover";     // Specify minimum query coverage for alignment
     const std::string CMD_SUBJECT_COVERAGE = "--subject-cover";   // Specify minimum target coverage for alignment
-    const std::string CMD_MORE_SENSITIVE   = "--very-sensitive";  // Specify 'very sensitive' run that will take longer
     const std::string CMD_EVALUE           = "--evalue";          // Specify highest e-value to accept alignments for
     const std::string CMD_BLASTX           = "blastx";
     const std::string CMD_BLASTP           = "blastp";
@@ -103,6 +102,7 @@ protected:
 
     static std::vector<ENTAP_HEADERS> DEFAULT_HEADERS;
     std::vector<HGTDatabase> mHGTDatabases;
+    std::string mDmndSensitivity;
     uint16 mDonorDatabaseCt;
     uint16 mRecipientDatabaseCt;
 

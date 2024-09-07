@@ -66,7 +66,7 @@ public:
     ModEggnog(std::string &ont_out, std::string &in_hits,
             EntapDataPtrs &entap_data);
     ModVerifyData verify_files() override;
-    ~ModEggnog();
+    ~ModEggnog() override;
     virtual void execute() override ;
     virtual void parse() override;
     static bool is_executable(std::string &exe);
@@ -102,6 +102,7 @@ private:
     std::string mEggnogMapAnnotationsOutputPath;
     std::string mEggnogMapHitsOutputPath;
     std::string mEggnogMapSeedOrthoOutputPath;
+    std::string mDmndSensitivity;
     bool        mRunContaminantAnalysis;
     vect_str_t mUserContaminants;
 

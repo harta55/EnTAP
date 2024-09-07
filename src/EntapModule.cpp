@@ -100,5 +100,3 @@ void EntapModule::enable_headers() {
         mpQueryData->header_set(header, true);
     }
 }
-
-EntapModule::~EntapModule() =default;

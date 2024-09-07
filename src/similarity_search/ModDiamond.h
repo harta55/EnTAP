@@ -56,7 +56,7 @@ public:
     //******************* Public Functions *********************
     ModDiamond(std::string &out, std::string &fasta_path,EntapDataPtrs &entap_data, vect_str_t &databases,
                std::string module_name, uint16 software_flag);
-    ~ModDiamond() = default;
+    ~ModDiamond() override = default;
 
     // ModEntap overrides
     virtual ModVerifyData verify_files() override;
@@ -76,6 +76,7 @@ private:
 
     //************** Private Member Variables ******************
     bool mParsedFile;   // TRUE if any alignment file had alignments and was parsed
+    std::string mDmndSensitivity;
     //**********************************************************
 
     //**************** Private Const Variables *****************
@@ -98,7 +99,6 @@ private:
     // WARNING until restructuring of code make sure this matches ModHorizontalGeneTransferDiamond.h
     const std::string CMD_QUERY_COVERAGE   = "--query-cover";     // Specify minimum query coverage for alignment
     const std::string CMD_SUBJECT_COVERAGE = "--subject-cover";   // Specify minimum target coverage for alignment
-    const std::string CMD_MORE_SENSITIVE   = "--very-sensitive";  // Specify 'very sensitive' run that will take longer
     const std::string CMD_EVALUE           = "--evalue";          // Specify highest e-value to accept alignments for
     const std::string CMD_BLASTX           = "blastx";
     const std::string CMD_BLASTP           = "blastp";

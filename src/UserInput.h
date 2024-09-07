@@ -120,6 +120,7 @@ typedef enum {
     INPUT_FLAG_CONTAMINANT,
     INPUT_FLAG_E_VALUE,
     INPUT_FLAG_UNINFORMATIVE,
+    INPUT_FLAG_DMND_SENSITIVITY,
 
     /* Ontology Commands */
     INPUT_FLAG_ONTOLOGY,
@@ -134,6 +135,7 @@ typedef enum {
     INPUT_FLAG_EGG_MAPPER_DMND_DB,
     INPUT_FLAG_EGG_MAPPER_CONTAMINANT,
     INPUT_FLAG_EGG_MAPPER_DBMEM,
+    INPUT_FLAG_EGG_MAPPER_SENSITIVITY,
 
     /* Ontology Commands - InterProScan */
     INPUT_FLAG_INTERPRO_EXE,
@@ -191,6 +193,7 @@ public:
     void parse_ini(std::string &ini_path, ENT_INPUT_TYPES input_type);
     EXECUTION_TYPE verify_user_input();
     int get_supported_threads();
+    std::string get_diamond_sensitivity(ENTAP_INPUT_FLAGS INPUT_FLAG);
     std::queue<char> get_state_queue();
     std::string get_target_species_str();
     vect_str_t get_contaminants();
@@ -239,7 +242,6 @@ private:
         "list (decimal)",
         "boolean (true/false)"
     };
-
 
     struct EntapINIEntry {
         std::string category;
@@ -317,6 +319,9 @@ private:
     static const fp64          DEFAULT_E_VALUE;
     static const fp64          DEFAULT_BUSCO_E_VALUE;
     static const uint16        DEFAULT_THREADS;
+    static const std::string        DEFAULT_DMND_SENSITIVITY;
+    static const std::string        DEFAULT_EGGNOG_MAP_SENSITIVITY;
+    static const std::string   DEFAULT_DMND_SENSITIVITY_STR;
     static const fp64          RSEM_FPKM_DEFAULT;
     static const fp64          DEFAULT_QCOVERAGE;
     static const fp64          DEFAULT_TCOVERAGE;

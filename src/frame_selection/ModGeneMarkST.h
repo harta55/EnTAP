@@ -69,7 +69,7 @@ public:
     //******************* Public Functions *********************
     ModGeneMarkST(std::string &execution_stage_path, std::string &in_hits,
                   EntapDataPtrs &entap_data);
-    ~ModGeneMarkST();
+    ~ModGeneMarkST() override;
     virtual ModVerifyData verify_files() override ;
     virtual void execute() override ;
     virtual void parse() override ;

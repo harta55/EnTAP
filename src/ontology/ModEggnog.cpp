@@ -70,7 +70,7 @@ ModEggnog::ModEggnog(std::string &ont_out, std::string &in_hits, EntapDataPtrs &
     mEggnogMapperState = EGGNOG_MAPPER_NOT_STARTED;
     mSoftwareFlag = ONT_EGGNOG_MAPPER;
     mRunContaminantAnalysis = run_eggnog_contam_analysis();
-    mDmndSensitivity = mpUserInput->get_diamond_sensitivity(INPUT_FLAG_DMND_SENSITIVITY);
+    mDmndSensitivity = mpUserInput->get_diamond_sensitivity(INPUT_FLAG_EGG_MAPPER_SENSITIVITY);
 }
 
 bool ModEggnog::is_executable(std::string &exe) {
@@ -146,7 +146,7 @@ void ModEggnog::execute() {
     tc_command_map = {
             {"-m", "diamond"},
             {"-o", get_output_tag()},
-            {"--sensmode", "more-sensitive"},
+            {"--sensmode", mDmndSensitivity},
             {"-i", mInputTranscriptome},
             {"--dmnd_db", mEggnogMapDMNDPath},
             {"--data_dir", mEggnogMapDataDir},

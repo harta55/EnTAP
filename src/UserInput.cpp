@@ -259,20 +259,14 @@ const fp64   UserInput::DEFAULT_E_VALUE                 = 1e-5;
 #define CMD_DMND_SENSITIVITY "diamond-sensitivity"
 #define DESC_DMND_SENSITIVITY "Specify the DIAMOND sensitivity used against input DIAMOND databases (Similarity Searching and HGT Analysis)." \
 " Sensitivities are based off of DIAMOND documentation with a higher sensitivity generally taking longer" \
-" but giving a higher alignment rate. Sensitivity options are 1 (fast), 2 (mid-sensitive), 3 (sensitive), 4" \
-" (more-sensitive), 5 (very-sensitive), 6 (ultra-sensitive)."
-const uint16 UserInput::DEFAULT_DMND_SENSITIVITY = 5;
-const std::string UserInput::DEFAULT_DMND_SENSITIVITY_STR = "--very-sensitive";
+" but giving a higher alignment rate. Sensitivity options are fast, mid-sensitive, sensitive," \
+" more-sensitive, very-sensitive, ultra-sensitive."
+const std::string UserInput::DEFAULT_DMND_SENSITIVITY = "very-sensitive";
 
-const std::unordered_map<uint16, std::string> DIAMOND_SENSITIVITY_MAP =
-    {
-    {1, "--fast"},
-    {2, "--mid-sensitive"},
-    {3, "--sensitive"},
-    {4, "--more-sensitive"},
-    {5, "--very-sensitive"},
-    {6, "--ultra-sensitive"}
-    };
+const vect_str_t DIAMOND_SENSITIVITY_VALID_TYPES =
+    {"fast", "mid-sensitive", "sensitive", "more-sensitive",
+    "very-sensitive", "ultra-sensitive"};
+
 // Enter as lowercase
 const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
         "conserved",
@@ -313,9 +307,9 @@ const vect_str_t UserInput::DEFAULT_UNINFORMATIVE       = vect_str_t {
 #define CMD_EGGNOG_MAP_SENSITIVITY "eggnog-sensitivity"
 #define DESC_EGGNOG_MAP_SENSITIVITY "Specify the DIAMOND sensitivity used during EggNOG mapper execution against the EggNOG database." \
                                     " Sensitivities are based off of DIAMOND documentation with a higher sensitivity generally taking longer" \
-                                    " but giving a higher alignment rate. Sensitivity options are 1 (fast), 2 (mid-sensitive), 3 (sensitive), 4" \
-                                    " (more-sensitive), 5 (very-sensitive), 6 (ultra-sensitive)."
-const uint16 UserInput::DEFAULT_EGGNOG_MAP_SENSITIVITY = 5;
+                                    " but giving a higher alignment rate. Sensitivity options are fast, mid-sensitive, sensitive," \
+                                    " more-sensitive, very-sensitive, ultra-sensitive."
+const std::string UserInput::DEFAULT_EGGNOG_MAP_SENSITIVITY = "more-sensitive";
 // EggNOG DIAMOND Commands
 #define DESC_EGGNOG_DMND     "Path to EggNOG DIAMOND configured database that was generated during the Configuration stage."
 #define CMD_EGGNOG_DMND     "eggnog-dmnd"
@@ -398,6 +392,7 @@ const fp64   UserInput::DEFAULT_BUSCO_E_VALUE           = 1e-5;
 #define INI_EXP_RSEM "expression_analysis-rsem"
 #define INI_FRAME   "frame_selection"
 #define INI_SIM_SEARCH "similarity_search"
+#define INI_SIM_SEARCH_DIAMOND "similarity_search-diamond"
 #define INI_ONT_INTERPRO "ontology-interproscan"
 #define INI_ONTOLOGY "ontology"
 #define INI_ONT_EGGNOG "ontology-eggnog"
@@ -537,7 +532,9 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_SIM_SEARCH,CMD_CONTAMINANT          ,CMD_SHORT_CONTAMINANT,DESC_CONTAMINANT      ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
         {INI_SIM_SEARCH,CMD_EVAL                 ,CMD_SHORT_EVAL       ,DESC_EVAL             ,ENTAP_INI_NULL   ,ENT_INI_VAR_FLOAT       ,DEFAULT_E_VALUE        ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
         {INI_SIM_SEARCH,CMD_UNINFORMATIVE        ,ENTAP_INI_NULL  ,DESC_UNINFORMATIVE         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_STRING,DEFAULT_UNINFORMATIVE  ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
-        {INI_SIM_SEARCH,CMD_DMND_SENSITIVITY       ,ENTAP_INI_NULL  ,DESC_DMND_SENSITIVITY        ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT,DEFAULT_DMND_SENSITIVITY  ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
+
+/* Similarity Search - DIAMOND */
+        {INI_SIM_SEARCH_DIAMOND,CMD_DMND_SENSITIVITY       ,ENTAP_INI_NULL  ,DESC_DMND_SENSITIVITY        ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING,DEFAULT_DMND_SENSITIVITY  ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
 
 /* Ontology Commands */
         {INI_ONTOLOGY  ,CMD_ONTOLOGY_FLAG        ,ENTAP_INI_NULL  ,DESC_ONTOLOGY_FLAG         ,ENTAP_INI_NULL   ,ENT_INI_VAR_MULTI_INT   ,DEFAULT_ONTOLOGY       ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
@@ -554,7 +551,7 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DMND_DB   ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DMND_DB ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING  ,DEFAULT_EGG_DMND_DB_INI ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_CONTAM    ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_CONTAM ,ENTAP_INI_NULL    ,ENT_INI_VAR_BOOL    ,true      ,ENT_RUN_PARAM_INI_FILE, ENTAP_INI_NULL_VAL},
         {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_DBMEM   ,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_DBMEM ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL  ,true ,ENT_RUN_PARAM_INI_FILE   , ENTAP_INI_NULL_VAL},
-        {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_SENSITIVITY,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_SENSITIVITY ,ENTAP_INI_NULL   ,ENT_INI_VAR_INT  ,DEFAULT_EGGNOG_MAP_SENSITIVITY ,ENT_RUN_PARAM_INI_FILE   , ENTAP_INI_NULL_VAL},
+        {INI_ONT_EGGNOG_MAPPER,CMD_EGGNOG_MAP_SENSITIVITY,ENTAP_INI_NULL  ,DESC_EGGNOG_MAP_SENSITIVITY ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING  ,DEFAULT_EGGNOG_MAP_SENSITIVITY ,ENT_RUN_PARAM_INI_FILE   , ENTAP_INI_NULL_VAL},
 
 /* Ontology - InterPro Commands */
         {INI_ONT_INTERPRO,CMD_INTERPRO_EXE       ,ENTAP_INI_NULL  ,DESC_INTERPRO_EXE          ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,INTERPRO_DEF_EXE       ,ENT_CONFIG_INI_FILE   , ENTAP_INI_NULL_VAL},
@@ -1457,6 +1454,20 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
                 }
             }
 
+            // Verify Similarity Search sensitivity
+            if (has_input(INPUT_FLAG_DMND_SENSITIVITY)) {
+                std::string sensitivity = get_diamond_sensitivity(INPUT_FLAG_DMND_SENSITIVITY);
+                if (!sensitivity.empty()) {
+                    if (std::find(DIAMOND_SENSITIVITY_VALID_TYPES.begin(), DIAMOND_SENSITIVITY_VALID_TYPES.end(),
+                        sensitivity) == DIAMOND_SENSITIVITY_VALID_TYPES.end()) {
+                        // Invalid sensitivity type
+                        throw ExceptionHandler("Invalid DIAMOND sensitivity type: " + sensitivity, ERR_ENTAP_INPUT_PARSE);
+                    }
+                } else {
+                    throw ExceptionHandler("Invalid DIAMOND sensitivity type found in ini file", ERR_ENTAP_INPUT_PARSE);
+                }
+            }
+
             // Verify Ontology Flags
             is_interpro = false;
             if (has_input(INPUT_FLAG_ONTOLOGY)) {
@@ -1467,6 +1478,20 @@ UserInput::EXECUTION_TYPE UserInput::verify_user_input() {
                         throw ExceptionHandler("Invalid ontology flags being used", ERR_ENTAP_INPUT_PARSE);
                     }
                     if (ont_flags[i] == ONT_INTERPRO_SCAN && !is_interpro) is_interpro = true;
+                }
+            }
+
+            // Verify EggNOG sensitivity
+            if (has_input(INPUT_FLAG_EGG_MAPPER_SENSITIVITY)) {
+                std::string sensitivity = get_diamond_sensitivity(INPUT_FLAG_EGG_MAPPER_SENSITIVITY);
+                if (!sensitivity.empty()) {
+                    if (std::find(DIAMOND_SENSITIVITY_VALID_TYPES.begin(), DIAMOND_SENSITIVITY_VALID_TYPES.end(),
+                        sensitivity) == DIAMOND_SENSITIVITY_VALID_TYPES.end()) {
+                        // Invalid sensitivity type
+                        throw ExceptionHandler("Invalid DIAMOND sensitivity type for EggNOG-mapper: " + sensitivity, ERR_ENTAP_INPUT_PARSE);
+                        }
+                } else {
+                    throw ExceptionHandler("Invalid DIAMOND sensitivity type for EggNOG-mapper found in ini file", ERR_ENTAP_INPUT_PARSE);
                 }
             }
 
@@ -2056,13 +2081,12 @@ int UserInput::get_supported_threads() {
 std::string UserInput::get_diamond_sensitivity(ENTAP_INPUT_FLAGS INPUT_FLAG) {
     if (this->has_input(INPUT_FLAG))
     {
-        auto sensitivity = this->get_user_input<ent_input_uint_t>(INPUT_FLAG);
-        if (DIAMOND_SENSITIVITY_MAP.find(sensitivity) != DIAMOND_SENSITIVITY_MAP.end())
-        {
-            return DIAMOND_SENSITIVITY_MAP.at(sensitivity);
-        }
+        auto sensitivity = this->get_user_input<ent_input_str_t>(INPUT_FLAG);
+        LOWERCASE(sensitivity);
+        return sensitivity;
     }
-    return DEFAULT_DMND_SENSITIVITY_STR; // Default return value
+    FS_dprint("WARNING get_diamond_sensitivity unknown INPUT_FLAG");
+    return "";
 }
 
 std::queue<char> UserInput::get_state_queue() {

@@ -319,8 +319,8 @@ private:
     static const fp64          DEFAULT_E_VALUE;
     static const fp64          DEFAULT_BUSCO_E_VALUE;
     static const uint16        DEFAULT_THREADS;
-    static const uint16        DEFAULT_DMND_SENSITIVITY;
-    static const uint16        DEFAULT_EGGNOG_MAP_SENSITIVITY;
+    static const std::string        DEFAULT_DMND_SENSITIVITY;
+    static const std::string        DEFAULT_EGGNOG_MAP_SENSITIVITY;
     static const std::string   DEFAULT_DMND_SENSITIVITY_STR;
     static const fp64          RSEM_FPKM_DEFAULT;
     static const fp64          DEFAULT_QCOVERAGE;

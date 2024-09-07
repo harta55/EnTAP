@@ -752,7 +752,7 @@ void UserInput::parse_ini(std::string &ini_path, ENT_INPUT_TYPES input_type) {
                                     if (val == INI_FILE_BOOL_TRUE) {
                                         ini_entry->parsed_value = true;
                                     } else if (val == INI_FILE_BOOL_FALSE){
-                                        ;
+                                        ini_entry->parsed_value.clear();
                                     } else {
                                         throw ExceptionHandler("INI file boolean input must be true or false at line: "+ line,
                                             ERR_ENTAP_INPUT_PARSE);

@@ -43,7 +43,7 @@ Similarity Search Commands
      - integer
      - 0
    * - contam / c
-     - Specify contaminants to be used during Simlilarity Search best hit selection. Contaminants can be selected by species or through a specific taxon (insecta) from the NCBI Taxonomy Database. If your taxon is more than one word just replace the spaces with underscores (_). Alignments will be flagged as contaminants and will be lower scoring compared to other alignments.
+     - Specify contaminants to be used during Simililarity Search best hit selection. Contaminants can be selected by species or through a specific taxon (insecta) from the NCBI Taxonomy Database. If your taxon is more than one word just replace the spaces with underscores (_). Alignments will be flagged as contaminants and will be lower scoring compared to other alignments.
      - R-ini
      - multi-string
      - insecta
@@ -77,6 +77,22 @@ Similarity Search Commands
      - E-ini
      - string
      - diamond
+
+.. list-table:: **Similarity Search - DIAMOND Specific Flags**
+   :align: left
+   :widths: 10 50 10 10 10 
+   :header-rows: 1    
+   
+   * - param
+     - description
+     - location (cmd/R-ini,E-ini)
+     - qualifier
+     - example
+   * - diamond-sensitivity
+     - Specify the DIAMOND sensitivity used against input DIAMOND databases (Similarity Searching and HGT Analysis). Sensitivities are based off of DIAMOND documentation with a higher sensitivity generally taking longer but giving a higher alignment rate. Sensitivity options are fast, mid-sensitive, sensitive, more-sensitive, very-sensitive, ultra-sensitive.
+     - R-ini
+     - string
+     - very-sensitive
 
 
 .. _best_hit-label:

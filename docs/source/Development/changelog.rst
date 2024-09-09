@@ -2,6 +2,12 @@ Changelog
 ==================
 This page contains (mostly) all of the changes that were made between each version of EnTAP. 
 
+EnTAP v1.4.0 (September 10, 2024)
+-----------------------------------------
+    * Added user control of DIAMOND sensitivity during HGT Analysis, Similarity Searching, and EggNOG analysis. Higher sensitivity will generally take longer, but result in higher annotation rates
+    * Fixed an issue where InterProScan databases may not be recognized in the user input
+    * Fixed an issue where EggNOG contaminant analysis may still be on even if 'FALSE' was selected in the ini file
+
 EnTAP v1.3.0 (July 30, 2024)
 -----------------------------------------
     * Added EggNOG contaminant analysis. This is turned on/off through the 'eggnog-contaminant' flag and only utilized alongside Similarity Search contaminant analysis when an alignment from Similarity Search is not found. More information found in docs

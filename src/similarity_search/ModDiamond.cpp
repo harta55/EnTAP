@@ -280,7 +280,7 @@ bool ModDiamond::run_blast(AbstractSimilaritySearch::SimSearchCmd *cmd, bool use
     tc_commands.emplace(CMD_QUERY_COVERAGE, std::to_string(cmd->qcoverage));
     tc_commands.emplace(CMD_SUBJECT_COVERAGE, std::to_string(cmd->tcoverage));
     tc_commands.emplace(CMD_EVALUE, std::to_string(cmd->eval));
-    tc_commands.emplace("--" + mDmndSensitivity, TC_NULL_ARGUMENT);
+    tc_commands.emplace(mDmndSensitivity, TC_NULL_ARGUMENT);
     tc_commands.emplace(CMD_TOP_ALIGNMENTS, std::to_string(CMD_DEFAULT_TOP_ALIGN));
 
     tc_commands.emplace(CMD_OUTPUT_PATH, cmd->output_path);

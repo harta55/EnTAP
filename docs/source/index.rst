@@ -4,14 +4,14 @@
    contain the root `toctree` directive.
 
    
-.. image::    ENTAP_white.jpg
-	:scale: 50%
+.. image::    Getting_Started/EnTAP_Overview_hires.png
+	:scale: 25%
 	:align: center
    
 Welcome to EnTAP's documentation!
 =================================
 
-EnTAP is an eukaryotic non-model annotation pipeline developed by Alexander Hart and Dr. Jill Wegrzyn of the Plant Computational Genomics Lab at the University of Connecticut with additional support from Dr. Stephen Ficklin and Josh Burns of Washington State University.
+EnTAP is an eukaryotic non-model annotation pipeline developed by Alexander Hart, Cynthia Webster, and Dr. Jill Wegrzyn of the Plant Computational Genomics Lab at the University of Connecticut with additional support from Dr. Stephen Ficklin and Josh Burns of Washington State University.
 
 The version these docs relate to can be seen on the bottom left of the ReadTheDocs page. 
 

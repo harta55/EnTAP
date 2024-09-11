@@ -97,6 +97,11 @@ EggNOG Commands
      - R-ini
      - bool
      - true
+   * - eggnog-sensitivity
+     - Specify the DIAMOND sensitivity used during EggNOG mapper execution against the EggNOG database. Sensitivities are based off of DIAMOND documentation with a higher sensitivity generally taking longer but giving a higher alignment rate. Sensitivity options are fast, mid-sensitive, sensitive, more-sensitive, very-sensitive, ultra-sensitive.
+     - R-ini
+     - string
+     - more-sensitive
 	 
 Interpreting EggNOG Results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

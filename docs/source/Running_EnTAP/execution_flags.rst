@@ -381,6 +381,22 @@ There are a few data types (qualifiers) to keep in mind used throughout these in
      - string
      - diamond
 
+.. list-table:: Similarity Search - DIAMOND Specific Flags
+   :align: left
+   :widths: 10 50 10 10 10 
+   :header-rows: 1    
+   
+   * - param
+     - description
+     - location (cmd/R-ini,E-ini)
+     - qualifier
+     - example
+   * - diamond-sensitivity
+     - Specify the DIAMOND sensitivity used against input DIAMOND databases (Similarity Searching and HGT Analysis). Sensitivities are based off of DIAMOND documentation with a higher sensitivity generally taking longer but giving a higher alignment rate. Sensitivity options are fast, mid-sensitive, sensitive, more-sensitive, very-sensitive, ultra-sensitive.
+     - R-ini
+     - string
+     - very-sensitive
+
 .. list-table:: **Ontology Flags**
    :align: left
    :widths: 10 50 10 10 10 
@@ -434,6 +450,12 @@ There are a few data types (qualifiers) to keep in mind used throughout these in
      - R-ini
      - bool
      - true
+   * - eggnog-sensitivity
+     - Specify the DIAMOND sensitivity used during EggNOG mapper execution against the EggNOG database. Sensitivities are based off of DIAMOND documentation with a higher sensitivity generally taking longer but giving a higher alignment rate. Sensitivity options are fast, mid-sensitive, sensitive, more-sensitive, very-sensitive, ultra-sensitive.
+     - R-ini
+     - string
+     - more-sensitive
+
      
 .. list-table:: Ontology - InterProScan Specific Flags
    :align: left

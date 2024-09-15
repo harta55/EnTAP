@@ -328,11 +328,24 @@ void ModEggnog::parse() {
         EggnogResults.cazy = cazy;
         EggnogResults.bigg = bigg_reaction;
 
+        // Pull PFAM data from Eggnog mapper, then use this 'pfam name/description' to get the PFAM accession ID
+        //  from the EnTAP database
         if (!pfams.empty()) {
+            EggnogResults.protein_domains = pfams;  // Formatted as "RRM_1,hNIFK_binding" comma deliminated from emapper
             vect_str_t formatted_pfams = pEggnogDatabase->format_eggnog_pfams(pfams);
-
+            for (auto &pfam : formatted_pfams) {
+                if (!pfam.empty()) {
+                    PfamEntry pfam_entry = mpEntapDatabase->get_pfam_entry(pfam);
+                    EggnogResults.pfam_entries.push_back(pfam_entry);
+                    // Outputting formatting will be redone/restructured, this is temporary change
+                    //  to output our pfam eggnog data as the following:
+                    //  ACCESSIONID1(TERM1);ACCESSIONID2(TERM2)
+                    EggnogResults.pfam_entries_formatted += pfam_entry.pfam_accession_id + "(" +
+                        pfam_entry.pfam_name + ");";
+                }
+            }
+            if (!EggnogResults.pfam_entries_formatted.empty()) EggnogResults.pfam_entries_formatted.pop_back();
         }
-        EggnogResults.protein_domains = pfams;  // Formatted as "RRM_1,hNIFK_binding" comma deliminated from emapper
 
         querySequence->add_alignment(GENE_ONTOLOGY, mSoftwareFlag, EggnogResults, mEggnogMapDMNDPath);
         mpQueryData->add_alignment_data(out_annotated_filepath, querySequence, nullptr);

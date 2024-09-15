@@ -108,7 +108,9 @@ public:
         go_format_t              parsed_go;         // All go terms found parsed into EnTAP format
         std::string              name;              // Preferred name
         std::string              bigg;              // BiGG reaction
-        std::string              protein_domains;   // Pfam 'GCFC,NTR2' (comma separated)
+        std::string              protein_domains;   // Pfam 'GCFC,NTR2' (comma separated). RAW data from Emapper
+        std::vector<PfamEntry>   pfam_entries;      // PFAM data pulled from 'protein_domains' above
+        std::string              pfam_entries_formatted; // PFAM data formatted for output, TODO update how output/header data is being handled
         bool                     is_contaminant;    // TRUE if determined to be contaminant based on user input contaminants
 
         // DIAMOND specific eggnog data

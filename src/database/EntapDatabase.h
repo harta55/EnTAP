@@ -328,7 +328,7 @@ public:
         void serialize(Archive & archive)
         {
             archive(
-                    taxonomic_data, gene_ontology_data, uniprot_data,
+                    taxonomic_data, gene_ontology_data, uniprot_data,pfam_data,
                     MAJOR_VERSION, MINOR_VERSION);
         }
 

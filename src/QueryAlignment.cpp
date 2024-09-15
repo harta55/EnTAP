@@ -345,7 +345,7 @@ void EggnogDmndAlignment::refresh_headers() {
             {ENTAP_HEADER_ONT_EGG_KEGG_REACTION,&mEggnogResults.kegg_reaction},
             {ENTAP_HEADER_ONT_EGG_KEGG_RCLASS,       &mEggnogResults.kegg_rclass},
             {ENTAP_HEADER_ONT_EGG_BRITE,       &mEggnogResults.brite},
-            {ENTAP_HEADER_ONT_EGG_PROTEIN,    &mEggnogResults.protein_domains},
+            {ENTAP_HEADER_ONT_EGG_PROTEIN,    &mEggnogResults.pfam_entries_formatted},
             {ENTAP_HEADER_ONT_EGG_GO_BIO ,    nullptr},
             {ENTAP_HEADER_ONT_EGG_GO_CELL,    nullptr},
             {ENTAP_HEADER_ONT_EGG_GO_MOLE,    nullptr}

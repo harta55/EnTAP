@@ -51,6 +51,7 @@ protected:
     void UTEntapDatabase_02(EntapDatabase *entapDatabase, EntapDatabase::DATABASE_TYPE type);
     void UTEntapDatabase_03(EntapDatabase *entapDatabase, EntapDatabase::DATABASE_TYPE type);
     void UTEntapDatabase_04(EntapDatabase *entapDatabase);
+    void UTEntapDatabase_05(EntapDatabase *entapDatabase, EntapDatabase::DATABASE_TYPE type);
 
 
     void TestQueryData();

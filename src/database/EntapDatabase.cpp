@@ -183,6 +183,11 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_database(DATABASE_TYPE
     if (err_code != ERR_DATA_OK) {
         return err_code;
     }
+
+    err_code = generate_entap_pfam(type);
+    if (err_code != ERR_DATA_OK) {
+        return err_code;
+    }
     // ------------------------------------------------------------------ //
 
     // Write database to file if necessary and set version number
@@ -481,7 +486,6 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_go(EntapDatabase::DATA
     return ERR_DATA_OK;
 }
 
-
 EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase::DATABASE_TYPE type) {
 
     std::unordered_map<std::string, std::string> unknown_go_ids;
@@ -641,6 +645,90 @@ EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_uniprot(EntapDatabase:
     return ERR_DATA_OK;
 }
 
+EntapDatabase::DATABASE_ERR EntapDatabase::generate_entap_pfam(DATABASE_TYPE type) {
+    std::string line;       // Current line as read from file
+
+    // Set output path for FTP file
+    std::string pfam_flat_file = PATHS(mTempDirectory, PFAM_FLAT_FILENAME);
+
+    // download pfam flat file
+    if (!mpFileSystem->download_ftp_file(FTP_PFAM_FLAT_FILE, pfam_flat_file)) {
+        // failed to download from ftp
+        set_err_msg("Unable to download PFAM data from " + FTP_PFAM_FLAT_FILE + mpFileSystem->get_error(), ERR_DATA_PFAM_DOWNLOAD);
+        return ERR_DATA_PFAM_DOWNLOAD;
+    }
+
+    FS_dprint("PFAM file downloaded, verifying...");
+    // Ensure file is valid (should be)
+    uint16 file_status = mpFileSystem->get_file_status(pfam_flat_file);
+    if (file_status != 0) {
+        // File invalid
+        set_err_msg(mpFileSystem->print_file_status(file_status, pfam_flat_file), ERR_DATA_PFAM_DOWNLOAD);
+        return ERR_DATA_PFAM_DOWNLOAD;
+    }
+    FS_dprint("PFAM file verified, parsing...");
+
+    // If we are creating SQL database, add PFAM table
+    if (type == ENTAP_SQL) {
+        if (!create_sql_table(ENTAP_PFAM)) {
+            // error creating table
+            set_err_msg("Unable to create PFAM SQL Table", ERR_DATA_PFAM_CREATE_TABLE);
+            return ERR_DATA_PFAM_CREATE_TABLE;
+        }
+    }
+
+    /*  Begin parsing mapping file
+     *
+     *  PFAM mapping file is a tab-deliminated file with headers
+     *  As of 9/9/2024, the following columns exist:
+     *  PDB	CHAIN	PDB_START	PDB_END	PFAM_ACCESSION	PFAM_NAME
+     *  AUTH_PDBRES_START	AUTH_PDBRES_START_INS_CODE	AUTH_PDBRES_END
+     *  AUTH_PDBRES_END_INS_CODE	UNIPROT_ACCESSION	UNP_START
+     *  UNP_END	UNP_STR_START	UNP_STR_END
+     *
+     *  Currently, the only columns EnTAP will be interested in are the PFAM_NAME and
+     *      PFAM_ACCESSION. The primary purpose of this is to map the PFAM_NAME
+     *      to the PFAM_ACCESSION when it is not available with SW being used by EnTAP
+     *
+     */
+    try {
+        std::ifstream infile(pfam_flat_file);
+        while (std::getline(infile, line)) {
+            if (line.empty()) continue;
+
+            vect_str_t split_line = split_string(line, '\t');
+            size_t size = split_line.size();
+
+            PfamEntry pfam_entry;   // Entry that we are going to put in the database
+
+            // Pull the PFAM accession ID
+            if (size > PFAM_ACCESSION_ID_COL_INDEX) {
+                pfam_entry.pfam_accession_id = split_line.at(PFAM_ACCESSION_ID_COL_INDEX);
+            }
+
+            // Pull the PFAM term
+            if (size > PFAM_TERM_DESCRIPTION_COL_INDEX) {
+                pfam_entry.pfam_name = split_line.at(PFAM_TERM_DESCRIPTION_COL_INDEX);
+            }
+
+            // Add our PFAM entry to the EnTAP database
+            if (!add_pfam_entry(type, pfam_entry)) {
+                set_err_msg("ERROR: Unable to add entry:\n" + pfam_entry.pfam_name, ERR_DATA_PFAM_ENTRY);
+                return ERR_DATA_PFAM_ENTRY;
+            }
+
+        }
+    } catch (const std::exception &e) {
+        set_err_msg("Unable to parse PFAM data: " + std::string(e.what()) + "\nLine: " + line,
+                    ERR_DATA_PFAM_PARSE);
+        return ERR_DATA_PFAM_PARSE;
+    }
+
+    FS_dprint("Success! PFAM entries added");
+    mpFileSystem->delete_file(pfam_flat_file);
+    return ERR_DATA_OK;
+}
+
 
 // WARNING: recursive
 std::string EntapDatabase::entap_tax_get_lineage(EntapDatabase::TaxonomyNode &node,
@@ -753,6 +841,50 @@ bool EntapDatabase::add_uniprot_entry(EntapDatabase::DATABASE_TYPE type, Uniprot
     return ret;
 }
 
+bool EntapDatabase::add_pfam_entry(DATABASE_TYPE type, PfamEntry& entry) {
+    bool ret = true;
+    char *sql_cmd;
+
+    switch (type) {
+    case ENTAP_SERIALIZED:
+        if (mpSerializedDatabase == nullptr) {
+            FS_dprint("ERROR: Serialized database NULL");
+            ret = false;
+            break;
+        }
+        if (mpSerializedDatabase->pfam_data.find(entry.pfam_name) == mpSerializedDatabase->pfam_data.end()) {
+            mpSerializedDatabase->pfam_data[entry.pfam_name] = entry;
+        }
+        break;
+
+    case ENTAP_SQL: {
+        if (mpDatabaseHelper == nullptr) {
+            FS_dprint("ERROR: SQL database NULL");
+            ret = false;
+            break;
+        }
+
+        sql_cmd = sqlite3_mprintf(
+                "INSERT INTO %Q (%Q,%Q) " \
+                "VALUES (%Q,%Q);",
+
+                SQL_TABLE_PFAM_TITLE.c_str(),
+                SQL_TABLE_PFAM_COL_PFAM_TERM.c_str(),
+                SQL_TABLE_PFAM_COL_ACCESSION_ID.c_str(),
+
+                entry.pfam_name.c_str(),
+                entry.pfam_accession_id.c_str()
+        );
+        ret = mpDatabaseHelper->execute_cmd(sql_cmd);
+        break;
+    }
+
+    default:
+        break;
+    }
+    return ret;
+}
+
 bool EntapDatabase::create_sql_table(DATABASE_TABLES type) {
     char *sql_cmd;
     bool success;
@@ -815,6 +947,21 @@ bool EntapDatabase::create_sql_table(DATABASE_TABLES type) {
                     SQL_TABLE_UNIPROT_COL_GO.c_str()
             );
             break;
+
+        case ENTAP_PFAM:
+            FS_dprint("Creating SQL PFAM Table...");
+            sql_cmd = sqlite3_mprintf(
+                    "CREATE TABLE %Q ("                 \
+                    "ID    INTEGER PRIMARY KEY     NOT NULL," \
+                    "%Q    TEXT                    NOT NULL," \
+                    "%Q    TEXT                    NOT NULL);",
+
+                    SQL_TABLE_PFAM_TITLE.c_str(),
+                    SQL_TABLE_PFAM_COL_PFAM_TERM.c_str(),
+                    SQL_TABLE_PFAM_COL_ACCESSION_ID.c_str()
+            );
+            break;
+
 
         case ENTAP_VERSION:
             FS_dprint("Creating version table...");
@@ -1059,6 +1206,45 @@ UniprotEntry EntapDatabase::get_uniprot_entry(std::string& accession) {
     } catch (const std::exception &e) {
         FS_dprint("ERROR: Unhandled finding Uniprot Entry: "+ std::string(e.what()));
         return UniprotEntry();
+    }
+}
+
+PfamEntry EntapDatabase::get_pfam_entry(std::string& accession) {
+    PfamEntry pfam_entry;
+
+    if (accession.empty()) return PfamEntry();
+
+    try {
+        if (mUseSerial) {
+            // Using serialized database
+            auto it = mpSerializedDatabase->pfam_data.find(accession);
+            if (it == mpSerializedDatabase->pfam_data.end()) {
+                // FS_dprint("Unable to find Uniprot Entry: " + accession);
+                return {};
+            }
+            return it->second;
+
+        } else {
+            // Using SQL database
+            std::vector<std::vector<std::string>> results;
+            char *query = sqlite3_mprintf(
+                    "SELECT %q, %q FROM %q WHERE %q=%Q",
+                    SQL_TABLE_PFAM_COL_PFAM_TERM.c_str(),
+                    SQL_TABLE_PFAM_COL_ACCESSION_ID.c_str(),
+
+                    SQL_TABLE_PFAM_TITLE.c_str(),
+                    SQL_TABLE_PFAM_COL_PFAM_TERM.c_str(),
+                    accession.c_str()
+            );
+            results = mpDatabaseHelper->query(query);
+            if (results.empty()) return {};
+            pfam_entry.pfam_name      = results[0][0];
+            pfam_entry.pfam_accession_id = results[0][1];
+            return pfam_entry;
+        }
+    } catch (const std::exception &e) {
+        FS_dprint("ERROR: Unhandled finding PFAM entry: "+ std::string(e.what()));
+        return {};
     }
 }
 

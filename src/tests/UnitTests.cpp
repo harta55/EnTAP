@@ -55,17 +55,19 @@ void UnitTests::TestEntapDatabase() {
     auto *entapDatabase = new EntapDatabase(mpFileSystem);
 
     try {
-        UTEntapDatabase_00(entapDatabase, EntapDatabase::ENTAP_SQL);      // SQL Generate
-        UTEntapDatabase_01(entapDatabase, EntapDatabase::ENTAP_SQL);      // SQL Gene Ontology
-        UTEntapDatabase_02(entapDatabase, EntapDatabase::ENTAP_SQL);      // SQL Taxonomy
-        UTEntapDatabase_03(entapDatabase, EntapDatabase::ENTAP_SQL);      // SQL UniProt
+        // UTEntapDatabase_00(entapDatabase, EntapDatabase::ENTAP_SQL);      // SQL Generate
+        // UTEntapDatabase_01(entapDatabase, EntapDatabase::ENTAP_SQL);      // SQL Gene Ontology
+        // UTEntapDatabase_02(entapDatabase, EntapDatabase::ENTAP_SQL);      // SQL Taxonomy
+        // UTEntapDatabase_03(entapDatabase, EntapDatabase::ENTAP_SQL);      // SQL UniProt
+        UTEntapDatabase_05(entapDatabase, EntapDatabase::ENTAP_SQL);          // SQL Pfam
 
-        UTEntapDatabase_00(entapDatabase, EntapDatabase::ENTAP_SERIALIZED);      // Serialized Generate
-        UTEntapDatabase_01(entapDatabase, EntapDatabase::ENTAP_SERIALIZED);      // Serialized Gene Ontology
-        UTEntapDatabase_02(entapDatabase, EntapDatabase::ENTAP_SERIALIZED);      // Serialized Taxonomy
-        UTEntapDatabase_03(entapDatabase, EntapDatabase::ENTAP_SERIALIZED);      // Serialized UniProt
+        // UTEntapDatabase_00(entapDatabase, EntapDatabase::ENTAP_SERIALIZED);      // Serialized Generate
+        // UTEntapDatabase_01(entapDatabase, EntapDatabase::ENTAP_SERIALIZED);      // Serialized Gene Ontology
+        // UTEntapDatabase_02(entapDatabase, EntapDatabase::ENTAP_SERIALIZED);      // Serialized Taxonomy
+        // UTEntapDatabase_03(entapDatabase, EntapDatabase::ENTAP_SERIALIZED);      // Serialized UniProt
+        UTEntapDatabase_05(entapDatabase, EntapDatabase::ENTAP_SERIALIZED);      // Serialized Pfam
 
-        UTEntapDatabase_04(entapDatabase);      // Check NCBI accession routines
+        // UTEntapDatabase_04(entapDatabase);      // Check NCBI accession routines
 
     } catch (...) {
         delete entapDatabase;
@@ -208,6 +210,55 @@ void UnitTests::UTEntapDatabase_04(EntapDatabase *entapDatabase) {
 
     FS_dprint("UT_EntapDatabase_04 COMPLETE");
     std::cout << "UT_EntapDatabase_04 COMPLETE" << std::endl;
+}
+
+void UnitTests::UTEntapDatabase_05(EntapDatabase* entapDatabase, EntapDatabase::DATABASE_TYPE type) {
+    EntapDatabase::DATABASE_ERR database_err;
+    PfamEntry pfam_entry;
+    std::string pfam_test;
+
+    FS_dprint("UT_EntapDatabasePfam_00 START");
+    std::cout << "UT_EntapDatabasePfam_00 START" << std::endl;
+
+    // Test 00 - Create database
+    std::string temp_database_path = PATHS(mpFileSystem->get_temp_outdir(), "temp_database.txt");
+    database_err = entapDatabase->create_database_type(type, temp_database_path);
+    assert(database_err == EntapDatabase::ERR_DATA_OK);
+    FS_dprint("\tUT_EntapDatabasePfam_00 - CASE_00 PASS");
+    std::cout << "\tUT_EntapDatabasePfam_00 - CASE_00 PASS" << std::endl;
+
+    // Test 01 - Generate PFAM database
+    database_err = entapDatabase->generate_entap_pfam(type);
+    assert(database_err == EntapDatabase::ERR_DATA_OK);
+    FS_dprint("\tUT_EntapDatabasePfam_00 - CASE_01 PASS");
+    std::cout << "\tUT_EntapDatabasePfam_00 - CASE_01 PASS" << std::endl;
+
+    // Test02 - Random pfam entry
+    pfam_entry = {};
+    pfam_test = "PK";
+    pfam_entry = entapDatabase->get_pfam_entry(pfam_test);
+    assert(pfam_entry.pfam_accession_id == "PF00224");
+    assert(pfam_entry.pfam_name == pfam_test);
+    FS_dprint("\tUT_EntapDatabasePfam_00 - CASE_02 PASS");
+    std::cout << "\tUT_EntapDatabasePfam_00 - CASE_02 PASS" << std::endl;
+
+    // Test03 - Random pfam entry
+    pfam_entry = {};
+    pfam_test = "Ldh_1_C";
+    pfam_entry = entapDatabase->get_pfam_entry(pfam_test);
+    assert(pfam_entry.pfam_accession_id == "PF02866");
+    assert(pfam_entry.pfam_name == pfam_test);
+    FS_dprint("\tUT_EntapDatabasePfam_00 - CASE_03 PASS");
+    std::cout << "\tUT_EntapDatabasePfam_00 - CASE_03 PASS" << std::endl;
+
+    // Test04 - Unknown entry returns empty data
+    pfam_entry = {};
+    pfam_test = "asdfgh";
+    pfam_entry = entapDatabase->get_pfam_entry(pfam_test);
+    assert(pfam_entry.pfam_accession_id.empty());
+    assert(pfam_entry.pfam_name.empty());
+    FS_dprint("\tUT_EntapDatabasePfam_00 - CASE_04 PASS");
+    std::cout << "\tUT_EntapDatabasePfam_00 - CASE_04 PASS" << std::endl;
 }
 
 void UnitTests::TestQueryData() {

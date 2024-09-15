@@ -1029,3 +1029,12 @@ std::string EggnogDatabase::get_tax_from_tax_scope_max(const std::string &tax_sc
     }
     return ret;
 }
+
+vect_str_t EggnogDatabase::format_eggnog_pfams(std::string& eggnog_pfams) {
+    vect_str_t ret;
+
+    if (eggnog_pfams.empty()) return ret;
+
+    // Formatted as "RRM_1,hNIFK_binding" comma deliminated from emapper
+    return split_string(eggnog_pfams, ',');
+}

@@ -148,6 +148,27 @@ struct TaxEntry {
     }
 };
 
+struct PfamEntry {
+    std::string pfam_accession_id;  // Accesssion ID of the PFAM entry
+                                    // Example: PF00042
+    std::string pfam_name;          // Description/name of the PFAM entry
+                                    // Example: "Phage_lysozyme"
+
+    // Use CEREAL for serialization
+    template<class Archive>
+    void serialize(Archive & archive) {
+        archive(
+                pfam_accession_id, pfam_name);
+    }
+    bool is_empty() {
+        return this->pfam_accession_id.empty();
+    }
+    PfamEntry() {
+        pfam_accession_id = "";
+        pfam_name = "";
+    }
+};
+
 typedef std::set<GoEntry> go_format_t;
 
 struct UniprotEntry {
@@ -208,6 +229,7 @@ public:
     typedef std::unordered_map<std::string, TaxEntry> tax_serial_map_t;
     typedef std::unordered_map<std::string, GoEntry> go_serial_map_t;
     typedef std::unordered_map<std::string, UniprotEntry> uniprot_serial_map_t;
+    typedef std::unordered_map<std::string, PfamEntry> pfam_serial_map_t;
 
     typedef enum {
 
@@ -257,6 +279,10 @@ public:
         ERR_DATA_GET_VERSION,
         ERR_DATA_DELETE_TABLE,
         ERR_DATA_CREATE_TABLE,
+        ERR_DATA_PFAM_DOWNLOAD,
+        ERR_DATA_PFAM_CREATE_TABLE,
+        ERR_DATA_PFAM_PARSE,
+        ERR_DATA_PFAM_ENTRY,
 
         ERR_DATA_MEM_ALLOC,
         ERR_DATA_UNHANDLED_TYPE,
@@ -276,6 +302,8 @@ public:
         tax_serial_map_t taxonomic_data;
         go_serial_map_t  gene_ontology_data;    // Accession - "GO:453232143"
         uniprot_serial_map_t uniprot_data;
+        pfam_serial_map_t pfam_data;            // Accession - "Phage_lysozyme"
+                                                //  uses the PFAM name to get the accession ID
         uint8 MAJOR_VERSION;
         uint8 MINOR_VERSION;
 
@@ -329,6 +357,8 @@ public:
     TaxEntry get_tax_entry(std::string& species);
     GoEntry get_go_entry(std::string& go_id);
     UniprotEntry get_uniprot_entry(std::string& accession);
+    PfamEntry get_pfam_entry(std::string& accession);   // The PFAM term/name is used to get the
+                                                        //  PFAM accession ID
 
     // NCBI database accession routines
     bool is_ncbi_tax_entry(std::string &species);
@@ -349,6 +379,7 @@ private:
         ENTAP_TAXONOMY,     // NCBI tax database
         ENTAP_GENE_ONTOLOGY,// GO database
         ENTAP_UNIPROT,      // UniProt mapping database
+        ENTAP_PFAM,         // PFAM mapping database
         ENTAP_VERSION,      // Version table used in SQL database only
 
         ENTAP_MAX_TABLES
@@ -362,17 +393,18 @@ private:
     DATABASE_ERR generate_entap_tax(DATABASE_TYPE);
     DATABASE_ERR generate_entap_go(DATABASE_TYPE);
     DATABASE_ERR generate_entap_uniprot(DATABASE_TYPE);
+    DATABASE_ERR generate_entap_pfam(DATABASE_TYPE type);
     std::string  entap_tax_get_lineage(TaxonomyNode &,
                                        std::unordered_map<std::string, TaxonomyNode>&);
 
     bool create_sql_table(DATABASE_TABLES database_table);
-    EntapDatabase::DATABASE_ERR create_database_type(DATABASE_TYPE type, std::string &path);
-    EntapDatabase::DATABASE_ERR delete_database_table(DATABASE_TYPE type, DATABASE_TABLES table);
-
+    DATABASE_ERR create_database_type(DATABASE_TYPE type, std::string &path);
+    DATABASE_ERR delete_database_table(DATABASE_TYPE type, DATABASE_TABLES table);
 
     bool sql_add_tax_entry(TaxEntry&);
     bool sql_add_go_entry(GoEntry&);
     bool add_uniprot_entry(DATABASE_TYPE type, UniprotEntry &entry);
+    bool add_pfam_entry(DATABASE_TYPE type, PfamEntry &entry);
     void set_err_msg(std::string msg, DATABASE_ERR code);
     bool set_database_versions(DATABASE_TYPE type);
     std::string get_uniprot_accession(std::string& sseqid);
@@ -393,6 +425,8 @@ private:
             "https://treegenesdb.org/FTP/EnTAP/latest/databases/entap_database.bin.gz";
     const std::string FTP_UNIPROT_FLAT_FILE     =
             "ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/complete/uniprot_sprot.dat.gz";
+    const std::string FTP_PFAM_FLAT_FILE        =
+            "https://ftp.ebi.ac.uk/pub/databases/Pfam/mappings/pdb_pfam_mapping.txt";
 
     const std::string ENTAP_DATABASE_SERIAL_GZ = "entap_database.bin.gz";
     const std::string ENTAP_DATABASE_SQL_GZ            = "entap_database.db.gz";
@@ -432,6 +466,10 @@ private:
     const std::string SQL_TABLE_UNIPROT_COL_KEGG = "KEGG";
     const std::string SQL_TABLE_UNIPROT_COL_GO   = "GOTERMS";
 
+    const std::string SQL_TABLE_PFAM_TITLE = "PFAM";
+    const std::string SQL_TABLE_PFAM_COL_ACCESSION_ID = "PFAMACCESSION";
+    const std::string SQL_TABLE_PFAM_COL_PFAM_TERM    = "PFAMTERM";
+
     const std::string SQL_TABLE_VERSION_TITLE    = "VERSION";
     const std::string SQL_TABLE_VERSION_COL_VER  = "VERSION";
 
@@ -442,11 +480,16 @@ private:
     const std::string UNIPROT_DAT_FILE_GZ            = "uniprot_sprot.dat.gz";
     const std::string UNIPROT_DAT_FILE               = "uniprot_sprot.dat";
 
+    // PFAM Mapping constants
+    const std::string PFAM_FLAT_FILENAME             = "pfam_mapping.txt";
+    const uint16      PFAM_ACCESSION_ID_COL_INDEX    = 4; // starting from 0 for first column
+    const uint16      PFAM_TERM_DESCRIPTION_COL_INDEX= 5; // starting from 0 for first column
+
     // EnTAP database consts
     const SERIALIZATION_TYPE SERIALIZE_DEFAULT    = CEREAL_BIN_ARCHIVE;
-    const uint8              SERIALIZE_MAJOR      = 2;
+    const uint8              SERIALIZE_MAJOR      = 3;
     const uint8              SERIALIZE_MINOR      = 0;
-    const uint8              SQL_MAJOR            = 2;
+    const uint8              SQL_MAJOR            = 3;
     const uint8              SQL_MINOR            = 0;
 
     const uint8 STATUS_UPDATES = 5;     // Percentage of updates when downloading/configuring
@@ -469,7 +512,8 @@ private:
     const std::string ENTAP_DATABASE_TABLES[ENTAP_MAX_TABLES] {
             "EnTAP NCBI Taxonomy Database",
             "EnTAP Gene Ontology Database",
-            "EnTAP UniProt Swiss-Prot Database"
+            "EnTAP UniProt Swiss-Prot Database",
+            "EnTAP PFAM Database"
     };
 };
 

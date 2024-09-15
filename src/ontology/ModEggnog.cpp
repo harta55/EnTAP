@@ -327,7 +327,12 @@ void ModEggnog::parse() {
         EggnogResults.kegg_tc = kegg_tc;
         EggnogResults.cazy = cazy;
         EggnogResults.bigg = bigg_reaction;
-        EggnogResults.protein_domains = pfams;
+
+        if (!pfams.empty()) {
+            vect_str_t formatted_pfams = pEggnogDatabase->format_eggnog_pfams(pfams);
+
+        }
+        EggnogResults.protein_domains = pfams;  // Formatted as "RRM_1,hNIFK_binding" comma deliminated from emapper
 
         querySequence->add_alignment(GENE_ONTOLOGY, mSoftwareFlag, EggnogResults, mEggnogMapDMNDPath);
         mpQueryData->add_alignment_data(out_annotated_filepath, querySequence, nullptr);

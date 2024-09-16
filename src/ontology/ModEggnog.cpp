@@ -336,12 +336,17 @@ void ModEggnog::parse() {
             for (auto &pfam : formatted_pfams) {
                 if (!pfam.empty()) {
                     PfamEntry pfam_entry = mpEntapDatabase->get_pfam_entry(pfam);
-                    EggnogResults.pfam_entries.push_back(pfam_entry);
-                    // Outputting formatting will be redone/restructured, this is temporary change
-                    //  to output our pfam eggnog data as the following:
-                    //  ACCESSIONID1(TERM1);ACCESSIONID2(TERM2)
-                    EggnogResults.pfam_entries_formatted += pfam_entry.pfam_accession_id + "(" +
-                        pfam_entry.pfam_name + ");";
+                    if (!pfam_entry.is_empty()) {
+                        EggnogResults.pfam_entries.push_back(pfam_entry);
+                        // Outputting formatting will be redone/restructured, this is temporary change
+                        //  to output our pfam eggnog data as the following:
+                        //  ACCESSIONID1(TERM1);ACCESSIONID2(TERM2)
+                        EggnogResults.pfam_entries_formatted += pfam_entry.pfam_accession_id + "(" +
+                            pfam_entry.pfam_name + ");";
+                    } else {
+                        // Unable to find a PFAM match for this description, we will put 'UNKNOWN_ID in its place
+                        EggnogResults.pfam_entries_formatted += "UNKNOWN_PFAM_ID(" + pfam + ");";
+                    }
                 }
             }
             if (!EggnogResults.pfam_entries_formatted.empty()) EggnogResults.pfam_entries_formatted.pop_back();

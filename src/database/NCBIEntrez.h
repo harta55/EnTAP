@@ -27,6 +27,8 @@
 #ifndef ENTAP_NCBIENTREZ_H
 #define ENTAP_NCBIENTREZ_H
 
+
+#include "NCBIDatabase.h"
 #include "../common.h"
 #include "../FileSystem.h"
 
@@ -50,22 +52,11 @@ public:
         std::vector<ENTREZ_DATA_TYPES> data_types;
     };
 
-    struct EntrezEntryData {
-        std::string geneid;
-    };
-
-    typedef std::unordered_map<std::string, EntrezEntryData> entrez_data_results;
-
     struct EntrezResults {
         std::string count;
         vect_str_t uid_list;
-        entrez_data_results entrez_results;
+        NCBIDataResults_t entrez_results;
     };
-
-
-
-
-
 
     // Entrez DATABASE types
     static const std::string NCBI_DATABASE_TAXONOMY;

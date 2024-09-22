@@ -51,9 +51,10 @@ void UnitTests::execute_tests() {
 //    TestQueryData();
 
     // Test suite of NCBI Entrez tests
-    TestNCBIEntrez();
+    // TestNCBIEntrez();
 
     // Test suite of NCBI Database tests
+    TestNCBIDatabase();
 
 }
 
@@ -340,14 +341,59 @@ void UnitTests::TestNCBIDatabase() {
 
 void UnitTests::UTNCBIDatabase_00() {
     NCBIDatabase ncbi_database = NCBIDatabase(mpFileSystem);
-    QuerySequence query_sequence;
-    QuerySequence::SimSearchResults sim_search_results;
-    // sim_search_results.sseqid = "XP_014245616";
-    // SimSearchAlignment sim_search_alignment =
-    //     SimSearchAlignment(SIMILARITY_SEARCH, SIM_DIAMOND, "test_path", query_sequence*,
-    //                                     sim_search_results, "homo_sapiens");
+    NCBIDataResults_t ncbi_data_results;
+    vect_str_t ncbi_data_accessions;
+
+    FS_dprint("UT_NCBIDatabase_00 START");
+    std::cout << "UT_NCBIDatabase_00 START" << std::endl;
+
+    // Test 1, pulling gene id from protein database for a single NCBI ID
+    std::string test_ncbi_id = "XP_014245616";
+    std::string test_expected_geneid = "106664428";
+    ncbi_data_accessions = {test_ncbi_id};
+    ncbi_data_results = ncbi_database.get_ncbi_data(ncbi_data_accessions);
+
+    assert(!ncbi_data_results.empty());
+    assert(ncbi_data_results.find(test_ncbi_id) != ncbi_data_results.end());
+    assert(ncbi_data_results.at(test_ncbi_id).geneid == test_expected_geneid);
+    FS_dprint("\tUT_NCBIDatabase_00 - CASE_01 PASS");
+    std::cout << "\tUT_NCBIDatabase_00 - CASE_01 PASS" << std::endl;
 
 
+    // Test 2, pulling gene id from protein database for multiple NCBI ID
+    //  including NCBI versions (XXXX.1)
+    ncbi_data_accessions = {"XP_014245616", "XP_020482136.1", "XP_026476231.1"};
+    ncbi_data_results = {};
+    ncbi_data_results = ncbi_database.get_ncbi_data(ncbi_data_accessions);
+
+    assert(!ncbi_data_results.empty());
+    assert(ncbi_data_results.find("XP_014245616") != ncbi_data_results.end());
+    assert(ncbi_data_results.at("XP_014245616").geneid == "106664428");
+    assert(ncbi_data_results.find("XP_020482136.1") != ncbi_data_results.end());
+    assert(ncbi_data_results.at("XP_020482136.1").geneid == "109976342");
+    assert(ncbi_data_results.find("XP_026476231.1") != ncbi_data_results.end());
+    assert(ncbi_data_results.at("XP_026476231.1").geneid == "113381705");
+    FS_dprint("\tUT_NCBIDatabase_00 - CASE_02 PASS");
+    std::cout << "\tUT_NCBIDatabase_00 - CASE_02 PASS" << std::endl;
+
+    // Test 3, NCBIDatabase returns empty data if cannot find ID
+    ncbi_data_accessions = {"XP_014245616safdsafs"};
+    ncbi_data_results = {};
+
+    assert(ncbi_database.get_ncbi_data(ncbi_data_accessions).empty());
+    FS_dprint("\tUT_NCBIDatabase_00 - CASE_03 PASS");
+    std::cout << "\tUT_NCBIDatabase_00 - CASE_03 PASS" << std::endl;
+
+    // Test 4, NCBIDatabase returns empty data with no UID list
+    ncbi_data_results = {};
+    ncbi_data_accessions = {};
+
+    assert(ncbi_database.get_ncbi_data(ncbi_data_accessions).empty());
+    FS_dprint("\tUT_NCBIDatabase_00 - CASE_04 PASS");
+    std::cout << "\tUT_NCBIDatabase_00 - CASE_04 PASS" << std::endl;
+
+    FS_dprint("UT_NCBIDatabase_00 COMPLETE");
+    std::cout << "UT_NCBIDatabase_00 COMPLETE" << std::endl;
 
 
 }

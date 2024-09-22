@@ -40,12 +40,42 @@ NCBIDatabase::NCBIDatabase(FileSystem *pfile_system)
     mContinueProcessing = true;
     mProcessRemaining = false;
     mpNCBIEntrez = new NCBIEntrez(pfile_system);
-    std::thread thNCBIData(&NCBIDatabase::main_loop, this);
+    mNCBIAccessionType = NCBI_ACCESSION_ENTREZ;
+    // std::thread thNCBIData(&NCBIDatabase::main_loop, this);
 }
 
 void NCBIDatabase::get_ncbi_data(SimSearchAlignment* alignment)
 {
     mProcessingQueue.push(alignment);
+}
+
+NCBIDataResults_t NCBIDatabase::get_ncbi_data(const vect_str_t &ncbi_accession) const {
+    if (ncbi_accession.empty()) return {};
+
+    switch (mNCBIAccessionType) {
+
+        case NCBI_ACCESSION_ENTREZ: {
+            if (mpNCBIEntrez == nullptr) return {}; // RETURN empty data
+            NCBIEntrez::EntrezResults entrez_results;
+            NCBIEntrez::EntrezInput entrez_input;
+            NCBIDataResults_t ncbi_data_results;
+            entrez_input.database = NCBIEntrez::NCBI_DATABASE_PROTEIN;
+            entrez_input.rettype = NCBIEntrez::NCBI_ENTREZ_RETTYPE_GP;
+            entrez_input.data_types = {NCBIEntrez::ENTREZ_DATA_GENEID};
+            entrez_input.uid_list = ncbi_accession;
+
+            if (mpNCBIEntrez->entrez_fetch(entrez_input, entrez_results)) {
+                // NCBI database pull was successful
+                return entrez_results.entrez_results;
+            }
+            break;
+        }
+
+        case NCBI_ACCESSION_API:
+        default:
+            break;
+    }
+    return {};
 }
 
 void NCBIDatabase::main_loop()
@@ -73,7 +103,7 @@ void NCBIDatabase::main_loop()
             std::thread th(&NCBIDatabase::get_entrez_ncbi_data,this, query_ids, bulk_query_map);
             mRunningThreads.push_back(th.get_id());
         }
-        sleep(10);
+        sleep(5);
     }
 }
 

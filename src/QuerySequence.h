@@ -31,6 +31,7 @@
 
 #include "common.h"
 #include "database/EntapDatabase.h"
+#include "database/NCBIDatabase.h"
 
 class SimSearchAlignment;
 class QueryAlignment;
@@ -181,7 +182,9 @@ public:
         fp64                              coverage_raw;
         bool                              contaminant;
         bool                              is_informative;
-        UniprotEntry                      uniprot_info;
+        UniprotEntry                      uniprot_info; // Info pulled for UniProt alignments
+        NCBIData                          ncbi_data;    // NCBI data, only relevant for matches against
+                                                        //  NCBI databases
     };
 
     struct HorizontalGeneTransferResults {

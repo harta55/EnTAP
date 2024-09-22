@@ -72,6 +72,7 @@ bool NCBIEntrez::entrez_has_hits(EntrezInput &entrezInput) {
                 }
             }
             infile.close();
+            mpFileSystem->delete_file(output_file);
         } else {
             ret = false;
         }
@@ -220,7 +221,7 @@ bool NCBIEntrez::parse_ncbi_gp_file(EntrezInput& entrezInput, EntrezResults& ent
     std::string line;
     std::smatch match;
     std::string current_sequence;
-    EntrezEntryData entrez_entry_data;
+    NCBIData entrez_entry_data;
     std::ifstream infile(output_file);
     const std::string TEST_REGEX = R"(LOCUS\s*(\S+)\s)";
     const std::string TEXT_REGEX_GENE = "\\s+\\/db_xref=\"GeneID:(.+)\"";

@@ -328,7 +328,7 @@ void ModDiamond::parse() {
     TaxEntry            taxEntry;                       // Entry from Tarxonomic database
     std::pair<bool, std::string> contam_info;           // Contaminate information
     std::stringstream   ss;                             // Output string stream
-    SimSearchAlignment*     p_sim_alignment;              // Pointer to query alignment
+    SimSearchAlignment*     p_sim_alignment;            // Pointer to query alignment
 
     // ------------------ Read from DIAMOND output ----------------------- //
     std::string qseqid;             // Sequence ID of query sequence
@@ -354,6 +354,8 @@ void ModDiamond::parse() {
 
     FS_dprint("Beginning to filter individual DIAMOND files...");
     TC_print(TC_PRINT_COUT, "Parsing DIAMOND Similarity Search...");
+
+    NCBIDatabase ncbi_database = NCBIDatabase(mpFileSystem);
 
     // disable UniProt headers until we know we have a hit
     for (std::string &output_path : mOutputPaths) {
@@ -450,6 +452,11 @@ void ModDiamond::parse() {
             simSearchResults.is_informative = is_informative(stitle, mUninformativeTags);
             simSearchResults.is_informative ? simSearchResults.yes_no_inform = YES_FLAG :
                     simSearchResults.yes_no_inform  = NO_FLAG;
+
+            NCBIDataResults_t ncbi_data_results = ncbi_database.get_ncbi_data({sseqid});
+            if (!ncbi_data_results.empty()) {
+                simSearchResults.ncbi_data = ncbi_data_results.at(sseqid);
+            }
 
             p_sim_alignment = query->add_alignment(mExecutionState, mSoftwareFlag,
                     simSearchResults, output_path, mInputLineage);

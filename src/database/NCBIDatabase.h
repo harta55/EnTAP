@@ -27,28 +27,36 @@
 #ifndef NCBIDATABASE_H
 #define NCBIDATABASE_H
 
-#include "NCBIEntrez.h"
 #include "../FileSystem.h"
 class SimSearchAlignment;
 class NCBIEntrez;
 
+struct NCBIData {
+ std::string accession_id; // NCBI sequence accession ID
+ std::string geneid;       // GeneID found for this sequence
+};
+typedef std::unordered_map<std::string, NCBIData> NCBIDataResults_t;
 class NCBIDatabase {
 
 public:
  ~NCBIDatabase();
- NCBIDatabase(FileSystem *pfile_system);
+ explicit NCBIDatabase(FileSystem *pfile_system);
 
  void get_ncbi_data(SimSearchAlignment* alignment);
+ NCBIDataResults_t get_ncbi_data(const vect_str_t &ncbi_accession) const;
 
- struct NCBIData {
-  std::string geneid;
- };
 private:
+typedef enum {
+  NCBI_ACCESSION_ENTREZ,
+  NCBI_ACCESSION_API
+} NCBI_ACCESSION_TYPE;
+
  bool mContinueProcessing;
  bool mProcessRemaining;
  std::list<std::thread::id> mRunningThreads;
  std::queue<SimSearchAlignment*> mProcessingQueue;
  NCBIEntrez *mpNCBIEntrez;
+ NCBI_ACCESSION_TYPE mNCBIAccessionType;
 
  void main_loop();
  void get_entrez_ncbi_data(const std::string& query_ids, std::unordered_map<std::string, SimSearchAlignment*> bulk_query_map);

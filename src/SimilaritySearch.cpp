@@ -77,7 +77,9 @@ SimilaritySearch::SimilaritySearch(vect_str_t &database_paths, std::string &inpu
 void SimilaritySearch::execute() {
     EntapModule::ModVerifyData verifyData;
     std::unique_ptr<AbstractSimilaritySearch> ptr;
-    TC_print(TC_PRINT_COUT, "Beginning Similarity Search...");
+
+    auto startTime = std::chrono::system_clock::now();
+    TC_print(TC_PRINT_COUT, get_time_str(startTime) + " -- Beginning Similarity Search...");
 
     try {
         ptr = spawn_object();
@@ -93,7 +95,10 @@ void SimilaritySearch::execute() {
         ptr.reset();
         throw e;
     }
-    TC_print(TC_PRINT_COUT, "Similarity Search complete");
+    auto endTime = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(endTime - startTime).count();
+    TC_print(TC_PRINT_COUT, get_cur_time() + " -- Similarity Search Complete [" +
+        std::to_string(time_diff) + " min]");
 }
 
 std::unique_ptr<AbstractSimilaritySearch> SimilaritySearch::spawn_object() {

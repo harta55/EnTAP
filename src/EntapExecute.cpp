@@ -67,14 +67,14 @@ namespace entapExecute {
  */
     void execute_main(UserInput *user_input, FileSystem *filesystem) {
         FS_dprint("EnTAP Executing...");
-        TC_print(TC_PRINT_COUT, "Running EnTAP execution...");
+        TC_print(TC_PRINT_COUT, get_cur_time() + " -- Running EnTAP Execution...");
 
         std::string                             original_input;  // Absolute path to ORIGINAL transcriptome (ALWAYS use for Expression)
         std::string                             input_path;      // Absolute path to transciptome (WARNING changes depending on user selection)
         std::string                             final_out_dir;   // Absolute path to output directory for final stats
         std::string                             transcriptome_outpath;
         std::string                             transcriptome_dir;
-        std::string                             transcrtipeom_out_filename;
+        std::string                             transcriptome_out_filename;
         std::string                             entap_graphing_path;
         ent_input_multi_str_t                   databases;       // NCBI+UNIPROT+Other
         std::queue<char>                        state_queue;
@@ -117,9 +117,9 @@ namespace entapExecute {
         // Set/create outpaths
         final_out_dir  = pFileSystem->get_final_outdir();
         pFileSystem->create_transcriptome_dir();        // Directory where filtered transcriptomes will be copied
-        transcrtipeom_out_filename = pFileSystem->get_filename(input_path, true);   // Pull filename from input transcriptome
+        transcriptome_out_filename = pFileSystem->get_filename(input_path, true);   // Pull filename from input transcriptome
         transcriptome_dir     = pFileSystem->get_trancriptome_dir();
-        transcriptome_outpath = PATHS(transcriptome_dir, transcrtipeom_out_filename);
+        transcriptome_outpath = PATHS(transcriptome_dir, transcriptome_out_filename);
 
         try {
             verify_state(state_queue, state_flag);         // Set state transition
@@ -318,9 +318,14 @@ namespace entapExecute {
             } // END WHILE
 
             // *************************** Exit Stuff ********************** //
-            TC_print(TC_PRINT_COUT, "Compiling final EnTAP statistics...");
+            auto startTime = std::chrono::system_clock::now();
+            TC_print(TC_PRINT_COUT, get_time_str(startTime) + " -- Compiling EnTAP Results...");
             pQUERY_DATA->final_statistics(final_out_dir, output_types);
-            TC_print(TC_PRINT_COUT, "EnTAP complete!");
+            auto endTime = std::chrono::system_clock::now();
+            int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(endTime - startTime).count();
+            TC_print(TC_PRINT_COUT, get_cur_time() + " -- EnTAP Results Compiled [" +
+                std::to_string(time_diff) + " min]");
+
            // pFileSystem->directory_iterate(FileSystem::FILE_ITER_DELETE_EMPTY, mOutpath);   // Delete empty files
             SAFE_DELETE(pQUERY_DATA);
             SAFE_DELETE(pGraphing_Manager);

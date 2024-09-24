@@ -104,8 +104,8 @@ void Ontology::execute() {
 
     EntapModule::ModVerifyData verify_data;
     std::unique_ptr<EntapModule> ptr;
-    TC_print(TC_PRINT_COUT, "Beginning Ontology Analysis...");
-
+    TC_print(TC_PRINT_COUT, get_cur_time() + " -- Beginning Gene Family Analysis...");
+    auto start_time = std::chrono::system_clock::now();
     try {
         for (uint16 software : mSoftwareFlags) {
             ptr = spawn_object(software);
@@ -119,7 +119,10 @@ void Ontology::execute() {
         ptr.reset();
         throw e;
     }
-    TC_print(TC_PRINT_COUT, "Ontology Analysis complete");
+    auto end_time = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time).count();
+    TC_print(TC_PRINT_COUT, get_cur_time() + " -- Gene Family Analysis Complete [" +
+        std::to_string(time_diff) + " min]");
 }
 
 

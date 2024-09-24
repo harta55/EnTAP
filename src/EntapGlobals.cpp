@@ -62,11 +62,13 @@ vect_str_t split_string(std::string sequences, char delim) {
 
 std::string get_cur_time() {
     std::chrono::time_point<std::chrono::system_clock> current;
-    std::time_t time;
-
     current = std::chrono::system_clock::now();
-    time = std::chrono::system_clock::to_time_t(current);
-    std::string out_time(std::ctime(&time));
+    return get_time_str(current);
+}
+
+std::string get_time_str(std::chrono::time_point<std::chrono::system_clock>& time) {
+    std::time_t time_t = std::chrono::system_clock::to_time_t(time);
+    std::string out_time(std::ctime(&time_t));
     return out_time.substr(0,out_time.length()-1);
 }
 

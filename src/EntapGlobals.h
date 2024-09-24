@@ -61,6 +61,7 @@ std::string float_to_string(fp64);
 std::string float_to_sci(fp64, int);
 vect_str_t  split_string(std::string, char);
 std::string get_cur_time();
+std::string get_time_str(std::chrono::time_point<std::chrono::system_clock> &time);
 std::string &ltrim(std::string &s);
 std::string &rtrim(std::string &s);
 std::string &trim(std::string &s);

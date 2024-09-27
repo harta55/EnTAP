@@ -285,7 +285,9 @@ bool ModHorizontalGeneTransferDiamond::run_diamond(AbstractSimilaritySearch::Sim
     terminalData.command        = TC_generate_command(tc_commands, temp_exe);
     terminalData.base_std_path  = cmd->std_out_path;
     terminalData.print_files    = true;
-    terminalData.suppress_std_err = false;
+    terminalData.suppress_std_err = true; // Suppressing putting std error into debug file
+                                          //    to prevent log flooding, DIAMOND dumps all info in err
+                                          //    instead of std out
 
     err_code = TC_execute_cmd(terminalData);
 

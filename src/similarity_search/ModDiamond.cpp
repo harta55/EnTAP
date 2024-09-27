@@ -255,7 +255,7 @@ void ModDiamond::execute() {
  *
  * =====================================================================
  */
-bool ModDiamond::run_blast(AbstractSimilaritySearch::SimSearchCmd *cmd, bool use_defaults) {
+bool ModDiamond::run_blast(SimSearchCmd *cmd, bool use_defaults) {
     TerminalData    terminalData;   // Terminal data
     command_map_t   tc_commands;    // Terminal command map
     int32           err_code;       // Error codee from terminal execution
@@ -290,7 +290,9 @@ bool ModDiamond::run_blast(AbstractSimilaritySearch::SimSearchCmd *cmd, bool use
     terminalData.command        = TC_generate_command(tc_commands, temp_exe);
     terminalData.base_std_path  = cmd->std_out_path;
     terminalData.print_files    = true;
-    terminalData.suppress_std_err = false;
+    terminalData.suppress_std_err = true; // Suppressing putting std error into debug file
+                                          //    to prevent log flooding, DIAMOND dumps all info in err
+                                          //    instead of std out
 
     err_code = TC_execute_cmd(terminalData);
 

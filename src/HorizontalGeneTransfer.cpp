@@ -51,7 +51,8 @@ void HorizontalGeneTransfer::execute() {
 
     EntapModule::ModVerifyData verifyData;
     std::unique_ptr<AbstractHorizontalGeneTransfer> ptr;
-    TC_print(TC_PRINT_COUT, "Beginning Horizontal Gene Transfer...");
+    TC_print(TC_PRINT_COUT, get_cur_time() + " -- Beginning Horizontal Gene Transfer Analysis...");
+    auto start_time = std::chrono::system_clock::now();
 
     try {
         ptr = spawn_object();
@@ -67,8 +68,10 @@ void HorizontalGeneTransfer::execute() {
         ptr.reset();
         throw e;
     }
-    TC_print(TC_PRINT_COUT, "Horizontal Gene Transfer complete");
-
+    auto end_time = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time).count();
+    TC_print(TC_PRINT_COUT, get_cur_time() + " -- Horizontal Gene Transfer Analysis Complete [" +
+        std::to_string(time_diff) + " min]");
 }
 
 std::unique_ptr<AbstractHorizontalGeneTransfer> HorizontalGeneTransfer::spawn_object() {

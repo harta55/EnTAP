@@ -631,7 +631,7 @@ UserInput::UserInput(int argc, const char** argv, FileSystem *fileSystem) {
         root_dir = FileSystem::get_cur_dir();
     }
     mpFileSystem->set_root_dir(root_dir);
-    TC_print(TC_PRINT_COUT, "ini files parsed, debug logging will continue at: " + DEBUG_FILE_PATH);
+    TC_print(TC_PRINT_COUT, "\tini files parsed, debug logging will continue at: " + DEBUG_FILE_PATH);
     parse_future_inputs();
 }
 
@@ -704,7 +704,7 @@ void UserInput::parse_future_inputs() {
  * ======================================================================
  */
 void UserInput::parse_ini(std::string &ini_path, ENT_INPUT_TYPES input_type) {
-    TC_print(TC_PRINT_COUT, "Parsing ini file at: " + ini_path);
+    TC_print(TC_PRINT_COUT, "\tParsing ini file at: " + ini_path);
 
     EntapINIEntry                               *ini_entry;
     std::string                                 line;

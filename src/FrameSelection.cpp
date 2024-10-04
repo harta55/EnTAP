@@ -95,7 +95,8 @@ std::string FrameSelection::execute(std::string input) {
     mInPath = input;
     if (mOverwrite) mpFileSystem->delete_dir(mModOutDir);
     mpFileSystem->create_dir(mModOutDir);
-    TC_print(TC_PRINT_COUT, "Beginning Frame Selection...");
+    TC_print(TC_PRINT_COUT, get_cur_time() + " -- Beginning Frame Selection...");
+    auto start_time = std::chrono::system_clock::now();
     try {
         ptr = spawn_object();
         verify_data = ptr->verify_files();
@@ -109,7 +110,10 @@ std::string FrameSelection::execute(std::string input) {
 
         ptr.reset();
 
-        TC_print(TC_PRINT_COUT, "Frame Selection complete");
+        auto end_time = std::chrono::system_clock::now();
+        int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time).count();
+        TC_print(TC_PRINT_COUT, get_cur_time() + " -- Frame Selection Complete [" +
+            std::to_string(time_diff) + " min]");
         return output;
     } catch (const ExceptionHandler &e) {
         ptr.reset();

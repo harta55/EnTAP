@@ -204,7 +204,8 @@ void ModDiamond::execute() {
     SimSearchCmd simSearchCmd;  // DIAMOND commands
 
     FS_dprint("Executing DIAMOND for necessary files....");
-    TC_print(TC_PRINT_COUT, "Running DIAMOND Similarity Search...");
+    TC_print(TC_PRINT_COUT, "\tRunning DIAMOND Similarity Search...");
+    auto diamond_start_time = std::chrono::system_clock::now();
 
     for (std::string &database_path : mDatabasePaths) {
         output_path = get_database_output_path(database_path);
@@ -213,6 +214,9 @@ void ModDiamond::execute() {
         if (file_status != 0) {
             // If file does not exist or cannot be read, execute diamond
             FS_dprint("File not found, executing against database at: " + database_path);
+            TC_print(TC_PRINT_COUT, "\t\tRunning DIAMOND Similarity Search against database at "
+                + database_path + "...");
+            auto database_start_time = std::chrono::system_clock::now();
 
             simSearchCmd = {};
             simSearchCmd.database_path = database_path;
@@ -231,11 +235,15 @@ void ModDiamond::execute() {
             } catch (const ExceptionHandler &e ){
                 throw e;
             }
-
             FS_dprint("Success! Results written to: " + output_path);
+            auto database_end_time = std::chrono::system_clock::now();
+            int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(database_end_time - database_start_time).count();
+            TC_print(TC_PRINT_COUT, "\t\tComplete [" + std::to_string(time_diff) + " min]");
         }
     }
-    TC_print(TC_PRINT_COUT, "Success");
+    auto diamond_end_time = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(diamond_end_time - diamond_start_time).count();
+    TC_print(TC_PRINT_COUT, "\tComplete [" + std::to_string(time_diff) + " min]");
 }
 
 /**
@@ -353,7 +361,8 @@ void ModDiamond::parse() {
 #endif
 
     FS_dprint("Beginning to filter individual DIAMOND files...");
-    TC_print(TC_PRINT_COUT, "Parsing DIAMOND Similarity Search...");
+    TC_print(TC_PRINT_COUT, "\tParsing DIAMOND Similarity Search Results...");
+    auto start_time = std::chrono::system_clock::now();
 
     // disable UniProt headers until we know we have a hit
     for (std::string &output_path : mOutputPaths) {
@@ -475,7 +484,10 @@ void ModDiamond::parse() {
         throw ExceptionHandler("No alignments found during Similarity Searching!",
                                ERR_ENTAP_RUN_SIM_SEARCH_FILTER);
     }
-    TC_print(TC_PRINT_COUT, "Success");
+    auto end_time = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time).count();
+    TC_print(TC_PRINT_COUT, "\tComplete [" + std::to_string(time_diff) + " min]");
+    TC_print(TC_PRINT_COUT, "\tResults written to: " + mModOutDir);
 }
 
 /**

@@ -71,11 +71,17 @@ void ModHorizontalGeneTransferDiamond::execute() {
 
     // 1. Similarity Search against Donor and Recipient databases
     FS_dprint("HGT Running Similarity Search against Donor and Recipient Databases");
+    TC_print(TC_PRINT_COUT, "\tRunning DIAMOND Against Donor/Recipient Databases...");
+    auto diamond_start_time = std::chrono::system_clock::now();
+
     for (auto &database : mHGTDatabases) {
         file_status = mpFileSystem->get_file_status(database.diamond_output);
         if (file_status != 0) {
             // If file does not exist or cannot be read, execute diamond
             FS_dprint("File not found, executing against database at: " + database.database_path);
+            TC_print(TC_PRINT_COUT, "\t\tRunning DIAMOND Similarity Search against database at "
+                + database.database_path + "...");
+            auto database_start_time = std::chrono::system_clock::now();
 
             simSearchCmd = {};
             simSearchCmd.database_path = database.database_path;
@@ -96,10 +102,15 @@ void ModHorizontalGeneTransferDiamond::execute() {
                 throw e;
             }
             FS_dprint("Success! Results written to: " + database.diamond_output);
+            auto database_end_time = std::chrono::system_clock::now();
+            int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(database_end_time - database_start_time).count();
+            TC_print(TC_PRINT_COUT, "\t\tComplete [" + std::to_string(time_diff) + " min]");
         }
     }
     FS_dprint("HGT run against donor and recipients complete, determining HGT candidates...");
-    // 2.
+    auto diamond_end_time = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(diamond_end_time - diamond_start_time).count();
+    TC_print(TC_PRINT_COUT, "\tComplete [" + std::to_string(time_diff) + " min]");
 }
 
 // TODO restrucutre this and ModDIAMOND so that code can be reused better
@@ -128,7 +139,8 @@ void ModHorizontalGeneTransferDiamond::parse() {
     // ------------------------------------------------------------------ //
 
     FS_dprint("Beginning to filter individual DIAMOND files...");
-    TC_print(TC_PRINT_COUT, "Parsing DIAMOND Horizontal Gene Transfer...");
+    TC_print(TC_PRINT_COUT, "\tParsing HGT Results and Determining HGT Candidates...");
+    auto start_time = std::chrono::system_clock::now();
 
     for (HGTDatabase &hgtDatabase : mHGTDatabases) {
         FS_dprint("DIAMOND file located at " + hgtDatabase.diamond_output + " being parsed");
@@ -199,8 +211,10 @@ void ModHorizontalGeneTransferDiamond::parse() {
         FS_dprint("Success!");
     } // END FOR LOOP
     calculate_hgt_candidates(mHGTDatabases);
-
-    TC_print(TC_PRINT_COUT, "Success");
+    auto end_time = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time).count();
+    TC_print(TC_PRINT_COUT, "\tComplete [" + std::to_string(time_diff) + " min]");
+    TC_print(TC_PRINT_COUT, "\tResults written to: " + mModOutDir);
 }
 
 bool ModHorizontalGeneTransferDiamond::is_executable(std::string &exe) {

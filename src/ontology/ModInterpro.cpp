@@ -114,7 +114,8 @@ void ModInterpro::execute() {
     int32       err_code;
     TerminalData      terminalData;
 
-    TC_print(TC_PRINT_COUT, "Running InterProScan...");
+    TC_print(TC_PRINT_COUT, "\tRunning InterProScan...");
+    auto start_time = std::chrono::system_clock::now();
 
     mBlastp ? blast = PROTEIN_TAG : blast = NUCLEO_TAG;
     temp_dir = PATHS(mModOutDir, INTERPRO_TEMP);
@@ -152,7 +153,9 @@ void ModInterpro::execute() {
     } else {
         mpFileSystem->delete_dir(temp_dir);
     }
-    TC_print(TC_PRINT_COUT, "Success");
+    auto end_time = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time).count();
+    TC_print(TC_PRINT_COUT, "\tComplete [" + std::to_string(time_diff) + " min]");
 }
 
 
@@ -184,7 +187,8 @@ void ModInterpro::parse() {
     uint32                                count_no_hits=0;
 
     FS_dprint("Beginning to parse InterProScan data...");
-    TC_print(TC_PRINT_COUT, "Parsing InterProScan...");
+    TC_print(TC_PRINT_COUT, "\tParsing InterProScan Results...");
+    auto start_time = std::chrono::system_clock::now();
 
     if (mpFileSystem->file_exists(mFinalOutpath)) {
         FS_dprint("File found at: " + mFinalOutpath + " parsing...");
@@ -262,7 +266,10 @@ void ModInterpro::parse() {
     stats_out = stats_stream.str();
     mpFileSystem->print_stats(stats_out);
     FS_dprint("Success! InterProScan finished");
-    TC_print(TC_PRINT_COUT, "Success");
+    auto end_time = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time).count();
+    TC_print(TC_PRINT_COUT, "\tComplete [" + std::to_string(time_diff) + " min]");
+    TC_print(TC_PRINT_COUT, "\tResults written to: " + mModOutDir);
 }
 
 

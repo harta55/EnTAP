@@ -95,7 +95,9 @@ std::string ExpressionAnalysis::execute(std::string input) {
     mInFastaPath = input;
     if (mOverwrite) mpFileSystem->delete_dir(mExpressionDir);
     mpFileSystem->create_dir(mExpressionDir);
-    TC_print(TC_PRINT_COUT, "Beginning Expression Analysis...");
+
+    auto startTime = std::chrono::system_clock::now();
+    TC_print(TC_PRINT_COUT, get_time_str(startTime) + " -- Beginning Expression Analysis...");
 
     try {
         ptr = spawn_object();
@@ -111,7 +113,10 @@ std::string ExpressionAnalysis::execute(std::string input) {
         ptr.reset();
         throw e;
     }
-    TC_print(TC_PRINT_COUT, "Expression Analysis complete");
+    auto endTime = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(endTime - startTime).count();
+    TC_print(TC_PRINT_COUT, get_cur_time() + " -- Expression Analysis Complete [" +
+        std::to_string(time_diff) + " min]");
     return output;
 }
 

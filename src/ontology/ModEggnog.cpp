@@ -141,8 +141,8 @@ void ModEggnog::execute() {
 
     // Ensure we do not have an annotations file, should never occur (checked in other function)
     if (mpFileSystem->file_exists(mEggnogMapAnnotationsOutputPath)) return;
-    TC_print(TC_PRINT_COUT, "Running EggNOG-mapper analysis...");
-
+    TC_print(TC_PRINT_COUT, "\tRunning DIAMOND Similarity Search...");
+    auto start_time = std::chrono::system_clock::now();
     tc_command_map = {
             {"-m", "diamond"},
             {"-o", get_output_tag()},
@@ -203,7 +203,9 @@ void ModEggnog::execute() {
                                ERR_ENTAP_RUN_EGGNOG);
     }
 
-    TC_print(TC_PRINT_COUT, "Success!");
+    auto end_time = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time).count();
+    TC_print(TC_PRINT_COUT, "\tComplete [" + std::to_string(time_diff) + " min]");
     FS_dprint("Success! EggNOG execution complete");
 }
 
@@ -223,7 +225,8 @@ void ModEggnog::execute() {
 void ModEggnog::parse() {
 
     FS_dprint("Beginning to parse eggnog mapper results...");
-    TC_print(TC_PRINT_COUT, "Parsing EggNOG-mapper Analysis...");
+    TC_print(TC_PRINT_COUT, "\tParsing EggNOG-Mapper Results...");
+    auto start_time = std::chrono::system_clock::now();
 
     std::string                              out_msg;
     uint32                                   count_total_go_hits=0;
@@ -492,6 +495,11 @@ void ModEggnog::parse() {
     out_msg = stats_stream.str();
     mpFileSystem->print_stats(out_msg);
     FS_dprint("Success! EggNOG results parsed");
+
+    auto end_time = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time).count();
+    TC_print(TC_PRINT_COUT, "\tComplete [" + std::to_string(time_diff) + " min]");
+    TC_print(TC_PRINT_COUT, "\tResults written to: " + mModOutDir);
 }
 
 ModEggnog::~ModEggnog() {

@@ -154,7 +154,8 @@ void ModTransdecoder::execute() {
     std::string temp_filename;
     uint16 file_status;
 
-    TC_print(TC_PRINT_COUT, "Running TransDecoder Frame Selection...");
+    auto start_time = std::chrono::system_clock::now();
+    TC_print(TC_PRINT_COUT, "\tRunning TransDecoder Frame Selection...");
 
     // Train data through Transdecoder.LongOrfs executable
     FS_dprint("Training TransDecoder data...");
@@ -208,8 +209,9 @@ void ModTransdecoder::execute() {
     } catch (const std::exception &err) {
         throw ExceptionHandler(err.what(), ERR_ENTAP_RUN_TRANSDECODER_MOVE);
     }
-
-    TC_print(TC_PRINT_COUT, "Success");
+    auto end_time = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time).count();
+    TC_print(TC_PRINT_COUT, "\tComplete [" + std::to_string(time_diff) + " min]");
 }
 
 /**
@@ -230,7 +232,8 @@ void ModTransdecoder::parse() {
     uint16 file_status;
 
     FS_dprint("Beginning to parse TransDecoder output...");
-    TC_print(TC_PRINT_COUT, "Parsing TransDecoder Frame Selection...");
+    auto start_time = std::chrono::system_clock::now();
+    TC_print(TC_PRINT_COUT, "\tParsing TransDecoder Frame Selection Results...");
 
     // Ensure the files we need exist and are valid
     file_status = mpFileSystem->get_file_status(mFinalFaaPath);
@@ -259,7 +262,10 @@ void ModTransdecoder::parse() {
     }
 
     FS_dprint("Success! TransDecoder data parsed and stats calculated");
-    TC_print(TC_PRINT_COUT, "Success");
+    auto end_time = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time).count();
+    TC_print(TC_PRINT_COUT, "\tComplete [" + std::to_string(time_diff) + " min]");
+    TC_print(TC_PRINT_COUT, "\tResults written to: " + mModOutDir);
 }
 
 /**

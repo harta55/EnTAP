@@ -107,7 +107,7 @@ public:
     } ENT_FILE_ITER;
 
 
-    FileSystem();
+    FileSystem(std::chrono::time_point<std::chrono::system_clock> start_time);
     ~FileSystem();
     void set_root_dir(std::string &root_dir);
     bool set_working_dir(std::string &working_dir);
@@ -212,8 +212,15 @@ private:
     std::string mTempOutpath;     // Temp directory for EnTAP usage
     std::string mErrorMsg;        // String containing error mMessage from execution
     std::string mExeDirectory;    // Directory of the EnTAP executable
-    std::string mOriginalWorkingDir;     // Original working directory;
-    std::string mCurrentWorkingDir;      // Current working directory
+    std::string mOriginalWorkingDir;   // Original working directory;
+    std::string mCurrentWorkingDir;    // Current working directory
+    const std::chrono::time_point<std::chrono::system_clock>  mSTART_TIME;
+
+public:
+    std::chrono::time_point<std::chrono::system_clock> m_start_time() const {
+        return mSTART_TIME;
+    }
+
     //**********************************************************
 };
 

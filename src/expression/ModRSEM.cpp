@@ -110,7 +110,8 @@ EntapModule::ModVerifyData ModRSEM::verify_files() {
 void ModRSEM::execute() {
     // return path
     FS_dprint("Running RSEM...");
-    TC_print(TC_PRINT_COUT, "Running RSEM Expression Analysis...");
+    TC_print(TC_PRINT_COUT, "\tRunning RSEM Expression Analysis...");
+    auto start_time = std::chrono::system_clock::now();
 
     std::string                     bam;
     std::string                     rsem_arg;
@@ -143,7 +144,9 @@ void ModRSEM::execute() {
     } else {
         throw ExceptionHandler("Error in running expression analysis",ERR_ENTAP_RUN_RSEM_EXPRESSION);
     }
-    TC_print(TC_PRINT_COUT, "Success");
+    auto end_time = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time).count();
+    TC_print(TC_PRINT_COUT, "\tComplete [" + std::to_string(time_diff) + " min]");
 }
 
 
@@ -165,7 +168,8 @@ void ModRSEM::execute() {
  */
 void ModRSEM::parse() {
     FS_dprint("Beginning to filter transcriptome...");
-    TC_print(TC_PRINT_COUT, "Parsing RSEM Expression Analysis...");
+    TC_print(TC_PRINT_COUT, "\tParsing RSEM Expression Analysis Results...");
+    auto start_time = std::chrono::system_clock::now();
 
     uint32              count_removed=0;
     uint32              count_kept=0;
@@ -323,15 +327,12 @@ void ModRSEM::parse() {
     out_file.close();
     removed_file.close();
     FS_dprint("Success!");
-    //--------------------------------------------------------//
-
-
-    //------------------------Graphing------------------------//
-    FS_dprint("Success!");
-    //--------------------------------------------------------//
 
     mFinalFasta = out_kept;
-    TC_print(TC_PRINT_COUT, "Success");
+    auto end_time = std::chrono::system_clock::now();
+    int64 time_diff = std::chrono::duration_cast<std::chrono::minutes>(end_time - start_time).count();
+    TC_print(TC_PRINT_COUT, "\tComplete [" + std::to_string(time_diff) + " min]");
+    TC_print(TC_PRINT_COUT, "\tResults written to: " + mModOutDir);
 }
 
 

@@ -51,7 +51,6 @@
 
 
 //******************** Local Variables *************************
-std::chrono::time_point<std::chrono::system_clock> startTime;       // EnTAP starting time
 UserInput *pUserInput;                                              // Pointer to user input flags
 FileSystem *pFileSystem;                                            // Pointer to EnTAP filesystem
 UserInput::EXECUTION_TYPE EXECUTE_TYPE;                             // Config/Execute/API
@@ -134,11 +133,12 @@ int main(int argc, const char** argv) {
 void init_entap(int argc, const char** argv) {
 
     // Begin timing
-    startTime = std::chrono::system_clock::now();
+    auto const startTime = std::chrono::system_clock::now();
+    TC_print(TC_PRINT_COUT, get_cur_time() + " -- Start EnTAP");
     INITIALIZED_DEBUG_FILE = false;
 
     // Create filesystem
-    pFileSystem = new FileSystem();
+    pFileSystem = new FileSystem(startTime);
 
     // parse user flags and set the root filesystem directory according to user input
     pUserInput = new UserInput(argc, argv, pFileSystem);
@@ -146,7 +146,6 @@ void init_entap(int argc, const char** argv) {
     // Verify and print user input (marks begining of log file), sets if user selected config or execute
     EXECUTE_TYPE = pUserInput->verify_user_input();
 }
-
 
 
 /**
@@ -176,7 +175,7 @@ void exit_print(bool in_error, UserInput::EXECUTION_TYPE execute_type) {
 
             end_time = std::chrono::system_clock::now();
             FS_dprint("End - EnTAP");
-            min_dif = std::chrono::duration_cast<std::chrono::minutes>(end_time - startTime).count();
+            min_dif = std::chrono::duration_cast<std::chrono::minutes>(end_time - pFileSystem->m_start_time()).count();
 
             if (in_error) {
                 out_stream <<
@@ -185,10 +184,11 @@ void exit_print(bool in_error, UserInput::EXECUTION_TYPE execute_type) {
                 out_stream <<
                            "\nEnTAP has completed!";
             }
-            out_stream <<
-                       "\nTotal runtime (minutes): " << min_dif;
+            out_stream << "\nTotal runtime (minutes): " << min_dif;
             out_msg = out_stream.str();
             pFileSystem->print_stats(out_msg);
+            TC_print(TC_PRINT_COUT, get_cur_time() + " -- EnTAP Complete! [total runtime " + std::to_string(min_dif) +
+                " minute(s)]");
             break;
         }
 
@@ -203,5 +203,4 @@ void exit_print(bool in_error, UserInput::EXECUTION_TYPE execute_type) {
         default:
             break;
     }
-
 }

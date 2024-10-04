@@ -79,7 +79,8 @@ FileSystem::~FileSystem() {
     delete_dir(mTempOutpath);
 }
 
-FileSystem::FileSystem() {
+FileSystem::FileSystem(std::chrono::time_point<std::chrono::system_clock> const start_time) :
+    mSTART_TIME(start_time){
     // This routine will eventually process entire root directory here and generate
     // hierarchy
     mExeDirectory = "";
@@ -92,8 +93,6 @@ FileSystem::FileSystem() {
     mOriginalWorkingDir = get_cur_dir();
     mRootPath = mOriginalWorkingDir;        // Set root to CWD by default, then change
 }
-
-
 
 /**
  * ======================================================================

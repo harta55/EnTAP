@@ -110,7 +110,14 @@ void Ontology::execute() {
         for (uint16 software : mSoftwareFlags) {
             ptr = spawn_object(software);
             verify_data = ptr->verify_files();
-            if (!verify_data.files_exist) ptr->execute();
+            if (!verify_data.files_exist) {
+                ptr->execute();
+            } else {
+                if (!mpUserInput->has_input(INPUT_FLAG_RESUME)) {
+                    throw ExceptionHandler("Resume flag not being used with existing files at: " + ptr->m_mod_out_dir(),
+                        ERR_ENTAP_RESUME);
+                }
+            }
             ptr->parse();
             ptr->set_success_flags();
             ptr.reset();

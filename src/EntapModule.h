@@ -52,6 +52,9 @@ public:
     virtual void parse() = 0;
     virtual void set_success_flags() = 0;
     virtual bool set_version() = 0;
+    std::string m_mod_out_dir() const {
+        return mModOutDir;
+    }
 
 protected:
 

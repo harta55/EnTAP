@@ -79,8 +79,12 @@
 
 #define CMD_OVERWRITE       "overwrite"
 #define DESC_OVERWRITE      "Select this option if you would like to overwrite files from a previous execution of EnTAP."   \
-                            " This will DISABLE 'picking up where you left off' which enables you to continue an annotation" \
+                            " This will supercede the 'resume' flag which enables you to continue an annotation" \
                             " from where you left off before. Refer to the documentation for more information."
+#define CMD_RESUME       "resume"
+#define DESC_RESUME      "Select this option if you would like EnTAP to continue execution if existing files are found from a previous run."\
+                         " If false is selected, EnTAP will stop execution once it finds files from a previous run and print a warning. Note," \
+                         " the 'overwrite' option will supercede this command if 'overwrite' is being used (set to TRUE)."
 
 #define CMD_ENT_RUN_PARAM_INI_FILE        "run-ini"
 #define DESC_ENT_RUN_PARAM_INI_FILE      "[REQUIRED] Specify path to the entap_run.params file that will be used to find all of the run-specific commands."
@@ -475,6 +479,7 @@ UserInput::EntapINIEntry UserInput::mUserInputs[] = {
         {INI_GENERAL   ,CMD_RUN_PROTEIN          ,ENTAP_INI_NULL  ,DESC_RUN_PROTEIN           ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_RUN_NUCLEO           ,ENTAP_INI_NULL  ,DESC_RUN_NUCLEO            ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_OVERWRITE            ,ENTAP_INI_NULL  ,DESC_OVERWRITE             ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE      ,ENTAP_INI_NULL_VAL},
+        {INI_GENERAL   ,CMD_RESUME                 ,ENTAP_INI_NULL  ,DESC_RESUME                  ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL     ,ENT_RUN_PARAM_INI_FILE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_ENT_RUN_PARAM_INI_FILE,ENTAP_INI_NULL ,DESC_ENT_RUN_PARAM_INI_FILE,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_RUN_PARAM_INI_FILENAME,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
         {INI_GENERAL   ,CMD_ENT_CONFIG_INI_FILE  ,ENTAP_INI_NULL  ,DESC_ENT_CONFIG_INI_FILE   ,ENTAP_INI_NULL   ,ENT_INI_VAR_STRING      ,DEFAULT_ENT_CONFIG_INI_PATH,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},
 //        {INI_GENERAL   ,CMD_HELP                 ,CMD_SHORT_HELP       ,DESC_HELP             ,ENTAP_INI_NULL   ,ENT_INI_VAR_BOOL        ,ENTAP_INI_NULL_VAL   ,ENT_COMMAND_LINE      ,ENTAP_INI_NULL_VAL},

@@ -263,9 +263,9 @@ EntapModule::ModVerifyData ModHorizontalGeneTransferDiamond::verify_databases(en
             // File found + is 'legit', can skip execution for it
             FS_dprint("File for database " + hgtDatabase.database_shortname + " exists, skipping...\n" + hgtDatabase.diamond_output);
             hgtDatabase.diamond_ran_success = true;
+            ret_data.output_paths.push_back(hgtDatabase.diamond_output);   // Add paths to verify data, used to check existing files from previous run
         }
         mHGTDatabases.push_back(hgtDatabase);
-        ret_data.output_paths.push_back(hgtDatabase.diamond_output);   // Add paths to verify data (not currently used)
     }
     FS_dprint("Success! Verified files for DIAMOND, continuing...");
     return ret_data;

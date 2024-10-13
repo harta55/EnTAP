@@ -102,7 +102,14 @@ std::string ExpressionAnalysis::execute(std::string input) {
     try {
         ptr = spawn_object();
         verify_data = ptr->verify_files();
-        if (!verify_data.files_exist) ptr->execute();
+        if (!verify_data.files_exist) {
+            ptr->execute();
+        } else {
+            if (!mpUserInput->has_input(INPUT_FLAG_RESUME)) {
+                throw ExceptionHandler("Resume flag not being used with existing files at: " + ptr->m_mod_out_dir(),
+                    ERR_ENTAP_RESUME);
+            }
+        }
         ptr->parse();
         output = ptr->get_final_fasta();
 

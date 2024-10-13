@@ -180,15 +180,18 @@ void exit_print(bool in_error, UserInput::EXECUTION_TYPE execute_type) {
             if (in_error) {
                 out_stream <<
                            "\nEnTAP has failed! ";
+                TC_print(TC_PRINT_COUT, get_cur_time() + " -- EnTAP has Failed! [total runtime " + std::to_string(min_dif) +
+                    " minute(s)]");
             } else {
                 out_stream <<
                            "\nEnTAP has completed!";
+                TC_print(TC_PRINT_COUT, get_cur_time() + " -- EnTAP Complete! [total runtime " + std::to_string(min_dif) +
+                    " minute(s)]");
             }
             out_stream << "\nTotal runtime (minutes): " << min_dif;
             out_msg = out_stream.str();
             pFileSystem->print_stats(out_msg);
-            TC_print(TC_PRINT_COUT, get_cur_time() + " -- EnTAP Complete! [total runtime " + std::to_string(min_dif) +
-                " minute(s)]");
+
             break;
         }
 

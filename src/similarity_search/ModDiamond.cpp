@@ -150,9 +150,9 @@ EntapModule::ModVerifyData ModDiamond::verify_files() {
         } else {
             // File found + is 'legit', can skip execution for it
             FS_dprint("File for database " + database_name + " exists, skipping...\n" + out_path);
+            verify_data.output_paths.push_back(out_path);   // Add paths to verify data, used to check for existing
+                                                            //  files from previous run
         }
-
-        verify_data.output_paths.push_back(out_path);   // Add paths to verify data (not currently used)
         mOutputPaths.push_back(out_path);
     }
 

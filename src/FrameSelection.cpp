@@ -102,6 +102,11 @@ std::string FrameSelection::execute(std::string input) {
         verify_data = ptr->verify_files();
         if (!verify_data.files_exist) {
             ptr->execute();
+        } else {
+            if (!mpUserInput->has_input(INPUT_FLAG_RESUME)) {
+                throw ExceptionHandler("Resume flag not being used with existing files at: " + ptr->m_mod_out_dir(),
+                    ERR_ENTAP_RESUME);
+            }
         }
         output = ptr->get_final_faa();
         ptr->parse();

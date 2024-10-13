@@ -35,9 +35,12 @@ transdecoder-no-refine-starts=false
 #Specify the output directory you would like the data produced by EnTAP to be saved to.
 #type:string
 out-dir=entap_outfiles
-#Select this option if you would like to overwrite files from a previous execution of EnTAP. This will DISABLE 'picking up where you left off' which enables you to continue an annotation from where you left off before. Refer to the documentation for more information.
+#Select this option if you would like to overwrite files from a previous execution of EnTAP. This will supercede the 'resume' flag which enables you to continue an annotation from where you left off before. Refer to the documentation for more information.
 #type:boolean (true/false)
 overwrite=false
+#Select this option if you would like EnTAP to continue execution if existing files are found from a previous run. If false is selected, EnTAP will stop execution once it finds files from a previous run and print a warning. Note, the 'overwrite' option will supercede this command if 'overwrite' is being used (set to TRUE).
+#type:boolean (true/false)
+resume=false
 #Path to the input transcriptome file
 #type:string
 input=

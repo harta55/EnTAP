@@ -36,6 +36,7 @@ enum ENTAP_ERR {
 
     ERR_ENTAP_SUCCESS                     = 0u,
     ERR_ENTAP_INPUT_PARSE                 = 10u,
+    ERR_ENTAP_RESUME                      = 11u,
     ERR_ENTAP_CONFIG_PARSE                = 12u,
     ERR_ENTAP_CONFIG_CREATE               = 13u,
     ERR_ENTAP_CONFIG_CREATE_SUCCESS       = 14u,
@@ -95,7 +96,6 @@ enum ENTAP_ERR {
     ERR_ENTAP_MEM_ALLOC                   = 201u,
     ERR_ENTAP_HGT_PARSE                   = 210u,
     ERR_ENTAP_HGT_RUN                     = 211u,
-    ERR_ENTAP_MAX                         = 201u
 };
 
 
@@ -110,8 +110,6 @@ public:
 private:
     uint16 mErrCode;
     std::string mMessage;
-
-//    static const std::string ERR_ENTAP_STR [ERR_ENTAP_MAX];
 };
 
 #endif //ENTAP_EXCEPTIONHANDLER_H

@@ -84,8 +84,15 @@ void SimilaritySearch::execute() {
     try {
         ptr = spawn_object();
         verifyData = ptr->verify_files();
+        // file_exist flag is FALSE if ANY database from user is missing an output file
+        // Because of this, we have to check if any individual files exist to verify 'resume' flag
         if (!verifyData.files_exist) {
             ptr->execute();
+        } else {
+            if (!mpUserInput->has_input(INPUT_FLAG_RESUME) && (!verifyData.output_paths.empty())) {
+                throw ExceptionHandler("Resume flag not being used with existing files at: " + ptr->m_mod_out_dir(),
+                    ERR_ENTAP_RESUME);
+            }
         }
         ptr->parse();
         ptr->set_success_flags();

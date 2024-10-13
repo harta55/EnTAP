@@ -34,6 +34,14 @@ else()
     message(WARNING "Perl was not detected, this is required for GeneMarkS-T!")
 endif()
 
+#GTest
+include(FetchContent)
+FetchContent_Declare(
+        googletest
+        URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
+        DOWNLOAD_EXTRACT_TIMESTAMP true
+)
+
 set(SOURCE_FILES
         src/main.cpp
         src/ExceptionHandler.cpp src/ExceptionHandler.h

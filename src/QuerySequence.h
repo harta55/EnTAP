@@ -286,13 +286,13 @@ public:
     static void setExpressionN50(int expression_sequence);
     static int GetExpressionN50();
 
-    static void setFrameAverageSequenceLength(int expression_sequence);
+    static void setFrameAverageSequenceLength(int frame_sequence);
     static int GetFrameAverageSequenceLength();
-    static void setFrameLongestSequenceLength(int expression_sequence);
+    static void setFrameLongestSequenceLength(int frame_sequence);
     static int GetFrameLongestSequenceLength();
-    static void setFrameShortestSequenceLength(int expression_sequence);
+    static void setFrameShortestSequenceLength(int frame_sequence);
     static int GetFrameShortestSequenceLength();
-    static void setFrameN50(int expression_sequence);
+    static void setFrameN50(int frame_sequence);
     static int GetFrameN50();
 
     fp32 getMEffectiveLength() const;

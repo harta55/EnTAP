@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -166,10 +166,10 @@ bool GraphingManager::initialize_graph_data(GraphingManager::GraphingData &graph
         case ENT_GRAPH_BAR_STACKED:
             new_graph = new EntapGraphBarStacked(graphingData);
             break;
-
-        case ENT_LOG_VISUAL:
+	
+	case ENT_LOG_VISUAL:
             new_graph = new EntapLogVisual(graphingData);
-            break;
+            break;	
 
         default:
             ret = false;
@@ -444,22 +444,22 @@ bool GraphingManager::EntapGraphBarStacked::add_datapoint(std::list<std::string>
 }
 
 //**********************************************************************
-//**********************************************************************
-//                 EntapLogVisual Nested Class
-//**********************************************************************
-//**********************************************************************
-
+////**********************************************************************
+////                 EntapLogVisual Nested Class
+////**********************************************************************
+////**********************************************************************
+//
 GraphingManager::EntapLogVisual::EntapLogVisual(GraphingManager::GraphingData &graphingData)
         : EntapGraphBase(graphingData) {
 
-}
+        }
 
-bool GraphingManager::EntapLogVisual::add_datapoint(std::list<std::string> &list) {
-    bool ret = true;
+        bool GraphingManager::EntapLogVisual::add_datapoint(std::list<std::string> &list) {
+            bool ret = true;
 
-    *mpOutputTextStream << list.front() << '\t';
-    list.pop_front();
-    *mpOutputTextStream << list.front() << std::endl;
-    
-    return ret;
-}
+                *mpOutputTextStream << list.front() << '\t';
+                    list.pop_front();
+                        *mpOutputTextStream << list.front() << std::endl;
+                            
+                                return ret;
+                                }

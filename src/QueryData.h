@@ -7,7 +7,7 @@
  * For information, contact Alexander Hart at:
  *     entap.dev@gmail.com
  *
- * Copyright 2017-2023, Alexander Hart, Dr. Jill Wegrzyn
+ * Copyright 2017-2024, Alexander Hart, Dr. Jill Wegrzyn
  *
  * This file is part of EnTAP.
  *
@@ -34,8 +34,10 @@
 #include "common.h"
 #include "UserInput.h"
 #include "GraphingManager.h"
+
 // Forward Declarations
 class QueryAlignment;
+class QuerySequence;
 class GraphingManager;
 
 typedef std::unordered_map<std::string, QuerySequence*> QUERY_MAP_T;
@@ -56,6 +58,7 @@ public:
         IS_PROTEIN         = (1 << 4),  // We have some protein data
         IS_NUCLEOTIDE      = (1 << 5),  // We have some nucleotide data
         UNIPROT_MATCH      = (1 << 6),
+        SUCCESS_HGT        = (1 << 7),
 
         DATA_FLAGS_MAX     = (1 << 31)
     } DATA_FLAGS;
@@ -66,7 +69,7 @@ public:
     } SEQUENCE_TYPES;
 
 
-    QueryData(std::string &input_path, UserInput* userInput, FileSystem* fileSystem, GraphingManager* graphingManager);
+    QueryData(std::string &input_path, UserInput* userInput, FileSystem* fileSystem);
     QueryData(std::string&, std::string&, UserInput*, FileSystem*);
     ~QueryData();
 
@@ -74,7 +77,7 @@ public:
 
     std::pair<uint16, uint16> calculate_N_vals(std::vector<uint16>&,uint64);
     std::string trim_sequence_header(std::string&, std::string);
-    void final_statistics(std::string& outpath, std::vector<FileSystem::ENT_FILE_TYPES> output_types);
+    void final_statistics(std::string& outpath, std::vector<FileSystem::ENT_FILE_TYPES> output_types, GraphingManager *mpGraphingManager);
 
     // Output routines
     bool start_alignment_files(const std::string &base_path, const std::vector<ENTAP_HEADERS> &headers, const vect_uint16_t &go_levels,
@@ -85,16 +88,21 @@ public:
     bool print_transcriptome(uint32 flags, std::string &outpath, SEQUENCE_TYPES sequence_type);
 
     QUERY_MAP_T get_specific_sequences(uint32 flags);
+    uint64 get_sequence_count(uint32 flags) const;
 
     // DATA_FLAG routines
     bool is_protein_data();
+    bool is_nucleotide_data();
     void set_is_protein_data(bool val);
     void set_is_success_frame_selection(bool val);
     void set_is_success_expression(bool val);
     void set_is_success_sim_search(bool val);
     void set_is_success_ontology(bool val);
+    void set_is_success_hgt(bool val);
     void set_is_uniprot(bool val);
     bool DATA_FLAG_GET(DATA_FLAGS);
+
+    uint32 getMTotalSequences() const;
 
     // Header routines
     void header_set(ENTAP_HEADERS header, bool val);
@@ -113,6 +121,7 @@ private:
         std::vector<ENTAP_HEADERS> headers;
         std::ofstream* file_streams[FileSystem::ENT_FILE_OUTPUT_FORMAT_MAX][UserInput::MAX_GO_LEVEL+1];
     };
+
     void set_input_type(std::string&);
     void DATA_FLAG_SET(DATA_FLAGS);
     void DATA_FLAG_CLEAR(DATA_FLAGS);
@@ -162,17 +171,30 @@ private:
 
     QUERY_MAP_T  *mpSequences;
     bool         mNoTrim;
-    bool         mIsComplete;              // All sequences can be tagged as 'complete' genes
     uint32       mTotalSequences;          // Original sequence number
+    uint32       mTotalKeptSequences;
+public:
+    uint32 getMTotalKeptSequences() const;
+
+    void setMTotalKeptSequences(uint32 mTotalKeptSequences);
+
+private:
+    // Total number of sequences kept after filtering (Expression Analysis + Frame Selection)
     uint32       mDataFlags;
     uint64       mNucleoLengthStart;       // Starting total len (nucleotide)
     uint64       mProteinLengthStart;      // Starting total len (protein)
     FileSystem  *mpFileSystem;
     UserInput   *mpUserInput;
-    GraphingManager *mpGraphingManager;
     std::string mTranscriptTypeStr;
     std::unordered_map<std::string, OutputFileData> mAlignmentFiles;
     static EntapHeader ENTAP_HEADER_INFO[];
+    uint32       mAverageSequence;
+    uint32       mNnum;
+    uint32       mPnum;
+    uint32       mLongestSequence;
+    uint32       mShortestSequence;
+    ent_input_fp_t  fpkm;
+    std::vector<uint16>  sequence_length;
 
 };
 

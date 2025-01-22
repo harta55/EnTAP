@@ -288,77 +288,185 @@ def create_gen_statistics(files, label_vals):
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
 
-.workflow-wrapper {{
-            position: relative;
-            width: 100%;
-            max-width: 2048px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 8px;
-        }}
-        .workflow-container {{
-            position: relative;
-            width: 100%;
-            height: 900px;  /* Adjusted height for better vertical spacing */
-        }}
-        .workflow-box {{
-            position: absolute;
-            background-color: #fff;
-            border: 2px solid #000;
-            border-radius: 8px;
-            padding: 10px;
-            width: 16%;  /* Adjusted width for better spacing */
-            text-align: center;
-            font-size: 14px;
-            box-sizing: border-box;
-        }}
-        .workflow-box.orange {{
-            background-color: #ffcc80;
-        }}
-        .workflow-box.blue {{
-            background-color: #81d4fa;
-        }}
-        .workflow-box.gray {{
-            background-color: #c9bcbc;
-        }}
-        .arrow {{
-            position: absolute;
-            width: 0;
-            height: 0;
-            border-style: solid;
-        }}
-        .arrow-right {{
-            border-width: 10px 0 10px 20px;
-            border-color: transparent transparent transparent black;
-        }}
-        .arrow-down {{
-            border-width: 20px 10px 0 10px;
-            border-color: black transparent transparent transparent;
-        }}
+:root {{
+    --columns: 35; 
+    --rows : 52;
+}}
 
-        /* Positioning elements for grouped appearance and spacing */
-        #box1 {{ top: 5%; left: 5%; }}
-        #box2 {{ top: 15%; left: 5%; }}  
-        #box3 {{ top: 10%; left: 26%; }}
-        #box5 {{ top: 10%; left: 47%; }}
-        #box6 {{ top: 22%; left: 47.25%; }}
-        #box7 {{ top: 35%; left: 38.25%; }}
-        #box8 {{ top: 36%; left: 56.25%; }}
-        #box9 {{ top: 47%; left: 75.75%; }}
-        #box10 {{ top: 35%; left: 75.5%; }}
-        #box11 {{ top: 40%; left: 5%; }}
+* {{
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}}
 
-        #arrow1 {{ top: 13%; left: 23%; width: 5%; }}
-        #arrow2 {{ top: 13%; left: 28%; width: 5%; }}
-        #arrow3 {{ top: 13%; left: 44%; width: 5%; }}
-        #arrow4 {{ top: 36%; left: 65%; width: 5%; }}
-        #arrow5 {{ top: 19%; left: 54%; height: 15%; }}
-        #arrow6 {{ top: 58.5%; left: 50%; height: 15%; }}
-        #arrow7 {{ top: 37.5%; left: 73%; width: 10%; }}
-        #arrow9 {{ top: 44%; left: 82.5%; height: 10%; }}
-        #arrow10 {{ top: 32.5%; left: 54%; height: 5%; }}
+.workflow-container-work {{
+    display: grid;
+    grid-template-columns: repeat(var(--columns), 1fr); 
+    grid-auto-rows: 75px;
+    gap: 10px; /* Space between items */
+}}
 
+.workflow-box {{
+    background-color: #ffffff;
+    color: #333;
+    padding: 15px;
+    text-align: center;
+    border-radius: 12px; 
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}}
+
+.workflow-box:hover {{
+    transform: translateY(-5px) scale(1.03);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}}
+
+.input {{
+    background-color: #E3F2FD;
+}}
+
+.process {{
+    background-color: #FFF9C4;
+}}
+
+.output {{
+    background-color: #FFCDD2;
+}}
+
+#nucleotide-seq {{
+    grid-column: 1 / 6; 
+}}
+
+#config-file {{
+    grid-column:  1 / 6; 
+    grid-row: 2;
+}}
+
+#rna-alignments {{
+    grid-column: 14 / 20; 
+}}
+#filtered {{
+    grid-column: 14 / 19;
+    grid-row: 1/3; 
+}}
+
+#rsem {{
+    grid-column: 7 / 13; 
+    grid-row: 1/3; 
+}}
+
+#transdecoder {{
+    grid-column: 20 / 25; 
+    grid-row: 1/3; 
+}}
+
+#protein {{
+    grid-column: 20 / 25; 
+    grid-row: 4/6; 
+}}
+
+#runN {{
+    grid-column: 14 / 19; 
+    grid-row: 4/6; 
+}}
+
+#database-alignments{{
+    grid-column: 17/22;
+    grid-row: 7/9;
+}}
+
+#diamond {{
+    grid-column: 23 / 29; 
+    grid-row: 7/9; 
+}}
+
+#transcriptome {{
+    grid-column: 2 / 7; 
+    grid-row: 4; 
+}}
+
+#eggnog-database {{
+    grid-column: 17 / 23; 
+    grid-row: 4; 
+}}
+
+#eggnog-alignments {{
+    grid-column: 2 / 6; 
+    grid-row: 5; 
+}}
+
+#entap-summary {{
+    grid-column: 18 / 24; 
+    grid-row: 5; 
+}}
+
+
+.arrow-down {{
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 20px solid #555;
+    margin: 0 auto;
+}}
+
+.arrow-right {{
+    grid-column: 6;
+    grid-row: 1/3;
+    width: 100%; 
+    font-size: 250%; 
+    color: #555; 
+    text-align: center;
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+}}
+
+
+img {{
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}}
+
+.workflow-logo {{
+    grid-column: 26 / 32; 
+    grid-row: 1 / 2; 
+}}
+
+@media (max-width: 900px) {{
+    .workflow-container-work {{
+        grid-template-columns: repeat(12, 1fr); 
+    }}
+
+    .workflow-box {{
+        grid-column: 2 / 12;
+    }}
+
+    .workflow-logo {{
+        grid-column: 1 / 12; 
+        grid-row: 1;
+    }}
+}}
+
+@media (max-width: 600px) {{
+    .workflow-container-work {{
+        grid-template-columns: repeat(6, 1fr); 
+    }}
+
+    .workflow-box {{
+        grid-column: 1 / 7; 
+    }}
+
+    .workflow-logo {{
+        grid-column: 1 / 7; 
+        grid-row: 1;
+    }}
+}}
         body {{
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa;
@@ -556,6 +664,8 @@ def create_gen_statistics(files, label_vals):
             margin: 0;
         }}
         .new-config-section {{
+            table-layout: fixed;
+            word-wrap: break-word;
             width: 100%;
             border-collapse: collapse;
         }}
@@ -774,101 +884,63 @@ document.addEventListener("DOMContentLoaded", function() {{
 
 
 <div class="container">
-<div class="section-container">
+    <div class="section-container">
+        <div class="workflow-container-work">
+            <img  src="https://github.com/harta55/EnTAP/raw/master/docs/source/ENTAP_white_50.jpg?raw=true" 
+        alt="EnTAP Logo" 
+        style="grid-column: 30/38; grid-row: 1/4;">
 
-<div class="workflow-wrapper">
-    <div class="workflow-container">
-            <img src="https://github.com/harta55/EnTAP/raw/master/docs/source/ENTAP_white_50.jpg?raw=true" alt="EnTAP Logo" class="entap-logo" style="float: right; margin-left: 20px;">
+            
+            <div id="nucleotide-seq" class="workflow-box input">Nucleotide Sequences (FASTA)</div>
+            <div class="arrow-right">&#8594;</div>
+
+
+            <div id="config-file" class="workflow-box input">EnTAP Configuration File</div>
+            <div class="arrow-right" style="grid-column: 13; grid-row: 1/3;">&#8594;</div>            
+
+            <div id="rsem" class="workflow-box process">Expression Analysis (RSEM)</div>
+            <div class="arrow-right" style="grid-column: 19; grid-row: 1/3;">&#8594;</div>
+
+            <div id="filtered" class="workflow-box process">Filtered Transcripts (FASTA)</div>
+
+
+            <div id="transdecoder" class="workflow-box output">Frame Selection, RunP (Transdecoder)</div>
+
+            <div class="arrow-right" style="grid-column: 22; grid-row: 3;">&#8595;</div>
+            
+            <div id="protein" class="workflow-box output">Protein Sequences (FASTA)</div>
+
+            <div class="arrow-right" style="grid-column: 16; grid-row: 3;">&#8595;</div>
+
+            <div id="runN" class="workflow-box output">Remain In Transcript Mode (runN)</div>
+
+            <div class="arrow-right" style="grid-column: 19; grid-row: 6/7;">&#8595;</div>
+
+            <div id="database-alignments" class="workflow-box output">Diamond Alignments (tsv)</div>
+
+            <div class="arrow-right" style="grid-column: 22; grid-row: 7/9;">&#8592;</div>
+
+            <div id="diamond" class="workflow-box output">Diamond (Similarity Search)</div>
+
+            <div class="arrow-right" style="grid-column: 29; grid-row: 7/9;">&#8592;</div>
+
+            <div id="diamond" style = "grid-column: 30/34; grid-row: 7/8;" class="workflow-box output">Diamond Protein Databases</div>
+            <div id="diamond" style = "grid-column: 30/34; grid-row: 8/9;" class="workflow-box output">Entap Database</div>
+
+            <div class="arrow-right" style="grid-column: 16; grid-row: 7/9;">&#8592;</div>
+
+            <div id="diamonds" style = "grid-column: 11/16; grid-row: 7/9;" class="workflow-box output">Transcriptome (Fasta)</div>
+
+            <div class="arrow-right" style="grid-column: 10; grid-row: 7/9;">&#8592;</div>
+
+            <div id="diamonds" style = "grid-column: 5/10; grid-row: 7/9;" class="workflow-box output">EggNOG Alignments (tsv)</div>
+
+            <div class="arrow-right" style="grid-column: 6/9; grid-row: 6/7;">&#8593;</div>
+
+            <div id="diamonds" style = "grid-column: 5/10; grid-row: 4/6;" class="workflow-box output">EnTAP Summary</div>
         </div>
-        <div id="box1" class="workflow-box gray">Nucleotide Sequences (FASTA)</div>
-        <div id="box2" class="workflow-box gray">EnTAP Configuration Files (ini)</div>
-        <div id="box3" class="workflow-box orange">Filtered Transcripts (FASTA)</div>
-        <div id="arrow1" class="arrow arrow-right"></div>
-        <div id="box5" class="workflow-box blue">Database Alignments (tsv)</div>
-        <div id="arrow3" class="arrow arrow-right"></div>
-        <div id="box6" class="workflow-box gray">Optional Alignment Selection / Contaminant Filtering</div>
-        <div id="arrow4" class="arrow arrow-right"></div>
-        <div id="box7" class="workflow-box blue">Optimal Database Alignments (tsv)</div>
-        <div id="arrow5" class="arrow arrow-down"></div>
-        <div id="box8" class="workflow-box orange">Transcriptome (FASTA)</div>
-        <div id="arrow6" the-arrow arrow-down"></div>
-        <div id="box9" class="workflow-box blue">EnTAP Summary</div>
-        <div id="box10" class="workflow-box gray">EggNOG Alignments (tsv)</div>
-        <div id="arrow7" class="arrow arrow-right"></div>
-        <div id="arrow9" class="arrow arrow-down"></div>
-        <div id="arrow10" class="arrow arrow-down"></div>
     </div>
 </div>
-</div>
-</div>
-
-<script>
-    var runP = {runP}; 
-
-    if (runP) {{
-        var proteinBox = document.createElement("div");
-        proteinBox.id = "box11";
-        proteinBox.className = "workflow-box orange";
-        proteinBox.innerText = "Protein Sequences (FASTA)";
-        document.getElementById("box3").insertAdjacentElement("afterend", proteinBox);
-
-        var arrowToProtein = document.createElement("div");
-        arrowToProtein.className = "arrow arrow-right";
-        proteinBox.insertAdjacentElement("beforebegin", arrowToProtein);
-
-        proteinBox.style.position = "absolute";
-        proteinBox.style.top = "10.125%"; 
-        proteinBox.style.left = "46%";
-        arrowToProtein.style.position = "absolute";
-        arrowToProtein.style.top = "12.125%"; 
-        arrowToProtein.style.left = "43.5%"; 
-
-        var downArrowAfterProtein = document.createElement("div");
-        downArrowAfterProtein.className = "arrow arrow-down";
-        proteinBox.insertAdjacentElement("afterend", downArrowAfterProtein);
-
-        downArrowAfterProtein.style.position = "absolute";
-        downArrowAfterProtein.style.top = "19%"; 
-        downArrowAfterProtein.style.left = "53%";
-
-        document.getElementById("box5").style.top = "22%"; 
-        document.getElementById("box5").style.left = "46%";
-
-        document.getElementById("box6").style.top = "35%"; 
-        document.getElementById("box6").style.left = "46%";
-
-        document.getElementById("box7").style.top = "36%"; 
-        document.getElementById("box7").style.left = "66%";
-
-        document.getElementById("box8").style.top = "50.5%"; 
-        document.getElementById("box8").style.left = "46.25%";
-
-        document.getElementById("box9").style.top = "63%"; 
-        document.getElementById("box9").style.left = "67.5%";
-
-        document.getElementById("box10").style.top = "62%"; 
-        document.getElementById("box10").style.left = "46.5%"; 
-
-        document.getElementById("arrow3").style.top = "38.5%";
-        document.getElementById("arrow3").style.left = "63%";
-
-        document.getElementById("arrow4").style.display = "none";
-
-        document.getElementById("arrow5").style.top = "46.5%";
-        document.getElementById("arrow5").style.left = "53.5%";
-
-        document.getElementById("arrow7").style.top = "64.5%";
-        document.getElementById("arrow7").style.left = "64%";
-
-        document.getElementById("arrow9").style.top = "58%";
-        document.getElementById("arrow9").style.left = "53.5%";
-
-        document.getElementById("arrow10").style.top = "31%";
-        document.getElementById("arrow10").style.left = "53%"; 
-
-    }}
-</script>
-
 
 
 <div class="container">
@@ -982,16 +1054,22 @@ document.addEventListener("DOMContentLoaded", function() {{
             <p style="font-size: 18px;"><strong>N50 (bp):</strong> {frame_n50}</p>
         </div>
     </div>
+    <div class="chart-container" style="width: 1200px; height: 600px; margin: 0 auto;">
+        <div id="transcriptomes" style="width:100%; height:100%;"></div>
+    </div>
 </div>
 
     <!-- Similarity Search Section -->
     <div class="row">
         <div class="col-md-6">
             <div class="section-container">
-                <div class="section-header" style="background-color: #007bff;">
+                <div class="section-header">
                     <h2>Similarity Search</h2>
                 </div>
                 <div class="section">
+                    <div class="chart-container" style="width: 700px; height: 600px; margin: 0 auto;">
+                    <div id="similarity-search" style="width:100%; height:100%;"></div>
+                    </div>
                     <div class="circle-container">
                         <div class="circle" data-percent="{align_percent}">
                             <div class="circle-content">{align_percent}%</div>
@@ -1028,10 +1106,13 @@ document.addEventListener("DOMContentLoaded", function() {{
         <!-- Gene Families Section -->
         <div class="col-md-6">
             <div class="section-container">
-                <div class="section-header" style="background-color: #e67e22;">
+                <div class="section-header">
                     <h2>Gene Families<h2></h2>
                 </div>
                 <div class="section">
+                    <div class="chart-container" style="width: 700px; height: 600px; margin: 0 auto;">
+                    <div id="gene-family" style="width:100%; height:100%;"></div>
+                    </div>
                     <div class="circle-container">
                         <div class="circle" data-percent="{unique_percent}">
                             <div class="circle-content">{unique_percent}%</div>
@@ -1064,32 +1145,12 @@ document.addEventListener("DOMContentLoaded", function() {{
             </div>
         </div>
         <div class="section-container" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px; margin: 0 auto;">
-
-            <!-- Transcriptomes Section with 3 Violin Plots -->
-            <div class="chart-container" style="width: 1200px; height: 600px; margin: 0 auto;">
-                <div id="transcriptomes" style="width:100%; height:100%;"></div>
-            </div>
-        
-            <!-- Similarity Search Section with 4 Violin Plots -->
-            <div class="chart-container" style="width: 1200px; height: 600px; margin: 0 auto;">
-                <div id="similarity-search" style="width:100%; height:100%;"></div>
-            </div>
-        
-            <!-- Gene Family Section with 3 Violin Plots -->
-            <div class="chart-container" style="width: 1200px; height: 600px; margin: 0 auto;">
-                <div id="gene-family" style="width:100%; height:100%;"></div>
-            </div>
-        
             <!-- Combined Section: Similarity Search and/or Gene Family -->
             <div class="chart-container" style="width: 1200px; height: 600px; margin: 0 auto;">
                 <div id="combined" style="width:100%; height:100%;"></div>
             </div>
-        
         </div>
 <div style = "height: 50px;"></div>
-
-
-
 
     <!-- Export PDF Button -->
     <div class="container">
